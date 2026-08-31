@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
 
 	rdbmsmodel "github.com/cloud-barista/cm-beetle/imdl/rdbms-model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
@@ -25,9 +26,9 @@ import (
 )
 
 // GetRDBMSSupport retrieves CSP support matrix for managed RDBMS via CB-Tumblebug.
-func GetRDBMSSupport(cspType string) (rdbmsmodel.RDBMSSupportResponse, error) {
-	log.Debug().Str("cspType", cspType).Msg("Fetching RDBMS support matrix via CB-Tumblebug")
-	return tbclient.NewSession().GetRDBMSSupport(cspType)
+func GetRDBMSSupport(providerName string) (rdbmsmodel.RDBMSSupportResponse, error) {
+	log.Debug().Str("providerName", providerName).Msg("Fetching RDBMS support matrix via CB-Tumblebug")
+	return tbclient.NewSession().GetRDBMSSupport(providerName)
 }
 
 // GetRDBMSCapability retrieves real-time capability information for a connection via CB-Tumblebug.
@@ -36,70 +37,63 @@ func GetRDBMSCapability(connectionName string) (rdbmsmodel.RDBMSCapabilityRespon
 	return tbclient.NewSession().GetRDBMSCapability(connectionName)
 }
 
-// ValidateRDBMS performs dry-run validation and default autofill for an RDBMS create request via CB-Tumblebug.
+// ValidateRDBMS performs dry-run validation and default autofill for an RDBMS create request.
+// It executes a two-stage validation pipeline:
+//  1. Beetle Deep Validation: Referential & cross-connection integrity checks (e.g. verifying VNet/SG connection matches target RDBMS connection)
+//  2. Tumblebug Infra Validation: Dry-run check against CSP capability & API constraints via CB-Tumblebug.
 func ValidateRDBMS(nsId string, req rdbmsmodel.RDBMSCreateRequest) (rdbmsmodel.RDBMSCreateRequest, error) {
+	nsId = strings.TrimSpace(nsId)
 	if nsId == "" {
-		nsId = "default"
+		return req, fmt.Errorf("nsId is required")
 	}
-	log.Info().Str("nsId", nsId).Str("rdbmsName", req.Name).Msg("Validating RDBMS create request via CB-Tumblebug")
-	return tbclient.NewSession().ValidateRDBMS(nsId, req)
-}
-
-// ValidateRecommendedRDBMS validates all recommended RDBMS instances against target cloud constraints.
-func ValidateRecommendedRDBMS(nsId string, req rdbmsmodel.RecommendedRDBMS) ([]rdbmsmodel.RDBMSCreateRequest, error) {
-	if nsId == "" {
-		nsId = "default"
+	targetConn := strings.TrimSpace(req.ConnectionName)
+	if targetConn == "" {
+		return req, fmt.Errorf("connectionName is required")
 	}
 
-	connName := strings.ToLower(fmt.Sprintf("%s-%s", req.TargetCloud.Csp, req.TargetCloud.Region))
-	if req.TargetCloud.Csp == "" || req.TargetCloud.Region == "" {
-		return nil, fmt.Errorf("target cloud CSP and region are required")
-	}
-
-	validatedList := make([]rdbmsmodel.RDBMSCreateRequest, 0, len(req.TargetRDBMSInstances))
 	tbSess := tbclient.NewSession()
 
-	for _, inst := range req.TargetRDBMSInstances {
-		adminUser := inst.AdminUserName
-		if adminUser == "" {
-			adminUser = "cbuser"
-		}
-		adminPass := inst.AdminUserPassword
-		if adminPass == "" {
-			adminPass = "BeetleRdbms1234!"
-		}
-
-		createReq := rdbmsmodel.RDBMSCreateRequest{
-			Name:                inst.RDBMSName,
-			ConnectionName:      connName,
-			VNetId:              inst.VNetId,
-			SubnetIds:           inst.SubnetIds,
-			SecurityGroupIds:    inst.SecurityGroupIds,
-			DBEngine:            inst.DBEngine,
-			DBEngineVersion:     inst.DBEngineVersion,
-			DBInstanceSpec:      inst.DBInstanceSpec,
-			StorageType:         inst.StorageType,
-			StorageSize:         inst.StorageSize,
-			Iops:                inst.Iops,
-			AdminUserName:       adminUser,
-			AdminUserPassword:   adminPass,
-			HighAvailability:    inst.HighAvailability,
-			BackupRetentionDays: inst.BackupRetentionDays,
-			PublicAccess:        inst.PublicAccess,
-			DeletionProtection:  inst.DeletionProtection,
-			AutoFillDefaults:    true,
-		}
-
-		validated, vErr := tbSess.ValidateRDBMS(nsId, createReq)
-		if vErr != nil {
-			log.Warn().Err(vErr).Str("rdbmsName", inst.RDBMSName).Msg("Validation via Tumblebug failed; retaining local recommendation")
-			validatedList = append(validatedList, createReq)
-		} else {
-			validatedList = append(validatedList, validated)
+	// 1. Referential & Cross-connection check for VNet
+	if req.VNetId != "" {
+		vNetInfo, err := tbSess.ReadVNet(nsId, req.VNetId)
+		if err == nil && vNetInfo.Id != "" {
+			if vNetInfo.ConnectionName != "" && !strings.EqualFold(vNetInfo.ConnectionName, targetConn) {
+				return req, fmt.Errorf("cross-connection mismatch: VNet '%s' belongs to connection '%s', but RDBMS target connection is '%s'",
+					req.VNetId, vNetInfo.ConnectionName, targetConn)
+			}
 		}
 	}
 
-	return validatedList, nil
+	// 2. Referential & Cross-connection check for Security Groups
+	if len(req.SecurityGroupIds) > 0 {
+		for _, sgId := range req.SecurityGroupIds {
+			if sgId == "" {
+				continue
+			}
+			sgInfo, err := tbSess.ReadSecurityGroup(nsId, sgId)
+			if err == nil && sgInfo.Id != "" {
+				if sgInfo.ConnectionName != "" && !strings.EqualFold(sgInfo.ConnectionName, targetConn) {
+					return req, fmt.Errorf("cross-connection mismatch: SecurityGroup '%s' belongs to connection '%s', but RDBMS target connection is '%s'",
+						sgId, sgInfo.ConnectionName, targetConn)
+				}
+			}
+		}
+	}
+
+	// 3. NHN Cloud specific flag validation
+	if req.NHNDBSGToAllowAllInbound {
+		if !strings.HasPrefix(strings.ToLower(targetConn), "nhn") {
+			return req, fmt.Errorf("nhnDBSGToAllowAllInbound is only supported for NHN Cloud")
+		}
+		if !req.PublicAccess {
+			return req, fmt.Errorf("nhnDBSGToAllowAllInbound requires publicAccess=true")
+		}
+	}
+
+	// 4. Pass to Tumblebug for live CSP capability strict dry-run validation (autoFillDefaults=false)
+	req.AutoFillDefaults = false
+	log.Info().Str("nsId", nsId).Str("rdbmsName", req.Name).Str("connection", targetConn).Msg("Validating RDBMS create request via CB-Tumblebug (strict mode: autoFillDefaults=false)")
+	return tbSess.ValidateRDBMS(nsId, req)
 }
 
 // RecommendRDBMS recommends optimal managed RDBMS instances for target cloud migration.
@@ -144,7 +138,7 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 		}
 
 		// Check MariaDB support
-		if targetEngine == "mariadb" && !isMariaDBSupported(desiredCsp, support, hasSupport) {
+		if targetEngine == "mariadb" && !isMariaDBSupported(support, hasSupport) {
 			targetEngine = "mysql"
 			warning := fmt.Sprintf("MariaDB is not supported on CSP '%s'. Recommended MySQL as fallback for instance '%s'.", desiredCsp, src.InstanceName)
 			warnings = append(warnings, warning)
@@ -153,24 +147,24 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 
 		// Fetch engine-specific live capability from Tumblebug
 		connName := fmt.Sprintf("%s-%s", desiredCsp, desiredRegion)
-		capResp, capErr := tbclient.NewSession().GetRDBMSCapability(connName, targetEngine)
+		capaResp, capErr := tbclient.NewSession().GetRDBMSCapability(connName, targetEngine)
 		if capErr != nil {
 			log.Warn().Err(capErr).Str("connectionName", connName).Str("engine", targetEngine).Msg("Failed to fetch live RDBMS capability from Tumblebug")
 		}
-		cap := capResp.Supports
+		capa := capaResp.Supports
 
 		// Select Engine Version with robust fallback using live supportedVersions
-		targetVersion := selectEngineVersion(targetEngine, src.EngineVersion, cap.SupportedVersions, &warnings, src.InstanceName)
+		targetVersion := selectEngineVersion(targetEngine, src.EngineVersion, capa.SupportedVersions, &warnings, src.InstanceName)
 
-		// 2. DB Spec Recommendation with capacity-aware best fit using live instanceSpecs / dbInstanceSpecOptions
-		targetSpec := selectDBSpecFromCapability(src.Vcpu, src.MemoryMb, cap)
+		// 2. DB Spec Recommendation with capacity-aware best fit using live instanceSpecs / dbInstanceSpecOptions / DBMSRequirements
+		targetSpec := selectDBInstanceSpecFromCapability(src.Vcpu, src.MemoryMb, targetEngine, capa)
 
 		// 3. Storage Type Recommendation using live Notes.StorageTypes and StorageTypeOptions
-		targetStorageType, selectedNote := selectStorageTypeFromCapability(src.StorageType, cap, &warnings, src.InstanceName)
+		targetStorageType, selectedNote := selectStorageTypeFromCapability(src.StorageType, capa, &warnings, src.InstanceName)
 
 		// Determine storage size boundaries using live capability info
-		minStorage := cap.StorageSizeRange.Min
-		maxStorage := cap.StorageSizeRange.Max
+		minStorage := capa.StorageSizeRange.Min
+		maxStorage := capa.StorageSizeRange.Max
 		if selectedNote != nil {
 			if selectedNote.MinSize > 0 {
 				minStorage = selectedNote.MinSize
@@ -215,16 +209,17 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 			targetIops = fmt.Sprintf("%d", assignedIops)
 		}
 
-		// 4. Admin Credentials Default
+		// 4. Admin Credentials Default from Capability
 		targetAdminUser := "cbuser"
-		if cap.AdminUserNameRequirement != nil && cap.AdminUserNameRequirement.FixedValue != "" {
-			targetAdminUser = cap.AdminUserNameRequirement.FixedValue
-		} else if desiredCsp == "ibm" {
-			targetAdminUser = "admin"
-		} else if desiredCsp == "tencent" {
-			targetAdminUser = "root"
-		} else if desiredCsp == "azure" || desiredCsp == "alibaba" || desiredCsp == "ncp" {
-			targetAdminUser = "dbadmin"
+		if capa.AdminUserNameRequirement != nil && capa.AdminUserNameRequirement.FixedValue != "" {
+			targetAdminUser = capa.AdminUserNameRequirement.FixedValue
+		} else if capa.AdminUserNameRequirement != nil && len(capa.AdminUserNameRequirement.ReservedValues) > 0 {
+			for _, reserved := range capa.AdminUserNameRequirement.ReservedValues {
+				if strings.EqualFold(targetAdminUser, reserved) {
+					targetAdminUser = "dbadmin"
+					break
+				}
+			}
 		}
 
 		// 5. Network & CSP-specific warnings
@@ -232,10 +227,7 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 			warning := fmt.Sprintf("NCP Cloud DB does not provide external public IP by default; instance '%s' will be created within private VPC.", src.InstanceName)
 			warnings = append(warnings, warning)
 		}
-		if desiredCsp == "nhn" && src.PublicAccess {
-			warning := fmt.Sprintf("NHN Cloud blocks port 3306 by default; ensure DB Security Group inbound permit rule is enabled for instance '%s'.", src.InstanceName)
-			warnings = append(warnings, warning)
-		}
+		targetNHNDBSG := src.NHNDBSGToAllowAllInbound
 		if src.HighAvailability && desiredCsp == "aws" {
 			warning := fmt.Sprintf("High availability (Multi-AZ) on AWS requires Subnets in at least two distinct Availability Zones for instance '%s'.", src.InstanceName)
 			warnings = append(warnings, warning)
@@ -250,21 +242,27 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 			})
 		}
 
+		targetBackupDays := src.BackupRetentionDays
+		if strings.EqualFold(desiredCsp, "ibm") {
+			targetBackupDays = 0 // IBM Cloud Databases does not support setting BackupRetentionDays during provisioning
+		}
+
 		targetInst := rdbmsmodel.TargetRDBMSInstance{
-			SourceInstanceName:  src.InstanceName,
-			SourceMachineId:     src.MachineId,
-			RDBMSName:           targetName,
-			DBEngine:            targetEngine,
-			DBEngineVersion:     targetVersion,
-			DBInstanceSpec:      targetSpec,
-			StorageType:         targetStorageType,
-			StorageSize:         targetStorageSize,
-			Iops:                targetIops,
-			AdminUserName:       targetAdminUser,
-			HighAvailability:    src.HighAvailability,
-			BackupRetentionDays: src.BackupRetentionDays,
-			PublicAccess:        src.PublicAccess,
-			Databases:           targetDatabases,
+			SourceInstanceName:       src.InstanceName,
+			SourceMachineId:          src.MachineId,
+			RDBMSName:                targetName,
+			DBEngine:                 targetEngine,
+			DBEngineVersion:          targetVersion,
+			DBInstanceSpec:           targetSpec,
+			StorageType:              targetStorageType,
+			StorageSize:              targetStorageSize,
+			Iops:                     targetIops,
+			AdminUserName:            targetAdminUser,
+			HighAvailability:         src.HighAvailability,
+			BackupRetentionDays:      targetBackupDays,
+			PublicAccess:             src.PublicAccess,
+			NHNDBSGToAllowAllInbound: targetNHNDBSG,
+			Databases:                targetDatabases,
 		}
 
 		targetInstances = append(targetInstances, targetInst)
@@ -287,126 +285,168 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 }
 
 // selectEngineVersion chooses the best-matching supported version from capability, or a standard fallback.
+// selectEngineVersion selects the best-matching target database engine version from capability.
+// It handles standard semver ("8.0", "8.0.32") as well as CSP-specific codes (e.g. NHN "MYSQL_V8032", Tencent "8.0").
 func selectEngineVersion(engine, requestedVersion string, supported []string, warnings *[]string, instName string) string {
 	requestedVersion = strings.TrimSpace(requestedVersion)
 	if len(supported) == 0 {
 		if requestedVersion != "" {
 			return requestedVersion
 		}
-		if engine == "mariadb" {
+		if strings.EqualFold(engine, "mariadb") {
 			return "10.6"
 		}
 		return "8.0"
 	}
 
-	// 1. Exact match
+	// 1. Exact match (case-insensitive)
 	for _, v := range supported {
 		if strings.EqualFold(v, requestedVersion) {
 			return v
 		}
 	}
 
-	// 2. Prefix match (e.g. requested "8.0.35" matching "8.0" or requested "8" matching "8.0")
+	// 2. Direct substring / prefix / suffix match
 	if requestedVersion != "" {
 		for _, v := range supported {
-			if strings.HasPrefix(requestedVersion, v) || strings.HasPrefix(v, requestedVersion) {
+			if strings.EqualFold(v, requestedVersion) ||
+				strings.HasPrefix(v, requestedVersion) ||
+				strings.HasPrefix(requestedVersion, v) ||
+				strings.Contains(strings.ToLower(v), strings.ToLower(requestedVersion)) {
 				return v
 			}
 		}
-		// Warning on version mismatch fallback
-		msg := fmt.Sprintf("Requested %s version '%s' is not supported on target cloud. Selected supported version '%s' instead for instance '%s'.",
-			engine, requestedVersion, supported[0], instName)
-		*warnings = append(*warnings, msg)
 	}
 
-	// 3. Preferred default version if available in supported list
-	preferred := "8.0"
-	if engine == "mariadb" {
-		preferred = "10.6"
+	// 3. CSP Version Code Normalization match (e.g. "8.0" -> "80" matching "MYSQL_V8032", "5.7" -> "57" matching "MYSQL_V5744")
+	if requestedVersion != "" {
+		reqDigits := extractVersionDigits(requestedVersion)
+		if len(reqDigits) >= 2 {
+			for _, v := range supported {
+				vDigits := extractVersionDigits(v)
+				if strings.HasPrefix(vDigits, reqDigits) || strings.Contains(vDigits, reqDigits) {
+					return v
+				}
+			}
+		}
 	}
+
+	// 4. Preferred default version (e.g., 8.0 for MySQL, 10.6 for MariaDB)
+	preferred := "8.0"
+	preferredDigits := "80"
+	if strings.EqualFold(engine, "mariadb") {
+		preferred = "10.6"
+		preferredDigits = "106"
+	}
+
 	for _, v := range supported {
-		if strings.HasPrefix(v, preferred) {
+		if strings.Contains(strings.ToLower(v), preferred) || strings.Contains(extractVersionDigits(v), preferredDigits) {
 			return v
 		}
 	}
 
-	// Fallback to first supported option
+	// Fallback to first supported option with informational warning
+	if requestedVersion != "" && !strings.EqualFold(supported[0], requestedVersion) {
+		msg := fmt.Sprintf("Requested %s version '%s' could not be strictly matched. Selected supported version '%s' for instance '%s'.",
+			engine, requestedVersion, supported[0], instName)
+		*warnings = append(*warnings, msg)
+	}
+
 	return supported[0]
 }
 
+// extractVersionDigits extracts consecutive digit sequences for version matching (e.g. "8.0.35" -> "8035", "MYSQL_V8032" -> "8032")
+func extractVersionDigits(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		if unicode.IsDigit(r) {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
 // selectStorageTypeFromCapability selects the optimal storage type and guidance note dynamically from Tumblebug capability.
-func selectStorageTypeFromCapability(requestedType string, cap rdbmsmodel.RDBMSMetaInfo, warnings *[]string, instName string) (string, *rdbmsmodel.StorageTypeNote) {
-	req := strings.TrimSpace(requestedType)
+func selectStorageTypeFromCapability(req string, capa rdbmsmodel.RDBMSMetaInfo, warnings *[]string, instName string) (string, *rdbmsmodel.StorageTypeNote) {
+	// If the CSP does not support storage type selection (e.g. Azure, IBM, NCP), storageType must be omitted
+	if !capa.SupportsStorageTypeSelection {
+		return "", nil
+	}
+
+	// Filter out non-actionable placeholder options (e.g. "NA")
+	usableOptions := make([]string, 0, len(capa.StorageTypeOptions))
+	for _, opt := range capa.StorageTypeOptions {
+		if !strings.EqualFold(opt, "NA") && strings.TrimSpace(opt) != "" {
+			usableOptions = append(usableOptions, opt)
+		}
+	}
+	if len(usableOptions) == 0 {
+		return "", nil
+	}
 
 	// Collect storage notes map from notes or storageTypeGuidance
 	notesMap := make(map[string]rdbmsmodel.StorageTypeNote)
-	if cap.Notes != nil && len(cap.Notes.StorageTypes) > 0 {
-		for _, note := range cap.Notes.StorageTypes {
+	if capa.Notes != nil && len(capa.Notes.StorageTypes) > 0 {
+		for _, note := range capa.Notes.StorageTypes {
 			notesMap[strings.ToLower(note.StorageType)] = note
 		}
 	}
-	if len(cap.StorageTypeGuidance) > 0 {
-		for k, v := range cap.StorageTypeGuidance {
+	if len(capa.StorageTypeGuidance) > 0 {
+		for k, v := range capa.StorageTypeGuidance {
 			notesMap[strings.ToLower(k)] = v
 		}
 	}
 
 	// 1. Check if user requested a specific type and if it is supported in capability
-	if req != "" {
+	if req != "" && !strings.EqualFold(req, "NA") {
 		reqLower := strings.ToLower(req)
-		// Check against capability options
-		if len(cap.StorageTypeOptions) > 0 {
-			for _, opt := range cap.StorageTypeOptions {
-				if strings.EqualFold(opt, req) {
-					if note, ok := notesMap[reqLower]; ok {
-						return opt, &note
-					}
-					return opt, nil
+		// Check against usable capability options
+		for _, opt := range usableOptions {
+			if strings.EqualFold(opt, req) {
+				if note, ok := notesMap[reqLower]; ok {
+					return opt, &note
 				}
+				return opt, nil
 			}
-			msg := fmt.Sprintf("Requested storage type '%s' is not supported on target cloud. Replaced with capability recommended storage for instance '%s'.",
-				req, instName)
-			*warnings = append(*warnings, msg)
-		} else if note, ok := notesMap[reqLower]; ok {
-			return note.StorageType, &note
 		}
+		msg := fmt.Sprintf("Requested storage type '%s' is not supported on target cloud. Replaced with capability recommended storage for instance '%s'.",
+			req, instName)
+		*warnings = append(*warnings, msg)
 	}
 
 	// 2. Select recommended storage from notes if flagged recommended
 	for _, note := range notesMap {
-		if note.Recommended {
+		if note.Recommended && !strings.EqualFold(note.StorageType, "NA") {
 			return note.StorageType, &note
 		}
 	}
 
 	// 3. Select defaultStorageType if provided by capability
-	if cap.DefaultStorageType != "" {
-		if note, ok := notesMap[strings.ToLower(cap.DefaultStorageType)]; ok {
-			return cap.DefaultStorageType, &note
+	if capa.DefaultStorageType != "" && !strings.EqualFold(capa.DefaultStorageType, "NA") {
+		if note, ok := notesMap[strings.ToLower(capa.DefaultStorageType)]; ok {
+			return capa.DefaultStorageType, &note
 		}
-		return cap.DefaultStorageType, nil
+		return capa.DefaultStorageType, nil
 	}
 
-	// 4. Fallback to first storage option from capability
-	if len(cap.StorageTypeOptions) > 0 {
-		first := cap.StorageTypeOptions[0]
-		if note, ok := notesMap[strings.ToLower(first)]; ok {
-			return first, &note
-		}
-		return first, nil
+	// 4. Fallback to first usable storage option from capability
+	first := usableOptions[0]
+	if note, ok := notesMap[strings.ToLower(first)]; ok {
+		return first, &note
 	}
-
-	return "gp2", nil
+	return first, nil
 }
 
-// selectDBSpecFromCapability selects the best-fitting instance spec dynamically from Tumblebug capability using resource fit.
-func selectDBSpecFromCapability(vcpu, memoryMb int, cap rdbmsmodel.RDBMSMetaInfo) string {
-	// If detailed DBInstanceSpecs list is available, evaluate requirements
-	if len(cap.DBInstanceSpecs) > 0 {
+// selectDBInstanceSpecFromCapability selects the best-fitting instance spec dynamically from Tumblebug capability using resource fit.
+func selectDBInstanceSpecFromCapability(vcpu, memoryMb int, engine string, capa rdbmsmodel.RDBMSMetaInfo) string {
+	engineLower := strings.ToLower(engine)
+
+	// 1. If detailed DBInstanceSpecs list is available, evaluate requirements
+	if len(capa.DBInstanceSpecs) > 0 {
 		var bestSpec string
 		var minDiff int64 = 1<<62 - 1
 
-		for _, spec := range cap.DBInstanceSpecs {
+		for _, spec := range capa.DBInstanceSpecs {
 			specCpu, _ := strconv.Atoi(spec.VCpuCount)
 			specMem, _ := strconv.Atoi(spec.MemSizeMiB)
 			if specCpu == 0 {
@@ -433,34 +473,38 @@ func selectDBSpecFromCapability(vcpu, memoryMb int, cap rdbmsmodel.RDBMSMetaInfo
 			return bestSpec
 		}
 
-		// Fallback to the first spec if no spec strictly satisfies the requirements
-		return cap.DBInstanceSpecs[0].Name
+		// If no spec strictly satisfies the requirements, check ReferenceDBInstanceSpec in DBMSRequirements
+		if req, ok := capa.DBMSRequirements[engineLower]; ok && req.ReferenceDBInstanceSpec != "" {
+			return req.ReferenceDBInstanceSpec
+		}
+
+		// Fallback to the first spec from capability
+		return capa.DBInstanceSpecs[0].Name
 	}
 
-	// If only string options list is provided, return the first option
-	if len(cap.DBInstanceSpecOptions) > 0 {
-		return cap.DBInstanceSpecOptions[0]
+	// 2. Check engine-specific ReferenceDBInstanceSpec in DBMSRequirements from Tumblebug capability
+	if req, ok := capa.DBMSRequirements[engineLower]; ok && req.ReferenceDBInstanceSpec != "" {
+		return req.ReferenceDBInstanceSpec
 	}
 
-	return "db.t3.medium"
+	// 3. If string options list is provided from Tumblebug capability, return the first valid option
+	for _, opt := range capa.DBInstanceSpecOptions {
+		if strings.TrimSpace(opt) != "" {
+			return opt
+		}
+	}
+
+	return ""
 }
 
-// isMariaDBSupported checks if the target CSP supports MariaDB using live support info or static reference.
-func isMariaDBSupported(csp string, support rdbmsmodel.RDBMSCSPSupportInfo, hasSupport bool) bool {
+// isMariaDBSupported checks if the target CSP supports MariaDB using Tumblebug support info.
+func isMariaDBSupported(support rdbmsmodel.RDBMSCSPSupportInfo, hasSupport bool) bool {
 	if hasSupport && len(support.SupportedDBEngines) > 0 {
 		for _, eng := range support.SupportedDBEngines {
 			if strings.EqualFold(eng, "mariadb") {
 				return true
 			}
 		}
-		return false
 	}
-
-	// Static reference fallback
-	switch csp {
-	case "aws", "alibaba", "nhn", "openstack":
-		return true
-	default:
-		return false
-	}
+	return false
 }

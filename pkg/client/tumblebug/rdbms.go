@@ -29,21 +29,20 @@ import (
 // RDBMS Support & Capability APIs
 // ============================================================================
 
-// GetRDBMSSupport retrieves CSP support information for RDBMS features.
-// If cspType is empty, returns support information for all CSPs.
-func (s *Session) GetRDBMSSupport(cspType string) (rdbmsmodel.RDBMSSupportResponse, error) {
-	log.Debug().Msgf("Retrieving RDBMS support information for CSP: %s", cspType)
+// GetRDBMSSupport retrieves whether managed RDBMS is supported for the specified CSP or all CSPs.
+func (s *Session) GetRDBMSSupport(optionalCsp ...string) (rdbmsmodel.RDBMSSupportResponse, error) {
+	log.Debug().Msg("Retrieving RDBMS support information from CB-Tumblebug")
 
 	var resBody rdbmsmodel.RDBMSSupportResponse
 	req := s.SetResult(&resBody)
 
-	if cspType != "" {
-		req = req.SetQueryParam("providerName", cspType)
+	if len(optionalCsp) > 0 && optionalCsp[0] != "" {
+		req = req.SetQueryParam("providerName", optionalCsp[0])
 	}
 
 	resp, err := req.Get("/rdbms/support")
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to retrieve RDBMS support information")
+		log.Error().Err(err).Msg("Failed to retrieve RDBMS support info")
 		return rdbmsmodel.RDBMSSupportResponse{}, err
 	}
 
@@ -54,7 +53,7 @@ func (s *Session) GetRDBMSSupport(cspType string) (rdbmsmodel.RDBMSSupportRespon
 			}
 		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
-		log.Error().Err(err).Msg("Failed to retrieve RDBMS support information")
+		log.Error().Err(err).Msg("Failed to retrieve RDBMS support info")
 		return rdbmsmodel.RDBMSSupportResponse{}, err
 	}
 
@@ -74,15 +73,28 @@ func (s *Session) GetRDBMSCapability(connectionName string, optionalEngine ...st
 		engine = optionalEngine[0]
 	}
 
+	req = req.SetQueryParam("dbEngine", engine)
+
 	if connectionName != "" {
 		req = req.SetQueryParam("connectionName", connectionName)
 		parts := strings.Split(connectionName, "-")
 		if len(parts) >= 2 {
-			providerName := parts[0]
+			providerName := strings.ToLower(parts[0])
 			regionName := strings.Join(parts[1:], "-")
+
+			// Normalize providerName and regionName to match Tumblebug connection configs
+			switch providerName {
+			case "ncp":
+				regionName = strings.ToUpper(regionName) // e.g., "kr" -> "KR"
+			case "nhn":
+				providerName = "nhn"                     // Registered providerName is "nhn"
+				regionName = strings.ToUpper(regionName) // e.g., "kr1" -> "KR1"
+			case "kt":
+				regionName = strings.ToUpper(regionName) // e.g., "kr1" -> "KR1"
+			}
+
 			req = req.SetQueryParam("providerName", providerName).
-				SetQueryParam("regionName", regionName).
-				SetQueryParam("dbEngine", engine)
+				SetQueryParam("regionName", regionName)
 		}
 	}
 

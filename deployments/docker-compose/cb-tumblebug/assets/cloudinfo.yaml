@@ -715,16 +715,16 @@ cloud:
         - mx-central-1a
         - mx-central-1b
         - mx-central-1c
-      me-south-1:
-        description: Middle East (Bahrain)
-        location:
-          display: Middle East (Bahrain)
-          latitude: 25.0
-          longitude: 49.6
-        zone:
-        - me-south-1a
-        - me-south-1b
-        - me-south-1c
+      # me-south-1:
+      #   description: Middle East (Bahrain)
+      #   location:
+      #     display: Middle East (Bahrain)
+      #     latitude: 25.0
+      #     longitude: 49.6
+      #   zone:
+      #   - me-south-1a
+      #   - me-south-1b
+      #   - me-south-1c
   azure:
     description: Microsoft Azure
     driver: azure-driver-v1.0.so
@@ -1980,19 +1980,19 @@ cloud:
         zone:
         - jp-pub-a
         - jp-pub-b
-      KR3:
-        id: KR3
-        description: Gwangju (South Korea)
-        location:
-          display: Gwangju (South Korea)
-          latitude: 35.1595
-          longitude: 126.8526
-        zone:
-        - kr3-pub-a
-        - kr3-pub-b
+      # KR3:
+      #   id: KR3
+      #   description: Gwangju (South Korea)
+      #   location:
+      #     display: Gwangju (South Korea)
+      #     latitude: 35.1595
+      #     longitude: 126.8526
+      #   zone:
+      #   - kr3-pub-a
+      #   - kr3-pub-b
       # US1:
       #   id: US1
-      #   desc: US West (California)
+      #   description: US West (California)
       #   location:
       #     display: California, USA
       #     latitude: 37.7749

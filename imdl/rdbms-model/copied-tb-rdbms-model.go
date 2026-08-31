@@ -60,13 +60,16 @@ type RDBMSStorageTypeConfig struct {
 
 // RDBMSDBMSRequirement is one DB-engine entry for requirements.
 type RDBMSDBMSRequirement struct {
-	MinStorageSize          int    `json:"minStorageSize,omitempty"`
-	MaxStorageSize          int    `json:"maxStorageSize,omitempty"`
-	DefaultPort             int    `json:"defaultPort,omitempty"`
-	Note                    string `json:"note,omitempty"`
-	ReferenceEngineVersion  string `json:"referenceEngineVersion,omitempty"`
-	ReferenceDBInstanceSpec string `json:"referenceDBInstanceSpec,omitempty"`
-	ReferenceDBSpec         string `json:"referenceDBSpec,omitempty"`
+	MinStorageSize          int      `json:"minStorageSize,omitempty"`
+	MaxStorageSize          int      `json:"maxStorageSize,omitempty"`
+	DefaultPort             int      `json:"defaultPort,omitempty"`
+	Note                    string   `json:"note,omitempty"`
+	ReferenceEngineVersion  string   `json:"referenceEngineVersion,omitempty"`
+	ReferenceDBInstanceSpec string   `json:"referenceDBInstanceSpec,omitempty"`
+	// DeprecatedVersions lists engine versions that are deprecated by the CSP and discouraged for new deployments.
+	DeprecatedVersions []string `json:"deprecatedVersions,omitempty"`
+	// EndOfLifeVersions lists engine versions that have reached official End of Life (EOL) and cannot be provisioned.
+	EndOfLifeVersions []string `json:"endOfLifeVersions,omitempty"`
 }
 
 // RDBMSDatabaseRequirement captures database name rules.

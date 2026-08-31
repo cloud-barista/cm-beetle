@@ -12,7 +12,7 @@ must also be updated to maintain internal consistency. The Align Names API autom
 
 CM-Beetle uses a **Late Binding** strategy: the recommendation model holds base names (e.g., `vnet-01`), and a `nameSeed` prefix is applied at migration time via the `?nameSeed=` query parameter.
 
-> For the full NameSeed concept, rules, and workflow, see [NameSeed: Late Binding for Resource Names](feature-guide/naming-nameseed.md).
+> For the full NameSeed concept, rules, and workflow, see [NameSeed: Late Binding for Resource Names](feature-guide/core-naming-rule.md).
 
 > [!NOTE]
 > **One resource at a time.** Each rename specifies exactly one `oldName` → `newName`.

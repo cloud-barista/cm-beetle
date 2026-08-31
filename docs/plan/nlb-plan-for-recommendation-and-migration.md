@@ -1241,5 +1241,5 @@ OnpremInfra
 - [cm-honeybee discussion #55 — HAProxy 수집 데이터 예시](https://github.com/cloud-barista/cm-honeybee/discussions/55)
 - [CB-Tumblebug Swagger v0.12.15](https://raw.githubusercontent.com/cloud-barista/cb-tumblebug/v0.12.15/src/interface/rest/docs/swagger.yaml)
 - [imdl README — 인프라 모델 디렉토리 가이드](../../imdl/README.md)
-- [Object Storage Feature Guide — API 패턴 참조](../feature-guide/object-storage-migration-feature-guide.md)
+- [Object Storage Feature Guide — API 패턴 참조](../feature-guide/middleware-object-storage.md)
 - [API Development Guide](../api-development-guide.md)

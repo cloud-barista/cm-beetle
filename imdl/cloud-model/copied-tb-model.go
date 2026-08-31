@@ -4,11 +4,8 @@ import "time"
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.12.30 (commit: c2c4e76b3cc7ba158a6f61918fe061470f039c6b)
-// * Synchronized: 2026-08-07 (VerifiedMessage, NodeInfoInNs, NLBInfoInNs for namespace-wide listing)
-// * Synchronized: 2026-08-12 (InfraInfo: replaced stale PostCommand/PostCommandResult with
-//   PostCommands/PostCommandAsync/PostCommandResults/PostCommandStatus/PostCommandRequestId,
-//   added Cluster field and the InfraClusterInfo type)
+// * Version: CB-Tumblebug latest main (commit: a9a104734c622ff44d5ad0698d6df9a4b12a74d0)
+// * Synchronized: 2026-08-31
 
 // InfraReq is struct for requirements to create Infra
 type InfraReq struct {
@@ -687,6 +684,78 @@ type NodeInfo struct {
 	AddtionalDetails []KeyValue `json:"addtionalDetails,omitempty"`
 }
 
+// NodeSummary is the per-Node projection returned by the Infra list view
+// (GET /ns/{nsId}/infra). It is served from the NodeStatusAgent's in-memory
+// store with no per-Node KV read, so it carries live status plus immutable
+// config only. Heavy, derived, or sensitive fields — networkAgentStatus,
+// commandStatus, sshHostKeyInfo, nodeUserName/Password, addtionalDetails — are
+// intentionally omitted; fetch the complete NodeInfo via the single-Node API
+// GET /ns/{nsId}/infra/{infraId}/node/{nodeId}.
+type NodeSummary struct {
+	ResourceType     string            `json:"resourceType"`
+	Id               string            `json:"id"`
+	Uid              string            `json:"uid,omitempty"`
+	Label            map[string]string `json:"label"`
+	CspResourceName  string            `json:"cspResourceName,omitempty"`
+	CspResourceId    string            `json:"cspResourceId,omitempty"`
+	Name             string            `json:"name"`
+	NodeGroupId      string            `json:"nodeGroupId"`
+	Location         Location          `json:"location"`
+	Status           string            `json:"status"`
+	TargetStatus     string            `json:"targetStatus"`
+	TargetAction     string            `json:"targetAction"`
+	MonAgentStatus   string            `json:"monAgentStatus"`
+	SystemMessage    string            `json:"systemMessage"`
+	CreatedTime      string            `json:"createdTime"`
+	Region           RegionInfo        `json:"region"`
+	PublicIP         string            `json:"publicIP"`
+	SSHPort          int               `json:"sshPort"`
+	PublicDNS        string            `json:"publicDNS"`
+	PrivateIP        string            `json:"privateIP"`
+	PrivateDNS       string            `json:"privateDNS"`
+	RootDiskType     string            `json:"rootDiskType"`
+	RootDiskSize     int               `json:"rootDiskSize"`
+	ConnectionName   string            `json:"connectionName"`
+	ConnectionConfig ConnConfig        `json:"connectionConfig"`
+	SpecId           string            `json:"specId"`
+	CspSpecName      string            `json:"cspSpecName"`
+	Spec             SpecSummary       `json:"spec"`
+	ImageId          string            `json:"imageId"`
+	CspImageName     string            `json:"cspImageName"`
+	Image            ImageSummary      `json:"image"`
+	VNetId           string            `json:"vNetId"`
+	CspVNetId        string            `json:"cspVNetId"`
+	SubnetId         string            `json:"subnetId"`
+	CspSubnetId      string            `json:"cspSubnetId"`
+	NetworkInterface string            `json:"networkInterface"`
+	SecurityGroupIds []string          `json:"securityGroupIds"`
+	DataDiskIds      []string          `json:"dataDiskIds"`
+	SshKeyId         string            `json:"sshKeyId"`
+	CspSshKeyId      string            `json:"cspSshKeyId"`
+}
+
+// InfraInfoSummary is the Infra projection returned by the list view
+// (GET /ns/{nsId}/infra). Infra-level fields are complete (read from the single
+// Infra object); Nodes are NodeSummary. For the full per-Node object use the
+// single-Infra (GET /ns/{nsId}/infra/{infraId}) or single-Node API.
+type InfraInfoSummary struct {
+	ResourceType                  string            `json:"resourceType"`
+	Id                            string            `json:"id"`
+	Uid                           string            `json:"uid,omitempty"`
+	Name                          string            `json:"name"`
+	Status                        string            `json:"status"`
+	StatusCount                   StatusCountInfo   `json:"statusCount"`
+	TargetStatus                  string            `json:"targetStatus"`
+	TargetAction                  string            `json:"targetAction"`
+	InstallMonAgent               string            `json:"installMonAgent"`
+	ConfigureCloudAdaptiveNetwork string            `json:"configureCloudAdaptiveNetwork"`
+	Label                         map[string]string `json:"label"`
+	SystemLabel                   string            `json:"systemLabel"`
+	SystemMessage                 []string          `json:"systemMessage"`
+	Description                   string            `json:"description"`
+	Node                          []NodeSummary     `json:"node"`
+}
+
 // InfraSshCmdResult is struct for Set of SshCmd Results in terms of Infra
 type InfraSshCmdResult struct {
 	Results []SshCmdResult `json:"results"`
@@ -919,6 +988,12 @@ type ImageInfo struct {
 	SystemLabel string     `json:"systemLabel" example:"Managed by CB-Tumblebug" default:""`
 	Description string     `json:"description"`
 
+	SystemMessage string `json:"systemMessage,omitempty"`
+
+	// DeletionRequestedAt (RFC3339) marks a deletion tombstone (customImage only):
+	// non-empty means the row is kept until CSP-side removal is confirmed
+	DeletionRequestedAt string `json:"deletionRequestedAt,omitempty"`
+
 	// CommandHistory stores the status and history of remote commands executed on this VM
 	CommandHistory []ImageSourceCommandHistory `json:"commandHistory" gorm:"type:text;serializer:json"`
 }
@@ -1084,11 +1159,17 @@ type NLBInfo struct {
 	CreatedTime          time.Time            `json:"createdTime,omitempty"`
 	Description          string               `json:"description"`
 	Status               string               `json:"status"`
+	SystemMessage        string               `json:"systemMessage,omitempty"`
 	KeyValueList         []KeyValue           `json:"keyValueList,omitempty"`
 	AssociatedObjectList []string             `json:"associatedObjectList,omitempty"`
 	IsAutoGenerated      bool                 `json:"isAutoGenerated"`
 	Location             Location             `json:"location"`
-	SystemLabel          string               `json:"systemLabel,omitempty"`
+
+	// DeletionRequestedAt (RFC3339) marks a deletion tombstone: non-empty means the
+	// record is kept until CSP-side removal is confirmed
+	DeletionRequestedAt string `json:"deletionRequestedAt,omitempty"`
+
+	SystemLabel string `json:"systemLabel,omitempty"`
 }
 
 // NLBListenerInfo mirrors CB-Tumblebug's NLBListenerInfo.

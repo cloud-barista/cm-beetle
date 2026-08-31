@@ -1,0 +1,15 @@
+{
+  "resourceType": "infra",
+  "name": "infra-kt-global",
+  "description": "Global KT Infra test - 1 VM per region",
+  "infraDynamicReq": {
+    "nodeGroups": [
+      {
+        "name": "g1-kt-kr1",
+        "nodeGroupSize": 1,
+        "specId": "kt+kr1+1x1.itl",
+        "imageId": "3556e626-a174-448d-a53e-c1ab6e26d559"
+      }
+    ]
+  }
+}

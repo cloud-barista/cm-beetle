@@ -19,6 +19,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	tbresource "github.com/cloud-barista/cb-tumblebug/src/interface/rest/server/resource"
@@ -54,11 +55,17 @@ func createTumblebugProxyHandler(sourcePattern string, targetPattern string) ech
 	// Return a handler that processes the request and forwards it to Tumblebug
 	return func(c echo.Context) error {
 		// Create the rewrite rule based on the source and target patterns
+		// Support both with and without the "/beetle" base group prefix
+		beetleSourcePattern := "/beetle" + sourcePattern
+		if strings.HasPrefix(sourcePattern, "/beetle") {
+			beetleSourcePattern = sourcePattern
+		}
 		rewriteRules := map[string]string{
-			sourcePattern: targetPattern,
+			sourcePattern:       targetPattern,
+			beetleSourcePattern: targetPattern,
 		}
 
-		log.Debug().Msgf("Proxying with rewrite rule: %s -> %s", sourcePattern, targetPattern)
+		log.Debug().Msgf("Proxying with rewrite rules: %v", rewriteRules)
 
 		// Use the existing Proxy middleware
 		proxyMiddleware := middlewares.Proxy(middlewares.ProxyConfig{

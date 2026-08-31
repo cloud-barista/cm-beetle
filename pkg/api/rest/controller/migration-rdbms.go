@@ -44,8 +44,8 @@ type MigrateRDBMSRequest struct {
 
 // MigrateRDBMS godoc
 // @ID MigrateRDBMS
-// @Summary Migrate managed RDBMS instances to cloud
-// @Description Migrate managed RDBMS instances to cloud based on recommendation results
+// @Summary Migrate Managed RDBMS (RDS) instances to cloud
+// @Description Provision and migrate managed RDBMS / RDS instances in target cloud based on recommendation results (supports AWS RDS, GCP Cloud SQL, Azure Database, NCP Cloud DB, NHN RDS, Alibaba ApsaraDB, TencentDB, IBM Databases)
 // @Description
 // @Description [Note]
 // @Description - This API provisions managed RDBMS instances in the target cloud within the specified namespace.
@@ -140,14 +140,14 @@ func MigrateRDBMS(c echo.Context) error {
 
 // ValidateMigrateRDBMS godoc
 // @ID ValidateMigrateRDBMS
-// @Summary Validate managed RDBMS migration request against target cloud
-// @Description Validate recommended RDBMS configuration against target cloud constraints before actual migration
+// @Summary Validate Managed RDBMS (RDS) creation request against target cloud
+// @Description Validate managed RDBMS configuration against target cloud constraints before actual migration
 // @Tags [Migration] Managed RDBMS
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param request body MigrateRDBMSRequest true "RDBMS migration request to validate"
-// @Success 200 {object} model.ApiResponse[[]rdbmsmodel.RDBMSCreateRequest] "Successfully validated RDBMS migration configurations"
+// @Param request body rdbmsmodel.RDBMSCreateRequest true "RDBMS creation request to validate"
+// @Success 200 {object} model.ApiResponse[rdbmsmodel.RDBMSCreateRequest] "Successfully validated RDBMS creation configuration"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
 // @Router /migration/middleware/ns/{nsId}/rdbms/validate [post]
@@ -157,29 +157,26 @@ func ValidateMigrateRDBMS(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId required"))
 	}
 
-	var req MigrateRDBMSRequest
+	var req rdbmsmodel.RDBMSCreateRequest
 	if err := c.Bind(&req); err != nil {
 		log.Error().Err(err).Msg("Failed to bind request")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
-	if req.TargetCloud.Csp == "" || req.TargetCloud.Region == "" {
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("CSP and region required"))
-	}
-
-	validatedList, err := recommendation.ValidateRecommendedRDBMS(nsId, req.RecommendedRDBMS)
+	req.AutoFillDefaults = false
+	validated, err := recommendation.ValidateRDBMS(nsId, req)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to validate RDBMS migration configuration")
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+		log.Error().Err(err).Msg("Failed to validate RDBMS configuration")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(fmt.Sprintf("Validation failed: %v", err)))
 	}
 
-	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(validatedList, "Successfully validated RDBMS migration configurations"))
+	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(validated, "Successfully validated RDBMS configuration"))
 }
 
 // ListRDBMS godoc
 // @ID ListRDBMS
-// @Summary List migrated managed RDBMS instances
-// @Description Retrieve the list of all migrated managed RDBMS instances in the namespace
+// @Summary List migrated Managed RDBMS (RDS) instances
+// @Description Retrieve the list of all migrated managed RDBMS / RDS instances in the namespace
 // @Tags [Migration] Managed RDBMS
 // @Accept json
 // @Produce json
@@ -205,8 +202,8 @@ func ListRDBMS(c echo.Context) error {
 
 // GetRDBMS godoc
 // @ID GetRDBMS
-// @Summary Get details of a migrated managed RDBMS instance
-// @Description Retrieve details of a specific migrated managed RDBMS instance in the namespace
+// @Summary Get details of a migrated Managed RDBMS (RDS) instance
+// @Description Retrieve details of a specific migrated managed RDBMS / RDS instance in the namespace
 // @Tags [Migration] Managed RDBMS
 // @Accept json
 // @Produce json
@@ -234,8 +231,8 @@ func GetRDBMS(c echo.Context) error {
 
 // DeleteRDBMS godoc
 // @ID DeleteRDBMS
-// @Summary Delete a migrated managed RDBMS instance
-// @Description Delete a specific migrated managed RDBMS instance in the namespace
+// @Summary Delete a migrated Managed RDBMS (RDS) instance
+// @Description Delete a specific migrated managed RDBMS / RDS instance in the namespace
 // @Tags [Migration] Managed RDBMS
 // @Accept json
 // @Produce json
@@ -269,7 +266,7 @@ func DeleteRDBMS(c echo.Context) error {
 
 // CreateRDBMSDatabase godoc
 // @ID CreateRDBMSDatabase
-// @Summary Create a logical database inside a managed RDBMS instance
+// @Summary Create a logical database inside a Managed RDBMS (RDS) instance
 // @Description Create a new logical database inside an existing managed RDBMS instance
 // @Tags [Migration] Managed RDBMS
 // @Accept json
@@ -303,7 +300,7 @@ func CreateRDBMSDatabase(c echo.Context) error {
 
 // ListRDBMSDatabases godoc
 // @ID ListRDBMSDatabases
-// @Summary List logical databases inside a managed RDBMS instance
+// @Summary List logical databases inside a Managed RDBMS (RDS) instance
 // @Description Retrieve the list of logical databases inside an existing managed RDBMS instance
 // @Tags [Migration] Managed RDBMS
 // @Accept json
@@ -335,7 +332,7 @@ func ListRDBMSDatabases(c echo.Context) error {
 
 // DeleteRDBMSDatabase godoc
 // @ID DeleteRDBMSDatabase
-// @Summary Delete a logical database inside a managed RDBMS instance
+// @Summary Delete a logical database inside a Managed RDBMS (RDS) instance
 // @Description Delete a logical database inside an existing managed RDBMS instance
 // @Tags [Migration] Managed RDBMS
 // @Accept json

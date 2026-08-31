@@ -1,6 +1,6 @@
 {
   "resourceType": "infra",
-  "name": "llm-bench-gpu",
+  "name": "infra-usecase-llm-bench",
   "description": "LLM benchmarking Infra with GPU VMs (NVIDIA L4, L40S, AMD Radeon PRO V710) and a CPU-based observability node",
   "infraDynamicReq": {
     "installMonAgent": "no",
@@ -13,7 +13,7 @@
         },
         "description": "mapui",
         "specId": "azure+westus+standard_nv24ads_v710_v5",
-        "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202601310",
+        "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202608060",
         "rootDiskType": "PremiumSSD",
         "rootDiskSize": 200,
         "connectionName": "azure-westus"
@@ -24,12 +24,11 @@
         "label": {
           "role": "observability"
         },
-        "description": "CPU-based observability node (t3a.2xlarge, 8 vCPU, 32 GiB)",
-        "specId": "aws+us-west-2+t3a.2xlarge",
-        "imageId": "ami-0503ed50b531cc445",
-        "rootDiskType": "gp2",
-        "rootDiskSize": 200,
-        "connectionName": "aws-us-west-2"
+        "description": "CPU-based observability node (e2-standard-8, 8 vCPU, 32 GiB)",
+        "specId": "gcp+us-west3+e2-standard-8",
+        "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+        "rootDiskType": "default",
+        "rootDiskSize": 200
       },
       {
         "name": "nvidial4",

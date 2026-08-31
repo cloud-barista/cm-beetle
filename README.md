@@ -60,15 +60,20 @@ Data migration transfers data between storage endpoints regardless of which CSP 
 
 ### Feature Guides
 
-- [Infrastructure](docs/feature-guide/infrastructure.md)
-- [Kubernetes Infrastructure](docs/feature-guide/kubernetes-infrastructure.md)
-- [Managed Middleware](docs/feature-guide/managed-middleware.md)
-- [Object Storage Migration](docs/feature-guide/object-storage-migration-feature-guide.md)
-- [Network Load Balancer (NLB)](docs/feature-guide/nlb-feature-guide.md)
-- [Data Migration](docs/feature-guide/data-migration-feature-guide.md)
-- [Validation](docs/feature-guide/validation-feature-guide.md)
-- [Naming (NameSeed)](docs/feature-guide/naming-nameseed.md)
-- [Async Responses](docs/feature-guide/async-responses.md)
+- **Core & System**
+  - [Async Responses](docs/feature-guide/core-async-response.md)
+  - [Naming Rules (NameSeed)](docs/feature-guide/core-naming-rule.md)
+  - [Validation](docs/feature-guide/core-validation.md)
+- **Infrastructure**
+  - [Computing Infrastructure](docs/feature-guide/infra-computing.md)
+  - [Kubernetes Infrastructure](docs/feature-guide/infra-kubernetes.md)
+- **Managed Middleware**
+  - [Managed Middleware Overview](docs/feature-guide/middleware-overview.md)
+  - [Network Load Balancer (NLB)](docs/feature-guide/middleware-nlb.md)
+  - [Managed Object Storage](docs/feature-guide/middleware-object-storage.md)
+  - [Managed RDBMS (RDS)](docs/feature-guide/middleware-rdbms.md)
+- **Data**
+  - [Data Transfer](docs/feature-guide/data-transfer.md)
 
 ## Execution and development environment
 

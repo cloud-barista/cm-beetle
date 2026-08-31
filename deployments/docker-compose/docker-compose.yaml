@@ -11,7 +11,7 @@ x-default-healthcheck: &default-healthcheck
 services:
   # cm-beetle
   cm-beetle:
-    image: cloudbaristaorg/cm-beetle:0.6.0
+    # image: cloudbaristaorg/cm-beetle:0.6.0
     container_name: cm-beetle
     build:
       context: ${PROJECT_ROOT}
@@ -60,8 +60,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.13.1
-    #image: cloudbaristaorg/cb-tumblebug:0.13.2
+    # image: cloudbaristaorg/cb-tumblebug:0.13.2
     container_name: cb-tumblebug
     build:
       context: ${PROJECT_ROOT}/../cb-tumblebug
@@ -200,7 +199,7 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:edge
+    image: cloudbaristaorg/cb-spider:0.13.1
     container_name: cb-spider
     # build:
     #   context: ${PROJECT_ROOT}/../cb-spider
@@ -226,6 +225,7 @@ services:
       - SPIDER_METADB_DATABASE=${SP_POSTGRES_DB}
       - SPIDER_LOG_LEVEL=error
       - SPIDER_HISCALL_LOG_LEVEL=error
+      - GOMEMLIMIT=8GiB # Go GC soft target (no hard limit); see helm values spider.goMemLimit
       - ID_TRANSFORM_MODE=OFF
       - PLUGIN_SW=OFF
       - ADMINWEB=OFF
@@ -262,11 +262,21 @@ services:
   # CB-MapUI
   # This is the Map-based client for CB-Tumblebug.
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.12.56
+    image: cloudbaristaorg/cb-mapui:0.13.5
     container_name: cb-mapui
     # build:
     #   context: ${PROJECT_ROOT}/../cb-mapui
     #   dockerfile: Dockerfile
+    environment:
+      # Optional: preset remote-command popup parameters from .env (blank = ask in UI)
+      - MAPUI_PARAM_HF_TOKEN=${HF_TOKEN:-}
+      - MAPUI_PARAM_VLLM_HF_TOKEN=${HF_TOKEN:-}
+      - MAPUI_PARAM_TAVILY_API_KEY=${TAVILY_API_KEY:-}
+      - MAPUI_PARAM_DISCORD_TOKEN=${DISCORD_TOKEN:-}
+      - MAPUI_PARAM_DISCORD_HOME_CHANNEL=${DISCORD_HOME_CHANNEL:-}
+      - MAPUI_PARAM_DISCORD_HOME_CHANNEL_NAME=${DISCORD_HOME_CHANNEL_NAME:-}
+      - MAPUI_PARAM_HERMES_API_KEY=${HERMES_API_KEY:-}
+      - MAPUI_PARAM_NTFY_TOPIC=${NTFY_TOPIC:-}
     networks:
       - cloud-barista
     ports:

@@ -362,6 +362,11 @@ definitions:
       cspImageName:
         example: csp-06eb41e14121c550a
         type: string
+      deletionRequestedAt:
+        description: |-
+          DeletionRequestedAt (RFC3339) marks a deletion tombstone (customImage only):
+          non-empty means the row is kept until CSP-side removal is confirmed
+        type: string
       description:
         type: string
       details:
@@ -447,6 +452,8 @@ definitions:
         type: string
       systemLabel:
         example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
         type: string
       uid:
         example: wef12awefadf1221edcf
@@ -977,7 +984,7 @@ definitions:
       rootDiskType:
         description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
           ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
-          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"],
+          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"],
           TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
         example: cloud_essd
         type: string
@@ -1049,6 +1056,11 @@ definitions:
         type: string
       cspResourceName:
         type: string
+      deletionRequestedAt:
+        description: |-
+          DeletionRequestedAt (RFC3339) marks a deletion tombstone: non-empty means the
+          record is kept until CSP-side removal is confirmed
+        type: string
       description:
         type: string
       healthChecker:
@@ -1074,6 +1086,8 @@ definitions:
       status:
         type: string
       systemLabel:
+        type: string
+      systemMessage:
         type: string
       targetGroup:
         $ref: '#/definitions/cloudmodel.NLBTargetGroupInfo'
@@ -2994,26 +3008,6 @@ definitions:
         example: true
         type: boolean
     type: object
-  model.ApiResponse-array_rdbmsmodel_RDBMSCreateRequest:
-    properties:
-      data:
-        description: Contains the actual response data (single object, list, or page)
-        items:
-          $ref: '#/definitions/rdbmsmodel.RDBMSCreateRequest'
-        type: array
-      error:
-        description: Error message for failed responses
-        example: Error message if failure
-        type: string
-      message:
-        description: Optional message for additional context
-        example: Operation successful
-        type: string
-      success:
-        description: Indicates whether the API call was successful
-        example: true
-        type: boolean
-    type: object
   model.ApiResponse-cloudmodel_IdList:
     properties:
       data:
@@ -3717,6 +3711,19 @@ definitions:
     type: object
   model.BastionNode:
     properties:
+      assigned:
+        description: |-
+          Assigned records who registered this bastion: BastionAssignedManual when an
+          operator named it, BastionAssignedAuto when the system picked any Running VM
+          with a public IP. The distinction matters when both kinds are registered for
+          one subnet: naming a bastion asserts the target is NOT directly reachable,
+          while an auto entry only asserts "some VM here has a public IP". Empty means
+          the entry predates this field (see pickBastion for how that is handled).
+        enum:
+        - manual
+        - auto
+        example: manual
+        type: string
       infraId:
         type: string
       nodeId:
@@ -4276,6 +4283,12 @@ definitions:
         items:
           type: string
         type: array
+      conditions:
+        description: Conditions hold structured state observations (Ready/Synced),
+          K8s-style
+        items:
+          $ref: '#/definitions/model.Condition'
+        type: array
       connectionConfig:
         $ref: '#/definitions/model.ConnConfig'
       connectionName:
@@ -4288,6 +4301,11 @@ definitions:
         description: CspResourceName is name assigned to the CSP resource. This name
           is internally used to handle the resource.
         example: we12fawefadf1221edcf
+        type: string
+      deletionRequestedAt:
+        description: |-
+          DeletionRequestedAt (RFC3339) marks a deletion tombstone: non-empty means the
+          record is kept until CSP-side removal is confirmed
         type: string
       description:
         type: string
@@ -4312,10 +4330,17 @@ definitions:
       resourceType:
         description: ResourceType is the type of the resource
         type: string
+      status:
+        description: Status is the lifecycle status; empty is treated as Available
+          for backward compatibility
+        example: Available
+        type: string
       systemLabel:
         description: SystemLabel is for describing the Resource in a keyword (any
           string can be used) for special System purpose
         example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
         type: string
       uid:
         description: Uid is universally unique identifier for the object, used for
@@ -4510,6 +4535,12 @@ definitions:
         items:
           type: string
         type: array
+      conditions:
+        description: Conditions hold structured state observations (Ready/Synced),
+          K8s-style
+        items:
+          $ref: '#/definitions/model.Condition'
+        type: array
       connectionConfig:
         $ref: '#/definitions/model.ConnConfig'
       connectionName:
@@ -4522,6 +4553,11 @@ definitions:
         description: CspResourceName is name assigned to the CSP resource. This name
           is internally used to handle the resource.
         example: we12fawefadf1221edcf
+        type: string
+      deletionRequestedAt:
+        description: |-
+          DeletionRequestedAt (RFC3339) marks a deletion tombstone: non-empty means the
+          record is kept until CSP-side removal is confirmed
         type: string
       description:
         type: string
@@ -4548,10 +4584,17 @@ definitions:
       resourceType:
         description: ResourceType is the type of the resource
         type: string
+      status:
+        description: Status is the lifecycle status; empty is treated as Available
+          for backward compatibility
+        example: Available
+        type: string
       systemLabel:
         description: SystemLabel is for describing the Resource in a keyword (any
           string can be used) for special System purpose
         example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
         type: string
       uid:
         description: Uid is universally unique identifier for the object, used for
@@ -5340,10 +5383,39 @@ definitions:
     - name
     - vNetId
     type: object
+  rdbmsmodel.RDBMSDBInstanceSpecInfo:
+    properties:
+      memSizeMiB:
+        example: "4096"
+        type: string
+      name:
+        example: db.t3.medium
+        type: string
+      storageSizeRangeGB:
+        $ref: '#/definitions/rdbmsmodel.StorageSizeRange'
+      vCpuClockGHz:
+        example: "2.5"
+        type: string
+      vCpuCount:
+        example: "2"
+        type: string
+    type: object
   rdbmsmodel.RDBMSDBMSRequirement:
     properties:
       defaultPort:
         type: integer
+      deprecatedVersions:
+        description: DeprecatedVersions lists engine versions that are deprecated
+          by the CSP and discouraged for new deployments.
+        items:
+          type: string
+        type: array
+      endOfLifeVersions:
+        description: EndOfLifeVersions lists engine versions that have reached official
+          End of Life (EOL) and cannot be provisioned.
+        items:
+          type: string
+        type: array
       maxStorageSize:
         type: integer
       minStorageSize:
@@ -5351,8 +5423,6 @@ definitions:
       note:
         type: string
       referenceDBInstanceSpec:
-        type: string
-      referenceDBSpec:
         type: string
       referenceEngineVersion:
         type: string
@@ -5500,6 +5570,8 @@ definitions:
         $ref: '#/definitions/rdbmsmodel.RDBMSAdminUserNameRequirement'
       adminUserPasswordRequirement:
         $ref: '#/definitions/rdbmsmodel.RDBMSAdminUserPasswordRequirement'
+      backupRetentionRange:
+        type: string
       connectionName:
         example: aws-ap-northeast-2
         type: string
@@ -5514,6 +5586,10 @@ definitions:
         items:
           type: string
         type: array
+      dbInstanceSpecs:
+        items:
+          $ref: '#/definitions/rdbmsmodel.RDBMSDBInstanceSpecInfo'
+        type: array
       dbOperationMethod:
         example: cspNativeApi
         type: string
@@ -5524,12 +5600,24 @@ definitions:
       defaultStorageType:
         example: gp3
         type: string
+      liveSupportedEngines:
+        items:
+          type: string
+        type: array
+      notes:
+        $ref: '#/definitions/rdbmsmodel.RDBMSNotes'
       providerName:
         example: aws
         type: string
       regionName:
         example: ap-northeast-2
         type: string
+      requiresSecurityGroup:
+        example: true
+        type: boolean
+      requiresSubnet:
+        example: true
+        type: boolean
       staticFields:
         items:
           $ref: '#/definitions/rdbmsmodel.StaticFieldNote'
@@ -5554,12 +5642,37 @@ definitions:
         items:
           type: string
         type: array
+      supportsBackup:
+        example: true
+        type: boolean
+      supportsDeletionProtection:
+        example: true
+        type: boolean
+      supportsEncryption:
+        example: true
+        type: boolean
+      supportsHighAvailability:
+        example: true
+        type: boolean
+      supportsPublicAccess:
+        example: true
+        type: boolean
+      supportsStorageSizeConfiguration:
+        example: true
+        type: boolean
       supportsStorageTypeSelection:
         example: true
         type: boolean
       supportsTag:
         example: true
         type: boolean
+    type: object
+  rdbmsmodel.RDBMSNotes:
+    properties:
+      storageTypes:
+        items:
+          $ref: '#/definitions/rdbmsmodel.StorageTypeNote'
+        type: array
     type: object
   rdbmsmodel.RDBMSSupportResponse:
     properties:
@@ -5675,6 +5788,11 @@ definitions:
         description: Memory in MB
         example: 8192
         type: integer
+      nhnDBSGToAllowAllInbound:
+        description: 'NHN-specific: allow inbound 3306 from 0.0.0.0/0 on DB Security
+          Group'
+        example: false
+        type: boolean
       port:
         description: Network & Topology
         example: 3306
@@ -5819,6 +5937,10 @@ definitions:
       iops:
         example: "3000"
         type: string
+      nhnDBSGToAllowAllInbound:
+        description: CSP-Specific Options
+        example: true
+        type: boolean
       publicAccess:
         example: true
         type: boolean
@@ -6647,6 +6769,11 @@ definitions:
       cspImageName:
         example: csp-06eb41e14121c550a
         type: string
+      deletionRequestedAt:
+        description: |-
+          DeletionRequestedAt (RFC3339) marks a deletion tombstone (customImage only):
+          non-empty means the row is kept until CSP-side removal is confirmed
+        type: string
       description:
         type: string
       details:
@@ -6732,6 +6859,8 @@ definitions:
         type: string
       systemLabel:
         example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
         type: string
       uid:
         example: wef12awefadf1221edcf
@@ -8510,8 +8639,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve the list of all migrated managed RDBMS instances in the
-        namespace
+      description: Retrieve the list of all migrated managed RDBMS / RDS instances
+        in the namespace
       operationId: ListRDBMS
       parameters:
       - default: mig01
@@ -8535,14 +8664,14 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: List migrated managed RDBMS instances
+      summary: List migrated Managed RDBMS (RDS) instances
       tags:
       - '[Migration] Managed RDBMS'
     post:
       consumes:
       - application/json
       description: |-
-        Migrate managed RDBMS instances to cloud based on recommendation results
+        Provision and migrate managed RDBMS / RDS instances in target cloud based on recommendation results (supports AWS RDS, GCP Cloud SQL, Azure Database, NCP Cloud DB, NHN RDS, Alibaba ApsaraDB, TencentDB, IBM Databases)
 
         [Note]
         - This API provisions managed RDBMS instances in the target cloud within the specified namespace.
@@ -8604,14 +8733,15 @@ paths:
           description: Too many requests
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Migrate managed RDBMS instances to cloud
+      summary: Migrate Managed RDBMS (RDS) instances to cloud
       tags:
       - '[Migration] Managed RDBMS'
   /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}:
     delete:
       consumes:
       - application/json
-      description: Delete a specific migrated managed RDBMS instance in the namespace
+      description: Delete a specific migrated managed RDBMS / RDS instance in the
+        namespace
       operationId: DeleteRDBMS
       parameters:
       - default: mig01
@@ -8644,13 +8774,13 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Delete a migrated managed RDBMS instance
+      summary: Delete a migrated Managed RDBMS (RDS) instance
       tags:
       - '[Migration] Managed RDBMS'
     get:
       consumes:
       - application/json
-      description: Retrieve details of a specific migrated managed RDBMS instance
+      description: Retrieve details of a specific migrated managed RDBMS / RDS instance
         in the namespace
       operationId: GetRDBMS
       parameters:
@@ -8680,7 +8810,7 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Get details of a migrated managed RDBMS instance
+      summary: Get details of a migrated Managed RDBMS (RDS) instance
       tags:
       - '[Migration] Managed RDBMS'
   /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database:
@@ -8721,7 +8851,7 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: List logical databases inside a managed RDBMS instance
+      summary: List logical databases inside a Managed RDBMS (RDS) instance
       tags:
       - '[Migration] Managed RDBMS'
     post:
@@ -8763,7 +8893,7 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Create a logical database inside a managed RDBMS instance
+      summary: Create a logical database inside a Managed RDBMS (RDS) instance
       tags:
       - '[Migration] Managed RDBMS'
   /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{dbName}:
@@ -8808,14 +8938,14 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Delete a logical database inside a managed RDBMS instance
+      summary: Delete a logical database inside a Managed RDBMS (RDS) instance
       tags:
       - '[Migration] Managed RDBMS'
   /migration/middleware/ns/{nsId}/rdbms/validate:
     post:
       consumes:
       - application/json
-      description: Validate recommended RDBMS configuration against target cloud constraints
+      description: Validate managed RDBMS configuration against target cloud constraints
         before actual migration
       operationId: ValidateMigrateRDBMS
       parameters:
@@ -8825,19 +8955,19 @@ paths:
         name: nsId
         required: true
         type: string
-      - description: RDBMS migration request to validate
+      - description: RDBMS creation request to validate
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controller.MigrateRDBMSRequest'
+          $ref: '#/definitions/rdbmsmodel.RDBMSCreateRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully validated RDBMS migration configurations
+          description: Successfully validated RDBMS creation configuration
           schema:
-            $ref: '#/definitions/model.ApiResponse-array_rdbmsmodel_RDBMSCreateRequest'
+            $ref: '#/definitions/model.ApiResponse-rdbmsmodel_RDBMSCreateRequest'
         "400":
           description: Invalid request parameters
           schema:
@@ -8846,7 +8976,7 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Validate managed RDBMS migration request against target cloud
+      summary: Validate Managed RDBMS (RDS) creation request against target cloud
       tags:
       - '[Migration] Managed RDBMS'
   /migration/middleware/objectStorage/inspect:
@@ -10912,6 +11042,11 @@ paths:
       description: Forward object storage support request to CB-Tumblebug via Proxy
         (Returns ObjectStorageSupportResponse)
       operationId: GetObjectStorageSupport
+      parameters:
+      - description: CSP Type filter (e.g., aws, azure, gcp)
+        in: query
+        name: providerName
+        type: string
       produces:
       - application/json
       responses:
@@ -10927,7 +11062,7 @@ paths:
       consumes:
       - application/json
       description: |-
-        Recommend appropriate managed RDBMS (MySQL, MariaDB) instance specs and configurations for cloud migration
+        Recommend optimal Managed RDBMS / RDS (MySQL, MariaDB) instance specs, engine versions, and storage configurations for target cloud migration (supports AWS RDS, GCP Cloud SQL, Azure Database, Alibaba ApsaraDB, TencentDB, IBM Databases, NCP Cloud DB, NHN RDS)
 
         [Note] `desiredCsp` and `desiredRegion` are required.
         - `desiredCsp` and `desiredRegion` can be set in the query parameter or the request body.
@@ -10982,15 +11117,16 @@ paths:
           description: Internal server error during recommendation
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Recommend a managed RDBMS for cloud migration
+      summary: Recommend Managed RDBMS (RDS) for cloud migration
       tags:
       - '[Recommendation] Managed RDBMS'
   /recommendation/middleware/rdbms/capability:
     get:
       consumes:
       - application/json
-      description: Forward RDBMS capability request to CB-Tumblebug via Proxy (Returns
-        RDBMSCapabilityResponse)
+      description: Retrieve real-time engine versions, DB instance specs, and storage
+        options for Managed RDBMS / RDS (Amazon RDS, Cloud SQL, Azure Database, etc.)
+        from CB-Tumblebug
       operationId: GetRDBMSCapability
       parameters:
       - description: Connection Name (e.g., aws-ap-northeast-2)
@@ -11005,21 +11141,28 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/rdbmsmodel.RDBMSCapabilityResponse'
-      summary: Get real-time capability and spec options for managed RDBMS (Proxied
-        to Tumblebug)
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Get real-time capability and spec options for Managed RDBMS (RDS)
       tags:
       - '[Recommendation] Managed RDBMS'
   /recommendation/middleware/rdbms/support:
     get:
       consumes:
       - application/json
-      description: Forward RDBMS support request to CB-Tumblebug via Proxy (Returns
-        RDBMSSupportResponse)
+      description: Retrieve CSP feature support matrix for managed RDBMS / RDS (Amazon
+        RDS, Google Cloud SQL, Azure Database, NCP Cloud DB, etc.) via CB-Tumblebug
       operationId: GetRDBMSSupport
       parameters:
       - description: CSP Type filter (e.g., aws, azure, gcp)
         in: query
-        name: cspType
+        name: providerName
         type: string
       produces:
       - application/json
@@ -11028,19 +11171,19 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/rdbmsmodel.RDBMSSupportResponse'
-      summary: Get CSP feature support map for managed RDBMS (Proxied to Tumblebug)
+      summary: Get CSP support map for Managed RDBMS (RDS)
       tags:
       - '[Recommendation] Managed RDBMS'
   /recommendation/middleware/rdbms/validate:
     post:
       consumes:
       - application/json
-      description: Perform dry-run validation and default parameter auto-filling for
-        an RDBMS configuration
+      description: Perform strict dry-run validation for a Managed RDBMS / RDS configuration
+        against target cloud constraints
       operationId: ValidateRDBMSRecommendation
       parameters:
-      - default: default
-        description: Optional namespace ID (defaults to 'default')
+      - default: mig01
+        description: Namespace ID (defaults to 'mig01')
         in: query
         name: nsId
         type: string
@@ -11054,7 +11197,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully validated and auto-filled RDBMS configuration
+          description: Successfully validated RDBMS configuration
           schema:
             $ref: '#/definitions/model.ApiResponse-rdbmsmodel_RDBMSCreateRequest'
         "400":
@@ -11065,7 +11208,7 @@ paths:
           description: Validation error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Validate and auto-fill default values for managed RDBMS configuration
+      summary: Validate Managed RDBMS (RDS) configuration against target cloud
       tags:
       - '[Recommendation] Managed RDBMS'
   /recommendation/multiInfra:

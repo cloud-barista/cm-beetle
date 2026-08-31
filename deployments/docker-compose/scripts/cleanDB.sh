@@ -38,21 +38,28 @@ echo -e "The following service data will be REMOVED:"
 echo "$CLEAN_TARGETS" | sed 's/^/  - /'
 echo ""
 
-while true; do
-    read -p 'Do you want to proceed? (y/n) : ' CHECKPROCEED
-    case $CHECKPROCEED in
-    [Yy]*)
-        break
-        ;;
-    [Nn]*)
-        echo -e "\nCleanup cancelled."
-        exit 1
-        ;;
-    *)
-        echo "Please answer yes or no."
-        ;;
-    esac
-done
+FORCE=false
+if [[ "${1:-}" =~ ^(-y|--yes|-f|--force)$ ]]; then
+    FORCE=true
+fi
+
+if [ "$FORCE" = false ]; then
+    while true; do
+        read -p 'Do you want to proceed? (y/n) : ' CHECKPROCEED
+        case $CHECKPROCEED in
+        [Yy]*)
+            break
+            ;;
+        [Nn]*)
+            echo -e "\nCleanup cancelled."
+            exit 1
+            ;;
+        *)
+            echo "Please answer yes or no."
+            ;;
+        esac
+    done
+fi
 
 echo -e "\nCleaning up data..."
 cd "$DATA_DIR"

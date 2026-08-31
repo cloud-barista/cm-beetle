@@ -6,23 +6,23 @@ description: "Synchronize CB-Tumblebug models in copied-tb-model.go with specifi
 
 # SyncTB - CB-Tumblebug Model Synchronization
 
-Synchronize TB models in `copied-tb-model.go` with the specified CB-Tumblebug version.
+Synchronize TB models in `copied-tb-model.go` and `copied-tb-k8s-model.go` with the specified CB-Tumblebug version.
 
 ## Target Version
 
-${input:version:CB-Tumblebug version (e.g., v0.11.2, v0.12.0, latest)}
+${input:version:CB-Tumblebug version (e.g., v0.12.30, v0.13.1, main, latest)}
 
 ## Process Overview
 
 This prompt will help synchronize CB-Tumblebug models by:
 
-1. **Current Version Detection**: Extract current TB version from copied-tb-model.go
+1. **Current Version Detection**: Extract current TB version from `copied-tb-model.go` and `copied-tb-k8s-model.go`
 2. **Repository Setup**: Clone CB-Tumblebug repository temporarily
-3. **Git Diff Analysis**: Execute git diff to identify all changed structs between versions
-4. **Struct Dependency Mapping**: Map all existing structs in copied-tb-model.go and their dependencies
-5. **Comprehensive Synchronization**: Update ALL structs that exist in copied-tb-model.go and their dependencies
+3. **Git Diff Analysis**: Execute git diff to identify all changed structs between versions (`src/core/model/`)
+4. **Struct Dependency Mapping**: Map all existing structs in `copied-tb-model.go` (Infra, Spec, Image, Disk, SecurityGroup, SSHKey, VNet, NLB) and `copied-tb-k8s-model.go` (K8sCluster, K8sNodeGroup, Token/Kubeconfig)
+5. **Comprehensive Synchronization**: Update ALL structs that exist in both files and their dependencies
 6. **Cleanup**: Remove temporary repository and return to original directory
-7. **Validation**: Ensure compilation and proper serialization
+7. **Validation**: Ensure compilation (`go build ./imdl/...`) and proper serialization
 
 ## Synchronization Principles
 

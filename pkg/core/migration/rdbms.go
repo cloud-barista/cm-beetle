@@ -73,26 +73,32 @@ func CreateRDBMS(nsId string, req rdbmsmodel.RecommendedRDBMS, seed string) erro
 			adminPass = "BeetleRdbms1234!" // default temporary password if omitted
 		}
 
+		backupDays := target.BackupRetentionDays
+		if strings.HasPrefix(strings.ToLower(connName), "ibm") {
+			backupDays = 0 // IBM Cloud Databases does not support setting BackupRetentionDays during provisioning
+		}
+
 		createReq := rdbmsmodel.RDBMSCreateRequest{
-			Name:                target.RDBMSName,
-			ConnectionName:      connName,
-			VNetId:              target.VNetId,
-			SubnetIds:           target.SubnetIds,
-			SecurityGroupIds:    target.SecurityGroupIds,
-			DBEngine:            target.DBEngine,
-			DBEngineVersion:     target.DBEngineVersion,
-			DBInstanceSpec:      target.DBInstanceSpec,
-			StorageType:         target.StorageType,
-			StorageSize:         target.StorageSize,
-			Iops:                target.Iops,
-			AdminUserName:       adminUser,
-			AdminUserPassword:   adminPass,
-			HighAvailability:    target.HighAvailability,
-			BackupRetentionDays: target.BackupRetentionDays,
-			PublicAccess:        target.PublicAccess,
-			DeletionProtection:  target.DeletionProtection,
-			Description:         fmt.Sprintf("Migrated by CM-Beetle from source instance '%s'", target.SourceInstanceName),
-			AutoFillDefaults:    true,
+			Name:                     target.RDBMSName,
+			ConnectionName:           connName,
+			VNetId:                   target.VNetId,
+			SubnetIds:                target.SubnetIds,
+			SecurityGroupIds:         target.SecurityGroupIds,
+			DBEngine:                 target.DBEngine,
+			DBEngineVersion:          target.DBEngineVersion,
+			DBInstanceSpec:           target.DBInstanceSpec,
+			StorageType:              target.StorageType,
+			StorageSize:              target.StorageSize,
+			Iops:                     target.Iops,
+			AdminUserName:            adminUser,
+			AdminUserPassword:        adminPass,
+			HighAvailability:         target.HighAvailability,
+			BackupRetentionDays:      backupDays,
+			PublicAccess:             target.PublicAccess,
+			NHNDBSGToAllowAllInbound: target.NHNDBSGToAllowAllInbound,
+			DeletionProtection:       target.DeletionProtection,
+			Description:              fmt.Sprintf("Migrated by CM-Beetle from source instance %s", target.SourceInstanceName),
+			AutoFillDefaults:         true,
 		}
 
 		createdInfo, err := tbSess.CreateRDBMS(nsId, createReq)

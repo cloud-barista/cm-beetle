@@ -15,11 +15,11 @@ type SourceRDBMSProperty struct {
 	MachineId string `json:"machineId,omitempty" example:"550e8400-e29b-41d4-a716-446655440000"`
 
 	// Engine & Version
-	Engine        string `json:"engine" validate:"required" example:"mysql"`       // "mysql" or "mariadb"
+	Engine        string `json:"engine" validate:"required" example:"mysql"`      // "mysql" or "mariadb"
 	EngineVersion string `json:"engineVersion" validate:"required" example:"8.0"` // e.g. "8.0", "10.5"
 
 	// Compute & Memory
-	Vcpu     int `json:"vcpu" validate:"required" example:"4"`       // Number of vCPU cores
+	Vcpu     int `json:"vcpu" validate:"required" example:"4"`        // Number of vCPU cores
 	MemoryMb int `json:"memoryMb" validate:"required" example:"8192"` // Memory in MB
 
 	// Storage
@@ -28,9 +28,10 @@ type SourceRDBMSProperty struct {
 	Iops          int    `json:"iops,omitempty" example:"3000"`                   // Observed IOPS
 
 	// Network & Topology
-	Port             int  `json:"port,omitempty" example:"3306"`               // DB listening port (default: 3306)
-	HighAvailability bool `json:"highAvailability,omitempty" example:"false"` // HA / Replication mode
-	PublicAccess     bool `json:"publicAccess,omitempty" example:"false"`      // External public access enabled
+	Port                     int  `json:"port,omitempty" example:"3306"`                      // DB listening port (default: 3306)
+	HighAvailability         bool `json:"highAvailability,omitempty" example:"false"`         // HA / Replication mode
+	PublicAccess             bool `json:"publicAccess,omitempty" example:"false"`             // External public access enabled
+	NHNDBSGToAllowAllInbound bool `json:"nhnDBSGToAllowAllInbound,omitempty" example:"false"` // NHN-specific: allow inbound 3306 from 0.0.0.0/0 on DB Security Group
 
 	// Backup & Policy
 	BackupRetentionDays int `json:"backupRetentionDays,omitempty" example:"7"` // Backup retention in days
