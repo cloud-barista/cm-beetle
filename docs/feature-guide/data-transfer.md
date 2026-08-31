@@ -1,10 +1,10 @@
-# Data Migration Feature Guide
+# Data Transfer Feature Guide
 
 ## Overview
 
-CM-Beetle provides a data migration API that transfers data between storage systems across cloud providers. This feature enables you to:
+CM-Beetle provides a data transfer API that transfers data between storage systems across cloud providers. This feature enables you to:
 
-- **Migrate** files and objects between remote filesystems (SSH/rsync) and object storages (S3-compatible)
+- **Transfer & Sync** files and objects between remote filesystems (SSH/rsync) and object storages (S3-compatible)
 - **Filter** files by include/exclude glob patterns during transfer
 - **Encrypt** sensitive credentials in transit using RSA-OAEP + AES-256-GCM
 - **Track** migration progress via asynchronous request status polling
@@ -451,7 +451,7 @@ A typical end-to-end workflow combining Object Storage infrastructure migration 
 6. DELETE /migration/middleware/ns/{nsId}/objectStorage/{osId} → cleanup
 ```
 
-See the [Object Storage Feature Guide](object-storage-migration-feature-guide.md) for bucket recommendation and management details.
+See the [Object Storage Feature Guide](middleware-object-storage.md) for bucket recommendation and management details.
 
 ---
 

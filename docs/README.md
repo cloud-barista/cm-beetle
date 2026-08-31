@@ -4,9 +4,20 @@ Documentation site for CM-Beetle, computing infrastructure migration.
 
 ## Feature Guides
 
-- [NameSeed: Late Binding for Resource Names](feature-guide/naming-nameseed.md) – Concept, rules, and workflow for the `nameSeed` query parameter.
-- [Data Migration Feature Guide](feature-guide/data-migration-feature-guide.md) – Data migration capabilities and workflow.
-- [Object Storage Migration Feature Guide](feature-guide/object-storage-migration-feature-guide.md) – Object Storage recommendation and migration capabilities.
+- **Core & System**
+  - [Async Responses](feature-guide/core-async-response.md) – Non-blocking async response model and polling workflow.
+  - [NameSeed: Late Binding for Resource Names](feature-guide/core-naming-rule.md) – Concept, rules, and workflow for deterministic resource naming.
+  - [Validation Guide](feature-guide/core-validation.md) – Pre-flight dry-run validation rules for target infrastructure.
+- **Infrastructure**
+  - [Computing Infrastructure](feature-guide/infra-computing.md) – VM, VNet, Subnet, and Security Group migration support.
+  - [Kubernetes Infrastructure](feature-guide/infra-kubernetes.md) – Managed Kubernetes cluster recommendation and migration.
+- **Managed Middleware**
+  - [Managed Middleware Overview](feature-guide/middleware-overview.md) – Multi-cloud support matrix for managed middleware.
+  - [Network Load Balancer (NLB)](feature-guide/middleware-nlb.md) – NLB backend topology grouping and migration.
+  - [Managed Object Storage](feature-guide/middleware-object-storage.md) – Object storage bucket recommendation, feature adjustment, and migration.
+  - [Managed RDBMS (RDS)](feature-guide/middleware-rdbms.md) – Relational database recommendation, referential validation, and migration.
+- **Data**
+  - [Data Transfer](feature-guide/data-transfer.md) – Server filesystem and data transfer capabilities and workflow.
 
 ## API Guides
 

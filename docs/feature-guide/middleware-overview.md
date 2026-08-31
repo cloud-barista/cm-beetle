@@ -1,18 +1,18 @@
 # Managed Middleware
 
-This document covers support for managed middleware resources (NLB, DBMS, Object Storage) by target CSP.
+This document covers support for managed middleware resources (NLB, DBMS / Managed RDS, Object Storage) by target CSP.
 
 ## Overview
 
-| Resource       | AWS | Azure | GCP | Alibaba | Tencent | IBM | (OpenStack) | NCP | (NHN) | (KT) |
-| -------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :---------: | :-: | :---: | :--: |
-| Object Storage | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |     ✅      | ✅  |  ✅   |  ✅  |
-| NLB            | ✅  |  🚧   | 🚧  |   🚧    |   📅    | 🚧  |     📅      | 🚧  |  📅   |  📅  |
-| DBMS           | 📅  |  📅   | 📅  |   📅    |   📅    | 📅  |     📅      | 📅  |  📅   |  📅  |
+| Resource       | AWS | Azure | GCP | Alibaba | Tencent | IBM | (OpenStack) | NCP | NHN | (KT) |
+| -------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :---------: | :-: | :-: | :--: |
+| Object Storage | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |     ✅      | ✅  |  ✅ |  ✅  |
+| NLB            | ✅  |  🚧   | 🚧  |   🚧    |   📅    | 🚧  |     📅      | 🚧  |  📅 |  📅  |
+| Managed RDBMS  | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |     📅      | ✅  |  ✅ |  📅  |
 
 ## Object Storage
 
-See also: [Object Storage Migration Feature Guide](object-storage-migration-feature-guide.md)
+See also: [Object Storage Feature Guide](middleware-object-storage.md)
 
 | Feature       | AWS | Azure | GCP | Alibaba | Tencent | IBM | OpenStack | NCP | NHN | KT  |
 | ------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :-------: | :-: | :-: | :-: |
@@ -23,7 +23,22 @@ See also: [Object Storage Migration Feature Guide](object-storage-migration-feat
 > - Recommendation and migration are supported for all listed CSPs.
 > - ❌ Not configurable per bucket — available at the provider level only.
 
+## Managed RDBMS (RDS)
+
+See also: [Managed RDBMS Feature Guide](middleware-rdbms.md)
+
+| Feature | AWS | Azure | GCP | Alibaba | Tencent | IBM | NCP | NHN |
+| :--- | :-: | :-: | :-: | :-----: | :-----: | :-: | :-: | :-: |
+| Support & Capability Discovery | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Recommendation & Validation | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Migration & Provisioning | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Logical Database CRUD | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Internal Data I/O | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| External Data I/O | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | N/A (Private only) | ✅ |
+
 ## NLB (Preview)
+
+See also: [NLB Feature Guide](middleware-nlb.md)
 
 > NLB recommendation and migration are available as a **preview** feature. Tested on AWS, Azure, GCP, and IBM.
 
@@ -59,4 +74,4 @@ See also: [Object Storage Migration Feature Guide](object-storage-migration-feat
 ## Roadmap
 
 - 🚧 **In progress**: NLB — Azure, GCP, Alibaba, IBM, NCP
-- 📅 **Planned**: NLB — Tencent, OpenStack, NHN, KT · DBMS — all CSPs
+- 📅 **Planned**: NLB — Tencent, OpenStack, NHN, KT · Managed RDBMS — OpenStack, KT

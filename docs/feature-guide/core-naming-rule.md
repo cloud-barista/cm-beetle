@@ -93,4 +93,4 @@ Use the **Preview** step to verify names before committing to resource creation.
 ## Related
 
 - [Align Names API Guide](../api-guide-align-names.md) — rename a resource and propagate references
-- [Object Storage Migration Feature Guide](object-storage-migration-feature-guide.md) — NameSeed usage for object storage
+- [Object Storage Feature Guide](middleware-object-storage.md) — NameSeed usage for object storage
