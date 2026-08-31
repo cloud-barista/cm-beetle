@@ -5,6 +5,7 @@
 CM-Beetle provides end-to-end **Managed RDBMS (Relational Database Service)** recommendation, validation, and migration capabilities for heterogeneous multi-cloud environments. This feature empowers users to transition on-premises or existing cloud databases to optimal managed database services (e.g., AWS RDS, Google Cloud SQL, Azure Database, Alibaba ApsaraDB, Tencent CDB, IBM Cloud Databases, NCP Cloud DB, NHN RDS) with zero guesswork.
 
 Key capabilities include:
+
 - **Capability-Driven Recommendation**: Evaluates source database parameters (engine, version, vCPU, memory, storage) and maps them to the optimal target CSP DB instance spec and configuration using real-time CSP capability metrics.
 - **Pre-flight & Referential Validation**: Performs multi-tier dry-run validations against CSP API rules and referential integrity (e.g., matching VNet/Subnet/SecurityGroup connection profiles) before touching cloud resources.
 - **Automated Migration & Provisioning**: Seamlessly deploys managed database clusters and instances via CB-Tumblebug with robust state tracking.
@@ -20,29 +21,29 @@ The Managed RDBMS workflow spans from initial capability discovery to post-migra
 ```mermaid
 flowchart TD
     subgraph Phase1["1. Discovery & Recommendation"]
-        A[Source DB Metadata] --> B[GET /recommendation/middleware/rdbms/support]
-        B --> C[GET /recommendation/middleware/rdbms/capability]
-        C --> D[POST /recommendation/middleware/rdbms]
-        D --> E[Recommended RDBMS Spec]
+        A["Source DB Metadata"] --> B["GET /recommendation/middleware/rdbms/support"]
+        B --> C["GET /recommendation/middleware/rdbms/capability"]
+        C --> D["POST /recommendation/middleware/rdbms"]
+        D --> E["Recommended RDBMS Spec"]
     end
 
     subgraph Phase2["2. Validation & Autofill"]
-        E --> F[POST /recommendation/middleware/rdbms/validate]
-        F --> G{Referential & CSP Dry-run Check}
-        G -->|Pass| H[Migration-Ready Payload]
-        G -->|Fail| I[Actionable Diagnostics]
+        E --> F["POST /recommendation/middleware/rdbms/validate"]
+        F --> G{"Referential & CSP Dry-run Check"}
+        G -->|Pass| H["Migration-Ready Payload"]
+        G -->|Fail| I["Actionable Diagnostics"]
     end
 
     subgraph Phase3["3. Migration & Provisioning"]
-        H --> J[POST /migration/middleware/ns/{nsId}/rdbms]
-        J --> K[CB-Tumblebug & Cloud Provider Provisioning]
-        K --> L[RDBMS Instance Ready]
+        H --> J["POST /migration/middleware/ns/{nsId}/rdbms"]
+        J --> K["CB-Tumblebug & Cloud Provider Provisioning"]
+        K --> L["RDBMS Instance Ready"]
     end
 
     subgraph Phase4["4. Database Operations & Verification"]
-        L --> M[POST /migration/.../database - Create DB]
-        M --> N[Internal / External SQL Data I/O Verification]
-        N --> O[DELETE /migration/.../rdbms - Clean-up]
+        L --> M["POST /migration/.../database - Create DB"]
+        M --> N["Internal / External SQL Data I/O Verification"]
+        N --> O["DELETE /migration/.../rdbms - Clean-up"]
     end
 ```
 
@@ -52,16 +53,16 @@ flowchart TD
 
 CM-Beetle Managed RDBMS has been verified across 8 major Cloud Service Providers (CSPs):
 
-| CSP | Service Brand | Supported DB Engines | Access Mode | Subnet Requirement | Provisioning Characteristics |
-| :--- | :--- | :--- | :---: | :--- | :--- |
-| **AWS** | Amazon RDS | MySQL, MariaDB, PostgreSQL | Public / Private | Multi-AZ Subnet Group (>= 2 subnets across AZs) | High availability and automated failover |
-| **Azure** | Azure Database for MySQL/PostgreSQL | MySQL, PostgreSQL | Public / Private | Single or Multi-Subnet | Flexible server architecture |
-| **GCP** | Google Cloud SQL | MySQL, PostgreSQL | Public / Private | Authorized Networks / VPC Peering | Highly performant storage scaling |
-| **Alibaba** | Alibaba Cloud ApsaraDB | MySQL, MariaDB, PostgreSQL | Public / Private | VNet Subnet Binding | Broad engine version choices |
-| **Tencent** | Tencent Cloud CDB | MySQL, MariaDB, PostgreSQL | Public / Private | Multi-AZ VPC Subnet Group | Fast regional provisioning |
-| **IBM** | IBM Cloud Databases (ICD) | MySQL, PostgreSQL | Public / Private | Resource Group / VPC bound | Asynchronous provisioning (~20-25m) with robust status polling |
-| **NCP** | NAVER Cloud DB | MySQL, PostgreSQL | Private Only | Single Subnet + Dedicated DB Port | Private access enforced; verified via Internal Runner VM |
-| **NHN** | NHN Cloud RDS | MySQL, MariaDB, PostgreSQL | Public / Private | Standard VPC Subnet | Inbound security group rules required |
+| CSP         | Service Brand                       | Supported DB Engines       |   Access Mode    | Subnet Requirement                              | Provisioning Characteristics                                   |
+| :---------- | :---------------------------------- | :------------------------- | :--------------: | :---------------------------------------------- | :------------------------------------------------------------- |
+| **AWS**     | Amazon RDS                          | MySQL, MariaDB, PostgreSQL | Public / Private | Multi-AZ Subnet Group (>= 2 subnets across AZs) | High availability and automated failover                       |
+| **Azure**   | Azure Database for MySQL/PostgreSQL | MySQL, PostgreSQL          | Public / Private | Single or Multi-Subnet                          | Flexible server architecture                                   |
+| **GCP**     | Google Cloud SQL                    | MySQL, PostgreSQL          | Public / Private | Authorized Networks / VPC Peering               | Highly performant storage scaling                              |
+| **Alibaba** | Alibaba Cloud ApsaraDB              | MySQL, MariaDB, PostgreSQL | Public / Private | VNet Subnet Binding                             | Broad engine version choices                                   |
+| **Tencent** | Tencent Cloud CDB                   | MySQL, MariaDB, PostgreSQL | Public / Private | Multi-AZ VPC Subnet Group                       | Fast regional provisioning                                     |
+| **IBM**     | IBM Cloud Databases (ICD)           | MySQL, PostgreSQL          | Public / Private | Resource Group / VPC bound                      | Asynchronous provisioning (~20-25m) with robust status polling |
+| **NCP**     | NAVER Cloud DB                      | MySQL, PostgreSQL          |   Private Only   | Single Subnet + Dedicated DB Port               | Private access enforced; verified via Internal Runner VM       |
+| **NHN**     | NHN Cloud RDS                       | MySQL, MariaDB, PostgreSQL | Public / Private | Standard VPC Subnet                             | Inbound security group rules required                          |
 
 ---
 
@@ -70,6 +71,7 @@ CM-Beetle Managed RDBMS has been verified across 8 major Cloud Service Providers
 ### 1. Discovery & Recommendation APIs
 
 #### 1.1 Get CSP Support Matrix
+
 Retrieve supported database engines, features, and operation methods across all or specific CSPs.
 
 - **Endpoint**: `GET /recommendation/middleware/rdbms/support`
@@ -77,6 +79,7 @@ Retrieve supported database engines, features, and operation methods across all 
   - `providerName` (optional): Filter by CSP provider (e.g., `aws`, `azure`, `gcp`, `ibm`, `ncp`, `nhn`).
 
 **Sample Request**:
+
 ```http
 GET /beetle/recommendation/middleware/rdbms/support?providerName=aws HTTP/1.1
 Host: localhost:8056
@@ -84,16 +87,14 @@ Authorization: Basic <credentials>
 ```
 
 **Sample Response**:
+
 ```json
 {
   "resourceType": "rdbms",
   "supports": {
     "aws": {
       "supported": true,
-      "supportedDBEngines": [
-        "mysql",
-        "mariadb"
-      ],
+      "supportedDBEngines": ["mysql", "mariadb"],
       "dbOperationMethod": "sqlFallback",
       "supportsTag": true,
       "storageTypeSelectable": true
@@ -105,6 +106,7 @@ Authorization: Basic <credentials>
 ---
 
 #### 1.2 Get Real-time Capability Options
+
 Fetch live DB instance spec catalogs, supported engine versions, and storage configurations for a given connection.
 
 - **Endpoint**: `GET /recommendation/middleware/rdbms/capability`
@@ -112,6 +114,7 @@ Fetch live DB instance spec catalogs, supported engine versions, and storage con
   - `connectionName` (required): Target cloud connection name (e.g., `aws-ap-northeast-2`).
 
 **Sample Response**:
+
 ```json
 {
   "resourceType": "rdbms",
@@ -137,12 +140,14 @@ Fetch live DB instance spec catalogs, supported engine versions, and storage con
 ---
 
 #### 1.3 Recommend Managed RDBMS
+
 Recommends optimal target RDBMS specifications based on source database workloads and desired cloud properties.
 
 - **Endpoint**: `POST /recommendation/middleware/rdbms`
 - **Request Body**: `RDBMSRecommendationRequest`
 
 **Sample Request**:
+
 ```json
 {
   "desiredCloud": {
@@ -165,6 +170,7 @@ Recommends optimal target RDBMS specifications based on source database workload
 ```
 
 **Sample Response**:
+
 ```json
 {
   "desiredCloud": {
@@ -191,6 +197,7 @@ Recommends optimal target RDBMS specifications based on source database workload
 ### 2. Validation & Autofill API
 
 #### Validate RDBMS Recommendation
+
 Executes pre-flight referential integrity checks and dry-run validation without provisioning cloud resources.
 
 - **Endpoint**: `POST /recommendation/middleware/rdbms/validate`
@@ -199,6 +206,7 @@ Executes pre-flight referential integrity checks and dry-run validation without 
 - **Request Body**: `RDBMSCreateRequest`
 
 **Validation Checks Performed**:
+
 1. **Connection Consistency**: Verifies that the VNet, Subnet(s), and Security Group(s) belong to the same CSP connection profile as the target RDBMS.
 2. **Engine & Version Compatibility**: Checks if the specified DB engine version is supported by the target CSP capability catalog.
 3. **Multi-AZ Subnet Requirements**: Validates whether the CSP requires multiple subnets across distinct Availability Zones (e.g., AWS, Tencent).
@@ -209,6 +217,7 @@ Executes pre-flight referential integrity checks and dry-run validation without 
 ### 3. Migration & Management APIs
 
 #### 3.1 Migrate (Provision) Managed RDBMS
+
 Provisions the recommended Managed RDBMS instance in the specified namespace.
 
 - **Endpoint**: `POST /migration/middleware/ns/{nsId}/rdbms`
@@ -216,6 +225,7 @@ Provisions the recommended Managed RDBMS instance in the specified namespace.
   - `nameSeed` (optional): Prefix seed for deterministic instance naming.
 
 **Sample Request**:
+
 ```json
 {
   "name": "prod-rdbms-mysql",
@@ -238,6 +248,7 @@ Provisions the recommended Managed RDBMS instance in the specified namespace.
 ---
 
 #### 3.2 Logical Database Management (CRUD)
+
 Once the managed RDBMS is provisioned, logical tenant databases can be created, inspected, and deleted.
 
 - **Create Database**: `POST /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database`
@@ -252,6 +263,7 @@ Once the managed RDBMS is provisioned, logical tenant databases can be created, 
 ---
 
 #### 3.3 Delete Managed RDBMS
+
 Terminates and removes the RDBMS instance.
 
 - **Endpoint**: `DELETE /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}`
