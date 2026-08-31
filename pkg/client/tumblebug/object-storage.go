@@ -493,16 +493,16 @@ func (s *Session) GetObjectStorageLocation(nsId string, osId string) (tbmodel.Ob
 // ============================================================================
 
 // GetObjectStorageSupport retrieves CSP support information for object storage features
-// If cspType is empty, returns support information for all CSPs
-func (s *Session) GetObjectStorageSupport(cspType string) (tbmodel.ObjectStorageSupportResponse, error) {
-	log.Debug().Msgf("Retrieving object storage support information for CSP: %s", cspType)
+// If providerName is empty, returns support information for all CSPs
+func (s *Session) GetObjectStorageSupport(providerName string) (tbmodel.ObjectStorageSupportResponse, error) {
+	log.Debug().Msgf("Retrieving object storage support information for provider: %s", providerName)
 
 	var resBody tbmodel.ObjectStorageSupportResponse
 	req := s.SetResult(&resBody)
 
-	// Add optional CSP type query parameter
-	if cspType != "" {
-		req = req.SetQueryParam("cspType", cspType)
+	// Add optional providerName query parameter
+	if providerName != "" {
+		req = req.SetQueryParam("providerName", providerName)
 	}
 
 	resp, err := req.Get("/objectStorage/support")

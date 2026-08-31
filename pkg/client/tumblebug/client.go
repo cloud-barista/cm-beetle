@@ -76,7 +76,7 @@ func NewClient(cfg ApiConfig) *TumblebugClient {
 	if cfg.Timeout > 0 {
 		r.SetTimeout(cfg.Timeout)
 	} else {
-		r.SetTimeout(30 * time.Minute)
+		r.SetTimeout(35 * time.Minute)
 	}
 
 	// Beetle paces its own calls (see call-pacer.go), but TB is shared, so another

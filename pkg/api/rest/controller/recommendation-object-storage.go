@@ -22,14 +22,19 @@ var _ = tbmodel.ObjectStorageSupportResponse{}
 // @Tags [Recommendation] Managed Object Storage
 // @Accept json
 // @Produce json
+// @Param providerName query string false "CSP Type filter (e.g., aws, azure, gcp)"
 // @Success 200 {object} tbmodel.ObjectStorageSupportResponse
 // @Router /recommendation/middleware/objectStorage/support [get]
 func GetObjectStorageSupport(c echo.Context) error {
-	sourcePattern := "/recommendation/middleware/objectStorage/support"
-	targetPattern := "/objectStorage/support"
+	providerName := c.QueryParam("providerName")
 
-	proxyHandler := createTumblebugProxyHandler(sourcePattern, targetPattern)
-	return proxyHandler(c)
+	result, err := tbclient.NewSession().GetObjectStorageSupport(providerName)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get object storage support matrix")
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to get object storage support matrix: %v", err)))
+	}
+
+	return c.JSON(http.StatusOK, result)
 }
 
 // ============================================================================

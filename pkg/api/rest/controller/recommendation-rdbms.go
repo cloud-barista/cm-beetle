@@ -17,9 +17,11 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	rdbmsmodel "github.com/cloud-barista/cm-beetle/imdl/rdbms-model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -31,26 +33,21 @@ var _ = rdbmsmodel.RDBMSCapabilityResponse{}
 
 // GetRDBMSSupport godoc
 // @ID GetRDBMSSupport
-// @Summary Get CSP feature support map for managed RDBMS
-// @Description Retrieve managed RDBMS support matrix from CB-Tumblebug (Returns RDBMSSupportResponse)
+// @Summary Get CSP support map for Managed RDBMS (RDS)
+// @Description Retrieve CSP feature support matrix for managed RDBMS / RDS (Amazon RDS, Google Cloud SQL, Azure Database, NCP Cloud DB, etc.) via CB-Tumblebug
 // @Tags [Recommendation] Managed RDBMS
 // @Accept json
 // @Produce json
-// @Param cspType query string false "CSP Type filter (e.g., aws, azure, gcp)"
-// @Param providerName query string false "Provider name alias for cspType"
+// @Param providerName query string false "CSP Type filter (e.g., aws, azure, gcp)"
 // @Success 200 {object} rdbmsmodel.RDBMSSupportResponse
-// @Failure 500 {object} model.ApiResponse[any] "Internal server error"
 // @Router /recommendation/middleware/rdbms/support [get]
 func GetRDBMSSupport(c echo.Context) error {
-	cspType := c.QueryParam("cspType")
-	if cspType == "" {
-		cspType = c.QueryParam("providerName")
-	}
+	providerName := c.QueryParam("providerName")
 
-	result, err := recommendation.GetRDBMSSupport(cspType)
+	result, err := recommendation.GetRDBMSSupport(providerName)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get RDBMS support matrix")
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to get RDBMS support: %v", err)))
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to get RDBMS support matrix: %v", err)))
 	}
 
 	return c.JSON(http.StatusOK, result)
@@ -58,8 +55,8 @@ func GetRDBMSSupport(c echo.Context) error {
 
 // GetRDBMSCapability godoc
 // @ID GetRDBMSCapability
-// @Summary Get real-time capability and spec options for managed RDBMS
-// @Description Retrieve real-time capability and spec options for managed RDBMS from CB-Tumblebug (Returns RDBMSCapabilityResponse)
+// @Summary Get real-time capability and spec options for Managed RDBMS (RDS)
+// @Description Retrieve real-time engine versions, DB instance specs, and storage options for Managed RDBMS / RDS (Amazon RDS, Cloud SQL, Azure Database, etc.) from CB-Tumblebug
 // @Tags [Recommendation] Managed RDBMS
 // @Accept json
 // @Produce json
@@ -85,21 +82,21 @@ func GetRDBMSCapability(c echo.Context) error {
 
 // ValidateRDBMS godoc
 // @ID ValidateRDBMSRecommendation
-// @Summary Validate and auto-fill default values for managed RDBMS configuration
-// @Description Perform dry-run validation and default parameter auto-filling for an RDBMS configuration
+// @Summary Validate Managed RDBMS (RDS) configuration against target cloud
+// @Description Perform strict dry-run validation for a Managed RDBMS / RDS configuration against target cloud constraints
 // @Tags [Recommendation] Managed RDBMS
 // @Accept json
 // @Produce json
-// @Param nsId query string false "Optional namespace ID (defaults to 'default')" default(default)
+// @Param nsId query string false "Namespace ID (defaults to 'mig01')" default(mig01)
 // @Param request body rdbmsmodel.RDBMSCreateRequest true "RDBMS creation request to validate"
-// @Success 200 {object} model.ApiResponse[rdbmsmodel.RDBMSCreateRequest] "Successfully validated and auto-filled RDBMS configuration"
+// @Success 200 {object} model.ApiResponse[rdbmsmodel.RDBMSCreateRequest] "Successfully validated RDBMS configuration"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Validation error"
 // @Router /recommendation/middleware/rdbms/validate [post]
 func ValidateRDBMS(c echo.Context) error {
 	nsId := c.QueryParam("nsId")
-	if nsId == "" {
-		nsId = "default"
+	if strings.TrimSpace(nsId) == "" {
+		nsId = common.DefaultNamespaceId
 	}
 
 	var req rdbmsmodel.RDBMSCreateRequest
@@ -108,14 +105,14 @@ func ValidateRDBMS(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
-	req.AutoFillDefaults = true
+	req.AutoFillDefaults = false
 	validated, err := recommendation.ValidateRDBMS(nsId, req)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to validate RDBMS configuration")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(fmt.Sprintf("Validation failed: %v", err)))
 	}
 
-	res := model.SuccessResponseWithMessage(validated, "RDBMS configuration is valid and default values have been filled")
+	res := model.SuccessResponseWithMessage(validated, "RDBMS configuration is valid")
 	return c.JSON(http.StatusOK, res)
 }
 
@@ -131,8 +128,8 @@ type RecommendRDBMSRequest struct {
 
 // RecommendRDBMS godoc
 // @ID RecommendRDBMS
-// @Summary Recommend a managed RDBMS for cloud migration
-// @Description Recommend appropriate managed RDBMS (MySQL, MariaDB) instance specs and configurations for cloud migration
+// @Summary Recommend Managed RDBMS (RDS) for cloud migration
+// @Description Recommend optimal Managed RDBMS / RDS (MySQL, MariaDB) instance specs, engine versions, and storage configurations for target cloud migration (supports AWS RDS, GCP Cloud SQL, Azure Database, Alibaba ApsaraDB, TencentDB, IBM Databases, NCP Cloud DB, NHN RDS)
 // @Description
 // @Description [Note] `desiredCsp` and `desiredRegion` are required.
 // @Description - `desiredCsp` and `desiredRegion` can be set in the query parameter or the request body.

@@ -43,6 +43,9 @@ type TargetRDBMSInstance struct {
 	BackupRetentionDays int  `json:"backupRetentionDays,omitempty" example:"7"`
 	DeletionProtection  bool `json:"deletionProtection,omitempty" example:"false"`
 
+	// CSP-Specific Options
+	NHNDBSGToAllowAllInbound bool `json:"nhnDBSGToAllowAllInbound,omitempty" example:"true"`
+
 	// Optional Inner Databases to create after instance provisioning
 	Databases []TargetDatabase `json:"databases,omitempty"`
 }
