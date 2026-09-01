@@ -9,7 +9,7 @@ When upgrading CB-Tumblebug, check each file against the upstream source and syn
 
    ```bash
    cd /path/to/cb-tumblebug
-   git checkout main && git pull upstream main
+   git checkout v0.13.2
    ```
 
 2. Discover all changed files systematically:
@@ -53,41 +53,42 @@ When upgrading CB-Tumblebug, check each file against the upstream source and syn
 
 ---
 
-## Latest Main Branch Sync (2026-08-31)
+## v0.13.2 Sync (2026-09-01)
 
-Based on CB-Tumblebug latest `main` branch `a9a10473` (`Merge pull request #2741 from seokho-son/main`). Upgrade path: **v0.12.30 → latest main**.
+Based on CB-Tumblebug tag `v0.13.2` (`2a7436583f889cc794ebf37d151362a2e684e871`). Upgrade path: **v0.13.1 &rarr; v0.13.2**.
 
-### Model Changes (v0.12.30 → latest main)
+### Model Changes (v0.13.1 &rarr; v0.13.2)
 
 | Change | Description |
 | --- | --- |
-| **`ImageInfo`**: `SystemMessage`, `DeletionRequestedAt` | Added error message tracking and deletion tombstone tracking |
-| **`NLBInfo`**: `SystemMessage`, `DeletionRequestedAt` | Added system message and deletion tombstone tracking |
-| **`NodeSummary`** & **`InfraInfoSummary`** | Added lightweight projection structs for Infra list views (`GET /ns/{nsId}/infra`) |
-| **`SecurityGroupInfo` / `SshKeyInfo`**: `Conditions`, `DeletionRequestedAt`, `Status` | Added lifecycle status, K8s-style conditions, and tombstone tracking |
-| **`DataDiskInfo`**: `DiskFailed`, `Conditions`, `DeletionRequestedAt` | Added failure enum and condition tracking |
-| **`RDBMS` Models**: `RDBMSInfo`, `RDBMSCreateRequest`, `RDBMSCapabilityResponse`, `RDBMSSupportResponse`, `RDBMSCSPSupportInfo`, `RDBMSDatabaseCreateReq`, `RDBMSDatabaseInfo`, `RDBMSDatabaseListResponse` | Managed RDBMS models synchronized with Spider v0.13.1 contract and multi-cloud DB engines |
+| **`NodeInfo`**: `Failure` | Added structured `Failure *ProvisioningFailure` field representing node creation failure classification, zone attempts, and retryability |
+| **`ProvisioningFailure` & `ZoneCapability`** | Added failure classification struct and zone shifting capability model with `Failure*` and `RetryHint*` constants |
+| **`RDBMSDBMSRequirement`**: `DeprecatedVersions`, `EndOfLifeVersions` | Added version deprecation and EOL status tracking in managed RDBMS metadata |
+| **`RDBMSCreateRequest` / `RDBMSInfo`**: `NHNDBSGToAllowAllInbound` | Added NHN Cloud DB security group inbound rule option |
+| **`NodeSummary` & `InfraInfoSummary`** | Maintained lightweight projection structs for Infra list views (`GET /ns/{nsId}/infra`) |
 
 ### Deployment File Changes
 
 | File | Action |
 | --- | --- |
 | **Model files (`imdl/cloud-model/`)** | |
-| `copied-tb-model.go` | **Updated** — Synced with latest main `a9a10473`: added `NodeSummary`, `InfraInfoSummary`, `ImageInfo` and `NLBInfo` fields, version header |
-| `copied-tb-k8s-model.go` | **Updated** — Synced full K8s cluster models (`K8sClusterInfo`, `K8sNodeGroupInfo`, `K8sClusterDynamicReq`, `K8sNodeGroupDynamicReq`, `K8sMultiClusterDynamicReq`, `K8sMultiClusterInfo`, `K8sAccessInfo`, `K8sClusterTokenResponse`, `K8sClusterKubeconfigResponse`, `IID`) |
+| `copied-tb-model.go` | **Updated** — Synced with v0.13.2 (`2a743658`): added `NodeInfo.Failure`, `ProvisioningFailure`, `ZoneCapability`, failure constants, version header |
+| `copied-tb-k8s-model.go` | **Updated** — Synced version header to `v0.13.2` (`2a743658`) |
+| **Go Module Dependencies (`go.mod`)** | |
+| `go.mod` | **Updated** — `github.com/cloud-barista/cb-tumblebug` updated from `v0.13.1` to `v0.13.2` |
 | **Docker Compose (`deployments/docker-compose/`)** | |
-| `docker-compose.yaml` | **Updated** — cb-spider `0.13.1` with `GOMEMLIMIT=8GiB`, cb-mapui `0.13.5` with `MAPUI_PARAM_*` optional variables, openbao `2.5.1` |
+| `docker-compose.yaml` | **Updated** — Synced service images: `cb-spider:0.13.2`, `cb-mapui:0.13.6`, `cb-tumblebug:0.13.2` |
 | **Assets & Scripts (`deployments/docker-compose/cb-tumblebug/`)** | |
-| `assets/assets.dump.gz` | **Updated** — Synced with latest 39MB dump |
-| `assets/assets.dump.gz.info` | **Updated** — Synced manifest sidecar |
-| `assets/k8sclusterinfo.yaml` | **Updated** — Synced K8s version and CSP support metadata |
-| `assets/diskinfo.yaml` | **Added** — Synced disk specifications and IOPS metadata |
-| `assets/rdbmsinfo.yaml` | **Updated** — Synced multi-cloud RDBMS capability matrix |
-| `assets/cloudinfo.yaml`, `extractionpatterns.yaml`, etc. | **Updated** — Synced latest provider configurations |
-| `init/templates/*` | **Updated** — Synced 28 standardized templates (`infra-*.json`, `k8scluster-across.json`, `sg-*.json`, `vnet-*.json`) |
-| `scripts/lib/pg-backend.sh` | **Added** — Synced Postgres backend detection library for Docker/Local/K8s environments |
-| `scripts/restore-assets.sh`, `backup-assets.sh` | **Updated** — Synced Postgres asset restore and backup utilities |
-| `interface/mcp/*` | **Updated** — Synced stateless HTTP mode, label management, search options, and proxy configurations |
+| `assets/assets.dump.gz` | **No change** — Verified MD5 `dba8da8e89b5ebdd203daf7c4480147b` (39MB dump matches upstream) |
+| `assets/assets.dump.gz.info` | **No change** — Verified matches upstream sidecar manifest |
+| `assets/k8sclusterinfo.yaml` | **No change** — Verified matches upstream K8s version and CSP support metadata |
+| `assets/diskinfo.yaml` | **No change** — Verified matches upstream disk specifications and IOPS metadata |
+| `assets/rdbmsinfo.yaml` | **No change** — Verified matches upstream multi-cloud RDBMS capability matrix |
+| `assets/cloudinfo.yaml`, `extractionpatterns.yaml`, etc. | **No change** — Verified matches upstream provider configurations |
+| `init/templates/*` | **No change** — Verified matches 28 standardized templates (`infra-*.json`, `k8scluster-across.json`, `sg-*.json`, `vnet-*.json`) |
+| `scripts/lib/pg-backend.sh` | **No change** — Verified matches upstream Postgres backend detection library |
+| `scripts/restore-assets.sh`, `backup-assets.sh` | **No change** — Verified matches upstream asset utilities |
+| `interface/mcp/*` | **No change** — Verified matches upstream stateless HTTP mode and proxy configurations |
 
 ## Upstream Source Paths
 

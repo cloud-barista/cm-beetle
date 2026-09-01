@@ -139,52 +139,80 @@ See [tb-sync.instructions.md](../.github/instructions/tb-sync.instructions.md) f
 
 This module is independently versioned using Git tags with the `imdl/` prefix (e.g., `imdl/v0.1.0`).
 
-### Releasing a New Version
+### Repository Setup and Remote Model
 
-After your changes to `imdl/` have been merged into `upstream/main`, create and push the version tag:
+This project follows a three-tier Git remote workflow:
+
+- **`upstream`**: Official organization repository (`github.com/cloud-barista/cm-beetle`)
+- **`origin`**: Your personal fork (`github.com/<your-account>/cm-beetle`)
+- **`local`**: Your local clone
+
+```
+Normal Code Changes: Local Commit → git push origin <branch> → Open PR to upstream/main → Merge
+Tagging (Maintainers): git tag -a imdl/vX.Y.Z upstream/main → git push upstream imdl/vX.Y.Z
+```
+
+---
+
+### Step-by-Step Release Workflow
+
+#### Step 1: Commit and PR `imdl` Changes
+
+1. Create a local branch from `upstream/main` (or `upstream/dev` if using a development branch):
+   ```bash
+   git fetch upstream
+   git checkout -b feat/update-imdl upstream/main
+   ```
+2. Commit `imdl/` changes, push to your **`origin`** fork (not `upstream`), and open a PR:
+   ```bash
+   git add imdl/
+   git commit -m "update(imdl): sync models with cb-tumblebug vX.Y.Z"
+   git push -u origin feat/update-imdl
+   ```
+3. Merge the PR into `upstream/main` (or `upstream/dev`).
+
+#### Step 2: Tag the Released `imdl` Version
+
+After the PR is merged into `upstream`, create and push the annotated tag directly to `upstream`:
 
 ```bash
 # 1) Fetch latest upstream and verify merge
 git fetch upstream
 git log upstream/main --oneline -5
 
-# 2) Check recent imdl tags to determine next version
+# 2) Check recent imdl tags to determine the next version
 git tag -l "imdl/*" --sort=-v:refname | head -5
 
-# 3) Set next version manually based on the list above
-export NEXT_IMDL_TAG=  # Update this value (e.g., export NEXT_IMDL_TAG="imdl/v0.1.0")
+# 3) Set next version (e.g., export NEXT_IMDL_TAG="imdl/v0.1.13")
+export NEXT_IMDL_TAG=  # Update this value (e.g., export NEXT_IMDL_TAG="imdl/v0.1.13")
 echo "Next imdl tag: $NEXT_IMDL_TAG"
 
-# 4) Tag the merge result on upstream/main
+# 4) Tag the merge result on upstream/main (or upstream/dev)
 git tag -a $NEXT_IMDL_TAG upstream/main -m "imdl: release ${NEXT_IMDL_TAG#imdl/}"
-# Optional (safer if upstream/main has moved):
-# git tag -a $NEXT_IMDL_TAG <merge_commit_sha> -m "imdl: release ${NEXT_IMDL_TAG#imdl/}"
 
-# 5) Push tag to upstream
+# 5) Push tag directly to upstream
 git push upstream $NEXT_IMDL_TAG
 
 # 6) Verify tag
 git show $NEXT_IMDL_TAG
 ```
 
-> **Note:** Tag `upstream/main` (the merge result), not your old branch commit hash. If another PR is merged before you tag, use the exact merge commit SHA instead of `upstream/main`. Using `$NEXT_IMDL_TAG` environment variable ensures consistency across all commands.
+> **Note:** Tags are pushed directly to `upstream` (not `origin`) so the Go module proxy can resolve them. Pushing a tag creates a tag object and does NOT directly push commits to branches.
 
-### Updating CM-Beetle Dependency
+#### Step 3: Update CM-Beetle Dependency (`go.mod`)
 
-After creating and pushing the tag, update the main CM-Beetle project to use the new version:
+After publishing the tag, update CM-Beetle's root `go.mod` via a new branch and PR:
 
 ```bash
-# 1) Start a new branch from the latest upstream/main
+# 1) Start a new branch from upstream/main (or upstream/dev)
 git fetch upstream
-git checkout upstream/main -b update-imdl-${NEXT_IMDL_TAG#imdl/}
+git checkout -b chore/update-imdl-${NEXT_IMDL_TAG#imdl/} --no-track upstream/main
 
-# 2) Update dependency to the latest version
-go get -u github.com/cloud-barista/cm-beetle/imdl
-# Or specify exact version (use $NEXT_IMDL_TAG from previous step):
-# go get github.com/cloud-barista/cm-beetle/imdl@${NEXT_IMDL_TAG#imdl/}
+# 2) Update dependency to the newly tagged version
+go get github.com/cloud-barista/cm-beetle/imdl@${NEXT_IMDL_TAG#imdl/}
 go mod tidy
 
-# 3) Then follow standard development workflow: verify, test, commit, push, and open PR
+# 3) Follow standard development workflow: verify, test, commit, push to your origin fork, and open a PR
 ```
 
-For detailed instructions on the complete workflow, see [docs/module-import-guide.md](../docs/module-import-guide.md).
+For detailed instructions on the complete multi-module workflow, see [docs/module-import-guide.md](../docs/module-import-guide.md).
