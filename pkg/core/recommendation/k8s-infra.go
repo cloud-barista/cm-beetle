@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
@@ -40,8 +41,19 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 		return emptyRet, fmt.Errorf("no worker nodes found in source K8s cluster")
 	}
 
-	// Select K8s version
-	version, err := selectK8sVersion(provider, region, onpremInfra.K8sCluster.Version)
+	// Read everything the target cloud declares before any per-worker work begins. Keeping the
+	// lookups here — rather than inside the helpers that consume them — is what makes the rest of
+	// this function, and those helpers, free of hidden I/O.
+	profile := getTargetProfile(provider, region)
+
+	// Versions come from a different endpoint than the K8s asset, so they are read separately
+	// rather than folded into the profile: the L0 APIs need the profile but not the versions.
+	available, err := tbclient.NewSession().GetAvailableK8sVersions(provider, region)
+	if err != nil {
+		return emptyRet, fmt.Errorf("failed to fetch available K8s versions from Tumblebug: %w", err)
+	}
+
+	version, err := selectK8sVersion(available, provider, onpremInfra.K8sCluster.Version)
 	if err != nil {
 		return emptyRet, fmt.Errorf("K8s version selection failed: %w", err)
 	}
@@ -54,40 +66,36 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 		clusterName = onpremInfra.K8sCluster.Name
 	}
 
-	// Group workers by spec (vCPU/memory/architecture) and build one node group per group.
-	// Managed K8s node groups are homogeneous — every node in a group shares one instance
-	// spec (EKS managed node group, AKS agent pool, GKE node pool) — so heterogeneous
-	// workers must map to separate node groups. Homogeneous workers collapse to one group.
-	// Node group names use a fixed base ("workers") + index, validated against the CSP
-	// naming rule fetched from Tumblebug.
-	workerGroups := groupWorkersBySpec(workerNodes)
-	nodeGroupReqs := make([]cloudmodel.K8sNodeGroupReq, 0, len(workerGroups))
-	for i, g := range workerGroups {
-		specs, upscaleNote, specErr := RecommendK8sNodeSpecs(provider, region, g.nodes[0], 1)
-		if specErr != nil {
-			return emptyRet, fmt.Errorf("K8s worker spec recommendation failed for node group %d: %w", i+1, specErr)
-		}
-		if len(specs) == 0 {
-			return emptyRet, fmt.Errorf("no spec found for K8s worker node group %d", i+1)
-		}
-		specId := specs[0].Id
-		// Select an architecture-appropriate node image (see resolveNodeImageId). The spec is
-		// already arch-aware; the image must match so ARM specs get an ARM image, not the x86 default.
-		arch := normalizeArch(g.nodes[0].CPU.Architecture)
-		imageId, imgErr := ResolveK8sNodeImageId(provider, region, arch)
-		if imgErr != nil {
-			return emptyRet, fmt.Errorf("K8s node image selection failed for node group %d: %w", i+1, imgErr)
-		}
-		name := resolveNodeGroupName(provider, "workers", i+1)
-		ng := buildK8sNodeGroupReq(provider, name, specId, g.nodes)
-		ng.ImageId = imageId
-		if upscaleNote != "" {
-			ng.Description += " " + upscaleNote
-		}
-		nodeGroupReqs = append(nodeGroupReqs, ng)
+	// Recommend per worker, then merge on the resolved target — not the other way round.
+	//
+	// Managed K8s node groups are homogeneous (EKS managed node group, AKS agent pool, GKE node
+	// pool), so a node group can hold only workers that share one spec. Grouping on the *target*
+	// rather than on the source signature means two workers differing by a single vCPU that
+	// resolve to the same instance type share one node group instead of producing two.
+	//
+	// Ask for the same candidate pool the L0 spec API uses, not just one spec. Requesting a
+	// single spec would delegate the choice to Tumblebug's cost priority and leave
+	// sortK8sSpecsByProximity sorting a one-element slice — so the two APIs could recommend
+	// different specs for the same worker whenever the cheapest candidate in range is not the
+	// closest one.
+	targets := recommendWorkerTargets(profile, workerNodes, GetDefaultSpecsLimit())
+	groups, failed := mergeIntoNodeGroups(targets)
+	logExcludedWorkers(failed)
+	if len(groups) == 0 {
+		return emptyRet, fmt.Errorf("no K8s worker node group could be recommended: %s", summarizeFailures(failed))
 	}
 
-	vNetReq := buildK8sVNetReq(connectionName, provider, region, onpremInfra)
+	nodeGroupReqs := make([]cloudmodel.K8sNodeGroupReq, 0, len(groups))
+	includedWorkers := 0
+	for i, g := range groups {
+		// Node group names use a fixed base ("workers") + index, normalized and checked against
+		// the CSP naming rule the profile carries.
+		name := buildNodeGroupName(profile, "workers", i+1)
+		nodeGroupReqs = append(nodeGroupReqs, buildK8sNodeGroupReq(provider, name, g))
+		includedWorkers += len(g.nodes)
+	}
+
+	vNetReq := buildK8sVNetReq(profile, connectionName, onpremInfra)
 	sshKeyReq := buildK8sSshKeyReq(connectionName)
 	sgReqList := buildK8sSecurityGroupReqList(connectionName, provider, region, workerNodes, onpremInfra.K8sCluster)
 
@@ -97,12 +105,23 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 		Version:        version,
 		// VNetId, SubnetIds, SecurityGroupIds are filled in by migration logic
 		K8sNodeGroupList: nodeGroupReqs,
-		Description:      fmt.Sprintf("Migrated from on-premise K8s cluster (v%s, %d workers)", onpremInfra.K8sCluster.Version, len(workerNodes)),
+		// Count the workers actually covered, not every worker in the source: excluded ones
+		// (see below) are not in any node group.
+		Description: fmt.Sprintf("Migrated from on-premise K8s cluster (v%s, %d workers)", onpremInfra.K8sCluster.Version, includedWorkers),
+	}
+
+	// A worker that could not be resolved is excluded rather than failing the whole
+	// recommendation, so the exclusion has to be visible in the response — dropping it silently
+	// would be worse than the hard failure this replaced.
+	description := fmt.Sprintf("K8s cluster recommendation for %s %s (source: v%s → target: v%s)",
+		provider, region, onpremInfra.K8sCluster.Version, version)
+	if note := summarizeFailures(failed); note != "" {
+		description += ". " + note
 	}
 
 	result := cloudmodel.RecommendedInfra{
 		Status:      "recommended",
-		Description: fmt.Sprintf("K8s cluster recommendation for %s %s (source: v%s → target: v%s)", provider, region, onpremInfra.K8sCluster.Version, version),
+		Description: description,
 		TargetCloud: cloudmodel.CloudProperty{
 			Csp:    strings.ToLower(provider),
 			Region: strings.ToLower(region),
@@ -119,6 +138,8 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 		Str("version", version).
 		Int("nodeGroupCount", len(nodeGroupReqs)).
 		Int("workerCount", len(workerNodes)).
+		Int("includedWorkers", includedWorkers).
+		Int("excludedWorkers", len(failed)).
 		Msg("K8s infra recommendation completed")
 
 	return result, nil
@@ -135,39 +156,217 @@ func collectWorkerNodes(nodes []onpremmodel.NodeProperty) []onpremmodel.NodeProp
 	return workers
 }
 
-// workerGroup is a set of source worker nodes that share the same spec signature and thus
-// map to a single (homogeneous) managed K8s node group.
-type workerGroup struct {
-	nodes []onpremmodel.NodeProperty
+// sourceVcpuOf returns the source node's vCPU count. One rule serves both the memoization key
+// and the spec search, so a node can never be keyed by one value and sized by another.
+//
+// Cpus == 0 means "totals, not per-socket": a node discovered through the Kubernetes API arrives
+// as {cpus: 0, cores: 0, threads: N} because honeybee lands the API's total CPU count in Threads.
+// Treat it as a single socket. Threads == 0 falls back to Cores (assume no SMT) rather than 1,
+// since a bare 1 understates a multi-core socket by its full core count.
+func sourceVcpuOf(n onpremmodel.NodeProperty) uint32 {
+	cpus := n.CPU.Cpus
+	if cpus == 0 {
+		cpus = 1
+	}
+	threads := n.CPU.Threads
+	if threads == 0 {
+		threads = n.CPU.Cores
+	}
+	if threads == 0 {
+		threads = 1
+	}
+	return cpus * threads
 }
 
-// groupWorkersBySpec groups workers by their spec signature (vCPU, memory, architecture),
-// preserving first-appearance order so node group indices are deterministic. Homogeneous
-// workers yield a single group; heterogeneous workers yield one group per distinct spec.
-func groupWorkersBySpec(workers []onpremmodel.NodeProperty) []workerGroup {
-	index := make(map[string]int)
-	var groups []workerGroup
+// workerSpecKey is the memoization key for spec recommendation — NOT a partition key.
+//
+// Two workers sharing a key resolve to the same target, so the recommendation is computed once.
+// Two workers with different keys may still end up in the same node group: merging happens on the
+// resolved target, not here (see mergeIntoNodeGroups). That is what stops a 1-unit difference in
+// the source from producing a separate node group.
+func workerSpecKey(n onpremmodel.NodeProperty) string {
+	return fmt.Sprintf("%d|%d|%s", sourceVcpuOf(n), n.Memory.TotalSize, normalizeArch(n.CPU.Architecture))
+}
+
+// workerTarget is one source worker resolved against the target cloud: the ranked specs it maps
+// onto, the node image its architecture requires, and any note that must reach the user.
+//
+// A non-nil err means this worker could not be resolved. It is excluded from the node groups and
+// reported back to the caller rather than aborting the whole recommendation — one worker without
+// an available node image must not cost the caller the entire cluster.
+type workerTarget struct {
+	node        onpremmodel.NodeProperty
+	specs       []cloudmodel.SpecInfo // ranked; specs[0] is the chosen one
+	imageId     string
+	upscaleNote string
+	err         error
+}
+
+// specId returns the chosen target spec id, or "" when the worker failed to resolve.
+func (t workerTarget) specId() string {
+	if t.err != nil || len(t.specs) == 0 {
+		return ""
+	}
+	return t.specs[0].Id
+}
+
+// recommendWorkerTargets recommends a target spec and node image for every worker, in source order.
+//
+// Recommendation is memoized by workerSpecKey so identical workers cost one Tumblebug call, which
+// keeps the call count at what the previous group-then-recommend flow used. The key is a cache key
+// only — see workerSpecKey.
+//
+// The memo lives for one call, during which limit is fixed, so limit is not part of the key. Add
+// it if a future caller varies limit per worker.
+func recommendWorkerTargets(p targetProfile, workers []onpremmodel.NodeProperty, limit int) []workerTarget {
+
+	memo := make(map[string]workerTarget, len(workers))
+	targets := make([]workerTarget, 0, len(workers))
+
 	for _, w := range workers {
 		key := workerSpecKey(w)
+		if cached, ok := memo[key]; ok {
+			cached.node = w // the node differs per worker; everything else is shared
+			targets = append(targets, cached)
+			continue
+		}
+
+		t := workerTarget{node: w}
+
+		specs, note, err := RecommendK8sNodeSpecs(p.provider, p.region, w, limit)
+		switch {
+		case err != nil:
+			// Keep machine IDs out of the error text: failures are grouped by cause and the
+			// affected IDs are listed separately (see groupFailuresByCause).
+			t.err = fmt.Errorf("spec recommendation failed: %w", err)
+		case len(specs) == 0:
+			t.err = fmt.Errorf("no target spec found within the search range")
+		default:
+			t.specs, t.upscaleNote = specs, note
+			// The spec search already filtered on this architecture, so the image must match it:
+			// an ARM spec needs an ARM image, not the x86 default.
+			imageId, imgErr := selectK8sNodeImage(p, normalizeArch(w.CPU.Architecture))
+			if imgErr != nil {
+				t.err = fmt.Errorf("node image selection failed: %w", imgErr)
+			} else {
+				t.imageId = imageId
+			}
+		}
+
+		memo[key] = t
+		targets = append(targets, t)
+	}
+	return targets
+}
+
+// nodeGroupAccum accumulates the source workers that resolved to one target (spec, image) pair.
+type nodeGroupAccum struct {
+	specs   []cloudmodel.SpecInfo // ranked; specs[0] is the chosen target spec
+	imageId string
+	nodes   []onpremmodel.NodeProperty
+	notes   []string
+}
+
+// specId returns the node group's target spec id.
+func (g nodeGroupAccum) specId() string {
+	if len(g.specs) == 0 {
+		return ""
+	}
+	return g.specs[0].Id
+}
+
+// mergeIntoNodeGroups collapses resolved workers into homogeneous node groups keyed by the target
+// (specId, imageId) pair — never by source attributes. Two source workers differing by a single
+// vCPU that resolve to the same instance type therefore share one node group.
+//
+// Architecture needs no separate key: specId implies it (a spec belongs to exactly one
+// architecture), so arm64 and x86_64 workers can never merge and every member of a group shares
+// one node image.
+//
+// Groups are ordered by first appearance in the source node list, so node group indices — and
+// therefore names — are deterministic across runs.
+func mergeIntoNodeGroups(targets []workerTarget) (groups []nodeGroupAccum, failed []workerTarget) {
+	index := make(map[string]int)
+
+	for _, t := range targets {
+		if t.err != nil {
+			failed = append(failed, t)
+			continue
+		}
+		key := t.specId() + "|" + t.imageId
 		if i, ok := index[key]; ok {
-			groups[i].nodes = append(groups[i].nodes, w)
+			groups[i].nodes = append(groups[i].nodes, t.node)
 			continue
 		}
 		index[key] = len(groups)
-		groups = append(groups, workerGroup{nodes: []onpremmodel.NodeProperty{w}})
+		groups = append(groups, nodeGroupAccum{
+			specs:   t.specs,
+			imageId: t.imageId,
+			nodes:   []onpremmodel.NodeProperty{t.node},
+			notes:   noteSlice(t.upscaleNote),
+		})
+	}
+	return groups, failed
+}
+
+// noteSlice wraps a possibly-empty note so a group starts with either zero or one note.
+func noteSlice(note string) []string {
+	if note == "" {
+		return nil
+	}
+	return []string{note}
+}
+
+// failureGroup is a set of workers excluded for the same reason.
+type failureGroup struct {
+	cause      string
+	machineIds []string
+}
+
+// groupFailuresByCause groups excluded workers by error text so one shared cause is reported once
+// with the affected machine IDs listed, rather than repeating the same sentence per worker.
+// First-appearance order keeps the output deterministic.
+func groupFailuresByCause(failed []workerTarget) []failureGroup {
+	index := make(map[string]int)
+	var groups []failureGroup
+
+	for _, t := range failed {
+		cause := "unknown error"
+		if t.err != nil {
+			cause = t.err.Error()
+		}
+		if i, ok := index[cause]; ok {
+			groups[i].machineIds = append(groups[i].machineIds, t.node.MachineId)
+			continue
+		}
+		index[cause] = len(groups)
+		groups = append(groups, failureGroup{cause: cause, machineIds: []string{t.node.MachineId}})
 	}
 	return groups
 }
 
-// workerSpecKey builds the spec signature used both for grouping and (implicitly) for spec
-// recommendation: vCPU (cpus×threads), memory (GiB), and normalized architecture.
-func workerSpecKey(n onpremmodel.NodeProperty) string {
-	threads := n.CPU.Threads
-	if threads == 0 {
-		threads = 1
+// summarizeFailures renders excluded workers as one sentence, grouped by cause.
+// Returns "" when nothing was excluded, so callers can append it unconditionally.
+func summarizeFailures(failed []workerTarget) string {
+	if len(failed) == 0 {
+		return ""
 	}
-	vcpu := n.CPU.Cpus * threads
-	return fmt.Sprintf("%d|%d|%s", vcpu, n.Memory.TotalSize, normalizeArch(n.CPU.Architecture))
+	groups := groupFailuresByCause(failed)
+	parts := make([]string, 0, len(groups))
+	for _, g := range groups {
+		parts = append(parts, fmt.Sprintf("%s (%s)", g.cause, strings.Join(g.machineIds, ", ")))
+	}
+	return fmt.Sprintf("%d source worker(s) excluded: %s", len(failed), strings.Join(parts, "; "))
+}
+
+// logExcludedWorkers reports excluded workers once per cause at warn level.
+func logExcludedWorkers(failed []workerTarget) {
+	for _, g := range groupFailuresByCause(failed) {
+		log.Warn().
+			Str("cause", g.cause).
+			Strs("machineIds", g.machineIds).
+			Msg("Source workers excluded from K8s recommendation")
+	}
 }
 
 // archAliases maps the architecture strings on-premise sources report to the canonical values
@@ -211,13 +410,9 @@ func normalizeArch(arch string) string {
 //
 // TODO: Remove this workaround once CB-Tumblebug exposes an isLts field in
 // availableK8sVersion. At that point, filter by isLts=false and remove the Azure branch.
-func selectK8sVersion(provider, region, sourceVersion string) (string, error) {
-	available, err := tbclient.NewSession().GetAvailableK8sVersions(provider, region)
-	if err != nil {
-		return "", fmt.Errorf("failed to fetch available K8s versions from Tumblebug: %w", err)
-	}
+func selectK8sVersion(available []tbmodel.K8sClusterVersionDetailAvailable, provider, sourceVersion string) (string, error) {
 	if len(available) == 0 {
-		return "", fmt.Errorf("no K8s versions available for %s %s", provider, region)
+		return "", fmt.Errorf("no K8s versions available for provider %q", provider)
 	}
 
 	sourceMajorMinor := extractMajorMinor(sourceVersion)
@@ -331,14 +526,12 @@ const (
 // RecommendVNet, then checks that the chosen CIDR does not overlap with the cluster's
 // PodCIDR or ServiceCIDR. If network data is absent or recommendation fails, it falls
 // back to the hardcoded 10.10.0.0/16 default so recommendation remains resilient.
-func buildK8sVNetReq(connectionName, provider, region string, srcInfra onpremmodel.OnpremInfra) cloudmodel.VNetReq {
+func buildK8sVNetReq(p targetProfile, connectionName string, srcInfra onpremmodel.OnpremInfra) cloudmodel.VNetReq {
 	const fallbackCIDR = "10.10.0.0/16"
 
-	subnetCount := resolveRequiredSubnetCount(provider)
-	var zones []string
-	if subnetCount > 1 {
-		zones = resolveRegionZones(provider, region)
-	}
+	provider, region := p.provider, p.region
+	subnetCount := p.requiredSubnetCount
+	zones := p.regionZones
 
 	buildVNet := func(vpcCIDR string) cloudmodel.VNetReq {
 		subnets := make([]cloudmodel.SubnetReq, 0, subnetCount)
@@ -417,25 +610,21 @@ func cidrsOverlap(cidr1, cidr2 string) bool {
 	return net1.Contains(net2.IP) || net2.Contains(net1.IP)
 }
 
-// resolveRequiredSubnetCount returns the number of subnets the target CSP requires for a K8s
-// cluster, from Tumblebug. Falls back to a safe per-provider default on lookup failure.
-func resolveRequiredSubnetCount(provider string) int {
-	count, err := tbclient.NewSession().GetK8sRequiredSubnetCount(provider)
-	if err != nil || count < 1 {
-		fallback := 1
-		if strings.EqualFold(provider, "aws") {
-			fallback = 2
-		}
-		log.Warn().Err(err).Str("provider", provider).Int("fallback", fallback).
-			Msg("Failed to fetch required subnet count; using per-provider fallback")
-		return fallback
+// defaultRequiredSubnetCount is the per-CSP fallback used when the K8s asset does not say how many
+// subnets a cluster needs. AWS EKS requires two, in distinct AZs; the other CSPs need one.
+func defaultRequiredSubnetCount(provider string) int {
+	if strings.EqualFold(provider, "aws") {
+		return 2
 	}
-	return count
+	return 1
 }
 
-// resolveRegionZones returns the availability zones of the region, from Tumblebug. Falls back
-// to the conventional "<region>a"/"<region>b" names on lookup failure.
-func resolveRegionZones(provider, region string) []string {
+// getRegionZones returns the availability zones of the region, from Tumblebug. Falls back to the
+// conventional "<region>a"/"<region>b" names on lookup failure.
+//
+// This stays a lookup of its own rather than joining the K8s asset read: it hits a different
+// endpoint, and only multi-subnet CSPs need it at all.
+func getRegionZones(provider, region string) []string {
 	info, err := tbclient.NewSession().ReadRegionInfo(provider, region)
 	if err != nil || len(info.Zones) == 0 {
 		fallback := []string{region + "a", region + "b"}
@@ -444,6 +633,53 @@ func resolveRegionZones(provider, region string) []string {
 		return fallback
 	}
 	return info.Zones
+}
+
+// targetProfile is what the target cloud declares about K8s clusters, read before any per-worker
+// work begins. Gathering it in one place is what keeps the rest of the recommendation free of
+// scattered lookups — and what lets the functions taking a profile be tested without Tumblebug.
+//
+// provider and region ride along so those functions need no extra parameters.
+type targetProfile struct {
+	provider string
+	region   string
+
+	nodeImageDesignation bool
+	nodeImages           []tbmodel.K8sClusterNodeImageDetailAvailable
+
+	nodeGroupNamingRule string
+	requiredSubnetCount int
+	regionZones         []string // only fetched when requiredSubnetCount > 1
+}
+
+// getTargetProfile reads the target cloud's K8s declarations in one place.
+//
+// It does not fail. Each field falls back to what the individual lookups used before, so a
+// Tumblebug hiccup degrades the recommendation instead of aborting it.
+func getTargetProfile(provider, region string) targetProfile {
+	p := targetProfile{provider: provider, region: region}
+
+	profile, err := tbclient.NewSession().GetK8sClusterProfile(provider, region)
+	if err != nil {
+		log.Warn().Err(err).Str("provider", provider).Str("region", region).
+			Msg("Failed to read K8s cluster info; using per-field defaults")
+		p.requiredSubnetCount = defaultRequiredSubnetCount(provider)
+	} else {
+		p.nodeImageDesignation = profile.NodeImageDesignation
+		p.nodeImages = profile.NodeImages
+		p.nodeGroupNamingRule = profile.NodeGroupNamingRule
+		p.requiredSubnetCount = profile.RequiredSubnetCount
+		if p.requiredSubnetCount < 1 {
+			log.Warn().Str("provider", provider).Int("fallback", defaultRequiredSubnetCount(provider)).
+				Msg("K8s asset declares no required subnet count; using per-provider fallback")
+			p.requiredSubnetCount = defaultRequiredSubnetCount(provider)
+		}
+	}
+
+	if p.requiredSubnetCount > 1 {
+		p.regionZones = getRegionZones(provider, region)
+	}
+	return p
 }
 
 // buildK8sSshKeyReq builds a SshKeyReq for worker node access.
@@ -560,36 +796,29 @@ var cspRequiresFixedNodeGroupSize = map[string]bool{
 // names allow 40 chars) to remain safe across providers.
 const defaultMaxNodeGroupNameLen = 40
 
-// resolveNodeGroupName builds a node group name from base + index, normalizes it to satisfy
+// buildNodeGroupName assembles a node group name from base + index, normalizes it to satisfy
 // common CSP constraints (lowercase alphanumeric, letter-initial), enforces a safe length
 // cap, and validates it against the CSP naming rule fetched from Tumblebug. It never fails:
 // on any error it falls back to the normalized default, keeping recommendation resilient to
 // Tumblebug hiccups.
 //
-// The source model carries no node group name to preserve, so a single synthesized group is
-// generated. Multiple-group support (source-name normalization, sequence suffixes) can reuse
-// normalizeNodeGroupName once the source model exposes node groups.
-func resolveNodeGroupName(provider, base string, index int) string {
-	safeName := normalizeNodeGroupName(base, index, maxNodeGroupNameLen(provider))
+// The source model carries no node group name to preserve, so names are synthesized. The index
+// is what keeps them distinct when heterogeneous workers resolve to several node groups.
+func buildNodeGroupName(p targetProfile, base string, index int) string {
+	safeName := normalizeNodeGroupName(base, index, maxNodeGroupNameLen(p.provider))
 
-	rule, err := tbclient.NewSession().GetK8sNodeGroupNamingRule(provider)
-	if err != nil {
-		log.Warn().Err(err).Str("provider", provider).Str("name", safeName).
-			Msg("Failed to fetch node group naming rule; using normalized default")
-		return safeName
-	}
-	if rule == "" {
-		return safeName // CSP defines no naming rule
+	if p.nodeGroupNamingRule == "" {
+		return safeName // CSP defines no naming rule, or it could not be read
 	}
 
-	re, err := regexp.Compile(rule)
+	re, err := regexp.Compile(p.nodeGroupNamingRule)
 	if err != nil {
-		log.Warn().Err(err).Str("rule", rule).Str("name", safeName).
+		log.Warn().Err(err).Str("rule", p.nodeGroupNamingRule).Str("name", safeName).
 			Msg("Invalid node group naming rule regex from Tumblebug; using normalized default")
 		return safeName
 	}
 	if !re.MatchString(safeName) {
-		log.Warn().Str("rule", rule).Str("name", safeName).
+		log.Warn().Str("rule", p.nodeGroupNamingRule).Str("name", safeName).
 			Msg("Normalized node group name does not match CSP rule; using it as best effort")
 	}
 	return safeName
@@ -630,7 +859,7 @@ func normalizeNodeGroupName(base string, index, maxLen int) string {
 	return cleaned + suffix
 }
 
-// buildK8sNodeGroupReq builds a K8sNodeGroupReq from source worker nodes.
+// buildK8sNodeGroupReq builds a K8sNodeGroupReq from one merged node group.
 // Note: SshKeyId is intentionally empty here; migration logic fills it after SshKey creation.
 //
 // Min/MaxNodeSize handling differs per CSP even when auto-scaling is disabled:
@@ -638,8 +867,8 @@ func normalizeNodeGroupName(base string, index, maxLen int) string {
 //     specified, OnAutoScaling must be enabled"), so both are left at 0.
 //   - AWS EKS requires MaxNodeSize >= 1 unconditionally ("The MaxNodeSize value must
 //     be greater than or equal to 1"), so a fixed-size group uses Max = desiredSize.
-func buildK8sNodeGroupReq(provider, name, specId string, workers []onpremmodel.NodeProperty) cloudmodel.K8sNodeGroupReq {
-	desiredSize := len(workers)
+func buildK8sNodeGroupReq(provider, name string, g nodeGroupAccum) cloudmodel.K8sNodeGroupReq {
+	desiredSize := len(g.nodes)
 	if desiredSize == 0 {
 		desiredSize = 1
 	}
@@ -647,7 +876,7 @@ func buildK8sNodeGroupReq(provider, name, specId string, workers []onpremmodel.N
 	// Use the largest root disk in the group so no node in this (homogeneous) group is
 	// under-provisioned on disk.
 	rootDiskSize := 0
-	for _, w := range workers {
+	for _, w := range g.nodes {
 		if int(w.RootDisk.TotalSize) > rootDiskSize {
 			rootDiskSize = int(w.RootDisk.TotalSize)
 		}
@@ -662,10 +891,15 @@ func buildK8sNodeGroupReq(provider, name, specId string, workers []onpremmodel.N
 		minNodeSize, maxNodeSize = desiredSize, desiredSize
 	}
 
+	description := fmt.Sprintf("Worker node group migrated from on-premise (%d node(s))", desiredSize)
+	if len(g.notes) > 0 {
+		description += " " + strings.Join(g.notes, " ")
+	}
+
 	return cloudmodel.K8sNodeGroupReq{
 		Name:         name,
-		ImageId:      "default",
-		SpecId:       specId,
+		ImageId:      g.imageId,
+		SpecId:       g.specId(),
 		RootDiskType: "default",
 		RootDiskSize: rootDiskSize,
 		// SshKeyId filled by migration logic
@@ -673,6 +907,6 @@ func buildK8sNodeGroupReq(provider, name, specId string, workers []onpremmodel.N
 		DesiredNodeSize: desiredSize,
 		MinNodeSize:     minNodeSize,
 		MaxNodeSize:     maxNodeSize,
-		Description:     fmt.Sprintf("Worker node group migrated from on-premise (%d nodes)", desiredSize),
+		Description:     description,
 	}
 }

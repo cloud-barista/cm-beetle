@@ -19,15 +19,16 @@ import (
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
-	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/rs/zerolog/log"
 )
 
-// RecommendK8sNodeGroupImages recommends a node image for every worker node group derived from the
+// RecommendK8sNodeGroupImages recommends a node image for every architecture present among the
 // source workers, and assembles the L0 response.
 //
-// Workers are grouped by spec signature (same rule as RecommendK8sNodeGroupSpecs).
-// Each group receives the architecture-appropriate node image from the provider's curated list.
+// Grouping is by normalized architecture, which is the only input to node image selection. This
+// intentionally differs from the node group breakdown in RecommendK8sInfra: several node groups can
+// share one architecture and therefore one node image, and grouping by spec here would cost a
+// Tumblebug spec search per group for a result that does not depend on the spec.
 //
 // Returns RecommendedOsImageList. For K8s node images, only TargetOsImage.Id is populated;
 // other ImageInfo fields are empty because the curated list carries only an id string.
@@ -44,23 +45,24 @@ func RecommendK8sNodeGroupImages(provider, region string, srcInfra onpremmodel.O
 		return ret, fmt.Errorf("no worker nodes found in source infra (nodes with role=worker are required)")
 	}
 
-	for i, g := range groupWorkersBySpec(workers) {
-		members := machineIdsOf(g.nodes)
-		arch := normalizeArch(g.nodes[0].CPU.Architecture)
+	profile := getTargetProfile(provider, region)
 
-		imageId, err := ResolveK8sNodeImageId(provider, region, arch)
+	for i, g := range groupWorkersByArch(workers) {
+		members := machineIdsOf(g.nodes)
+
+		imageId, err := selectK8sNodeImage(profile, g.arch)
 		if err != nil {
-			log.Warn().Err(err).Int("nodeGroupIndex", i+1).Msg("failed to resolve K8s node image")
+			log.Warn().Err(err).Str("arch", g.arch).Msg("failed to resolve K8s node image")
 			ret.RecommendedOsImageList = append(ret.RecommendedOsImageList, cloudmodel.RecommendedOsImage{
 				Status:        string(NothingRecommended),
 				SourceServers: members,
-				Description:   fmt.Sprintf("failed to resolve node image for node group %d: %v", i+1, err),
+				Description:   fmt.Sprintf("failed to resolve node image for architecture group %d (%s): %v", i+1, g.arch, err),
 				TargetOsImage: cloudmodel.ImageInfo{},
 			})
 			continue
 		}
 
-		desc := buildNodeImageDescription(provider, region, i+1, len(g.nodes), arch, imageId)
+		desc := buildNodeImageDescription(profile, i+1, len(g.nodes), g.arch, imageId)
 
 		ret.RecommendedOsImageList = append(ret.RecommendedOsImageList, cloudmodel.RecommendedOsImage{
 			Status:        string(FullyRecommended),
@@ -81,30 +83,53 @@ func RecommendK8sNodeGroupImages(provider, region string, srcInfra onpremmodel.O
 	return ret, nil
 }
 
-// ResolveK8sNodeImageId returns the node image ID appropriate for the given architecture.
-// Promoted from the unexported resolveNodeImageId used internally by RecommendK8sInfra.
+// archGroup is the set of source workers sharing one normalized architecture.
+type archGroup struct {
+	arch  string
+	nodes []onpremmodel.NodeProperty
+}
+
+// groupWorkersByArch groups workers by normalized architecture, preserving first-appearance order
+// so group indices are deterministic.
+func groupWorkersByArch(workers []onpremmodel.NodeProperty) []archGroup {
+	index := make(map[string]int)
+	var groups []archGroup
+	for _, w := range workers {
+		arch := normalizeArch(w.CPU.Architecture)
+		if i, ok := index[arch]; ok {
+			groups[i].nodes = append(groups[i].nodes, w)
+			continue
+		}
+		index[arch] = len(groups)
+		groups = append(groups, archGroup{arch: arch, nodes: []onpremmodel.NodeProperty{w}})
+	}
+	return groups
+}
+
+// selectK8sNodeImage picks the node image for the given architecture from the target profile.
 //
 // Behavior:
-//   - NodeImageDesignation=false (CSP manages the image) or x86_64 arch → "default".
-//   - NodeImageDesignation=true + arm64 → pick an ARM node image from the curated list.
-//   - arm64 required but no ARM image available → error.
-func ResolveK8sNodeImageId(provider, region, arch string) (string, error) {
-	designation, images, err := tbclient.NewSession().GetK8sNodeImages(provider, region)
-	if err != nil {
-		log.Warn().Err(err).Str("provider", provider).Str("region", region).
-			Msg("Failed to fetch node images; using default image")
+//   - NodeImageDesignation=false (the CSP manages the image) or x86_64 → "default".
+//   - arm64 + designation → pick an ARM node image from the curated list.
+//   - arm64 but no ARM image available → error.
+//
+// Note: when the profile lookup failed, nodeImageDesignation is false and every architecture gets
+// "default" — including arm64, which then pairs an ARM spec with the provider's x86 image. That
+// is the pre-existing behavior, kept here deliberately; see
+// docs/k8s-recommendation/k8s-io-consolidation-implementation-plan.md for the proposed fix.
+func selectK8sNodeImage(p targetProfile, arch string) (imageId string, err error) {
+	if !p.nodeImageDesignation || arch != "arm64" {
 		return "default", nil
 	}
-	if !designation || arch != "arm64" {
-		return "default", nil
-	}
-	for _, img := range images {
+	for _, img := range p.nodeImages {
 		if isArmNodeImageId(img.Id) {
 			return img.Id, nil
 		}
 	}
-	return "", fmt.Errorf("no arm64 node image available for provider %q region %q (node image "+
-		"designation required); add an ARM node image to k8sclusterinfo.yaml or use an x86_64 spec", provider, region)
+	return "", fmt.Errorf(
+		"no arm64 K8s node image is available for provider %q region %q. Use x86_64 worker nodes, "+
+			"or check the available node images with searchImage(isKubernetesImage=true, provider=%q)",
+		p.provider, p.region, p.provider)
 }
 
 // isArmNodeImageId reports whether a curated node image identifier denotes an ARM/aarch64 image.
@@ -115,21 +140,15 @@ func isArmNodeImageId(id string) bool {
 }
 
 // buildNodeImageDescription constructs the per-entry description in user-friendly language.
-func buildNodeImageDescription(provider, region string, groupIdx, nodeCount int, arch, imageId string) string {
-	designation, _, err := tbclient.NewSession().GetK8sNodeImages(provider, region)
-	if err != nil || !designation {
+func buildNodeImageDescription(p targetProfile, groupIdx, nodeCount int, arch, imageId string) string {
+	if !p.nodeImageDesignation {
 		return fmt.Sprintf(
-			"Node group %d (%d node(s), %s) — %s manages node image selection automatically",
-			groupIdx, nodeCount, arch, provider)
-	}
-	if arch != "arm64" {
-		return fmt.Sprintf(
-			"Node group %d (%d node(s), %s) — Use node image '%s' for %s %s",
-			groupIdx, nodeCount, arch, imageId, provider, region)
+			"Architecture group %d (%d node(s), %s) — %s manages node image selection automatically",
+			groupIdx, nodeCount, arch, p.provider)
 	}
 	return fmt.Sprintf(
-		"Node group %d (%d node(s), %s) — Use %s for %s %s",
-		groupIdx, nodeCount, arch, imageId, provider, region)
+		"Architecture group %d (%d node(s), %s) — Use node image '%s' for %s %s",
+		groupIdx, nodeCount, arch, imageId, p.provider, p.region)
 }
 
 // summarizeRecommendedOsImageList derives the overall status and description.

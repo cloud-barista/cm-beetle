@@ -104,6 +104,44 @@ func (s *Session) getK8sClusterDetail(providerName string) (tbmodel.K8sClusterDe
 	return detail, nil
 }
 
+// K8sClusterProfile is everything the k8sClusterInfo asset declares about K8s clusters for one
+// provider/region.
+//
+// The asset is a single document, so reading it field by field means one HTTP request per field,
+// and callers that ask once per node group or per worker multiply that further. This type lets a
+// caller read the document once and keep every field it needs.
+type K8sClusterProfile struct {
+	NodeImageDesignation bool
+	NodeImages           []tbmodel.K8sClusterNodeImageDetailAvailable
+	NodeGroupNamingRule  string
+	RequiredSubnetCount  int
+}
+
+// GetK8sClusterProfile reads /k8sClusterInfo once and resolves every region-scoped field for the
+// given region. Prefer it over the single-field getters below when more than one field is needed.
+func (s *Session) GetK8sClusterProfile(providerName, regionName string) (K8sClusterProfile, error) {
+	log.Debug().Str("provider", providerName).Str("region", regionName).Msg("Getting K8s cluster profile")
+
+	detail, err := s.getK8sClusterDetail(providerName)
+	if err != nil {
+		return K8sClusterProfile{}, err
+	}
+
+	profile := K8sClusterProfile{
+		NodeImageDesignation: detail.NodeImageDesignation,
+		NodeImages:           resolveRegionNodeImages(detail.NodeImage, regionName),
+		NodeGroupNamingRule:  detail.NodeGroupNamingRule,
+		RequiredSubnetCount:  detail.RequiredSubnetCount,
+	}
+
+	log.Debug().Str("provider", providerName).
+		Bool("nodeImageDesignation", profile.NodeImageDesignation).
+		Int("nodeImages", len(profile.NodeImages)).
+		Int("requiredSubnetCount", profile.RequiredSubnetCount).
+		Msg("Got K8s cluster profile")
+	return profile, nil
+}
+
 // GetK8sNodeGroupNamingRule returns the CSP-specific node group naming rule (a regex)
 // from Tumblebug's k8sClusterInfo asset data. Returns an empty string when the CSP
 // defines no rule. The regex does not always encode length limits (e.g. Azure omits

@@ -32,8 +32,9 @@ const maxK8sSpecRangeWeight = 5
 // RecommendK8sNodeGroupSpecs recommends a worker spec for every node group derived from the
 // source workers, and assembles the L0 response.
 //
-// Source workers are grouped by spec signature because managed K8s node groups are homogeneous;
-// one recommendation set is produced per group, with the group's members reported in SourceServers.
+// Workers are recommended individually and then merged by the target spec they resolve to, because
+// managed K8s node groups are homogeneous; one recommendation set is produced per merged group,
+// with the group's members reported in SourceServers.
 //
 // Unlike RecommendK8sInfra, this does NOT require srcInfra.K8sCluster — spec recommendation only
 // needs worker nodes. Cluster info is a version-selection input, not a spec input.
@@ -51,29 +52,24 @@ func RecommendK8sNodeGroupSpecs(provider, region string, srcInfra onpremmodel.On
 		specsLimit = GetDefaultSpecsLimit()
 	}
 
-	for i, g := range groupWorkersBySpec(workers) {
+	// Share the resolve-then-merge pipeline with RecommendK8sInfra so both APIs report the same
+	// node group breakdown for the same input. They used to derive groups independently, which let
+	// them disagree.
+	targets := recommendWorkerTargets(getTargetProfile(provider, region), workers, specsLimit)
+	groups, failed := mergeIntoNodeGroups(targets)
+	logExcludedWorkers(failed)
+
+	for i, g := range groups {
 		members := machineIdsOf(g.nodes)
 
-		specs, upscaleNote, err := RecommendK8sNodeSpecs(provider, region, g.nodes[0], specsLimit)
-		if err != nil {
-			log.Warn().Err(err).Int("nodeGroupIndex", i+1).Msg("failed to recommend K8s worker specs")
-			ret.RecommendedSpecList = append(ret.RecommendedSpecList, cloudmodel.RecommendedSpec{
-				Status:        string(NothingRecommended),
-				SourceServers: members,
-				Description:   fmt.Sprintf("failed to recommend worker specs for node group %d: %v", i+1, err),
-				TargetSpec:    cloudmodel.SpecInfo{},
-			})
-			continue
-		}
-
 		desc := fmt.Sprintf("Recommended worker spec for node group %d (%d node(s))", i+1, len(g.nodes))
-		if upscaleNote != "" {
-			desc += " " + upscaleNote
+		if len(g.notes) > 0 {
+			desc += " " + strings.Join(g.notes, " ")
 		}
 
-		// Two groups can converge on the same spec; merge their source servers rather than
-		// emitting duplicate entries. Same dedup rule as the VM spec controller.
-		for _, spec := range specs {
+		// A node group's candidate list can overlap another's; merge their source servers rather
+		// than emitting duplicate entries. Same dedup rule as the VM spec controller.
+		for _, spec := range g.specs {
 			if idx := indexOfRecommendedSpec(ret.RecommendedSpecList, spec.Id); idx >= 0 {
 				ret.RecommendedSpecList[idx].SourceServers = append(ret.RecommendedSpecList[idx].SourceServers, members...)
 				continue
@@ -85,6 +81,16 @@ func RecommendK8sNodeGroupSpecs(provider, region string, srcInfra onpremmodel.On
 				TargetSpec:    spec,
 			})
 		}
+	}
+
+	// Report excluded workers grouped by cause, so one shared reason is stated once.
+	for _, f := range groupFailuresByCause(failed) {
+		ret.RecommendedSpecList = append(ret.RecommendedSpecList, cloudmodel.RecommendedSpec{
+			Status:        string(NothingRecommended),
+			SourceServers: f.machineIds,
+			Description:   fmt.Sprintf("failed to recommend worker specs: %s", f.cause),
+			TargetSpec:    cloudmodel.SpecInfo{},
+		})
 	}
 
 	ret.Count = len(ret.RecommendedSpecList)
@@ -104,6 +110,8 @@ func RecommendK8sNodeGroupSpecs(provider, region string, srcInfra onpremmodel.On
 // smaller than its source leaves pods unschedulable:
 //   - the search range is clamped so it never dips below the source (nor below the minimum viable
 //     worker spec), whereas the VM path deliberately allows downsizing,
+//   - ranking ignores CPU vendor (see sortK8sSpecsByProximity): with every candidate already at or
+//     above the source, a vendor match can only buy a larger, costlier node,
 //   - NCP hypervisor filtering is skipped (NKS is pinned to XEN, so the VM path's KVM filter would
 //     exclude the very specs NKS can use),
 //   - an upscale note is returned when the floor raised the request, so callers can surface it.
@@ -117,30 +125,10 @@ func RecommendK8sNodeSpecs(provider, region string, worker onpremmodel.NodePrope
 		limit = GetDefaultSpecsLimit()
 	}
 
-	// Source sizing: total vCPU = Cpus (sockets) * Threads (logical CPUs per socket).
-	//
-	// Both factors need a floor, because honeybee fills this struct from two different collectors
-	// and the K8s-derived one leaves fields at zero. A node discovered through the Kubernetes API
-	// (rather than SSH) arrives as {cpus: 0, cores: 0, threads: 8} — the API reports the node's
-	// total CPU count, which honeybee lands in Threads. Multiplying by a zero Cpus would yield 0
-	// vCPU, the floor below would then quietly size an 8-vCPU worker down to the 2-vCPU minimum,
-	// and no upscale note would fire because the comparison is against the bogus 0.
-	//
-	// Cpus == 0 therefore means "totals, not per-socket" → treat it as a single socket.
-	// Threads == 0 falls back to Cores (assume no SMT) rather than 1, since a bare 1 understates
-	// a multi-core socket by its full core count.
-	cpus := worker.CPU.Cpus
-	if cpus == 0 {
-		cpus = 1
-	}
-	threads := worker.CPU.Threads
-	if threads == 0 {
-		threads = worker.CPU.Cores
-	}
-	if threads == 0 {
-		threads = 1
-	}
-	srcVcpu := cpus * threads
+	// Source sizing uses the shared sourceVcpuOf rule, so the value driving this search is the
+	// same one that keys the recommendation cache. Deriving it twice, differently, is how a node
+	// could previously be keyed by one vCPU count and sized by another.
+	srcVcpu := sourceVcpuOf(worker)
 	srcMem := uint32(worker.Memory.TotalSize)
 	arch := normalizeArch(worker.CPU.Architecture)
 
@@ -215,7 +203,7 @@ func RecommendK8sNodeSpecs(provider, region string, worker onpremmodel.NodePrope
 				return nil, upscaleNote, fmt.Errorf("failed to convert K8s worker spec list: %w", err)
 			}
 
-			sortByProximityWithCost(converted, minVcpu, minMem, strings.ToLower(provider), extractCpuVendor(worker.CPU.Vendor))
+			sortK8sSpecsByProximity(converted, minVcpu, minMem)
 			if len(converted) > limit {
 				converted = converted[:limit]
 			}

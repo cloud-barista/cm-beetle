@@ -442,6 +442,33 @@ func sortByProximityWithCost(vmSpecs []cloudmodel.SpecInfo, vcpus, memory uint32
 	}
 }
 
+// sortK8sSpecsByProximity sorts K8s worker specs by proximity to the source size, then by cost.
+//
+// Unlike the VM path (sortByProximityWithCost), CPU vendor match is deliberately NOT a ranking
+// criterion. Every candidate reaching here is already >= the source, because the K8s spec search
+// clamps its lower bound to the source size (see RecommendK8sNodeSpecs) — so promoting a
+// vendor match can only mean paying for a node larger than the workload needs. Concretely, for a
+// source of 8 vCPU / 16 GiB on Intel, vendorMatch ranks an Intel 8 vCPU / 32 GiB spec above an
+// exact-fit AMD 8 vCPU / 16 GiB one, doubling the memory bill. A lifted-and-shifted VM may care
+// about CPU vendor parity; containers on a K8s worker generally do not.
+func sortK8sSpecsByProximity(k8sSpecs []cloudmodel.SpecInfo, vcpus, memory uint32) {
+
+	machineType := deriveMachineType(vcpus, memory)
+
+	log.Debug().Msgf("Sorting K8s node specs for machine type: %s (vcpus: %d, memory: %d GiB)", machineType, vcpus, memory)
+
+	ctx := specRankingContext{vcpus: vcpus, memory: memory}
+
+	switch machineType {
+	case "compute-intensive":
+		rankSpecs(ctx, k8sSpecs, vcpuProximity, memoryProximity, byCost)
+	case "memory-intensive":
+		rankSpecs(ctx, k8sSpecs, memoryProximity, vcpuProximity, byCost)
+	default: // "general-purpose"
+		rankSpecs(ctx, k8sSpecs, manhattanProximity, byCost)
+	}
+}
+
 // abs returns the absolute value of x
 func abs(x int32) int32 {
 	if x < 0 {
