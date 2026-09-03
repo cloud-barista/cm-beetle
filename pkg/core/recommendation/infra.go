@@ -172,7 +172,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 	// 	Name:           fmt.Sprintf("migrated-%s", node.MachineId),
 	// 	RootDiskSize:   "", // TBD
 	// 	RootDiskType:   "", // TBD
-	// 	SubGroupSize:   "",
+	// 	NodeGroupSize:  "",
 	// 	VmUserPassword: "",
 	// }
 
@@ -265,14 +265,14 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 			tempVmInfraInfo.TargetInfra.NodeGroups = append(tempVmInfraInfo.TargetInfra.NodeGroups, tempCreateNodegroupReq)
 		}
 
-		status := checkOverallSubGroupStatus(tempVmInfraInfo.TargetInfra.NodeGroups)
+		status := checkOverallNodeGroupStatus(tempVmInfraInfo.TargetInfra.NodeGroups)
 		tempVmInfraInfo.Status = status
 		if status == string(NothingRecommended) {
-			tempVmInfraInfo.Description = "Could not find approprate VMs."
+			tempVmInfraInfo.Description = "Could not find appropriate Node (VM)s."
 		} else if status == string(FullyRecommended) {
 			tempVmInfraInfo.Description = "Target infra is recommended."
 		} else {
-			tempVmInfraInfo.Description = "Some VMs are recommended. Please check and fill the required information."
+			tempVmInfraInfo.Description = "Some Node (VM)s are recommended. Please check and fill the required information."
 		}
 
 		recommenedVmInfraInfoList = append(recommenedVmInfraInfoList, tempVmInfraInfo)
@@ -707,7 +707,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			recommendedSg = existingSg
 		}
 
-		// * Set the security group ID to the skeleton SubGroup List
+		// * Set the security group ID to the skeleton NodeGroup List
 		skeletonNodegroupList[i].SecurityGroupIds = []string{recommendedSg.Name}
 	}
 
@@ -821,7 +821,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	// For each candidate up to the actual limit
 	for i := 0; i < actualLimit; i++ {
 
-		// Create a copy of the skeleton SubGroup List
+		// Create a copy of the skeleton NodeGroup List
 		tempNodeGroupList := make([]cloudmodel.CreateNodeGroupReq, len(skeletonNodegroupList))
 		copy(tempNodeGroupList, skeletonNodegroupList)
 

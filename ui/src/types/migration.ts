@@ -66,6 +66,28 @@ export interface OsProperty {
   versionId: string;
 }
 
+export interface GpuDetail {
+  index: number;
+  uuid?: string;
+  model?: string;
+  pciBusId?: string;
+  memoryTotal?: number;
+  memoryFree?: number;
+  memoryUsed?: number;
+}
+
+export interface GpuProperty {
+  count: number;
+  vendor?: string;
+  model?: string;
+  type?: string;
+  totalMemoryGB?: number;
+  driverVersion?: string;
+  cudaVersion?: string;
+  architecture?: string;
+  details?: GpuDetail[];
+}
+
 export interface OnpremNode {
   machineId: string;
   hostname: string;
@@ -77,6 +99,7 @@ export interface OnpremNode {
   routingTable: RouteProperty[];
   firewallTable: FirewallRule[];
   os: OsProperty;
+  gpu?: GpuProperty | null;
 }
 
 export interface GatewayProperty {

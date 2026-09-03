@@ -28,13 +28,13 @@ import (
 // @ID AlignNames
 // @Summary Propagate a resource name change to all dependent child resources
 // @Description When a parent/primary resource is renamed (e.g., VNet), this API updates all
-// @Description child/dependent references in the model (e.g., SecurityGroup.VNetId, SubGroup.VNetId).
+// @Description child/dependent references in the model (e.g., SecurityGroup.VNetId, NodeGroup.VNetId).
 // @Description
 // @Description **Supported resourceType values** (cb-tumblebug convention):
-// @Description - `vNet` : Rename VNet → propagates to SecurityGroup.VNetId, SubGroup.VNetId
-// @Description - `subnet` : Rename Subnet → propagates to SubGroup.SubnetId
-// @Description - `sshKey` : Rename SSH Key → propagates to SubGroup.SshKeyId
-// @Description - `securityGroup` : Rename SecurityGroup → propagates to SubGroup.SecurityGroupIds
+// @Description - `vNet` : Rename VNet → propagates to SecurityGroup.VNetId, NodeGroup.VNetId
+// @Description - `subnet` : Rename Subnet → propagates to NodeGroup.SubnetId
+// @Description - `sshKey` : Rename SSH Key → propagates to NodeGroup.SshKeyId
+// @Description - `securityGroup` : Rename SecurityGroup → propagates to NodeGroup.SecurityGroupIds
 // @Description - `infra` : Rename Infra (no child propagation)
 // @Description
 // @Description After propagation, names are validated for referential integrity.
