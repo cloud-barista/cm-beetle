@@ -116,11 +116,11 @@ const (
 
 // PropagateNameChange updates a specific resource's name in the model and propagates
 // the change to all child/dependent resources that reference it.
-// (e.g., If VNet is renamed, all SecurityGroup.VNetId and SubGroup.VNetId are updated)
+// (e.g., If VNet is renamed, all SecurityGroup.VNetId and NodeGroup.VNetId are updated)
 //
 // Parameters:
 //   - infra: The recommendation model to update (will be copied, not mutated)
-//   - resourceType: One of "vNet", "subnet", "sshKey", "securityGroup", "mci"
+//   - resourceType: One of "vNet", "subnet", "sshKey", "securityGroup", "infra"
 //   - oldName: The current name of the resource to rename
 //   - newName: The new name to assign to the resource
 func PropagateNameChange(infra cloudmodel.RecommendedInfra, resourceType, oldName, newName string) cloudmodel.RecommendedInfra {
@@ -178,7 +178,7 @@ func PropagateNameChange(infra cloudmodel.RecommendedInfra, resourceType, oldNam
 				result.TargetSecurityGroupList[i].Name = newName
 			}
 		}
-		// 2. Propagate to SubGroup SecurityGroupIds
+		// 2. Propagate to NodeGroup SecurityGroupIds
 		for i, ng := range result.TargetInfra.NodeGroups {
 			for j, sgId := range ng.SecurityGroupIds {
 				if sgId == oldName {

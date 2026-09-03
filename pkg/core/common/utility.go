@@ -126,39 +126,50 @@ func ChangeIdString(name string) string {
 	return changedString
 }
 
-// GenMciKey is func to generate a key used in keyValue store
+// GenInfraKey is func to generate a key used in keyValue store for Node (VM) / Infra
+func GenInfraKey(nsId string, infraId string, nodeId string) string {
+	if nodeId != "" {
+		return "/ns/" + nsId + "/infra/" + infraId + "/node/" + nodeId
+	} else if infraId != "" {
+		return "/ns/" + nsId + "/infra/" + infraId
+	} else if nsId != "" {
+		return "/ns/" + nsId
+	} else {
+		return ""
+	}
+}
+
+// GenInfraNodeGroupKey is func to generate a key from nodeGroupId used in keyValue store
+func GenInfraNodeGroupKey(nsId string, infraId string, groupId string) string {
+	return "/ns/" + nsId + "/infra/" + infraId + "/nodegroup/" + groupId
+}
+
+// GenInfraPolicyKey is func to generate Infra policy key
+func GenInfraPolicyKey(nsId string, infraId string, nodeId string) string {
+	if nodeId != "" {
+		return "/ns/" + nsId + "/policy/infra/" + infraId + "/node/" + nodeId
+	} else if infraId != "" {
+		return "/ns/" + nsId + "/policy/infra/" + infraId
+	} else if nsId != "" {
+		return "/ns/" + nsId
+	} else {
+		return ""
+	}
+}
+
+// Deprecated: Use GenInfraKey instead.
 func GenMciKey(nsId string, mciId string, vmId string) string {
-
-	if vmId != "" {
-		return "/ns/" + nsId + "/mci/" + mciId + "/vm/" + vmId
-	} else if mciId != "" {
-		return "/ns/" + nsId + "/mci/" + mciId
-	} else if nsId != "" {
-		return "/ns/" + nsId
-	} else {
-		return ""
-	}
-
+	return GenInfraKey(nsId, mciId, vmId)
 }
 
-// GenMciSubGroupKey is func to generate a key from subGroupId used in keyValue store
+// Deprecated: Use GenInfraNodeGroupKey instead.
 func GenMciSubGroupKey(nsId string, mciId string, groupId string) string {
-
-	return "/ns/" + nsId + "/mci/" + mciId + "/subgroup/" + groupId
-
+	return GenInfraNodeGroupKey(nsId, mciId, groupId)
 }
 
-// GenMciPolicyKey is func to generate Mci policy key
+// Deprecated: Use GenInfraPolicyKey instead.
 func GenMciPolicyKey(nsId string, mciId string, vmId string) string {
-	if vmId != "" {
-		return "/ns/" + nsId + "/policy/mci/" + mciId + "/vm/" + vmId
-	} else if mciId != "" {
-		return "/ns/" + nsId + "/policy/mci/" + mciId
-	} else if nsId != "" {
-		return "/ns/" + nsId
-	} else {
-		return ""
-	}
+	return GenInfraPolicyKey(nsId, mciId, vmId)
 }
 
 // LookupKeyValueList is func to lookup KeyValue list

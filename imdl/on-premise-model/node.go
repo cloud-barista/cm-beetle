@@ -14,6 +14,7 @@ type NodeProperty struct {
 	RoutingTable  []RouteProperty            `json:"routingTable"`
 	FirewallTable []FirewallRuleProperty     `json:"firewallTable,omitempty"`
 	OS            OsProperty                 `json:"os"`
+	GPU           *GpuProperty               `json:"gpu,omitempty"` // GPU accelerator hardware information (optional)
 }
 
 type CpuProperty struct {
@@ -82,3 +83,28 @@ type OsProperty struct { // note: reference command `cat /etc/os-release`
 	ID              string `json:"id,omitempty" example:"ubuntu"`
 	IDLike          string `json:"idLike,omitempty" example:"debian"`
 }
+
+// GpuProperty represents GPU and accelerator hardware information of an on-premise node.
+type GpuProperty struct {
+	Count         uint32      `json:"count" validate:"required" example:"1"`           // Number of physical GPU devices/chips
+	Vendor        string      `json:"vendor,omitempty" example:"NVIDIA"`               // GPU Vendor/Manufacturer (e.g., "NVIDIA", "AMD", "Intel")
+	Model         string      `json:"model,omitempty" example:"NVIDIA A100-PCIE-40GB"` // Primary GPU model name (e.g., "Tesla T4", "NVIDIA A100-PCIE-40GB", "GeForce RTX 4090")
+	Type          string      `json:"type,omitempty" example:"GPU"`                    // Accelerator type: "GPU", "NPU", "TPU" (defaults to "GPU")
+	TotalMemoryGB float32     `json:"totalMemoryGB,omitempty" example:"40"`            // Total VRAM across all devices in GB
+	DriverVersion string      `json:"driverVersion,omitempty" example:"535.129.03"`    // Installed GPU driver version
+	CudaVersion   string      `json:"cudaVersion,omitempty" example:"12.2"`            // Supported/Installed CUDA version (e.g., "12.2", "12.4")
+	Architecture  string      `json:"architecture,omitempty" example:"Ampere"`         // GPU Microarchitecture (e.g., "Ampere", "Hopper", "Ada Lovelace", "Turing", "Volta")
+	Details       []GpuDetail `json:"details,omitempty"`                               // Detailed information per individual physical GPU device
+}
+
+// GpuDetail represents detailed hardware attributes of an individual physical GPU device.
+type GpuDetail struct {
+	Index       uint32  `json:"index" example:"0"`                                         // Device index (e.g., 0, 1)
+	Uuid        string  `json:"uuid,omitempty" example:"GPU-12345678-abcd-ef01-2345-..."`  // Unique device UUID from driver (e.g., NVML GPU UUID)
+	Model       string  `json:"model,omitempty" example:"NVIDIA A100-PCIE-40GB"`           // Specific model for this device
+	PciBusId    string  `json:"pciBusId,omitempty" example:"0000:01:00.0"`                 // PCIe Bus identifier (e.g., "0000:01:00.0")
+	MemoryTotal float32 `json:"memoryTotal,omitempty" example:"40"`                        // Memory capacity in GB
+	MemoryFree  float32 `json:"memoryFree,omitempty" example:"38"`                         // Available/Free memory in GB
+	MemoryUsed  float32 `json:"memoryUsed,omitempty" example:"2"`                          // Used memory in GB
+}
+

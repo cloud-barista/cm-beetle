@@ -105,9 +105,9 @@ func MigrateInfraWithDefaults(c echo.Context) error {
 	}
 
 	// Create the infrastructure for migration
-	mciInfo, err := migration.CreateInfraWithDefaults(nsId, &req.InfraDynamicReq)
+	infraInfo, err := migration.CreateInfraWithDefaults(nsId, &req.InfraDynamicReq)
 
-	log.Debug().Msgf("mciInfo: %v", mciInfo)
+	log.Debug().Msgf("infraInfo: %v", infraInfo)
 
 	// [Output]
 	if err != nil {
@@ -116,7 +116,7 @@ func MigrateInfraWithDefaults(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
 
-	return c.JSON(http.StatusCreated, model.SuccessResponse(mciInfo))
+	return c.JSON(http.StatusCreated, model.SuccessResponse(infraInfo))
 }
 
 // TODO: Check and dev the request and response bodies for the following API
