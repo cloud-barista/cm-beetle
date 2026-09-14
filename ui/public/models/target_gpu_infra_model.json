@@ -1,0 +1,310 @@
+{
+  "id": "model-target-gpu-infra-1",
+  "name": "Recommended AWS AI GPU Cluster",
+  "description": "Optimized AWS cloud GPU infrastructure model (ap-northeast-2) recommended for heterogeneous GPU cluster",
+  "modelType": "cloud",
+  "version": "1.0",
+  "cloudInfraModel": {
+    "status": "highly-matched",
+    "description": "GPU Candidate #1 | highly-matched | Overall Match Rate: Min=94.2% Max=100.0% Avg=98.8% | VMs: 5 total, 5 matched, 0 acceptable | Decomposed heterogeneous physical server (node-gpu-train-01) into 3 homogeneous cloud Node Groups",
+    "targetCloud": {
+      "csp": "aws",
+      "region": "ap-northeast-2"
+    },
+    "targetInfra": {
+      "name": "infra101",
+      "installMonAgent": "",
+      "label": null,
+      "systemLabel": "",
+      "description": "Homogeneous GPU-accelerated recommended cloud infrastructure for multi-cloud migration",
+      "nodeGroups": [
+        {
+          "name": "ng-node-gpu-infer-01",
+          "nodeGroupSize": 1,
+          "label": {
+            "sourceMachineIds": "node-gpu-infer-01"
+          },
+          "description": "Recommended GPU VM for node-gpu-infer-01 (1 node) | Match Rate: CPU=100.0% Memory=100.0% GPU=100.0% (4x NVIDIA Tesla T4 64GB)",
+          "connectionName": "aws-ap-northeast-2",
+          "specId": "aws+ap-northeast-2+g4dn.12xlarge",
+          "imageId": "ami-012a353bb3afb92ee",
+          "vNetId": "mig-vnet-01",
+          "subnetId": "mig-subnet-01",
+          "securityGroupIds": [
+            "mig-sg-01"
+          ],
+          "sshKeyId": "mig-sshkey-01",
+          "rootDiskSize": 250,
+          "dataDiskIds": null
+        },
+        {
+          "name": "ng-node-gpu-train-01-primary-a100",
+          "nodeGroupSize": 1,
+          "label": {
+            "sourceMachineIds": "node-gpu-train-01-primary-a100"
+          },
+          "description": "Recommended GPU VM for node-gpu-train-01 A100 Cluster | Match Rate: GPU=100.0% (8x NVIDIA A100 80GB)",
+          "connectionName": "aws-ap-northeast-2",
+          "specId": "aws+ap-northeast-2+p4de.24xlarge",
+          "imageId": "ami-012a353bb3afb92ee",
+          "vNetId": "mig-vnet-01",
+          "subnetId": "mig-subnet-01",
+          "securityGroupIds": [
+            "mig-sg-02"
+          ],
+          "sshKeyId": "mig-sshkey-01",
+          "rootDiskSize": 500,
+          "dataDiskIds": null
+        },
+        {
+          "name": "ng-node-gpu-train-01-gpu-t4",
+          "nodeGroupSize": 1,
+          "label": {
+            "sourceMachineIds": "node-gpu-train-01-gpu-t4"
+          },
+          "description": "Recommended GPU VM for node-gpu-train-01 T4 Cluster | Match Rate: GPU=100.0% (1x NVIDIA Tesla T4 16GB)",
+          "connectionName": "aws-ap-northeast-2",
+          "specId": "aws+ap-northeast-2+g4dn.xlarge",
+          "imageId": "ami-012a353bb3afb92ee",
+          "vNetId": "mig-vnet-01",
+          "subnetId": "mig-subnet-01",
+          "securityGroupIds": [
+            "mig-sg-02"
+          ],
+          "sshKeyId": "mig-sshkey-01",
+          "rootDiskSize": 100,
+          "dataDiskIds": null
+        },
+        {
+          "name": "ng-node-gpu-train-01-gpu-mi350",
+          "nodeGroupSize": 1,
+          "label": {
+            "sourceMachineIds": "node-gpu-train-01-gpu-mi350"
+          },
+          "description": "Recommended GPU VM for node-gpu-train-01 MI350 Cluster | Match Rate: GPU=92.5% (1x NVIDIA A10G 24GB)",
+          "connectionName": "aws-ap-northeast-2",
+          "specId": "aws+ap-northeast-2+g5.2xlarge",
+          "imageId": "ami-012a353bb3afb92ee",
+          "vNetId": "mig-vnet-01",
+          "subnetId": "mig-subnet-01",
+          "securityGroupIds": [
+            "mig-sg-02"
+          ],
+          "sshKeyId": "mig-sshkey-01",
+          "rootDiskSize": 100,
+          "dataDiskIds": null
+        },
+        {
+          "name": "ng-node-gpu-workstation-01",
+          "nodeGroupSize": 1,
+          "label": {
+            "sourceMachineIds": "node-gpu-workstation-01"
+          },
+          "description": "Recommended GPU VM for node-gpu-workstation-01 | Match Rate: GPU=100.0% (1x NVIDIA L4 24GB)",
+          "connectionName": "aws-ap-northeast-2",
+          "specId": "aws+ap-northeast-2+g6.xlarge",
+          "imageId": "ami-012a353bb3afb92ee",
+          "vNetId": "mig-vnet-01",
+          "subnetId": "mig-subnet-01",
+          "securityGroupIds": [
+            "mig-sg-03"
+          ],
+          "sshKeyId": "mig-sshkey-01",
+          "rootDiskSize": 120,
+          "dataDiskIds": null
+        }
+      ],
+      "policyOnPartialFailure": ""
+    },
+    "targetVNet": {
+      "name": "mig-vnet-01",
+      "connectionName": "aws-ap-northeast-2",
+      "cidrBlock": "10.20.0.0/14",
+      "subnetInfoList": [
+        {
+          "name": "mig-subnet-01",
+          "ipv4_CIDR": "10.20.0.0/16",
+          "description": "a recommended subnet for migration"
+        }
+      ],
+      "description": "a recommended vNet for migration"
+    },
+    "targetSshKey": {
+      "name": "mig-sshkey-01",
+      "connectionName": "aws-ap-northeast-2",
+      "description": "SSH key pair for migration (Note: provided ONLY once, MUST be downloaded)",
+      "cspResourceId": "",
+      "fingerprint": "",
+      "username": "",
+      "verifiedUsername": "",
+      "publicKey": "",
+      "privateKey": ""
+    },
+    "targetSpecList": [
+      {
+        "id": "aws+ap-northeast-2+g4dn.12xlarge",
+        "cspSpecName": "g4dn.12xlarge",
+        "name": "aws+ap-northeast-2+g4dn.12xlarge",
+        "providerName": "aws",
+        "regionName": "ap-northeast-2",
+        "vCPU": 48,
+        "memoryGiB": 192,
+        "costPerHour": 3.912,
+        "acceleratorModel": "NVIDIA Tesla T4",
+        "acceleratorCount": 4,
+        "acceleratorMemoryGB": 64,
+        "acceleratorType": "GPU"
+      },
+      {
+        "id": "aws+ap-northeast-2+p4de.24xlarge",
+        "cspSpecName": "p4de.24xlarge",
+        "name": "aws+ap-northeast-2+p4de.24xlarge",
+        "providerName": "aws",
+        "regionName": "ap-northeast-2",
+        "vCPU": 96,
+        "memoryGiB": 1152,
+        "costPerHour": 40.96,
+        "acceleratorModel": "NVIDIA A100",
+        "acceleratorCount": 8,
+        "acceleratorMemoryGB": 640,
+        "acceleratorType": "GPU"
+      },
+      {
+        "id": "aws+ap-northeast-2+g4dn.xlarge",
+        "cspSpecName": "g4dn.xlarge",
+        "name": "aws+ap-northeast-2+g4dn.xlarge",
+        "providerName": "aws",
+        "regionName": "ap-northeast-2",
+        "vCPU": 4,
+        "memoryGiB": 16,
+        "costPerHour": 0.647,
+        "acceleratorModel": "NVIDIA Tesla T4",
+        "acceleratorCount": 1,
+        "acceleratorMemoryGB": 16,
+        "acceleratorType": "GPU"
+      },
+      {
+        "id": "aws+ap-northeast-2+g5.2xlarge",
+        "cspSpecName": "g5.2xlarge",
+        "name": "aws+ap-northeast-2+g5.2xlarge",
+        "providerName": "aws",
+        "regionName": "ap-northeast-2",
+        "vCPU": 8,
+        "memoryGiB": 32,
+        "costPerHour": 1.212,
+        "acceleratorModel": "NVIDIA A10G",
+        "acceleratorCount": 1,
+        "acceleratorMemoryGB": 24,
+        "acceleratorType": "GPU"
+      },
+      {
+        "id": "aws+ap-northeast-2+g6.xlarge",
+        "cspSpecName": "g6.xlarge",
+        "name": "aws+ap-northeast-2+g6.xlarge",
+        "providerName": "aws",
+        "regionName": "ap-northeast-2",
+        "vCPU": 4,
+        "memoryGiB": 16,
+        "costPerHour": 0.9896,
+        "acceleratorModel": "NVIDIA L4",
+        "acceleratorCount": 1,
+        "acceleratorMemoryGB": 24,
+        "acceleratorType": "GPU"
+      }
+    ],
+    "targetOsImageList": [
+      {
+        "id": "ami-012a353bb3afb92ee",
+        "cspImageName": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731",
+        "name": "ami-012a353bb3afb92ee",
+        "providerName": "aws",
+        "regionName": "ap-northeast-2",
+        "osType": "ubuntu",
+        "osArchitecture": "x86_64"
+      }
+    ],
+    "targetSecurityGroupList": [
+      {
+        "name": "mig-sg-01",
+        "connectionName": "aws-ap-northeast-2",
+        "vNetId": "mig-vnet-01",
+        "description": "Recommended security group for node-gpu-infer-01",
+        "firewallRules": [
+          {
+            "direction": "inbound",
+            "ipProtocol": "tcp",
+            "fromPort": "22",
+            "toPort": "22",
+            "cidr": "0.0.0.0/0"
+          },
+          {
+            "direction": "inbound",
+            "ipProtocol": "tcp",
+            "fromPort": "80",
+            "toPort": "80",
+            "cidr": "0.0.0.0/0"
+          },
+          {
+            "direction": "inbound",
+            "ipProtocol": "tcp",
+            "fromPort": "8080",
+            "toPort": "8080",
+            "cidr": "0.0.0.0/0"
+          }
+        ]
+      },
+      {
+        "name": "mig-sg-02",
+        "connectionName": "aws-ap-northeast-2",
+        "vNetId": "mig-vnet-01",
+        "description": "Recommended security group for node-gpu-train-01 clusters",
+        "firewallRules": [
+          {
+            "direction": "inbound",
+            "ipProtocol": "tcp",
+            "fromPort": "22",
+            "toPort": "22",
+            "cidr": "0.0.0.0/0"
+          },
+          {
+            "direction": "inbound",
+            "ipProtocol": "tcp",
+            "fromPort": "8000",
+            "toPort": "8000",
+            "cidr": "0.0.0.0/0"
+          },
+          {
+            "direction": "inbound",
+            "ipProtocol": "tcp",
+            "fromPort": "8888",
+            "toPort": "8888",
+            "cidr": "0.0.0.0/0"
+          }
+        ]
+      },
+      {
+        "name": "mig-sg-03",
+        "connectionName": "aws-ap-northeast-2",
+        "vNetId": "mig-vnet-01",
+        "description": "Recommended security group for node-gpu-workstation-01",
+        "firewallRules": [
+          {
+            "direction": "inbound",
+            "ipProtocol": "tcp",
+            "fromPort": "22",
+            "toPort": "22",
+            "cidr": "0.0.0.0/0"
+          },
+          {
+            "direction": "inbound",
+            "ipProtocol": "tcp",
+            "fromPort": "8888",
+            "toPort": "8888",
+            "cidr": "0.0.0.0/0"
+          }
+        ]
+      }
+    ]
+  },
+  "updatedTime": "2026-09-10T10:18:27.347Z"
+}

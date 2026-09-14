@@ -4,9 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from './TopologyMap';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope } from '../../types/migration';
-import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2, Compass, ArrowRight, ArrowLeft, Plus, AlertTriangle } from 'lucide-react';
+import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2, Compass, ArrowRight, ArrowLeft, Plus, AlertTriangle, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
-import { tumblebugApi } from '../../api/client';
+import { tumblebugApi, beetleApi } from '../../api/client';
+import sampleGpuData from '../../data/sampleSourceGpuInfra.json';
 
 
 
@@ -41,12 +42,82 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     tumblebugProviders,
     tumblebugRegions,
     fetchTumblebugProviders,
-    fetchTumblebugRegions
+    fetchTumblebugRegions,
+    namespaceId
   } = useMigrationStore();
+
+  const [isValidatingDryRun, setIsValidatingDryRun] = useState(false);
+  const [dryRunResult, setDryRunResult] = useState<{
+    open: boolean;
+    valid?: boolean;
+    issues: Array<{ code: string; severity: string; path: string; message: string }>;
+    error?: string;
+  }>({ open: false, issues: [] });
+
+  const handleDryRunValidate = async () => {
+    if (!editedCandidate) return;
+    setIsValidatingDryRun(true);
+    try {
+      const res = await beetleApi.validateInfra(
+        namespaceId || 'mig01',
+        editedCandidate,
+        true
+      );
+      setDryRunResult({
+        open: true,
+        valid: res.valid,
+        issues: res.issues || [],
+        error: res.error
+      });
+    } catch (err: any) {
+      setDryRunResult({
+        open: true,
+        valid: false,
+        issues: [],
+        error: err.message || 'Validation request failed'
+      });
+    } finally {
+      setIsValidatingDryRun(false);
+    }
+  };
 
   const [activeTunedNodeId, setActiveTunedNodeId] = useState<string>('');
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [showSaveTargetModal, setShowSaveTargetModal] = useState(false);
+  const [isSavingTarget, setIsSavingTarget] = useState(false);
+  const [targetSaveSuccessMsg, setTargetSaveSuccessMsg] = useState('');
+
+  const handleDirectSaveTargetModel = async () => {
+    if (!editedCandidate) return;
+    setIsSavingTarget(true);
+    setTargetSaveSuccessMsg('');
+    const isGpu = Boolean(
+      selectedSourceModel?.id?.includes('gpu') ||
+      selectedSourceModel?.name?.toLowerCase().includes('gpu') ||
+      (editedCandidate as any)?.id?.includes('gpu') ||
+      (editedCandidate as any)?.targetSubnetList?.some((sn: any) =>
+        sn.targetNodeGroupList?.some((ng: any) => ng.name?.toLowerCase().includes('gpu'))
+      )
+    );
+    try {
+      const res = await beetleApi.saveTargetInfraModelToFile(editedCandidate, isGpu);
+      if (res.success) {
+        setTargetSaveSuccessMsg(
+          isGpu
+            ? 'Target model saved and overwritten to sampleTargetGpuInfra.json successfully!'
+            : 'Target model saved and overwritten to sampleTargetInfra.json successfully!'
+        );
+        setTimeout(() => setTargetSaveSuccessMsg(''), 4000);
+      } else {
+        alert(res.error || 'Failed to overwrite target model to file.');
+      }
+    } catch (err: any) {
+      console.error('Failed to save target model to file:', err);
+    } finally {
+      setIsSavingTarget(false);
+    }
+  };
+
   const [pairRegionsMap, setPairRegionsMap] = useState<Record<string, { id: string; name: string }[]>>({});
 
   // Tuned nodes state for left spec editor
@@ -373,6 +444,102 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     ) ?? (candidate.targetSpecList.length === 1 ? candidate.targetSpecList[0] : null);
   };
 
+  // Helper to find source node by machineId/hostname across selectedSourceModel, savedSourceModels, and sample data
+  const findSourceNode = (sourceId: string): OnpremNode | null => {
+    if (!sourceId) return null;
+    const cleanId = sourceId.trim().toLowerCase();
+
+    // 1. Check selectedSourceModel
+    const currentNodes = (selectedSourceModel?.onpremiseInfraModel?.nodes ||
+                         (selectedSourceModel as any)?.sourceInfra?.nodes || []) as OnpremNode[];
+    const match1 = currentNodes.find((n: any) =>
+      n.machineId?.toLowerCase() === cleanId ||
+      n.hostname?.toLowerCase() === cleanId
+    );
+    if (match1) return match1;
+
+    // 2. Check savedSourceModels
+    if (savedSourceModels && savedSourceModels.length > 0) {
+      for (const sm of savedSourceModels) {
+        const smNodes = (sm.onpremiseInfraModel?.nodes || (sm as any).sourceInfra?.nodes || []) as OnpremNode[];
+        const match2 = smNodes.find((n: any) =>
+          n.machineId?.toLowerCase() === cleanId ||
+          n.hostname?.toLowerCase() === cleanId
+        );
+        if (match2) return match2;
+      }
+    }
+
+    // 3. Check sampleGpuData fallback
+    const sampleNodes = ((sampleGpuData as any)?.nodes || []) as OnpremNode[];
+    const match3 = sampleNodes.find((n: any) =>
+      n.machineId?.toLowerCase() === cleanId ||
+      n.hostname?.toLowerCase() === cleanId
+    );
+    if (match3) return match3;
+
+    return null;
+  };
+
+  // Helper to determine if target node / spec or mapped source server has GPU hardware
+  const getGpuInfo = (specInfo: any, specId?: string, ng?: any): { hasGpu: boolean; label: string } | null => {
+    // 1. Authoritative: CB-Tumblebug SpecInfo metadata
+    if (specInfo) {
+      const count = specInfo.acceleratorCount ?? specInfo.AcceleratorCount ?? specInfo.gpuCount ?? specInfo.GpuCount;
+      if (count && Number(count) > 0) return { hasGpu: true, label: 'TBD' };
+      if (Array.isArray(specInfo.details)) {
+        const gpuDetail = specInfo.details.find((d: any) =>
+          d.key === 'GpuInfo' || d.key === 'AcceleratorInfo' || d.key === 'InferenceAcceleratorInfo'
+        );
+        if (gpuDetail) return { hasGpu: true, label: 'TBD' };
+      }
+    }
+
+    // 2. CSP Instance Spec naming pattern
+    if (specId) {
+      const s = specId.toLowerCase();
+      if (s.includes('g4dn.') || s.includes('g5.') || s.includes('g5g.') || s.includes('g6.') ||
+          s.includes('p3.') || s.includes('p4d') || s.includes('p5.') || s.includes('a2-') || s.includes('g2-')) {
+        return { hasGpu: true, label: 'TBD' };
+      }
+    }
+
+    // 3. Check if mapped source node has GPU cards attached
+    if (ng) {
+      const rawSourceIds = ng.label?.sourceMachineIds || ng.label?.sourceMachineId || ng.label?.sourceMachine || '';
+      const sourceIds = String(rawSourceIds).split(',').map((id: string) => id.trim()).filter(Boolean);
+      for (const sId of sourceIds) {
+        const sourceNode = findSourceNode(sId);
+        if (sourceNode?.gpuCards && sourceNode.gpuCards.length > 0) {
+          return { hasGpu: true, label: 'TBD' };
+        }
+      }
+      if ((ng.name || '').toLowerCase().includes('gpu')) {
+        return { hasGpu: true, label: 'TBD' };
+      }
+    }
+
+    return null;
+  };
+
+  // Candidate-level GPU accelerators summary (Marked TBD for target cloud models)
+  const candidateGpuSummary = React.useMemo(() => {
+    if (!editedCandidate?.targetInfra?.nodeGroups) {
+      return { hasGpu: false, gpuNgCount: 0, gpuNodeCount: 0 };
+    }
+    const gpuNgs = editedCandidate.targetInfra.nodeGroups.filter(ng => {
+      const specInfo = getSpecInfo(editedCandidate, ng.specId);
+      return !!getGpuInfo(specInfo, ng.specId, ng);
+    });
+    const sourceHasGpu = Boolean(
+      selectedSourceModel?.onpremiseInfraModel?.nodes?.some((n: any) => n.gpuCards && n.gpuCards.length > 0)
+    );
+    const hasGpu = gpuNgs.length > 0 || sourceHasGpu;
+    const gpuNgCount = gpuNgs.length;
+    const gpuNodeCount = gpuNgs.reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0);
+    return { hasGpu, gpuNgCount, gpuNodeCount };
+  }, [editedCandidate, selectedSourceModel, savedSourceModels]);
+
   // Lookup ImageInfo from targetOsImageList by imageId
   const getImageInfo = (candidate: typeof editedCandidate, imageId: string) => {
     if (!candidate?.targetOsImageList) return null;
@@ -664,7 +831,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         <div className="flex items-center gap-2 shrink-0">
           <Compass className="w-5 h-5 text-emerald-500" />
           <h2 className="text-base font-extrabold text-text-main tracking-tight">
-            Target Cloud Optimization
+            Target Cloud Optimizer
           </h2>
         </div>
         <span className="text-sm text-text-muted">
@@ -968,7 +1135,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                       <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 block font-mono">Recommended Cloud Summary</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 
                       {/* 1. Estimation (Match Level & Est. Cost) */}
                       <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
@@ -977,11 +1144,11 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
                           <div className="flex flex-row justify-between items-center pt-2 min-h-[45px] gap-2">
                             <div className="flex items-center space-x-1.5">
-                              <span className="text-xs text-text-muted font-bold font-sans">Match</span>
+                              <span className="text-xs text-text-muted font-normal font-sans">Match</span>
                               <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs uppercase bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded whitespace-nowrap">{editedCandidate.status}</span>
                             </div>
                             <div className="flex items-center space-x-1.5 border-l border-border-main/20 pl-3">
-                              <span className="text-xs text-text-muted font-bold font-sans">Cost</span>
+                              <span className="text-xs text-text-muted font-normal font-sans">Cost</span>
                               <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-lg font-mono whitespace-nowrap">
                                 ${getEstimatedMonthlyCost(editedCandidate)}/month
                               </span>
@@ -1002,54 +1169,42 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                         </div>
                       </div>
 
-                      {/* 3. Compute (Nodes) */}
-                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-between">
+                      {/* 3. Overall Compute (Node Groups & Nodes) */}
+                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
                         <div className="space-y-2">
-                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Compute</span>
+                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Overall Compute</span>
 
-                          <div className="grid grid-cols-2 gap-2 items-start pt-2 min-h-[65px]">
-                            {/* Left Side: Total Nodes Count */}
-                            <div className="flex flex-col justify-center border-r border-border-main/20 pr-2">
-                              <div className="text-lg font-extrabold text-text-main font-sans tracking-tight">
-                                {(editedCandidate.targetInfra?.nodeGroups || []).reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0)} Node(s)
-                              </div>
-                            </div>
-
-                            {/* Right Side: Per-NodeGroup list */}
-                            <div className="space-y-1.5 pl-2 max-h-[85px] overflow-y-auto w-full">
-                              {(editedCandidate.targetInfra?.nodeGroups || []).map((ng, i) => (
-                                <div key={i} className="bg-bg-panel border border-border-main/50 px-2 py-1 rounded-lg text-xs font-sans flex justify-between items-center space-x-2">
-                                  <span className="text-text-muted font-bold whitespace-nowrap">Node Group {i + 1}</span>
-                                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{ng.nodeGroupSize} Nodes</span>
-                                </div>
-                              ))}
-                            </div>
+                          <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
+                            {(editedCandidate.targetInfra?.nodeGroups || []).length} Node Group(s) {(editedCandidate.targetInfra?.nodeGroups || []).reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0)} Node(s)
                           </div>
                         </div>
                       </div>
 
-                      {/* 4. Security Groups */}
-                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-between">
+                      {/* 4. GPU Accelerators — Shows GPU Node Groups and Nodes count, marked TBD */}
+                      {candidateGpuSummary.hasGpu && (
+                        <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
+                          <div className="space-y-2">
+                            <div className="border-b border-border-main/10 pb-1 flex items-center justify-between">
+                              <span className="text-sm font-bold text-emerald-500 font-sans">GPU Accelerators</span>
+                              <span className="text-xs font-bold font-mono text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded" title="Target Cloud GPU Specification is TBD">
+                                Spec: TBD
+                              </span>
+                            </div>
+
+                            <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
+                              {candidateGpuSummary.gpuNgCount} Node Group(s) {candidateGpuSummary.gpuNodeCount} Node(s)
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 5. Security Group (Security Groups & Rules) */}
+                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
                         <div className="space-y-2">
-                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Security</span>
+                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Security Group</span>
 
-                          <div className="grid grid-cols-2 gap-2 items-start pt-2 min-h-[65px]">
-                            {/* Left Side: Total SG Count */}
-                            <div className="flex flex-col justify-center border-r border-border-main/20 pr-2">
-                              <div className="text-lg font-extrabold text-text-main font-sans tracking-tight whitespace-nowrap">
-                                {(editedCandidate.targetSecurityGroupList || []).length} Security Group(s)
-                              </div>
-                            </div>
-
-                            {/* Right Side: Per-SG Rules list */}
-                            <div className="space-y-1.5 pl-2 max-h-[85px] overflow-y-auto w-full">
-                              {(editedCandidate.targetSecurityGroupList || []).map((sg, i) => (
-                                <div key={i} className="bg-bg-panel border border-border-main/50 px-2 py-1 rounded-lg text-xs font-sans flex justify-between items-center space-x-1">
-                                  <span className="text-text-muted font-bold">SG {i + 1}</span>
-                                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{(sg?.firewallRules || []).length} Rules</span>
-                                </div>
-                              ))}
-                            </div>
+                          <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
+                            {(editedCandidate.targetSecurityGroupList || []).length} Security Group(s) {(editedCandidate.targetSecurityGroupList || []).reduce((acc, sg) => acc + (sg?.firewallRules || []).length, 0)} Rule(s)
                           </div>
                         </div>
                       </div>
@@ -1230,6 +1385,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                               const specInfo = getSpecInfo(editedCandidate, ng.specId);
                               const vcpu    = specInfo?.vCPU;
                               const memGiB  = specInfo?.memoryGiB;
+                              const gpuInfo = getGpuInfo(specInfo, ng.specId, ng);
                               const imgInfo = getImageInfo(editedCandidate, ng.imageId);
                               const osName  = formatOsName(imgInfo, ng.imageId);
 
@@ -1268,10 +1424,15 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                       </div>
                                     </div>
 
-                                    {/* Spec: vCPU · Memory · instance type */}
+                                    {/* Spec: vCPU · Memory · GPU · instance type */}
                                     <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
                                       {vcpu   && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">{vcpu} vCPU</span>}
                                       {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">{formatMemory(memGiB)}</span>}
+                                      {gpuInfo && (
+                                        <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-1.5 py-0.5 rounded font-mono flex items-center gap-1" title="Target Cloud GPU Specification is TBD">
+                                          <span>GPU: TBD</span>
+                                        </span>
+                                      )}
                                       <span className="text-xs font-mono text-text-muted">{extractInstanceType(ng.specId)}</span>
                                     </div>
 
@@ -1304,6 +1465,11 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                           <div className="flex flex-wrap gap-1">
                                             {vcpu   && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">{vcpu} vCPU</span>}
                                             {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">{formatMemory(memGiB)}</span>}
+                                            {gpuInfo && (
+                                              <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-1.5 py-0.5 rounded font-mono" title="Target Cloud GPU Specification is TBD">
+                                                GPU: TBD
+                                              </span>
+                                            )}
                                           </div>
                                           <span className="text-xs font-mono text-text-muted mt-1 block" title={ng.specId}>{extractInstanceType(ng.specId)}</span>
                                         </div>
@@ -1413,7 +1579,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                       >
                                         <span>c {idx + 1}</span>
                                         {cspName && (
-                                          <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-extrabold ${
+                                          <span className={`text-xs px-1.5 py-0.5 rounded font-mono font-extrabold ${
                                             isActive ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300' : 'bg-bg-input text-text-muted'
                                           }`}>
                                             {cspName}
@@ -1520,6 +1686,11 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                         <div className="flex items-center gap-1.5 flex-wrap">
                                           {vcpu   && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-2 py-0.5 rounded">{vcpu} vCPU</span>}
                                           {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-2 py-0.5 rounded">{formatMemory(memGiB)}</span>}
+                                          {getGpuInfo(specInfo, ng.specId, ng) && (
+                                            <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-2 py-0.5 rounded font-mono" title="Target Cloud GPU Specification is TBD">
+                                              GPU: TBD
+                                            </span>
+                                          )}
                                           <span className="text-xs text-text-muted font-mono" title={ng.specId}>{extractInstanceType(ng.specId)}</span>
                                         </div>
                                       </div>
@@ -2031,41 +2202,70 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
                           </div>
 
-                          <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-3 border-t border-border-main/20">
-                            <span className="text-sm text-amber-600 dark:text-amber-400 font-sans">
-                              ⚠️ Note: Resource creation may fail due to account-level CSP quota limits, regional availability, or insufficient instance stock. Verify your account quotas before deployment.
-                            </span>
-                            <button
-                              onClick={() => setShowSaveTargetModal(true)}
-                              className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/10"
-                            >
-                              <Save className="w-4 h-4" />
-                              <span>Save Target Cloud Infra Model</span>
-                            </button>
+                          {/* Full-width CSP Quota & Deployment Warning Banner */}
+                          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs">
+                            <span className="font-bold shrink-0">⚠️ Note:</span>
+                            <span>Resource creation may fail due to account-level CSP quota limits, regional availability, or insufficient instance stock. Verify your account quotas before deployment.</span>
                           </div>
 
-                          {(onNext || onBack) && (
-                            <div className="flex items-center justify-between pt-4 border-t border-border-main/20 mt-4">
-                              {onBack ? (
-                                <button
-                                  onClick={onBack}
-                                  className="px-4 py-2 bg-bg-input border border-border-main hover:bg-bg-main text-text-main font-bold text-xs rounded-xl transition cursor-pointer flex items-center space-x-1.5"
-                                >
-                                  <ArrowLeft className="w-3.5 h-3.5" />
-                                  <span>Back to 2. Refinement</span>
-                                </button>
-                              ) : <div />}
+                          {/* Success feedback toast */}
+                          {targetSaveSuccessMsg && (
+                            <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold animate-fade-in">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                              <span>{targetSaveSuccessMsg}</span>
+                            </div>
+                          )}
+
+                          {/* Unified Bottom Action & Navigation Bar */}
+                          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-border-main/20 mt-4">
+                            {onBack ? (
+                              <button
+                                onClick={onBack}
+                                className="w-full sm:w-auto px-4 py-2.5 bg-bg-input border border-border-main hover:bg-bg-main text-text-main font-bold text-xs rounded-xl transition cursor-pointer flex items-center justify-center space-x-1.5"
+                              >
+                                <ArrowLeft className="w-3.5 h-3.5" />
+                                <span>Back to 2. Source Infra Refinement</span>
+                              </button>
+                            ) : <div />}
+
+                            <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
+                              <button
+                                onClick={handleDryRunValidate}
+                                disabled={isValidatingDryRun}
+                                className="w-full sm:w-auto px-4 py-2.5 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-extrabold flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-sm disabled:opacity-50"
+                              >
+                                {isValidatingDryRun ? (
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-500" />
+                                ) : (
+                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                                )}
+                                <span>{isValidatingDryRun ? 'Checking Consistency...' : 'Pre-Flight Validation (Dry-Run)'}</span>
+                              </button>
+
+                              <button
+                                onClick={handleDirectSaveTargetModel}
+                                disabled={isSavingTarget}
+                                className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-md shadow-emerald-500/20 disabled:opacity-50"
+                              >
+                                {isSavingTarget ? (
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Save className="w-3.5 h-3.5" />
+                                )}
+                                <span>{isSavingTarget ? 'Saving to File...' : 'Save Target Cloud Infra Model'}</span>
+                              </button>
+
                               {onNext && (
                                 <button
                                   onClick={onNext}
-                                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer ml-auto"
+                                  className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center space-x-1.5 cursor-pointer"
                                 >
                                   <span>Next: Proceed to 4. Migration Execution</span>
-                                  <ArrowRight className="w-4 h-4" />
+                                  <ArrowRight className="w-3.5 h-3.5" />
                                 </button>
                               )}
                             </div>
-                          )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2140,7 +2340,14 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                           {c.targetInfra.nodeGroups.map((ng, i) => (
                             <div key={i} className="flex justify-between border-b border-border-main/10 pb-1 last:border-0 last:pb-0">
                               <span className="text-text-muted">{ng.name}:</span>
-                              <span className="font-bold text-emerald-600 dark:text-emerald-400">{ng.specId} (x{ng.nodeGroupSize})</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-emerald-600 dark:text-emerald-400">{ng.specId} (x{ng.nodeGroupSize})</span>
+                                {getGpuInfo(getSpecInfo(c, ng.specId), ng.specId, ng) && (
+                                  <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-1.5 py-0.5 rounded font-mono" title="Target Cloud GPU Specification is TBD">
+                                    GPU: TBD
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </td>
@@ -2259,6 +2466,94 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                   Confirm Delete
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pre-Flight Validation Modal */}
+      {dryRunResult.open && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="glass-panel p-6 rounded-2xl w-full max-w-2xl border border-border-main animate-scale-up space-y-4">
+            <div className="flex justify-between items-center border-b border-border-main/20 pb-3">
+              <h3 className="text-base font-extrabold text-text-main flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                Pre-Flight Infrastructure Validation (Dry-Run)
+              </h3>
+              <button
+                onClick={() => setDryRunResult({ open: false, issues: [] })}
+                className="text-text-muted hover:text-text-main transition p-1 hover:bg-bg-input rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-text-muted leading-relaxed">
+              CM-Beetle dry-run validation checks 12 core consistency rules (referential integrity, spec-image architecture matching, CSP connection names, and CIDR subnet collisions) before initiating cloud provisioning.
+            </p>
+
+            {dryRunResult.error ? (
+              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-xs space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-red-600 dark:text-red-400">
+                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                  <span>Validation Request Error</span>
+                </div>
+                <p className="text-text-muted">{dryRunResult.error}</p>
+              </div>
+            ) : dryRunResult.valid ? (
+              <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                  <span>All 12 Pre-Flight Consistency Checks Passed!</span>
+                </div>
+                <p className="text-xs text-text-muted leading-relaxed">
+                  Target cloud specifications, OS image configurations, VNet/Subnet address spaces, and security rules are verified and ready for deployment.
+                </p>
+                {dryRunResult.issues && dryRunResult.issues.length > 0 && (
+                  <div className="pt-2 border-t border-emerald-500/20 space-y-1 font-mono text-xs">
+                    <span className="text-amber-500 font-bold">Advisory Warnings ({dryRunResult.issues.length}):</span>
+                    {dryRunResult.issues.map((iss, i) => (
+                      <div key={i} className="text-amber-400 flex items-start gap-1">
+                        <span>• [{iss.code}]</span>
+                        <span>{iss.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl space-y-3">
+                <div className="flex items-center gap-2 font-extrabold text-red-600 dark:text-red-400 text-sm">
+                  <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+                  <span>Validation Issues Detected ({dryRunResult.issues.length} issue(s))</span>
+                </div>
+                <div className="max-h-60 overflow-y-auto space-y-2 pr-1 font-mono text-xs">
+                  {dryRunResult.issues.map((iss, i) => (
+                    <div key={i} className={`p-3 rounded-lg border space-y-1 ${
+                      iss.severity === 'error'
+                        ? 'bg-red-500/15 border-red-500/30 text-red-400'
+                        : 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+                    }`}>
+                      <div className="flex items-center justify-between font-bold">
+                        <span>[{iss.code}]</span>
+                        <span className="uppercase text-xs px-1.5 py-0.5 rounded font-sans bg-bg-panel text-text-main font-extrabold">{iss.severity}</span>
+                      </div>
+                      {iss.path && <div className="text-xs text-text-muted">Path: {iss.path}</div>}
+                      <div className="font-sans font-normal text-text-main">{iss.message}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setDryRunResult({ open: false, issues: [] })}
+                className="px-5 py-2 bg-bg-panel border border-border-main hover:bg-bg-input text-text-main rounded-xl text-xs font-bold transition cursor-pointer"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

@@ -251,9 +251,11 @@ func RecommendInfraCandidates(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
 	}
 
-	// Select specialized core recommendation pipeline based on GPU presence
+	// Select specialized recommendation module based on resource characteristics
 	recommender := recommendation.RecommendInfraCandidates
-	if recommendation.HasAnyGpu(sourceInfra) {
+	if len(sourceInfra.NLBs) > 0 {
+		recommender = recommendation.RecommendInfraWithNlbCandidates
+	} else if recommendation.HasAnyGpu(sourceInfra) {
 		recommender = recommendation.RecommendGpuInfraCandidates
 	}
 

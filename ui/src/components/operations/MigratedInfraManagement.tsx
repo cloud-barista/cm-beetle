@@ -141,6 +141,12 @@ const SAMPLE_INFRA_DETAIL = {
   ]
 };
 
+const isGpuSpec = (specId: string): boolean => {
+  if (!specId) return false;
+  const s = specId.toLowerCase();
+  return s.includes('gpu') || s.includes('g4dn') || s.includes('g5') || s.includes('p3') || s.includes('p4') || s.includes('a2') || s.includes('tesla') || s.includes('a100') || s.includes('h100');
+};
+
 export const MigratedInfraManagement: React.FC = () => {
   const {
     jobs,
@@ -1067,7 +1073,16 @@ export const MigratedInfraManagement: React.FC = () => {
                         return (
                           <tr key={idx} className="hover:bg-emerald-500/[0.02] transition">
                             <td className="py-3 px-4 font-bold text-text-main">{node.name}</td>
-                            <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold">{node.specId}</td>
+                            <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold">
+                              <div className="flex items-center gap-1.5">
+                                <span>{node.specId}</span>
+                                {isGpuSpec(node.specId) && (
+                                  <span className="px-1.5 py-0.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold rounded">
+                                    GPU
+                                  </span>
+                                )}
+                              </div>
+                            </td>
                             <td className="py-3 px-4 select-all text-text-main font-extrabold">{node.publicIp}</td>
                             <td className="py-3 px-4 text-text-muted">{node.privateIp}</td>
                             <td className="py-3 px-4">
@@ -1250,7 +1265,7 @@ export const MigratedInfraManagement: React.FC = () => {
                   </div>
                 ) : (
                   <div className="p-6 bg-bg-panel/40 border border-border-main/40 rounded-xl text-center text-xs font-mono text-text-muted">
-                    No Dedicated Managed NLB configured for this infrastructure. Compute VM instances are configured with Direct Public IP access.
+                    No Dedicated Managed NLB configured for this infrastructure. Compute Nodes are configured with Direct Public IP access.
                   </div>
                 )}
               </div>

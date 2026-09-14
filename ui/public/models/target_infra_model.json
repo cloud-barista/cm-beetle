@@ -1,0 +1,537 @@
+{
+  "id": "model-target-infra-1",
+  "name": "Recommended AWS Web & InfluxDB Cloud Infra",
+  "description": "Optimized AWS cloud infrastructure model (ap-northeast-2) recommended for standard on-premise cluster",
+  "modelType": "cloud",
+  "version": "1.0",
+  "cloudInfraModel": {
+    "status": "highly-matched",
+    "description": "Candidate #1 | highly-matched | 1 NLB(s) | Overall Match Rate: Min=100.0% Max=100.0% Avg=100.0% | VMs: 2 total, 2 matched, 0 acceptable | 1 NLB warning(s): NLB backend 'influxdb_back': load-balancing algorithm 'roundrobin' cannot be directly mapped to cloud NLB. CSP default algorithm will be used.",
+    "targetCloud": {
+      "csp": "aws",
+      "region": "ap-northeast-2"
+    },
+    "targetInfra": {
+      "name": "infra101",
+      "installMonAgent": "",
+      "label": null,
+      "systemLabel": "",
+      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "nodeGroups": [
+        {
+          "name": "ng-influxdb-back",
+          "nodeGroupSize": 2,
+          "label": {
+            "nlbBackend": "influxdb_back",
+            "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf"
+          },
+          "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
+          "connectionName": "aws-ap-northeast-2",
+          "specId": "aws+ap-northeast-2+t3.xlarge",
+          "imageId": "ami-012a353bb3afb92ee",
+          "vNetId": "mig-vnet-01",
+          "subnetId": "mig-subnet-01",
+          "securityGroupIds": [
+            "mig-sg-01"
+          ],
+          "sshKeyId": "mig-sshkey-01",
+          "rootDiskSize": 30,
+          "dataDiskIds": null
+        },
+        {
+          "name": "ng-ec268ed7-821e-9d73-e79f-961262161624",
+          "nodeGroupSize": 1,
+          "label": {
+            "sourceMachineIds": "ec268ed7-821e-9d73-e79f-961262161624"
+          },
+          "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
+          "connectionName": "aws-ap-northeast-2",
+          "specId": "aws+ap-northeast-2+t3.small",
+          "imageId": "ami-012a353bb3afb92ee",
+          "vNetId": "mig-vnet-01",
+          "subnetId": "mig-subnet-01",
+          "securityGroupIds": [
+            "mig-sg-02"
+          ],
+          "sshKeyId": "mig-sshkey-01",
+          "rootDiskSize": 10,
+          "dataDiskIds": null
+        }
+      ],
+      "policyOnPartialFailure": ""
+    },
+    "targetVNet": {
+      "name": "mig-vnet-01",
+      "connectionName": "aws-ap-northeast-2",
+      "cidrBlock": "10.0.0.0/21",
+      "subnetInfoList": [
+        {
+          "name": "mig-subnet-01",
+          "ipv4_CIDR": "10.0.1.0/24",
+          "description": "a recommended subnet for migration"
+        }
+      ],
+      "description": "a recommended vNet for migration"
+    },
+    "targetSshKey": {
+      "name": "mig-sshkey-01",
+      "connectionName": "aws-ap-northeast-2",
+      "description": "SSH key pair for migration (Note: provided ONLY once, MUST be downloaded)",
+      "cspResourceId": "",
+      "fingerprint": "",
+      "username": "",
+      "verifiedUsername": "",
+      "publicKey": "",
+      "privateKey": ""
+    },
+    "targetSpecList": [
+      {
+        "id": "aws+ap-northeast-2+t3.xlarge",
+        "uid": "tbt1via2qor5okve6pun",
+        "cspSpecName": "t3.xlarge",
+        "name": "aws+ap-northeast-2+t3.xlarge",
+        "namespace": "system",
+        "connectionName": "aws-ap-northeast-2",
+        "providerName": "aws",
+        "regionName": "ap-northeast-2",
+        "regionLatitude": 37.36,
+        "regionLongitude": 126.78,
+        "infraType": "node",
+        "architecture": "x86_64",
+        "vCPU": 4,
+        "memoryGiB": 16,
+        "diskSizeGB": -1,
+        "costPerHour": 0.208,
+        "evaluationScore01": -1,
+        "evaluationScore02": -1,
+        "evaluationScore03": -1,
+        "evaluationScore04": -1,
+        "evaluationScore05": -1,
+        "evaluationScore06": -1,
+        "evaluationScore07": -1,
+        "evaluationScore08": -1,
+        "evaluationScore09": -1,
+        "evaluationScore10": -1,
+        "rootDiskType": "",
+        "rootDiskSize": -1,
+        "systemLabel": "auto-gen",
+        "details": [
+          {
+            "key": "AutoRecoverySupported",
+            "value": "true"
+          },
+          {
+            "key": "BareMetal",
+            "value": "false"
+          },
+          {
+            "key": "BurstablePerformanceSupported",
+            "value": "true"
+          },
+          {
+            "key": "CurrentGeneration",
+            "value": "true"
+          },
+          {
+            "key": "DedicatedHostsSupported",
+            "value": "true"
+          },
+          {
+            "key": "EbsInfo",
+            "value": "{EbsOptimizedInfo:{BaselineBandwidthInMbps:695,BaselineIops:4000,BaselineThroughputInMBps:86.875,MaximumBandwidthInMbps:2780,MaximumIops:15700,MaximumThroughputInMBps:347.5},EbsOptimizedSupport:default,EncryptionSupport:supported,NvmeSupport:required}"
+          },
+          {
+            "key": "FreeTierEligible",
+            "value": "false"
+          },
+          {
+            "key": "HibernationSupported",
+            "value": "true"
+          },
+          {
+            "key": "Hypervisor",
+            "value": "nitro"
+          },
+          {
+            "key": "InstanceStorageSupported",
+            "value": "false"
+          },
+          {
+            "key": "InstanceType",
+            "value": "t3.xlarge"
+          },
+          {
+            "key": "MemoryInfo",
+            "value": "{SizeInMiB:16384}"
+          },
+          {
+            "key": "NetworkInfo",
+            "value": "{DefaultNetworkCardIndex:0,EfaInfo:null,EfaSupported:false,EnaSupport:required,Ipv4AddressesPerInterface:15,Ipv6AddressesPerInterface:15,Ipv6Supported:true,MaximumNetworkCards:1,MaximumNetworkInterfaces:4,NetworkCards:[{MaximumNetworkInterfaces:4,NetworkCardIndex:0,NetworkPerformance:Up to 5 Gigabit}],NetworkPerformance:Up to 5 Gigabit}"
+          },
+          {
+            "key": "PlacementGroupInfo",
+            "value": "{SupportedStrategies:[partition,spread]}"
+          },
+          {
+            "key": "ProcessorInfo",
+            "value": "{SupportedArchitectures:[x86_64],SustainedClockSpeedInGhz:2.5}"
+          },
+          {
+            "key": "SupportedBootModes",
+            "value": "legacy-bios; uefi"
+          },
+          {
+            "key": "SupportedRootDeviceTypes",
+            "value": "ebs"
+          },
+          {
+            "key": "SupportedUsageClasses",
+            "value": "on-demand; spot"
+          },
+          {
+            "key": "SupportedVirtualizationTypes",
+            "value": "hvm"
+          },
+          {
+            "key": "VCpuInfo",
+            "value": "{DefaultCores:2,DefaultThreadsPerCore:2,DefaultVCpus:4,ValidCores:[2],ValidThreadsPerCore:[1,2]}"
+          }
+        ]
+      },
+      {
+        "id": "aws+ap-northeast-2+t3.small",
+        "uid": "tbpf96u7vfjaf20v9o5q",
+        "cspSpecName": "t3.small",
+        "name": "aws+ap-northeast-2+t3.small",
+        "namespace": "system",
+        "connectionName": "aws-ap-northeast-2",
+        "providerName": "aws",
+        "regionName": "ap-northeast-2",
+        "regionLatitude": 37.36,
+        "regionLongitude": 126.78,
+        "infraType": "node",
+        "architecture": "x86_64",
+        "vCPU": 2,
+        "memoryGiB": 2,
+        "diskSizeGB": -1,
+        "costPerHour": 0.026,
+        "evaluationScore01": -1,
+        "evaluationScore02": -1,
+        "evaluationScore03": -1,
+        "evaluationScore04": -1,
+        "evaluationScore05": -1,
+        "evaluationScore06": -1,
+        "evaluationScore07": -1,
+        "evaluationScore08": -1,
+        "evaluationScore09": -1,
+        "evaluationScore10": -1,
+        "rootDiskType": "",
+        "rootDiskSize": -1,
+        "systemLabel": "auto-gen",
+        "details": [
+          {
+            "key": "AutoRecoverySupported",
+            "value": "true"
+          },
+          {
+            "key": "BareMetal",
+            "value": "false"
+          },
+          {
+            "key": "BurstablePerformanceSupported",
+            "value": "true"
+          },
+          {
+            "key": "CurrentGeneration",
+            "value": "true"
+          },
+          {
+            "key": "DedicatedHostsSupported",
+            "value": "true"
+          },
+          {
+            "key": "EbsInfo",
+            "value": "{EbsOptimizedInfo:{BaselineBandwidthInMbps:174,BaselineIops:1000,BaselineThroughputInMBps:21.75,MaximumBandwidthInMbps:2085,MaximumIops:11800,MaximumThroughputInMBps:260.625},EbsOptimizedSupport:default,EncryptionSupport:supported,NvmeSupport:required}"
+          },
+          {
+            "key": "FreeTierEligible",
+            "value": "true"
+          },
+          {
+            "key": "HibernationSupported",
+            "value": "true"
+          },
+          {
+            "key": "Hypervisor",
+            "value": "nitro"
+          },
+          {
+            "key": "InstanceStorageSupported",
+            "value": "false"
+          },
+          {
+            "key": "InstanceType",
+            "value": "t3.small"
+          },
+          {
+            "key": "MemoryInfo",
+            "value": "{SizeInMiB:2048}"
+          },
+          {
+            "key": "NetworkInfo",
+            "value": "{DefaultNetworkCardIndex:0,EfaInfo:null,EfaSupported:false,EnaSupport:required,Ipv4AddressesPerInterface:4,Ipv6AddressesPerInterface:4,Ipv6Supported:true,MaximumNetworkCards:1,MaximumNetworkInterfaces:3,NetworkCards:[{MaximumNetworkInterfaces:3,NetworkCardIndex:0,NetworkPerformance:Up to 5 Gigabit}],NetworkPerformance:Up to 5 Gigabit}"
+          },
+          {
+            "key": "PlacementGroupInfo",
+            "value": "{SupportedStrategies:[partition,spread]}"
+          },
+          {
+            "key": "ProcessorInfo",
+            "value": "{SupportedArchitectures:[x86_64],SustainedClockSpeedInGhz:2.5}"
+          },
+          {
+            "key": "SupportedBootModes",
+            "value": "legacy-bios; uefi"
+          },
+          {
+            "key": "SupportedRootDeviceTypes",
+            "value": "ebs"
+          },
+          {
+            "key": "SupportedUsageClasses",
+            "value": "on-demand; spot"
+          },
+          {
+            "key": "SupportedVirtualizationTypes",
+            "value": "hvm"
+          },
+          {
+            "key": "VCpuInfo",
+            "value": "{DefaultCores:1,DefaultThreadsPerCore:2,DefaultVCpus:2,ValidCores:[1],ValidThreadsPerCore:[1,2]}"
+          }
+        ]
+      }
+    ],
+    "targetOsImageList": [
+      {
+        "resourceType": "image",
+        "namespace": "system",
+        "providerName": "aws",
+        "cspImageName": "ami-012a353bb3afb92ee",
+        "regionList": [
+          "ap-northeast-2"
+        ],
+        "id": "ami-012a353bb3afb92ee",
+        "uid": "tbbe6d8vhrqe5l5nne2u",
+        "name": "ami-012a353bb3afb92ee",
+        "sourceNodeUid": "",
+        "sourceCspImageName": "",
+        "connectionName": "aws-ap-northeast-2",
+        "infraType": "",
+        "fetchedTime": "2026.08.21 14:20:39 Fri",
+        "creationDate": "2026-07-31T07:25:12.000Z",
+        "isGPUImage": false,
+        "isKubernetesImage": false,
+        "isBasicImage": true,
+        "isBasicGpuImage": false,
+        "osType": "Ubuntu 22.04",
+        "osArchitecture": "x86_64",
+        "osPlatform": "Linux/UNIX",
+        "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731",
+        "osDiskType": "ebs",
+        "osDiskSizeGB": -1,
+        "imageStatus": "Available",
+        "details": [
+          {
+            "key": "Architecture",
+            "value": "x86_64"
+          },
+          {
+            "key": "BlockDeviceMappings",
+            "value": "{DeviceName:/dev/sda1,Ebs:{DeleteOnTermination:true,Encrypted:false,Iops:null,KmsKeyId:null,OutpostArn:null,SnapshotId:snap-047f4bba8e035b38e,Throughput:null,VolumeSize:8,VolumeType:gp2},NoDevice:null,VirtualName:null}; {DeviceName:/dev/sdb,Ebs:null,NoDevice:null,VirtualName:ephemeral0}; {DeviceName:/dev/sdc,Ebs:null,NoDevice:null,VirtualName:ephemeral1}"
+          },
+          {
+            "key": "BootMode",
+            "value": "uefi-preferred"
+          },
+          {
+            "key": "CreationDate",
+            "value": "2026-07-31T07:25:12.000Z"
+          },
+          {
+            "key": "DeprecationTime",
+            "value": "2028-07-31T07:25:12.000Z"
+          },
+          {
+            "key": "Description",
+            "value": "Canonical, Ubuntu, 22.04, amd64 jammy image"
+          },
+          {
+            "key": "EnaSupport",
+            "value": "true"
+          },
+          {
+            "key": "Hypervisor",
+            "value": "xen"
+          },
+          {
+            "key": "ImageId",
+            "value": "ami-012a353bb3afb92ee"
+          },
+          {
+            "key": "ImageLocation",
+            "value": "amazon/ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731"
+          },
+          {
+            "key": "ImageOwnerAlias",
+            "value": "amazon"
+          },
+          {
+            "key": "ImageType",
+            "value": "machine"
+          },
+          {
+            "key": "Name",
+            "value": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731"
+          },
+          {
+            "key": "OwnerId",
+            "value": "099720109477"
+          },
+          {
+            "key": "PlatformDetails",
+            "value": "Linux/UNIX"
+          },
+          {
+            "key": "Public",
+            "value": "true"
+          },
+          {
+            "key": "RootDeviceName",
+            "value": "/dev/sda1"
+          },
+          {
+            "key": "RootDeviceType",
+            "value": "ebs"
+          },
+          {
+            "key": "SriovNetSupport",
+            "value": "simple"
+          },
+          {
+            "key": "State",
+            "value": "available"
+          },
+          {
+            "key": "UsageOperation",
+            "value": "RunInstances"
+          },
+          {
+            "key": "VirtualizationType",
+            "value": "hvm"
+          }
+        ],
+        "systemLabel": "",
+        "description": "Canonical, Ubuntu, 22.04, amd64 jammy image",
+        "commandHistory": null
+      }
+    ],
+    "targetSecurityGroupList": [
+      {
+        "name": "mig-sg-01",
+        "connectionName": "aws-ap-northeast-2",
+        "vNetId": "mig-vnet-01",
+        "description": "Recommended security group for NLB backend influxdb_back",
+        "firewallRules": [
+          {
+            "Ports": "22",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "8086",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "10.0.0.0/16"
+          },
+          {
+            "Ports": "",
+            "Protocol": "ALL",
+            "Direction": "inbound",
+            "CIDR": "10.0.0.0/16"
+          },
+          {
+            "Ports": "8086",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          }
+        ],
+        "cspResourceId": ""
+      },
+      {
+        "name": "mig-sg-02",
+        "connectionName": "aws-ap-northeast-2",
+        "vNetId": "mig-vnet-01",
+        "description": "Recommended security group for ec268ed7-821e-9d73-e79f-961262161624",
+        "firewallRules": [
+          {
+            "Ports": "22",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "9999",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "",
+            "Protocol": "ALL",
+            "Direction": "inbound",
+            "CIDR": "10.0.0.0/16"
+          }
+        ],
+        "cspResourceId": ""
+      }
+    ],
+    "targetNlbList": [
+      {
+        "description": "Migrated from HAProxy backend: influxdb_back",
+        "type": "PUBLIC",
+        "scope": "REGION",
+        "listener": {
+          "protocol": "TCP",
+          "port": "9999"
+        },
+        "targetGroup": {
+          "protocol": "TCP",
+          "port": "8086",
+          "nodeGroupId": "ng-influxdb-back"
+        },
+        "healthChecker": {
+          "interval": 10,
+          "threshold": 3,
+          "timeout": 10
+        }
+      }
+    ],
+    "targetK8sCluster": {
+      "connectionName": "",
+      "description": "",
+      "name": "",
+      "version": "",
+      "vNetId": "",
+      "subnetIds": null,
+      "securityGroupIds": null,
+      "k8sNodeGroupList": null,
+      "cspResourceId": "",
+      "label": null,
+      "systemLabel": ""
+    }
+  },
+  "updatedTime": "2026-09-10T10:18:27.329Z"
+}

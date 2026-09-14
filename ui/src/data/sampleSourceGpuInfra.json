@@ -1,0 +1,365 @@
+{
+  "nameSeed": "ai-gpu",
+  "desiredCsp": "aws",
+  "desiredRegion": "ap-northeast-2",
+  "sourceInfra": {
+    "network": {
+      "ipv4Networks": {
+        "cidrBlocks": [
+          "10.20.0.0/16"
+        ],
+        "defaultGateways": [
+          {
+            "interfaceName": "ens5",
+            "ip": "10.20.1.1",
+            "machineId": "node-gpu-train-01"
+          },
+          {
+            "interfaceName": "ens5",
+            "ip": "10.20.1.1",
+            "machineId": "node-gpu-infer-01"
+          },
+          {
+            "interfaceName": "ens5",
+            "ip": "10.20.1.1",
+            "machineId": "node-gpu-workstation-01"
+          }
+        ]
+      },
+      "ipv6Networks": {}
+    },
+    "nodes": [
+      {
+        "machineId": "node-gpu-train-01",
+        "hostname": "gpu-trainer-alpha",
+        "cpu": {
+          "architecture": "x86_64",
+          "cores": 32,
+          "cpus": 1,
+          "maxSpeed": 3.4,
+          "model": "AMD EPYC 7763 64-Core Processor",
+          "threads": 64,
+          "vendor": "AuthenticAMD"
+        },
+        "memory": {
+          "available": 120,
+          "totalSize": 128,
+          "type": "DDR4"
+        },
+        "rootDisk": {
+          "label": "/",
+          "totalSize": 500,
+          "type": "NVMe"
+        },
+        "gpuCards": [
+          {
+            "vendor": "NVIDIA",
+            "model": "A100-PCIE-80GB",
+            "architecture": "Ampere",
+            "driverVersion": "535.129.03",
+            "cudaVersion": "12.2",
+            "memoryTotalGB": 80,
+            "memoryFreeGB": 79.5,
+            "memoryUsedGB": 0.5,
+            "pciBusId": "0000:00:1a.0",
+            "driverIndex": "0"
+          },
+          {
+            "vendor": "NVIDIA",
+            "model": "A100-PCIE-80GB",
+            "architecture": "Ampere",
+            "driverVersion": "535.129.03",
+            "cudaVersion": "12.2",
+            "memoryTotalGB": 80,
+            "memoryFreeGB": 79.5,
+            "memoryUsedGB": 0.5,
+            "pciBusId": "0000:00:1b.0",
+            "driverIndex": "1"
+          },
+          {
+            "vendor": "NVIDIA",
+            "model": "Tesla T4",
+            "architecture": "Turing",
+            "driverVersion": "535.129.03",
+            "cudaVersion": "12.2",
+            "memoryTotalGB": 16,
+            "memoryFreeGB": 15.8,
+            "memoryUsedGB": 0.2,
+            "pciBusId": "0000:00:1c.0",
+            "driverIndex": "2"
+          },
+          {
+            "vendor": "AMD",
+            "model": "Instinct MI350",
+            "architecture": "CDNA3",
+            "driverVersion": "rocm-6.1",
+            "cudaVersion": "",
+            "memoryTotalGB": 128,
+            "memoryFreeGB": 127,
+            "memoryUsedGB": 1,
+            "pciBusId": "0000:00:1d.0",
+            "driverIndex": "3"
+          }
+        ],
+        "interfaces": [
+          {
+            "ipv4CidrBlocks": [
+              "10.20.1.10/24"
+            ],
+            "ipv6Addresses": [],
+            "macAddress": "02:aa:bb:cc:dd:01",
+            "mtu": 9001,
+            "name": "ens5",
+            "state": "up"
+          }
+        ],
+        "firewallTable": [
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8000",
+            "protocol": "tcp",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8888",
+            "protocol": "tcp",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          }
+        ],
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "10.20.1.1",
+            "interface": "ens5",
+            "linkState": "up",
+            "metric": 100,
+            "protocol": "kernel"
+          }
+        ],
+        "os": {
+          "id": "ubuntu",
+          "idLike": "debian",
+          "name": "Ubuntu",
+          "prettyName": "Ubuntu 22.04.4 LTS",
+          "version": "22.04.4 LTS (Jammy Jellyfish)",
+          "versionCodename": "jammy",
+          "versionId": "22.04"
+        }
+      },
+      {
+        "machineId": "node-gpu-infer-01",
+        "hostname": "gpu-inference-worker",
+        "cpu": {
+          "architecture": "x86_64",
+          "cores": 16,
+          "cpus": 1,
+          "maxSpeed": 2.8,
+          "model": "Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz",
+          "threads": 32,
+          "vendor": "GenuineIntel"
+        },
+        "memory": {
+          "available": 60,
+          "totalSize": 64,
+          "type": "DDR4"
+        },
+        "rootDisk": {
+          "label": "/",
+          "totalSize": 250,
+          "type": "SSD"
+        },
+        "gpuCards": [
+          {
+            "vendor": "NVIDIA",
+            "model": "Tesla T4",
+            "architecture": "Turing",
+            "driverVersion": "535.129.03",
+            "cudaVersion": "12.2",
+            "memoryTotalGB": 16,
+            "memoryFreeGB": 15.8,
+            "memoryUsedGB": 0.2,
+            "pciBusId": "0000:00:1e.0",
+            "driverIndex": "0"
+          },
+          {
+            "vendor": "NVIDIA",
+            "model": "Tesla T4",
+            "architecture": "Turing",
+            "driverVersion": "535.129.03",
+            "cudaVersion": "12.2",
+            "memoryTotalGB": 16,
+            "memoryFreeGB": 15.8,
+            "memoryUsedGB": 0.2,
+            "pciBusId": "0000:00:1f.0",
+            "driverIndex": "1"
+          }
+        ],
+        "interfaces": [
+          {
+            "ipv4CidrBlocks": [
+              "10.20.1.20/24"
+            ],
+            "ipv6Addresses": [],
+            "macAddress": "02:aa:bb:cc:dd:02",
+            "mtu": 9001,
+            "name": "ens5",
+            "state": "up"
+          }
+        ],
+        "firewallTable": [
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          }
+        ],
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "10.20.1.1",
+            "interface": "ens5",
+            "linkState": "up",
+            "metric": 100,
+            "protocol": "kernel"
+          }
+        ],
+        "os": {
+          "id": "ubuntu",
+          "idLike": "debian",
+          "name": "Ubuntu",
+          "prettyName": "Ubuntu 22.04.4 LTS",
+          "version": "22.04.4 LTS (Jammy Jellyfish)",
+          "versionCodename": "jammy",
+          "versionId": "22.04"
+        }
+      },
+      {
+        "machineId": "node-gpu-workstation-01",
+        "hostname": "gpu-dev-station",
+        "cpu": {
+          "architecture": "x86_64",
+          "cores": 8,
+          "cpus": 1,
+          "maxSpeed": 2.5,
+          "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
+          "threads": 16,
+          "vendor": "GenuineIntel"
+        },
+        "memory": {
+          "available": 28,
+          "totalSize": 32,
+          "type": "DDR4"
+        },
+        "rootDisk": {
+          "label": "/",
+          "totalSize": 120,
+          "type": "SSD"
+        },
+        "gpuCards": [
+          {
+            "vendor": "NVIDIA",
+            "model": "NVIDIA L4",
+            "architecture": "Ada Lovelace",
+            "driverVersion": "535.129.03",
+            "cudaVersion": "12.4",
+            "memoryTotalGB": 24,
+            "memoryFreeGB": 23.5,
+            "memoryUsedGB": 0.5,
+            "pciBusId": "0000:00:20.0",
+            "driverIndex": "0"
+          }
+        ],
+        "interfaces": [
+          {
+            "ipv4CidrBlocks": [
+              "10.20.1.30/24"
+            ],
+            "ipv6Addresses": [],
+            "macAddress": "02:aa:bb:cc:dd:03",
+            "mtu": 9001,
+            "name": "ens5",
+            "state": "up"
+          }
+        ],
+        "firewallTable": [
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8888",
+            "protocol": "tcp",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          }
+        ],
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "10.20.1.1",
+            "interface": "ens5",
+            "linkState": "up",
+            "metric": 100,
+            "protocol": "kernel"
+          }
+        ],
+        "os": {
+          "id": "ubuntu",
+          "idLike": "debian",
+          "name": "Ubuntu",
+          "prettyName": "Ubuntu 22.04.4 LTS",
+          "version": "22.04.4 LTS (Jammy Jellyfish)",
+          "versionCodename": "jammy",
+          "versionId": "22.04"
+        }
+      }
+    ],
+    "nlbs": []
+  }
+}

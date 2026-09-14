@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty } from '../types/migration';
 import { honeybeeApi, damselflyApi, beetleApi, tumblebugApi } from '../api/client';
 import recommendedInfraSample from '../data/sampleTargetInfra.json';
+import sampleGpuData from '../data/sampleSourceGpuInfra.json';
 
 // ----------------------------------------------------------------------------
 // HIGH QUALITY DEMO / SOURCE INFRA MODEL DATA
@@ -115,6 +116,20 @@ export const DEMO_SOURCE_INFRA: OnpremInfra = {
         { name: "ens5", state: "up", macAddress: "02:bf:6e:6c:6e:31", mtu: 9001, ipv4CidrBlocks: ["10.0.1.138/24"], ipv6CidrBlocks: ["fe80::bf:6eff:fe6c:6e31/64"] }
       ],
       machineId: "ec288dd0-c6fa-8a49-2f60-bc898311febf",
+      gpuCards: [
+        {
+          vendor: "NVIDIA",
+          model: "Tesla T4",
+          architecture: "Turing",
+          driverVersion: "535.129.03",
+          cudaVersion: "12.2",
+          memoryTotalGB: 16,
+          memoryFreeGB: 15.8,
+          memoryUsedGB: 0.2,
+          pciBusId: "0000:00:1e.0",
+          driverIndex: "0"
+        }
+      ],
       memory: { available: 7, totalSize: 8, type: "DDR4" },
       os: { id: "ubuntu", idLike: "debian", name: "Ubuntu", prettyName: "Ubuntu 22.04.3 LTS", version: "22.04.3 LTS (Jammy Jellyfish)", versionCodename: "jammy", versionId: "22.04" },
       rootDisk: { label: "", totalSize: 30, type: "SSD" },
@@ -143,7 +158,16 @@ export const DEMO_SOURCE_INFRA: OnpremInfra = {
   ]
 };
 
-const DEFAULT_FALLBACK_SOURCE_MODEL: OnpremModelEnvelope = {
+export const DEFAULT_GPU_SOURCE_MODEL: OnpremModelEnvelope = {
+  id: 'sample-source-gpu-infra-1',
+  name: '[Sample] ai-gpu-cluster-multi-vendor',
+  description: 'AI/LLM cluster with heterogeneous GPUs (2x A100 80GB, 1x T4, 1x MI350, 1x L4)',
+  onpremiseInfraModel: sampleGpuData.sourceInfra as unknown as OnpremInfra,
+  version: '1.0',
+  updatedTime: new Date().toISOString()
+};
+
+export const DEFAULT_FALLBACK_SOURCE_MODEL: OnpremModelEnvelope = {
   id: 'sample-source-infra-1',
   name: '[Sample] web-haproxy-influxdb',
   description: '1 HAProxy/App node + 2 InfluxDB nodes with NLB (sample)',
@@ -279,6 +303,10 @@ export interface MigrationJob {
   vms?: { publicIp: string; privateIp: string; specId: string; name: string }[];
   error?: string;
   isSample?: boolean;
+  targetNlbList?: any[];
+  nlbReqId?: string;
+  nlbStatus?: 'Idle' | 'Provisioning' | 'Success' | 'Failed';
+  nlbHealth?: { healthy: boolean; status: string; checkedAt: string };
 }
 
 export interface ObjectStorageJobCard {
@@ -364,7 +392,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   connections: [],
   isLoadingSource: false,
   refinedSourceInfra: DEMO_SOURCE_INFRA,
-  savedSourceModels: [DEFAULT_FALLBACK_SOURCE_MODEL],
+  savedSourceModels: [DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL],
   selectedSourceModel: DEFAULT_FALLBACK_SOURCE_MODEL,
   tumblebugProviders: [
     'aws', 'azure', 'gcp', 'alibaba', 'tencent',
@@ -481,14 +509,15 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   fetchSavedSourceModels: async () => {
+    const builtInSamples = [DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL];
+    const builtInIds = new Set(builtInSamples.map(s => s.id));
     try {
       const models = await damselflyApi.getSourceModels();
-      // Always include the built-in sample model at the top of the list
-      const withoutSample = models.filter((m: OnpremModelEnvelope) => m.id !== DEFAULT_FALLBACK_SOURCE_MODEL.id);
-      set({ savedSourceModels: [DEFAULT_FALLBACK_SOURCE_MODEL, ...withoutSample] });
+      const withoutSamples = models.filter((m: OnpremModelEnvelope) => !builtInIds.has(m.id));
+      set({ savedSourceModels: [...builtInSamples, ...withoutSamples] });
     } catch {
-      // Damselfly unreachable — show sample model only
-      set({ savedSourceModels: [DEFAULT_FALLBACK_SOURCE_MODEL] });
+      // Damselfly unreachable — show sample models only
+      set({ savedSourceModels: builtInSamples });
     }
   },
 
@@ -803,7 +832,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     if (!nsId || !infraId) return;
 
     try {
-      const reportHtml = await beetleApi.getMigrationReport(nsId, infraId);
+      const sourceInfra = get().refinedSourceInfra;
+      const reportHtml = await beetleApi.getMigrationReport(nsId, infraId, sourceInfra);
       set({ liveReportHtml: reportHtml });
     } catch (err) {
       console.error('Failed to load migration report:', err);

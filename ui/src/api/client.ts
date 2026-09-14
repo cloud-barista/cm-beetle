@@ -362,6 +362,62 @@ export const beetleApi = {
     }
   },
 
+  // Stage 2: Migrate NLB for deployed infrastructure (with Prefer: respond-async header)
+  migrateNlb: async (
+    nsId: string,
+    infraId: string,
+    targetNlbList: any[],
+    useExisting: boolean = true
+  ): Promise<{ success: boolean; reqId?: string; data?: any; error?: string }> => {
+    try {
+      const response = await api.post(
+        `/beetle/migration/middleware/ns/${nsId}/infra/${infraId}/nlb?useExisting=${useExisting}`,
+        { targetNlbList },
+        {
+          headers: {
+            'Prefer': 'respond-async'
+          }
+        }
+      );
+      const reqId = response.data?.data?.reqId || response.headers['x-request-id'];
+      return { success: true, reqId, data: response.data };
+    } catch (err: any) {
+      return { success: false, error: err.response?.data?.error || err.response?.data?.message || err.message };
+    }
+  },
+
+  // Query live NLB health status from CSP
+  getNlbHealth: async (
+    nsId: string,
+    infraId: string,
+    nlbId: string
+  ): Promise<{ success: boolean; data?: any; error?: string }> => {
+    try {
+      const response = await api.get(
+        `/beetle/migration/middleware/ns/${nsId}/infra/${infraId}/nlb/${nlbId}/healthz`
+      );
+      return { success: true, data: response.data?.data || response.data };
+    } catch (err: any) {
+      return { success: false, error: err.response?.data?.error || err.response?.data?.message || err.message };
+    }
+  },
+
+  // List all NLBs in deployed infrastructure
+  getNlbList: async (
+    nsId: string,
+    infraId: string
+  ): Promise<{ success: boolean; data?: any[]; error?: string }> => {
+    try {
+      const response = await api.get(
+        `/beetle/migration/middleware/ns/${nsId}/infra/${infraId}/nlb`
+      );
+      const resData = response.data?.data || response.data;
+      return { success: true, data: Array.isArray(resData) ? resData : [] };
+    } catch (err: any) {
+      return { success: false, error: err.response?.data?.error || err.response?.data?.message || err.message };
+    }
+  },
+
   // Poll async request details by ReqID
   getRequestDetails: async (reqId: string): Promise<{ status: string; errorResponse?: string; responseData?: any }> => {
     try {
@@ -382,9 +438,22 @@ export const beetleApi = {
   },
 
   // Fetch final migration correlation and comparison report
-  getMigrationReport: async (nsId: string, infraId: string): Promise<string> => {
-    const response = await api.post(`/beetle/report/migration/ns/${nsId}/infra/${infraId}?format=html`, {});
-    return response.data;
+  getMigrationReport: async (nsId: string, infraId: string, sourceInfra?: any): Promise<string> => {
+    try {
+      if (sourceInfra?.nodes && sourceInfra.nodes.length > 0) {
+        const response = await api.post(`/beetle/report/migration/ns/${nsId}/infra/${infraId}?format=html`, {
+          onpremiseInfraModel: sourceInfra
+        });
+        return response.data;
+      }
+      // Fallback to target summary when sourceInfra is not provided
+      const response = await api.get(`/beetle/summary/target/ns/${nsId}/infra/${infraId}?format=html`);
+      return response.data;
+    } catch (err: any) {
+      console.warn('POST migration report failed, falling back to target summary:', err);
+      const response = await api.get(`/beetle/summary/target/ns/${nsId}/infra/${infraId}?format=html`);
+      return response.data;
+    }
   },
 
   // Fetch list of migrated multi-cloud infrastructures from Beetle API (GET /beetle/migration/ns/{nsId}/infra)
@@ -463,6 +532,28 @@ export const beetleApi = {
         success: false,
         error: err.response?.data?.error || err.response?.data?.message || err.message
       };
+    }
+  },
+
+  // Overwrite sampleSourceInfra.json or sampleSourceGpuInfra.json directly on server file system for testing
+  saveSourceInfraModelToFile: async (model: any, isGpu: boolean = false): Promise<{ success: boolean; message?: string; fileName?: string; error?: string }> => {
+    try {
+      const url = isGpu ? '/api/models/source-infra?sample=gpu' : '/api/models/source-infra';
+      const response = await axios.post(url, model);
+      return { success: true, message: response.data?.message || 'Source model saved and overwritten successfully.', fileName: response.data?.fileName };
+    } catch (err: any) {
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  // Overwrite sampleTargetInfra.json or sampleTargetGpuInfra.json directly on server file system for testing
+  saveTargetInfraModelToFile: async (model: any, isGpu: boolean = false): Promise<{ success: boolean; message?: string; fileName?: string; error?: string }> => {
+    try {
+      const url = isGpu ? '/api/models/target-infra?sample=gpu' : '/api/models/target-infra';
+      const response = await axios.post(url, model);
+      return { success: true, message: response.data?.message || 'Target model saved and overwritten successfully.', fileName: response.data?.fileName };
+    } catch (err: any) {
+      return { success: false, error: err.response?.data?.error || err.message };
     }
   },
 
