@@ -32,7 +32,8 @@ import {
   ShieldCheck,
   Database,
   Shield,
-  Lock
+  Lock,
+  Network
 } from 'lucide-react';
 
 interface MigrationJob {
@@ -52,6 +53,10 @@ interface MigrationJob {
   vms?: { publicIp: string; privateIp: string; specId: string; name: string }[];
   error?: string;
   isSample?: boolean;
+  targetNlbList?: any[];
+  nlbReqId?: string;
+  nlbStatus?: 'Idle' | 'Provisioning' | 'Success' | 'Failed';
+  nlbHealth?: { healthy: boolean; status: string; checkedAt: string };
 }
 
 export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
@@ -113,6 +118,33 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
   const [customTumblebugEndpoint, setCustomTumblebugEndpoint] = useState('');
   const [customTumblebugUser, setCustomTumblebugUser] = useState('');
   const [customTumblebugPassword, setCustomTumblebugPassword] = useState('');
+
+  // NLB Live Health Probing state & handler
+  const [probingNlb, setProbingNlb] = useState(false);
+  const handleProbeNlbHealth = async (job: MigrationJob) => {
+    if (!job) return;
+    setProbingNlb(true);
+    const nlbId = job.targetNlbList?.[0]?.name || `${job.infraId}-nlb`;
+    try {
+      const res = await beetleApi.getNlbHealth(job.nsId, job.infraId, nlbId);
+      setJobs(prev => prev.map(j => j.id === job.id ? {
+        ...j,
+        nlbHealth: {
+          healthy: res.success && !res.error,
+          status: res.data?.status || (res.success ? 'Healthy' : 'Unhealthy'),
+          checkedAt: new Date().toLocaleTimeString()
+        },
+        logs: [
+          ...j.logs,
+          `GET /nlb/${nlbId}/healthz -> Status: ${res.data?.status || (res.success ? 'Healthy' : 'Unhealthy')}`
+        ]
+      } : j));
+    } catch (err: any) {
+      console.warn('Probe health error:', err);
+    } finally {
+      setProbingNlb(false);
+    }
+  };
 
   // Auto fetch migrated target storages when opening data launch modal or changing nsId
   const handleFetchTargetStorages = async (nsIdToFetch: string) => {
@@ -309,8 +341,10 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     const interval = setInterval(async () => {
       const currentJobs = jobsRef.current;
       const activeJobsToPoll = currentJobs.filter(j => !j.isSample && j.status === 'Handling');
+      const activeNlbJobsToPoll = currentJobs.filter(j => !j.isSample && j.nlbStatus === 'Provisioning' && j.nlbReqId);
       
       const statusUpdates: Record<string, { status: string; errorResponse?: string; responseData?: any }> = {};
+      const nlbStatusUpdates: Record<string, { status: string; errorResponse?: string }> = {};
 
       for (const job of activeJobsToPoll) {
         try {
@@ -324,6 +358,22 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
           }
         } catch {
           // ignore transient error
+        }
+      }
+
+      for (const job of activeNlbJobsToPoll) {
+        if (job.nlbReqId) {
+          try {
+            const res = await beetleApi.getRequestDetails(job.nlbReqId);
+            if (res && res.status) {
+              nlbStatusUpdates[job.id] = {
+                status: res.status,
+                errorResponse: res.errorResponse
+              };
+            }
+          } catch {
+            // ignore transient error
+          }
         }
       }
 
@@ -360,6 +410,35 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
               setToastMsg(`🎉 [${job.infraId}] Infrastructure Migration Succeeded!`);
               setTimeout(() => setToastMsg(null), 5000);
 
+              // Stage 2: Automatic NLB Deployment Trigger if targetNlbList is present and nlbStatus is 'Idle'
+              if (job.targetNlbList && job.targetNlbList.length > 0 && (!job.nlbStatus || job.nlbStatus === 'Idle')) {
+                beetleApi.migrateNlb(job.nsId, job.infraId, job.targetNlbList).then(nlbRes => {
+                  if (nlbRes.success && nlbRes.reqId) {
+                    setJobs(prev => prev.map(j => j.id === job.id ? {
+                      ...j,
+                      nlbStatus: 'Provisioning',
+                      nlbReqId: nlbRes.reqId,
+                      logs: [
+                        ...j.logs,
+                        `Stage 2 -> POST /beetle/migration/middleware/ns/${job.nsId}/infra/${job.infraId}/nlb`,
+                        `HTTP 202 Accepted (NLB ReqID: ${nlbRes.reqId}, Status: Provisioning)`
+                      ]
+                    } : j));
+                  } else if (!nlbRes.success) {
+                    setJobs(prev => prev.map(j => j.id === job.id ? {
+                      ...j,
+                      nlbStatus: 'Failed',
+                      logs: [
+                        ...j.logs,
+                        `Stage 2 NLB Migration Failed: ${nlbRes.error || 'Unknown error'}`
+                      ]
+                    } : j));
+                  }
+                }).catch(err => {
+                  console.warn('NLB migration trigger error:', err);
+                });
+              }
+
               // Extract real VM nodes from Tumblebug/Beetle responseData
               const rawNodes = update?.responseData?.node || update?.responseData?.infraInfo?.node || [];
               const parsedVms = Array.isArray(rawNodes) && rawNodes.length > 0
@@ -387,6 +466,41 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 ],
                 vms: parsedVms
               };
+            }
+
+            // Handle Stage 2 NLB polling update
+            if (job.nlbStatus === 'Provisioning' && job.nlbReqId) {
+              const nlbUpdate = nlbStatusUpdates[job.id];
+              if (nlbUpdate) {
+                if (nlbUpdate.status === 'Success' || nlbUpdate.status === 'Completed') {
+                  const nlbId = job.targetNlbList?.[0]?.name || `${job.infraId}-nlb`;
+                  beetleApi.getNlbHealth(job.nsId, job.infraId, nlbId).then(hRes => {
+                    setJobs(prev => prev.map(j => j.id === job.id ? {
+                      ...j,
+                      nlbStatus: 'Success',
+                      nlbHealth: {
+                        healthy: hRes.success && !hRes.error,
+                        status: hRes.data?.status || 'Healthy',
+                        checkedAt: new Date().toLocaleTimeString()
+                      },
+                      logs: [
+                        ...j.logs,
+                        `Stage 2 -> NLB Provisioned Successfully!`,
+                        `GET /nlb/${nlbId}/healthz -> Status: ${hRes.data?.status || 'Healthy'}`
+                      ]
+                    } : j));
+                  });
+                } else if (nlbUpdate.status === 'Error' || nlbUpdate.status === 'Failed') {
+                  return {
+                    ...job,
+                    nlbStatus: 'Failed',
+                    logs: [
+                      ...job.logs,
+                      `Stage 2 -> NLB Provisioning Failed: ${nlbUpdate.errorResponse || 'Error'}`
+                    ]
+                  };
+                }
+              }
             }
 
             // Still Handling on backend API
@@ -499,6 +613,8 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       elapsedSeconds: 0,
       nodeGroupsCount: cloudModel?.targetInfra?.nodeGroups?.length || 0,
       totalVms: (cloudModel?.targetInfra?.nodeGroups || []).reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0),
+      targetNlbList: cloudModel.targetNlbList || [],
+      nlbStatus: cloudModel.targetNlbList && cloudModel.targetNlbList.length > 0 ? 'Idle' : undefined,
       logs: [
         `POST /beetle/migration/ns/${customNsId}/infra?nameSeed=${customNameSeed}`,
         `HTTP 202 Accepted (ReqID: ${reqId}, Status: Handling)`,
@@ -787,7 +903,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
               className="px-5 py-2.5 bg-bg-input/60 hover:bg-bg-main border border-border-main text-text-main font-bold text-xs rounded-xl transition flex items-center space-x-2 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to 3. Target Infra Optimization</span>
+              <span>Back to 3. Target Cloud Optimizer</span>
             </button>
 
             <div className="flex items-center space-x-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-bold font-mono">
@@ -968,6 +1084,67 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
             </div>
           )}
 
+          {/* Stage 2 NLB Status Card */}
+          {activeJob.targetNlbList && activeJob.targetNlbList.length > 0 && (
+            <div className="p-4.5 bg-bg-panel/40 border border-border-main/50 rounded-2xl space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border-main/20 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Network className="w-4 h-4 text-emerald-500" />
+                  <span className="text-sm font-extrabold text-text-main">
+                    Stage 2: Managed Network Load Balancer (NLB)
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                    activeJob.nlbStatus === 'Success'
+                      ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40'
+                      : activeJob.nlbStatus === 'Provisioning'
+                      ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 animate-pulse'
+                      : activeJob.nlbStatus === 'Failed'
+                      ? 'bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/40'
+                      : 'bg-bg-input text-text-muted border border-border-main'
+                  }`}>
+                    {activeJob.nlbStatus || 'Pending Stage 1'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {activeJob.nlbHealth && (
+                    <span className="text-xs font-mono text-text-muted flex items-center gap-1">
+                      <span className={`w-2 h-2 rounded-full ${activeJob.nlbHealth.healthy ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                      Health: <strong className="text-text-main">{activeJob.nlbHealth.status}</strong> ({activeJob.nlbHealth.checkedAt})
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleProbeNlbHealth(activeJob)}
+                    disabled={probingNlb || activeJob.nlbStatus !== 'Success'}
+                    className="px-3 py-1 bg-bg-panel border border-border-main hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1 disabled:opacity-40"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${probingNlb ? 'animate-spin' : ''}`} />
+                    <span>Probe NLB Health</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
+                {activeJob.targetNlbList.map((nlb: any, i: number) => (
+                  <div key={i} className="p-3 bg-bg-input/40 border border-border-main/30 rounded-xl space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-text-muted">Listener:</span>
+                      <span className="font-extrabold text-text-main">{nlb.listener?.protocol || 'TCP'}:{nlb.listener?.port || '80'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-text-muted">Target Group:</span>
+                      <span className="font-extrabold text-teal-600 dark:text-teal-400">{nlb.targetGroup?.nodeGroupId || 'All Nodes'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-text-muted">Scope / Type:</span>
+                      <span className="text-text-main">{nlb.scope || 'REGION'} ({nlb.type || 'PUBLIC'})</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Logs Console */}
           <div className="space-y-2">
             <h4 className="text-xs font-bold text-text-muted font-mono uppercase">REST API Request & Response Log</h4>
@@ -989,7 +1166,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 className="px-5 py-2.5 bg-bg-input/60 hover:bg-bg-main border border-border-main text-text-main font-bold text-xs rounded-xl transition flex items-center space-x-2 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>Back to 3. Target Infra Optimization</span>
+                <span>Back to 3. Target Cloud Optimizer</span>
               </button>
 
               <div className="flex items-center space-x-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-bold font-mono">
@@ -1187,9 +1364,9 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                             }`}>
                               <div className="flex items-center justify-between font-bold">
                                 <span>[{iss.code}]</span>
-                                <span className="uppercase text-[10px] px-1.5 py-0.5 rounded font-sans bg-bg-panel">{iss.severity}</span>
+                                <span className="uppercase text-xs px-1.5 py-0.5 rounded font-sans bg-bg-panel font-extrabold">{iss.severity}</span>
                               </div>
-                              {iss.path && <div className="text-[11px] opacity-80">Path: {iss.path}</div>}
+                              {iss.path && <div className="text-xs opacity-80">Path: {iss.path}</div>}
                               <div className="font-sans font-normal text-text-main">{iss.message}</div>
                             </div>
                           ))}

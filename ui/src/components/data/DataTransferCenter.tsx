@@ -163,6 +163,7 @@ export const DataTransferCenter: React.FC = () => {
   // Step 2 & 3: Source Storage Selection & Sub-Path / Prefix
   const [sourceBucketList, setSourceBucketList] = useState<string[]>([]);
   const [selectedSourceBucket, setSelectedSourceBucket] = useState('');
+  const [sourceScopeMode, setSourceScopeMode] = useState<'all' | 'prefix'>('all');
   const [sourceSubPath, setSourceSubPath] = useState('');
   const [isScanningSource, setIsScanningSource] = useState(false);
 
@@ -390,7 +391,7 @@ export const DataTransferCenter: React.FC = () => {
 
       // Construct Full Path according to Beetle transx.DataLocation.Path specification
       const rawSourceBucket = selectedSourceBucket || 'source-bucket-01';
-      const cleanSourceSubPath = sourceSubPath.trim().replace(/^\/+/, '');
+      const cleanSourceSubPath = (sourceScopeMode === 'all') ? '' : sourceSubPath.trim().replace(/^\/+/, '');
       const fullSourcePath = sourceAccessType === 'object-storage' 
         ? (cleanSourceSubPath ? `${rawSourceBucket}/${cleanSourceSubPath}` : rawSourceBucket) 
         : `${sourceSshHost}:${sourceSshPath}`;
@@ -403,11 +404,21 @@ export const DataTransferCenter: React.FC = () => {
         ? (cleanTargetSubPath ? `${rawTargetStorage}/${cleanTargetSubPath}` : rawTargetStorage) 
         : `${targetSshHost}:${targetSshPath}`;
 
+      // Build filter configuration for source location
+      const includePatterns = includeFilter.split(',').map(s => s.trim()).filter(Boolean);
+      const excludePatterns = excludeFilter.split(',').map(s => s.trim()).filter(Boolean);
+      const hasFilter = includePatterns.length > 0 || excludePatterns.length > 0;
+      const filterConfig = hasFilter ? {
+        ...(includePatterns.length > 0 ? { include: includePatterns } : {}),
+        ...(excludePatterns.length > 0 ? { exclude: excludePatterns } : {})
+      } : undefined;
+
       // Step 2: Build Plaintext DataMigrationModel matching pkg/api/rest/controller/migration-data.go & transx specification
       const plainModel = {
         source: {
           storageType: sourceAccessType === 'object-storage' ? 'objectstorage' : 'filesystem',
           path: fullSourcePath,
+          ...(filterConfig ? { filter: filterConfig } : {}),
           ...(sourceAccessType === 'object-storage' ? {
             objectStorage: {
               accessType: 'minio',
@@ -475,11 +486,7 @@ export const DataTransferCenter: React.FC = () => {
             }
           })
         },
-        strategy: dataStrategy || 'auto',
-        filter: {
-          include: includeFilter.split(',').map(s => s.trim()).filter(Boolean),
-          exclude: excludeFilter.split(',').map(s => s.trim()).filter(Boolean)
-        }
+        strategy: dataStrategy || 'auto'
       };
 
       // Step 3: Encrypt Sensitive Credential Fields Client-Side
@@ -1353,17 +1360,64 @@ export const DataTransferCenter: React.FC = () => {
                   </span>
 
                   {sourceAccessType === 'object-storage' ? (
-                    <div>
-                      <label className="block text-text-muted font-normal text-sm mb-1">
-                        Source Storage Sub-Path / Prefix (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={sourceSubPath}
-                        onChange={(e) => setSourceSubPath(e.target.value)}
-                        placeholder="/ (e.g. data/2026/ or uploads/)"
-                        className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 font-bold text-sm"
-                      />
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-text-muted font-normal text-sm mb-1.5">
+                          Transfer Scope
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSourceScopeMode('all');
+                              setSourceSubPath('');
+                            }}
+                            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all text-center flex items-center justify-center gap-1.5 ${
+                              sourceScopeMode === 'all'
+                                ? 'bg-emerald-500/15 border-emerald-500 text-emerald-400 shadow-sm'
+                                : 'bg-bg-panel border-border-main text-text-muted hover:border-emerald-500/50'
+                            }`}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                            Entire Bucket (/*)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSourceScopeMode('prefix')}
+                            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all text-center flex items-center justify-center gap-1.5 ${
+                              sourceScopeMode === 'prefix'
+                                ? 'bg-emerald-500/15 border-emerald-500 text-emerald-400 shadow-sm'
+                                : 'bg-bg-panel border-border-main text-text-muted hover:border-emerald-500/50'
+                            }`}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-teal-500 inline-block" />
+                            Sub-Folder / Prefix
+                          </button>
+                        </div>
+                      </div>
+
+                      {sourceScopeMode === 'prefix' ? (
+                        <div>
+                          <label className="block text-text-muted font-normal text-sm mb-1">
+                            Specific Key Prefix / Directory
+                          </label>
+                          <input
+                            type="text"
+                            value={sourceSubPath}
+                            onChange={(e) => setSourceSubPath(e.target.value)}
+                            placeholder="e.g. data/ or uploads/ (leave blank for root)"
+                            className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 font-bold text-sm"
+                          />
+                          <p className="text-xs text-text-muted mt-1">
+                            Only objects starting with this prefix will be transferred.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="p-2.5 bg-bg-panel/80 border border-border-main/50 rounded-xl text-xs text-text-muted flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span>All objects and folders in bucket <strong className="text-text-main">{selectedSourceBucket || 'bucket'}</strong> will be transferred.</span>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div>
@@ -1383,7 +1437,9 @@ export const DataTransferCenter: React.FC = () => {
                     <span className="text-emerald-400 font-extrabold text-xs shrink-0">Full Source URI:</span>
                     <code className="text-emerald-950 font-extrabold font-mono text-xs bg-emerald-300 px-3 py-1 rounded-lg border border-emerald-400 break-all whitespace-normal shadow-sm">
                       {sourceAccessType === 'object-storage'
-                        ? `${dataCsp.toLowerCase()}://${selectedSourceBucket || 'bucket'}/${sourceSubPath.trim().replace(/^\/+/, '')}`
+                        ? (sourceScopeMode === 'all' || !sourceSubPath.trim()
+                            ? `${dataCsp.toLowerCase()}://${selectedSourceBucket || 'bucket'} (All Objects)`
+                            : `${dataCsp.toLowerCase()}://${selectedSourceBucket || 'bucket'}/${sourceSubPath.trim().replace(/^\/+/, '')}`)
                         : `ssh://${sourceSshUser || 'ubuntu'}@${sourceSshHost || '192.168.1.50'}:${sourceSshPort || '22'}${sourceSshPath}`}
                     </code>
                   </div>

@@ -10,6 +10,16 @@ applyTo: "**/*.go"
 - **Formatting:** Use `gofmt` or `goimports`.
 - **Linting:** Ensure code passes `golangci-lint` (run `make lint`).
 
+## Core Engineering Philosophy & Principles
+
+- **Philosophy:**
+  - *"Simple is better than complex. Clear is better than clever."* Favor direct, transparent Go code over unnecessary abstractions.
+  - *"Design for what exists today, not an imaginary future."* Implement concrete requirements based on active code and models.
+- **Go SRP (Single Responsibility Principle):** Each file, struct, and function must have a single, well-defined responsibility and a single reason to change.
+- **No Fallback:** Never use silent fallback degradation or hidden catch-all defaults. Validate inputs explicitly and fail fast with meaningful errors.
+- **No Circular Dependencies (순환 참조 불가):** Maintain strictly acyclic dependency graphs across packages, interfaces, and types.
+- **Maintainability & Continuous Improvement:** Structure code linearly so it is straightforward to trace, test, profile, and enhance as resource relationships evolve.
+
 ## Logging & Error Handling
 
 - **Logging:** Use `zerolog`.
@@ -33,6 +43,7 @@ applyTo: "**/*.go"
 - **Be precise**: Include technical details (numbers, limits, ratios) when relevant.
 - **Be actionable**: Focus on **what** the code does, not how (implementation is in the code).
 - **Avoid redundancy**: Don't comment on obvious code behavior.
+- **Line Limit (Code Blocks):** Maximum of **1 line** per comment inside code blocks. Exactly **1 additional line** is permitted only when providing an explicit example or reference.
 - **No history/rationale narratives**: Never explain what a prior version did, why it was
   wrong, or "do not reintroduce X" warnings in code comments. That belongs in the commit
   message or PR description, not the source file. A comment describes the current code,

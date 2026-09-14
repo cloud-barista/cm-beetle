@@ -168,7 +168,7 @@ const ServerTableRow: React.FC<RowProps> = ({
     <tr className={`transition ${isRegistered ? 'bg-emerald-500/[0.015]' : 'hover:bg-bg-input/20'}`}>
       <td className="py-2.5 px-3 text-center text-text-muted text-xs">
         {idx + 1}
-        {isDraft && <div className="mt-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide">Draft</div>}
+        {isDraft && <div className="mt-1 text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide">Draft</div>}
       </td>
 
       <td className="py-2.5 px-3">
@@ -236,7 +236,7 @@ const ServerTableRow: React.FC<RowProps> = ({
                   <span className="text-xs text-text-muted bg-bg-panel px-1.5 py-0.5 rounded flex-shrink-0"><Upload className="w-3 h-3 inline" /></span>
                 </div>
               )}
-              {!authOk && <p className="text-[10px] text-red-500 dark:text-red-400">Password or Private Key required</p>}
+              {!authOk && <p className="text-xs text-red-500 dark:text-red-400">Password or Private Key required</p>}
             </div>
           )}
       </td>
@@ -792,7 +792,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
               onClick={onNext}
               className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
             >
-              <span>Next: Proceed to 2. Refinement</span>
+              <span>Next: Proceed to 2. Source Infra Refinement</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -957,7 +957,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                 onClick={onNext}
                 className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
               >
-                <span>Next: Proceed to 2. Refinement</span>
+                <span>Next: Proceed to 2. Source Infra Refinement</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

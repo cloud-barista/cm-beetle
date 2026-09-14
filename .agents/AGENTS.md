@@ -23,3 +23,18 @@
 4. **Brand Palette & Light Mode Contrast**:
    - **Brand Colors**: Emerald (#10b981) / Teal (#14b8a6) **ONLY**. Never use `cyan-*`, `purple-*`, or `sky-*`.
    - **Light Mode Contrast**: Ensure clear inputs and readable previews in light mode. Use `--border-input` (`#cbd5e1`) for form borders and high-contrast text (`text-slate-800` or `text-text-main`) for code/previews.
+
+## Go Development Philosophy & Coding Rules
+
+1. **Core Philosophy**:
+   - *"Simple is better than complex. Clear is better than clever."* Favor direct, transparent Go code over unnecessary abstractions.
+   - *"Design for what exists today, not an imaginary future."* Ground implementations in actual requirements, models, and constraints.
+2. **Architecture & Design Principles**:
+   - **Go Single Responsibility Principle (SRP)**: Each file, package, and struct must have one distinct, well-defined responsibility.
+   - **No Fallback**: Never implement silent fallback degradation or hidden catch-all defaults. Validate inputs explicitly and fail fast with meaningful errors.
+   - **No Circular Dependencies (순환 참조 불가)**: Strict acyclic dependency graph across all packages, interfaces, and types.
+   - **Maintainability & Continuous Improvement**: Structure code linearly so it is straightforward to trace, test, and profile as resource relationships evolve.
+3. **Code Block Comment Rules**:
+   - Comments inside code blocks are strictly limited to **1 line**.
+   - Exactly **1 additional line** is permitted only when providing an explicit example or reference.
+   - Write all comments in concise English; explain *what* the code does, not obvious syntax or past history.

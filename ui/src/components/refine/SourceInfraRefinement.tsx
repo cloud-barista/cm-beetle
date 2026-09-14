@@ -4,7 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope } from '../../types/migration';
 import sampleData from '../../data/sampleSourceInfra.json';
+import sampleGpuData from '../../data/sampleSourceGpuInfra.json';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
+import { beetleApi } from '../../api/client';
 import {
   RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, Server, Cpu,
   HardDrive, Network, Shield, Save, CheckCircle2, Loader2,
@@ -12,8 +14,19 @@ import {
   ArrowRight, ArrowLeft,
 } from 'lucide-react';
 
-const SAMPLE_INFRA: OnpremInfra = sampleData.sourceInfra as OnpremInfra;
-const SAMPLE_MODEL: OnpremModelEnvelope = {
+const SAMPLE_INFRA: OnpremInfra = sampleData.sourceInfra as unknown as OnpremInfra;
+const SAMPLE_GPU_INFRA: OnpremInfra = sampleGpuData.sourceInfra as unknown as OnpremInfra;
+
+export const SAMPLE_GPU_MODEL: OnpremModelEnvelope = {
+  id: 'sample-source-gpu-infra-1',
+  name: '[Sample] ai-gpu-cluster-multi-vendor',
+  description: 'AI/LLM cluster with heterogeneous GPUs (2x A100 80GB, 1x T4, 1x MI350, 1x L4)',
+  onpremiseInfraModel: SAMPLE_GPU_INFRA,
+  version: '1.0',
+  updatedTime: new Date().toISOString(),
+};
+
+export const SAMPLE_MODEL: OnpremModelEnvelope = {
   id: 'sample-source-infra-1',
   name: '[Sample] web-haproxy-influxdb',
   description: '1 HAProxy/App node + 2 InfluxDB nodes with NLB (sample)',
@@ -21,6 +34,8 @@ const SAMPLE_MODEL: OnpremModelEnvelope = {
   version: '1.0',
   updatedTime: new Date().toISOString(),
 };
+
+const BUILTIN_SAMPLE_IDS = new Set(['sample-source-gpu-infra-1', 'sample-source-infra-1']);
 
 export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () => void }> = ({ onNext, onBack }) => {
   const {
@@ -42,6 +57,8 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   const [newRuleCidr, setNewRuleCidr] = useState('0.0.0.0/0');
   const [tuningSourceSaveSuccess, setTuningSourceSaveSuccess] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [isSavingSource, setIsSavingSource] = useState(false);
+  const [sourceSaveSuccessMsg, setSourceSaveSuccessMsg] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -76,6 +93,12 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   const [newDataDiskLabel, setNewDataDiskLabel] = useState('');
   const [newDataDiskSize, setNewDataDiskSize] = useState('100');
   const [newDataDiskType, setNewDataDiskType] = useState('SSD');
+
+  // New GPU Card Form state
+  const [newGpuVendor, setNewGpuVendor] = useState('NVIDIA');
+  const [newGpuModel, setNewGpuModel] = useState('Tesla T4');
+  const [newGpuVram, setNewGpuVram] = useState('16');
+  const [newGpuCuda, setNewGpuCuda] = useState('12.2');
 
   // New Network Interface Form state
   const [newIfaceName, setNewIfaceName] = useState('');
@@ -161,6 +184,40 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
       return {
         ...n,
         dataDisks: (n.dataDisks || []).filter((_, idx) => idx !== diskIdx)
+      };
+    }));
+  };
+
+  const handleAddGpuCard = (machineId: string) => {
+    if (!newGpuModel.trim()) return;
+    setTunedNodes(prev => prev.map(n => {
+      if (n.machineId !== machineId) return n;
+      const currentCards = n.gpuCards || [];
+      return {
+        ...n,
+        gpuCards: [
+          ...currentCards,
+          {
+            vendor: newGpuVendor,
+            model: newGpuModel.trim(),
+            memoryTotalGB: Number(newGpuVram) || 16,
+            cudaVersion: newGpuCuda.trim() || undefined,
+            driverIndex: String(currentCards.length)
+          }
+        ]
+      };
+    }));
+    setNewGpuModel('Tesla T4');
+    setNewGpuVram('16');
+  };
+
+  const handleDeleteGpuCard = (machineId: string, idx: number) => {
+    setTunedNodes(prev => prev.map(n => {
+      if (n.machineId !== machineId) return n;
+      const filtered = (n.gpuCards || []).filter((_, i) => i !== idx);
+      return {
+        ...n,
+        gpuCards: filtered.length > 0 ? filtered : null
       };
     }));
   };
@@ -329,10 +386,11 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     setTunedNlbs(prev => prev.filter((_, idx) => idx !== nlbIdx));
   };
 
-  // Ensure sample model is always in the list
+  // Ensure built-in sample models are always at the top of the list
   const allModels: OnpremModelEnvelope[] = [
     SAMPLE_MODEL,
-    ...savedSourceModels.filter(m => m.id !== 'sample-source-infra-1'),
+    SAMPLE_GPU_MODEL,
+    ...savedSourceModels.filter(m => !BUILTIN_SAMPLE_IDS.has(m.id)),
   ];
 
   useEffect(() => { fetchSavedSourceModels(); }, []);
@@ -350,7 +408,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleDeleteModel = () => {
-    if (!selectedSourceModel || selectedSourceModel.id === 'sample-source-infra-1') return;
+    if (!selectedSourceModel || BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id)) return;
     setDeleteConfirmText('');
     setShowDeleteConfirm(true);
   };
@@ -418,11 +476,49 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
       await saveSourceModel(result.name, result.description, result.version, updatedInfra);
     }
 
+    try {
+      const isGpu = selectedSourceModel.id === 'sample-source-gpu-infra-1';
+      await beetleApi.saveSourceInfraModelToFile(updatedInfra, isGpu);
+    } catch (e) {
+      console.warn('Failed to overwrite source model to file:', e);
+    }
+
     setTunedNodes(filteredNodes);
     setExcludedNodeIds([]);
     setTuningSourceSaveSuccess(true);
     setActiveStep(3); // Advance to Step 3: Desired Cloud Target Specification
     setTimeout(() => setTuningSourceSaveSuccess(false), 2000);
+  };
+
+  const handleDirectSaveSourceModel = async () => {
+    if (!selectedSourceModel) return;
+    const filteredNodes = tunedNodes.filter(n => !excludedNodeIds.includes(n.machineId));
+    const updatedInfra = {
+      ...selectedSourceModel.onpremiseInfraModel,
+      nodes: filteredNodes,
+      network: tunedNetwork || selectedSourceModel.onpremiseInfraModel.network,
+      nlbs: tunedNlbs
+    };
+
+    setIsSavingSource(true);
+    setSourceSaveSuccessMsg('');
+    try {
+      const isGpu = selectedSourceModel.id === 'sample-source-gpu-infra-1';
+      const res = await beetleApi.saveSourceInfraModelToFile(updatedInfra, isGpu);
+      const targetFileName = res.fileName || (isGpu ? 'sampleSourceGpuInfra.json' : 'sampleSourceInfra.json');
+      if (res.success) {
+        setSourceSaveSuccessMsg(`Source model saved and overwritten to ${targetFileName} successfully!`);
+        setTunedNodes(filteredNodes);
+        setExcludedNodeIds([]);
+        setTimeout(() => setSourceSaveSuccessMsg(''), 4000);
+      } else {
+        alert(res.error || 'Failed to overwrite source model to file.');
+      }
+    } catch (err: any) {
+      console.error('Failed to save source model to file:', err);
+    } finally {
+      setIsSavingSource(false);
+    }
   };
 
   const handleAddCidr = (cidr: string) => {
@@ -505,7 +601,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
               >
                 <RefreshCw className="w-4 h-4 mr-1.5" /> Load Model
               </button>
-              {selectedSourceModel && selectedSourceModel.id !== 'sample-source-infra-1' && (
+              {selectedSourceModel && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id) && (
                 <button
                   onClick={handleDeleteModel}
                   className="px-5 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer"
@@ -740,6 +836,11 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                             >
                               <HardDrive className="w-4 h-4" />
                               <span className={isExcluded ? 'line-through' : ''}>{n.hostname}</span>
+                              {n.gpuCards && n.gpuCards.length > 0 && (
+                                <span className="ml-1 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs rounded font-extrabold border border-emerald-500/30">
+                                  GPU
+                                </span>
+                              )}
                             </button>
                             <button
                               onClick={(e) => {
@@ -907,6 +1008,90 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                                       </select>
                                     </div>
                                   </div>
+
+                                  {/* GPU Cards Management */}
+                                  <div className="bg-bg-panel/50 border border-emerald-500/30 rounded-xl p-4 space-y-2.5 text-sm">
+                                    <div className="flex justify-between items-center border-b border-border-main/20 pb-1.5">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">GPU Cards</span>
+                                        <span className="text-xs text-text-muted">(Source Hardware Metadata)</span>
+                                      </div>
+                                      <span className="text-xs text-text-muted font-mono">Discrete VRAM (GB)</span>
+                                    </div>
+                                    {activeNode.gpuCards && activeNode.gpuCards.length > 0 ? (
+                                      <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                                        {activeNode.gpuCards.map((g, idx) => (
+                                          <div key={idx} className="flex justify-between items-center bg-bg-panel px-3 py-1.5 rounded-lg border border-border-main/30 text-xs">
+                                            <div className="flex items-center gap-2">
+                                              <span className="font-extrabold text-text-main">{g.vendor} {g.model}</span>
+                                              {g.cudaVersion && (
+                                                <span className="text-text-muted font-mono text-xs">CUDA {g.cudaVersion}</span>
+                                              )}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                              <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{g.memoryTotalGB || 0} GB VRAM</span>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleDeleteGpuCard(activeNode.machineId, idx)}
+                                                className="text-red-400 hover:text-red-300 font-bold cursor-pointer"
+                                                title="Remove GPU card"
+                                              >
+                                                ✕
+                                              </button>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="text-xs text-text-muted italic">No GPU cards configured.</div>
+                                    )}
+
+                                    {/* Add GPU Card Form */}
+                                    <div className="pt-2 border-t border-border-main/20 flex flex-wrap gap-2 items-center">
+                                      <select
+                                        value={newGpuVendor}
+                                        onChange={(e) => setNewGpuVendor(e.target.value)}
+                                        className="bg-bg-panel border border-border-main/60 rounded-lg px-2 py-1 text-xs text-text-main cursor-pointer"
+                                      >
+                                        <option value="NVIDIA">NVIDIA</option>
+                                        <option value="AMD">AMD</option>
+                                        <option value="Intel">Intel</option>
+                                        <option value="Google">Google</option>
+                                      </select>
+                                      <input
+                                        type="text"
+                                        placeholder="Model (e.g. Tesla T4, A100)"
+                                        value={newGpuModel}
+                                        onChange={(e) => setNewGpuModel(e.target.value)}
+                                        className="flex-1 min-w-[120px] bg-bg-panel border border-border-main/60 rounded-lg px-2 py-1 text-xs text-text-main font-bold"
+                                      />
+                                      <div className="flex items-center gap-1">
+                                        <input
+                                          type="number"
+                                          min="1"
+                                          placeholder="VRAM"
+                                          value={newGpuVram}
+                                          onChange={(e) => setNewGpuVram(e.target.value)}
+                                          className="w-16 bg-bg-panel border border-border-main/60 rounded-lg px-2 py-1 text-xs text-text-main font-bold"
+                                        />
+                                        <span className="text-xs text-text-muted font-bold">GB</span>
+                                      </div>
+                                      <input
+                                        type="text"
+                                        placeholder="CUDA (e.g. 12.2)"
+                                        value={newGpuCuda}
+                                        onChange={(e) => setNewGpuCuda(e.target.value)}
+                                        className="w-24 bg-bg-panel border border-border-main/60 rounded-lg px-2 py-1 text-xs text-text-main font-mono"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => handleAddGpuCard(activeNode.machineId)}
+                                        className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap"
+                                      >
+                                        Add GPU
+                                      </button>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
 
@@ -1067,6 +1252,30 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                                   <span className="text-text-main font-extrabold">
                                     {activeNode.dataDisks.map((d) => `${toGB(d.totalSize)} GB`).join(', ')} ({activeNode.dataDisks.length} disks)
                                   </span>
+                                ) : (
+                                  <span className="text-text-muted font-normal italic">None</span>
+                                )}
+                              </div>
+                              <div className="flex justify-between items-start pt-1.5 border-t border-border-main/20 mt-1">
+                                <span className="text-text-muted font-normal whitespace-nowrap">GPU Cards:</span>
+                                {activeNode.gpuCards && activeNode.gpuCards.length > 0 ? (
+                                  <div className="flex flex-col items-end gap-1 text-right">
+                                    {activeNode.gpuCards.map((g, idx) => {
+                                      const displayName = (g.vendor && g.model?.startsWith(g.vendor))
+                                        ? g.model
+                                        : `${g.vendor ? `${g.vendor} ` : ''}${g.model || 'GPU'}`;
+                                      return (
+                                        <div key={idx} className="flex items-center gap-1.5">
+                                          <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs sm:text-sm">
+                                            {displayName}
+                                          </span>
+                                          <span className="text-text-muted font-medium text-xs">
+                                            ({g.memoryTotalGB || 0}GB VRAM)
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
                                 ) : (
                                   <span className="text-text-muted font-normal italic">None</span>
                                 )}
@@ -1457,17 +1666,40 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                   </div>
 
                   {/* Save spec and proceed button at the bottom of Step 1 */}
-                  <div className="flex flex-row items-center justify-start pt-4 border-t border-border-main/20 mt-4 space-x-4">
-                    <button
-                      onClick={() => setShowSaveModal(true)}
-                      className="px-6 py-3 bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-600 hover:from-emerald-500 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer shadow-lg shadow-emerald-500/10 shrink-0"
-                    >
-                      <Save className="w-4 h-4 mr-1.5 text-slate-950" /> Save Source Infra Revision
-                    </button>
-                    <div className="flex items-center space-x-2 text-sm text-text-muted">
-                      <span className="font-bold">Model to save:</span>
-                      <span className="text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 font-extrabold text-sm">{selectedSourceModel.name}</span>
-                      <span className="text-sm text-text-muted font-mono bg-bg-panel px-1.5 py-0.5 rounded border border-border-main/40">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border-main/20 mt-4">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleDirectSaveSourceModel}
+                        disabled={isSavingSource}
+                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold flex items-center transition cursor-pointer shadow-md shadow-emerald-500/20 shrink-0 disabled:opacity-50"
+                      >
+                        {isSavingSource ? (
+                          <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <Save className="w-3.5 h-3.5 mr-1.5" />
+                        )}
+                        <span>{isSavingSource ? 'Saving to File...' : 'Save Source Infra Model'}</span>
+                      </button>
+                      <button
+                        onClick={() => setShowSaveModal(true)}
+                        className="px-3.5 py-2.5 bg-bg-panel border border-border-main hover:bg-bg-input text-text-muted hover:text-text-main rounded-xl text-xs font-bold transition cursor-pointer"
+                        title="Save as a new named catalog revision in Damselfly"
+                      >
+                        Save Revision As...
+                      </button>
+                    </div>
+
+                    {sourceSaveSuccessMsg && (
+                      <div className="flex items-center gap-2 px-3.5 py-1.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold animate-fade-in">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>{sourceSaveSuccessMsg}</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center space-x-2 text-xs text-text-muted">
+                      <span className="font-bold">Model:</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{selectedSourceModel.name}</span>
+                      <span className="font-mono bg-bg-panel px-1.5 py-0.5 rounded border border-border-main/40">
                         v{selectedSourceModel.version || '1.0'}
                       </span>
                     </div>
@@ -1489,7 +1721,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                           onClick={onNext}
                           className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer ml-auto"
                         >
-                          <span>Next: Proceed to 3. Target Infra Optimization</span>
+                          <span>Next: Proceed to 3. Target Cloud Optimizer</span>
                           <ArrowRight className="w-4 h-4" />
                         </button>
                       )}
@@ -1506,11 +1738,11 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
         isOpen={showSaveModal}
         onClose={() => setShowSaveModal(false)}
         title="Save Source Infra Revision"
-        defaultName={selectedSourceModel && selectedSourceModel.id !== 'sample-source-infra-1' ? selectedSourceModel.name : ''}
-        defaultDescription={selectedSourceModel && selectedSourceModel.id !== 'sample-source-infra-1' ? (selectedSourceModel.description || '') : ''}
-        defaultVersion={selectedSourceModel && selectedSourceModel.id !== 'sample-source-infra-1' ? (selectedSourceModel.version || '1.0.0') : '1.0.0'}
+        defaultName={selectedSourceModel && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id) ? selectedSourceModel.name : ''}
+        defaultDescription={selectedSourceModel && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id) ? (selectedSourceModel.description || '') : ''}
+        defaultVersion={selectedSourceModel && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id) ? (selectedSourceModel.version || '1.0.0') : '1.0.0'}
         existingRevisions={savedSourceModels
-          .filter(m => m.id !== 'sample-source-infra-1')
+          .filter(m => !BUILTIN_SAMPLE_IDS.has(m.id))
           .map(m => ({ id: m.id, name: m.name, version: m.version }))}
         onSave={handleSaveToDamselfly}
       />

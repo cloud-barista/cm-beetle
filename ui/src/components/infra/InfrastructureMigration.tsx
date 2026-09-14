@@ -19,8 +19,8 @@ export const InfrastructureMigration: React.FC = () => {
 
   const subSteps = [
     { id: 'source', label: '1. Source Analysis', icon: Database, desc: 'Register hosts & extract metadata' },
-    { id: 'refine', label: '2. Refinement', icon: Sliders, desc: 'Review & refine source specs' },
-    { id: 'design', label: '3. Target Infra Optimization', icon: Compass, desc: 'Customize target cloud model' },
+    { id: 'refine', label: '2. Source Infra Refinement', icon: Sliders, desc: 'Review & refine source specs' },
+    { id: 'design', label: '3. Target Cloud Optimizer', icon: Compass, desc: 'Customize target cloud model' },
     { id: 'migrate', label: '4. Migration Execution', icon: Play, desc: 'Execute VM migration & check status' },
   ] as const;
 
