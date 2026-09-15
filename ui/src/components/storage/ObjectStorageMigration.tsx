@@ -1913,7 +1913,7 @@ export const ObjectStorageMigration: React.FC = () => {
               </h2>
             </div>
             <span className="text-sm text-text-muted">
-              Generate AI-optimized target cloud recommendations, compare multi-CSP specs &amp; cost estimates, and customize target cloud models.
+              Generate optimized target cloud recommendations, compare multi-CSP specs &amp; cost estimates, and customize target cloud models.
             </span>
           </div>
 
