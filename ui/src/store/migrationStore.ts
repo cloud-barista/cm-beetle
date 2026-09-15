@@ -116,20 +116,6 @@ export const DEMO_SOURCE_INFRA: OnpremInfra = {
         { name: "ens5", state: "up", macAddress: "02:bf:6e:6c:6e:31", mtu: 9001, ipv4CidrBlocks: ["10.0.1.138/24"], ipv6CidrBlocks: ["fe80::bf:6eff:fe6c:6e31/64"] }
       ],
       machineId: "ec288dd0-c6fa-8a49-2f60-bc898311febf",
-      gpuCards: [
-        {
-          vendor: "NVIDIA",
-          model: "Tesla T4",
-          architecture: "Turing",
-          driverVersion: "535.129.03",
-          cudaVersion: "12.2",
-          memoryTotalGB: 16,
-          memoryFreeGB: 15.8,
-          memoryUsedGB: 0.2,
-          pciBusId: "0000:00:1e.0",
-          driverIndex: "0"
-        }
-      ],
       memory: { available: 7, totalSize: 8, type: "DDR4" },
       os: { id: "ubuntu", idLike: "debian", name: "Ubuntu", prettyName: "Ubuntu 22.04.3 LTS", version: "22.04.3 LTS (Jammy Jellyfish)", versionCodename: "jammy", versionId: "22.04" },
       rootDisk: { label: "", totalSize: 30, type: "SSD" },
@@ -210,6 +196,10 @@ interface MigrationState {
   desiredCsp: string;
   desiredRegion: string;
   targetPairs: CloudProperty[];
+  recommendationMode: 'multi' | 'single';
+  cachedMultiCandidates: RecommendedInfra[] | null;
+  cachedMultiPairs: CloudProperty[] | null;
+  recommendationLimit: number;
   recommendationCandidates: RecommendedInfra[];
   selectedCandidateIndex: number;
   editedCandidate: RecommendedInfra | null;
@@ -222,6 +212,10 @@ interface MigrationState {
   setDesiredCsp: (csp: string) => Promise<void>;
   setDesiredRegion: (region: string) => void;
   setTargetPairs: (pairs: CloudProperty[]) => void;
+  setRecommendationMode: (mode: 'multi' | 'single') => void;
+  setCachedMultiCandidates: (candidates: RecommendedInfra[] | null) => void;
+  setCachedMultiPairs: (pairs: CloudProperty[] | null) => void;
+  setRecommendationLimit: (limit: number) => void;
   addTargetPair: (csp?: string, region?: string) => void;
   removeTargetPair: (index: number) => void;
   updateTargetPair: (index: number, csp: string, region: string) => void;
@@ -511,14 +505,18 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   fetchSavedSourceModels: async () => {
     const builtInSamples = [DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL];
     const builtInIds = new Set(builtInSamples.map(s => s.id));
+    let allModels: OnpremModelEnvelope[] = [];
     try {
       const models = await damselflyApi.getSourceModels();
       const withoutSamples = models.filter((m: OnpremModelEnvelope) => !builtInIds.has(m.id));
-      set({ savedSourceModels: [...builtInSamples, ...withoutSamples] });
+      allModels = [...builtInSamples, ...withoutSamples];
     } catch {
       // Damselfly unreachable — show sample models only
-      set({ savedSourceModels: builtInSamples });
+      allModels = builtInSamples;
     }
+    const curSelected = get().selectedSourceModel;
+    const updatedSelected = curSelected ? (allModels.find(m => m.id === curSelected.id) || curSelected) : DEFAULT_FALLBACK_SOURCE_MODEL;
+    set({ savedSourceModels: allModels, selectedSourceModel: updatedSelected });
   },
 
   selectSourceModel: (model) => {
@@ -558,7 +556,14 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   // --------------------------------------------------------------------------
   desiredCsp: 'aws',
   desiredRegion: 'ap-northeast-2',
-  targetPairs: [{ csp: 'aws', region: 'ap-northeast-2' }],
+  targetPairs: [
+    { csp: 'aws', region: 'ap-northeast-2' },
+    { csp: 'gcp', region: 'asia-northeast3' }
+  ],
+  recommendationMode: 'multi',
+  cachedMultiCandidates: null,
+  cachedMultiPairs: null,
+  recommendationLimit: 5,
   recommendationCandidates: [],
   selectedCandidateIndex: 0,
   editedCandidate: null,
@@ -580,6 +585,10 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
   setDesiredRegion: (region) => set({ desiredRegion: region }),
   setTargetPairs: (pairs) => set({ targetPairs: pairs }),
+  setRecommendationMode: (mode) => set({ recommendationMode: mode }),
+  setCachedMultiCandidates: (candidates) => set({ cachedMultiCandidates: candidates }),
+  setCachedMultiPairs: (pairs) => set({ cachedMultiPairs: pairs }),
+  setRecommendationLimit: (limit) => set({ recommendationLimit: Math.max(1, Math.min(10, limit)) }),
   addTargetPair: (csp = 'aws', region = 'ap-northeast-2') => {
     const current = get().targetPairs;
     if (current.length >= 10) return;
@@ -587,7 +596,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
   removeTargetPair: (index) => {
     const current = get().targetPairs;
-    if (current.length <= 1) return;
+    const minCount = get().recommendationMode === 'multi' ? 2 : 1;
+    if (current.length <= minCount) return;
     set({ targetPairs: current.filter((_, i) => i !== index) });
   },
   updateTargetPair: (index, csp, region) => {
@@ -599,24 +609,26 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   triggerRecommendation: async (sourceInfra) => {
-    set({ isRecommending: true, recommendationCandidates: [], editedCandidate: null });
+    set({ isRecommending: true, recommendationCandidates: [], editedCandidate: null, selectedCloudModel: null });
     try {
       const pairs = get().targetPairs;
+      const limit = get().recommendationLimit || 5;
       let candidates: RecommendedInfra[] = [];
       if (pairs.length === 1) {
         // Single target CSP & Region pair -> Call single infra recommendation API
-        candidates = await beetleApi.getRecommendations(sourceInfra, pairs[0].csp, pairs[0].region);
+        candidates = await beetleApi.getRecommendations(sourceInfra, pairs[0].csp, pairs[0].region, limit);
       } else if (pairs.length >= 2) {
         // Multiple target CSP & Region pairs (2~10) -> Call multiInfra recommendation API
         candidates = await beetleApi.getMultiRecommendations(sourceInfra, pairs);
       } else {
-        candidates = await beetleApi.getRecommendations(sourceInfra, get().desiredCsp, get().desiredRegion);
+        candidates = await beetleApi.getRecommendations(sourceInfra, get().desiredCsp, get().desiredRegion, limit);
       }
 
       set({ 
         recommendationCandidates: candidates, 
         selectedCandidateIndex: 0,
         editedCandidate: candidates.length > 0 ? candidates[0] : null,
+        selectedCloudModel: null,
         isRecommending: false 
       });
     } catch (err) {
@@ -1003,6 +1015,34 @@ export const useMigrationStore = create<MigrationState>()(
       themeMode: state.themeMode,
       deletingInfrasMap: state.deletingInfrasMap,
       deletingStoragesMap: state.deletingStoragesMap
-    })
+    }),
+    onRehydrateStorage: () => (state) => {
+      if (state) {
+        const cleanGpuIfNonGpu = (m: OnpremModelEnvelope | null) => {
+          if (!m) return;
+          const isGpu = m.id?.toLowerCase().includes('gpu') || m.name?.toLowerCase().includes('gpu');
+          if (!isGpu && m.onpremiseInfraModel?.nodes) {
+            m.onpremiseInfraModel.nodes.forEach(n => {
+              delete (n as any).gpuCards;
+            });
+          }
+        };
+
+        if (state.selectedSourceModel?.id === 'sample-source-infra-1') {
+          state.selectedSourceModel = DEFAULT_FALLBACK_SOURCE_MODEL;
+          state.refinedSourceInfra = DEMO_SOURCE_INFRA;
+        } else if (state.selectedSourceModel) {
+          cleanGpuIfNonGpu(state.selectedSourceModel);
+        }
+
+        if (Array.isArray(state.savedSourceModels)) {
+          state.savedSourceModels = state.savedSourceModels.map(m => {
+            if (m.id === 'sample-source-infra-1') return DEFAULT_FALLBACK_SOURCE_MODEL;
+            cleanGpuIfNonGpu(m);
+            return m;
+          });
+        }
+      }
+    }
   })
 );

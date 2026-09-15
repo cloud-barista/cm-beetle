@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from './TopologyMap';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope } from '../../types/migration';
-import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2, Compass, ArrowRight, ArrowLeft, Plus, AlertTriangle, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2, Compass, ArrowRight, ArrowLeft, Plus, AlertTriangle, ShieldCheck, CheckCircle2, Globe, Target, Zap, Undo2 } from 'lucide-react';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
 import { tumblebugApi, beetleApi } from '../../api/client';
 import sampleGpuData from '../../data/sampleSourceGpuInfra.json';
@@ -18,6 +18,14 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     desiredCsp,
     desiredRegion,
     targetPairs,
+    recommendationMode,
+    setRecommendationMode,
+    cachedMultiCandidates,
+    setCachedMultiCandidates,
+    cachedMultiPairs,
+    setCachedMultiPairs,
+    recommendationLimit,
+    setRecommendationLimit,
     recommendationCandidates,
     selectedCandidateIndex,
     editedCandidate,
@@ -229,6 +237,114 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     return false;
   })();
 
+  const handleSwitchMode = (mode: 'multi' | 'single') => {
+    if (mode === recommendationMode) return;
+    setRecommendationMode(mode);
+    if (mode === 'single') {
+      if ((targetPairs || []).length > 1) {
+        setCachedMultiPairs(targetPairs);
+      }
+      const firstPair = (targetPairs && targetPairs.length > 0) ? targetPairs[0] : { csp: 'aws', region: 'ap-northeast-2' };
+      setTargetPairs([firstPair]);
+    } else {
+      // Cross-CSP Exploration requires at least 2 pairs
+      if (cachedMultiPairs && cachedMultiPairs.length >= 2) {
+        setTargetPairs(cachedMultiPairs);
+      } else if ((targetPairs || []).length < 2) {
+        const first = (targetPairs && targetPairs.length > 0) ? targetPairs[0] : { csp: 'aws', region: 'ap-northeast-2' };
+        const secondCsp = first.csp.toLowerCase() === 'aws' ? 'gcp' : 'aws';
+        const secondRegion = secondCsp === 'gcp' ? 'asia-northeast3' : 'ap-northeast-2';
+        setTargetPairs([first, { csp: secondCsp, region: secondRegion }]);
+      }
+    }
+  };
+
+  const handleApplyGlobalBig3 = () => {
+    const global3 = [
+      { csp: 'aws', region: 'ap-northeast-2' },
+      { csp: 'gcp', region: 'asia-northeast3' },
+      { csp: 'azure', region: 'koreacentral' }
+    ];
+    setTargetPairs(global3);
+    global3.forEach(p => {
+      tumblebugApi.getRegions(p.csp).then(regs => {
+        if (regs && regs.length > 0) {
+          setPairRegionsMap(prev => ({ ...prev, [p.csp]: regs }));
+        }
+      }).catch(() => {});
+    });
+  };
+
+  const handleApplyDomesticBig2 = () => {
+    const domestic2 = [
+      { csp: 'ncp', region: 'kr' },
+      { csp: 'nhn', region: 'kr1' }
+    ];
+    setTargetPairs(domestic2);
+    domestic2.forEach(p => {
+      tumblebugApi.getRegions(p.csp).then(regs => {
+        if (regs && regs.length > 0) {
+          setPairRegionsMap(prev => ({ ...prev, [p.csp]: regs }));
+        }
+      }).catch(() => {});
+    });
+  };
+
+  const handleResetToDefaultMultiPairs = () => {
+    const default2 = [
+      { csp: 'aws', region: 'ap-northeast-2' },
+      { csp: 'gcp', region: 'asia-northeast3' }
+    ];
+    setTargetPairs(default2);
+  };
+
+  const handleDeepDiveWithCsp = async (csp: string, region: string) => {
+    setCachedMultiCandidates(recommendationCandidates);
+    setCachedMultiPairs(targetPairs);
+    setRecommendationMode('single');
+    setTargetPairs([{ csp, region }]);
+    setRecommendationLimit(5);
+    const filteredNodes = tunedNodes.filter(n => !excludedNodeIds.includes(n.machineId));
+    const sourceInfra: OnpremInfra = {
+      nodes: filteredNodes.length > 0 ? filteredNodes : (selectedSourceModel?.onpremiseInfraModel?.nodes || []),
+      network: tunedNetwork || selectedSourceModel?.onpremiseInfraModel?.network || {
+        ipv4Networks: {},
+        ipv6Networks: {}
+      },
+      nlbs: selectedSourceModel?.onpremiseInfraModel?.nlbs || []
+    };
+    useMigrationStore.setState({ isRecommending: true, recommendationCandidates: [], editedCandidate: null });
+    try {
+      const candidates = await beetleApi.getRecommendations(sourceInfra, csp, region, 5);
+      useMigrationStore.setState({
+        recommendationCandidates: candidates,
+        selectedCandidateIndex: 0,
+        editedCandidate: candidates.length > 0 ? candidates[0] : null,
+        isRecommending: false
+      });
+      setActiveStep(2);
+    } catch (err) {
+      console.error('Failed to get deep-dive recommendations:', err);
+      useMigrationStore.setState({ isRecommending: false });
+      alert('Failed to get deep-dive recommendations for ' + csp.toUpperCase());
+    }
+  };
+
+  const handleRestoreMultiCandidates = () => {
+    if (cachedMultiCandidates && cachedMultiCandidates.length > 0) {
+      useMigrationStore.setState({
+        recommendationCandidates: cachedMultiCandidates,
+        selectedCandidateIndex: 0,
+        editedCandidate: cachedMultiCandidates[0],
+        targetPairs: cachedMultiPairs && cachedMultiPairs.length > 0 ? cachedMultiPairs : targetPairs,
+        recommendationMode: 'multi',
+        cachedMultiCandidates: null,
+        cachedMultiPairs: null,
+      });
+      setActiveStep(2);
+    }
+  };
+
   // Auto-load tunedNodes from selectedSourceModel when tab is entered
   // (source model selection & tuning now happens in SourceInfraRefinement)
   useEffect(() => {
@@ -344,6 +460,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
   };
 
   const handleRecommend = async () => {
+    selectCloudModel(null);
     const filteredNodes = tunedNodes.filter(n => !excludedNodeIds.includes(n.machineId));
     if (filteredNodes.length === 0) return;
     const sourceInfra: OnpremInfra = {
@@ -444,7 +561,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     ) ?? (candidate.targetSpecList.length === 1 ? candidate.targetSpecList[0] : null);
   };
 
-  // Helper to find source node by machineId/hostname across selectedSourceModel, savedSourceModels, and sample data
+  // Helper to find source node by machineId/hostname strictly within active model
   const findSourceNode = (sourceId: string): OnpremNode | null => {
     if (!sourceId) return null;
     const cleanId = sourceId.trim().toLowerCase();
@@ -458,25 +575,19 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     );
     if (match1) return match1;
 
-    // 2. Check savedSourceModels
-    if (savedSourceModels && savedSourceModels.length > 0) {
-      for (const sm of savedSourceModels) {
-        const smNodes = (sm.onpremiseInfraModel?.nodes || (sm as any).sourceInfra?.nodes || []) as OnpremNode[];
-        const match2 = smNodes.find((n: any) =>
-          n.machineId?.toLowerCase() === cleanId ||
-          n.hostname?.toLowerCase() === cleanId
-        );
-        if (match2) return match2;
-      }
-    }
-
-    // 3. Check sampleGpuData fallback
-    const sampleNodes = ((sampleGpuData as any)?.nodes || []) as OnpremNode[];
-    const match3 = sampleNodes.find((n: any) =>
-      n.machineId?.toLowerCase() === cleanId ||
-      n.hostname?.toLowerCase() === cleanId
+    // 2. Fallback to sample GPU data ONLY if current model is explicitly a GPU workload
+    const isGpuWorkload = Boolean(
+      selectedSourceModel?.id?.toLowerCase().includes('gpu') ||
+      selectedSourceModel?.name?.toLowerCase().includes('gpu')
     );
-    if (match3) return match3;
+    if (isGpuWorkload) {
+      const sampleNodes = ((sampleGpuData as any)?.nodes || []) as OnpremNode[];
+      const matchSample = sampleNodes.find((n: any) =>
+        n.machineId?.toLowerCase() === cleanId ||
+        n.hostname?.toLowerCase() === cleanId
+      );
+      if (matchSample) return matchSample;
+    }
 
     return null;
   };
@@ -527,16 +638,30 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     if (!editedCandidate?.targetInfra?.nodeGroups) {
       return { hasGpu: false, gpuNgCount: 0, gpuNodeCount: 0 };
     }
+    // Web / Database workloads (e.g. web-haproxy-influxdb) have no GPU
+    const isExplicitNonGpu = 
+      selectedSourceModel?.id === 'sample-source-infra-1' ||
+      selectedSourceModel?.name?.toLowerCase().includes('web-haproxy') ||
+      selectedSourceModel?.name?.toLowerCase().includes('influxdb');
+    if (isExplicitNonGpu) {
+      return { hasGpu: false, gpuNgCount: 0, gpuNodeCount: 0 };
+    }
+
+    // Check if source model has GPU hardware or is a GPU workload
+    const sourceHasGpu = Boolean(
+      selectedSourceModel?.id?.toLowerCase().includes('gpu') ||
+      selectedSourceModel?.name?.toLowerCase().includes('gpu') ||
+      selectedSourceModel?.onpremiseInfraModel?.nodes?.some((n: any) => n.gpuCards && n.gpuCards.length > 0)
+    );
+
     const gpuNgs = editedCandidate.targetInfra.nodeGroups.filter(ng => {
       const specInfo = getSpecInfo(editedCandidate, ng.specId);
       return !!getGpuInfo(specInfo, ng.specId, ng);
     });
-    const sourceHasGpu = Boolean(
-      selectedSourceModel?.onpremiseInfraModel?.nodes?.some((n: any) => n.gpuCards && n.gpuCards.length > 0)
-    );
-    const hasGpu = gpuNgs.length > 0 || sourceHasGpu;
-    const gpuNgCount = gpuNgs.length;
-    const gpuNodeCount = gpuNgs.reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0);
+
+    const hasGpu = sourceHasGpu || gpuNgs.length > 0;
+    const gpuNgCount = hasGpu ? gpuNgs.length : 0;
+    const gpuNodeCount = hasGpu ? gpuNgs.reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0) : 0;
     return { hasGpu, gpuNgCount, gpuNodeCount };
   }, [editedCandidate, selectedSourceModel, savedSourceModels]);
 
@@ -835,7 +960,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
           </h2>
         </div>
         <span className="text-sm text-text-muted">
-          Generate AI-optimized target cloud recommendations, compare multi-CSP specs & cost estimates, and customize target cloud models.
+          Generate optimized target cloud recommendations, compare multi-CSP specs & cost estimates, and customize target cloud models.
         </span>
       </div>
 
@@ -917,22 +1042,136 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
             {/* Target Cloud Pair(s) Selection Container */}
             <div className="max-w-4xl space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <label className="block text-sm font-normal text-text-muted">Target Cloud Pair(s)</label>
-                  <span className="text-xs text-text-muted font-normal">
-                    Select 1 pair for candidate options or 2~10 pairs for multi-CSP comparison
-                  </span>
-                </div>
+              {/* Mode Selector Tab (Standalone row, fixed height to prevent UI shift) */}
+              <div className="flex items-center gap-1.5 p-1 bg-bg-panel border border-border-main rounded-2xl w-fit">
                 <button
-                  onClick={handleAddNextPair}
-                  disabled={(targetPairs || []).length >= 10}
-                  className="px-3.5 py-1.5 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 disabled:opacity-40 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer"
+                  type="button"
+                  onClick={() => handleSwitchMode('multi')}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 transition cursor-pointer ${
+                    recommendationMode === 'multi'
+                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                      : 'text-text-muted hover:text-text-main'
+                  }`}
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Target Cloud Pair ({(targetPairs || []).length}/10)</span>
+                  <Globe className="w-4 h-4" />
+                  <span>Cross-CSP Exploration (Multi-Cloud)</span>
+                  {recommendationMode === 'multi' && (targetPairs || []).length > 1 && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-slate-950/20 text-slate-950 text-[10px] font-mono">
+                      {(targetPairs || []).length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchMode('single')}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 transition cursor-pointer ${
+                    recommendationMode === 'single'
+                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                      : 'text-text-muted hover:text-text-main'
+                  }`}
+                >
+                  <Target className="w-4 h-4" />
+                  <span>Single-CSP Deep Dive (Architecture Options)</span>
+                  {recommendationMode === 'single' && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-slate-950/20 text-slate-950 text-[10px] font-mono">
+                      {recommendationLimit}
+                    </span>
+                  )}
                 </button>
               </div>
+
+              {/* Header Label and Add Pair Button */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                <div>
+                  <label className="block text-sm font-normal text-text-muted">
+                    {recommendationMode === 'multi' ? 'Target Cloud Pair(s)' : 'Target Cloud Provider & Region'}
+                  </label>
+                  <span className="text-xs text-text-muted font-normal">
+                    {recommendationMode === 'multi'
+                      ? 'Select 2~10 distinct CSP and region pairs to compare top architectures across clouds'
+                      : 'Select a target cloud provider and region to explore multiple alternative candidate specifications'}
+                  </span>
+                </div>
+                {recommendationMode === 'multi' && (
+                  <button
+                    onClick={handleAddNextPair}
+                    disabled={(targetPairs || []).length >= 10}
+                    className="px-3.5 py-1.5 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 disabled:opacity-40 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Target Cloud Pair ({(targetPairs || []).length}/10)</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Mode-specific Toolbar Strip (Presets for Multi-Cloud, Recommendation Count for Single-Cloud) */}
+              {recommendationMode === 'multi' ? (
+                <div className="flex flex-wrap items-center justify-between gap-2.5 px-4 py-2.5 bg-bg-panel/50 border border-border-main/50 rounded-xl">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-normal text-text-muted flex items-center gap-1 mr-1">
+                      <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span>Quick Presets:</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleApplyGlobalBig3}
+                      className="px-2.5 py-1 bg-bg-panel hover:bg-emerald-500/10 border border-border-main hover:border-emerald-500/30 text-text-main hover:text-emerald-500 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                      title="AWS (ap-northeast-2), GCP (asia-northeast3), Azure (koreacentral)"
+                    >
+                      <span>+ Global Big 3</span>
+                      <span className="text-[11px] font-normal text-text-muted">(AWS, GCP, Azure)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleApplyDomesticBig2}
+                      className="px-2.5 py-1 bg-bg-panel hover:bg-emerald-500/10 border border-border-main hover:border-emerald-500/30 text-text-main hover:text-emerald-500 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                      title="NCP (kr), NHN Cloud (kr1)"
+                    >
+                      <span>+ Domestic 2</span>
+                      <span className="text-[11px] font-normal text-text-muted">(NCP, NHN)</span>
+                    </button>
+                  </div>
+                  {(targetPairs || []).length > 2 && (
+                    <button
+                      type="button"
+                      onClick={handleResetToDefaultMultiPairs}
+                      className="px-2.5 py-1 text-text-muted hover:text-red-400 rounded-lg text-xs font-normal transition cursor-pointer"
+                    >
+                      Reset to 2 Pairs
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 bg-bg-panel/50 border border-border-main/50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-normal text-text-muted flex items-center gap-1.5 shrink-0">
+                      <Sliders className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      <span>Recommendation Count:</span>
+                    </span>
+                    <select
+                      value={recommendationLimit}
+                      onChange={(e) => setRecommendationLimit(Number(e.target.value))}
+                      className="bg-bg-input border border-border-main text-text-main rounded-lg px-3 py-1.5 text-xs font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                        <option key={num} value={num}>
+                          {num} {num === 1 ? 'Candidate' : 'Candidates'} {num === 5 ? '(Default)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-xs text-text-muted font-normal hidden sm:inline">
+                      Generate {recommendationLimit} architecture candidate options for comparison
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {recommendationMode === 'multi' && (targetPairs || []).length < 2 && (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 rounded-xl text-xs font-bold flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Cross-CSP Exploration requires at least 2 distinct target cloud pairs to compare architectures.</span>
+                </div>
+              )}
 
               {hasDuplicatePairs && (targetPairs || []).length > 1 && (
                 <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 rounded-xl text-xs font-bold flex items-center gap-2">
@@ -1002,7 +1241,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                         </div>
                       </div>
 
-                      {(targetPairs || []).length > 1 && (
+                      {recommendationMode === 'multi' && (targetPairs || []).length > 2 && (
                         <button
                           onClick={() => removeTargetPair(idx)}
                           className="p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition cursor-pointer self-end md:self-center"
@@ -1020,7 +1259,12 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
             <div className="mt-6 flex justify-start">
               <button
                 onClick={handleRecommend}
-                disabled={isRecommending || tunedNodes.length === 0 || (hasDuplicatePairs && (targetPairs || []).length > 1)}
+                disabled={
+                  isRecommending ||
+                  tunedNodes.length === 0 ||
+                  (recommendationMode === 'multi' && (targetPairs || []).length < 2) ||
+                  (hasDuplicatePairs && (targetPairs || []).length > 1)
+                }
                 className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50 text-slate-950 font-extrabold rounded-xl text-sm tracking-wider transition shadow-lg shadow-emerald-500/10 flex items-center justify-center space-x-2 cursor-pointer"
               >
                 {isRecommending ? (
@@ -1032,9 +1276,11 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                   <>
                     <Sparkles className="w-4 h-4" />
                     <span>
-                      {(targetPairs || []).length > 1
-                        ? `Recommend Cross-CSP Target Infrastructure (${(targetPairs || []).length} Pairs)`
-                        : 'Recommend Target Cloud Infrastructure'}
+                      {recommendationMode === 'multi'
+                        ? (targetPairs || []).length < 2
+                          ? 'Select at least 2 Target Pairs to Compare'
+                          : `Recommend Cross-CSP Target Infrastructure (${(targetPairs || []).length} Pairs)`
+                        : `Recommend Target Cloud Infrastructure (${recommendationLimit} Candidates)`}
                     </span>
                   </>
                 )}
@@ -1109,8 +1355,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         ) : (
           <div className="space-y-6">
 
-            {/* Row-based layout: Recommended Cloud Summary (Row 1) & Topology Visualization (Row 2) */}
-            {/* Row-based layout: Recommended Cloud Summary (Row 1) & Topology Visualization (Row 2) */}
+            {/* Row-based layout: Candidates (Row 1), Recommended Cloud Summary (Row 2), Topology Visualization (Row 3) */}
             {editedCandidate && (
               editedCandidate.status === 'failed' ||
               editedCandidate.status === 'nothing-to-recommend' ||
@@ -1129,112 +1374,297 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
               ) : (
                 <div className="flex flex-col space-y-6 pt-4 border-t border-border-main/20">
 
-                  {/* Row 1: Detailed specifications overview card (Recommended Cloud Summary) */}
-                  <div className="bg-bg-panel/30 border border-border-main/50 rounded-2xl p-5 space-y-4 w-full">
-                    <div className="border-b border-border-main/30 pb-3 mb-2">
-                      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 block font-mono">Recommended Cloud Summary</span>
+                  {/* Row 1: Recommended Target Cloud Candidates (Horizontal Scroll) */}
+                  <div className="bg-bg-panel/30 border border-border-main/50 rounded-2xl p-5 space-y-3 w-full">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-border-main/30 pb-3 mb-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Layers className="w-4 h-4 text-emerald-500" />
+                          <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                            Recommended Target Cloud Candidates
+                          </span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold border border-emerald-500/20 font-mono">
+                            {recommendationCandidates.length} Candidate{recommendationCandidates.length > 1 ? 's' : ''}
+                          </span>
+                          {selectedCloudModel && (
+                            <span className="text-xs font-mono font-extrabold px-2 py-0.5 rounded bg-bg-panel border border-border-main text-text-muted">
+                              Loaded: {selectedCloudModel.name}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-sm text-text-muted mt-0.5 block">
+                          Select a recommended candidate to examine its topology and customize infrastructure settings.
+                        </span>
+                      </div>
+
+                      {recommendationCandidates.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowCompareModal(true)}
+                          className="px-3.5 py-2 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-bold transition cursor-pointer flex items-center gap-2 shrink-0 self-start sm:self-auto shadow-sm"
+                        >
+                          <Layers className="w-4 h-4 text-emerald-500" />
+                          <span>Compare Matrix ({recommendationCandidates.length})</span>
+                        </button>
+                      )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-
-                      {/* 1. Estimation (Match Level & Est. Cost) */}
-                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
-                        <div className="space-y-2">
-                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Estimation</span>
-
-                          <div className="flex flex-row justify-between items-center pt-2 min-h-[45px] gap-2">
-                            <div className="flex items-center space-x-1.5">
-                              <span className="text-xs text-text-muted font-normal font-sans">Match</span>
-                              <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs uppercase bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded whitespace-nowrap">{editedCandidate.status}</span>
-                            </div>
-                            <div className="flex items-center space-x-1.5 border-l border-border-main/20 pl-3">
-                              <span className="text-xs text-text-muted font-normal font-sans">Cost</span>
-                              <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-lg font-mono whitespace-nowrap">
-                                ${getEstimatedMonthlyCost(editedCandidate)}/month
-                              </span>
-                            </div>
-                          </div>
+                    {selectedCloudModel && (
+                      <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between max-w-xl">
+                        <div>
+                          <span className="text-xs font-normal text-text-muted block">Loaded Design Model</span>
+                          <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
+                            {selectedCloudModel.name} (v{selectedCloudModel.version})
+                          </span>
                         </div>
+                        <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/20 px-2.5 py-1 rounded-lg">
+                          Active Model
+                        </span>
                       </div>
+                    )}
 
-                      {/* 2. Network (VNet & Subnets) */}
-                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
-                        <div className="space-y-2">
-                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Network</span>
-
-                          {/* 1 VNet(s) X Subnet(s) */}
-                          <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
-                            1 VNet(s) {editedCandidate.targetVNet?.subnetInfoList?.length || 0} Subnet(s)
-                          </div>
+                    {/* Multi-CSP rollback banner if viewing single-CSP deep dive */}
+                    {cachedMultiCandidates && cachedMultiCandidates.length > 0 && (
+                      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl mb-2">
+                        <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                          <Sparkles className="w-4 h-4 shrink-0" />
+                          <span>
+                            Currently viewing Single-CSP Deep Dive for {targetPairs[0]?.csp?.toUpperCase()}. Previous Multi-CSP comparison results are saved.
+                          </span>
                         </div>
+                        <button
+                          type="button"
+                          onClick={handleRestoreMultiCandidates}
+                          className="px-3.5 py-1.5 bg-bg-panel border border-border-main hover:border-emerald-500/40 text-text-main rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-sm hover:shadow"
+                        >
+                          <Undo2 className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>Back to Multi-CSP Comparison ({cachedMultiCandidates.length} CSPs)</span>
+                        </button>
                       </div>
+                    )}
 
-                      {/* 3. Overall Compute (Node Groups & Nodes) */}
-                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
-                        <div className="space-y-2">
-                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Overall Compute</span>
+                    {/* Horizontal scrollable candidate cards */}
+                    <div className="overflow-x-auto pb-3 pt-1 flex items-stretch gap-4 scroll-smooth">
+                      {(() => {
+                        const isMultiCspResults = recommendationCandidates.length > 1 &&
+                          new Set(recommendationCandidates.map(c => c.targetCloud?.csp?.toLowerCase())).size > 1;
 
-                          <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
-                            {(editedCandidate.targetInfra?.nodeGroups || []).length} Node Group(s) {(editedCandidate.targetInfra?.nodeGroups || []).reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0)} Node(s)
-                          </div>
-                        </div>
-                      </div>
+                        return recommendationCandidates.map((c, idx) => {
+                          const isActive = selectedCandidateIndex === idx;
+                          const cspName = c.targetCloud?.csp ? c.targetCloud.csp.toUpperCase() : '';
+                          const regionName = c.targetCloud?.region || '—';
+                          const cost = getEstimatedMonthlyCost(c);
+                          const nodeGroups = c.targetInfra?.nodeGroups || [];
+                          const nodeCount = nodeGroups.reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0);
+                          const nodeGroupCount = nodeGroups.length;
 
-                      {/* 4. GPU Accelerators — Shows GPU Node Groups and Nodes count, marked TBD */}
-                      {candidateGpuSummary.hasGpu && (
-                        <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
-                          <div className="space-y-2">
-                            <div className="border-b border-border-main/10 pb-1 flex items-center justify-between">
-                              <span className="text-sm font-bold text-emerald-500 font-sans">GPU Accelerators</span>
-                              <span className="text-xs font-bold font-mono text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded" title="Target Cloud GPU Specification is TBD">
-                                Spec: TBD
-                              </span>
-                            </div>
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => selectCandidate(idx)}
+                              className={`p-5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between space-y-3.5 relative shrink-0 w-[290px] min-w-[280px] ${
+                                isActive
+                                  ? 'bg-emerald-500/10 border-emerald-500 text-text-main shadow-md shadow-emerald-500/10 ring-1 ring-emerald-500'
+                                  : 'bg-bg-panel/70 border-border-main text-text-muted hover:border-emerald-500/40 hover:bg-bg-panel hover:shadow-sm'
+                              }`}
+                            >
+                              {/* Card Header: Candidate Title & CSP Badge */}
+                              <div className="flex items-center justify-between gap-2 w-full">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono font-extrabold shrink-0 ${
+                                    isActive
+                                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                                      : 'bg-bg-input text-text-muted border border-border-main'
+                                  }`}>
+                                    {idx + 1}
+                                  </span>
+                                  <span className="text-sm font-extrabold text-text-main truncate">
+                                    Candidate {idx + 1}
+                                  </span>
+                                </div>
+                                {cspName && (
+                                  <span className={`text-xs px-2.5 py-0.5 rounded font-mono font-extrabold uppercase shrink-0 ${
+                                    isActive
+                                      ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30'
+                                      : 'bg-bg-input text-text-muted border border-border-main'
+                                  }`}>
+                                    {cspName}
+                                  </span>
+                                )}
+                              </div>
 
-                            <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
-                              {candidateGpuSummary.gpuNgCount} Node Group(s) {candidateGpuSummary.gpuNodeCount} Node(s)
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                              {/* Card Body: Values Only (No Keys!) */}
+                              <div className="space-y-2 w-full pt-1.5 border-t border-border-main/15">
+                                {/* Target Region Value */}
+                                <div className="font-extrabold text-text-main text-sm truncate" title={regionName}>
+                                  {regionName}
+                                </div>
 
-                      {/* 5. Security Group (Security Groups & Rules) */}
-                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
-                        <div className="space-y-2">
-                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Security Group</span>
+                                {/* Node Allocation Value */}
+                                <div className="font-extrabold text-text-main text-sm truncate">
+                                  {nodeGroupCount} Node Group(s), {nodeCount} Node(s)
+                                </div>
 
-                          <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
-                            {(editedCandidate.targetSecurityGroupList || []).length} Security Group(s) {(editedCandidate.targetSecurityGroupList || []).reduce((acc, sg) => acc + (sg?.firewallRules || []).length, 0)} Rule(s)
-                          </div>
-                        </div>
-                      </div>
+                                {/* Match Level Value (Badge) */}
+                                <div>
+                                  <span className={`inline-block text-xs uppercase font-extrabold px-2.5 py-0.5 rounded ${
+                                    c.status === 'highly-matched'
+                                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                                  }`}>
+                                    {c.status || 'matched'}
+                                  </span>
+                                </div>
+                              </div>
 
-                      {/* 5. SSH Key */}
-                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
-                        <div className="space-y-2">
-                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">SSH Key</span>
+                              {/* Card Footer: Est. Cost Value Only & Select State */}
+                              <div className="pt-2.5 border-t border-border-main/20 flex items-center justify-between w-full">
+                                <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                  ${cost}/month
+                                </span>
 
-                          <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
-                            {editedCandidate.targetSshKey ? 1 : 0} SSH Key(s)
-                          </div>
-                        </div>
-                      </div>
+                                <span className={`text-xs font-bold px-2.5 py-1 rounded-lg transition ${
+                                  isActive
+                                    ? 'bg-emerald-500 text-slate-950 font-extrabold shadow-sm flex items-center gap-1'
+                                    : 'bg-bg-input text-text-muted border border-border-main hover:text-text-main'
+                                }`}>
+                                  {isActive && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                  {isActive ? 'Selected' : 'Select'}
+                                </span>
+                              </div>
 
-                      {/* 6. Load Balancer (NLB) */}
-                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
-                        <div className="space-y-2">
-                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Load Balancer</span>
-
-                          <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
-                            {(editedCandidate.targetNlbList || []).length} NLB(s)
-                          </div>
-                        </div>
-                      </div>
-
+                              {/* Deep Dive Action (Visible in Multi-CSP mode or when results contain multiple CSPs) */}
+                              {(recommendationMode === 'multi' || isMultiCspResults) && c.targetCloud?.csp && (
+                                <div
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeepDiveWithCsp(c.targetCloud.csp, c.targetCloud.region || 'ap-northeast-2');
+                                  }}
+                                  className="w-full pt-1"
+                                >
+                                  <span className="w-full py-1.5 px-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500/50 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm">
+                                    <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                                    <span>Deep Dive with {cspName} (5 Candidates) ➔</span>
+                                  </span>
+                                </div>
+                              )}
+                            </button>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
 
-                  {/* Row 2: Topology Visualization */}
+                  {/* Row 2: 2-Line Summary Bar */}
+                  <div className="bg-bg-panel/40 border border-border-main/50 rounded-xl p-4 sm:px-5 sm:py-3.5 w-full flex flex-col gap-2.5 text-sm shadow-sm">
+                    {/* Line 1: Summary, Candidate, Match, Cost */}
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                      <div className="inline-flex items-center gap-2 shrink-0 pr-4 border-r border-border-main/30">
+                        <Compass className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span className="text-sm font-extrabold text-text-main">
+                          Summary
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold border border-emerald-500/20">
+                          Candidate {selectedCandidateIndex + 1}
+                        </span>
+                      </div>
+
+                      {/* Match */}
+                      <div className="inline-flex items-center gap-1.5 shrink-0">
+                        <span className="text-sm font-normal text-text-muted leading-none">Match</span>
+                        <span className="text-xs uppercase font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 leading-tight">
+                          {editedCandidate.status}
+                        </span>
+                      </div>
+
+                      <div className="h-4 w-px bg-border-main/30 shrink-0 hidden sm:block self-center" />
+
+                      {/* Cost */}
+                      <div className="inline-flex items-baseline gap-1.5 shrink-0">
+                        <span className="text-sm font-normal text-text-muted">Cost</span>
+                        <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                          ${getEstimatedMonthlyCost(editedCandidate)}/month
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="h-px w-full bg-border-main/20" />
+
+                    {/* Line 2: Network, Overall Compute, Accelerator (TBD), Security, SSH Key, NLB */}
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                      {/* Network */}
+                      <div className="inline-flex items-baseline gap-1.5 shrink-0">
+                        <span className="text-sm font-normal text-text-muted">Network</span>
+                        <span className="text-sm font-extrabold text-text-main tabular-nums">
+                          1 VNet, {editedCandidate.targetVNet?.subnetInfoList?.length || 0} Subnet(s)
+                        </span>
+                      </div>
+
+                      <div className="h-4 w-px bg-border-main/30 shrink-0 hidden sm:block self-center" />
+
+                      {/* Overall Compute */}
+                      <div className="inline-flex items-baseline gap-1.5 shrink-0">
+                        <span className="text-sm font-normal text-text-muted">Overall Compute</span>
+                        <span className="text-sm font-extrabold text-text-main tabular-nums">
+                          {(editedCandidate.targetInfra?.nodeGroups || []).length} Node Group(s), {(editedCandidate.targetInfra?.nodeGroups || []).reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0)} Node(s)
+                        </span>
+                      </div>
+
+                      <div className="h-4 w-px bg-border-main/30 shrink-0 hidden sm:block self-center" />
+
+                      {/* Accelerator (TBD) */}
+                      <div className="inline-flex items-baseline gap-1.5 shrink-0">
+                        <span className="text-sm font-normal text-text-muted">Accelerator</span>
+                        {candidateGpuSummary.hasGpu && candidateGpuSummary.gpuNgCount > 0 ? (
+                          <>
+                            <span className="text-sm font-extrabold text-text-main tabular-nums">
+                              {candidateGpuSummary.gpuNgCount} Node Group(s), {candidateGpuSummary.gpuNodeCount} Node(s)
+                            </span>
+                            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded leading-tight self-center">
+                              TBD
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded leading-tight self-center">
+                            TBD
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="h-4 w-px bg-border-main/30 shrink-0 hidden sm:block self-center" />
+
+                      {/* Security */}
+                      <div className="inline-flex items-baseline gap-1.5 shrink-0">
+                        <span className="text-sm font-normal text-text-muted">Security</span>
+                        <span className="text-sm font-extrabold text-text-main tabular-nums">
+                          {(editedCandidate.targetSecurityGroupList || []).length} SG(s), {(editedCandidate.targetSecurityGroupList || []).reduce((acc, sg) => acc + (sg?.firewallRules || []).length, 0)} Rule(s)
+                        </span>
+                      </div>
+
+                      <div className="h-4 w-px bg-border-main/30 shrink-0 hidden sm:block self-center" />
+
+                      {/* SSH Key */}
+                      <div className="inline-flex items-baseline gap-1.5 shrink-0">
+                        <span className="text-sm font-normal text-text-muted">SSH Key</span>
+                        <span className="text-sm font-extrabold text-text-main tabular-nums">
+                          {editedCandidate.targetSshKey ? 1 : 0} Key(s)
+                        </span>
+                      </div>
+
+                      <div className="h-4 w-px bg-border-main/30 shrink-0 hidden sm:block self-center" />
+
+                      {/* Load Balancer */}
+                      <div className="inline-flex items-baseline gap-1.5 shrink-0">
+                        <span className="text-sm font-normal text-text-muted">NLB</span>
+                        <span className="text-sm font-extrabold text-text-main tabular-nums">
+                          {(editedCandidate.targetNlbList || []).length} NLB(s)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 3: Topology Visualization */}
 
                   <div className="w-full bg-bg-panel/40 border border-border-main/50 rounded-2xl p-5 relative min-h-[300px] flex flex-col justify-between">
                     <div>
@@ -1266,7 +1696,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                 return (
                                   <span key={sgIdx} className="bg-orange-100 dark:bg-orange-950/40 border border-orange-300 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 text-sm px-2 py-0.5 rounded font-extrabold flex items-center space-x-1 font-mono">
                                     <Sliders className="w-3 h-3" />
-                                    <span>SG: {sg.name || 'default-sg'} ({(sg.firewallRules || []).length} Rules)</span>
+                                    <span>SG: {sg.name || 'default-sg'} ({(sg.firewallRules || []).length} Rule(s))</span>
                                   </span>
                                 );
                               })}

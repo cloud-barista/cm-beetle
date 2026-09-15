@@ -263,13 +263,14 @@ let targetModelCachePromise: Promise<{ success: boolean; targetModel: any; error
 
 export const beetleApi = {
   // Get Cloud Recommendation candidates based on Source model input
-  getRecommendations: async (sourceInfra: OnpremInfra, desiredCsp: string, desiredRegion: string): Promise<RecommendedInfra[]> => {
+  getRecommendations: async (sourceInfra: OnpremInfra, desiredCsp: string, desiredRegion: string, limit?: number): Promise<RecommendedInfra[]> => {
     const hasNlbs = sourceInfra.nlbs && sourceInfra.nlbs.length > 0;
+    const limitQuery = limit ? `&limit=${limit}` : '';
     
     let response;
     if (hasNlbs) {
       // Call NLB-aware recommendation endpoint
-      response = await api.post(`/beetle/recommendation/infraWithNlb?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}`, {
+      response = await api.post(`/beetle/recommendation/infraWithNlb?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}${limitQuery}`, {
         nameSeed: 'my',
         desiredCsp,
         desiredRegion,
@@ -277,7 +278,7 @@ export const beetleApi = {
       });
     } else {
       // Call standard VM recommendation endpoint
-      response = await api.post(`/beetle/recommendation/infra?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}`, {
+      response = await api.post(`/beetle/recommendation/infra?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}${limitQuery}`, {
         desiredCspAndRegionPair: {
           csp: desiredCsp,
           region: desiredRegion
