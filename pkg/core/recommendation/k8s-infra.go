@@ -91,13 +91,13 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 		// Node group names use a fixed base ("workers") + index, normalized and checked against
 		// the CSP naming rule the profile carries.
 		name := buildNodeGroupName(profile, "workers", i+1)
-		nodeGroupReqs = append(nodeGroupReqs, buildK8sNodeGroupReq(provider, name, g))
+		nodeGroupReqs = append(nodeGroupReqs, buildK8sNodeGroupReq(profile, name, g))
 		includedWorkers += len(g.nodes)
 	}
 
 	vNetReq := buildK8sVNetReq(profile, connectionName, onpremInfra)
 	sshKeyReq := buildK8sSshKeyReq(connectionName)
-	sgReqList := buildK8sSecurityGroupReqList(connectionName, provider, region, workerNodes, onpremInfra.K8sCluster)
+	sgReqList := buildK8sSecurityGroupReqList(connectionName, provider, region, vNetReq.CidrBlock, workerNodes, onpremInfra.K8sCluster)
 
 	clusterReq := cloudmodel.K8sClusterReq{
 		ConnectionName: connectionName,
@@ -963,6 +963,7 @@ type targetProfile struct {
 	nodeGroupNamingRule string
 	requiredSubnetCount int
 	regionZones         []string // only fetched when requiredSubnetCount > 1
+	rootDiskType        string
 }
 
 // getTargetProfile reads the target cloud's K8s declarations in one place.
@@ -970,7 +971,7 @@ type targetProfile struct {
 // It does not fail. Each field falls back to what the individual lookups used before, so a
 // Tumblebug hiccup degrades the recommendation instead of aborting it.
 func getTargetProfile(provider, region string) targetProfile {
-	p := targetProfile{provider: provider, region: region}
+	p := targetProfile{provider: provider, region: region, rootDiskType: "default"}
 
 	profile, err := tbclient.NewSession().GetK8sClusterProfile(provider, region)
 	if err != nil {
@@ -982,6 +983,10 @@ func getTargetProfile(provider, region string) targetProfile {
 		p.nodeImages = profile.NodeImages
 		p.nodeGroupNamingRule = profile.NodeGroupNamingRule
 		p.requiredSubnetCount = profile.RequiredSubnetCount
+		p.rootDiskType = profile.RootDiskType
+		if p.rootDiskType == "" {
+			p.rootDiskType = "default"
+		}
 		if p.requiredSubnetCount < 1 {
 			log.Warn().Str("provider", provider).Int("fallback", defaultRequiredSubnetCount(provider)).
 				Msg("K8s asset declares no required subnet count; using per-provider fallback")
@@ -1012,11 +1017,33 @@ func buildK8sSshKeyReq(connectionName string) cloudmodel.SshKeyReq {
 // is absent (e.g., honeybee mergeK8sNodes bug), it falls back to a minimal fixed rule set.
 //
 // Note: VNetId is intentionally empty here; migration logic fills it after VNet creation.
-func buildK8sSecurityGroupReqList(connectionName, provider, region string, workers []onpremmodel.NodeProperty, k8sCluster *onpremmodel.K8sClusterProperty) []cloudmodel.SecurityGroupReq {
+func buildK8sSecurityGroupReqList(connectionName, provider, region, vpcCIDR string, workers []onpremmodel.NodeProperty, k8sCluster *onpremmodel.K8sClusterProperty) []cloudmodel.SecurityGroupReq {
 	const k8sKubeletPort = "10250"
+	const k8sApiServerPort = "6443"
 	nodePortRange := "30000-32767"
 	if k8sCluster != nil && k8sCluster.NodePortRange != "" {
 		nodePortRange = k8sCluster.NodePortRange
+	}
+
+	// Standard K8s access rules: API server, Kubelet, NodePort, SSH, and intra-cluster communication.
+	requiredRules := []cloudmodel.FirewallRuleReq{
+		{Ports: k8sApiServerPort, Protocol: "TCP", Direction: "inbound", CIDR: "0.0.0.0/0"},
+		{Ports: "443", Protocol: "TCP", Direction: "inbound", CIDR: "0.0.0.0/0"},
+		{Ports: "22", Protocol: "TCP", Direction: "inbound", CIDR: "0.0.0.0/0"},
+		{Ports: k8sKubeletPort, Protocol: "TCP", Direction: "inbound", CIDR: "0.0.0.0/0"},
+		{Ports: nodePortRange, Protocol: "TCP", Direction: "inbound", CIDR: "0.0.0.0/0"},
+		{Ports: "1-65535", Protocol: "TCP", Direction: "inbound", CIDR: vpcCIDR},
+		{Ports: "1-65535", Protocol: "UDP", Direction: "inbound", CIDR: vpcCIDR},
+		{Ports: "1-65535", Protocol: "TCP", Direction: "inbound", CIDR: "172.16.0.0/12"},
+		{Ports: "1-65535", Protocol: "UDP", Direction: "inbound", CIDR: "172.16.0.0/12"},
+		{Ports: "1-65535", Protocol: "TCP", Direction: "outbound", CIDR: "0.0.0.0/0"},
+		{Ports: "1-65535", Protocol: "UDP", Direction: "outbound", CIDR: "0.0.0.0/0"},
+	}
+	if k8sCluster != nil && k8sCluster.PodCIDR != "" && k8sCluster.PodCIDR != vpcCIDR {
+		requiredRules = append(requiredRules,
+			cloudmodel.FirewallRuleReq{Ports: "1-65535", Protocol: "TCP", Direction: "inbound", CIDR: k8sCluster.PodCIDR},
+			cloudmodel.FirewallRuleReq{Ports: "1-65535", Protocol: "UDP", Direction: "inbound", CIDR: k8sCluster.PodCIDR},
+		)
 	}
 
 	// Try to derive rules from source worker firewall tables.
@@ -1035,22 +1062,20 @@ func buildK8sSecurityGroupReqList(connectionName, provider, region string, worke
 			sg.ConnectionName = connectionName
 			sg.Name = "k8s-sg"
 
-			existingPorts := make(map[string]bool)
+			existingRules := make(map[string]bool)
 			if sg.FirewallRules != nil {
 				for _, r := range *sg.FirewallRules {
-					existingPorts[r.Ports+"|"+r.Direction] = true
+					existingRules[r.Ports+"|"+r.Protocol+"|"+r.Direction+"|"+r.CIDR] = true
 				}
 			}
 
-			// Add K8s-specific ports only when not already present from source rules.
+			// Add K8s-specific ports when not already present with matching CIDR from source rules.
 			var k8sExtra []cloudmodel.FirewallRuleReq
-			for _, candidate := range []cloudmodel.FirewallRuleReq{
-				{Ports: k8sKubeletPort, Protocol: "TCP", Direction: "inbound", CIDR: "0.0.0.0/0"},
-				{Ports: nodePortRange, Protocol: "TCP", Direction: "inbound", CIDR: "0.0.0.0/0"},
-				{Ports: "1-65535", Protocol: "TCP", Direction: "outbound", CIDR: "0.0.0.0/0"},
-			} {
-				if !existingPorts[candidate.Ports+"|"+candidate.Direction] {
+			for _, candidate := range requiredRules {
+				key := candidate.Ports + "|" + candidate.Protocol + "|" + candidate.Direction + "|" + candidate.CIDR
+				if !existingRules[key] {
 					k8sExtra = append(k8sExtra, candidate)
+					existingRules[key] = true
 				}
 			}
 
@@ -1068,13 +1093,7 @@ func buildK8sSecurityGroupReqList(connectionName, provider, region string, worke
 	}
 
 	// Fallback: minimal fixed rules covering standard K8s access patterns.
-	rules := &[]cloudmodel.FirewallRuleReq{
-		{Ports: "443", Protocol: "TCP", Direction: "inbound", CIDR: "0.0.0.0/0"},
-		{Ports: "22", Protocol: "TCP", Direction: "inbound", CIDR: "0.0.0.0/0"},
-		{Ports: nodePortRange, Protocol: "TCP", Direction: "inbound", CIDR: "0.0.0.0/0"},
-		{Ports: k8sKubeletPort, Protocol: "TCP", Direction: "inbound", CIDR: "0.0.0.0/0"},
-		{Ports: "1-65535", Protocol: "TCP", Direction: "outbound", CIDR: "0.0.0.0/0"},
-	}
+	rules := &requiredRules
 	return []cloudmodel.SecurityGroupReq{{
 		ConnectionName: connectionName,
 		Name:           "k8s-sg",
@@ -1102,6 +1121,12 @@ var cspRequiresFixedNodeGroupSize = map[string]bool{
 	"aws":     true,
 	"tencent": true,
 	"ibm":     true,
+}
+
+// cspRequiresAutoScalingOn lists CSPs where managed node groups are always ASG-backed
+// and reject OnAutoScaling=false (e.g. AWS EKS, cb-spider issue #1496).
+var cspRequiresAutoScalingOn = map[string]bool{
+	"aws": true,
 }
 
 // defaultMaxNodeGroupNameLen is a conservative upper bound applied when a CSP has no
@@ -1180,14 +1205,14 @@ func normalizeNodeGroupName(base string, index, maxLen int) string {
 //     specified, OnAutoScaling must be enabled"), so both are left at 0.
 //   - AWS EKS requires MaxNodeSize >= 1 unconditionally ("The MaxNodeSize value must
 //     be greater than or equal to 1"), so a fixed-size group uses Max = desiredSize.
-func buildK8sNodeGroupReq(provider, name string, g nodeGroupAccum) cloudmodel.K8sNodeGroupReq {
+func buildK8sNodeGroupReq(profile targetProfile, name string, g nodeGroupAccum) cloudmodel.K8sNodeGroupReq {
+	provider := profile.provider
 	desiredSize := len(g.nodes)
 	if desiredSize == 0 {
 		desiredSize = 1
 	}
 
-	// Use the largest root disk in the group so no node in this (homogeneous) group is
-	// under-provisioned on disk.
+	// Use the largest root disk in the group so no node is under-provisioned.
 	rootDiskSize := 0
 	for _, w := range g.nodes {
 		if int(w.RootDisk.TotalSize) > rootDiskSize {
@@ -1195,13 +1220,15 @@ func buildK8sNodeGroupReq(provider, name string, g nodeGroupAccum) cloudmodel.K8
 		}
 	}
 
-	// Default: min/max unset (0). Azure requires this when auto-scaling is off.
-	// Default: min/max unset (0). Azure requires this when auto-scaling is off (it rejects a
-	// specified MinNodeSize otherwise). Some CSPs instead reject MaxNodeSize=0 and need a
-	// fixed-size group pinned at desiredSize (see cspRequiresFixedNodeGroupSize).
+	// Apply CSP-specific node group sizing rules when autoscaling is off.
 	minNodeSize, maxNodeSize := 0, 0
 	if cspRequiresFixedNodeGroupSize[strings.ToLower(provider)] {
 		minNodeSize, maxNodeSize = desiredSize, desiredSize
+	}
+
+	rootDiskType := profile.rootDiskType
+	if rootDiskType == "" {
+		rootDiskType = "default"
 	}
 
 	description := fmt.Sprintf("Worker node group migrated from on-premise (%d node(s))", desiredSize)
@@ -1209,14 +1236,19 @@ func buildK8sNodeGroupReq(provider, name string, g nodeGroupAccum) cloudmodel.K8
 		description += " " + strings.Join(g.notes, " ")
 	}
 
+	onAutoScaling := "false"
+	if cspRequiresAutoScalingOn[strings.ToLower(provider)] {
+		onAutoScaling = "true"
+	}
+
 	return cloudmodel.K8sNodeGroupReq{
 		Name:         name,
 		ImageId:      g.imageId,
 		SpecId:       g.specId(),
-		RootDiskType: "default",
+		RootDiskType: rootDiskType,
 		RootDiskSize: rootDiskSize,
 		// SshKeyId filled by migration logic
-		OnAutoScaling:   "false",
+		OnAutoScaling:   onAutoScaling,
 		DesiredNodeSize: desiredSize,
 		MinNodeSize:     minNodeSize,
 		MaxNodeSize:     maxNodeSize,
