@@ -87,6 +87,8 @@ workload:
   enabled: true
   kubeconfigTimeoutSec: 600 # kubeconfig lags the Active status on some CSPs
   kubeconfigPollSec: 60
+  nodeReadyTimeoutSec: 600 # worker nodes take time to boot and report Ready
+  nodePollSec: 15
   podReadyTimeoutSec: 180
   podPollSec: 10
   # Publish nginx through a LoadBalancer Service and fetch it from outside the cluster.
