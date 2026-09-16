@@ -6221,7 +6221,7 @@ definitions:
         example: dbadmin
         type: string
       backupRetentionDays:
-        example: 7
+        example: 0
         type: integer
       highAvailability:
         example: false
