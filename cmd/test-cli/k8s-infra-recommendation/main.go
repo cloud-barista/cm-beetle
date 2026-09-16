@@ -256,7 +256,10 @@ func runAllCases(client *resty.Client, cfg TestConfig, targets []TestCase, scena
 
 func runTargetCases(client *resty.Client, cfg TestConfig, target TestCase, scenarios []Scenario) []CaseResult {
 	results := make([]CaseResult, 0, len(scenarios))
-	for _, sc := range scenarios {
+	for i, sc := range scenarios {
+		if i > 0 {
+			time.Sleep(150 * time.Millisecond)
+		}
 		results = append(results, runCase(client, cfg, target, sc))
 	}
 	return results

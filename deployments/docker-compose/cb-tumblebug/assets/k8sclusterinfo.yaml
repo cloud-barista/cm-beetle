@@ -13,6 +13,14 @@
 #           - name: "1.30" [available version name (use double quotes)]
 #             id: "1.30" [available version name (use double quotes)]
 #     nodeGroupNamingRule: [regular expression or no restriction if empty]
+#     initialNodeGroupManagedByCluster: [true/false, default false]
+#       The node group created together with the cluster is lifecycle-bound to it and
+#       cannot be deleted independently via the node group API.
+#     autoScalingOffNodeSize: [{min: N, max: N}, default none]
+#       The node-size floor the CSP still demands while autoscaling is disabled.
+#       Most CSPs ignore Min/Max in that state - omit the key for those. Some even reject
+#       a non-zero MinNodeSize when autoscaling is off, so never set min unless the CSP
+#       demands it. A field left out keeps the value the client requested.
 #
 
 k8scluster:
@@ -113,20 +121,17 @@ k8scluster:
     initialNodeGroupManagedByCluster: true
     version:
       # ServiceUnavailable or NotSupportedSLB
-      - region: [me-east-1, cn-zhangjiakou, cn-hangzhou, cn-shenzhen, cn-chengdu, ap-south-1, ap-sourtheast-2]
+      - region: [me-east-1, cn-zhangjiakou, cn-hangzhou, cn-shenzhen, cn-chengdu, ap-south-1, ap-southeast-2]
       # ap-northeast-1,ap-northeast-2,ap-southeast-1,ap-southeast-3,ap-southeast-5,us-west-1,us-east-1,eu-central-1,eu-west-1,cn-beijing,cn-hongkong,cn-shanghai,cn-huhehaote,cn-heyuan,cn-wulanchabu,cn-guangzhou
       - region: [common] 
+        # Verified against ap-northeast-2 on 2026-09-14 (allowed: 1.36.2 / 1.35.7 / 1.34.10).
         available:
+          - name: "1.36"
+            id: "1.36.2-aliyun.1"
           - name: "1.35"
-            id: "1.35.2-aliyun.1"
+            id: "1.35.7-aliyun.1"
           - name: "1.34"
-            id: "1.34.3-aliyun.1"
-          - name: "1.33"
-            id: "1.33.3-aliyun.1"
-          - name: "1.32"
-            id: "1.32.7-aliyun.1"
-          - name: "1.31"
-            id: "1.31.9-aliyun.1"
+            id: "1.34.10-aliyun.1"
     rootDisk:
       - region: [common]
         type:
@@ -136,6 +141,10 @@ k8scluster:
           min: 10
           max: 40
   nhn:
+    # CSP constraint: the NKS nodegroup API rejects max_node_count 0 (verified 2026-09-10,
+    # HTTP 400 "Value should be greater or equal to 1"). Min stays unset because the
+    # CB-Spider driver rejects a non-zero Min while autoscaling is off.
+    autoScalingOffNodeSize: {max: 1}
     nodeGroupsOnCreation: true
     nodeImageDesignation: true
     requiredSubnetCount: 1
@@ -161,6 +170,14 @@ k8scluster:
     nodeImageDesignation: true
     requiredSubnetCount: 1
     initialNodeGroupManagedByCluster: true
+    # Not a CSP constraint: TKE itself accepts MinSize 0 - its CreateClusterNodePool reference
+    # uses "MinSize":0 in the request example
+    # (https://intl.cloud.tencent.com/document/product/457/38781). The floor exists only
+    # because validateAtAddNodeGroup in the CB-Spider driver rejects anything below 1, while
+    # the driver forwards Min/Max/Desired to TKE as AutoScalingGroup parameters regardless of
+    # EnableAutoscale. Drop this once that check is fixed upstream. Nothing scales while
+    # autoscaling is off, so max needs no headroom.
+    autoScalingOffNodeSize: {min: 1, max: 1}
     version:
       # ServiceUnavailable
       - region: [ap-mumbai, eu-moscow, na-toronto]
@@ -202,18 +219,25 @@ k8scluster:
           min: 10
           max: 40
   ibm:
+    # Not a CSP constraint: the driver only sends Min/Max to IKS inside its
+    # `if OnAutoScaling` branch, so IKS never sees them while autoscaling is off. The floor
+    # exists solely because validateAtCreateCluster/validateAtAddNodeGroup reject anything
+    # below 1 with no OnAutoScaling guard. Drop this once that check is fixed upstream.
+    autoScalingOffNodeSize: {min: 1, max: 1}
     nodeGroupsOnCreation: true
     nodeImageDesignation: false
     requiredSubnetCount: 1
     version:
       - region: [common]
-        available: # Updated: 2026-06-12
+        available: # Updated: 2026-09-14
+          - name: "1.36"
+            id: "1.36.3"
           - name: "1.35"
-            id: "1.35.5"
+            id: "1.35.7"
           - name: "1.34"
-            id: "1.34.8"
+            id: "1.34.10"
           - name: "1.33"
-            id: "1.33.12"
+            id: "1.33.13"
     rootDisk:
       - region: [common]
         type:

@@ -302,45 +302,59 @@ func checkAPIServer(k8s *resty.Client, server string, report *CSPTestReport, res
 	_ = json.Unmarshal(verResp.Body(), &version)
 	res.Notes = append(res.Notes, fmt.Sprintf("✅ API server reachable (%s)", version.GitVersion))
 
-	nodesResp, err := k8s.R().Get(server + "/api/v1/nodes")
-	if err != nil || nodesResp.StatusCode() != http.StatusOK {
-		return fmt.Errorf("cannot list nodes via the K8s API")
-	}
-	var nodes struct {
-		Items []struct {
-			Status struct {
-				Conditions []struct {
-					Type   string `json:"type"`
-					Status string `json:"status"`
-				} `json:"conditions"`
-			} `json:"status"`
-		} `json:"items"`
-	}
-	if err := json.Unmarshal(nodesResp.Body(), &nodes); err != nil {
-		return fmt.Errorf("failed to parse node list: %w", err)
-	}
-
-	ready := 0
-	for _, n := range nodes.Items {
-		for _, c := range n.Status.Conditions {
-			if c.Type == "Ready" && c.Status == "True" {
-				ready++
-			}
-		}
-	}
-
 	want := 0
 	if report.Recommendation != nil {
 		for _, ng := range report.Recommendation.TargetK8sCluster.K8sNodeGroupList {
 			want += ng.DesiredNodeSize
 		}
 	}
-	if want > 0 && ready != want {
-		res.Notes = append(res.Notes, fmt.Sprintf("❌ %d/%d node(s) Ready, recommendation asked for %d", ready, len(nodes.Items), want))
-		return fmt.Errorf("cluster has %d ready node(s), expected %d", ready, want)
+	if want == 0 {
+		return nil
 	}
-	res.Notes = append(res.Notes, fmt.Sprintf("✅ %d node(s) Ready, matching the recommendation", ready))
-	return nil
+
+	timeout := 300 * time.Second
+	interval := 5 * time.Second
+	deadline := time.Now().Add(timeout)
+
+	var lastReady, lastTotal int
+	for attempt := 1; ; attempt++ {
+		nodesResp, err := k8s.R().Get(server + "/api/v1/nodes")
+		if err == nil && nodesResp.StatusCode() == http.StatusOK {
+			var nodes struct {
+				Items []struct {
+					Status struct {
+						Conditions []struct {
+							Type   string `json:"type"`
+							Status string `json:"status"`
+						} `json:"conditions"`
+					} `json:"status"`
+				} `json:"items"`
+			}
+			if err := json.Unmarshal(nodesResp.Body(), &nodes); err == nil {
+				ready := 0
+				for _, n := range nodes.Items {
+					for _, c := range n.Status.Conditions {
+						if c.Type == "Ready" && c.Status == "True" {
+							ready++
+						}
+					}
+				}
+				lastReady = ready
+				lastTotal = len(nodes.Items)
+				if ready >= want {
+					res.Notes = append(res.Notes, fmt.Sprintf("✅ %d node(s) Ready, matching the recommendation", ready))
+					return nil
+				}
+				progressf(res.Target, "... node readiness: %d/%d Ready (expected %d, attempt %d)", ready, lastTotal, want, attempt)
+			}
+		}
+
+		if time.Now().After(deadline) {
+			res.Notes = append(res.Notes, fmt.Sprintf("❌ %d/%d node(s) Ready, recommendation asked for %d", lastReady, lastTotal, want))
+			return fmt.Errorf("cluster has %d ready node(s), expected %d", lastReady, want)
+		}
+		time.Sleep(interval)
+	}
 }
 
 // runNginxWorkload creates a Deployment and waits for its pod to run. Scope stops at Running:

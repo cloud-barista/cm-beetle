@@ -79,6 +79,8 @@ type TestConfig struct {
 		Enabled              bool `yaml:"enabled"`
 		KubeconfigTimeoutSec int  `yaml:"kubeconfigTimeoutSec"`
 		KubeconfigPollSec    int  `yaml:"kubeconfigPollSec"`
+		NodeReadyTimeoutSec  int  `yaml:"nodeReadyTimeoutSec"`
+		NodePollSec          int  `yaml:"nodePollSec"`
 		PodReadyTimeoutSec   int  `yaml:"podReadyTimeoutSec"`
 		PodPollSec           int  `yaml:"podPollSec"`
 		LoadBalancerEnabled  bool `yaml:"loadBalancerEnabled"`
