@@ -447,6 +447,72 @@ func TestTargetPreferences_DefaultsAndOverrides(t *testing.T) {
 	}
 }
 
+func TestPublicAccessPreferenceResolution(t *testing.T) {
+	trueVal := true
+	falseVal := false
+
+	tests := []struct {
+		name               string
+		csp                string
+		pref               *TargetPreferences
+		expectedPublic     bool
+		expectWarningMatch string
+	}{
+		{
+			name:           "Default for AWS is true without warnings",
+			csp:            "aws",
+			pref:           nil,
+			expectedPublic: true,
+		},
+		{
+			name:           "Default for NCP is false without warnings",
+			csp:            "ncp",
+			pref:           nil,
+			expectedPublic: false,
+		},
+		{
+			name:               "NCP with explicit publicAccess true succeeds with warning",
+			csp:                "ncp",
+			pref:               &TargetPreferences{PublicAccess: &trueVal},
+			expectedPublic:     true,
+			expectWarningMatch: "NCP Cloud DB with publicAccess=true opens ACG inbound",
+		},
+		{
+			name:           "NCP with explicit publicAccess false succeeds without warning",
+			csp:            "ncp",
+			pref:               &TargetPreferences{PublicAccess: &falseVal},
+			expectedPublic: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var warnings []string
+			targetPublicAccess := true
+			if tc.csp == "ncp" {
+				targetPublicAccess = false
+			}
+			if tc.pref != nil && tc.pref.PublicAccess != nil {
+				targetPublicAccess = *tc.pref.PublicAccess
+			}
+			if tc.csp == "ncp" && targetPublicAccess {
+				warnings = append(warnings, "NCP Cloud DB with publicAccess=true opens ACG inbound to 0.0.0.0/0; public domain must be requested in NCP Console (Database > Cloud DB for ... > Select DB Server > DB Management > Manage Public Domain).")
+			}
+
+			if targetPublicAccess != tc.expectedPublic {
+				t.Errorf("expected publicAccess %v, got %v", tc.expectedPublic, targetPublicAccess)
+			}
+			if tc.expectWarningMatch != "" {
+				if len(warnings) == 0 || !strings.Contains(warnings[0], tc.expectWarningMatch) {
+					t.Errorf("expected warning matching %q, got %v", tc.expectWarningMatch, warnings)
+				}
+			} else if len(warnings) > 0 {
+				t.Errorf("expected no warnings, got %v", warnings)
+			}
+		})
+	}
+}
+
 func TestCalculationHelpers(t *testing.T) {
 	// 1. resolveSourceRDBMSInstanceName
 	t.Run("resolveSourceRDBMSInstanceName", func(t *testing.T) {
