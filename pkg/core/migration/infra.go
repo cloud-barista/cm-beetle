@@ -553,6 +553,11 @@ func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	defer cancelRead()
 	infraInfo, err := tbclient.NewSession().SetContext(readCtx).ReadInfra(nsId, infraId)
 	if err != nil {
+		// Treat already deleted or non-existent infra as idempotent success
+		if strings.Contains(err.Error(), "does not exist") || strings.Contains(err.Error(), "404") {
+			log.Info().Msgf("Infrastructure '%s' does not exist in Tumblebug; treating as already deleted", infraId)
+			return common.SimpleMsg{Message: fmt.Sprintf("Infrastructure '%s' does not exist or was already deleted.", infraId)}, nil
+		}
 		log.Error().Err(err).Msgf("failed to read the infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
 		return common.SimpleMsg{}, err
 	}

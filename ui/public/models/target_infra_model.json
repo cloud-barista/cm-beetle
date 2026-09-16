@@ -12,7 +12,7 @@
       "region": "ap-northeast-2"
     },
     "targetInfra": {
-      "name": "infra101",
+      "name": "my-target-model",
       "installMonAgent": "",
       "label": null,
       "systemLabel": "",
@@ -533,5 +533,5 @@
       "systemLabel": ""
     }
   },
-  "updatedTime": "2026-09-10T10:18:27.329Z"
+  "updatedTime": "2026-09-16T08:40:47.166Z"
 }

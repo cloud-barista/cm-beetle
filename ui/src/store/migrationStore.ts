@@ -351,14 +351,27 @@ export function calculateJobElapsedSeconds(job: { startTime?: string; elapsedSec
     if (!isNaN(parsed)) {
       return Math.max(0, Math.floor((Date.now() - parsed) / 1000));
     }
-    // Handle time-only strings like "19:25:10" or "07:25:10 PM"
-    const todayStr = new Date().toISOString().split('T')[0];
-    const dateParsed = new Date(`${todayStr}T${job.startTime}`).getTime();
-    if (!isNaN(dateParsed)) {
-      return Math.max(0, Math.floor((Date.now() - dateParsed) / 1000));
+    // Handle time-only strings including AM/PM and Korean locale designations
+    const timeMatch = job.startTime.match(/(\d{1,2}):(\d{1,2}):(\d{1,2})/);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1], 10);
+      const minutes = parseInt(timeMatch[2], 10);
+      const seconds = parseInt(timeMatch[3], 10);
+      const isPm = job.startTime.includes('PM') || job.startTime.includes('오후');
+      const isAm = job.startTime.includes('AM') || job.startTime.includes('오전');
+      if (isPm && hours < 12) hours += 12;
+      if (isAm && hours === 12) hours = 0;
+
+      const now = new Date();
+      const dateObj = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, seconds);
+      const diffSec = Math.floor((Date.now() - dateObj.getTime()) / 1000);
+      if (!isNaN(diffSec) && diffSec >= 0) {
+        return diffSec;
+      }
     }
   }
-  return job.elapsedSeconds || 0;
+  // Fallback to incrementing previous elapsed seconds so timer never freezes at 0
+  return (job.elapsedSeconds || 0) + 1;
 }
 
 const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
@@ -672,10 +685,16 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     ];
     try {
       const models = await damselflyApi.getCloudModels();
-      set({ savedCloudModels: [fallbackCloudModels[0], ...models] });
+      const existingLocal = get().savedCloudModels.filter(
+        m => m.id !== 'cloud-demo-1' && !models.some(remote => remote.id === m.id)
+      );
+      set({ savedCloudModels: [fallbackCloudModels[0], ...models, ...existingLocal] });
     } catch {
-      // Damselfly unreachable — show fallback demo model only
-      set({ savedCloudModels: fallbackCloudModels });
+      // Damselfly unreachable — keep local models
+      const current = get().savedCloudModels;
+      if (current.length === 0) {
+        set({ savedCloudModels: fallbackCloudModels });
+      }
     }
   },
 
@@ -693,19 +712,51 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   saveCloudModel: async (name, description, version, cloudInfra) => {
-    const saved = await damselflyApi.saveCloudModel(name, description, cloudInfra, version);
-    set({
-      savedCloudModels: [...get().savedCloudModels, saved],
-      selectedCloudModel: saved
-    });
-    return saved;
+    try {
+      const saved = await damselflyApi.saveCloudModel(name, description, cloudInfra, version);
+      set({
+        savedCloudModels: [...get().savedCloudModels.filter(m => m.id !== saved.id), saved],
+        selectedCloudModel: saved
+      });
+      return saved;
+    } catch (err) {
+      console.warn('Damselfly save error, saving to local state:', err);
+      const localSaved: CloudModelEnvelope = {
+        id: `cloud-model-${Date.now()}`,
+        name,
+        description,
+        cloudInfraModel: cloudInfra,
+        version: version || '1.0.0',
+        updatedTime: new Date().toISOString()
+      };
+      set({
+        savedCloudModels: [...get().savedCloudModels.filter(m => m.name !== name), localSaved],
+        selectedCloudModel: localSaved
+      });
+      return localSaved;
+    }
   },
 
   updateCloudModel: async (id, name, description, version, cloudInfra) => {
-    const saved = await damselflyApi.updateCloudModel(id, name, description, cloudInfra, version);
-    const updatedList = get().savedCloudModels.map(m => m.id === id ? saved : m);
-    set({ savedCloudModels: updatedList, selectedCloudModel: saved });
-    return saved;
+    try {
+      const saved = await damselflyApi.updateCloudModel(id, name, description, cloudInfra, version);
+      const updatedList = get().savedCloudModels.map(m => m.id === id ? saved : m);
+      set({ savedCloudModels: updatedList, selectedCloudModel: saved });
+      return saved;
+    } catch (err) {
+      console.warn('Damselfly update error, updating in local state:', err);
+      const localSaved: CloudModelEnvelope = {
+        id,
+        name,
+        description,
+        cloudInfraModel: cloudInfra,
+        version: version || '1.0.0',
+        updatedTime: new Date().toISOString()
+      };
+      const updatedList = get().savedCloudModels.map(m => m.id === id ? localSaved : m);
+      set({ savedCloudModels: updatedList, selectedCloudModel: localSaved });
+      return localSaved;
+    }
   },
 
   deleteCloudModel: async (id) => {
@@ -756,29 +807,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   // --------------------------------------------------------------------------
   // Page 3: Migration Execution - Live Connected to Beetle API
   // --------------------------------------------------------------------------
-  jobs: [
-    {
-      id: 'req-aws-01',
-      reqId: 'req-20260721-001',
-      infraId: 'mig01-aws-infra',
-      nsId: 'mig01',
-      nameSeed: '',
-      csp: 'AWS',
-      region: 'ap-northeast-2',
-      status: 'Handling',
-      startTime: '19:25:10',
-      elapsedSeconds: 15,
-      nodeGroupsCount: 2,
-      totalVms: 3,
-      isSample: true,
-      logs: [
-        'POST /beetle/migration/ns/mig01/infra?nameSeed=',
-        'HTTP 202 Accepted (ReqID: req-20260721-001, Status: Handling)',
-        'GET /beetle/request/req-20260721-001 -> Status: Handling (Elapsed: 15s)'
-      ]
-    }
-  ],
-  activeJobId: 'req-aws-01',
+  jobs: [],
+  activeJobId: '',
   namespaceId: 'mig01',
   nameSeed: '',
   isDeploying: false,
@@ -790,8 +820,6 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   setActiveJobId: (id) => set({ activeJobId: id }),
   addJob: (job) => set((state) => ({ jobs: [job, ...state.jobs], activeJobId: job.id })),
   removeJob: (id) => set((state) => {
-    const target = state.jobs.find(j => j.id === id);
-    if (target?.isSample) return state;
     const updatedJobs = state.jobs.filter(j => j.id !== id);
     const nextActiveId = state.activeJobId === id ? (updatedJobs[0]?.id || '') : state.activeJobId;
     return { jobs: updatedJobs, activeJobId: nextActiveId };
@@ -1033,6 +1061,14 @@ export const useMigrationStore = create<MigrationState>()(
           state.refinedSourceInfra = DEMO_SOURCE_INFRA;
         } else if (state.selectedSourceModel) {
           cleanGpuIfNonGpu(state.selectedSourceModel);
+        }
+
+        // Clean up any stale sample migration jobs from persisted state
+        if (Array.isArray(state.jobs)) {
+          state.jobs = state.jobs.filter(j => !j.isSample);
+          if (!state.jobs.some(j => j.id === state.activeJobId)) {
+            state.activeJobId = state.jobs[0]?.id || '';
+          }
         }
 
         if (Array.isArray(state.savedSourceModels)) {

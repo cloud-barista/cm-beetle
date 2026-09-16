@@ -191,26 +191,58 @@ export const damselflyApi = {
 
   // Save recommended target cloud spec as design template
   saveCloudModel: async (name: string, description: string, cloudInfraModel: RecommendedInfra, version?: string): Promise<CloudModelEnvelope> => {
+    const csp = cloudInfraModel?.targetCloud?.csp || '';
+    const region = cloudInfraModel?.targetCloud?.region || '';
     const response = await api.post('/damselfly/infra-model?modelType=cloud&isTargetModel=true', {
       userModelName: name,
       userModelVersion: version,
       description,
+      csp,
+      region,
       cloudInfraModel
     });
     const m = response.data;
-    return { ...m, id: m.id || m.uid || 'cloud-demo-1', name: m.name || m.userModelName || name, version: m.version || m.userModelVersion || version };
+    let infra = m.cloudInfraModel || m.cloud_infra_model || m.recommendedInfra || cloudInfraModel;
+    if (typeof infra === 'string') {
+      try { infra = JSON.parse(infra); } catch (e) {}
+    }
+    return {
+      ...m,
+      id: m.id || m.uid || `cloud-model-${Date.now()}`,
+      name: m.name || m.userModelName || name,
+      description: m.description || description,
+      version: m.version || m.userModelVersion || version || '1.0.0',
+      cloudInfraModel: infra,
+      updatedTime: m.updatedTime || new Date().toISOString()
+    };
   },
 
   // Update existing target cloud design
   updateCloudModel: async (id: string, name: string, description: string, cloudInfraModel: RecommendedInfra, version?: string): Promise<CloudModelEnvelope> => {
+    const csp = cloudInfraModel?.targetCloud?.csp || '';
+    const region = cloudInfraModel?.targetCloud?.region || '';
     const response = await api.put(`/damselfly/infra-model/${id}?modelType=cloud&isTargetModel=true`, {
       userModelName: name,
       userModelVersion: version,
       description,
+      csp,
+      region,
       cloudInfraModel
     });
     const m = response.data;
-    return { ...m, id: m.id || m.uid || id, name: m.name || m.userModelName || name, version: m.version || m.userModelVersion || version };
+    let infra = m.cloudInfraModel || m.cloud_infra_model || m.recommendedInfra || cloudInfraModel;
+    if (typeof infra === 'string') {
+      try { infra = JSON.parse(infra); } catch (e) {}
+    }
+    return {
+      ...m,
+      id: m.id || m.uid || id,
+      name: m.name || m.userModelName || name,
+      description: m.description || description,
+      version: m.version || m.userModelVersion || version || '1.0.0',
+      cloudInfraModel: infra,
+      updatedTime: m.updatedTime || new Date().toISOString()
+    };
   },
 
   // Get target cloud design templates
@@ -416,6 +448,25 @@ export const beetleApi = {
       return { success: true, data: Array.isArray(resData) ? resData : [] };
     } catch (err: any) {
       return { success: false, error: err.response?.data?.error || err.response?.data?.message || err.message };
+    }
+  },
+
+  // Delete a specific NLB in deployed infrastructure
+  deleteNlb: async (
+    nsId: string,
+    infraId: string,
+    nlbId: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await api.delete(
+        `/beetle/migration/middleware/ns/${nsId}/infra/${infraId}/nlb/${nlbId}`
+      );
+      return { success: true };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err.response?.data?.error || err.response?.data?.message || err.message
+      };
     }
   },
 

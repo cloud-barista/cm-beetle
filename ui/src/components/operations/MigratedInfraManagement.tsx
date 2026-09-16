@@ -165,7 +165,8 @@ export const MigratedInfraManagement: React.FC = () => {
     deletingStoragesMap,
     startStorageTeardown,
     removeStorageTeardown,
-    pollStorageTeardownStatus
+    pollStorageTeardownStatus,
+    removeJob
   } = useMigrationStore();
 
   const [copiedIp, setCopiedIp] = useState<string | null>(null);
@@ -174,6 +175,10 @@ export const MigratedInfraManagement: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [deleteSuccessMsg, setDeleteSuccessMsg] = useState('');
+  const [detectedNlbs, setDetectedNlbs] = useState<any[]>([]);
+  const [deleteStage, setDeleteStage] = useState<'idle' | 'deleting-nlb' | 'deleting-infra'>('idle');
+  const [liveNlbs, setLiveNlbs] = useState<any[]>([]);
+  const [deletingNlbId, setDeletingNlbId] = useState<string | null>(null);
 
   // Migrated Infra IDs fetched from GET /beetle/migration/ns/{nsId}/infra?option=id
   const [migratedInfraIds, setMigratedInfraIds] = useState<string[]>([]);
@@ -308,20 +313,25 @@ export const MigratedInfraManagement: React.FC = () => {
     try {
       const ns = namespaceId || 'mig01';
       const ids = await beetleApi.getMigratedInfraIdList(ns);
-      // Ensure SAMPLE_INFRA_ID is always present in catalog list
-      const combinedIds = Array.from(new Set([SAMPLE_INFRA_ID, ...ids]));
+      // Only include jobs that are actively provisioning (in-flight)
+      const inFlightJobInfraIds = jobs
+        .filter(j => j.status === 'Handling' || j.nlbStatus === 'Provisioning')
+        .map(j => j.infraId)
+        .filter(Boolean);
+      const combinedIds = Array.from(new Set([SAMPLE_INFRA_ID, ...inFlightJobInfraIds, ...ids]));
       setMigratedInfraIds(combinedIds);
 
-      // Auto-select first ID if available
-      if (combinedIds.length > 0 && !selectedInfraId) {
-        setSelectedInfraId(combinedIds[0]);
-      }
+      // Auto-select valid ID if current selection is invalid or empty
+      setSelectedInfraId(prev => (prev && combinedIds.includes(prev) ? prev : combinedIds[0] || ''));
     } catch (err) {
       console.warn('Failed to load migrated infra IDs, falling back to sample:', err);
-      setMigratedInfraIds([SAMPLE_INFRA_ID]);
-      if (!selectedInfraId) {
-        setSelectedInfraId(SAMPLE_INFRA_ID);
-      }
+      const inFlightJobInfraIds = jobs
+        .filter(j => j.status === 'Handling' || j.nlbStatus === 'Provisioning')
+        .map(j => j.infraId)
+        .filter(Boolean);
+      const fallbackIds = Array.from(new Set([SAMPLE_INFRA_ID, ...inFlightJobInfraIds]));
+      setMigratedInfraIds(fallbackIds);
+      setSelectedInfraId(prev => (prev && fallbackIds.includes(prev) ? prev : fallbackIds[0] || ''));
     } finally {
       setIsLoadingIds(false);
     }
@@ -340,21 +350,28 @@ export const MigratedInfraManagement: React.FC = () => {
         if (res.completed) {
           if (res.success) {
             setDeleteSuccessMsg(`Target infrastructure "${infraId}" was completely terminated and removed.`);
+            // Clean up any lingering job for this infra in store
+            jobs.filter(j => j.infraId === infraId).forEach(j => removeJob(j.id));
           } else {
-            setDeleteError(`Infrastructure "${infraId}" deletion failed: ${res.error || 'Unknown error'}`);
+            if (res.error?.includes('does not exist') || res.error?.includes('not found')) {
+              setDeleteSuccessMsg(`Target infrastructure "${infraId}" does not exist or was already deleted.`);
+              jobs.filter(j => j.infraId === infraId).forEach(j => removeJob(j.id));
+            } else {
+              setDeleteError(`Infrastructure "${infraId}" deletion failed: ${res.error || 'Unknown error'}`);
+            }
           }
           // Refresh list from server after teardown completes!
           await fetchMigratedInfraIds();
           if (selectedInfraId === infraId) {
-            setSelectedInfraId('');
-            setLoadedInfraDetail(null);
+            setSelectedInfraId(SAMPLE_INFRA_ID);
+            setLoadedInfraDetail(SAMPLE_INFRA_DETAIL);
           }
         }
       }
     }, 3000);
 
     return () => clearInterval(intervalId);
-  }, [deletingInfrasMap, namespaceId, selectedInfraId]);
+  }, [deletingInfrasMap, namespaceId, selectedInfraId, jobs, removeJob]);
 
   // Persistent Object Storage teardown polling effect (runs across tab navigation!)
   useEffect(() => {
@@ -398,7 +415,11 @@ export const MigratedInfraManagement: React.FC = () => {
       }
       const ns = namespaceId || 'mig01';
       const detail = await beetleApi.getMigratedInfraDetail(ns, infraIdToLoad);
-      setLoadedInfraDetail(detail || SAMPLE_INFRA_DETAIL);
+      if (!detail) {
+        setLoadedInfraDetail(null);
+        return;
+      }
+      setLoadedInfraDetail(detail);
 
       // Fetch compliance report HTML as well
       try {
@@ -406,6 +427,19 @@ export const MigratedInfraManagement: React.FC = () => {
         setInfraReportHtml(rHtml);
       } catch (rErr) {
         console.warn('Report fetch notice:', rErr);
+      }
+
+      // Fetch active NLB list for this infrastructure
+      try {
+        const nRes = await beetleApi.getNlbList(ns, infraIdToLoad);
+        if (nRes.success && Array.isArray(nRes.data)) {
+          setLiveNlbs(nRes.data);
+        } else {
+          setLiveNlbs([]);
+        }
+      } catch (nErr) {
+        console.warn('NLB list fetch notice:', nErr);
+        setLiveNlbs([]);
       }
     } catch (err) {
       console.warn('Failed to load infra detail for', infraIdToLoad, err);
@@ -417,7 +451,7 @@ export const MigratedInfraManagement: React.FC = () => {
     }
   };
 
-  const handleOpenDeleteModalForInfra = (infraId: string) => {
+  const handleOpenDeleteModalForInfra = async (infraId: string) => {
     if (infraId === SAMPLE_INFRA_ID) {
       alert('Sample infrastructure is protected and cannot be deleted.');
       return;
@@ -426,15 +460,54 @@ export const MigratedInfraManagement: React.FC = () => {
     setShowDeleteConfirm(true);
     setDeleteConfirmText('');
     setDeleteError('');
+    setDeleteStage('idle');
+
+    // Query active NLBs for staged teardown
+    try {
+      const ns = namespaceId || 'mig01';
+      const nRes = await beetleApi.getNlbList(ns, infraId);
+      if (nRes.success && Array.isArray(nRes.data) && nRes.data.length > 0) {
+        setDetectedNlbs(nRes.data);
+      } else {
+        const matchModel = savedCloudModels.find(m => m.id === infraId || m.name === infraId);
+        const modelNlbs = (matchModel?.cloudInfraModel as any)?.targetNlbList || [];
+        setDetectedNlbs(modelNlbs);
+      }
+    } catch {
+      setDetectedNlbs([]);
+    }
+  };
+
+  const handleDeleteSingleNlb = async (nlbId: string) => {
+    if (!selectedInfraId) return;
+    const confirm = window.confirm(`Are you sure you want to delete Managed NLB "${nlbId}"?\n\n(Compute nodes and network resources will remain intact)`);
+    if (!confirm) return;
+
+    setDeletingNlbId(nlbId);
+    try {
+      const ns = namespaceId || 'mig01';
+      const res = await beetleApi.deleteNlb(ns, selectedInfraId, nlbId);
+      if (res.success) {
+        setLiveNlbs(prev => prev.filter(n => (n.id || n.name) !== nlbId));
+        setDeleteSuccessMsg(`✓ Managed NLB "${nlbId}" was deleted successfully.`);
+      } else {
+        alert(`Failed to delete NLB: ${res.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      alert(`Failed to delete NLB: ${err.message || 'Network error'}`);
+    } finally {
+      setDeletingNlbId(null);
+    }
   };
 
   const completedJobsCount = jobs.filter(j => j.status === 'Success').length;
   const completedStoragesCount = objectStorageJobs.filter(j => j.status === 'Success').length;
+  const activeJobsCount = jobs.filter(j => j.status === 'Handling' || j.nlbStatus === 'Provisioning').length;
 
   useEffect(() => {
     fetchMigratedInfraIds();
     loadMigratedStorages();
-  }, [namespaceId, completedJobsCount, completedStoragesCount]);
+  }, [namespaceId, completedJobsCount, completedStoragesCount, activeJobsCount, jobs.length]);
 
   // Combine backend migrated infras, completed migration jobs from store, and saved models
   const completedJobs = jobs.filter(j => j.status === 'Success');
@@ -448,8 +521,9 @@ export const MigratedInfraManagement: React.FC = () => {
   };
 
   const handleDownloadReport = () => {
-    if (!liveReportHtml) return;
-    const blob = new Blob([liveReportHtml], { type: 'text/html' });
+    const reportContent = infraReportHtml || liveReportHtml;
+    if (!reportContent) return;
+    const blob = new Blob([reportContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -475,32 +549,65 @@ export const MigratedInfraManagement: React.FC = () => {
     const ns = namespaceId || 'mig01';
 
     try {
-      // Execute Delete infrastructure API request (DELETE /beetle/migration/ns/{nsId}/infra/{infraId}?option=terminate) with Prefer: respond-async
+      // Step 1: If an NLB exists, delete the NLB first via flat API
+      if (detectedNlbs.length > 0) {
+        setDeleteStage('deleting-nlb');
+        for (const nlb of detectedNlbs) {
+          const nlbId = nlb.id || nlb.name;
+          if (nlbId) {
+            const delRes = await beetleApi.deleteNlb(ns, targetInfraId, nlbId);
+            if (!delRes.success) {
+              console.warn(`NLB ${nlbId} delete warning:`, delRes.error);
+            }
+          }
+        }
+      }
+
+      // Step 2: Delete base infrastructure (MCI/VMs, SGs, VNets) via flat API
+      setDeleteStage('deleting-infra');
       const res = await beetleApi.deleteMigratedInfra(ns, targetInfraId, 'terminate', true);
 
       if (res.success) {
         setShowDeleteConfirm(false);
         setDeleteConfirmText('');
+        setDeleteStage('idle');
 
         if (res.reqId) {
           startInfraTeardown(targetInfraId, res.reqId);
-          setDeleteSuccessMsg(`Target infrastructure "${targetInfraId}" termination initiated asynchronously (Req ID: ${res.reqId}).`);
+          setDeleteSuccessMsg(
+            detectedNlbs.length > 0
+              ? `Target infrastructure "${targetInfraId}" termination initiated: Step 1 (NLB detached) completed, Step 2 (Infra teardown Req ID: ${res.reqId}) is in progress.`
+              : `Target infrastructure "${targetInfraId}" termination initiated asynchronously (Req ID: ${res.reqId}).`
+          );
         } else {
           setDeleteSuccessMsg(`Target infrastructure "${targetInfraId}" deleted successfully.`);
+          jobs.filter(j => j.infraId === targetInfraId).forEach(j => removeJob(j.id));
           await fetchMigratedInfraIds();
           if (selectedInfraId === targetInfraId) {
-            setSelectedInfraId('');
-            setLoadedInfraDetail(null);
+            setSelectedInfraId(SAMPLE_INFRA_ID);
+            setLoadedInfraDetail(SAMPLE_INFRA_DETAIL);
           }
         }
       } else {
-        setDeleteError(res.error || 'Failed to delete target infrastructure.');
+        if (res.error?.includes('does not exist') || res.error?.includes('not found')) {
+          setShowDeleteConfirm(false);
+          setDeleteConfirmText('');
+          setDeleteStage('idle');
+          setDeleteSuccessMsg(`Target infrastructure "${targetInfraId}" does not exist or was already deleted.`);
+          jobs.filter(j => j.infraId === targetInfraId).forEach(j => removeJob(j.id));
+          await fetchMigratedInfraIds();
+          setSelectedInfraId(SAMPLE_INFRA_ID);
+          setLoadedInfraDetail(SAMPLE_INFRA_DETAIL);
+        } else {
+          setDeleteError(res.error || 'Failed to delete target infrastructure.');
+        }
       }
     } catch (err: any) {
       console.error('Delete failed:', err);
       setDeleteError(err.response?.data?.error || err.message || 'Failed to delete target infrastructure.');
     } finally {
       setIsDeleting(false);
+      setDeleteStage('idle');
     }
   };
 
@@ -695,7 +802,7 @@ export const MigratedInfraManagement: React.FC = () => {
               {migratedInfraIds.map((infraId) => {
                 const isSelected = selectedInfraId === infraId;
                 const isTerminating = !!deletingInfrasMap[infraId];
-                const matchingActiveJob = jobs.find(j => (j.infraId === infraId || j.id === infraId || (j.reqId && j.reqId === infraId)) && j.status === 'Handling');
+                const matchingActiveJob = jobs.find(j => (j.infraId === infraId || j.id === infraId || (j.reqId && j.reqId === infraId)) && (j.status === 'Handling' || j.nlbStatus === 'Provisioning'));
                 const isMigrating = !!matchingActiveJob;
                 const matchingJob = completedJobs.find(j => j.infraId === infraId || j.id === infraId) || jobs.find(j => j.infraId === infraId || j.id === infraId);
                 const csp = matchingJob?.csp || (infraId.toLowerCase().includes('aws') ? 'AWS' : infraId.toLowerCase().includes('azure') ? 'AZURE' : 'GCP');
@@ -740,7 +847,7 @@ export const MigratedInfraManagement: React.FC = () => {
                       ) : isMigrating ? (
                         <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30 flex items-center gap-1 font-mono shrink-0">
                           <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
-                          Migrating...
+                          {matchingActiveJob?.nlbStatus === 'Provisioning' ? 'NLB Migrating...' : 'Migrating...'}
                         </span>
                       ) : (
                         <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/40 flex items-center gap-1 font-mono shrink-0">
@@ -807,7 +914,7 @@ export const MigratedInfraManagement: React.FC = () => {
                   {migratedInfraIds.map((infraId, idx) => {
                     const isSelected = selectedInfraId === infraId;
                     const isTerminating = !!deletingInfrasMap[infraId];
-                    const matchingActiveJob = jobs.find(j => (j.infraId === infraId || j.id === infraId || (j.reqId && j.reqId === infraId)) && j.status === 'Handling');
+                    const matchingActiveJob = jobs.find(j => (j.infraId === infraId || j.id === infraId || (j.reqId && j.reqId === infraId)) && (j.status === 'Handling' || j.nlbStatus === 'Provisioning'));
                     const isMigrating = !!matchingActiveJob;
                     const matchingJob = completedJobs.find(j => j.infraId === infraId || j.id === infraId) || jobs.find(j => j.infraId === infraId || j.id === infraId);
                     const csp = matchingJob?.csp || (infraId.toLowerCase().includes('aws') ? 'AWS' : infraId.toLowerCase().includes('azure') ? 'AZURE' : 'GCP');
@@ -844,7 +951,7 @@ export const MigratedInfraManagement: React.FC = () => {
                           ) : isMigrating ? (
                             <span className="inline-flex items-center gap-1 text-amber-500 font-bold">
                               <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
-                              Migrating...
+                              {matchingActiveJob?.nlbStatus === 'Provisioning' ? 'NLB Migrating...' : 'Migrating...'}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
@@ -1231,67 +1338,110 @@ export const MigratedInfraManagement: React.FC = () => {
             )}
 
             {/* Sub-Tab 5: Managed NLB */}
-            {activeSubTab === 'nlb' && (
-              <div className="space-y-4">
-                <h4 className="text-sm font-extrabold text-text-main flex items-center gap-2">
-                  <Radio className="w-4 h-4 text-emerald-500" />
-                  Managed Network Load Balancers (NLB)
-                </h4>
+            {activeSubTab === 'nlb' && (() => {
+              const displayNlbs = liveNlbs.length > 0
+                ? liveNlbs
+                : ((currentCloudModel as any).targetNlbList || []);
 
-                {(currentCloudModel as any).targetNlbList && (currentCloudModel as any).targetNlbList.length > 0 ? (
-                  <div className="overflow-x-auto border border-border-main/50 rounded-xl">
-                    <table className="w-full text-left border-collapse text-xs font-mono">
-                      <thead>
-                        <tr className="border-b border-border-main bg-bg-input/60 text-text-muted font-bold">
-                          <th className="py-2.5 px-4">NLB Name</th>
-                          <th className="py-2.5 px-4">Listener Port</th>
-                          <th className="py-2.5 px-4">Target Protocol</th>
-                          <th className="py-2.5 px-4">Health Check</th>
-                          <th className="py-2.5 px-4">Target Node Group</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border-main/40 text-text-main">
-                        {(currentCloudModel as any).targetNlbList.map((nlb: any, idx: number) => (
-                          <tr key={idx} className="hover:bg-emerald-500/[0.02] transition">
-                            <td className="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">{nlb.name || 'mig-nlb-01'}</td>
-                            <td className="py-3 px-4 font-bold">Port 80 ➔ 8080</td>
-                            <td className="py-3 px-4 text-emerald-500 font-extrabold">TCP / HTTP</td>
-                            <td className="py-3 px-4 text-text-muted">HTTP /healthz (Interval: 10s)</td>
-                            <td className="py-3 px-4 font-bold text-text-main">ng-web-01</td>
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-extrabold text-text-main flex items-center gap-2">
+                      <Radio className="w-4 h-4 text-emerald-500" />
+                      Managed Network Load Balancers (NLB)
+                    </h4>
+                    {displayNlbs.length > 0 && (
+                      <span className="text-xs font-mono text-text-muted">
+                        Total: <strong className="text-text-main">{displayNlbs.length}</strong> active NLB(s)
+                      </span>
+                    )}
+                  </div>
+
+                  {displayNlbs.length > 0 ? (
+                    <div className="overflow-x-auto border border-border-main/50 rounded-xl">
+                      <table className="w-full text-left border-collapse text-xs font-mono">
+                        <thead>
+                          <tr className="border-b border-border-main bg-bg-input/60 text-text-muted font-bold">
+                            <th className="py-2.5 px-4">NLB Name</th>
+                            <th className="py-2.5 px-4">Listener Port</th>
+                            <th className="py-2.5 px-4">Target Protocol</th>
+                            <th className="py-2.5 px-4">Health Check</th>
+                            <th className="py-2.5 px-4">Target Node Group</th>
+                            <th className="py-2.5 px-4 text-right">Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="p-6 bg-bg-panel/40 border border-border-main/40 rounded-xl text-center text-xs font-mono text-text-muted">
-                    No Dedicated Managed NLB configured for this infrastructure. Compute Nodes are configured with Direct Public IP access.
-                  </div>
-                )}
-              </div>
-            )}
+                        </thead>
+                        <tbody className="divide-y divide-border-main/40 text-text-main">
+                          {displayNlbs.map((nlb: any, idx: number) => {
+                            const nlbName = nlb.name || nlb.id || `mig-nlb-${idx + 1}`;
+                            const port = nlb.listener?.port ? `Port ${nlb.listener.port}` : 'Port 80 ➔ 8080';
+                            const protocol = nlb.listener?.protocol || 'TCP / HTTP';
+                            const targetGroup = nlb.targetGroup?.nodeGroupId || 'ng-web-01';
+                            const isDeletingNlb = deletingNlbId === nlbName;
+
+                            return (
+                              <tr key={idx} className="hover:bg-emerald-500/[0.02] transition">
+                                <td className="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">{nlbName}</td>
+                                <td className="py-3 px-4 font-bold">{port}</td>
+                                <td className="py-3 px-4 text-emerald-500 font-extrabold">{protocol}</td>
+                                <td className="py-3 px-4 text-text-muted">HTTP /healthz (Interval: 10s)</td>
+                                <td className="py-3 px-4 font-bold text-text-main">{targetGroup}</td>
+                                <td className="py-3 px-4 text-right">
+                                  <button
+                                    onClick={() => handleDeleteSingleNlb(nlbName)}
+                                    disabled={isDeletingNlb || isDeleting}
+                                    className="px-2.5 py-1 text-red-500 hover:bg-red-500/10 border border-red-500/30 rounded-lg transition font-mono font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-40"
+                                    title="Delete this NLB individually"
+                                  >
+                                    {isDeletingNlb ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    )}
+                                    <span>Delete NLB</span>
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="p-6 bg-bg-panel/40 border border-border-main/40 rounded-xl text-center text-xs font-mono text-text-muted">
+                      No Dedicated Managed NLB configured for this infrastructure. Compute Nodes are configured with Direct Public IP access.
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
-          {/* Compliance HTML Report Viewer */}
+          {/* Compliance HTML Report Viewer with white background and 3x height */}
           {(infraReportHtml || liveReportHtml) && (
-            <div className="glass-panel rounded-2xl border border-border-main overflow-hidden flex flex-col">
-              <div className="px-5 py-4 bg-bg-input/40 border-b border-border-main flex items-center justify-between">
-                <h3 className="text-sm font-bold text-text-main flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-emerald-400" />
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+              <div className="px-6 py-4 bg-white border-b border-slate-200 flex items-center justify-between">
+                <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-emerald-500" />
                   Post-Migration Compliance & Comparison Report
                 </h3>
                 <button
                   onClick={handleDownloadReport}
-                  className="px-3.5 py-1.5 bg-bg-panel border border-border-main hover:bg-emerald-500/10 hover:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-extrabold flex items-center transition cursor-pointer"
+                  className="px-3.5 py-1.5 bg-slate-100 border border-slate-300 hover:bg-emerald-50 hover:border-emerald-500/30 text-emerald-700 rounded-lg text-xs font-extrabold flex items-center transition cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5 mr-1" />
                   Download HTML Report
                 </button>
               </div>
-              <div
-                className="p-6 bg-bg-input text-text-main max-h-[500px] overflow-y-auto font-sans prose prose-sm max-w-none text-sm"
-                dangerouslySetInnerHTML={{ __html: infraReportHtml || liveReportHtml }}
-              />
+              <div className="w-full h-[1650px] bg-white rounded-b-2xl overflow-hidden">
+                <iframe
+                  title="Post-Migration Compliance Report"
+                  srcDoc={(infraReportHtml || liveReportHtml)
+                    .replace(/background-color:\s*#f5f5f5/gi, 'background-color: #ffffff')
+                    .replace(/background:\s*#f5f5f5/gi, 'background: #ffffff')}
+                  className="w-full h-full border-0 bg-white"
+                  sandbox="allow-same-origin"
+                />
+              </div>
             </div>
           )}
 
@@ -1745,6 +1895,29 @@ export const MigratedInfraManagement: React.FC = () => {
               Are you sure you want to delete <strong className="text-text-main">"{selectedInfraId}"</strong>? This will release all cloud VMs, subnets, and VPC network allocations.
             </p>
 
+            {/* Staged Teardown Notice when NLB is detected */}
+            {detectedNlbs.length > 0 && (
+              <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2 text-xs">
+                <div className="flex items-center gap-1.5 font-bold text-amber-500">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Attached Managed NLB Detected ({detectedNlbs.map(n => n.name || n.id).join(', ')})</span>
+                </div>
+                <p className="text-text-muted leading-relaxed">
+                  To prevent cloud dependency locks (ENI release), Beetle UX Lab will orchestrate teardown in 2 sequential stages:
+                </p>
+                <div className="space-y-1 font-mono text-[11px] text-text-main">
+                  <div className="flex items-center gap-2">
+                    <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold shrink-0">Stage 1</span>
+                    <span>Terminate & Detach Managed NLB ({detectedNlbs.map(n => n.name || n.id).join(', ')})</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold shrink-0">Stage 2</span>
+                    <span>Terminate Compute Nodes, Security Groups & VNet</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-text-muted">
                 To confirm, type <span className="font-mono bg-bg-panel px-1 py-0.5 rounded text-text-main">{selectedInfraId}</span> in the box below:
@@ -1783,7 +1956,11 @@ export const MigratedInfraManagement: React.FC = () => {
                 }`}
               >
                 {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                Confirm Delete
+                {deleteStage === 'deleting-nlb'
+                  ? 'Step 1/2: Detaching NLB...'
+                  : deleteStage === 'deleting-infra'
+                  ? 'Step 2/2: Terminating Infra...'
+                  : 'Confirm Delete'}
               </button>
             </div>
           </div>
