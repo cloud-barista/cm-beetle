@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from './TopologyMap';
-import { OnpremNode, OnpremInfra, OnpremModelEnvelope } from '../../types/migration';
+import { OnpremNode, OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope } from '../../types/migration';
 import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2, Compass, ArrowRight, ArrowLeft, Plus, AlertTriangle, ShieldCheck, CheckCircle2, Globe, Target, Zap, Undo2 } from 'lucide-react';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
 import { tumblebugApi, beetleApi } from '../../api/client';
@@ -123,6 +123,24 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
       console.error('Failed to save target model to file:', err);
     } finally {
       setIsSavingTarget(false);
+    }
+  };
+
+  const handleProceedToMigration = () => {
+    // Sync current edited candidate to selected cloud model before advancing
+    if (editedCandidate) {
+      const modelName = editedCandidate.targetInfra?.name || selectedCloudModel?.name || `${editedCandidate.targetCloud?.csp || 'cloud'}-target-model`;
+      selectCloudModel({
+        id: selectedCloudModel?.id || `candidate-${Date.now()}`,
+        name: modelName,
+        description: selectedCloudModel?.description || `Optimized target cloud model for ${editedCandidate.targetCloud?.csp?.toUpperCase() || 'Cloud'} (${editedCandidate.targetCloud?.region || ''})`,
+        cloudInfraModel: editedCandidate,
+        version: selectedCloudModel?.version || '1.0',
+        updatedTime: new Date().toISOString()
+      });
+    }
+    if (onNext) {
+      onNext();
     }
   };
 
@@ -939,11 +957,41 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
   const handleSaveToDamselfly = async (result: { name: string; description: string; version: string; overwriteId: string | null }) => {
     if (!editedCandidate) return;
+    const targetModelToSave: RecommendedInfra = {
+      ...editedCandidate,
+      targetInfra: {
+        ...editedCandidate.targetInfra,
+        name: result.name
+      }
+    };
+    updateEditedCandidate(targetModelToSave);
+
+    let savedModel: CloudModelEnvelope | null = null;
     if (result.overwriteId) {
-      await updateCloudModel(result.overwriteId, result.name, result.description, result.version, editedCandidate);
+      savedModel = await updateCloudModel(result.overwriteId, result.name, result.description, result.version, targetModelToSave);
     } else {
-      await saveCloudModel(result.name, result.description, result.version, editedCandidate);
+      savedModel = await saveCloudModel(result.name, result.description, result.version, targetModelToSave);
     }
+
+    const isGpu = Boolean(
+      selectedSourceModel?.id?.includes('gpu') ||
+      selectedSourceModel?.name?.toLowerCase().includes('gpu') ||
+      (targetModelToSave as any)?.id?.includes('gpu') ||
+      (targetModelToSave as any)?.targetSubnetList?.some((sn: any) =>
+        sn.targetNodeGroupList?.some((ng: any) => ng.name?.toLowerCase().includes('gpu'))
+      )
+    );
+    try {
+      await beetleApi.saveTargetInfraModelToFile(targetModelToSave, isGpu);
+    } catch (err) {
+      console.warn('Failed to overwrite local sample json file:', err);
+    }
+
+    if (savedModel) {
+      selectCloudModel(savedModel);
+    }
+    setTargetSaveSuccessMsg(`Target Cloud Model "${result.name}" saved to repository successfully.`);
+    setTimeout(() => setTargetSaveSuccessMsg(''), 5000);
   };
 
   const { isRecommending } = useMigrationStore();
@@ -2673,21 +2721,16 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                               </button>
 
                               <button
-                                onClick={handleDirectSaveTargetModel}
-                                disabled={isSavingTarget}
-                                className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-md shadow-emerald-500/20 disabled:opacity-50"
+                                onClick={() => setShowSaveTargetModal(true)}
+                                className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-md shadow-emerald-500/20"
                               >
-                                {isSavingTarget ? (
-                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <Save className="w-3.5 h-3.5" />
-                                )}
-                                <span>{isSavingTarget ? 'Saving to File...' : 'Save Target Cloud Infra Model'}</span>
+                                <Save className="w-3.5 h-3.5" />
+                                <span>Save Target Cloud Infra Model</span>
                               </button>
 
                               {onNext && (
                                 <button
-                                  onClick={onNext}
+                                  onClick={handleProceedToMigration}
                                   className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center space-x-1.5 cursor-pointer"
                                 >
                                   <span>Next: Proceed to 4. Migration Execution</span>
@@ -2825,12 +2868,12 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         isOpen={showSaveTargetModal}
         onClose={() => setShowSaveTargetModal(false)}
         title="Save Target Cloud Infra Model"
-        defaultName={selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1' ? selectedCloudModel.name : ''}
-        defaultDescription={selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1' ? (selectedCloudModel.description || '') : ''}
+        defaultName={selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1' ? selectedCloudModel.name : (editedCandidate?.targetInfra?.name || `${editedCandidate?.targetCloud?.csp || 'cloud'}-target-model`)}
+        defaultDescription={selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1' ? (selectedCloudModel.description || '') : (editedCandidate?.description || `Optimized target cloud model for ${editedCandidate?.targetCloud?.csp?.toUpperCase() || 'Cloud'} (${editedCandidate?.targetCloud?.region || ''})`)}
         defaultVersion={selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1' ? (selectedCloudModel.version || '1.0.0') : '1.0.0'}
         existingRevisions={savedCloudModels.filter(m => m.id !== 'cloud-demo-1').map(m => ({ id: m.id, name: m.name, version: m.version }))}
         onSave={handleSaveToDamselfly}
-        successMessage="Target Cloud Infrastructure Model saved to Damselfly Repository successfully."
+        successMessage="Target Cloud Infrastructure Model saved to repository successfully."
       />
 
       {/* Delete Confirmation Modal */}
