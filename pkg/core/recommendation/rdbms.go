@@ -387,14 +387,15 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 
 	// Resolve target deployment preferences with intelligent defaults
 	targetPublicAccess := true
+	if desiredCsp == "ncp" {
+		targetPublicAccess = false
+	}
 	if pref != nil && pref.PublicAccess != nil {
 		targetPublicAccess = *pref.PublicAccess
 	}
-	if desiredCsp == "ncp" {
-		if targetPublicAccess {
-			warnings = append(warnings, "NCP Cloud DB does not provide external public IP by default; instance(s) will be created within private VPC.")
-		}
-		targetPublicAccess = false
+	if desiredCsp == "ncp" && targetPublicAccess {
+		// Public domain request: Database > Cloud DB for ... > Select DB Server > DB Management > Manage Public Domain.
+		warnings = append(warnings, "NCP Cloud DB with publicAccess=true opens ACG inbound to 0.0.0.0/0; public domain must be requested in NCP Console (Database > Cloud DB for ... > Select DB Server > DB Management > Manage Public Domain).")
 	}
 
 	targetHA := false
