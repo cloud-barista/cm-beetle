@@ -336,7 +336,7 @@ type TargetPreferences struct {
 	AdminUserName            string `json:"adminUserName,omitempty" example:"dbadmin"`
 	HighAvailability         *bool  `json:"highAvailability,omitempty" example:"false"`
 	PublicAccess             *bool  `json:"publicAccess,omitempty" example:"true"`
-	BackupRetentionDays      int    `json:"backupRetentionDays,omitempty" example:"7"`
+	BackupRetentionDays      int    `json:"backupRetentionDays,omitempty" example:"0"`
 	NHNDBSGToAllowAllInbound bool   `json:"nhnDBSGToAllowAllInbound,omitempty" example:"false"`
 }
 
@@ -413,7 +413,8 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 		warnings = append(warnings, "High availability (Multi-AZ) on AWS requires Subnets in at least two distinct Availability Zones in the target VNet.")
 	}
 
-	targetBackupDays := 7
+	targetBackupDays := 0
+	// TODO: Restore default to 7 days once RDBMS Update/Modify API is supported post-migration.
 	if pref != nil && pref.BackupRetentionDays > 0 {
 		targetBackupDays = pref.BackupRetentionDays
 	}

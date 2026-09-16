@@ -439,6 +439,12 @@ func TestTargetPreferences_DefaultsAndOverrides(t *testing.T) {
 	if !pref.NHNDBSGToAllowAllInbound {
 		t.Errorf("expected NHNDBSGToAllowAllInbound true, got %v", pref.NHNDBSGToAllowAllInbound)
 	}
+
+	// Verify default preferences zero value
+	defaultPref := &TargetPreferences{}
+	if defaultPref.BackupRetentionDays != 0 {
+		t.Errorf("expected default BackupRetentionDays 0, got %d", defaultPref.BackupRetentionDays)
+	}
 }
 
 func TestCalculationHelpers(t *testing.T) {

@@ -14354,7 +14354,7 @@ const docTemplate = `{
                 },
                 "backupRetentionDays": {
                     "type": "integer",
-                    "example": 7
+                    "example": 0
                 },
                 "highAvailability": {
                     "type": "boolean",
