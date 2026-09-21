@@ -63,6 +63,8 @@ type nodeGroupBlueprint struct {
 //  6. Build target NLB list — identical for all candidates
 //  7. Assemble candidates: candidate i assigns the i-th ranked pair to each NodeGroup
 func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error) {
+	srcInfra = SanitizeSourceInfra(srcInfra)
+
 	if len(srcInfra.NLBs) == 0 {
 		return nil, fmt.Errorf("sourceInfra.nlbs is empty")
 	}

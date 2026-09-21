@@ -34,6 +34,8 @@ type singleTargetRecommender func(desiredCsp, desiredRegion string, srcInfra onp
 // each target CSP/region pair, for cross-CSP comparison. Composes RecommendInfraCandidates or
 // RecommendGpuInfraCandidates based on GPU presence; no matching/ranking logic is duplicated here.
 func RecommendMultiInfraCandidates(pairs []cloudmodel.CloudProperty, srcInfra onpremmodel.OnpremInfra, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error) {
+	srcInfra = SanitizeSourceInfra(srcInfra)
+
 	recommender := RecommendInfraCandidates
 	if HasAnyGpu(srcInfra) {
 		recommender = RecommendGpuInfraCandidates
@@ -44,6 +46,8 @@ func RecommendMultiInfraCandidates(pairs []cloudmodel.CloudProperty, srcInfra on
 // RecommendMultiInfraWithNlbCandidates is the NLB-aware counterpart of
 // RecommendMultiInfraCandidates, composing RecommendInfraWithNlbCandidates per target.
 func RecommendMultiInfraWithNlbCandidates(pairs []cloudmodel.CloudProperty, srcInfra onpremmodel.OnpremInfra, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error) {
+	srcInfra = SanitizeSourceInfra(srcInfra)
+
 	return recommendPerTarget(pairs, srcInfra, minMatchRate, RecommendInfraWithNlbCandidates)
 }
 

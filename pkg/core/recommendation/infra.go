@@ -150,6 +150,7 @@ func IsValidCspAndRegion(cspName string, region string) (bool, error) {
 
 // RecommendInfraWithDefaults recommends an appropriate target infrastructure for cloud migration using defaults
 func RecommendInfraWithDefaults(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedInfraDynamicList, error) {
+	srcInfra = SanitizeSourceInfra(srcInfra)
 
 	// var emptyResp RecommendedVmInfraInfoList
 	var recommendedVmInfraInfoList cloudmodel.RecommendedInfraDynamicList
@@ -290,6 +291,7 @@ func RecommendInfraWithDefaults(desiredCsp string, desiredRegion string, srcInfr
 
 // RecommendInfra recommends an appropriate target infrastructure for cloud migration
 func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedInfra, error) {
+	srcInfra = SanitizeSourceInfra(srcInfra)
 
 	// var emptyResp RecommendedVmInfra
 	var recommendedVmInfra cloudmodel.RecommendedInfra
@@ -574,6 +576,7 @@ func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmode
 
 // RecommendInfraCandidates recommends appropriate target infrastructure candidates for cloud migration
 func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error) {
+	srcInfra = SanitizeSourceInfra(srcInfra)
 
 	// * To recommend multiple infra candidates (i.e., multiple VM spec and OS image combinations),
 	// * this function estimates, recommends or just generates vNets, subnets, SSH key pair, and security groups
