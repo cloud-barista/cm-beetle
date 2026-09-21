@@ -206,9 +206,9 @@ func MigrateInfra(c echo.Context) error {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
 		started := common.RunAsync(reqID, func() (cloudmodel.VmInfraInfo, error) {
 			if useExisting {
-				return migration.CreateInfraWithExisting(nsId, &infraToMigrate)
+				return migration.MigrateInfraWithExisting(nsId, &infraToMigrate)
 			}
-			return migration.CreateInfra(nsId, &infraToMigrate)
+			return migration.MigrateInfra(nsId, &infraToMigrate)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -229,9 +229,9 @@ func MigrateInfra(c echo.Context) error {
 	var mciInfo cloudmodel.VmInfraInfo
 	var err error
 	if useExisting {
-		mciInfo, err = migration.CreateInfraWithExisting(nsId, &infraToMigrate)
+		mciInfo, err = migration.MigrateInfraWithExisting(nsId, &infraToMigrate)
 	} else {
-		mciInfo, err = migration.CreateInfra(nsId, &infraToMigrate)
+		mciInfo, err = migration.MigrateInfra(nsId, &infraToMigrate)
 	}
 
 	log.Debug().Msgf("mciInfo: %+v", mciInfo)

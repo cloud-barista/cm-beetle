@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/pkg/csp"
 	"github.com/rs/zerolog/log"
 )
 
@@ -15,37 +16,37 @@ type Checker interface {
 }
 
 // CheckCompatibility performs compatibility check between spec and image for the specified CSP
-func CheckCompatibility(csp string, spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
+func CheckCompatibility(cspName string, spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 
 	// 1. Architecture check for all CSPs (common check)
-	if !isArchitectureCompatible(csp, spec, image) {
+	if !isArchitectureCompatible(cspName, spec, image) {
 		return false
 	}
 
 	// 2. CSP-specific compatibility checks using Detail information
-	switch strings.ToLower(csp) {
-	case "aws":
+	switch strings.ToLower(cspName) {
+	case csp.AWS:
 		return CheckAws(spec, image)
-	case "gcp":
+	case csp.GCP:
 		return CheckGcp(spec, image)
-	case "azure":
+	case csp.Azure:
 		return CheckAzure(spec, image)
-	case "ncp":
+	case csp.NCP:
 		return CheckNcp(spec, image)
-	case "alibaba":
+	case csp.Alibaba:
 		return CheckAlibaba(spec, image)
-	case "tencent":
+	case csp.Tencent:
 		return CheckTencent(spec, image)
-	case "ibm":
+	case csp.IBM:
 		return CheckIbm(spec, image)
-	case "nhn":
+	case csp.NHN:
 		return CheckNhn(spec, image)
-	case "kt":
+	case csp.KT:
 		return CheckKt(spec, image)
-	case "openstack":
+	case csp.OpenStack:
 		return CheckOpenstack(spec, image)
 	default:
-		log.Trace().Msgf("No specific compatibility checks for CSP: %s", csp)
+		log.Trace().Msgf("No specific compatibility checks for CSP: %s", cspName)
 		return true
 	}
 }
@@ -55,24 +56,22 @@ func CheckCompatibility(csp string, spec cloudmodel.SpecInfo, image cloudmodel.I
 // structured spec Details). Returns "" for CSPs without a vendor detector or when the spec
 // doesn't match a known pattern. Callers must treat "" as unknown/unclassified, never as a
 // default vendor.
-func GetCpuVendor(csp string, spec cloudmodel.SpecInfo) string {
-	switch strings.ToLower(csp) {
-	case "aws":
+func GetCpuVendor(cspName string, spec cloudmodel.SpecInfo) string {
+	switch strings.ToLower(cspName) {
+	case csp.AWS:
 		return getAwsCpuVendor(spec.CspSpecName)
-	case "azure":
+	case csp.Azure:
 		return getAzureCpuVendor(spec.CspSpecName)
-	case "gcp":
+	case csp.GCP:
 		return getGcpCpuVendor(spec.CspSpecName)
-	case "alibaba":
+	case csp.Alibaba:
 		return getAlibabaCpuVendor(spec)
-	case "ibm":
+	case csp.IBM:
 		return getIbmCpuVendor(spec.CspSpecName)
-	case "ncp":
+	case csp.NCP:
 		return getNcpCpuVendor(spec.CspSpecName)
 	default:
-		// tencent, nhn, kt, openstack: not currently enabled recommendation CSPs (see
-		// isSupportedCSP in pkg/core/recommendation/infra.go) and not researched - revisit if
-		// one of them is enabled.
+		// Return empty for CSPs without vendor detectors (tencent, nhn, kt, openstack).
 		return ""
 	}
 }

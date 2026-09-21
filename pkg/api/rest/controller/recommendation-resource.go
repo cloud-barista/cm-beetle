@@ -41,7 +41,7 @@ import (
 // @Accept json
 // @Produce	json
 // @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
-// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,tencent,ibm,ncp,nhn) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedVNetList] "Successfully recommended vNet(s)"
@@ -119,7 +119,7 @@ func RecommendVNet(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
-// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,tencent,ibm,ncp,nhn) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedSecurityGroupList] "Successfully recommended security group(s)"
@@ -189,7 +189,7 @@ type RecommendVmSpecResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
-// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,tencent,ibm,ncp,nhn) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param targetMachineId query string false "Target Machine ID to focus recommendation on (optional)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
@@ -380,7 +380,7 @@ func RecommendVmSpecs(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
-// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,tencent,ibm,ncp,nhn) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedOsImageList] "Successfully recommended VM OS image(s)"
@@ -532,7 +532,7 @@ type RecommendK8sNodeGroupSpecsRequest struct {
 // @Accept json
 // @Produce json
 // @Param UserInfra body RecommendK8sNodeGroupSpecsRequest true "Source on-premise infra (must include nodes with role=worker)"
-// @Param desiredProvider query string false "Provider (e.g., aws)" Enums(aws,azure,gcp,alibaba,ncp,nhn,tencent,ibm) default(aws)
+// @Param desiredProvider query string false "Provider (e.g., aws)" Enums(aws,azure,gcp,alibaba,tencent,ibm,ncp,nhn) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param limit query int false "Max spec candidates per node group (default: 3, max: 30)" default(3)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
@@ -612,7 +612,7 @@ func RecommendK8sNodeGroupSpecs(c echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param UserInfra body RecommendK8sNodeGroupSpecsRequest true "Source on-premise infra (must include nodes with role=worker)"
-// @Param desiredProvider query string false "Provider (e.g., aws)" Enums(aws,azure,gcp,alibaba,ncp,nhn,tencent,ibm) default(aws)
+// @Param desiredProvider query string false "Provider (e.g., aws)" Enums(aws,azure,gcp,alibaba,tencent,ibm,ncp,nhn) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedOsImageList] "Successfully recommended K8s worker node image(s)"

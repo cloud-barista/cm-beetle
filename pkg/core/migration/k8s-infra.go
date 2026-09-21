@@ -23,6 +23,7 @@ import (
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/core/validation"
+	"github.com/cloud-barista/cm-beetle/pkg/csp"
 	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 	"github.com/rs/zerolog/log"
 )
@@ -76,7 +77,7 @@ func (p *k8sClusterPrereqs) rollback() {
 // InvalidParameter.Coexist). For these, the SG is created with inbound rules first and the
 // outbound rules are added via a separate call, so the full recommended ruleset is applied
 // (rather than silently dropping the outbound rules).
-var cspRejectsCombinedIngressEgress = map[string]bool{"tencent": true}
+var cspRejectsCombinedIngressEgress = map[string]bool{csp.Tencent: true}
 
 // createSecurityGroup creates a fresh SecurityGroup and tracks it for rollback. For CSPs that
 // reject combined ingress/egress in one request, it creates with the inbound rules first, then

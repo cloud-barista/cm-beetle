@@ -21,6 +21,7 @@ import (
 	"time"
 
 	rdbmsmodel "github.com/cloud-barista/cm-beetle/imdl/rdbms-model"
+	"github.com/cloud-barista/cm-beetle/pkg/csp"
 	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/rs/zerolog/log"
 )
@@ -84,12 +85,12 @@ func (s *Session) GetRDBMSCapability(connectionName string, optionalEngine ...st
 
 			// Normalize providerName and regionName to match Tumblebug connection configs
 			switch providerName {
-			case "ncp":
+			case csp.NCP:
 				regionName = strings.ToUpper(regionName) // e.g., "kr" -> "KR"
-			case "nhn":
-				providerName = "nhn"                     // Registered providerName is "nhn"
+			case csp.NHN:
+				providerName = csp.NHN                   // Registered providerName is "nhn"
 				regionName = strings.ToUpper(regionName) // e.g., "kr1" -> "KR1"
-			case "kt":
+			case csp.KT:
 				regionName = strings.ToUpper(regionName) // e.g., "kr1" -> "KR1"
 			}
 

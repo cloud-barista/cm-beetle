@@ -24,6 +24,7 @@ import (
 
 	rdbmsmodel "github.com/cloud-barista/cm-beetle/imdl/rdbms-model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
+	"github.com/cloud-barista/cm-beetle/pkg/csp"
 	"github.com/rs/zerolog/log"
 )
 
@@ -86,7 +87,7 @@ func ValidateRDBMS(nsId string, req rdbmsmodel.RDBMSCreateRequest) (rdbmsmodel.R
 
 	// 3. NHN Cloud specific flag validation
 	if req.NHNDBSGToAllowAllInbound {
-		if !strings.HasPrefix(strings.ToLower(targetConn), "nhn") {
+		if !strings.HasPrefix(strings.ToLower(targetConn), csp.NHN) {
 			return emptyRes, fmt.Errorf("nhnDBSGToAllowAllInbound is only supported for NHN Cloud")
 		}
 		if !req.PublicAccess {
@@ -419,12 +420,12 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 	if pref != nil && pref.BackupRetentionDays > 0 {
 		targetBackupDays = pref.BackupRetentionDays
 	}
-	if strings.EqualFold(desiredCsp, "ibm") {
+	if strings.EqualFold(desiredCsp, csp.IBM) {
 		targetBackupDays = 0 // IBM Cloud Databases does not support setting BackupRetentionDays during provisioning
 	}
 
 	targetNHNDBSG := false
-	if pref != nil && strings.EqualFold(desiredCsp, "nhn") {
+	if pref != nil && strings.EqualFold(desiredCsp, csp.NHN) {
 		targetNHNDBSG = pref.NHNDBSGToAllowAllInbound
 	}
 

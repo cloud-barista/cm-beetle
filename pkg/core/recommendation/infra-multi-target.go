@@ -15,7 +15,7 @@ const (
 	MinMultiInfraTargets = 2
 
 	// MaxMultiInfraTargets caps the number of CSP/region pairs a multi-target recommendation
-	// request may include. Set to the project's current scope of 10 supported CSPs.
+	// request may include.
 	MaxMultiInfraTargets = 10
 
 	// multiInfraCandidatesPerTarget is intentionally fixed at 1: multi-target recommendation

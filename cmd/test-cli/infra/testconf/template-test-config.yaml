@@ -21,7 +21,7 @@ test:
     - csp: tencent
       region: ap-seoul
       name: Tencent-Seoul
-      execute: false # TBD      
+      execute: false
     - csp: ibm
       region: au-syd
       name: IBMCloud-Sydney
@@ -37,7 +37,7 @@ test:
     - csp: nhn
       region: kr1
       name: NHNCloud-Pangyo
-      execute: false # TBD
+      execute: false
     - csp: kt
       region: kr1
       name: KT-Seoul

@@ -88,7 +88,7 @@ func parseMinMatchRate(c echo.Context) float64 {
 // @Description Use this API to compare candidate clouds before committing to one; once a target is chosen,
 // @Description use `POST /recommendation/infra` against that single CSP/region to explore multiple candidates.
 // @Description
-// @Description **[Required Parameter: `desiredCspAndRegionPairs`]** 2 to 10 target CSP/region pairs (project scope: 10 supported CSPs).
+// @Description **[Required Parameter: `desiredCspAndRegionPairs`]** 2 to 10 target CSP/region pairs.
 // @Description Duplicate pairs are rejected.
 // @Description
 // @Description **[Response]** Always returns exactly one item per requested target, in request order
@@ -179,7 +179,7 @@ type RecommendMultiInfraWithNlbRequest struct {
 // @Description Use this API to compare candidate clouds before committing to one; once a target is chosen,
 // @Description use `POST /recommendation/infraWithNlb` against that single CSP/region to explore multiple candidates.
 // @Description
-// @Description **[Required Parameter: `desiredCspAndRegionPairs`]** 2 to 10 target CSP/region pairs (project scope: 10 supported CSPs).
+// @Description **[Required Parameter: `desiredCspAndRegionPairs`]** 2 to 10 target CSP/region pairs.
 // @Description Duplicate pairs are rejected.
 // @Description
 // @Description [Note] `sourceInfra.nlbs` must be populated (HAProxy frontend-backend pairs from cm-honeybee).

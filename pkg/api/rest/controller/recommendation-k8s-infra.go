@@ -52,7 +52,7 @@ type RecommendK8sInfraResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendK8sInfraRequest true "Source on-premise infra (must include k8sCluster and nodes with role=worker)"
-// @Param desiredProvider query string true "Provider (e.g., aws)" Enums(aws,azure,gcp,alibaba,ncp)
+// @Param desiredProvider query string true "Provider (e.g., aws)" Enums(aws,azure,gcp,alibaba,tencent,ibm,ncp,nhn)
 // @Param desiredRegion query string true "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} model.ApiResponse[RecommendK8sInfraResponse] "K8s infra recommendation (pass directly to POST /migration/ns/{nsId}/k8sCluster)"
