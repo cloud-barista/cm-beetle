@@ -83,6 +83,8 @@ func RecommendGpuInfraCandidates(
 	limit int,
 	minMatchRate float64,
 ) ([]cloudmodel.RecommendedInfra, error) {
+	srcInfra = SanitizeSourceInfra(srcInfra)
+
 	var recommendedVmInfraCandidates []cloudmodel.RecommendedInfra
 
 	var limitSpecs int = GetDefaultSpecsLimit()

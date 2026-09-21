@@ -32,6 +32,8 @@ const defaultArchitecture = "x86_64"
 // - recommendGpuNodeSpec for nodes with GPU accelerators
 // - recommendCpuNodeSpec for general-purpose CPU nodes
 func RecommendNodeSpecs(csp string, region string, node onpremmodel.NodeProperty, limit int) (vmSpecList []cloudmodel.SpecInfo, length int, err error) {
+	node = SanitizeSourceNode(node)
+
 	if limit <= 0 {
 		log.Warn().Msgf("Invalid limit value: %d, setting to default: %d", limit, defaultSpecsLimit)
 		limit = defaultSpecsLimit
