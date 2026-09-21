@@ -307,11 +307,9 @@ func main() {
 		}
 
 		// Determine NameSeed for this specific test case.
-		// In parallel mode with multiple cases, append the 1-based index to avoid name
-		// collisions between concurrent runs (e.g., "my" → "my01", "my02", ...).
-		// A single case never gets a suffix so the seed stays as-is (e.g., "my").
+		// When multiple cases are configured, append the 1-based index to avoid name collisions (e.g., "my" → "my01", "my02").
 		caseNameSeed := baseNameSeed
-		if isParallel && len(config.Test.Cases) > 1 {
+		if len(config.Test.Cases) > 1 {
 			caseNameSeed = fmt.Sprintf("%s%02d", baseNameSeed, i+1)
 		}
 

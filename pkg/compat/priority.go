@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/pkg/csp"
 	"github.com/rs/zerolog/log"
 )
 
@@ -21,8 +22,8 @@ const (
 
 // GetImagePriority returns a priority value for a given image (lower is better)
 // It combines general keyword-based prioritization with CSP-specific rules.
-func GetImagePriority(csp string, image cloudmodel.ImageInfo) int {
-	cspLower := strings.ToLower(csp)
+func GetImagePriority(cspName string, image cloudmodel.ImageInfo) int {
+	cspLower := strings.ToLower(cspName)
 	dist := strings.ToLower(image.OSDistribution)
 
 	// --- 1. General Prioritization (Keyword-based) ---
@@ -48,7 +49,7 @@ func GetImagePriority(csp string, image cloudmodel.ImageInfo) int {
 
 	// --- 2. CSP-Specific Prioritization ---
 	switch cspLower {
-	case "azure":
+	case csp.Azure:
 		// Deprioritize images that likely require Marketplace Plan information
 		if isAzureMarketplaceImage(image) {
 			log.Trace().Msgf("Azure: Deprioritizing Marketplace image: %s", image.CspImageName)

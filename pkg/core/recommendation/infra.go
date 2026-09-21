@@ -6,6 +6,7 @@ import (
 
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/compat"
+	"github.com/cloud-barista/cm-beetle/pkg/csp"
 	"github.com/cloud-barista/cm-beetle/pkg/similarity"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
@@ -60,21 +61,23 @@ func (q MatchRateVector) AverageMatchRate() float64 {
 	return (q.CPU + q.Memory + q.Image) / 3.0
 }
 
-func isSupportedCSP(csp string) bool {
-	supportedCSPs := map[string]bool{
-		"aws":     true,
-		"azure":   true,
-		"gcp":     true,
-		"alibaba": true,
-		"tencent": true,
-		"ibm":     true,
-		"ncp":     true,
-		// "nhn": true,
-		// "kt": true,
-		// "openstack": true,
-	}
+// supportedInfraCSPs defines the CSPs supported for computing infrastructure recommendation.
+// KT and OpenStack are currently not supported for computing infrastructure.
+var supportedInfraCSPs = map[string]bool{
+	csp.AWS:       true,
+	csp.Azure:     true,
+	csp.GCP:       true,
+	csp.Alibaba:   true,
+	csp.Tencent:   true,
+	csp.IBM:       true,
+	csp.NCP:       true,
+	csp.NHN:       true,
+	csp.OpenStack: false,
+	csp.KT:        false,
+}
 
-	return supportedCSPs[csp]
+func isSupportedCSP(cspName string) bool {
+	return supportedInfraCSPs[strings.ToLower(strings.TrimSpace(cspName))]
 }
 
 // getCspMinRootDiskSizeGB returns the CSP-specific safe minimum root disk size in GB.
@@ -86,35 +89,33 @@ func isSupportedCSP(csp string) bool {
 // TODO: Replace hardcoded values with dynamic lookup via CB-Spider's GET /cloudos/metainfo/{CloudOSName}
 // (returns RootDiskSize as a string enum list). Consider caching at startup to avoid per-request overhead.
 // Ref: https://github.com/cloud-barista/cb-spider/blob/master/cloud-driver-libs/cloudos_meta.yaml
-func getCspMinRootDiskSizeGB(csp string) int {
-	switch strings.ToLower(csp) {
-	case "ibm":
+func getCspMinRootDiskSizeGB(cspName string) int {
+	switch strings.ToLower(cspName) {
+	case csp.IBM:
 		// Fixed at 100 GB by default; root disk size is not configurable via API.
-		// (Custom user images support 10~250 GB, but the standard fixed value is 100 GB.)
 		return 100
-	case "ncp", "ncpvpc":
+	case csp.NCP, "ncpvpc":
 		// Fixed at 50 GB for Linux; root disk size cannot be changed via API or console.
 		return 50
-	case "tencent":
+	case csp.Tencent:
 		// Minimum per cloudos_meta.yaml: CLOUD_PREMIUM|50 GB, CLOUD_SSD|50 GB.
 		return 50
-	case "kt", "ktvpc":
+	case csp.KT, "ktvpc":
 		// Minimum per cloudos_meta.yaml: HDD|50 GB, SSD|50 GB.
 		return 50
-	case "alibaba":
+	case csp.Alibaba:
 		// Minimum: cloud_essd|20 GB, cloud_efficiency|20 GB; cloud_auto requires 40 GB.
 		return 40
-	case "azure":
+	case csp.Azure:
 		// Root disk size depends on the selected image and is not configurable via API.
-		// CB-Spider's Azure driver ignores this field; 30 GB serves as a safe fallback floor.
 		return 30
-	case "nhn":
+	case csp.NHN:
 		// Minimum per cloudos_meta.yaml: General_HDD|20 GB, General_SSD|20 GB.
 		return 20
 	case "ktclassic":
 		// Minimum per cloudos_meta.yaml: HDD|20 GB, SSD|20 GB.
 		return 20
-	case "aws", "gcp":
+	case csp.AWS, csp.GCP:
 		// AWS: gp2/gp3 practical OS minimum ~8 GB. GCP: pd-standard minimum 10 GB.
 		return 10
 	default:
@@ -122,23 +123,23 @@ func getCspMinRootDiskSizeGB(csp string) int {
 	}
 }
 
-func IsValidCspAndRegion(csp string, region string) (bool, error) {
+func IsValidCspAndRegion(cspName string, region string) (bool, error) {
 
 	isValid := false
-	cspName := strings.ToLower(csp)
+	cspLower := strings.ToLower(cspName)
 	regionName := strings.ToLower(region)
-	supportedCsp := isSupportedCSP(cspName)
+	supportedCsp := isSupportedCSP(cspLower)
 
 	if !supportedCsp {
-		err := fmt.Errorf("not supported yet (provider: %s)", cspName)
+		err := fmt.Errorf("not supported yet (provider: %s)", cspLower)
 		log.Warn().Msgf("%s", err.Error())
 		return isValid, err
 	}
 
 	// Check if the region is valid for the specified CSP
-	_, err := tbclient.NewSession().ReadRegionInfo(cspName, regionName)
+	_, err := tbclient.NewSession().ReadRegionInfo(cspLower, regionName)
 	if err != nil {
-		log.Warn().Msgf("failed to read region info for CSP %s and region %s: %v", cspName, regionName, err)
+		log.Warn().Msgf("failed to read region info for CSP %s and region %s: %v", cspLower, regionName, err)
 		return isValid, err
 	}
 

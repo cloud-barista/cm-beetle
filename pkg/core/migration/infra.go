@@ -28,6 +28,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/cloud-barista/cm-beetle/pkg/core/validation"
+	"github.com/cloud-barista/cm-beetle/pkg/csp"
 	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 	"github.com/rs/zerolog/log"
 )
@@ -121,8 +122,8 @@ func CreateInfraWithDefaults(nsId string, infraModel *cloudmodel.InfraDynamicReq
 	return convertedInfraInfo, nil
 }
 
-// CreateInfra creates an infrastructure for the computing infra migration by creating fresh resources (useExisting=false)
-func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cloudmodel.VmInfraInfo, error) {
+// MigrateInfra migrates an on-premise infrastructure to target cloud by creating fresh resources (useExisting=false)
+func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cloudmodel.VmInfraInfo, error) {
 	log.Info().Msg("Creating an infrastructure")
 
 	emptyRet := cloudmodel.VmInfraInfo{}
@@ -240,7 +241,7 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 			return emptyRet, err
 		}
 
-		sgInfo, err := tbclient.NewSession().CreateSecurityGroup(nsId, tbSgReq, "")
+		sgInfo, err := createSecurityGroup(nsId, targetInfraModel.TargetCloud.Csp, tbSgReq)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to create the security group (nsId: %s)", nsId)
 			return emptyRet, err
@@ -334,8 +335,8 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 	return temp, nil
 }
 
-// CreateInfraWithExisting creates an infrastructure by reusing/ensuring existing resources (useExisting=true)
-func CreateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cloudmodel.VmInfraInfo, error) {
+// MigrateInfraWithExisting migrates an on-premise infrastructure by reusing/ensuring existing resources (useExisting=true)
+func MigrateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cloudmodel.VmInfraInfo, error) {
 	log.Info().Msg("Creating infrastructure with existing resources")
 	emptyRet := cloudmodel.VmInfraInfo{}
 
@@ -396,7 +397,7 @@ func CreateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommend
 	// 6. Use/Create security groups (sg)
 	sgRequirements := validation.DeriveSecurityGroupRequirements(targetInfraModel.TargetInfra.NodeGroups)
 	for _, sgRequirement := range sgRequirements {
-		err = useOrCreateSecurityGroup(nsId, sgRequirement, targetInfraModel.TargetSecurityGroupList)
+		err = useOrCreateSecurityGroup(nsId, targetInfraModel.TargetCloud.Csp, sgRequirement, targetInfraModel.TargetSecurityGroupList)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to use or create security group %s (nsId: %s)", sgRequirement.SecurityGroupId, nsId)
 			return emptyRet, err
@@ -783,8 +784,32 @@ func useOrCreateSshKey(nsId string, sshKeyRequirement validation.SshKeyRequireme
 	return nil
 }
 
+// createSecurityGroup creates a SecurityGroup via Tumblebug, splitting rules for Tencent Cloud.
+func createSecurityGroup(nsId, provider string, tbSgReq tbmodel.SecurityGroupReq) (tbmodel.SecurityGroupInfo, error) {
+	if provider == "" && tbSgReq.ConnectionName != "" {
+		provider = strings.Split(tbSgReq.ConnectionName, "-")[0]
+	}
+	if !strings.EqualFold(provider, csp.Tencent) {
+		return tbclient.NewSession().CreateSecurityGroup(nsId, tbSgReq, "")
+	}
+
+	// Split inbound and outbound rules for Tencent Cloud where combined rules are rejected at creation
+	inbound, outbound := splitFirewallRulesByDirection(tbSgReq.FirewallRules)
+	tbSgReq.FirewallRules = &inbound
+	info, err := tbclient.NewSession().CreateSecurityGroup(nsId, tbSgReq, "")
+	if err != nil {
+		return info, err
+	}
+	if len(outbound) > 0 {
+		if _, err := tbclient.NewSession().AddFirewallRules(nsId, info.Id, outbound); err != nil {
+			return info, fmt.Errorf("created SecurityGroup %s but failed to add outbound rules: %w", info.Id, err)
+		}
+	}
+	return info, nil
+}
+
 // useOrCreateSecurityGroup checks if security group exists, and creates it from the creation request list if missing
-func useOrCreateSecurityGroup(nsId string, sgRequirement validation.SecurityGroupRequirement, sgCreationReqList []cloudmodel.SecurityGroupReq) error {
+func useOrCreateSecurityGroup(nsId, provider string, sgRequirement validation.SecurityGroupRequirement, sgCreationReqList []cloudmodel.SecurityGroupReq) error {
 	needsCreate, issue := validation.CheckSecurityGroupAvailability(nsId, sgRequirement, sgCreationReqList)
 	if issue != nil {
 		return fmt.Errorf("%s", issue.Message)
@@ -813,6 +838,9 @@ func useOrCreateSecurityGroup(nsId string, sgRequirement validation.SecurityGrou
 	if sgCreationReq.VNetId == "" && sgRequirement.VNetId != "" {
 		sgCreationReq.VNetId = sgRequirement.VNetId
 	}
+	if provider == "" && sgCreationReq.ConnectionName != "" {
+		provider = strings.Split(sgCreationReq.ConnectionName, "-")[0]
+	}
 
 	sgCreationReq = checkAndSupportSSHAccessRule(sgCreationReq)
 
@@ -833,7 +861,7 @@ func useOrCreateSecurityGroup(nsId string, sgRequirement validation.SecurityGrou
 		return err
 	}
 
-	_, err = tbclient.NewSession().CreateSecurityGroup(nsId, tbSgReq, "")
+	_, err = createSecurityGroup(nsId, provider, tbSgReq)
 	if err != nil {
 		return err
 	}

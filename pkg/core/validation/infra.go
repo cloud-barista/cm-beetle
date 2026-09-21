@@ -30,9 +30,9 @@ import (
 // ValidateTargetInfra checks whether targetInfraModel is internally consistent
 // and can be migrated into namespace nsId, given how resources are provisioned
 // under useExisting:
-//   - useExisting=false: CreateInfra creates fresh VNet/SshKey/SecurityGroups, so
+//   - useExisting=false: MigrateInfra creates fresh VNet/SshKey/SecurityGroups, so
 //     none of them may already exist.
-//   - useExisting=true: CreateInfraWithExisting reuses a resource by ID if found,
+//   - useExisting=true: MigrateInfraWithExisting reuses a resource by ID if found,
 //     otherwise falls back to creating it from the accompanying Target*Req data,
 //     so a missing resource is only an error when that fallback data is absent.
 //
@@ -110,7 +110,7 @@ func requiredFieldIssue(path, message string) ValidationIssue {
 	return ValidationIssue{Code: CodeRequiredFieldMissing, Severity: SeverityError, Path: path, Message: message}
 }
 
-// validateFreshCreationNamesPresent checks the name fields CreateInfra needs to create fresh resources.
+// validateFreshCreationNamesPresent checks the name fields MigrateInfra needs to create fresh resources.
 func validateFreshCreationNamesPresent(target cloudmodel.RecommendedInfra) []ValidationIssue {
 	var issues []ValidationIssue
 	if target.TargetVNet.Name == "" {
@@ -127,7 +127,7 @@ func validateFreshCreationNamesPresent(target cloudmodel.RecommendedInfra) []Val
 	return issues
 }
 
-// checkNotAlreadyExistsForFreshCreation ensures the resources CreateInfra is about
+// checkNotAlreadyExistsForFreshCreation ensures the resources MigrateInfra is about
 // to create do not already exist in the namespace.
 func checkNotAlreadyExistsForFreshCreation(nsId string, target cloudmodel.RecommendedInfra) []ValidationIssue {
 	var issues []ValidationIssue
@@ -165,7 +165,7 @@ func checkNotAlreadyExistsForFreshCreation(nsId string, target cloudmodel.Recomm
 	return issues
 }
 
-// validateNodeGroupIdsPresent checks the ID fields CreateInfraWithExisting needs per NodeGroup.
+// validateNodeGroupIdsPresent checks the ID fields MigrateInfraWithExisting needs per NodeGroup.
 func validateNodeGroupIdsPresent(nodeGroups []cloudmodel.CreateNodeGroupReq) []ValidationIssue {
 	var issues []ValidationIssue
 	for i, ng := range nodeGroups {
@@ -184,7 +184,7 @@ func validateNodeGroupIdsPresent(nodeGroups []cloudmodel.CreateNodeGroupReq) []V
 }
 
 // checkAvailabilityForExisting mirrors the use-or-create decision that
-// CreateInfraWithExisting makes for each VNet/SshKey/SecurityGroup, without
+// MigrateInfraWithExisting makes for each VNet/SshKey/SecurityGroup, without
 // creating anything: it is an error only when a required resource is missing
 // AND the accompanying creation data needed to fall back to creating it is
 // also missing or invalid.

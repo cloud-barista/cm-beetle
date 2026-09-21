@@ -61,7 +61,7 @@ type RecommendInfraWithDefaultsResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraWithDefaultsRequest true "Specify the source infrastructure to be migrated"
-// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,tencent,ibm,ncp,nhn) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Param Prefer header string false "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)" Enums(respond-async)
@@ -181,7 +181,7 @@ type RecommendInfraResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraRequest true "Specify the source infrastructure to be migrated"
-// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,tencent,ibm,ncp,nhn) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param limit query int false "Limit (default: 3) the number of recommended infrastructures"
 // @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)"
@@ -350,7 +350,7 @@ type RecommendInfraWithNlbRequest struct {
 // @Tags [Recommendation] Infrastructure
 // @Accept json
 // @Produce json
-// @Param desiredCsp query string false "Target CSP (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param desiredCsp query string false "Target CSP (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,tencent,ibm,ncp,nhn) default(aws)
 // @Param desiredRegion query string false "Target region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param limit query int false "Maximum number of candidates to return" default(5)
 // @Param minMatchRate query number false "Minimum match rate (0-100) for highly-matched classification" default(90.0)
@@ -405,6 +405,11 @@ func RecommendInfraWithNlbCandidates(c echo.Context) error {
 	if len(req.SourceInfra.NLBs) == 0 {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(
 			"sourceInfra.nlbs is required for infraWithNlb; use /recommendation/infra for NLB-free recommendation"))
+	}
+
+	if ok, err := recommendation.IsValidCspAndRegion(req.DesiredCsp, req.DesiredRegion); !ok {
+		log.Error().Err(err).Msg("failed to validate CSP and region")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
 	}
 
 	log.Info().

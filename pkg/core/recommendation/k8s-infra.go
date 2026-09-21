@@ -26,6 +26,7 @@ import (
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
+	"github.com/cloud-barista/cm-beetle/pkg/csp"
 	"github.com/rs/zerolog/log"
 )
 
@@ -1118,9 +1119,9 @@ var cspMaxNodeGroupNameLen = map[string]int{
 // CSPs not listed here keep min/max at 0 (unset), which Azure AKS requires when auto-scaling
 // is off. Verified per CSP via live migration; extend as new CSPs are tested.
 var cspRequiresFixedNodeGroupSize = map[string]bool{
-	"aws":     true,
-	"tencent": true,
-	"ibm":     true,
+	csp.AWS:     true,
+	csp.Tencent: true,
+	csp.IBM:     true,
 }
 
 // cspRequiresAutoScalingOn lists CSPs where managed node groups are always ASG-backed

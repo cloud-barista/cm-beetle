@@ -4002,7 +4002,10 @@
                             "azure",
                             "gcp",
                             "alibaba",
-                            "ncp"
+                            "tencent",
+                            "ibm",
+                            "ncp",
+                            "nhn"
                         ],
                         "type": "string",
                         "default": "aws",
@@ -4115,7 +4118,10 @@
                             "azure",
                             "gcp",
                             "alibaba",
-                            "ncp"
+                            "tencent",
+                            "ibm",
+                            "ncp",
+                            "nhn"
                         ],
                         "type": "string",
                         "default": "aws",
@@ -4201,7 +4207,10 @@
                             "azure",
                             "gcp",
                             "alibaba",
-                            "ncp"
+                            "tencent",
+                            "ibm",
+                            "ncp",
+                            "nhn"
                         ],
                         "type": "string",
                         "default": "aws",
@@ -4325,7 +4334,10 @@
                             "azure",
                             "gcp",
                             "alibaba",
-                            "ncp"
+                            "tencent",
+                            "ibm",
+                            "ncp",
+                            "nhn"
                         ],
                         "type": "string",
                         "description": "Provider (e.g., aws)",
@@ -4698,7 +4710,7 @@
         },
         "/recommendation/multiInfra": {
             "post": {
-                "description": "Recommend a single best-effort infrastructure candidate for each of several target CSP/region pairs.\n\nUse this API to compare candidate clouds before committing to one; once a target is chosen,\nuse `POST /recommendation/infra` against that single CSP/region to explore multiple candidates.\n\n**[Required Parameter: `desiredCspAndRegionPairs`]** 2 to 10 target CSP/region pairs (project scope: 10 supported CSPs).\nDuplicate pairs are rejected.\n\n**[Response]** Always returns exactly one item per requested target, in request order\n(`len(data) == len(desiredCspAndRegionPairs)`), so items map back to targets via `targetCloud`\nwithout needing to be re-sorted or grouped. A target that fails validation or yields no\ncompatible infrastructure still produces one item, with `status` set to `failed` or\n`nothing-to-recommend` and `targetInfra` left empty.\n\n**[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n[Note] Each target costs roughly as much as one `/recommendation/infra` call; requests with\nseveral targets can take a while. `Prefer: respond-async` is strongly recommended.",
+                "description": "Recommend a single best-effort infrastructure candidate for each of several target CSP/region pairs.\n\nUse this API to compare candidate clouds before committing to one; once a target is chosen,\nuse `POST /recommendation/infra` against that single CSP/region to explore multiple candidates.\n\n**[Required Parameter: `desiredCspAndRegionPairs`]** 2 to 10 target CSP/region pairs.\nDuplicate pairs are rejected.\n\n**[Response]** Always returns exactly one item per requested target, in request order\n(`len(data) == len(desiredCspAndRegionPairs)`), so items map back to targets via `targetCloud`\nwithout needing to be re-sorted or grouped. A target that fails validation or yields no\ncompatible infrastructure still produces one item, with `status` set to `failed` or\n`nothing-to-recommend` and `targetInfra` left empty.\n\n**[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n[Note] Each target costs roughly as much as one `/recommendation/infra` call; requests with\nseveral targets can take a while. `Prefer: respond-async` is strongly recommended.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4778,7 +4790,7 @@
         },
         "/recommendation/multiInfraWithNlb": {
             "post": {
-                "description": "NLB-aware counterpart of `POST /recommendation/multiInfra`. Recommends a single best-effort\ninfrastructure candidate (including NLB mapping) for each of several target CSP/region pairs.\n\nUse this API to compare candidate clouds before committing to one; once a target is chosen,\nuse `POST /recommendation/infraWithNlb` against that single CSP/region to explore multiple candidates.\n\n**[Required Parameter: `desiredCspAndRegionPairs`]** 2 to 10 target CSP/region pairs (project scope: 10 supported CSPs).\nDuplicate pairs are rejected.\n\n[Note] `sourceInfra.nlbs` must be populated (HAProxy frontend-backend pairs from cm-honeybee).\n\n**[Response]** Always returns exactly one item per requested target, in request order\n(`len(data) == len(desiredCspAndRegionPairs)`), so items map back to targets via `targetCloud`\nwithout needing to be re-sorted or grouped. A target that fails validation or yields no\ncompatible infrastructure still produces one item, with `status` set to `failed` or\n`nothing-to-recommend` and `targetInfra` left empty.\n\n**[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n[Note] Each target costs roughly as much as one `/recommendation/infraWithNlb` call; requests with\nseveral targets can take a while. `Prefer: respond-async` is strongly recommended.",
+                "description": "NLB-aware counterpart of `POST /recommendation/multiInfra`. Recommends a single best-effort\ninfrastructure candidate (including NLB mapping) for each of several target CSP/region pairs.\n\nUse this API to compare candidate clouds before committing to one; once a target is chosen,\nuse `POST /recommendation/infraWithNlb` against that single CSP/region to explore multiple candidates.\n\n**[Required Parameter: `desiredCspAndRegionPairs`]** 2 to 10 target CSP/region pairs.\nDuplicate pairs are rejected.\n\n[Note] `sourceInfra.nlbs` must be populated (HAProxy frontend-backend pairs from cm-honeybee).\n\n**[Response]** Always returns exactly one item per requested target, in request order\n(`len(data) == len(desiredCspAndRegionPairs)`), so items map back to targets via `targetCloud`\nwithout needing to be re-sorted or grouped. A target that fails validation or yields no\ncompatible infrastructure still produces one item, with `status` set to `failed` or\n`nothing-to-recommend` and `targetInfra` left empty.\n\n**[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n[Note] Each target costs roughly as much as one `/recommendation/infraWithNlb` call; requests with\nseveral targets can take a while. `Prefer: respond-async` is strongly recommended.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4886,10 +4898,10 @@
                             "azure",
                             "gcp",
                             "alibaba",
-                            "ncp",
-                            "nhn",
                             "tencent",
-                            "ibm"
+                            "ibm",
+                            "ncp",
+                            "nhn"
                         ],
                         "type": "string",
                         "default": "aws",
@@ -4963,10 +4975,10 @@
                             "azure",
                             "gcp",
                             "alibaba",
-                            "ncp",
-                            "nhn",
                             "tencent",
-                            "ibm"
+                            "ibm",
+                            "ncp",
+                            "nhn"
                         ],
                         "type": "string",
                         "default": "aws",
@@ -5047,7 +5059,10 @@
                             "azure",
                             "gcp",
                             "alibaba",
-                            "ncp"
+                            "tencent",
+                            "ibm",
+                            "ncp",
+                            "nhn"
                         ],
                         "type": "string",
                         "default": "aws",
@@ -5121,7 +5136,10 @@
                             "azure",
                             "gcp",
                             "alibaba",
-                            "ncp"
+                            "tencent",
+                            "ibm",
+                            "ncp",
+                            "nhn"
                         ],
                         "type": "string",
                         "default": "aws",
@@ -5207,7 +5225,10 @@
                             "azure",
                             "gcp",
                             "alibaba",
-                            "ncp"
+                            "tencent",
+                            "ibm",
+                            "ncp",
+                            "nhn"
                         ],
                         "type": "string",
                         "default": "aws",
@@ -5287,7 +5308,10 @@
                             "azure",
                             "gcp",
                             "alibaba",
-                            "ncp"
+                            "tencent",
+                            "ibm",
+                            "ncp",
+                            "nhn"
                         ],
                         "type": "string",
                         "default": "aws",

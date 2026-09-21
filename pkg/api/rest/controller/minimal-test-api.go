@@ -24,6 +24,7 @@ import (
 
 	storagemodel "github.com/cloud-barista/cm-beetle/imdl/storage-model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	"github.com/cloud-barista/cm-beetle/pkg/csp"
 	"github.com/cloud-barista/cm-beetle/transx"
 	"github.com/cloud-barista/cm-beetle/transx/fieldsec"
 	"github.com/labstack/echo/v4"
@@ -33,21 +34,21 @@ import (
 )
 
 // getS3EndpointForCsp resolves the appropriate S3 API endpoint for minio-go client based on CSP and region
-func getS3EndpointForCsp(csp, region string) string {
-	switch strings.ToLower(csp) {
-	case "aws":
+func getS3EndpointForCsp(cspName, region string) string {
+	switch strings.ToLower(cspName) {
+	case csp.AWS:
 		if region != "" {
 			return fmt.Sprintf("s3.%s.amazonaws.com", region)
 		}
 		return "s3.amazonaws.com"
-	case "gcp":
+	case csp.GCP:
 		return "storage.googleapis.com"
-	case "alibaba":
+	case csp.Alibaba:
 		if region != "" {
 			return fmt.Sprintf("oss-%s.aliyuncs.com", region)
 		}
 		return "oss-ap-northeast-1.aliyuncs.com"
-	case "tencent":
+	case csp.Tencent:
 		if region != "" {
 			return fmt.Sprintf("cos.%s.myqcloud.com", region)
 		}
