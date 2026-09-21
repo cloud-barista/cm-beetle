@@ -115,6 +115,7 @@ type K8sClusterProfile struct {
 	NodeImages           []tbmodel.K8sClusterNodeImageDetailAvailable
 	NodeGroupNamingRule  string
 	RequiredSubnetCount  int
+	RootDiskType         string
 }
 
 // GetK8sClusterProfile reads /k8sClusterInfo once and resolves every region-scoped field for the
@@ -132,12 +133,14 @@ func (s *Session) GetK8sClusterProfile(providerName, regionName string) (K8sClus
 		NodeImages:           resolveRegionNodeImages(detail.NodeImage, regionName),
 		NodeGroupNamingRule:  detail.NodeGroupNamingRule,
 		RequiredSubnetCount:  detail.RequiredSubnetCount,
+		RootDiskType:         resolveRegionRootDiskType(detail.RootDisk, regionName),
 	}
 
 	log.Debug().Str("provider", providerName).
 		Bool("nodeImageDesignation", profile.NodeImageDesignation).
 		Int("nodeImages", len(profile.NodeImages)).
 		Int("requiredSubnetCount", profile.RequiredSubnetCount).
+		Str("rootDiskType", profile.RootDiskType).
 		Msg("Got K8s cluster profile")
 	return profile, nil
 }
@@ -187,6 +190,25 @@ func resolveRegionNodeImages(details []tbmodel.K8sClusterNodeImageDetail, region
 		}
 	}
 	return common
+}
+
+// resolveRegionRootDiskType resolves the root disk type for the given region from k8sClusterInfo.
+func resolveRegionRootDiskType(details []tbmodel.K8sClusterRootDiskDetail, regionName string) string {
+	var common string
+	for _, d := range details {
+		for _, r := range d.Region {
+			if strings.EqualFold(r, regionName) && len(d.Type) > 0 && d.Type[0].Id != "" {
+				return d.Type[0].Id
+			}
+			if strings.EqualFold(r, "common") && len(d.Type) > 0 && d.Type[0].Id != "" {
+				common = d.Type[0].Id
+			}
+		}
+	}
+	if common != "" {
+		return common
+	}
+	return "default"
 }
 
 // GetK8sRequiredSubnetCount returns the number of subnets the CSP requires to create a K8s

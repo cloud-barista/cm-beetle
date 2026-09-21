@@ -157,6 +157,42 @@ func pollK8sClusterActive(nsId, clusterId string, maxAttempts int) (tbmodel.K8sC
 		clusterId, maxAttempts, string(clusterInfo.Status))
 }
 
+// pollK8sNodeGroupsActive waits until all added node groups reach Active status and desired size.
+func pollK8sNodeGroupsActive(nsId, clusterId string, expectedNodeGroups []tbmodel.K8sNodeGroupReq, maxAttempts int) (tbmodel.K8sClusterInfo, error) {
+	var clusterInfo tbmodel.K8sClusterInfo
+	for i := 0; i < maxAttempts; i++ {
+		time.Sleep(15 * time.Second)
+		updated, err := tbclient.NewSession().ReadK8sCluster(nsId, clusterId)
+		if err != nil {
+			log.Warn().Err(err).Int("attempt", i+1).Msg("Failed to poll cluster node groups; retrying")
+			continue
+		}
+		clusterInfo = updated
+		allReady := true
+		for _, exp := range expectedNodeGroups {
+			found := false
+			for _, ng := range clusterInfo.K8sNodeGroupList {
+				if ng.Name == exp.Name {
+					found = true
+					if string(ng.Status) != "Active" || ng.DesiredNodeSize < exp.DesiredNodeSize || len(ng.K8sNodes) < exp.DesiredNodeSize {
+						allReady = false
+					}
+					break
+				}
+			}
+			if !found {
+				allReady = false
+			}
+		}
+		if allReady {
+			log.Info().Str("clusterId", clusterId).Msg("All K8s node groups are Active and ready")
+			return clusterInfo, nil
+		}
+		log.Debug().Str("clusterId", clusterId).Int("attempt", i+1).Msg("Node groups not yet ready; waiting")
+	}
+	return clusterInfo, fmt.Errorf("node groups in cluster %s did not become Active after %d attempts", clusterId, maxAttempts)
+}
+
 // minViableWorkerVcpu / minViableWorkerMemGiB mirror the recommender's floor: managed K8s
 // worker nodes below 2 vCPU / 4 GiB cannot reliably host the kubelet + system daemonsets, and
 // Azure AKS rejects them for the mandatory system node pool.
@@ -416,6 +452,14 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra) (tbmodel.K8sC
 		}
 		clusterInfo = updatedClusterInfo
 		log.Info().Str("nodeGroup", tbNgReq.Name).Str("status", string(clusterInfo.Status)).Msg("Node group added")
+	}
+
+	// Wait until all separately added node groups become Active with matching desired size.
+	const maxNodeGroupPollAttempts = 40
+	if readyClusterInfo, err := pollK8sNodeGroupsActive(nsId, clusterInfo.Id, tbNodeGroupReqs, maxNodeGroupPollAttempts); err != nil {
+		log.Warn().Err(err).Str("clusterId", clusterInfo.Id).Msg("Node group polling timed out; returning cluster info")
+	} else {
+		clusterInfo = readyClusterInfo
 	}
 
 	log.Info().Str("clusterId", clusterInfo.Id).Msg("K8s infra migration completed")
