@@ -1,0 +1,20 @@
+{
+  "status": "partial",
+  "description": "Successfully recommended 1 object storage configuration(s)",
+  "warnings": [
+    "Bucket 'kt-test-source-bucket': versioning disabled (not supported on ncp)",
+    "Bucket 'kt-test-source-bucket': CORS disabled (not supported on ncp)"
+  ],
+  "targetCloud": {
+    "csp": "ncp",
+    "region": "kr"
+  },
+  "targetObjectStorages": [
+    {
+      "sourceBucketName": "kt-test-source-bucket",
+      "bucketName": "os-01",
+      "versioningEnabled": false,
+      "corsEnabled": false
+    }
+  ]
+}
