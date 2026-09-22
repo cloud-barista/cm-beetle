@@ -1,0 +1,21 @@
+{
+  "desiredCloud": {
+    "csp": "ncp",
+    "region": "kr"
+  },
+  "sourceObjectStorages": [
+    {
+      "bucketName": "kt-test-source-bucket",
+      "versioningEnabled": true,
+      "corsEnabled": true,
+      "totalSizeBytes": 1073741824,
+      "objectCount": 100,
+      "accessFrequency": "frequent",
+      "tags": {
+        "SourceCsp": "kt",
+        "SourceRegion": "kr1",
+        "Environment": "Test"
+      }
+    }
+  ]
+}
