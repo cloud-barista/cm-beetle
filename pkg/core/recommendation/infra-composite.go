@@ -333,11 +333,16 @@ func RecommendCompositeInfraCandidates(
 
 		for ngIdx := range ngBlueprints {
 			pairs := pairsByGroup[ngIdx]
-			if len(pairs) == 0 || cIdx >= len(pairs) {
+			if len(pairs) == 0 {
 				continue
 			}
 
-			selectedPair := pairs[cIdx]
+			pairIdx := cIdx
+			if pairIdx >= len(pairs) {
+				pairIdx = 0
+			}
+
+			selectedPair := pairs[pairIdx]
 			selectedSpec := selectedPair.Spec
 			selectedImage := selectedPair.Image
 
@@ -390,9 +395,15 @@ func RecommendCompositeInfraCandidates(
 			csp, candidateNodeGroups, syntheticSrcInfra, candidateSpecList, candidateImageList, minMatchRate,
 		)
 		candidate.Status = overallStatus
+		// Skip duplicate candidate if all node groups match an existing candidate
+		if isDuplicateInfraCandidate(candidates, candidate) {
+			log.Debug().Int("candidateIndex", cIdx).Msg("skipping duplicate candidate infrastructure")
+			continue
+		}
+
 		candidate.Description = fmt.Sprintf(
 			"Candidate #%d | %s | %d NLB(s) | Match Rate: Min=%.1f%% Max=%.1f%% Avg=%.1f%% | %s",
-			cIdx+1, overallStatus, len(targetNlbList), summary.MinMatchRate, summary.MaxMatchRate, summary.AvgMatchRate, overallStatusDesc,
+			len(candidates)+1, overallStatus, len(targetNlbList), summary.MinMatchRate, summary.MaxMatchRate, summary.AvgMatchRate, overallStatusDesc,
 		)
 
 		candidates = append(candidates, candidate)

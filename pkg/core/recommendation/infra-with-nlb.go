@@ -365,13 +365,14 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 					Msgf("candidate %d: no pairs available for this NodeGroup, skipping", candidateIdx+1)
 				continue
 			}
-			if candidateIdx >= len(pairs) {
-				log.Warn().Str("machineId", bp.representativeNode.MachineId).
-					Msgf("candidate %d: only %d pairs available, skipping", candidateIdx+1, len(pairs))
-				continue
+			pairIdx := candidateIdx
+			if pairIdx >= len(pairs) {
+				pairIdx = 0
+				log.Debug().Str("machineId", bp.representativeNode.MachineId).
+					Msgf("candidate %d: only %d pairs available, reusing optimal pair", candidateIdx+1, len(pairs))
 			}
 
-			selectedPair := pairs[candidateIdx]
+			selectedPair := pairs[pairIdx]
 			selectedSpec := selectedPair.Spec
 			selectedImage := selectedPair.Image
 
@@ -459,9 +460,15 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 		if len(warnings) > 0 {
 			nlbWarningNote = fmt.Sprintf(" | %d NLB warning(s): %s", len(warnings), strings.Join(warnings, "; "))
 		}
+		// Skip duplicate candidate if all node groups match an existing candidate
+		if isDuplicateInfraCandidate(candidates, candidate) {
+			log.Debug().Int("candidateIndex", candidateIdx).Msg("skipping duplicate candidate infrastructure")
+			continue
+		}
+
 		candidate.Description = fmt.Sprintf(
 			"Candidate #%d | %s | %d NLB(s) | Overall Match Rate: Min=%.1f%% Max=%.1f%% Avg=%.1f%% | %s%s",
-			candidateIdx+1,
+			len(candidates)+1,
 			overallStatus,
 			len(targetNlbList),
 			summary.MinMatchRate, summary.MaxMatchRate, summary.AvgMatchRate,

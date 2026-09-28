@@ -846,13 +846,15 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 			// Pairs are ranked by match rate to the source node (CPU, Memory, Image similarity).
 			// This explores alternative solutions in the multi-dimensional space.
 
-			// If the i-th pair exists, select it; otherwise skip this node for this candidate
+			// Select the i-th pair, or reuse the optimal pair (Rank 1) when alternatives are exhausted
+			pairIdx := i
 			var pair CompatibleSpecImagePair
 			if i < len(compatiblePairs) {
 				pair = compatiblePairs[i]
 			} else {
-				log.Warn().Msgf("candidate %d: node %s has only %d pairs available, skipping this node for this candidate", i+1, node.MachineId, len(compatiblePairs))
-				continue
+				pairIdx = 0
+				pair = compatiblePairs[0]
+				log.Debug().Msgf("candidate %d: node %s has only %d pairs available, reusing optimal pair", i+1, node.MachineId, len(compatiblePairs))
 			}
 
 			selectedVmSpec = pair.Spec
@@ -866,7 +868,7 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 				Str("machineId", node.MachineId).
 				Int("candidateIndex", i).
 				Int("serverIndex", j).
-				Int("pairIndex", i).
+				Int("pairIndex", pairIdx).
 				Int("totalPairsForServer", len(compatiblePairs)).
 				Str("selectedSpecId", selectedVmSpec.Id).
 				Str("selectedSpecName", selectedVmSpec.CspSpecName).
@@ -978,11 +980,17 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 		// Calculate overall match rate with detailed information
 		overallStatus, overallStatusDesc, infraMatchRateSummary := calculateCandidateMatchRateWithDetails(csp, tempNodeGroupList, srcInfra, deduplicatedVmSpecList, deduplicatedVmOsImageList, minMatchRate)
 
+		// Skip duplicate candidate if all node groups match an existing candidate
+		if isDuplicateInfraCandidate(recommendedVmInfraCandidates, candidateInfra) {
+			log.Debug().Int("candidateIndex", i).Msg("skipping duplicate candidate infrastructure")
+			continue
+		}
+
 		// Set the status and enhanced description with match rate summary
 		candidateInfra.Status = overallStatus
 		candidateInfra.Description = fmt.Sprintf(
 			"Candidate #%d | %s | Overall Match Rate: Min=%.1f%% Max=%.1f%% Avg=%.1f%% | %s",
-			i+1,
+			len(recommendedVmInfraCandidates)+1,
 			overallStatus,
 			infraMatchRateSummary.MinMatchRate,
 			infraMatchRateSummary.MaxMatchRate,
