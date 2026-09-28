@@ -51,8 +51,23 @@ func checkOverallNodeGroupStatus(nodegroups []cloudmodel.CreateNodeGroupDynamicR
 	}
 }
 
-// Deprecated: Use checkOverallNodeGroupStatus instead.
-func checkOverallSubGroupStatus(nodegroups []cloudmodel.CreateNodeGroupDynamicReq) string {
-	return checkOverallNodeGroupStatus(nodegroups)
+// isDuplicateInfraCandidate checks if candidate has identical SpecId and ImageId across all node groups to any existing candidate
+func isDuplicateInfraCandidate(existingCandidates []cloudmodel.RecommendedInfra, candidate cloudmodel.RecommendedInfra) bool {
+	for _, existing := range existingCandidates {
+		if len(existing.TargetInfra.NodeGroups) != len(candidate.TargetInfra.NodeGroups) {
+			continue
+		}
+		allMatch := true
+		for idx := range existing.TargetInfra.NodeGroups {
+			if existing.TargetInfra.NodeGroups[idx].SpecId != candidate.TargetInfra.NodeGroups[idx].SpecId ||
+				existing.TargetInfra.NodeGroups[idx].ImageId != candidate.TargetInfra.NodeGroups[idx].ImageId {
+				allMatch = false
+				break
+			}
+		}
+		if allMatch {
+			return true
+		}
+	}
+	return false
 }
-
