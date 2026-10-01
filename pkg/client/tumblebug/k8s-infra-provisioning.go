@@ -116,6 +116,7 @@ type K8sClusterProfile struct {
 	NodeGroupNamingRule  string
 	RequiredSubnetCount  int
 	RootDiskType         string
+	RootDiskSizeMinGB    int // 0 when the asset declares no minimum
 }
 
 // GetK8sClusterProfile reads /k8sClusterInfo once and resolves every region-scoped field for the
@@ -134,6 +135,7 @@ func (s *Session) GetK8sClusterProfile(providerName, regionName string) (K8sClus
 		NodeGroupNamingRule:  detail.NodeGroupNamingRule,
 		RequiredSubnetCount:  detail.RequiredSubnetCount,
 		RootDiskType:         resolveRegionRootDiskType(detail.RootDisk, regionName),
+		RootDiskSizeMinGB:    resolveRegionRootDiskSizeMin(detail.RootDisk, regionName),
 	}
 
 	log.Debug().Str("provider", providerName).
@@ -141,6 +143,7 @@ func (s *Session) GetK8sClusterProfile(providerName, regionName string) (K8sClus
 		Int("nodeImages", len(profile.NodeImages)).
 		Int("requiredSubnetCount", profile.RequiredSubnetCount).
 		Str("rootDiskType", profile.RootDiskType).
+		Int("rootDiskSizeMinGB", profile.RootDiskSizeMinGB).
 		Msg("Got K8s cluster profile")
 	return profile, nil
 }
@@ -209,6 +212,22 @@ func resolveRegionRootDiskType(details []tbmodel.K8sClusterRootDiskDetail, regio
 		return common
 	}
 	return "default"
+}
+
+// resolveRegionRootDiskSizeMin resolves the minimum root disk size (GB) for the given region, preferring an exact region match over "common".
+func resolveRegionRootDiskSizeMin(details []tbmodel.K8sClusterRootDiskDetail, regionName string) int {
+	common := 0
+	for _, d := range details {
+		for _, r := range d.Region {
+			if strings.EqualFold(r, regionName) {
+				return int(d.Size.Min)
+			}
+			if strings.EqualFold(r, "common") {
+				common = int(d.Size.Min)
+			}
+		}
+	}
+	return common
 }
 
 // GetK8sRequiredSubnetCount returns the number of subnets the CSP requires to create a K8s
