@@ -333,6 +333,7 @@ func RunServer(port string) {
 
 	gValidationNs := gValidation.Group("/ns/:nsId")
 	gValidationNs.POST("/infra", controller.ValidateInfra)
+	gValidationNs.POST("/k8sCluster", controller.ValidateK8sInfra)
 
 	// Recommendation APIs for K8s infrastructure
 	gRecommendation.POST("/k8sCluster", controller.RecommendK8sInfra)

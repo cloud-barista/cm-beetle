@@ -101,3 +101,51 @@ func ValidateInfra(c echo.Context) error {
 	// [Output]
 	return c.JSON(http.StatusOK, model.SuccessResponse(result))
 }
+
+type ValidateK8sInfraRequest struct {
+	cloudmodel.RecommendedInfra
+}
+
+// ValidateK8sInfra godoc
+// @ID ValidateK8sInfra
+// @Summary (Preview) Validate a target Kubernetes infrastructure model before migration
+// @Description Runs, without creating or modifying any resource, the same checks
+// @Description K8s migration execution performs immediately before provisioning:
+// @Description
+// @Description - **Naming & referential integrity**: cluster and companion resource names
+// @Description - **Connection & provider metadata**: resolves CSP/region from connection
+// @Description - **K8s version compatibility**: verifies version is supported in target CSP/region
+// @Description - **Subnet count requirement**: verifies network meets CSP minimums (e.g. AWS >= 2)
+// @Description - **Node group constraints**: initial node group requirement and naming rules (e.g. Azure AKS <= 12 chars)
+// @Description - **Autoscaling sizing & root disk**: sizing bounds and CSP root disk minimums
+// @Description - **Worker spec viability**: enforces 2 vCPU / 4 GiB minimum and spec naming rules
+// @Tags [Validation] Validation
+// @Accept json
+// @Produce json
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param infraInfo body ValidateK8sInfraRequest true "The target Kubernetes infrastructure model to validate"
+// @Param X-Request-Id header string false "Unique request ID"
+// @Success 200 {object} model.ApiResponse[validation.ValidationResult] "Validation outcome: valid flag plus zero or more issues"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request body or parameters"
+// @Router /validation/ns/{nsId}/k8sCluster [post]
+func ValidateK8sInfra(c echo.Context) error {
+	// [Input]
+	nsId := c.Param("nsId")
+	if nsId == "" {
+		err := fmt.Errorf("invalid request, namespace ID (nsId: %s) is required", nsId)
+		log.Warn().Msg(err.Error())
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
+	}
+
+	req := new(ValidateK8sInfraRequest)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
+	}
+
+	// [Process]
+	result := validation.ValidateTargetK8sInfra(nsId, &req.RecommendedInfra)
+
+	// [Output]
+	return c.JSON(http.StatusOK, model.SuccessResponse(result))
+}
+
