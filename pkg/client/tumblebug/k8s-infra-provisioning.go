@@ -82,12 +82,20 @@ func (s *Session) K8sClusterRecommendNode(req tbmodel.RecommendSpecReq) ([]tbmod
 	return specInfoList, nil
 }
 
-// getK8sClusterDetail fetches the per-CSP K8s cluster asset details (naming rule, required
-// subnet count, etc.) from Tumblebug's k8sClusterInfo endpoint.
-func (s *Session) getK8sClusterDetail(providerName string) (tbmodel.K8sClusterDetail, error) {
-	emptyRet := tbmodel.K8sClusterDetail{}
+type k8sClusterDetailExt struct {
+	tbmodel.K8sClusterDetail
+	RequireNodeGroupName bool   `json:"require_nodegroup_name"`
+	NodeSpecNamingRule   string `json:"nodespec_naming_rule"`
+}
 
-	var result tbmodel.K8sClusterAssetInfo
+type k8sClusterAssetInfoExt struct {
+	CSPs map[string]k8sClusterDetailExt `json:"k8s_cluster"`
+}
+
+func (s *Session) getK8sClusterDetailExt(providerName string) (k8sClusterDetailExt, error) {
+	emptyRet := k8sClusterDetailExt{}
+
+	var result k8sClusterAssetInfoExt
 	resp, err := s.SetResult(&result).Get("/k8sClusterInfo")
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get K8s cluster info")
@@ -104,6 +112,16 @@ func (s *Session) getK8sClusterDetail(providerName string) (tbmodel.K8sClusterDe
 	return detail, nil
 }
 
+// getK8sClusterDetail fetches the per-CSP K8s cluster asset details (naming rule, required
+// subnet count, etc.) from Tumblebug's k8sClusterInfo endpoint.
+func (s *Session) getK8sClusterDetail(providerName string) (tbmodel.K8sClusterDetail, error) {
+	detailExt, err := s.getK8sClusterDetailExt(providerName)
+	if err != nil {
+		return tbmodel.K8sClusterDetail{}, err
+	}
+	return detailExt.K8sClusterDetail, nil
+}
+
 // K8sClusterProfile is everything the k8sClusterInfo asset declares about K8s clusters for one
 // provider/region.
 //
@@ -111,11 +129,15 @@ func (s *Session) getK8sClusterDetail(providerName string) (tbmodel.K8sClusterDe
 // and callers that ask once per node group or per worker multiply that further. This type lets a
 // caller read the document once and keep every field it needs.
 type K8sClusterProfile struct {
+	NodeGroupsOnCreation bool
+	RequireNodeGroupName bool
 	NodeImageDesignation bool
 	NodeImages           []tbmodel.K8sClusterNodeImageDetailAvailable
 	NodeGroupNamingRule  string
+	NodeSpecNamingRule   string
 	RequiredSubnetCount  int
 	RootDiskType         string
+	RootDiskSizeMinGB    int // 0 when the asset declares no minimum
 }
 
 // GetK8sClusterProfile reads /k8sClusterInfo once and resolves every region-scoped field for the
@@ -123,24 +145,31 @@ type K8sClusterProfile struct {
 func (s *Session) GetK8sClusterProfile(providerName, regionName string) (K8sClusterProfile, error) {
 	log.Debug().Str("provider", providerName).Str("region", regionName).Msg("Getting K8s cluster profile")
 
-	detail, err := s.getK8sClusterDetail(providerName)
+	detail, err := s.getK8sClusterDetailExt(providerName)
 	if err != nil {
 		return K8sClusterProfile{}, err
 	}
 
 	profile := K8sClusterProfile{
+		NodeGroupsOnCreation: detail.NodeGroupsOnCreation,
+		RequireNodeGroupName: detail.RequireNodeGroupName,
 		NodeImageDesignation: detail.NodeImageDesignation,
 		NodeImages:           resolveRegionNodeImages(detail.NodeImage, regionName),
 		NodeGroupNamingRule:  detail.NodeGroupNamingRule,
+		NodeSpecNamingRule:   detail.NodeSpecNamingRule,
 		RequiredSubnetCount:  detail.RequiredSubnetCount,
 		RootDiskType:         resolveRegionRootDiskType(detail.RootDisk, regionName),
+		RootDiskSizeMinGB:    resolveRegionRootDiskSizeMin(detail.RootDisk, regionName),
 	}
 
 	log.Debug().Str("provider", providerName).
+		Bool("nodeGroupsOnCreation", profile.NodeGroupsOnCreation).
+		Bool("requireNodeGroupName", profile.RequireNodeGroupName).
 		Bool("nodeImageDesignation", profile.NodeImageDesignation).
 		Int("nodeImages", len(profile.NodeImages)).
 		Int("requiredSubnetCount", profile.RequiredSubnetCount).
 		Str("rootDiskType", profile.RootDiskType).
+		Int("rootDiskSizeMinGB", profile.RootDiskSizeMinGB).
 		Msg("Got K8s cluster profile")
 	return profile, nil
 }
@@ -209,6 +238,22 @@ func resolveRegionRootDiskType(details []tbmodel.K8sClusterRootDiskDetail, regio
 		return common
 	}
 	return "default"
+}
+
+// resolveRegionRootDiskSizeMin resolves the minimum root disk size (GB) for the given region, preferring an exact region match over "common".
+func resolveRegionRootDiskSizeMin(details []tbmodel.K8sClusterRootDiskDetail, regionName string) int {
+	common := 0
+	for _, d := range details {
+		for _, r := range d.Region {
+			if strings.EqualFold(r, regionName) {
+				return int(d.Size.Min)
+			}
+			if strings.EqualFold(r, "common") {
+				common = int(d.Size.Min)
+			}
+		}
+	}
+	return common
 }
 
 // GetK8sRequiredSubnetCount returns the number of subnets the CSP requires to create a K8s
