@@ -9,7 +9,7 @@ jobs:
   # Check auto merge contiditons of PR and proceed merging
   automerge:  
     # Apply this job if it is a PR and by OWNER with '/approve' comment
-    if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/approve') }}
+    if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/approve') && !contains(github.event.comment.body, 'cancel') }}
     
     # This job runs on Ubuntu-latest (Ubuntu 22.04 LTS checked on 2023-12-13)
     # See https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
@@ -49,6 +49,42 @@ jobs:
           github_token: ${{ secrets.github_token }}
           labels: |
             approved
+      
+      # Submit GitHub PR Review APPROVAL using CR_PAT with fallback for robot-authored PRs
+      - name: Approve Pull Request
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.CR_PAT }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}/reviews \
+            -d "{\"event\":\"APPROVE\",\"body\":\"Approved via /approve command by @${{ github.actor }}\"}")
+
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          # Fallback to GITHUB_TOKEN if the PR author is the owner of CR_PAT (HTTP 422)
+          if [ "$HTTP_STATUS" -eq 422 ] && echo "$BODY" | grep -qi "author"; then
+            echo "PR authored by robot account. Retrying approval using GITHUB_TOKEN..."
+            RESPONSE=$(curl -s -w "\n%{http_code}" \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}/reviews \
+              -d "{\"event\":\"APPROVE\",\"body\":\"Approved via /approve command by @${{ github.actor }}\"}")
+            HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | sed '$d')
+          fi
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "Successfully submitted approving review for PR #${{ github.event.issue.number }}."
+          else
+            echo "::error::Failed to approve PR #${{ github.event.issue.number }} (HTTP $HTTP_STATUS)"
+            echo "Response: $BODY"
+            exit 1
+          fi
       
       # AutoMerging if this PR has MERGE_LABELS: approved, lgtm (not wip, hold)
       - name: automerge-lgtm-approved
