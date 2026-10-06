@@ -2942,6 +2942,39 @@ definitions:
       targetVNet:
         $ref: '#/definitions/cloudmodel.VNetReq'
     type: object
+  controller.ValidateK8sInfraRequest:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetInfra:
+        $ref: '#/definitions/cloudmodel.InfraReq'
+      targetK8sCluster:
+        $ref: '#/definitions/cloudmodel.K8sClusterReq'
+      targetNlbList:
+        items:
+          $ref: '#/definitions/cloudmodel.NlbReq'
+        type: array
+      targetOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.ImageInfo'
+        type: array
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.SecurityGroupReq'
+        type: array
+      targetSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.SpecInfo'
+        type: array
+      targetSshKey:
+        $ref: '#/definitions/cloudmodel.SshKeyReq'
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.VNetReq'
+    type: object
   map_string_string:
     additionalProperties:
       type: string
@@ -12592,6 +12625,54 @@ paths:
       tags:
       - '[Validation] Target Cloud Configuration (Preview)'
       - '[Migration] Infrastructure'
+  /validation/ns/{nsId}/k8sCluster:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Runs, without creating or modifying any resource, the same checks
+        K8s migration execution performs immediately before provisioning:
+
+        - **Naming & referential integrity**: cluster and companion resource names
+        - **Connection & provider metadata**: resolves CSP/region from connection
+        - **K8s version compatibility**: verifies version is supported in target CSP/region
+        - **Subnet count requirement**: verifies network meets CSP minimums (e.g. AWS >= 2)
+        - **Node group constraints**: initial node group requirement and naming rules (e.g. Azure AKS <= 12 chars)
+        - **Autoscaling sizing & root disk**: sizing bounds and CSP root disk minimums
+        - **Worker spec viability**: enforces 2 vCPU / 4 GiB minimum and spec naming rules
+      operationId: ValidateK8sInfra
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: The target Kubernetes infrastructure model to validate
+        in: body
+        name: infraInfo
+        required: true
+        schema:
+          $ref: '#/definitions/controller.ValidateK8sInfraRequest'
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Validation outcome: valid flag plus zero or more issues'
+          schema:
+            $ref: '#/definitions/model.ApiResponse-validation_ValidationResult'
+        "400":
+          description: Invalid request body or parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: (Preview) Validate a target Kubernetes infrastructure model before
+        migration
+      tags:
+      - '[Validation] Validation'
 security:
 - BasicAuth: []
 - BearerAuth: []

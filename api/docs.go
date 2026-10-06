@@ -6007,6 +6007,61 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/validation/ns/{nsId}/k8sCluster": {
+            "post": {
+                "description": "Runs, without creating or modifying any resource, the same checks\nK8s migration execution performs immediately before provisioning:\n\n- **Naming \u0026 referential integrity**: cluster and companion resource names\n- **Connection \u0026 provider metadata**: resolves CSP/region from connection\n- **K8s version compatibility**: verifies version is supported in target CSP/region\n- **Subnet count requirement**: verifies network meets CSP minimums (e.g. AWS \u003e= 2)\n- **Node group constraints**: initial node group requirement and naming rules (e.g. Azure AKS \u003c= 12 chars)\n- **Autoscaling sizing \u0026 root disk**: sizing bounds and CSP root disk minimums\n- **Worker spec viability**: enforces 2 vCPU / 4 GiB minimum and spec naming rules",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Validation] Validation"
+                ],
+                "summary": "(Preview) Validate a target Kubernetes infrastructure model before migration",
+                "operationId": "ValidateK8sInfra",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "The target Kubernetes infrastructure model to validate",
+                        "name": "infraInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.ValidateK8sInfraRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Validation outcome: valid flag plus zero or more issues",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-validation_ValidationResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -9762,6 +9817,56 @@ const docTemplate = `{
             }
         },
         "controller.ValidateInfraRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "targetInfra": {
+                    "$ref": "#/definitions/cloudmodel.InfraReq"
+                },
+                "targetK8sCluster": {
+                    "$ref": "#/definitions/cloudmodel.K8sClusterReq"
+                },
+                "targetNlbList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.NlbReq"
+                    }
+                },
+                "targetOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.ImageInfo"
+                    }
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SecurityGroupReq"
+                    }
+                },
+                "targetSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SpecInfo"
+                    }
+                },
+                "targetSshKey": {
+                    "$ref": "#/definitions/cloudmodel.SshKeyReq"
+                },
+                "targetVNet": {
+                    "$ref": "#/definitions/cloudmodel.VNetReq"
+                }
+            }
+        },
+        "controller.ValidateK8sInfraRequest": {
             "type": "object",
             "properties": {
                 "description": {
