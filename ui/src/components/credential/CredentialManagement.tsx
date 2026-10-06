@@ -238,7 +238,7 @@ export const CredentialManagement: React.FC = () => {
                 <tr key={cred.id} className="hover:bg-bg-main/30 transition">
                   <td className="p-3.5 font-bold text-emerald-600 dark:text-emerald-400">{cred.profileName}</td>
                   <td className="p-3.5">
-                    <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase bg-bg-input border border-border-main">
+                    <span className="px-2 py-0.5 rounded text-xs font-bold uppercase bg-bg-input border border-border-main">
                       {cred.csp}
                     </span>
                   </td>
@@ -246,12 +246,12 @@ export const CredentialManagement: React.FC = () => {
                   <td className="p-3.5 text-text-main">{cred.accessKeyMasked}</td>
                   <td className="p-3.5">
                     {cred.status === 'valid' ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center space-x-1 w-max">
+                      <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center space-x-1 w-max">
                         <CheckCircle2 className="w-3 h-3" />
                         <span>Valid</span>
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center space-x-1 w-max">
+                      <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center space-x-1 w-max">
                         <AlertCircle className="w-3 h-3" />
                         <span>Unverified</span>
                       </span>

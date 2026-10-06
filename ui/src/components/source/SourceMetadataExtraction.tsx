@@ -116,7 +116,7 @@ const SharedCredsPanel: React.FC<SharedCredsProps> = ({
         )}
         <label className={`inline-flex items-center gap-2 mb-3 ${locked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
           <input type="checkbox" disabled={locked} checked={enabled} onChange={e => onToggleEnabled(e.target.checked)} className="sr-only peer" />
-          <div className="relative w-9 h-5 bg-bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-600" />
+          <div className="relative w-9 h-5 bg-bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-600" />
           <span className="text-sm text-text-muted">Enable Auto Inherit</span>
         </label>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

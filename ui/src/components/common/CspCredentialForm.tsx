@@ -351,7 +351,7 @@ export const CspCredentialForm: React.FC<CspCredentialFormProps> = ({
               <span className="text-xs font-extrabold text-teal-400">
                 S3 Interoperability Credentials (AWS S3-Compatible Interoperability)
               </span>
-              <span className="text-[11px] text-text-muted font-mono">
+              <span className="text-xs text-text-muted font-mono">
                 (S3AccessKey &amp; S3SecretKey for Object Storage API Control)
               </span>
             </div>

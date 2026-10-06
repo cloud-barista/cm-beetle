@@ -1247,7 +1247,7 @@ export const MigratedInfraManagement: React.FC = () => {
                         <div key={idx} className="p-2.5 bg-bg-panel/60 rounded-lg border border-border-main/40 flex justify-between items-center">
                           <div>
                             <span className="font-extrabold text-text-main block">{sub.name}</span>
-                            <span className="text-text-muted text-[11px]">Subnet ID: {sub.name}</span>
+                            <span className="text-text-muted text-xs">Subnet ID: {sub.name}</span>
                           </div>
                           <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold">
                             {sub.cidrBlock}
@@ -1905,7 +1905,7 @@ export const MigratedInfraManagement: React.FC = () => {
                 <p className="text-text-muted leading-relaxed">
                   To prevent cloud dependency locks (ENI release), Beetle UX Lab will orchestrate teardown in 2 sequential stages:
                 </p>
-                <div className="space-y-1 font-mono text-[11px] text-text-main">
+                <div className="space-y-1 font-mono text-xs text-text-main">
                   <div className="flex items-center gap-2">
                     <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold shrink-0">Stage 1</span>
                     <span>Terminate & Detach Managed NLB ({detectedNlbs.map(n => n.name || n.id).join(', ')})</span>

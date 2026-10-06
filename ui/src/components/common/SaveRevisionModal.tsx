@@ -181,7 +181,7 @@ export const SaveRevisionModal: React.FC<SaveRevisionModalProps> = ({
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-sky-500 text-slate-950 rounded-xl cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+            className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 rounded-xl cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
           >
             {isSaving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : (overwrite ? 'Overwrite' : 'Save New')}
           </button>

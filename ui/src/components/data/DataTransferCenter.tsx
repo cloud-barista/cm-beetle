@@ -1102,7 +1102,7 @@ export const DataTransferCenter: React.FC = () => {
                         </span>
 
                         {targetAccessType === 'object-storage' && (
-                          <div className="flex items-center gap-1 bg-bg-panel p-0.5 border border-border-main rounded-lg text-[11px]">
+                          <div className="flex items-center gap-1 bg-bg-panel p-0.5 border border-border-main rounded-lg text-xs">
                             <button
                               type="button"
                               onClick={() => setTargetAccessEngine('tumblebug')}
@@ -1511,21 +1511,21 @@ export const DataTransferCenter: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleAddIncludePreset('*.json')}
-                          className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 dark:hover:bg-emerald-900 border border-emerald-400/60 dark:border-emerald-500/50 text-emerald-900 dark:text-emerald-300 text-[11px] font-extrabold rounded-lg transition cursor-pointer shadow-2xs"
+                          className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 dark:hover:bg-emerald-900 border border-emerald-400/60 dark:border-emerald-500/50 text-emerald-900 dark:text-emerald-300 text-xs font-extrabold rounded-lg transition cursor-pointer shadow-2xs"
                         >
                           + *.json
                         </button>
                         <button
                           type="button"
                           onClick={() => handleAddIncludePreset('*.csv')}
-                          className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 dark:hover:bg-emerald-900 border border-emerald-400/60 dark:border-emerald-500/50 text-emerald-900 dark:text-emerald-300 text-[11px] font-extrabold rounded-lg transition cursor-pointer shadow-2xs"
+                          className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 dark:hover:bg-emerald-900 border border-emerald-400/60 dark:border-emerald-500/50 text-emerald-900 dark:text-emerald-300 text-xs font-extrabold rounded-lg transition cursor-pointer shadow-2xs"
                         >
                           + *.csv
                         </button>
                         <button
                           type="button"
                           onClick={() => handleAddIncludePreset('reports/**')}
-                          className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 dark:hover:bg-emerald-900 border border-emerald-400/60 dark:border-emerald-500/50 text-emerald-900 dark:text-emerald-300 text-[11px] font-extrabold rounded-lg transition cursor-pointer shadow-2xs"
+                          className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 dark:hover:bg-emerald-900 border border-emerald-400/60 dark:border-emerald-500/50 text-emerald-900 dark:text-emerald-300 text-xs font-extrabold rounded-lg transition cursor-pointer shadow-2xs"
                         >
                           + reports/**
                         </button>
@@ -1560,21 +1560,21 @@ export const DataTransferCenter: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleAddExcludePreset('*.tmp')}
-                          className="px-2 py-0.5 bg-rose-100 dark:bg-rose-950/80 hover:bg-rose-200 dark:hover:bg-rose-900 border border-rose-400/60 dark:border-rose-500/50 text-rose-900 dark:text-rose-300 text-[11px] font-extrabold rounded-lg transition cursor-pointer shadow-2xs"
+                          className="px-2 py-0.5 bg-rose-100 dark:bg-rose-950/80 hover:bg-rose-200 dark:hover:bg-rose-900 border border-rose-400/60 dark:border-rose-500/50 text-rose-900 dark:text-rose-300 text-xs font-extrabold rounded-lg transition cursor-pointer shadow-2xs"
                         >
                           + *.tmp
                         </button>
                         <button
                           type="button"
                           onClick={() => handleAddExcludePreset('*.log')}
-                          className="px-2 py-0.5 bg-rose-100 dark:bg-rose-950/80 hover:bg-rose-200 dark:hover:bg-rose-900 border border-rose-400/60 dark:border-rose-500/50 text-rose-900 dark:text-rose-300 text-[11px] font-extrabold rounded-lg transition cursor-pointer shadow-2xs"
+                          className="px-2 py-0.5 bg-rose-100 dark:bg-rose-950/80 hover:bg-rose-200 dark:hover:bg-rose-900 border border-rose-400/60 dark:border-rose-500/50 text-rose-900 dark:text-rose-300 text-xs font-extrabold rounded-lg transition cursor-pointer shadow-2xs"
                         >
                           + *.log
                         </button>
                         <button
                           type="button"
                           onClick={() => handleAddExcludePreset('temp/**')}
-                          className="px-2 py-0.5 bg-rose-100 dark:bg-rose-950/80 hover:bg-rose-200 dark:hover:bg-rose-900 border border-rose-400/60 dark:border-rose-500/50 text-rose-900 dark:text-rose-300 text-[11px] font-extrabold rounded-lg transition cursor-pointer shadow-2xs"
+                          className="px-2 py-0.5 bg-rose-100 dark:bg-rose-950/80 hover:bg-rose-200 dark:hover:bg-rose-900 border border-rose-400/60 dark:border-rose-500/50 text-rose-900 dark:text-rose-300 text-xs font-extrabold rounded-lg transition cursor-pointer shadow-2xs"
                         >
                           + temp/**
                         </button>
@@ -1781,7 +1781,7 @@ export const DataTransferCenter: React.FC = () => {
               <p className="text-xs text-text-muted leading-relaxed">
                 Are you sure you want to remove the data migration record for <strong className="text-text-main">"{deleteModalJob.reqId}"</strong> (<span className="font-mono text-emerald-400">{deleteModalJob.sourceBucket} ➔ {deleteModalJob.targetStorage}</span>) from the Queue?
               </p>
-              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-400 font-mono">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-400 font-mono">
                 ⚠️ Note: This action only removes the UI queue request record. Transferred data objects in cloud storage will NOT be deleted.
               </div>
 

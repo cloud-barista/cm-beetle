@@ -1232,13 +1232,13 @@ export const ObjectStorageMigration: React.FC = () => {
                       <td className="p-3 font-bold">{formatBytes(bucket.totalSizeBytes)}</td>
                       <td className="p-3">{(bucket.objectCount ?? 0).toLocaleString()}</td>
                       <td className="p-3">
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase bg-bg-input border border-border-main text-text-main">
+                        <span className="px-2 py-0.5 rounded text-xs font-bold uppercase bg-bg-input border border-border-main text-text-main">
                           {bucket.accessFrequency}
                         </span>
                       </td>
                       <td className="p-3 space-x-1">
-                        {bucket.versioningEnabled && <span className="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 rounded text-[10px]">Ver</span>}
-                        {bucket.encryptionEnabled && <span className="px-1.5 py-0.5 bg-teal-500/10 text-teal-400 rounded text-[10px]">Enc</span>}
+                        {bucket.versioningEnabled && <span className="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 rounded text-xs">Ver</span>}
+                        {bucket.encryptionEnabled && <span className="px-1.5 py-0.5 bg-teal-500/10 text-teal-400 rounded text-xs">Enc</span>}
                       </td>
                       <td className="p-3 text-right">
                         <button
@@ -1275,12 +1275,12 @@ export const ObjectStorageMigration: React.FC = () => {
                 </span>
                 <span className="text-text-muted">&gt;</span>
                 <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold border ${isInspectDone ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' : 'bg-bg-panel text-text-muted border-border-main'}`}>
-                  <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">{isInspectDone ? '✓' : '2'}</span>
+                  <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">{isInspectDone ? '✓' : '2'}</span>
                   <span>2 Storage Metadata Inspected</span>
                 </span>
                 <span className="text-text-muted">&gt;</span>
                 <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold border ${savedSourceModels.length > 0 ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' : 'bg-bg-panel text-text-muted border-border-main'}`}>
-                  <span className="w-4 h-4 rounded-full bg-bg-input text-text-muted flex items-center justify-center text-[10px]">{savedSourceModels.length > 0 ? '✓' : '3'}</span>
+                  <span className="w-4 h-4 rounded-full bg-bg-input text-text-muted flex items-center justify-center text-xs">{savedSourceModels.length > 0 ? '✓' : '3'}</span>
                   <span>3 Model Saved</span>
                 </span>
               </div>
@@ -1558,7 +1558,7 @@ export const ObjectStorageMigration: React.FC = () => {
                               <h4 className="text-sm font-extrabold text-text-main">
                                 Bucket Details ({b.bucketName})
                               </h4>
-                              <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-mono font-extrabold uppercase ${isExcluded ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                              <span className={`px-2.5 py-0.5 rounded-md text-xs font-mono font-extrabold uppercase ${isExcluded ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
                                 {isExcluded ? 'EXCLUDED FROM MIGRATION' : 'INCLUDED IN MIGRATION'}
                               </span>
                             </div>
@@ -2300,7 +2300,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                 className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold font-mono text-xs focus:outline-none focus:border-emerald-500"
                                 placeholder="e.g. target-storage-01"
                               />
-                              <span className="text-[11px] text-text-muted font-normal block pt-0.5">
+                              <span className="text-xs text-text-muted font-normal block pt-0.5">
                                 * Note: A unique <span className="font-bold text-text-main">CB-managed UID</span> is automatically assigned to the target bucket upon creation.
                               </span>
                             </div>
@@ -2331,7 +2331,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                   <div className="flex flex-col">
                                     <span className="font-extrabold text-text-main">Versioning</span>
                                     {!cspSupport.versioning && (
-                                      <span className="text-[10px] font-bold text-red-500 dark:text-red-400">N/A ({desiredCsp.toUpperCase()})</span>
+                                      <span className="text-xs font-bold text-red-500 dark:text-red-400">N/A ({desiredCsp.toUpperCase()})</span>
                                     )}
                                   </div>
                                 </label>
@@ -2358,7 +2358,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                   <div className="flex flex-col">
                                     <span className="font-extrabold text-text-main">CORS Rules</span>
                                     {!cspSupport.cors && (
-                                      <span className="text-[10px] font-bold text-red-500 dark:text-red-400">N/A ({desiredCsp.toUpperCase()})</span>
+                                      <span className="text-xs font-bold text-red-500 dark:text-red-400">N/A ({desiredCsp.toUpperCase()})</span>
                                     )}
                                   </div>
                                 </label>
@@ -2785,7 +2785,7 @@ export const ObjectStorageMigration: React.FC = () => {
                       <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg font-bold text-xs">✓</div>
                       <div>
                         <h4 className="text-xs font-bold text-text-main">1. Request Accepted</h4>
-                        <p className="text-[11px] text-text-muted font-mono">HTTP 202 (ReqID Issued)</p>
+                        <p className="text-xs text-text-muted font-mono">HTTP 202 (ReqID Issued)</p>
                       </div>
                     </div>
 
@@ -2794,7 +2794,7 @@ export const ObjectStorageMigration: React.FC = () => {
                       <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg font-bold text-xs">✓</div>
                       <div>
                         <h4 className="text-xs font-bold text-text-main">2. Migrating</h4>
-                        <p className="text-[11px] text-text-muted font-mono">Finished Processing</p>
+                        <p className="text-xs text-text-muted font-mono">Finished Processing</p>
                       </div>
                     </div>
 
@@ -2803,7 +2803,7 @@ export const ObjectStorageMigration: React.FC = () => {
                       <div className="p-2 bg-green-500/20 text-green-400 rounded-lg font-bold text-xs">✓</div>
                       <div>
                         <h4 className="text-xs font-bold text-text-main">3. Completed</h4>
-                        <p className="text-[11px] text-text-muted font-mono">Object Storage Active &amp; Ready</p>
+                        <p className="text-xs text-text-muted font-mono">Object Storage Active &amp; Ready</p>
                       </div>
                     </div>
                   </div>
@@ -3059,10 +3059,10 @@ export const ObjectStorageMigration: React.FC = () => {
                         <div>
                           <span className="font-extrabold text-emerald-500">{b.bucketName || b.targetBucketName || `target-storage-${idx + 1}`}</span>
                           {b.sourceBucketName && (
-                            <span className="text-text-muted font-normal ml-2 text-[11px]">(from: {b.sourceBucketName})</span>
+                            <span className="text-text-muted font-normal ml-2 text-xs">(from: {b.sourceBucketName})</span>
                           )}
                         </div>
-                        <div className="flex items-center space-x-2 text-[11px]">
+                        <div className="flex items-center space-x-2 text-xs">
                           <span className={`px-1.5 py-0.5 rounded font-bold ${b.versioningEnabled ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-slate-500/10 text-text-muted'}`}>
                             Versioning: {b.versioningEnabled ? 'ON' : 'OFF'}
                           </span>
@@ -3390,7 +3390,7 @@ export const ObjectStorageMigration: React.FC = () => {
               <p className="text-xs text-text-muted leading-relaxed">
                 Are you sure you want to remove the object storage migration record for <strong className="text-text-main">"{deleteModalJob.name}"</strong> (<span className="font-mono text-emerald-400">{deleteModalJob.reqId}</span>) from the Queue?
               </p>
-              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-400 font-mono">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-400 font-mono">
                 ⚠️ Note: This action only removes the UI queue request record. Physical cloud storage resources will NOT be deleted.
               </div>
 

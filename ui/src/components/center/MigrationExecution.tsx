@@ -980,7 +980,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg font-bold text-xs">✓</div>
                 <div>
                   <h4 className="text-xs font-bold text-text-main">1. Request Accepted</h4>
-                  <p className="text-[11px] text-text-muted font-mono">HTTP 202 (ReqID Issued)</p>
+                  <p className="text-xs text-text-muted font-mono">HTTP 202 (ReqID Issued)</p>
                 </div>
               </div>
 
@@ -999,7 +999,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-text-main">2. Migrating</h4>
-                  <p className="text-[11px] text-text-muted font-mono">
+                  <p className="text-xs text-text-muted font-mono">
                     {activeJob.status === 'Handling' ? 'Processing (Handling)...' : 'Finished Processing'}
                   </p>
                 </div>
@@ -1026,7 +1026,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                   <h4 className="text-xs font-bold text-text-main">
                     {activeJob.status === 'Success' ? '3. Completed' : activeJob.status === 'Failed' ? '3. Failed' : '3. Final Result'}
                   </h4>
-                  <p className="text-[11px] text-text-muted font-mono">
+                  <p className="text-xs text-text-muted font-mono">
                     {activeJob.status === 'Success' ? 'Infra Active & Ready' : activeJob.status === 'Failed' ? 'Error Encountered' : 'Awaiting completion'}
                   </p>
                 </div>
@@ -1855,7 +1855,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
               <p className="text-xs text-text-muted leading-relaxed">
                 Are you sure you want to remove the migration request record for target infra <strong className="text-text-main">"{deleteModalJob.infraId}"</strong> (<span className="font-mono text-emerald-400">{deleteModalJob.reqId}</span>) from the Queue?
               </p>
-              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-400 font-mono">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-400 font-mono">
                 ⚠️ Note: This action only removes the UI queue request record. Physical cloud infrastructure resources will NOT be deleted.
               </div>
 

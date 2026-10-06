@@ -1104,7 +1104,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                   <Globe className="w-4 h-4" />
                   <span>Cross-CSP Exploration (Multi-Cloud)</span>
                   {recommendationMode === 'multi' && (targetPairs || []).length > 1 && (
-                    <span className="px-1.5 py-0.5 rounded-full bg-slate-950/20 text-slate-950 text-[10px] font-mono">
+                    <span className="px-1.5 py-0.5 rounded-full bg-slate-950/20 text-slate-950 text-xs font-mono">
                       {(targetPairs || []).length}
                     </span>
                   )}
@@ -1121,7 +1121,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                   <Target className="w-4 h-4" />
                   <span>Single-CSP Deep Dive (Architecture Options)</span>
                   {recommendationMode === 'single' && (
-                    <span className="px-1.5 py-0.5 rounded-full bg-slate-950/20 text-slate-950 text-[10px] font-mono">
+                    <span className="px-1.5 py-0.5 rounded-full bg-slate-950/20 text-slate-950 text-xs font-mono">
                       {recommendationLimit}
                     </span>
                   )}
@@ -1167,7 +1167,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                       title="AWS (ap-northeast-2), GCP (asia-northeast3), Azure (koreacentral)"
                     >
                       <span>+ Global Big 3</span>
-                      <span className="text-[11px] font-normal text-text-muted">(AWS, GCP, Azure)</span>
+                      <span className="text-xs font-normal text-text-muted">(AWS, GCP, Azure)</span>
                     </button>
                     <button
                       type="button"
@@ -1176,7 +1176,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                       title="NCP (kr), NHN Cloud (kr1)"
                     >
                       <span>+ Domestic 2</span>
-                      <span className="text-[11px] font-normal text-text-muted">(NCP, NHN)</span>
+                      <span className="text-xs font-normal text-text-muted">(NCP, NHN)</span>
                     </button>
                   </div>
                   {(targetPairs || []).length > 2 && (
