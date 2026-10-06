@@ -965,6 +965,7 @@ type targetProfile struct {
 	requiredSubnetCount int
 	regionZones         []string // only fetched when requiredSubnetCount > 1
 	rootDiskType        string
+	rootDiskSizeMinGB   int // 0 when the CSP declares no minimum
 }
 
 // getTargetProfile reads the target cloud's K8s declarations in one place.
@@ -985,6 +986,7 @@ func getTargetProfile(provider, region string) targetProfile {
 		p.nodeGroupNamingRule = profile.NodeGroupNamingRule
 		p.requiredSubnetCount = profile.RequiredSubnetCount
 		p.rootDiskType = profile.RootDiskType
+		p.rootDiskSizeMinGB = profile.RootDiskSizeMinGB
 		if p.rootDiskType == "" {
 			p.rootDiskType = "default"
 		}
@@ -1221,6 +1223,14 @@ func buildK8sNodeGroupReq(profile targetProfile, name string, g nodeGroupAccum) 
 		}
 	}
 
+	// Raise a known disk size to the CSP minimum (e.g. NCP NKS KVM: 100GB); 0 keeps the CSP default.
+	notes := g.notes
+	if rootDiskSize > 0 && rootDiskSize < profile.rootDiskSizeMinGB {
+		notes = append(append([]string{}, g.notes...), fmt.Sprintf(
+			"Root disk raised from %dGB to the %s minimum of %dGB.", rootDiskSize, provider, profile.rootDiskSizeMinGB))
+		rootDiskSize = profile.rootDiskSizeMinGB
+	}
+
 	// Apply CSP-specific node group sizing rules when autoscaling is off.
 	minNodeSize, maxNodeSize := 0, 0
 	if cspRequiresFixedNodeGroupSize[strings.ToLower(provider)] {
@@ -1233,8 +1243,8 @@ func buildK8sNodeGroupReq(profile targetProfile, name string, g nodeGroupAccum) 
 	}
 
 	description := fmt.Sprintf("Worker node group migrated from on-premise (%d node(s))", desiredSize)
-	if len(g.notes) > 0 {
-		description += " " + strings.Join(g.notes, " ")
+	if len(notes) > 0 {
+		description += " " + strings.Join(notes, " ")
 	}
 
 	onAutoScaling := "false"

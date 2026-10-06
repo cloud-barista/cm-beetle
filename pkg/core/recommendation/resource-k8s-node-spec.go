@@ -115,8 +115,8 @@ func RecommendK8sNodeGroupSpecs(provider, region string, srcInfra onpremmodel.On
 //     deliberately allows downsizing,
 //   - ranking ignores CPU vendor (see sortK8sSpecsByProximity): with every candidate already at or
 //     above the source, a vendor match can only buy a larger, costlier node,
-//   - NCP hypervisor filtering is skipped (NKS is pinned to XEN, so the VM path's KVM filter would
-//     exclude the very specs NKS can use).
+//   - specs a CSP cannot use for node groups (e.g. NCP XEN specs) never reach it: Tumblebug's K8s
+//     endpoint drops them by the nodeSpecNamingRule in its k8sclusterinfo.yaml.
 //
 // The request goes to Tumblebug's K8s endpoint, whose validateK8sMinimumRequirements enforces the
 // K8s node minimums; the requirement's floor keeps the lower bounds at or above those minimums so
@@ -168,8 +168,6 @@ func RecommendK8sNodeSpecs(provider, region string, req workerRequirement, limit
 		// Drop unpriced specs only when pricing data exists at all, so regions without loaded
 		// cost data still yield recommendations.
 		found = filterPricedSpecs(found)
-
-		// Note: the VM path's NCP KVM filter is intentionally NOT applied here.
 
 		if len(found) > 0 {
 			converted, err := modelconv.ConvertWithValidation[[]tbmodel.SpecInfo, []cloudmodel.SpecInfo](found)
