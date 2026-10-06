@@ -42,9 +42,15 @@ const (
 	CodeResourceAlreadyExists   = "RESOURCE_ALREADY_EXISTS"
 	CodeResourceNotAvailable    = "RESOURCE_NOT_AVAILABLE"
 	CodeSpecImageIncompatible   = "SPEC_IMAGE_INCOMPATIBLE"
-	CodeInvalidConnectionName   = "INVALID_CONNECTION_NAME"
-	CodeSpecOrImageLookupFailed = "SPEC_OR_IMAGE_LOOKUP_FAILED"
-	CodeConnectionMismatch      = "CONNECTION_MISMATCH"
+	CodeInvalidConnectionName    = "INVALID_CONNECTION_NAME"
+	CodeSpecOrImageLookupFailed  = "SPEC_OR_IMAGE_LOOKUP_FAILED"
+	CodeConnectionMismatch       = "CONNECTION_MISMATCH"
+	CodeUnsupportedK8sVersion    = "UNSUPPORTED_K8S_VERSION"
+	CodeInsufficientSubnets      = "INSUFFICIENT_SUBNETS"
+	CodeInvalidNamingRule        = "INVALID_NAMING_RULE"
+	CodeInvalidNodeGroupSize     = "INVALID_NODEGROUP_SIZE"
+	CodeMissingRequiredNodeGroup = "MISSING_REQUIRED_NODEGROUP"
+	CodeInvalidRootDiskSize      = "INVALID_ROOT_DISK_SIZE"
 )
 
 // ValidationIssue is a single problem found while validating a target model.
