@@ -96,12 +96,12 @@ export const ObjectDirectoryTree: React.FC<ObjectDirectoryTreeProps> = ({
               <span className="font-extrabold text-text-main truncate text-xs group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
                 {node.name}
               </span>
-              <span className="text-[11px] text-text-muted font-normal shrink-0">
+              <span className="text-xs text-text-muted font-normal shrink-0">
                 ({node.objectCount.toLocaleString()} {node.objectCount === 1 ? 'item' : 'items'})
               </span>
             </div>
 
-            <div className="flex items-center space-x-3 text-[11px] text-text-muted shrink-0 pl-2">
+            <div className="flex items-center space-x-3 text-xs text-text-muted shrink-0 pl-2">
               <span className="font-semibold text-text-main">{formatBytes(node.sizeBytes)}</span>
             </div>
           </div>
@@ -129,7 +129,7 @@ export const ObjectDirectoryTree: React.FC<ObjectDirectoryTreeProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center space-x-3 text-[11px] text-text-muted shrink-0 pl-2">
+        <div className="flex items-center space-x-3 text-xs text-text-muted shrink-0 pl-2">
           {node.lastModified && <span className="text-text-muted/70 hidden sm:inline">{node.lastModified}</span>}
           <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">{formatBytes(node.sizeBytes)}</span>
         </div>

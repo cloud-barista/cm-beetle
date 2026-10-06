@@ -7,10 +7,10 @@ on:
     types: [created]
 jobs:
   # Check auto merge contiditons of PR and proceed merging
-  automerge:  
+  automerge:
     # Apply this job if it is a PR and by OWNER with '/approve' comment
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/approve') && !contains(github.event.comment.body, 'cancel') }}
-    
+
     # This job runs on Ubuntu-latest (Ubuntu 22.04 LTS checked on 2023-12-13)
     # See https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
     runs-on: ubuntu-22.04
@@ -19,7 +19,7 @@ jobs:
       - name: Extract Repository Name
         id: repo-name
         run: echo "REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2)" >> $GITHUB_ENV
-        
+
       - name: Get Maintainer Team Members
         id: check-team-members
         run: |
@@ -33,7 +33,7 @@ jobs:
                           https://api.github.com/orgs/cloud-barista/teams/${TEAM_NAME}/members | jq -r '.[] | .login' | tr '\n' ',')
           echo "TEAM_MEMBERS=$TEAM_MEMBERS" >> $GITHUB_ENV
           echo "TEAM_MEMBERS: ${TEAM_MEMBERS}"
-          
+
       - name: Verify if GITHUB_ACTOR is a Maintainer Team Member
         run: |
           TEAM_MEMBERS_ARRAY=(${TEAM_MEMBERS//,/ })
@@ -41,7 +41,7 @@ jobs:
             echo "User ${GITHUB_ACTOR} is not a member of the team. Stopping workflow."
             exit 1
           fi
-      
+
       # Apply 'approved' label when OWNER left '/approve' comment
       - uses: actions/checkout@v7
       - uses: actions-ecosystem/action-add-labels@v1
@@ -49,7 +49,7 @@ jobs:
           github_token: ${{ secrets.github_token }}
           labels: |
             approved
-      
+
       # Submit GitHub PR Review APPROVAL using CR_PAT with fallback for robot-authored PRs
       - name: Approve Pull Request
         run: |
@@ -85,7 +85,7 @@ jobs:
             echo "Response: $BODY"
             exit 1
           fi
-      
+
       # AutoMerging if this PR has MERGE_LABELS: approved, lgtm (not wip, hold)
       - name: automerge-lgtm-approved
         uses: "pascalgn/automerge-action@v0.16.4"

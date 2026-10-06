@@ -24,6 +24,13 @@
    - **Brand Colors**: Emerald (#10b981) / Teal (#14b8a6) **ONLY**. Never use `cyan-*`, `purple-*`, or `sky-*`.
    - **Light Mode Contrast**: Ensure clear inputs and readable previews in light mode. Use `--border-input` (`#cbd5e1`) for form borders and high-contrast text (`text-slate-800` or `text-text-main`) for code/previews.
 
+5. **Design System Linting & Self-Correction (@shadcn/lint)**:
+   - Always run `npm run lint` inside `ui/` after modifying or adding UI components/styles.
+   - Strictly resolve all design violations flagged by `@shadcn/lint`:
+     - Disallowed arbitrary values (e.g., `text-[10px]`, `text-[11px]`): Replace with standard scale tokens (`text-xs`, `text-sm`, `text-base`).
+     - Forbidden colors (`cyan-*`, `purple-*`, `sky-*`): Replace with brand palette tokens (`emerald-*`, `teal-*`, `text-main`, `text-muted`).
+     - Unknown classes: Verify Tailwind v4 `@theme` and `@utility` definitions in `src/app/globals.css`.
+
 ## Go Development Philosophy & Coding Rules
 
 1. **Core Philosophy**:

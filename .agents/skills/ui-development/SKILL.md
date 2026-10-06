@@ -105,3 +105,11 @@ import { Database } from "lucide-react";
 - Group classes: `bg-* text-* border-* rounded-* p-* m-*`
 - Dark mode by default (`dark:` class support)
 - Light mode high contrast: Use `--border-input` (`#cbd5e1`) for form borders and high-contrast text (`text-slate-800` or `text-text-main`) for previews.
+
+### Design System Verification & Linting (@shadcn/lint)
+
+- **Always run `npm run lint`** inside `ui/` after editing UI code.
+- Zero tolerance for design system errors:
+  - Fix any hardcoded microscopic font sizes (`text-[10px]`, `text-[11px]` -> use `text-xs`, `text-sm`).
+  - Fix any forbidden colors (`cyan-*`, `purple-*`, `sky-*` -> use brand `emerald-*`, `teal-*`).
+  - Ensure all custom animations/utilities are properly declared in `src/app/globals.css`.

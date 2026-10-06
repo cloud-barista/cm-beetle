@@ -32,6 +32,10 @@ jobs:
         working-directory: ui
         run: npm ci
 
+      - name: Lint UI & verify design system
+        working-directory: ui
+        run: npm run lint
+
       - name: Build Next.js app
         working-directory: ui
         run: npm run build

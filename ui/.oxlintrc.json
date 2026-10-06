@@ -1,0 +1,41 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react"],
+  "jsPlugins": ["@shadcn/lint"],
+  "categories": {
+    "correctness": "warn"
+  },
+  "rules": {
+    "shadcn/no-arbitrary-values": [
+      "error",
+      {
+        "allow": [
+          "z-*",
+          "max-w-*",
+          "max-h-*",
+          "w-*",
+          "min-w-*",
+          "min-h-*",
+          "h-*",
+          "top-*",
+          "bottom-*",
+          "left-*",
+          "right-*",
+          "inset-*",
+          "flex-*",
+          "grid-cols-*",
+          "content-*"
+        ],
+        "message": "Arbitrary font sizes (like text-[10px], text-[11px]) and raw custom values are not allowed. Follow cm-beetle typography rules (min font size text-sm/text-xs) and theme tokens."
+      }
+    ],
+    "shadcn/no-raw-colors": [
+      "error",
+      {
+        "deny": ["*cyan*", "*purple*", "*sky*"],
+        "message": "Brand colors are Emerald and Teal only. Cyan, purple, and sky are strictly forbidden in cm-beetle UI."
+      }
+    ],
+    "shadcn/no-unknown-classes": "error"
+  }
+}

@@ -83,7 +83,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               />
               <button
                 onClick={() => setLayoutWidth(1920)}
-                className="text-[10px] font-bold px-1.5 py-0.5 bg-bg-input hover:bg-bg-main text-text-muted hover:text-emerald-500 border border-border-main rounded cursor-pointer transition"
+                className="text-xs font-bold px-1.5 py-0.5 bg-bg-input hover:bg-bg-main text-text-muted hover:text-emerald-500 border border-border-main rounded cursor-pointer transition"
                 title="Reset layout width to standard 1920px"
               >
                 Reset
@@ -147,7 +147,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                         }`}>
                         <span>{item.label}</span>
                         {(item as any).badge && (
-                          <span className="px-1.5 py-0.5 text-[10px] font-mono font-extrabold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-md">
+                          <span className="px-1.5 py-0.5 text-xs font-mono font-extrabold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-md">
                             {(item as any).badge}
                           </span>
                         )}
@@ -198,7 +198,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                         }`}>
                         <span>{item.label}</span>
                         {(item as any).badge && (
-                          <span className="px-1.5 py-0.5 text-[10px] font-mono font-extrabold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-md">
+                          <span className="px-1.5 py-0.5 text-xs font-mono font-extrabold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-md">
                             {(item as any).badge}
                           </span>
                         )}
