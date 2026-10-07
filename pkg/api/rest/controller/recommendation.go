@@ -20,6 +20,7 @@ import (
 	"strconv"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
@@ -36,6 +37,7 @@ import (
  */
 
 type RecommendInfraWithDefaultsRequest struct {
+	Lineage                 lineage.MigrationLineage `json:"lineage,omitempty"`
 	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
 	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
@@ -143,6 +145,7 @@ func RecommendInfraWithDefaults(c echo.Context) error {
 }
 
 type RecommendInfraRequest struct {
+	Lineage                 lineage.MigrationLineage `json:"lineage,omitempty"`
 	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
 	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
@@ -302,9 +305,10 @@ func RecommendInfraCandidates(c echo.Context) error {
 
 // RecommendInfraWithNlbRequest is the request body for POST /recommendation/infraWithNlb.
 type RecommendInfraWithNlbRequest struct {
-	DesiredCsp    string                  `json:"desiredCsp"`    // Target CSP (e.g., "aws")
-	DesiredRegion string                  `json:"desiredRegion"` // Target region (e.g., "ap-northeast-2")
-	SourceInfra   onpremmodel.OnpremInfra `json:"sourceInfra"   validate:"required"`
+	Lineage       lineage.MigrationLineage `json:"lineage,omitempty"`
+	DesiredCsp    string                   `json:"desiredCsp"`    // Target CSP (e.g., "aws")
+	DesiredRegion string                   `json:"desiredRegion"` // Target region (e.g., "ap-northeast-2")
+	SourceInfra   onpremmodel.OnpremInfra  `json:"sourceInfra"   validate:"required"`
 }
 
 // RecommendInfraWithNlbCandidates godoc

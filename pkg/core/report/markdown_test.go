@@ -62,7 +62,7 @@ func TestResolveSourceMachineID(t *testing.T) {
 			name: "1:1 NodeGroup - single machine ID in label",
 			vm: summary.SummaryVmInfo{
 				Name:  "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-				Label: map[string]string{"sourceMachineIds": "ec268ed7-821e-9d73-e79f-961262161624"},
+				Label: map[string]string{"cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"},
 			},
 			want: "ec268ed7-821e-9d73-e79f-961262161624",
 		},
@@ -70,7 +70,7 @@ func TestResolveSourceMachineID(t *testing.T) {
 			name: "NLB backend NodeGroup - 1st member picks 1st machine ID by position",
 			vm: summary.SummaryVmInfo{
 				Name:  "my-ng-influxdb-back-1",
-				Label: map[string]string{"sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf"},
+				Label: map[string]string{"cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf"},
 			},
 			want: "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
 		},
@@ -78,7 +78,7 @@ func TestResolveSourceMachineID(t *testing.T) {
 			name: "NLB backend NodeGroup - 2nd member picks 2nd machine ID by position",
 			vm: summary.SummaryVmInfo{
 				Name:  "my-ng-influxdb-back-2",
-				Label: map[string]string{"sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf"},
+				Label: map[string]string{"cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf"},
 			},
 			want: "ec288dd0-c6fa-8a49-2f60-bc898311febf",
 		},
@@ -91,7 +91,7 @@ func TestResolveSourceMachineID(t *testing.T) {
 			name: "multi-value label but VM name has no group index",
 			vm: summary.SummaryVmInfo{
 				Name:  "my-ng-influxdb-back",
-				Label: map[string]string{"sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf"},
+				Label: map[string]string{"cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf"},
 			},
 			want: "",
 		},
@@ -118,7 +118,7 @@ func TestFindSourceServer(t *testing.T) {
 			name: "resolved via label (1:1 NodeGroup)",
 			vm: summary.SummaryVmInfo{
 				Name:  "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-				Label: map[string]string{"sourceMachineIds": "ec268ed7-821e-9d73-e79f-961262161624"},
+				Label: map[string]string{"cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"},
 			},
 			wantHostname: "ip-10-0-1-30",
 		},
@@ -126,7 +126,7 @@ func TestFindSourceServer(t *testing.T) {
 			name: "resolved via label (NLB backend NodeGroup, 2nd member)",
 			vm: summary.SummaryVmInfo{
 				Name:  "my-ng-influxdb-back-2",
-				Label: map[string]string{"sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf"},
+				Label: map[string]string{"cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf"},
 			},
 			wantHostname: "ip-10-0-1-138",
 		},

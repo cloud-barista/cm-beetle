@@ -120,7 +120,7 @@ func buildMigrationMappings(sourceSummary *summary.SourceInfraSummary, targetSum
 	var mappings []SourceTargetMapping
 
 	// Build a source-machine-ID -> target VM index, preferring the
-	// authoritative "sourceMachineIds" label set at NodeGroup creation time
+	// authoritative "cm-source-machine-ids" label set at NodeGroup creation time
 	// (see resolveSourceMachineID) over any inference from the VM name.
 	vmByMachineID := make(map[string]*summary.SummaryVmInfo)
 	for i, vm := range targetSummary.ComputeResources.Vms {

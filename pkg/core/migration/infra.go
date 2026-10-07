@@ -23,6 +23,7 @@ import (
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -123,7 +124,7 @@ func CreateInfraWithDefaults(nsId string, infraModel *cloudmodel.InfraDynamicReq
 }
 
 // MigrateInfra migrates an on-premise infrastructure to target cloud by creating fresh resources (useExisting=false)
-func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cloudmodel.VmInfraInfo, error) {
+func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, lin ...lineage.MigrationLineage) (cloudmodel.VmInfraInfo, error) {
 	log.Info().Msg("Creating an infrastructure")
 
 	emptyRet := cloudmodel.VmInfraInfo{}
@@ -287,6 +288,17 @@ func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (c
 		}
 	}
 
+	// Inject deployment timestamp and migration lineage labels for end-to-end traceability
+	if tbInfraReq.Label == nil {
+		tbInfraReq.Label = make(map[string]string)
+	}
+	tbInfraReq.Label[lineage.LabelMigratedAt] = time.Now().UTC().Format(time.RFC3339)
+	if len(lin) > 0 {
+		for k, v := range lin[0].ToLabelMap() {
+			tbInfraReq.Label[k] = v
+		}
+	}
+
 	// Create multi-cloud infrastructure
 	infraInfo, err := tbclient.NewSession().CreateInfra(nsId, tbInfraReq)
 	if err != nil {
@@ -336,7 +348,7 @@ func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (c
 }
 
 // MigrateInfraWithExisting migrates an on-premise infrastructure by reusing/ensuring existing resources (useExisting=true)
-func MigrateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cloudmodel.VmInfraInfo, error) {
+func MigrateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, lin ...lineage.MigrationLineage) (cloudmodel.VmInfraInfo, error) {
 	log.Info().Msg("Creating infrastructure with existing resources")
 	emptyRet := cloudmodel.VmInfraInfo{}
 
@@ -422,6 +434,17 @@ func MigrateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommen
 					Command:  []string{"uname -a"},
 				},
 			},
+		}
+	}
+
+	// Inject deployment timestamp and migration lineage labels for end-to-end traceability
+	if tbInfraReq.Label == nil {
+		tbInfraReq.Label = make(map[string]string)
+	}
+	tbInfraReq.Label[lineage.LabelMigratedAt] = time.Now().UTC().Format(time.RFC3339)
+	if len(lin) > 0 {
+		for k, v := range lin[0].ToLabelMap() {
+			tbInfraReq.Label[k] = v
 		}
 	}
 

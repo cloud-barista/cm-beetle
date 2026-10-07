@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 	"github.com/cloud-barista/cm-beetle/pkg/core/summary"
 )
 
@@ -610,13 +611,12 @@ func writeSshKeyStatus(md *strings.Builder, report *MigrationReport) {
 
 // Helper functions for extracting source information
 
-// sourceMachineIdsLabelKey is the NodeGroup creation-time label set by the
-// recommendation phase (see pkg/core/recommendation) recording which source
+// sourceMachineIdsLabelKey is the NodeGroup creation-time label recording which source
 // machine(s) a NodeGroup was recommended from.
-const sourceMachineIdsLabelKey = "sourceMachineIds"
+const sourceMachineIdsLabelKey = lineage.LabelSourceMachineIds
 
 // resolveSourceMachineID resolves the exact source machine ID for a target VM
-// from its "sourceMachineIds" label, which is authoritative and set at
+// from its "cm-source-machine-ids" label, which is authoritative and set at
 // NodeGroup creation time — unlike inferring it from the VM name.
 //
 // For a 1:1 NodeGroup (NodeGroupSize == 1) the label holds exactly one machine
@@ -664,7 +664,7 @@ func vmGroupIndex(vmName string) int {
 }
 
 // findSourceServer locates the source node a target VM was migrated from.
-// It first tries the authoritative "sourceMachineIds" label (see
+// It first tries the authoritative "cm-source-machine-ids" label (see
 // resolveSourceMachineID); if the VM has no usable label — e.g. it was
 // manually registered rather than created through the recommendation flow —
 // it falls back to matching by substring containment of a known machine ID in

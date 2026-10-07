@@ -23,6 +23,7 @@ import (
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -122,6 +123,7 @@ func MigrateInfraWithDefaults(c echo.Context) error {
 // TODO: Check and dev the request and response bodies for the following API
 
 type MigrateInfraRequest struct {
+	Lineage lineage.MigrationLineage `json:"lineage,omitempty"`
 	cloudmodel.RecommendedInfra
 }
 
@@ -206,9 +208,9 @@ func MigrateInfra(c echo.Context) error {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
 		started := common.RunAsync(reqID, func() (cloudmodel.VmInfraInfo, error) {
 			if useExisting {
-				return migration.MigrateInfraWithExisting(nsId, &infraToMigrate)
+				return migration.MigrateInfraWithExisting(nsId, &infraToMigrate, req.Lineage)
 			}
-			return migration.MigrateInfra(nsId, &infraToMigrate)
+			return migration.MigrateInfra(nsId, &infraToMigrate, req.Lineage)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -229,9 +231,9 @@ func MigrateInfra(c echo.Context) error {
 	var mciInfo cloudmodel.VmInfraInfo
 	var err error
 	if useExisting {
-		mciInfo, err = migration.MigrateInfraWithExisting(nsId, &infraToMigrate)
+		mciInfo, err = migration.MigrateInfraWithExisting(nsId, &infraToMigrate, req.Lineage)
 	} else {
-		mciInfo, err = migration.MigrateInfra(nsId, &infraToMigrate)
+		mciInfo, err = migration.MigrateInfra(nsId, &infraToMigrate, req.Lineage)
 	}
 
 	log.Debug().Msgf("mciInfo: %+v", mciInfo)
