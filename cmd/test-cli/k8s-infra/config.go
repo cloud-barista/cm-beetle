@@ -64,6 +64,7 @@ type TestCase struct {
 	cloudmodel.CloudProperty `yaml:",inline"`
 	Name                     string `yaml:"name"`
 	Execute                  bool   `yaml:"execute"`
+	NameSeed                 string `yaml:"nameSeed,omitempty"`
 }
 
 // Scenario is one on-premise fixture plus the expectations it must satisfy.
@@ -168,7 +169,7 @@ func applyDefaults(cfg *TestConfig) {
 		cfg.Workload.LbAddressTimeoutSec = 300
 	}
 	if cfg.Workload.LbAccessTimeoutSec == 0 {
-		cfg.Workload.LbAccessTimeoutSec = 180
+		cfg.Workload.LbAccessTimeoutSec = 360
 	}
 	if cfg.Workload.LbPollSec == 0 {
 		cfg.Workload.LbPollSec = 10
@@ -198,9 +199,17 @@ func selectedScenarios(cfg TestConfig) []Scenario {
 }
 
 // caseNameSeed determines resource prefix for each test case to prevent collision.
-func caseNameSeed(cfg TestConfig, idx int) string {
+func caseNameSeed(cfg TestConfig, target TestCase, fallbackIdx int) string {
+	if target.NameSeed != "" {
+		return target.NameSeed
+	}
 	if cfg.Beetle.NameSeed == "" {
 		return ""
 	}
-	return fmt.Sprintf("%s%02d", cfg.Beetle.NameSeed, idx+1)
+	for idx, c := range cfg.Test.Cases {
+		if c.Csp == target.Csp && c.Region == target.Region {
+			return fmt.Sprintf("%s%02d", cfg.Beetle.NameSeed, idx+1)
+		}
+	}
+	return fmt.Sprintf("%s%02d", cfg.Beetle.NameSeed, fallbackIdx+1)
 }

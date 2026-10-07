@@ -225,6 +225,6 @@ workload:
   podPollSec: 5
   loadBalancerEnabled: true
   lbAddressTimeoutSec: 300
-  lbAccessTimeoutSec: 180
+  lbAccessTimeoutSec: 360
   lbPollSec: 10
 

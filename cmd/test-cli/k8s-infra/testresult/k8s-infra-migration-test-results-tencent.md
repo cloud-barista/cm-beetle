@@ -1,34 +1,34 @@
 # CM-Beetle K8s Infra Migration Test Results — Tencent-Seoul
 
 > [!NOTE]
-> Full lifecycle against a real CSP: recommend → migrate → list → get (verified against
-> the recommendation) → delete → residual resource check.
+> Full lifecycle against a real CSP: recommend → validate → migrate → list → get → workload → delete → residual.
 
 ## Environment
 
 - CSP / Region: tencent / ap-seoul
 - CM-Beetle URL: http://localhost:8056
-- CM-Beetle Version: v0.6.1+ (e7e0c24)
-- Git Commit: e7e0c24
+- CM-Beetle Version: v0.6.1+ (cd1f3a2)
+- Git Commit: cd1f3a2
 - Namespace: mig01
-- Test Date: 2026-09-29 10:09:13 KST
-- Cluster ID: k8s4csp02-on-prem-k8s-cluster
+- Test Date: 2026-10-07 16:41:45 KST
+- Cluster ID: mig05-on-prem-k8s-cluster
 
 ## Test Results Summary
 
 | Step | Description | Status | Duration |
 |------|-------------|--------|----------|
 | 1 | POST /recommendation/k8sCluster | ✅ **PASS** | 21ms |
-| 2 | POST /migration/ns/{nsId}/k8sCluster | ✅ **PASS** | 6m0.141s |
-| 3 | GET /migration/ns/{nsId}/k8sCluster | ✅ **PASS** | 2ms |
-| 4 | GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation | ✅ **PASS** | 3.23s |
-| 5 | Workload verification (kubeconfig -> K8s API -> nginx) | ❌ **FAIL** | 10m34.117s |
-| 6 | DELETE /migration/ns/{nsId}/k8sCluster/{id} | ✅ **PASS** | 38.919s |
-| 7 | Residual resource check (Tumblebug) | ✅ **PASS** | 4ms |
+| 2 | POST /beetle/validation/ns/{nsId}/k8sCluster (Pre-flight validation) | ✅ **PASS** | 30ms |
+| 3 | POST /migration/ns/{nsId}/k8sCluster | ✅ **PASS** | 4m45.083s |
+| 4 | GET /migration/ns/{nsId}/k8sCluster | ✅ **PASS** | 2ms |
+| 5 | GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation | ✅ **PASS** | 3.003s |
+| 5 | Workload verification (kubeconfig -> K8s API -> nginx) | ❌ **FAIL** | 2m6.621s |
+| 7 | DELETE /migration/ns/{nsId}/k8sCluster/{id} | ✅ **PASS** | 36.335s |
+| 8 | Residual resource check (Tumblebug) | ✅ **PASS** | 4ms |
 
-**Overall Result**: 6/7 steps passed ❌
+**Overall Result**: 7/8 steps passed ❌
 
-**Total Duration**: 17m16s
+**Total Duration**: 7m31s
 
 ---
 
@@ -43,27 +43,34 @@
 - ℹ️  node groups: 1
 - ℹ️  node group[0] "workers1" spec=tencent+ap-seoul+bf1.large8 nodes=2
 
-### Step 2 — POST /migration/ns/{nsId}/k8sCluster
+### Step 2 — POST /beetle/validation/ns/{nsId}/k8sCluster (Pre-flight validation)
 
-- **Duration**: 6m0.141s
+- **Duration**: 30ms
+- **Status Code**: 200
+
+- ✅ Target K8s infra model is valid for migration (0 issues)
+
+### Step 3 — POST /migration/ns/{nsId}/k8sCluster
+
+- **Duration**: 4m45.083s
 - **Status Code**: 202
 
-- ℹ️  nameSeed: k8s4csp02
-- ℹ️  async reqId: 1790644153748123553
-- ℹ️  cluster id: k8s4csp02-on-prem-k8s-cluster
-- ℹ️  elapsed: 6m0s
+- ℹ️  nameSeed: mig05
+- ℹ️  async reqId: 1791358905694941639
+- ℹ️  cluster id: mig05-on-prem-k8s-cluster
+- ℹ️  elapsed: 4m45s
 - ✅ status: Active
 
-### Step 3 — GET /migration/ns/{nsId}/k8sCluster
+### Step 4 — GET /migration/ns/{nsId}/k8sCluster
 
 - **Duration**: 2ms
 - **Status Code**: 200
 
-- ✅ migrated cluster present in list (1 total)
+- ✅ migrated cluster present in list (8 total)
 
-### Step 4 — GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation
+### Step 5 — GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation
 
-- **Duration**: 3.23s
+- **Duration**: 3.003s
 - **Status Code**: 200
 
 - ✅ status: Active
@@ -73,24 +80,24 @@
 
 ### Step 5 — Workload verification (kubeconfig -> K8s API -> nginx)
 
-- **Duration**: 10m34.117s
-- **Error**: kubeconfig not ready within 600s
+- **Duration**: 2m6.621s
+- **Error**: kubeconfig not ready within 120s
 
 
-### Step 6 — DELETE /migration/ns/{nsId}/k8sCluster/{id}
+### Step 7 — DELETE /migration/ns/{nsId}/k8sCluster/{id}
 
-- **Duration**: 38.919s
+- **Duration**: 36.335s
 - **Status Code**: 200
 
-- ✅ deleted on attempt 1 (38s)
+- ✅ deleted on attempt 1 (36s)
 
-### Step 7 — Residual resource check (Tumblebug)
+### Step 8 — Residual resource check (Tumblebug)
 
 - **Duration**: 4ms
 
-- ℹ️  VNet k8s4csp02-k8s-vpc still exists (known gap)
-- ℹ️  SecurityGroup k8s4csp02-k8s-sg still exists (known gap)
-- ℹ️  SshKey k8s4csp02-k8s-sshkey still exists (known gap)
+- ℹ️  VNet mig05-k8s-vpc still exists (known gap)
+- ℹ️  SecurityGroup mig05-k8s-sg still exists (known gap)
+- ℹ️  SshKey mig05-k8s-sshkey still exists (known gap)
 
 ## Recommendation (input to migration)
 
@@ -275,9 +282,9 @@
 ```json
 {
   "resourceType": "k8s",
-  "id": "k8s4csp02-on-prem-k8s-cluster",
-  "uid": "tbttntecb61l03n9c2hh",
-  "name": "k8s4csp02-on-prem-k8s-cluster",
+  "id": "mig05-on-prem-k8s-cluster",
+  "uid": "tbqnipqvm7kp78l34k04",
+  "name": "mig05-on-prem-k8s-cluster",
   "connectionName": "tencent-ap-seoul",
   "connectionConfig": {
     "configName": "tencent-ap-seoul",
@@ -310,30 +317,28 @@
   "description": "Migrated from on-premise K8s cluster (v1.32.3, 2 workers)",
   "systemMessage": "",
   "label": {
-    "CB-SPIDER-PMKS-SECURITYGROUP-ID": "sg-l7hdrwah",
-    "CB-SPIDER-PMKS-SUBNET-ID": "subnet-cby6bpod",
     "sys.connectionName": "tencent-ap-seoul",
-    "sys.createdTime": "2026-09-29 01:10:10 +0000 UTC",
-    "sys.cspResourceId": "cls-ooqqxk9z",
-    "sys.cspResourceName": "tbttntecb61l03n9c2hh",
+    "sys.createdTime": "2026-10-07 07:41:57 +0000 UTC",
+    "sys.cspResourceId": "cls-lj87sx9d",
+    "sys.cspResourceName": "tbqnipqvm7kp78l34k04",
     "sys.description": "Migrated from on-premise K8s cluster (v1.32.3, 2 workers)",
-    "sys.id": "k8s4csp02-on-prem-k8s-cluster",
+    "sys.id": "mig05-on-prem-k8s-cluster",
     "sys.labelType": "k8s",
     "sys.manager": "cb-tumblebug",
-    "sys.name": "k8s4csp02-on-prem-k8s-cluster",
+    "sys.name": "mig05-on-prem-k8s-cluster",
     "sys.namespace": "mig01",
-    "sys.uid": "tbttntecb61l03n9c2hh",
+    "sys.uid": "tbqnipqvm7kp78l34k04",
     "sys.version": "1.32.2"
   },
   "systemLabel": "",
   "version": "1.32.2",
   "network": {
-    "vNetId": "k8s4csp02-k8s-vpc",
+    "vNetId": "mig05-k8s-vpc",
     "subnetIds": [
-      "k8s4csp02-k8s-subnet-a"
+      "mig05-k8s-subnet-a"
     ],
     "securityGroupIds": [
-      "k8s4csp02-k8s-sg"
+      "mig05-k8s-sg"
     ],
     "keyValueList": null
   },
@@ -345,7 +350,7 @@
       "specId": "tencent+ap-seoul+bf1.large8",
       "rootDiskType": "CLOUD_PREMIUM",
       "rootDiskSize": 100,
-      "sshKeyId": "k8s4csp02-k8s-sshkey",
+      "sshKeyId": "mig05-k8s-sshkey",
       "onAutoScaling": false,
       "desiredNodeSize": 2,
       "minNodeSize": 2,
@@ -353,18 +358,18 @@
       "status": "Active",
       "k8sNodes": [
         {
-          "cspResourceName": "ins-2etqzrrz",
-          "cspResourceId": "ins-2etqzrrz"
+          "cspResourceName": "ins-9nawhbof",
+          "cspResourceId": "ins-9nawhbof"
         },
         {
-          "cspResourceName": "ins-5liwpcgn",
-          "cspResourceId": "ins-5liwpcgn"
+          "cspResourceName": "ins-rcfembsh",
+          "cspResourceId": "ins-rcfembsh"
         }
       ],
       "keyValueList": [
         {
           "key": "NodePoolId",
-          "value": "np-8t8clgdj"
+          "value": "np-3n8n34un"
         },
         {
           "key": "Name",
@@ -372,7 +377,7 @@
         },
         {
           "key": "ClusterInstanceId",
-          "value": "cls-ooqqxk9z"
+          "value": "cls-lj87sx9d"
         },
         {
           "key": "LifeState",
@@ -380,11 +385,11 @@
         },
         {
           "key": "LaunchConfigurationId",
-          "value": "asc-e85gaze7"
+          "value": "asc-9dlteodp"
         },
         {
           "key": "AutoscalingGroupId",
-          "value": "asg-11ojbivl"
+          "value": "asg-b2gc3rcl"
         },
         {
           "key": "NodeCountSummary",
@@ -424,7 +429,7 @@
         },
         {
           "key": "Tags",
-          "value": "{Key:sys.connectionName,Value:tencent-ap-seoul}; {Key:sys.createdTime,Value:2026-09-29 01:10:10 +0000 UTC}; {Key:sys.description,Value:Migrated from on-premise K8s cluster (v1.32.3, 2 workers)}; {Key:sys.cspResourceName,Value:tbttntecb61l03n9c2hh}; {Key:sys.version,Value:1.32.2}; {Key:sys.uid,Value:tbttntecb61l03n9c2hh}; {Key:sys.name,Value:k8s4csp02-on-prem-k8s-cluster}; {Key:sys.cspResourceId,Value:cls-ooqqxk9z}; {Key:sys.id,Value:k8s4csp02-on-prem-k8s-cluster}; {Key:sys.namespace,Value:mig01}; {Key:sys.labelType,Value:k8s}; {Key:sys.manager,Value:cb-tumblebug}; {Key:CB-SPIDER-PMKS-SUBNET-ID,Value:subnet-cby6bpod}; {Key:CB-SPIDER-PMKS-SECURITYGROUP-ID,Value:sg-l7hdrwah}"
+          "value": "{Key:CB-SPIDER-PMKS-SUBNET-ID,Value:subnet-1u5rqx0f}; {Key:CB-SPIDER-PMKS-SECURITYGROUP-ID,Value:sg-rsc1c5rn}"
         },
         {
           "key": "DeletionProtection",
@@ -444,11 +449,11 @@
         }
       ],
       "cspResourceName": "workers1",
-      "cspResourceId": "np-8t8clgdj",
+      "cspResourceId": "np-3n8n34un",
       "spiderViewK8sNodeGroupDetail": {
         "IId": {
           "NameId": "workers1",
-          "SystemId": "np-8t8clgdj"
+          "SystemId": "np-3n8n34un"
         },
         "ImageIID": {
           "NameId": "img-4wpaazux",
@@ -458,8 +463,8 @@
         "RootDiskType": "CLOUD_PREMIUM",
         "RootDiskSize": "100",
         "KeyPairIID": {
-          "NameId": "tb2gnq0hjcbhh1j7iih1",
-          "SystemId": "skey-jtm9tnln"
+          "NameId": "tb8n9jfjjiascnfn0qpb",
+          "SystemId": "skey-3dm9bi4f"
         },
         "OnAutoScaling": false,
         "DesiredNodeSize": 2,
@@ -468,18 +473,18 @@
         "Status": "Active",
         "Nodes": [
           {
-            "NameId": "ins-2etqzrrz",
-            "SystemId": "ins-2etqzrrz"
+            "NameId": "ins-9nawhbof",
+            "SystemId": "ins-9nawhbof"
           },
           {
-            "NameId": "ins-5liwpcgn",
-            "SystemId": "ins-5liwpcgn"
+            "NameId": "ins-rcfembsh",
+            "SystemId": "ins-rcfembsh"
           }
         ],
         "KeyValueList": [
           {
             "key": "NodePoolId",
-            "value": "np-8t8clgdj"
+            "value": "np-3n8n34un"
           },
           {
             "key": "Name",
@@ -487,7 +492,7 @@
           },
           {
             "key": "ClusterInstanceId",
-            "value": "cls-ooqqxk9z"
+            "value": "cls-lj87sx9d"
           },
           {
             "key": "LifeState",
@@ -495,11 +500,11 @@
           },
           {
             "key": "LaunchConfigurationId",
-            "value": "asc-e85gaze7"
+            "value": "asc-9dlteodp"
           },
           {
             "key": "AutoscalingGroupId",
-            "value": "asg-11ojbivl"
+            "value": "asg-b2gc3rcl"
           },
           {
             "key": "NodeCountSummary",
@@ -539,7 +544,7 @@
           },
           {
             "key": "Tags",
-            "value": "{Key:sys.connectionName,Value:tencent-ap-seoul}; {Key:sys.createdTime,Value:2026-09-29 01:10:10 +0000 UTC}; {Key:sys.description,Value:Migrated from on-premise K8s cluster (v1.32.3, 2 workers)}; {Key:sys.cspResourceName,Value:tbttntecb61l03n9c2hh}; {Key:sys.version,Value:1.32.2}; {Key:sys.uid,Value:tbttntecb61l03n9c2hh}; {Key:sys.name,Value:k8s4csp02-on-prem-k8s-cluster}; {Key:sys.cspResourceId,Value:cls-ooqqxk9z}; {Key:sys.id,Value:k8s4csp02-on-prem-k8s-cluster}; {Key:sys.namespace,Value:mig01}; {Key:sys.labelType,Value:k8s}; {Key:sys.manager,Value:cb-tumblebug}; {Key:CB-SPIDER-PMKS-SUBNET-ID,Value:subnet-cby6bpod}; {Key:CB-SPIDER-PMKS-SECURITYGROUP-ID,Value:sg-l7hdrwah}"
+            "value": "{Key:CB-SPIDER-PMKS-SUBNET-ID,Value:subnet-1u5rqx0f}; {Key:CB-SPIDER-PMKS-SECURITYGROUP-ID,Value:sg-rsc1c5rn}"
           },
           {
             "key": "DeletionProtection",
@@ -562,22 +567,22 @@
     }
   ],
   "accessInfo": {
-    "endpoint": "Preparing....",
+    "endpoint": "First, add a nodegroup.",
     "kubeconfig": "Kubeconfig is not ready yet!"
   },
   "addons": {
     "keyValueList": null
   },
   "status": "Active",
-  "createdTime": "2026-09-29T01:10:10Z",
+  "createdTime": "2026-10-07T07:41:57Z",
   "keyValueList": [
     {
       "key": "ClusterId",
-      "value": "cls-ooqqxk9z"
+      "value": "cls-lj87sx9d"
     },
     {
       "key": "ClusterName",
-      "value": "tbttntecb61l03n9c2hh"
+      "value": "tbqnipqvm7kp78l34k04"
     },
     {
       "key": "ClusterVersion",
@@ -593,7 +598,7 @@
     },
     {
       "key": "ClusterNetworkSettings",
-      "value": "{ClusterCIDR:172.17.0.0/16,IgnoreClusterCIDRConflict:false,MaxNodePodNum:256,MaxClusterServiceNum:4096,Ipvs:false,VpcId:vpc-ih4b782u,Cni:true,KubeProxyMode:,ServiceCIDR:10.200.16.0/20,IgnoreServiceCIDRConflict:false,IsDualStack:false,Ipv6ServiceCIDR:,CiliumMode:,SubnetId:,DataPlaneV2:false}"
+      "value": "{ClusterCIDR:172.17.0.0/16,IgnoreClusterCIDRConflict:false,MaxNodePodNum:256,MaxClusterServiceNum:4096,Ipvs:false,VpcId:vpc-j2l404me,Cni:true,KubeProxyMode:,ServiceCIDR:10.200.16.0/20,IgnoreServiceCIDRConflict:false,IsDualStack:false,Ipv6ServiceCIDR:,CiliumMode:,SubnetId:,DataPlaneV2:false}"
     },
     {
       "key": "ClusterNodeNum",
@@ -605,7 +610,7 @@
     },
     {
       "key": "TagSpecification",
-      "value": "{ResourceType:cluster,Tags:[{Key:sys.connectionName,Value:tencent-ap-seoul},{Key:sys.createdTime,Value:2026-09-29 01:10:10 +0000 UTC},{Key:sys.description,Value:Migrated from on-premise K8s cluster (v1.32.3, 2 workers)},{Key:sys.cspResourceName,Value:tbttntecb61l03n9c2hh},{Key:sys.version,Value:1.32.2},{Key:sys.uid,Value:tbttntecb61l03n9c2hh},{Key:sys.name,Value:k8s4csp02-on-prem-k8s-cluster},{Key:sys.cspResourceId,Value:cls-ooqqxk9z},{Key:sys.id,Value:k8s4csp02-on-prem-k8s-cluster},{Key:sys.namespace,Value:mig01},{Key:sys.labelType,Value:k8s},{Key:sys.manager,Value:cb-tumblebug},{Key:CB-SPIDER-PMKS-SUBNET-ID,Value:subnet-cby6bpod},{Key:CB-SPIDER-PMKS-SECURITYGROUP-ID,Value:sg-l7hdrwah}]}"
+      "value": "{ResourceType:cluster,Tags:[{Key:CB-SPIDER-PMKS-SUBNET-ID,Value:subnet-1u5rqx0f},{Key:CB-SPIDER-PMKS-SECURITYGROUP-ID,Value:sg-rsc1c5rn}]}"
     },
     {
       "key": "ClusterStatus",
@@ -625,7 +630,7 @@
     },
     {
       "key": "CreatedTime",
-      "value": "2026-09-29T01:10:10Z"
+      "value": "2026-10-07T07:41:57Z"
     },
     {
       "key": "DeletionProtection",
@@ -664,29 +669,29 @@
       "value": "{Enabled:false}"
     }
   ],
-  "cspResourceName": "tbttntecb61l03n9c2hh",
-  "cspResourceId": "cls-ooqqxk9z",
+  "cspResourceName": "tbqnipqvm7kp78l34k04",
+  "cspResourceId": "cls-lj87sx9d",
   "spiderViewK8sClusterDetail": {
     "IId": {
-      "NameId": "tbttntecb61l03n9c2hh",
-      "SystemId": "cls-ooqqxk9z"
+      "NameId": "tbqnipqvm7kp78l34k04",
+      "SystemId": "cls-lj87sx9d"
     },
     "Version": "1.32.2",
     "Network": {
       "VpcIID": {
-        "NameId": "tbsrck7t004347r1bqkn",
-        "SystemId": "vpc-ih4b782u"
+        "NameId": "tbcphgtktgjeolhbollq",
+        "SystemId": "vpc-j2l404me"
       },
       "SubnetIIDs": [
         {
-          "NameId": "tb844l56oqt725adu087",
-          "SystemId": "subnet-cby6bpod"
+          "NameId": "tb4lvsba1mqmeuur32l4",
+          "SystemId": "subnet-1u5rqx0f"
         }
       ],
       "SecurityGroupIIDs": [
         {
-          "NameId": "tb80l6s2jmor9p8b1a8o",
-          "SystemId": "sg-l7hdrwah"
+          "NameId": "tbjfd5e3olk92e8s0aou",
+          "SystemId": "sg-rsc1c5rn"
         }
       ],
       "KeyValueList": null
@@ -695,7 +700,7 @@
       {
         "IId": {
           "NameId": "workers1",
-          "SystemId": "np-8t8clgdj"
+          "SystemId": "np-3n8n34un"
         },
         "ImageIID": {
           "NameId": "img-4wpaazux",
@@ -705,8 +710,8 @@
         "RootDiskType": "CLOUD_PREMIUM",
         "RootDiskSize": "100",
         "KeyPairIID": {
-          "NameId": "tb2gnq0hjcbhh1j7iih1",
-          "SystemId": "skey-jtm9tnln"
+          "NameId": "tb8n9jfjjiascnfn0qpb",
+          "SystemId": "skey-3dm9bi4f"
         },
         "OnAutoScaling": false,
         "DesiredNodeSize": 2,
@@ -715,18 +720,18 @@
         "Status": "Active",
         "Nodes": [
           {
-            "NameId": "ins-2etqzrrz",
-            "SystemId": "ins-2etqzrrz"
+            "NameId": "ins-9nawhbof",
+            "SystemId": "ins-9nawhbof"
           },
           {
-            "NameId": "ins-5liwpcgn",
-            "SystemId": "ins-5liwpcgn"
+            "NameId": "ins-rcfembsh",
+            "SystemId": "ins-rcfembsh"
           }
         ],
         "KeyValueList": [
           {
             "key": "NodePoolId",
-            "value": "np-8t8clgdj"
+            "value": "np-3n8n34un"
           },
           {
             "key": "Name",
@@ -734,7 +739,7 @@
           },
           {
             "key": "ClusterInstanceId",
-            "value": "cls-ooqqxk9z"
+            "value": "cls-lj87sx9d"
           },
           {
             "key": "LifeState",
@@ -742,11 +747,11 @@
           },
           {
             "key": "LaunchConfigurationId",
-            "value": "asc-e85gaze7"
+            "value": "asc-9dlteodp"
           },
           {
             "key": "AutoscalingGroupId",
-            "value": "asg-11ojbivl"
+            "value": "asg-b2gc3rcl"
           },
           {
             "key": "NodeCountSummary",
@@ -786,7 +791,7 @@
           },
           {
             "key": "Tags",
-            "value": "{Key:sys.connectionName,Value:tencent-ap-seoul}; {Key:sys.createdTime,Value:2026-09-29 01:10:10 +0000 UTC}; {Key:sys.description,Value:Migrated from on-premise K8s cluster (v1.32.3, 2 workers)}; {Key:sys.cspResourceName,Value:tbttntecb61l03n9c2hh}; {Key:sys.version,Value:1.32.2}; {Key:sys.uid,Value:tbttntecb61l03n9c2hh}; {Key:sys.name,Value:k8s4csp02-on-prem-k8s-cluster}; {Key:sys.cspResourceId,Value:cls-ooqqxk9z}; {Key:sys.id,Value:k8s4csp02-on-prem-k8s-cluster}; {Key:sys.namespace,Value:mig01}; {Key:sys.labelType,Value:k8s}; {Key:sys.manager,Value:cb-tumblebug}; {Key:CB-SPIDER-PMKS-SUBNET-ID,Value:subnet-cby6bpod}; {Key:CB-SPIDER-PMKS-SECURITYGROUP-ID,Value:sg-l7hdrwah}"
+            "value": "{Key:CB-SPIDER-PMKS-SUBNET-ID,Value:subnet-1u5rqx0f}; {Key:CB-SPIDER-PMKS-SECURITYGROUP-ID,Value:sg-rsc1c5rn}"
           },
           {
             "key": "DeletionProtection",
@@ -808,22 +813,22 @@
       }
     ],
     "AccessInfo": {
-      "Endpoint": "Preparing....",
+      "Endpoint": "First, add a nodegroup.",
       "Kubeconfig": "Kubeconfig is not ready yet!"
     },
     "Addons": {
       "KeyValueList": null
     },
     "Status": "Active",
-    "CreatedTime": "2026-09-29T01:10:10Z",
+    "CreatedTime": "2026-10-07T07:41:57Z",
     "KeyValueList": [
       {
         "key": "ClusterId",
-        "value": "cls-ooqqxk9z"
+        "value": "cls-lj87sx9d"
       },
       {
         "key": "ClusterName",
-        "value": "tbttntecb61l03n9c2hh"
+        "value": "tbqnipqvm7kp78l34k04"
       },
       {
         "key": "ClusterVersion",
@@ -839,7 +844,7 @@
       },
       {
         "key": "ClusterNetworkSettings",
-        "value": "{ClusterCIDR:172.17.0.0/16,IgnoreClusterCIDRConflict:false,MaxNodePodNum:256,MaxClusterServiceNum:4096,Ipvs:false,VpcId:vpc-ih4b782u,Cni:true,KubeProxyMode:,ServiceCIDR:10.200.16.0/20,IgnoreServiceCIDRConflict:false,IsDualStack:false,Ipv6ServiceCIDR:,CiliumMode:,SubnetId:,DataPlaneV2:false}"
+        "value": "{ClusterCIDR:172.17.0.0/16,IgnoreClusterCIDRConflict:false,MaxNodePodNum:256,MaxClusterServiceNum:4096,Ipvs:false,VpcId:vpc-j2l404me,Cni:true,KubeProxyMode:,ServiceCIDR:10.200.16.0/20,IgnoreServiceCIDRConflict:false,IsDualStack:false,Ipv6ServiceCIDR:,CiliumMode:,SubnetId:,DataPlaneV2:false}"
       },
       {
         "key": "ClusterNodeNum",
@@ -851,7 +856,7 @@
       },
       {
         "key": "TagSpecification",
-        "value": "{ResourceType:cluster,Tags:[{Key:sys.connectionName,Value:tencent-ap-seoul},{Key:sys.createdTime,Value:2026-09-29 01:10:10 +0000 UTC},{Key:sys.description,Value:Migrated from on-premise K8s cluster (v1.32.3, 2 workers)},{Key:sys.cspResourceName,Value:tbttntecb61l03n9c2hh},{Key:sys.version,Value:1.32.2},{Key:sys.uid,Value:tbttntecb61l03n9c2hh},{Key:sys.name,Value:k8s4csp02-on-prem-k8s-cluster},{Key:sys.cspResourceId,Value:cls-ooqqxk9z},{Key:sys.id,Value:k8s4csp02-on-prem-k8s-cluster},{Key:sys.namespace,Value:mig01},{Key:sys.labelType,Value:k8s},{Key:sys.manager,Value:cb-tumblebug},{Key:CB-SPIDER-PMKS-SUBNET-ID,Value:subnet-cby6bpod},{Key:CB-SPIDER-PMKS-SECURITYGROUP-ID,Value:sg-l7hdrwah}]}"
+        "value": "{ResourceType:cluster,Tags:[{Key:CB-SPIDER-PMKS-SUBNET-ID,Value:subnet-1u5rqx0f},{Key:CB-SPIDER-PMKS-SECURITYGROUP-ID,Value:sg-rsc1c5rn}]}"
       },
       {
         "key": "ClusterStatus",
@@ -871,7 +876,7 @@
       },
       {
         "key": "CreatedTime",
-        "value": "2026-09-29T01:10:10Z"
+        "value": "2026-10-07T07:41:57Z"
       },
       {
         "key": "DeletionProtection",

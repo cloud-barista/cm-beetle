@@ -78,7 +78,7 @@ func runValidationSuite(client *resty.Client, cfg TestConfig, auth AuthConfig, t
 
 	if cfg.Test.Set.Mode == "sequential" {
 		for i, t := range targets {
-			reports[i] = runValidationLifecycle(cfg, auth, t, requestBody, caseNameSeed(cfg, i))
+			reports[i] = runValidationLifecycle(cfg, auth, t, requestBody, caseNameSeed(cfg, t, i))
 		}
 		return reports
 	}
@@ -91,7 +91,7 @@ func runValidationSuite(client *resty.Client, cfg TestConfig, auth AuthConfig, t
 			if cfg.Test.Set.StartDelaySeconds > 0 && idx > 0 {
 				time.Sleep(time.Duration(idx*cfg.Test.Set.StartDelaySeconds) * time.Second)
 			}
-			reports[idx] = runValidationLifecycle(cfg, auth, target, requestBody, caseNameSeed(cfg, idx))
+			reports[idx] = runValidationLifecycle(cfg, auth, target, requestBody, caseNameSeed(cfg, target, idx))
 		}(i, t)
 	}
 	wg.Wait()

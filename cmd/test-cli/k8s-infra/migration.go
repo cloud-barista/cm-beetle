@@ -84,7 +84,7 @@ func runMigrationSuite(cfg TestConfig, auth AuthConfig, targets []TestCase, requ
 
 	if cfg.Test.Set.Mode == "sequential" {
 		for i, t := range targets {
-			reports[i] = runLifecycle(cfg, auth, t, requestBody, caseNameSeed(cfg, i))
+			reports[i] = runLifecycle(cfg, auth, t, requestBody, caseNameSeed(cfg, t, i))
 		}
 		return reports
 	}
@@ -97,7 +97,7 @@ func runMigrationSuite(cfg TestConfig, auth AuthConfig, targets []TestCase, requ
 			if d := cfg.Test.Set.StartDelaySeconds; d > 0 && idx > 0 {
 				time.Sleep(time.Duration(idx*d) * time.Second)
 			}
-			reports[idx] = runLifecycle(cfg, auth, target, requestBody, caseNameSeed(cfg, idx))
+			reports[idx] = runLifecycle(cfg, auth, target, requestBody, caseNameSeed(cfg, target, idx))
 		}(i, t)
 	}
 	wg.Wait()

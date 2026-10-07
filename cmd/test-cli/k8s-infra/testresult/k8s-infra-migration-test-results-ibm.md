@@ -1,34 +1,34 @@
 # CM-Beetle K8s Infra Migration Test Results — IBMCloud-Sydney
 
 > [!NOTE]
-> Full lifecycle against a real CSP: recommend → migrate → list → get (verified against
-> the recommendation) → delete → residual resource check.
+> Full lifecycle against a real CSP: recommend → validate → migrate → list → get → workload → delete → residual.
 
 ## Environment
 
 - CSP / Region: ibm / au-syd
 - CM-Beetle URL: http://localhost:8056
-- CM-Beetle Version: v0.6.1+ (8928ba9)
-- Git Commit: 8928ba9
+- CM-Beetle Version: v0.6.1+ (cd1f3a2)
+- Git Commit: cd1f3a2
 - Namespace: mig01
-- Test Date: 2026-09-16 19:10:41 KST
-- Cluster ID: k8s02-on-prem-k8s-cluster
+- Test Date: 2026-10-07 20:05:55 KST
+- Cluster ID: mig06-on-prem-k8s-cluster
 
 ## Test Results Summary
 
 | Step | Description | Status | Duration |
 |------|-------------|--------|----------|
-| 1 | POST /recommendation/k8sCluster | ✅ **PASS** | 21ms |
-| 2 | POST /migration/ns/{nsId}/k8sCluster | ✅ **PASS** | 23m30.564s |
-| 3 | GET /migration/ns/{nsId}/k8sCluster | ✅ **PASS** | 1ms |
-| 4 | GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation | ✅ **PASS** | 12.522s |
-| 5 | Workload verification (kubeconfig -> K8s API -> nginx) | ✅ **PASS** | 4m5.219s |
-| 6 | DELETE /migration/ns/{nsId}/k8sCluster/{id} | ✅ **PASS** | 5m42.478s |
-| 7 | Residual resource check (Tumblebug) | ✅ **PASS** | 3ms |
+| 1 | POST /recommendation/k8sCluster | ✅ **PASS** | 867ms |
+| 2 | POST /beetle/validation/ns/{nsId}/k8sCluster (Pre-flight validation) | ✅ **PASS** | 160ms |
+| 3 | POST /migration/ns/{nsId}/k8sCluster | ✅ **PASS** | 22m16.034s |
+| 4 | GET /migration/ns/{nsId}/k8sCluster | ✅ **PASS** | 2ms |
+| 5 | GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation | ✅ **PASS** | 5ms |
+| 5 | Workload verification (kubeconfig -> K8s API -> nginx) | ✅ **PASS** | 3m59.009s |
+| 7 | DELETE /migration/ns/{nsId}/k8sCluster/{id} | ✅ **PASS** | 5m34.67s |
+| 8 | Residual resource check (Tumblebug) | ✅ **PASS** | 6ms |
 
-**Overall Result**: 7/7 steps passed ✅
+**Overall Result**: 8/8 steps passed ✅
 
-**Total Duration**: 33m30s
+**Total Duration**: 31m50s
 
 ---
 
@@ -36,71 +36,78 @@
 
 ### Step 1 — POST /recommendation/k8sCluster
 
-- **Duration**: 21ms
+- **Duration**: 867ms
 - **Status Code**: 200
 
-- ℹ️  cluster: on-prem-k8s-cluster (version 1.33.13)
+- ℹ️  cluster: on-prem-k8s-cluster (version 1.35.9)
 - ℹ️  node groups: 1
 - ℹ️  node group[0] "workers1" spec=ibm+au-syd+cxf-4x8 nodes=2
 
-### Step 2 — POST /migration/ns/{nsId}/k8sCluster
+### Step 2 — POST /beetle/validation/ns/{nsId}/k8sCluster (Pre-flight validation)
 
-- **Duration**: 23m30.564s
+- **Duration**: 160ms
+- **Status Code**: 200
+
+- ✅ Target K8s infra model is valid for migration (0 issues)
+
+### Step 3 — POST /migration/ns/{nsId}/k8sCluster
+
+- **Duration**: 22m16.034s
 - **Status Code**: 202
 
-- ℹ️  nameSeed: k8s02
-- ℹ️  async reqId: 1789553441808820764
-- ℹ️  cluster id: k8s02-on-prem-k8s-cluster
-- ℹ️  elapsed: 23m30s
+- ℹ️  nameSeed: mig06
+- ℹ️  async reqId: 1791371156924617100
+- ℹ️  cluster id: mig06-on-prem-k8s-cluster
+- ℹ️  elapsed: 22m16s
 - ✅ status: Active
 
-### Step 3 — GET /migration/ns/{nsId}/k8sCluster
+### Step 4 — GET /migration/ns/{nsId}/k8sCluster
 
-- **Duration**: 1ms
+- **Duration**: 2ms
 - **Status Code**: 200
 
 - ✅ migrated cluster present in list (1 total)
 
-### Step 4 — GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation
+### Step 5 — GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation
 
-- **Duration**: 12.522s
+- **Duration**: 5ms
 - **Status Code**: 200
 
 - ✅ status: Active
 - ✅ node group count matches recommendation: 1
 - ✅ node group "workers1" matches (spec=ibm+au-syd+cxf-4x8, nodes=2)
-- ✅ version: 1.33.13_1580 (recommended 1.33.13)
+- ✅ version: 1.35.9_1546 (recommended 1.35.9)
 
 ### Step 5 — Workload verification (kubeconfig -> K8s API -> nginx)
 
-- **Duration**: 4m5.219s
+- **Duration**: 3m59.009s
 
-- ✅ kubeconfig obtained (server: https://c104.au-syd.containers.cloud.ibm.com:31606)
+- ✅ kubeconfig obtained (server: https://c105.au-syd.containers.cloud.ibm.com:32343)
 - ℹ️  auth method: client certificate in kubeconfig
-- ✅ API server reachable (v1.33.13+IKS)
+- ✅ API server reachable (v1.35.9+IKS)
 - ✅ 2 node(s) Ready, matching the recommendation
 - ✅ nginx Deployment created
 - ✅ nginx pod Running (attempt 3)
 - ✅ LoadBalancer Service created
-- ✅ LoadBalancer address assigned: c2927af0-au-syd.lb.appdomain.cloud
-- ✅ nginx served over the LoadBalancer at http://c2927af0-au-syd.lb.appdomain.cloud/ (attempt 13)
+- ✅ LoadBalancer address assigned: 9c279c4b-au-syd.lb.appdomain.cloud
+- ✅ nginx served over the LoadBalancer at 9c279c4b-au-syd.lb.appdomain.cloud (attempt 1)
 - ✅ LoadBalancer Service removed
 - ✅ nginx Deployment removed
 
-### Step 6 — DELETE /migration/ns/{nsId}/k8sCluster/{id}
+### Step 7 — DELETE /migration/ns/{nsId}/k8sCluster/{id}
 
-- **Duration**: 5m42.478s
+- **Duration**: 5m34.67s
 - **Status Code**: 200
 
-- ✅ deleted on attempt 1 (5m42s)
+- ✅ deleted on attempt 1 (5m34s)
 
-### Step 7 — Residual resource check (Tumblebug)
+### Step 8 — Residual resource check (Tumblebug)
 
-- **Duration**: 3ms
+- **Duration**: 6ms
 
-- ℹ️  VNet k8s02-k8s-vpc still exists (known gap)
-- ℹ️  SecurityGroup k8s02-k8s-sg still exists (known gap)
-- ℹ️  SshKey k8s02-k8s-sshkey still exists (known gap)
+- ℹ️  VNet mig06-k8s-vpc still exists (known gap)
+- ℹ️  SecurityGroup mig06-k8s-sg still exists (known gap)
+- ℹ️  SshKey mig06-k8s-sshkey still exists (known gap)
 
 ## Recommendation (input to migration)
 
@@ -110,7 +117,7 @@
 ```json
 {
   "status": "recommended",
-  "description": "K8s cluster recommendation for ibm au-syd (source: v1.32.3 → target: v1.33.13)",
+  "description": "K8s cluster recommendation for ibm au-syd (source: v1.32.3 → target: v1.35.9)",
   "targetCloud": {
     "csp": "ibm",
     "region": "au-syd"
@@ -175,6 +182,48 @@
           "CIDR": "0.0.0.0/0"
         },
         {
+          "Ports": "6443",
+          "Protocol": "TCP",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "443",
+          "Protocol": "TCP",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "10250",
+          "Protocol": "TCP",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "TCP",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/22"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "UDP",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/22"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "TCP",
+          "Direction": "inbound",
+          "CIDR": "172.16.0.0/12"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "UDP",
+          "Direction": "inbound",
+          "CIDR": "172.16.0.0/12"
+        },
+        {
           "Ports": "1-65535",
           "Protocol": "TCP",
           "Direction": "outbound",
@@ -185,6 +234,18 @@
           "Protocol": "UDP",
           "Direction": "outbound",
           "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "TCP",
+          "Direction": "inbound",
+          "CIDR": "192.168.0.0/16"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "UDP",
+          "Direction": "inbound",
+          "CIDR": "192.168.0.0/16"
         }
       ],
       "cspResourceId": ""
@@ -194,7 +255,7 @@
     "connectionName": "ibm-au-syd",
     "description": "Migrated from on-premise K8s cluster (v1.32.3, 2 workers)",
     "name": "on-prem-k8s-cluster",
-    "version": "1.33.13",
+    "version": "1.35.9",
     "vNetId": "",
     "subnetIds": null,
     "securityGroupIds": null,
@@ -231,9 +292,9 @@
 ```json
 {
   "resourceType": "k8s",
-  "id": "k8s02-on-prem-k8s-cluster",
-  "uid": "tbj7i7ch33krh023o26f",
-  "name": "k8s02-on-prem-k8s-cluster",
+  "id": "mig06-on-prem-k8s-cluster",
+  "uid": "tbn9e2fqrrhumthk6j20",
+  "name": "mig06-on-prem-k8s-cluster",
   "connectionName": "ibm-au-syd",
   "connectionConfig": {
     "configName": "ibm-au-syd",
@@ -268,44 +329,44 @@
   "systemMessage": "",
   "label": {
     "sys.connectionName": "ibm-au-syd",
-    "sys.createdTime": "2026-09-16 10:12:03 +0000 UTC",
-    "sys.cspResourceId": "dal6mt0s03rqu2pe3mrg",
-    "sys.cspResourceName": "tbj7i7ch33krh023o26f",
+    "sys.createdTime": "2026-10-07 11:06:11 +0000 UTC",
+    "sys.cspResourceId": "db32f95s0learmn856i0",
+    "sys.cspResourceName": "tbn9e2fqrrhumthk6j20",
     "sys.description": "Migrated from on-premise K8s cluster (v1.32.3, 2 workers)",
-    "sys.id": "k8s02-on-prem-k8s-cluster",
+    "sys.id": "mig06-on-prem-k8s-cluster",
     "sys.labelType": "k8s",
     "sys.manager": "cb-tumblebug",
-    "sys.name": "k8s02-on-prem-k8s-cluster",
+    "sys.name": "mig06-on-prem-k8s-cluster",
     "sys.namespace": "mig01",
-    "sys.uid": "tbj7i7ch33krh023o26f",
-    "sys.version": "1.33.13_1580"
+    "sys.uid": "tbn9e2fqrrhumthk6j20",
+    "sys.version": "1.35.9_1546"
   },
   "systemLabel": "",
-  "version": "1.33.13_1580",
+  "version": "1.35.9_1546",
   "network": {
-    "vNetId": "k8s02-k8s-vpc",
+    "vNetId": "mig06-k8s-vpc",
     "subnetIds": [
-      "k8s02-k8s-subnet-a"
+      "mig06-k8s-subnet-a"
     ],
     "securityGroupIds": [
-      "k8s02-k8s-sg"
+      "mig06-k8s-sg"
     ],
     "keyValueList": [
       {
         "key": "VpcIID",
-        "value": "{NameId:tbjitcfui5iupk1ohrn2,SystemId:r026-ea7b8de8-38c6-4d7a-bd4d-1b9f2be79653}"
+        "value": "{NameId:tblo85b3uaik2dvvkjg2,SystemId:r026-1f28c17f-150a-434e-ae0f-a2a321fd4536}"
       },
       {
         "key": "SubnetIIDs",
-        "value": "{NameId:tbr5pgg6n3mkoagtfkgc,SystemId:02h7-18fae5ee-0b08-4e95-b9dd-10bea99baa06}"
+        "value": "{NameId:tbp1ba7rn56rirasj2pe,SystemId:02h7-f7ea2bcc-1ff6-41d8-a8f8-e2acdb019147}"
       },
       {
         "key": "SecurityGroupIIDs",
-        "value": "{NameId:kube-dal6mt0s03rqu2pe3mrg,SystemId:r026-fcd88d9c-5f39-4f96-819e-05a8fc86a7de}"
+        "value": "{NameId:kube-db32f95s0learmn856i0,SystemId:r026-02b8e88f-2be0-4f01-8592-ce88b2a66999}"
       },
       {
         "key": "KeyValueList",
-        "value": "{Key:VpcIID,Value:{NameId:tbjitcfui5iupk1ohrn2,SystemId:r026-ea7b8de8-38c6-4d7a-bd4d-1b9f2be79653}}; {Key:SubnetIIDs,Value:{NameId:tbr5pgg6n3mkoagtfkgc,SystemId:02h7-18fae5ee-0b08-4e95-b9dd-10bea99baa06}}; {Key:SecurityGroupIIDs,Value:{NameId:kube-dal6mt0s03rqu2pe3mrg,SystemId:r026-fcd88d9c-5f39-4f96-819e-05a8fc86a7de}}"
+        "value": "{Key:VpcIID,Value:{NameId:tblo85b3uaik2dvvkjg2,SystemId:r026-1f28c17f-150a-434e-ae0f-a2a321fd4536}}; {Key:SubnetIIDs,Value:{NameId:tbp1ba7rn56rirasj2pe,SystemId:02h7-f7ea2bcc-1ff6-41d8-a8f8-e2acdb019147}}; {Key:SecurityGroupIIDs,Value:{NameId:kube-db32f95s0learmn856i0,SystemId:r026-02b8e88f-2be0-4f01-8592-ce88b2a66999}}"
       }
     ]
   },
@@ -317,26 +378,26 @@
       "specId": "ibm+au-syd+cxf-4x8",
       "rootDiskType": "Not visible in IBM",
       "rootDiskSize": 0,
-      "sshKeyId": "k8s02-k8s-sshkey",
+      "sshKeyId": "mig06-k8s-sshkey",
       "onAutoScaling": false,
       "desiredNodeSize": 2,
-      "minNodeSize": -1,
-      "maxNodeSize": -1,
+      "minNodeSize": 0,
+      "maxNodeSize": 0,
       "status": "Active",
       "k8sNodes": [
         {
           "cspResourceName": "Not visible in IBM",
-          "cspResourceId": "kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-0000019b"
+          "cspResourceId": "kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-00000168"
         },
         {
           "cspResourceName": "Not visible in IBM",
-          "cspResourceId": "kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-000002b1"
+          "cspResourceId": "kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-000002da"
         }
       ],
       "keyValueList": [
         {
           "key": "IId",
-          "value": "{NameId:workers1,SystemId:dal6mt0s03rqu2pe3mrg-f09c430}"
+          "value": "{NameId:workers1,SystemId:db32f95s0learmn856i0-c67c62f}"
         },
         {
           "key": "ImageIID",
@@ -380,15 +441,15 @@
         },
         {
           "key": "Nodes",
-          "value": "{NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-0000019b}; {NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-000002b1}"
+          "value": "{NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-00000168}; {NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-000002da}"
         }
       ],
       "cspResourceName": "workers1",
-      "cspResourceId": "dal6mt0s03rqu2pe3mrg-f09c430",
+      "cspResourceId": "db32f95s0learmn856i0-c67c62f",
       "spiderViewK8sNodeGroupDetail": {
         "IId": {
           "NameId": "workers1",
-          "SystemId": "dal6mt0s03rqu2pe3mrg-f09c430"
+          "SystemId": "db32f95s0learmn856i0-c67c62f"
         },
         "ImageIID": {
           "NameId": "Not visible in IBM",
@@ -403,23 +464,23 @@
         },
         "OnAutoScaling": false,
         "DesiredNodeSize": 2,
-        "MinNodeSize": -1,
-        "MaxNodeSize": -1,
+        "MinNodeSize": 0,
+        "MaxNodeSize": 0,
         "Status": "Active",
         "Nodes": [
           {
             "NameId": "Not visible in IBM",
-            "SystemId": "kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-0000019b"
+            "SystemId": "kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-00000168"
           },
           {
             "NameId": "Not visible in IBM",
-            "SystemId": "kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-000002b1"
+            "SystemId": "kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-000002da"
           }
         ],
         "KeyValueList": [
           {
             "key": "IId",
-            "value": "{NameId:workers1,SystemId:dal6mt0s03rqu2pe3mrg-f09c430}"
+            "value": "{NameId:workers1,SystemId:db32f95s0learmn856i0-c67c62f}"
           },
           {
             "key": "ImageIID",
@@ -463,21 +524,21 @@
           },
           {
             "key": "Nodes",
-            "value": "{NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-0000019b}; {NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-000002b1}"
+            "value": "{NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-00000168}; {NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-000002da}"
           }
         ]
       }
     }
   ],
   "accessInfo": {
-    "endpoint": "https://c104.au-syd.containers.cloud.ibm.com:31606",
-    "kubeconfig": "apiVersion: v1\nclusters:\n- cluster:\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURRRENDQWlpZ0F3SUJBZ0lVYzEwNit1NWxCMGtLUE5xR2hJS0svcDhOeFZZd0RRWUpLb1pJaHZjTkFRRUwKQlFBd09ERTJNRFFHQTFVRUF4TXRaR0ZzTm0xME1ITXdNM0p4ZFRKd1pUTnRjbWN0YTNWaVpYSnVaWFJsY3kxagpZUzB4TnpnNU5UVXpOVGt3TUI0WERUSTJNRGt4TmpFd01EZ3dNRm9YRFRNMk1Ea3hNekV3TURnd01Gb3dPREUyCk1EUUdBMVVFQXhNdFpHRnNObTEwTUhNd00zSnhkVEp3WlROdGNtY3RhM1ZpWlhKdVpYUmxjeTFqWVMweE56ZzUKTlRVek5Ua3dNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXNWL20rQ1VNTlpiZQpIdFdReTRXdmZBS0d4eVZmR2h3TEZ5R0hyZVBwRWZCSGdwbnlHMlNydVhSbGlqbVE4L0JBblA1a2VtUm5ScGp4CnR5TGZmYmxTeEwzRHpNSXhNclFqd01MaFp2MWVkM3lJeXAzVzQ0TE5aTVd6WitrUndyWTNKN0cxWTU5S2orNGwKVVpjajZETTVORXFocFhEelhtTEtVWHN2dUwxNTVoQXZHV0ljY0NuK0NFR2F6L245NlROYjJhV3A5VTVBVUtUWQphZVE5TFRTTEdMbm41bGVKLzQ5YzVsMmxzR0FCaWc3amJuM2lLQmNMdlJ3UFhpM0c4U2E1czh0ZXlLWUFDTjI2CnB6cGh2T00ySlltWkNCbzRxV1JNRUt2ZE04bkk1REZpOHI1M3RoVjdyRzVJb091Q1NCaHYyMllrN3Jad1FPNlIKMy9xcnhBczlFd0lEQVFBQm8wSXdRREFPQmdOVkhROEJBZjhFQkFNQ0FZWXdEd1lEVlIwVEFRSC9CQVV3QXdFQgovekFkQmdOVkhRNEVGZ1FVMUFhZTE2NllnelppdEVzM3V4ck5wUFFBdW9vd0RRWUpLb1pJaHZjTkFRRUxCUUFECmdnRUJBSWoxMW5LbFd1cDI0UEJMSDUvN3RFNDNWNGFtQXgyR3JOaGUycFk3NVN6Nm05MzJCMGdYT2R6N3dLZkQKUVhCUFJ1SmV3S0tnZUpudmFXNU9oS1kzeG1XWVhQZ2xvL202L1R4MjV1MXR6Q2lkZE8weVpwenQzZlRsVE0yVQp2WERyVlRvd1JnazVrR1FlcUQwOHFKbG5WVFJGcVRiOW9TRURkOTc5OHRVTHlDZzUzN0hlWjZ4M1BEcTMrZWJkCmdzMGcxZUdrb1BEUGRUVVk5WlphaGRIdDltV0EwaHNOQ3lielptU2h4VHVINmFrQTVobEQrR1ZNS1hUZ3ZMZUEKY0IxWDFnYzJOY0tKZTRmeW5teTI3S0VTcU1mL0tRaXJTR2tjNEJ4Y1o5eGNiUlUyQ002YjVlY0c5Q2JTM2dsegowY3FpanFvUjNuUEhreUN1c3l3RFYzOTJmOTQ9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\n    server: https://c104.au-syd.containers.cloud.ibm.com:31606\n  name: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg\ncontexts:\n- context:\n    cluster: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg\n    namespace: default\n    user: admin/dal6mt0s03rqu2pe3mrg\n  name: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg/admin\ncurrent-context: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg/admin\nkind: Config\nusers:\n- name: admin/dal6mt0s03rqu2pe3mrg\n  user:\n    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURzRENDQXBpZ0F3SUJBZ0lSQUt0em9vaWZ5dXVZMW94YmlGdjYxc2d3RFFZSktvWklodmNOQVFFTEJRQXcKT0RFMk1EUUdBMVVFQXhNdFpHRnNObTEwTUhNd00zSnhkVEp3WlROdGNtY3RhM1ZpWlhKdVpYUmxjeTFqWVMweApOemc1TlRVek5Ua3dNQjRYRFRJMk1Ea3hOakV3TWpZd05Gb1hEVEk0TURreE5qRXdNall3TkZvd2F6RUxNQWtHCkExVUVCaE1DVlZNeEZqQVVCZ05WQkFnVERWTmhiaUJHY21GdVkybHpZMjh4Q3pBSkJnTlZCQWNUQWtOQk1STXcKRVFZRFZRUUtFd3BwWW0wdFlXUnRhVzV6TVNJd0lBWURWUVFEREJsTGRXSmxRMlZ5ZENOSlFrMXBaQzAyT1RRdwpNREZDVHpkWE1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBOFpYbHpaeDlrd0xOCjRVQlBTRTcvaVFHVWFZQmducDFMZlNmVWRTNTlHQmRUMm9XQXNrWTdLV2VPZlFaT3UycitFRXJnaEZKR0JoQlgKc0pYTjVQVDVyMWZyWit1TStFdGhBRHBBMXpVZU5GRldNall5Qjdta1BHNFVhZ2N6b3BUblM3NFBuc2VRRmVtRwptOHI2NE1CYjRnVHpDNzNCTWVFd01wbXpPRVlQWkkzcmFoeks3VWFvMVUvVTg1UlRUYnkyTkZCSjdtY1l1SWNGClp3c0RWQ0dnNWVqbW45eFVMajA3c3RNSFVCZ2RIU2pCcGgzbmVIekZIZVFkYm9acUpCZFFJcG9QUHNZcVZrdUMKWE5NajFDaEJ2YXJxR2lZeVRlTkdZbllZbzRER2VvdGJWWUt3U0I4Y1hWbUMrWHJuRHhNb3RjYzE3TVZTR2xYeAp5YU84NFpWS0J3SURBUUFCbzRHQk1IOHdEZ1lEVlIwUEFRSC9CQVFEQWdLRU1CMEdBMVVkSlFRV01CUUdDQ3NHCkFRVUZCd01DQmdnckJnRUZCUWNEQVRBTUJnTlZIUk1CQWY4RUFqQUFNQjhHQTFVZEl3UVlNQmFBRk5RR250ZXUKbUlNMllyUkxON3NhemFUMEFMcUtNQjhHQTFVZEVRUVlNQmFCRkdoaGJtbDZZVzVuTnpkQVoyMWhhV3d1WTI5dApNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUJDMTVuVDBIWDZpclF4Tm1KYXE5ZWNOUVZXU1BkV2NRTmt1WUpKCkpGd1Zsb2tGSVExbSs3RWY0RmRhMERDbUE2aDJyQ0FPVE1HeXZrS0YyQzJTN05qN0RKcjM1ZitEcmRid2VHUUkKUnFWQTA2Zm1Va1BCWERMNDBsUDVFeXNaQW1CbGNnNUxvNFliYlRqNk5DMnZWTEYvbEhvWTFlcURoV0R3Qi91cAo5dHJnbGlzWXdXUC9kQUtEb2hhcmI0ZnNYb0pWWHU0WXhtVjB0c21DS041dGhlYkVJb1FEa0RqM1djWmxaOXJICkI0SEhKclh1LzlQUm8yTGdINUMvMytTY3V2Qk0yUXpJSDNnanZJdThKbWRKdWpEbGZ0NjVNdllMMzZIc2lGeGcKWkhPQUFGM3NON2h2bVpIZ1JWcjlRTTlyRWpTWXJweEI2N1lBOGRmbzRhNmhabmJ4Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\n    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBOFpYbHpaeDlrd0xONFVCUFNFNy9pUUdVYVlCZ25wMUxmU2ZVZFM1OUdCZFQyb1dBCnNrWTdLV2VPZlFaT3UycitFRXJnaEZKR0JoQlhzSlhONVBUNXIxZnJaK3VNK0V0aEFEcEExelVlTkZGV01qWXkKQjdta1BHNFVhZ2N6b3BUblM3NFBuc2VRRmVtR204cjY0TUJiNGdUekM3M0JNZUV3TXBtek9FWVBaSTNyYWh6Swo3VWFvMVUvVTg1UlRUYnkyTkZCSjdtY1l1SWNGWndzRFZDR2c1ZWptbjl4VUxqMDdzdE1IVUJnZEhTakJwaDNuCmVIekZIZVFkYm9acUpCZFFJcG9QUHNZcVZrdUNYTk1qMUNoQnZhcnFHaVl5VGVOR1luWVlvNERHZW90YlZZS3cKU0I4Y1hWbUMrWHJuRHhNb3RjYzE3TVZTR2xYeHlhTzg0WlZLQndJREFRQUJBb0lCQUE5MXlra0lOTGtOdXVNcApYR21DTkxRdDE3T1F0WjR3N3IzSnFMei9CcDVlRDgyeU1YUTNMbDROOUg1bnd1NFhnTDdHSyt3TDM5TlBoRzBXCmlTQ1gxTXExMDZqSTJES2prRWVWY3NUUzcyWGx0cUJyKzNPbkc2MktWZUFiS2VERHFyR2NMaCs1SWExbFRtbjEKNld3c296U3BvR3dsN3BFa21oTUM1d2M0NUk5SXJlMGw3YmZQeS9UaDhzbWs1T2sxYVBoZ0xvZHhBMGIzTkRPSQp0ZGU5czlKRGRTOU1zY3pBUGxza3I0bUx3N2w0WEYzWW5tUXc5UjY5RnRJQXlCMDJOa05Zbi9zTHA1d1cxdHlDCkRhL1FYM0lSdlBqOUZaa2NZb1ZHOGQxQ2xuRWlWTnJzRE5BK1FrdXN3SjF5TC9QamZvSnlsY1NydTZxUWNBLysKU0NaZmwzRUNnWUVBKzNHaXE1ZDhZKzBSL0VrNnUzZm5ZNDRHRGhpMjBwdE04M3oyM09xWURaekY3MFBNaHJxQwpLOXZzYlJ1MHcvQXBTY2RVRzV5ekJ3NDdpdXJVeXBIY1JjTDlFYkdXU0Z2NTllRGZ1bzBLQTlBMCtldnN1WWFxCnpvdXIwem5WVjBhNUI5Y2F4OW04NnF4SmJmQXhMNS9oNkhqQnRFVmZ0elZWcjhZR0l2WTJRaE1DZ1lFQTlmYUkKV2xDeFFkQlI0ekJwalRWSGsvbVpoNnM3cFBpUzMxUWNINHhibEFVdXVETE9iRStYdHFNVFhTYWl3SUJmYnJPaQpXYXBEZjFTK0ZjNFFlTUFjekFTY0xVMzQ2RGd2YmorV2YwS1krZ1pLNXhvek5iNnRFNEsxMEhMTVNyZTk4SWg3CnMyNVJiN1kvamFOc3lqcmFyQ2p2QjkxRHBYOU5mdWZDdEY3ZnRyMENnWUVBMG9xSVIxNEZEamNJQkZQZEZmU0UKajl2d1BnVjdzRVhSM1dBWjVVbWFJR3ZSWVZOSUF0aFEveUNiaTVEVGYrMnM1TlkvR3cvTzZHMkdkZi9FUmdwMApnd1dPbWk0MVJFbWZ0NzZnRjdqWlZmQVZLOS9jekV4eTRaZ2FQRGdFNTV1VWUzZ21PSW1kb25LNDJaRngzZ3JtClFwNDZ0QlFTM1htUFVpdGlJQXhCeW5rQ2dZQWxnL0RRTmJhVG56NmVOR2dsRFpkWlRweklRS25jUTczREtvVVAKbXN6dENzMVJjdzVoSHRLNUhLNTdhc1V3TDJSZThpODFGZTh0b0xOTmlCeWpEa3BXSSszZVN5Skg2U255MnVnTgppUTdrTThtQTdsSVpSSGdKbmNvMWZRMEQ2SHFrRVcwc3RRcmV5eUZ1YlJyT3phTkUxd2wrWFpWUHpOYjVJRWhtClVvSTAwUUtCZ1FEWkhTTllUbjZETWM5R0N2S3ZKNTRGME43d3hXYzcyak9JYkVXUWNXUUw0Tk5hNW5OVkRmRlkKMWQ0aktSOFg2UmZ3Tzg3QW5qaTBvdWc5YUs4ZitFL2J2cUdiK0lubjR3N0pHTlJ1dWJOM0JwQ0xEbjR3cmg3KwpTNk5keHBWMTFBWVpqRkN1TmhJL3k5WDBoZk9USHNiZ1IzeGpBaGJxcFUrK3dMUXY1ZWR6SFE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=\n"
+    "endpoint": "https://c105.au-syd.containers.cloud.ibm.com:32343",
+    "kubeconfig": "apiVersion: v1\nclusters:\n- cluster:\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURRRENDQWlpZ0F3SUJBZ0lVZnp2VEoxdkpXQVVoOU93cnk0T0J2VHdqNExFd0RRWUpLb1pJaHZjTkFRRUwKQlFBd09ERTJNRFFHQTFVRUF4TXRaR0l6TW1ZNU5YTXdiR1ZoY20xdU9EVTJhVEF0YTNWaVpYSnVaWFJsY3kxagpZUzB4TnpreE16Y3hNalF5TUI0WERUSTJNVEF3TnpFeE1ETXdNRm9YRFRNMk1UQXdOREV4TURNd01Gb3dPREUyCk1EUUdBMVVFQXhNdFpHSXpNbVk1TlhNd2JHVmhjbTF1T0RVMmFUQXRhM1ZpWlhKdVpYUmxjeTFqWVMweE56a3gKTXpjeE1qUXlNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQThubGY3V3FQeFlhNgphRG0rc0VCWS9qSVBiNlFXb2RBY09zTEdTNDdRT24xTEN6TWlpRTJSZzdtemtoQmNnamNkUWRTQ1NCVTF3RWFQCkN1N01oNCtJTWlsUGxYdzRmaG13RHIwbVlpR01qdFVhN3UrcWtNYmlsSTU5cUpoYXVFMFBVYXV4ZWpEZUxzb3cKaXpuellXaVZ4MDFlcG9PQ3RHUDEzU3oxWmFzSjNBbXl2Z1B3T1BmTnk2U2hESGRtWUUrWGJEZW5qR2tOMWwxUwovVGZEcjk3bU5WREdDNHhUSU1Kcjl3S3htdmIyYnV0bksrb3NaUlNFRkpoRmFDYmRlQXNkb05mVEdlemFiLzNxCmQ0S2w0d1hkdk1wcnZGT3gyWS91UzlXSDlJZ21GSUc4N254RzE4cXNkV2E0OUxPSGFBT1Rrczl4Tmg4ZEhUNk0KWDFXRlNMRU1IUUlEQVFBQm8wSXdRREFPQmdOVkhROEJBZjhFQkFNQ0FZWXdEd1lEVlIwVEFRSC9CQVV3QXdFQgovekFkQmdOVkhRNEVGZ1FVWGtCVlU5QmZpczc2aHNtZ3hVeHRERVU0ZjZrd0RRWUpLb1pJaHZjTkFRRUxCUUFECmdnRUJBS3RrcnppcVdSNVVpTk5uOW1kRmN2L1haRFJlYkEraDMwVHFGTXA5UFRSM2dFVWhmclJqUVlJMGJWWUIKOEgxZUdQdStoV0lvUElzVUJvYTJDM3g2c1dJQWN6c0tUWm9lQ0xJdXJ4YWZlVXVjdEpmaHFVRHhiN3FxSFl1SAoxanp1TmdzZ2pDZGliSFpUeGFLSURWbTF4TW0vVWpQMW05TXc1eWUvcXhETElEaTRFaGtSTGQyc0xsdDZoTTQxCks2YlRYMjUydFFIbDA0Y05ISStPY1kyOVhSVnpvVW82VzNVdDEzZnEzMTBGbGNJZm0zQndUcWNDL2VYZFFCdkQKRFhJbjh1RXFBVGdHanpGM1BocDVVVHlSd2ZJNnUrWnFSdXlPNXFveW9jVC9uTUQxbUgyQW85UUNRQmhOL1JHUQp5WnQrcjJXSXdiVjFGaE5NcUl5MWk2SXBIL009Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\n    server: https://c105.au-syd.containers.cloud.ibm.com:32343\n  name: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0\ncontexts:\n- context:\n    cluster: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0\n    namespace: default\n    user: admin/db32f95s0learmn856i0\n  name: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0/admin\ncurrent-context: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0/admin\nkind: Config\nusers:\n- name: admin/db32f95s0learmn856i0\n  user:\n    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURzRENDQXBpZ0F3SUJBZ0lSQVBDUk1tUGZnS1hMLytyRG5QU1NhY1l3RFFZSktvWklodmNOQVFFTEJRQXcKT0RFMk1EUUdBMVVFQXhNdFpHSXpNbVk1TlhNd2JHVmhjbTF1T0RVMmFUQXRhM1ZpWlhKdVpYUmxjeTFqWVMweApOemt4TXpjeE1qUXlNQjRYRFRJMk1UQXdOekV4TVRrMU4xb1hEVEk0TVRBd056RXhNVGsxTjFvd2F6RUxNQWtHCkExVUVCaE1DVlZNeEZqQVVCZ05WQkFnVERWTmhiaUJHY21GdVkybHpZMjh4Q3pBSkJnTlZCQWNUQWtOQk1STXcKRVFZRFZRUUtFd3BwWW0wdFlXUnRhVzV6TVNJd0lBWURWUVFEREJsTGRXSmxRMlZ5ZENOSlFrMXBaQzAyT1RRdwpNREZDVHpkWE1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBdC8vc0J3cFA1bDhpClNzM3RiSkFZZi9jN0U5QlM2N0s1YXRGRFJlcEYzUVZJUzBUNTBoY285WElqSW5IREl2Umo1VFMyYzlnQi9FekoKT3BoM3lJOFNVWTgzanVzZUlBalVLaHBadFUwNEMvZWFFcEhYVk9hdzQ3Qi9iTXlhY3Era3NLUHZ5WnN2eS9qeAo2bW1UOUxEZ1E2dTFHbTVtUkpnYzFUb2NvVDFacW1XSXN6WWFRY25VVnpDVGdFa3V3dkpyQkJjQ09tdllqWitrCnRLc3czM3pIQ01aNElkS2hZN3N4c0dEVTk4VHpLaG9ybEhZRGlMRWR3RThmeCtRUkREbVByRDZqbDlYTDFESUYKVUZ4Y2N4ZVZTS0FKcm9vRVRIN09nTmxTVWFZZ2I4UTZoZ1RJUVRaM1ZEYlZlQmR0OWdUMksxQXhxNkNnSzZ2ZQpEZEpuRzVmaTN3SURBUUFCbzRHQk1IOHdEZ1lEVlIwUEFRSC9CQVFEQWdLRU1CMEdBMVVkSlFRV01CUUdDQ3NHCkFRVUZCd01DQmdnckJnRUZCUWNEQVRBTUJnTlZIUk1CQWY4RUFqQUFNQjhHQTFVZEl3UVlNQmFBRkY1QVZWUFEKWDRyTytvYkpvTVZNYlF4Rk9IK3BNQjhHQTFVZEVRUVlNQmFCRkdoaGJtbDZZVzVuTnpkQVoyMWhhV3d1WTI5dApNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUF3OUVkQkJWWmhTUHMrWXJqUDhoNUJVVWxWTzBzZnZhR1djMlVKCi9VTlVHVUJTZm1FTXFSanZHYythV1JtbjdnV1VBMW92azJ4NE10NU5WTWpNYkVOVEMwWk1Ja1NTdWttR3hOYW4KSkE2RGdXMXpOdlBzazIvMDNnQU1DbUJtd1RheC93V0lwWC9QQTU2RXk4bEhIRVZpdWttNS9uU0lGYUIxZ0ZNbQpvczB2OE1WdFc4YVVlRGEySTVrajRaQlZicytOc3hXU0RCK2RoL2NBcUlGVS9sQzgwakRjeFMxbkl0K2o3UnN3CjVQeFJHcEllbUM1NjdDNEMxdUpZa2tLazJ2WStvZ05GczlQVzlGTXBjdjdPUEtMc3ZNb0lyNER4L1lvK3V4dTEKS3BuRm40M21tUVk5TERMelliTCtyK2R2Nm9ZVVFEZDZqS0VQSS9CK293d3BzcGxxCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\n    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBdC8vc0J3cFA1bDhpU3MzdGJKQVlmL2M3RTlCUzY3SzVhdEZEUmVwRjNRVklTMFQ1CjBoY285WElqSW5IREl2Umo1VFMyYzlnQi9FekpPcGgzeUk4U1VZODNqdXNlSUFqVUtocFp0VTA0Qy9lYUVwSFgKVk9hdzQ3Qi9iTXlhY3Era3NLUHZ5WnN2eS9qeDZtbVQ5TERnUTZ1MUdtNW1SSmdjMVRvY29UMVpxbVdJc3pZYQpRY25VVnpDVGdFa3V3dkpyQkJjQ09tdllqWitrdEtzdzMzekhDTVo0SWRLaFk3c3hzR0RVOThUektob3JsSFlECmlMRWR3RThmeCtRUkREbVByRDZqbDlYTDFESUZVRnhjY3hlVlNLQUpyb29FVEg3T2dObFNVYVlnYjhRNmhnVEkKUVRaM1ZEYlZlQmR0OWdUMksxQXhxNkNnSzZ2ZURkSm5HNWZpM3dJREFRQUJBb0lCQUFhRkpoc0FiWXU1OXFBZgpUZmpaTTZwaWhoQm5XRzQyWmhyMzVyZGYzREUvSjZ4Vnp3M05JNkZzU3Z4dkpaSzVNRXBiVDMvVURyWDBZL08vClJXSUdWOTJBclYrb3l6elNzMFNrQWJ2S29iVjRMNjNWY2RqMkFuSC9FTW8zM0lmbDIzaDY4VnRSTkNTNU4wYXUKNDc3NXFaTnhvK0xzNHo0dVdibmdsa3AzRkduL29iRDFpcGdoTzVTbkxQOWhpUDRjM3psNnE0T3dibXk0d0M0MApRcHlKTk9LcVVRa2hoVzhlREV4aDlGNW9GYUtMWmxLb2RaejN0c3llUHlPa3dFdHNBSVRoMG13S1RhZlNxdWlOCjBWUDlBMVZWTzlUMXpzZURMK0FZdFBNN2lZekRUN0tSbmNsUE43NmNrTEp5aytpQUlsejFQTzB2QWFEb2p4NmoKUGVpd0d0a0NnWUVBM3dkY1BRcHNSTVdnSWlMVU1xTVdEb0E0RlFxb2lOQmc1SVAxb1RYa1Rhc01ZSVM4NUQ3ZwpxakZXR0RLSnNSZ3I4eCtvSFoxa1BuWThPdlVBTWw1REwxWnZTcC9RRHpCYktlc1lXeU96MFNRWjZsMHZmbjNUClFNNllOektGWm5ZcXlGTXIxTUpNQStMV3hsbUxVNTRhbHdXQUUrWEErMWsvOFk1LzY1UkdIbHNDZ1lFQTB6TjgKbFBuTTdkVE1DMSsvK2V2K0JPQ05iWFdWY1F5OXdFVEw5WUVmZ0VCaDVyc0xQYmR5eWtBazJuNXBTMmhHMDVYNAowcDRzaHAvbmZRaEJaRXovVDlBWVppemtPUGhRL1RhRkY4aFF4VDVkeTVlVFc4OURBa3Jtb3EzbWpBTFdiWjVtCnRhbW1QelgyTTArMzA1bnc0L2d1N2lSalpPVkpvMUVxOVdHdy9NMENnWUVBcUt2TVdtMnpqQjlhQi9jSFBIU1MKamN6eW5SYytkcG9CYlZGUFJ1aVhEUlk3ZWhOcE44VkY2L0Q4QjdqUTRacENRdERDT0FOOGVMQzZ4R3ZlQmptNwozZVVrcmU5SFR2Vm5QTUNMM3dHVlVLcFkzeUl5ZFJ0NzFSdHBpdlV1WmxzZjUvamV3VDFnZDkvcVJvQWFHdGNMCmpRT2Y1V3h4RXFaZzhiS3ZrOTdEV05rQ2dZRUFoaHMxU2l0c0VzQ0NaOTUrdWlVOWdMOU5UbW5SWUoxa2g0ZW4Kc3RZd3VIRXBPU2NmdGlxY093eUwyaWxXbHNrNTMvUmtzT2c3QWFqYmhxc05TckVSbFE1Zno5RkZnVjg3bmUxVwppWWxxc0RRdnZxMGFwcnR1b3pBSVR0ZjVnb0h5d2x4SWY2V2ZxSmVOSTN2RkVCbTV1aWZITlBQcUlSRHV0ME04CjhkNzhVU2tDZ1lFQXpIMWlpL0xWYUJxOFducFBaUFVBOHhtRjZkUEtESGR1T0JVQURNNklFUGx0TXdjWm03NmoKQ3V4RXdkVTE1MVhkNUNDRUxzYVU3d1d0Tjd2TzEvRk9kZTljUStSR2NOd3JCRTR1MWxEMkpseUltOUROZ1BiaApoNm8rOWJQMHlqdGZzNHAreEZVVm5ab0NGd0hqYks4eUM2Q3pqYVZjK2M2NFhuSk1VUmlRNnZJPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=\n"
   },
   "addons": {
     "keyValueList": [
       {
         "key": "cluster-autoscaler",
-        "value": "{\"allowed_upgrade_versions\":[\"2.0.0\"],\"installOptionsTemplate\":{},\"name\":\"cluster-autoscaler\",\"targetVersion\":\"1.2.4\",\"version\":\"1.2.4\"}"
+        "value": "{\"installOptionsTemplate\":{},\"name\":\"cluster-autoscaler\",\"targetVersion\":\"2.0.0\",\"version\":\"2.0.0\"}"
       },
       {
         "key": "ibm-storage-operator",
@@ -490,31 +551,31 @@
     ]
   },
   "status": "Active",
-  "createdTime": "2026-09-16T10:12:03Z",
+  "createdTime": "2026-10-07T11:06:11Z",
   "keyValueList": [
     {
       "key": "IId",
-      "value": "{NameId:tbj7i7ch33krh023o26f,SystemId:dal6mt0s03rqu2pe3mrg}"
+      "value": "{NameId:tbn9e2fqrrhumthk6j20,SystemId:db32f95s0learmn856i0}"
     },
     {
       "key": "Version",
-      "value": "1.33.13_1580"
+      "value": "1.35.9_1546"
     },
     {
       "key": "Network",
-      "value": "{VpcIID:{NameId:tbjitcfui5iupk1ohrn2,SystemId:r026-ea7b8de8-38c6-4d7a-bd4d-1b9f2be79653},SubnetIIDs:[{NameId:tbr5pgg6n3mkoagtfkgc,SystemId:02h7-18fae5ee-0b08-4e95-b9dd-10bea99baa06}],SecurityGroupIIDs:[{NameId:kube-dal6mt0s03rqu2pe3mrg,SystemId:r026-fcd88d9c-5f39-4f96-819e-05a8fc86a7de}],KeyValueList:[{Key:VpcIID,Value:{NameId:tbjitcfui5iupk1ohrn2,SystemId:r026-ea7b8de8-38c6-4d7a-bd4d-1b9f2be79653}},{Key:SubnetIIDs,Value:{NameId:tbr5pgg6n3mkoagtfkgc,SystemId:02h7-18fae5ee-0b08-4e95-b9dd-10bea99baa06}},{Key:SecurityGroupIIDs,Value:{NameId:kube-dal6mt0s03rqu2pe3mrg,SystemId:r026-fcd88d9c-5f39-4f96-819e-05a8fc86a7de}},{Key:KeyValueList,Value:{Key:VpcIID,Value:{NameId:tbjitcfui5iupk1ohrn2,SystemId:r026-ea7b8de8-38c6-4d7a-bd4d-1b9f2be79653}}; {Key:SubnetIIDs,Value:{NameId:tbr5pgg6n3mkoagtfkgc,SystemId:02h7-18fae5ee-0b08-4e95-b9dd-10bea99baa06}}; {Key:SecurityGroupIIDs,Value:{NameId:kube-dal6mt0s03rqu2pe3mrg,SystemId:r026-fcd88d9c-5f39-4f96-819e-05a8fc86a7de}}}]}"
+      "value": "{VpcIID:{NameId:tblo85b3uaik2dvvkjg2,SystemId:r026-1f28c17f-150a-434e-ae0f-a2a321fd4536},SubnetIIDs:[{NameId:tbp1ba7rn56rirasj2pe,SystemId:02h7-f7ea2bcc-1ff6-41d8-a8f8-e2acdb019147}],SecurityGroupIIDs:[{NameId:kube-db32f95s0learmn856i0,SystemId:r026-02b8e88f-2be0-4f01-8592-ce88b2a66999}],KeyValueList:[{Key:VpcIID,Value:{NameId:tblo85b3uaik2dvvkjg2,SystemId:r026-1f28c17f-150a-434e-ae0f-a2a321fd4536}},{Key:SubnetIIDs,Value:{NameId:tbp1ba7rn56rirasj2pe,SystemId:02h7-f7ea2bcc-1ff6-41d8-a8f8-e2acdb019147}},{Key:SecurityGroupIIDs,Value:{NameId:kube-db32f95s0learmn856i0,SystemId:r026-02b8e88f-2be0-4f01-8592-ce88b2a66999}},{Key:KeyValueList,Value:{Key:VpcIID,Value:{NameId:tblo85b3uaik2dvvkjg2,SystemId:r026-1f28c17f-150a-434e-ae0f-a2a321fd4536}}; {Key:SubnetIIDs,Value:{NameId:tbp1ba7rn56rirasj2pe,SystemId:02h7-f7ea2bcc-1ff6-41d8-a8f8-e2acdb019147}}; {Key:SecurityGroupIIDs,Value:{NameId:kube-db32f95s0learmn856i0,SystemId:r026-02b8e88f-2be0-4f01-8592-ce88b2a66999}}}]}"
     },
     {
       "key": "NodeGroupList",
-      "value": "{IId:{NameId:workers1,SystemId:dal6mt0s03rqu2pe3mrg-f09c430},ImageIID:{NameId:Not visible in IBM,SystemId:Not visible in IBM},VMSpecName:cxf.4x8,RootDiskType:Not visible in IBM,RootDiskSize:Not visible in IBM,KeyPairIID:{NameId:Not visible in IBM,SystemId:Not visible in IBM},OnAutoScaling:false,DesiredNodeSize:2,MinNodeSize:-1,MaxNodeSize:-1,Status:Active,Nodes:[{NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-0000019b},{NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-000002b1}],KeyValueList:[{Key:IId,Value:{NameId:workers1,SystemId:dal6mt0s03rqu2pe3mrg-f09c430}},{Key:ImageIID,Value:{NameId:Not visible in IBM,SystemId:Not visible in IBM}},{Key:VMSpecName,Value:cxf.4x8},{Key:RootDiskType,Value:Not visible in IBM},{Key:RootDiskSize,Value:Not visible in IBM},{Key:KeyPairIID,Value:{NameId:Not visible in IBM,SystemId:Not visible in IBM}},{Key:OnAutoScaling,Value:false},{Key:DesiredNodeSize,Value:2},{Key:MinNodeSize,Value:0},{Key:MaxNodeSize,Value:0},{Key:Status,Value:Active},{Key:Nodes,Value:{NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-0000019b}; {NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-000002b1}}]}"
+      "value": "{IId:{NameId:workers1,SystemId:db32f95s0learmn856i0-c67c62f},ImageIID:{NameId:Not visible in IBM,SystemId:Not visible in IBM},VMSpecName:cxf.4x8,RootDiskType:Not visible in IBM,RootDiskSize:Not visible in IBM,KeyPairIID:{NameId:Not visible in IBM,SystemId:Not visible in IBM},OnAutoScaling:false,DesiredNodeSize:2,MinNodeSize:0,MaxNodeSize:0,AutoScalingInfoAvailable:false,Status:Active,Nodes:[{NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-00000168},{NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-000002da}],KeyValueList:[{Key:IId,Value:{NameId:workers1,SystemId:db32f95s0learmn856i0-c67c62f}},{Key:ImageIID,Value:{NameId:Not visible in IBM,SystemId:Not visible in IBM}},{Key:VMSpecName,Value:cxf.4x8},{Key:RootDiskType,Value:Not visible in IBM},{Key:RootDiskSize,Value:Not visible in IBM},{Key:KeyPairIID,Value:{NameId:Not visible in IBM,SystemId:Not visible in IBM}},{Key:OnAutoScaling,Value:false},{Key:DesiredNodeSize,Value:2},{Key:MinNodeSize,Value:0},{Key:MaxNodeSize,Value:0},{Key:Status,Value:Active},{Key:Nodes,Value:{NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-00000168}; {NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-000002da}}]}"
     },
     {
       "key": "AccessInfo",
-      "value": "{Endpoint:https://c104.au-syd.containers.cloud.ibm.com:31606,Kubeconfig:apiVersion: v1\\nclusters:\\n- cluster:\\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURRRENDQWlpZ0F3SUJBZ0lVYzEwNit1NWxCMGtLUE5xR2hJS0svcDhOeFZZd0RRWUpLb1pJaHZjTkFRRUwKQlFBd09ERTJNRFFHQTFVRUF4TXRaR0ZzTm0xME1ITXdNM0p4ZFRKd1pUTnRjbWN0YTNWaVpYSnVaWFJsY3kxagpZUzB4TnpnNU5UVXpOVGt3TUI0WERUSTJNRGt4TmpFd01EZ3dNRm9YRFRNMk1Ea3hNekV3TURnd01Gb3dPREUyCk1EUUdBMVVFQXhNdFpHRnNObTEwTUhNd00zSnhkVEp3WlROdGNtY3RhM1ZpWlhKdVpYUmxjeTFqWVMweE56ZzUKTlRVek5Ua3dNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXNWL20rQ1VNTlpiZQpIdFdReTRXdmZBS0d4eVZmR2h3TEZ5R0hyZVBwRWZCSGdwbnlHMlNydVhSbGlqbVE4L0JBblA1a2VtUm5ScGp4CnR5TGZmYmxTeEwzRHpNSXhNclFqd01MaFp2MWVkM3lJeXAzVzQ0TE5aTVd6WitrUndyWTNKN0cxWTU5S2orNGwKVVpjajZETTVORXFocFhEelhtTEtVWHN2dUwxNTVoQXZHV0ljY0NuK0NFR2F6L245NlROYjJhV3A5VTVBVUtUWQphZVE5TFRTTEdMbm41bGVKLzQ5YzVsMmxzR0FCaWc3amJuM2lLQmNMdlJ3UFhpM0c4U2E1czh0ZXlLWUFDTjI2CnB6cGh2T00ySlltWkNCbzRxV1JNRUt2ZE04bkk1REZpOHI1M3RoVjdyRzVJb091Q1NCaHYyMllrN3Jad1FPNlIKMy9xcnhBczlFd0lEQVFBQm8wSXdRREFPQmdOVkhROEJBZjhFQkFNQ0FZWXdEd1lEVlIwVEFRSC9CQVV3QXdFQgovekFkQmdOVkhRNEVGZ1FVMUFhZTE2NllnelppdEVzM3V4ck5wUFFBdW9vd0RRWUpLb1pJaHZjTkFRRUxCUUFECmdnRUJBSWoxMW5LbFd1cDI0UEJMSDUvN3RFNDNWNGFtQXgyR3JOaGUycFk3NVN6Nm05MzJCMGdYT2R6N3dLZkQKUVhCUFJ1SmV3S0tnZUpudmFXNU9oS1kzeG1XWVhQZ2xvL202L1R4MjV1MXR6Q2lkZE8weVpwenQzZlRsVE0yVQp2WERyVlRvd1JnazVrR1FlcUQwOHFKbG5WVFJGcVRiOW9TRURkOTc5OHRVTHlDZzUzN0hlWjZ4M1BEcTMrZWJkCmdzMGcxZUdrb1BEUGRUVVk5WlphaGRIdDltV0EwaHNOQ3lielptU2h4VHVINmFrQTVobEQrR1ZNS1hUZ3ZMZUEKY0IxWDFnYzJOY0tKZTRmeW5teTI3S0VTcU1mL0tRaXJTR2tjNEJ4Y1o5eGNiUlUyQ002YjVlY0c5Q2JTM2dsegowY3FpanFvUjNuUEhreUN1c3l3RFYzOTJmOTQ9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\\n    server: https://c104.au-syd.containers.cloud.ibm.com:31606\\n  name: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg\\ncontexts:\\n- context:\\n    cluster: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg\\n    namespace: default\\n    user: admin/dal6mt0s03rqu2pe3mrg\\n  name: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg/admin\\ncurrent-context: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg/admin\\nkind: Config\\nusers:\\n- name: admin/dal6mt0s03rqu2pe3mrg\\n  user:\\n    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURzRENDQXBpZ0F3SUJBZ0lSQUt0em9vaWZ5dXVZMW94YmlGdjYxc2d3RFFZSktvWklodmNOQVFFTEJRQXcKT0RFMk1EUUdBMVVFQXhNdFpHRnNObTEwTUhNd00zSnhkVEp3WlROdGNtY3RhM1ZpWlhKdVpYUmxjeTFqWVMweApOemc1TlRVek5Ua3dNQjRYRFRJMk1Ea3hOakV3TWpZd05Gb1hEVEk0TURreE5qRXdNall3TkZvd2F6RUxNQWtHCkExVUVCaE1DVlZNeEZqQVVCZ05WQkFnVERWTmhiaUJHY21GdVkybHpZMjh4Q3pBSkJnTlZCQWNUQWtOQk1STXcKRVFZRFZRUUtFd3BwWW0wdFlXUnRhVzV6TVNJd0lBWURWUVFEREJsTGRXSmxRMlZ5ZENOSlFrMXBaQzAyT1RRdwpNREZDVHpkWE1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBOFpYbHpaeDlrd0xOCjRVQlBTRTcvaVFHVWFZQmducDFMZlNmVWRTNTlHQmRUMm9XQXNrWTdLV2VPZlFaT3UycitFRXJnaEZKR0JoQlgKc0pYTjVQVDVyMWZyWit1TStFdGhBRHBBMXpVZU5GRldNall5Qjdta1BHNFVhZ2N6b3BUblM3NFBuc2VRRmVtRwptOHI2NE1CYjRnVHpDNzNCTWVFd01wbXpPRVlQWkkzcmFoeks3VWFvMVUvVTg1UlRUYnkyTkZCSjdtY1l1SWNGClp3c0RWQ0dnNWVqbW45eFVMajA3c3RNSFVCZ2RIU2pCcGgzbmVIekZIZVFkYm9acUpCZFFJcG9QUHNZcVZrdUMKWE5NajFDaEJ2YXJxR2lZeVRlTkdZbllZbzRER2VvdGJWWUt3U0I4Y1hWbUMrWHJuRHhNb3RjYzE3TVZTR2xYeAp5YU84NFpWS0J3SURBUUFCbzRHQk1IOHdEZ1lEVlIwUEFRSC9CQVFEQWdLRU1CMEdBMVVkSlFRV01CUUdDQ3NHCkFRVUZCd01DQmdnckJnRUZCUWNEQVRBTUJnTlZIUk1CQWY4RUFqQUFNQjhHQTFVZEl3UVlNQmFBRk5RR250ZXUKbUlNMllyUkxON3NhemFUMEFMcUtNQjhHQTFVZEVRUVlNQmFCRkdoaGJtbDZZVzVuTnpkQVoyMWhhV3d1WTI5dApNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUJDMTVuVDBIWDZpclF4Tm1KYXE5ZWNOUVZXU1BkV2NRTmt1WUpKCkpGd1Zsb2tGSVExbSs3RWY0RmRhMERDbUE2aDJyQ0FPVE1HeXZrS0YyQzJTN05qN0RKcjM1ZitEcmRid2VHUUkKUnFWQTA2Zm1Va1BCWERMNDBsUDVFeXNaQW1CbGNnNUxvNFliYlRqNk5DMnZWTEYvbEhvWTFlcURoV0R3Qi91cAo5dHJnbGlzWXdXUC9kQUtEb2hhcmI0ZnNYb0pWWHU0WXhtVjB0c21DS041dGhlYkVJb1FEa0RqM1djWmxaOXJICkI0SEhKclh1LzlQUm8yTGdINUMvMytTY3V2Qk0yUXpJSDNnanZJdThKbWRKdWpEbGZ0NjVNdllMMzZIc2lGeGcKWkhPQUFGM3NON2h2bVpIZ1JWcjlRTTlyRWpTWXJweEI2N1lBOGRmbzRhNmhabmJ4Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\\n    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBOFpYbHpaeDlrd0xONFVCUFNFNy9pUUdVYVlCZ25wMUxmU2ZVZFM1OUdCZFQyb1dBCnNrWTdLV2VPZlFaT3UycitFRXJnaEZKR0JoQlhzSlhONVBUNXIxZnJaK3VNK0V0aEFEcEExelVlTkZGV01qWXkKQjdta1BHNFVhZ2N6b3BUblM3NFBuc2VRRmVtR204cjY0TUJiNGdUekM3M0JNZUV3TXBtek9FWVBaSTNyYWh6Swo3VWFvMVUvVTg1UlRUYnkyTkZCSjdtY1l1SWNGWndzRFZDR2c1ZWptbjl4VUxqMDdzdE1IVUJnZEhTakJwaDNuCmVIekZIZVFkYm9acUpCZFFJcG9QUHNZcVZrdUNYTk1qMUNoQnZhcnFHaVl5VGVOR1luWVlvNERHZW90YlZZS3cKU0I4Y1hWbUMrWHJuRHhNb3RjYzE3TVZTR2xYeHlhTzg0WlZLQndJREFRQUJBb0lCQUE5MXlra0lOTGtOdXVNcApYR21DTkxRdDE3T1F0WjR3N3IzSnFMei9CcDVlRDgyeU1YUTNMbDROOUg1bnd1NFhnTDdHSyt3TDM5TlBoRzBXCmlTQ1gxTXExMDZqSTJES2prRWVWY3NUUzcyWGx0cUJyKzNPbkc2MktWZUFiS2VERHFyR2NMaCs1SWExbFRtbjEKNld3c296U3BvR3dsN3BFa21oTUM1d2M0NUk5SXJlMGw3YmZQeS9UaDhzbWs1T2sxYVBoZ0xvZHhBMGIzTkRPSQp0ZGU5czlKRGRTOU1zY3pBUGxza3I0bUx3N2w0WEYzWW5tUXc5UjY5RnRJQXlCMDJOa05Zbi9zTHA1d1cxdHlDCkRhL1FYM0lSdlBqOUZaa2NZb1ZHOGQxQ2xuRWlWTnJzRE5BK1FrdXN3SjF5TC9QamZvSnlsY1NydTZxUWNBLysKU0NaZmwzRUNnWUVBKzNHaXE1ZDhZKzBSL0VrNnUzZm5ZNDRHRGhpMjBwdE04M3oyM09xWURaekY3MFBNaHJxQwpLOXZzYlJ1MHcvQXBTY2RVRzV5ekJ3NDdpdXJVeXBIY1JjTDlFYkdXU0Z2NTllRGZ1bzBLQTlBMCtldnN1WWFxCnpvdXIwem5WVjBhNUI5Y2F4OW04NnF4SmJmQXhMNS9oNkhqQnRFVmZ0elZWcjhZR0l2WTJRaE1DZ1lFQTlmYUkKV2xDeFFkQlI0ekJwalRWSGsvbVpoNnM3cFBpUzMxUWNINHhibEFVdXVETE9iRStYdHFNVFhTYWl3SUJmYnJPaQpXYXBEZjFTK0ZjNFFlTUFjekFTY0xVMzQ2RGd2YmorV2YwS1krZ1pLNXhvek5iNnRFNEsxMEhMTVNyZTk4SWg3CnMyNVJiN1kvamFOc3lqcmFyQ2p2QjkxRHBYOU5mdWZDdEY3ZnRyMENnWUVBMG9xSVIxNEZEamNJQkZQZEZmU0UKajl2d1BnVjdzRVhSM1dBWjVVbWFJR3ZSWVZOSUF0aFEveUNiaTVEVGYrMnM1TlkvR3cvTzZHMkdkZi9FUmdwMApnd1dPbWk0MVJFbWZ0NzZnRjdqWlZmQVZLOS9jekV4eTRaZ2FQRGdFNTV1VWUzZ21PSW1kb25LNDJaRngzZ3JtClFwNDZ0QlFTM1htUFVpdGlJQXhCeW5rQ2dZQWxnL0RRTmJhVG56NmVOR2dsRFpkWlRweklRS25jUTczREtvVVAKbXN6dENzMVJjdzVoSHRLNUhLNTdhc1V3TDJSZThpODFGZTh0b0xOTmlCeWpEa3BXSSszZVN5Skg2U255MnVnTgppUTdrTThtQTdsSVpSSGdKbmNvMWZRMEQ2SHFrRVcwc3RRcmV5eUZ1YlJyT3phTkUxd2wrWFpWUHpOYjVJRWhtClVvSTAwUUtCZ1FEWkhTTllUbjZETWM5R0N2S3ZKNTRGME43d3hXYzcyak9JYkVXUWNXUUw0Tk5hNW5OVkRmRlkKMWQ0aktSOFg2UmZ3Tzg3QW5qaTBvdWc5YUs4ZitFL2J2cUdiK0lubjR3N0pHTlJ1dWJOM0JwQ0xEbjR3cmg3KwpTNk5keHBWMTFBWVpqRkN1TmhJL3k5WDBoZk9USHNiZ1IzeGpBaGJxcFUrK3dMUXY1ZWR6SFE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=\\n}"
+      "value": "{Endpoint:https://c105.au-syd.containers.cloud.ibm.com:32343,Kubeconfig:apiVersion: v1\\nclusters:\\n- cluster:\\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURRRENDQWlpZ0F3SUJBZ0lVZnp2VEoxdkpXQVVoOU93cnk0T0J2VHdqNExFd0RRWUpLb1pJaHZjTkFRRUwKQlFBd09ERTJNRFFHQTFVRUF4TXRaR0l6TW1ZNU5YTXdiR1ZoY20xdU9EVTJhVEF0YTNWaVpYSnVaWFJsY3kxagpZUzB4TnpreE16Y3hNalF5TUI0WERUSTJNVEF3TnpFeE1ETXdNRm9YRFRNMk1UQXdOREV4TURNd01Gb3dPREUyCk1EUUdBMVVFQXhNdFpHSXpNbVk1TlhNd2JHVmhjbTF1T0RVMmFUQXRhM1ZpWlhKdVpYUmxjeTFqWVMweE56a3gKTXpjeE1qUXlNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQThubGY3V3FQeFlhNgphRG0rc0VCWS9qSVBiNlFXb2RBY09zTEdTNDdRT24xTEN6TWlpRTJSZzdtemtoQmNnamNkUWRTQ1NCVTF3RWFQCkN1N01oNCtJTWlsUGxYdzRmaG13RHIwbVlpR01qdFVhN3UrcWtNYmlsSTU5cUpoYXVFMFBVYXV4ZWpEZUxzb3cKaXpuellXaVZ4MDFlcG9PQ3RHUDEzU3oxWmFzSjNBbXl2Z1B3T1BmTnk2U2hESGRtWUUrWGJEZW5qR2tOMWwxUwovVGZEcjk3bU5WREdDNHhUSU1Kcjl3S3htdmIyYnV0bksrb3NaUlNFRkpoRmFDYmRlQXNkb05mVEdlemFiLzNxCmQ0S2w0d1hkdk1wcnZGT3gyWS91UzlXSDlJZ21GSUc4N254RzE4cXNkV2E0OUxPSGFBT1Rrczl4Tmg4ZEhUNk0KWDFXRlNMRU1IUUlEQVFBQm8wSXdRREFPQmdOVkhROEJBZjhFQkFNQ0FZWXdEd1lEVlIwVEFRSC9CQVV3QXdFQgovekFkQmdOVkhRNEVGZ1FVWGtCVlU5QmZpczc2aHNtZ3hVeHRERVU0ZjZrd0RRWUpLb1pJaHZjTkFRRUxCUUFECmdnRUJBS3RrcnppcVdSNVVpTk5uOW1kRmN2L1haRFJlYkEraDMwVHFGTXA5UFRSM2dFVWhmclJqUVlJMGJWWUIKOEgxZUdQdStoV0lvUElzVUJvYTJDM3g2c1dJQWN6c0tUWm9lQ0xJdXJ4YWZlVXVjdEpmaHFVRHhiN3FxSFl1SAoxanp1TmdzZ2pDZGliSFpUeGFLSURWbTF4TW0vVWpQMW05TXc1eWUvcXhETElEaTRFaGtSTGQyc0xsdDZoTTQxCks2YlRYMjUydFFIbDA0Y05ISStPY1kyOVhSVnpvVW82VzNVdDEzZnEzMTBGbGNJZm0zQndUcWNDL2VYZFFCdkQKRFhJbjh1RXFBVGdHanpGM1BocDVVVHlSd2ZJNnUrWnFSdXlPNXFveW9jVC9uTUQxbUgyQW85UUNRQmhOL1JHUQp5WnQrcjJXSXdiVjFGaE5NcUl5MWk2SXBIL009Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\\n    server: https://c105.au-syd.containers.cloud.ibm.com:32343\\n  name: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0\\ncontexts:\\n- context:\\n    cluster: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0\\n    namespace: default\\n    user: admin/db32f95s0learmn856i0\\n  name: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0/admin\\ncurrent-context: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0/admin\\nkind: Config\\nusers:\\n- name: admin/db32f95s0learmn856i0\\n  user:\\n    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURzRENDQXBpZ0F3SUJBZ0lSQVBDUk1tUGZnS1hMLytyRG5QU1NhY1l3RFFZSktvWklodmNOQVFFTEJRQXcKT0RFMk1EUUdBMVVFQXhNdFpHSXpNbVk1TlhNd2JHVmhjbTF1T0RVMmFUQXRhM1ZpWlhKdVpYUmxjeTFqWVMweApOemt4TXpjeE1qUXlNQjRYRFRJMk1UQXdOekV4TVRrMU4xb1hEVEk0TVRBd056RXhNVGsxTjFvd2F6RUxNQWtHCkExVUVCaE1DVlZNeEZqQVVCZ05WQkFnVERWTmhiaUJHY21GdVkybHpZMjh4Q3pBSkJnTlZCQWNUQWtOQk1STXcKRVFZRFZRUUtFd3BwWW0wdFlXUnRhVzV6TVNJd0lBWURWUVFEREJsTGRXSmxRMlZ5ZENOSlFrMXBaQzAyT1RRdwpNREZDVHpkWE1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBdC8vc0J3cFA1bDhpClNzM3RiSkFZZi9jN0U5QlM2N0s1YXRGRFJlcEYzUVZJUzBUNTBoY285WElqSW5IREl2Umo1VFMyYzlnQi9FekoKT3BoM3lJOFNVWTgzanVzZUlBalVLaHBadFUwNEMvZWFFcEhYVk9hdzQ3Qi9iTXlhY3Era3NLUHZ5WnN2eS9qeAo2bW1UOUxEZ1E2dTFHbTVtUkpnYzFUb2NvVDFacW1XSXN6WWFRY25VVnpDVGdFa3V3dkpyQkJjQ09tdllqWitrCnRLc3czM3pIQ01aNElkS2hZN3N4c0dEVTk4VHpLaG9ybEhZRGlMRWR3RThmeCtRUkREbVByRDZqbDlYTDFESUYKVUZ4Y2N4ZVZTS0FKcm9vRVRIN09nTmxTVWFZZ2I4UTZoZ1RJUVRaM1ZEYlZlQmR0OWdUMksxQXhxNkNnSzZ2ZQpEZEpuRzVmaTN3SURBUUFCbzRHQk1IOHdEZ1lEVlIwUEFRSC9CQVFEQWdLRU1CMEdBMVVkSlFRV01CUUdDQ3NHCkFRVUZCd01DQmdnckJnRUZCUWNEQVRBTUJnTlZIUk1CQWY4RUFqQUFNQjhHQTFVZEl3UVlNQmFBRkY1QVZWUFEKWDRyTytvYkpvTVZNYlF4Rk9IK3BNQjhHQTFVZEVRUVlNQmFCRkdoaGJtbDZZVzVuTnpkQVoyMWhhV3d1WTI5dApNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUF3OUVkQkJWWmhTUHMrWXJqUDhoNUJVVWxWTzBzZnZhR1djMlVKCi9VTlVHVUJTZm1FTXFSanZHYythV1JtbjdnV1VBMW92azJ4NE10NU5WTWpNYkVOVEMwWk1Ja1NTdWttR3hOYW4KSkE2RGdXMXpOdlBzazIvMDNnQU1DbUJtd1RheC93V0lwWC9QQTU2RXk4bEhIRVZpdWttNS9uU0lGYUIxZ0ZNbQpvczB2OE1WdFc4YVVlRGEySTVrajRaQlZicytOc3hXU0RCK2RoL2NBcUlGVS9sQzgwakRjeFMxbkl0K2o3UnN3CjVQeFJHcEllbUM1NjdDNEMxdUpZa2tLazJ2WStvZ05GczlQVzlGTXBjdjdPUEtMc3ZNb0lyNER4L1lvK3V4dTEKS3BuRm40M21tUVk5TERMelliTCtyK2R2Nm9ZVVFEZDZqS0VQSS9CK293d3BzcGxxCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\\n    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBdC8vc0J3cFA1bDhpU3MzdGJKQVlmL2M3RTlCUzY3SzVhdEZEUmVwRjNRVklTMFQ1CjBoY285WElqSW5IREl2Umo1VFMyYzlnQi9FekpPcGgzeUk4U1VZODNqdXNlSUFqVUtocFp0VTA0Qy9lYUVwSFgKVk9hdzQ3Qi9iTXlhY3Era3NLUHZ5WnN2eS9qeDZtbVQ5TERnUTZ1MUdtNW1SSmdjMVRvY29UMVpxbVdJc3pZYQpRY25VVnpDVGdFa3V3dkpyQkJjQ09tdllqWitrdEtzdzMzekhDTVo0SWRLaFk3c3hzR0RVOThUektob3JsSFlECmlMRWR3RThmeCtRUkREbVByRDZqbDlYTDFESUZVRnhjY3hlVlNLQUpyb29FVEg3T2dObFNVYVlnYjhRNmhnVEkKUVRaM1ZEYlZlQmR0OWdUMksxQXhxNkNnSzZ2ZURkSm5HNWZpM3dJREFRQUJBb0lCQUFhRkpoc0FiWXU1OXFBZgpUZmpaTTZwaWhoQm5XRzQyWmhyMzVyZGYzREUvSjZ4Vnp3M05JNkZzU3Z4dkpaSzVNRXBiVDMvVURyWDBZL08vClJXSUdWOTJBclYrb3l6elNzMFNrQWJ2S29iVjRMNjNWY2RqMkFuSC9FTW8zM0lmbDIzaDY4VnRSTkNTNU4wYXUKNDc3NXFaTnhvK0xzNHo0dVdibmdsa3AzRkduL29iRDFpcGdoTzVTbkxQOWhpUDRjM3psNnE0T3dibXk0d0M0MApRcHlKTk9LcVVRa2hoVzhlREV4aDlGNW9GYUtMWmxLb2RaejN0c3llUHlPa3dFdHNBSVRoMG13S1RhZlNxdWlOCjBWUDlBMVZWTzlUMXpzZURMK0FZdFBNN2lZekRUN0tSbmNsUE43NmNrTEp5aytpQUlsejFQTzB2QWFEb2p4NmoKUGVpd0d0a0NnWUVBM3dkY1BRcHNSTVdnSWlMVU1xTVdEb0E0RlFxb2lOQmc1SVAxb1RYa1Rhc01ZSVM4NUQ3ZwpxakZXR0RLSnNSZ3I4eCtvSFoxa1BuWThPdlVBTWw1REwxWnZTcC9RRHpCYktlc1lXeU96MFNRWjZsMHZmbjNUClFNNllOektGWm5ZcXlGTXIxTUpNQStMV3hsbUxVNTRhbHdXQUUrWEErMWsvOFk1LzY1UkdIbHNDZ1lFQTB6TjgKbFBuTTdkVE1DMSsvK2V2K0JPQ05iWFdWY1F5OXdFVEw5WUVmZ0VCaDVyc0xQYmR5eWtBazJuNXBTMmhHMDVYNAowcDRzaHAvbmZRaEJaRXovVDlBWVppemtPUGhRL1RhRkY4aFF4VDVkeTVlVFc4OURBa3Jtb3EzbWpBTFdiWjVtCnRhbW1QelgyTTArMzA1bnc0L2d1N2lSalpPVkpvMUVxOVdHdy9NMENnWUVBcUt2TVdtMnpqQjlhQi9jSFBIU1MKamN6eW5SYytkcG9CYlZGUFJ1aVhEUlk3ZWhOcE44VkY2L0Q4QjdqUTRacENRdERDT0FOOGVMQzZ4R3ZlQmptNwozZVVrcmU5SFR2Vm5QTUNMM3dHVlVLcFkzeUl5ZFJ0NzFSdHBpdlV1WmxzZjUvamV3VDFnZDkvcVJvQWFHdGNMCmpRT2Y1V3h4RXFaZzhiS3ZrOTdEV05rQ2dZRUFoaHMxU2l0c0VzQ0NaOTUrdWlVOWdMOU5UbW5SWUoxa2g0ZW4Kc3RZd3VIRXBPU2NmdGlxY093eUwyaWxXbHNrNTMvUmtzT2c3QWFqYmhxc05TckVSbFE1Zno5RkZnVjg3bmUxVwppWWxxc0RRdnZxMGFwcnR1b3pBSVR0ZjVnb0h5d2x4SWY2V2ZxSmVOSTN2RkVCbTV1aWZITlBQcUlSRHV0ME04CjhkNzhVU2tDZ1lFQXpIMWlpL0xWYUJxOFducFBaUFVBOHhtRjZkUEtESGR1T0JVQURNNklFUGx0TXdjWm03NmoKQ3V4RXdkVTE1MVhkNUNDRUxzYVU3d1d0Tjd2TzEvRk9kZTljUStSR2NOd3JCRTR1MWxEMkpseUltOUROZ1BiaApoNm8rOWJQMHlqdGZzNHAreEZVVm5ab0NGd0hqYks4eUM2Q3pqYVZjK2M2NFhuSk1VUmlRNnZJPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=\\n}"
     },
     {
       "key": "Addons",
-      "value": "{KeyValueList:[{Key:cluster-autoscaler,Value:{\\allowed_upgrade_versions\\:[\\2.0.0\\],\\installOptionsTemplate\\:{},\\name\\:\\cluster-autoscaler\\,\\targetVersion\\:\\1.2.4\\,\\version\\:\\1.2.4\\}},{Key:ibm-storage-operator,Value:{\\healthStatus\\:\\Enabling\\,\\installOptionsTemplate\\:{},\\name\\:\\ibm-storage-operator\\,\\targetVersion\\:\\1.0\\,\\version\\:\\1.0\\}},{Key:vpc-block-csi-driver,Value:{\\allowed_upgrade_versions\\:[\\5.2\\],\\healthStatus\\:\\Enabling\\,\\installOptionsTemplate\\:{},\\name\\:\\vpc-block-csi-driver\\,\\targetVersion\\:\\5.1\\,\\version\\:\\5.1\\}}]}"
+      "value": "{KeyValueList:[{Key:cluster-autoscaler,Value:{\\installOptionsTemplate\\:{},\\name\\:\\cluster-autoscaler\\,\\targetVersion\\:\\2.0.0\\,\\version\\:\\2.0.0\\}},{Key:ibm-storage-operator,Value:{\\healthStatus\\:\\Enabling\\,\\installOptionsTemplate\\:{},\\name\\:\\ibm-storage-operator\\,\\targetVersion\\:\\1.0\\,\\version\\:\\1.0\\}},{Key:vpc-block-csi-driver,Value:{\\allowed_upgrade_versions\\:[\\5.2\\],\\healthStatus\\:\\Enabling\\,\\installOptionsTemplate\\:{},\\name\\:\\vpc-block-csi-driver\\,\\targetVersion\\:\\5.1\\,\\version\\:\\5.1\\}}]}"
     },
     {
       "key": "Status",
@@ -522,54 +583,54 @@
     },
     {
       "key": "CreatedTime",
-      "value": "2026-09-16T10:12:03Z"
+      "value": "2026-10-07T11:06:11Z"
     },
     {
       "key": "TagList",
       "value": "{Key:cb-spider-pmks-autoscaler-status,Value:deploying}"
     }
   ],
-  "cspResourceName": "tbj7i7ch33krh023o26f",
-  "cspResourceId": "dal6mt0s03rqu2pe3mrg",
+  "cspResourceName": "tbn9e2fqrrhumthk6j20",
+  "cspResourceId": "db32f95s0learmn856i0",
   "spiderViewK8sClusterDetail": {
     "IId": {
-      "NameId": "tbj7i7ch33krh023o26f",
-      "SystemId": "dal6mt0s03rqu2pe3mrg"
+      "NameId": "tbn9e2fqrrhumthk6j20",
+      "SystemId": "db32f95s0learmn856i0"
     },
-    "Version": "1.33.13_1580",
+    "Version": "1.35.9_1546",
     "Network": {
       "VpcIID": {
-        "NameId": "tbjitcfui5iupk1ohrn2",
-        "SystemId": "r026-ea7b8de8-38c6-4d7a-bd4d-1b9f2be79653"
+        "NameId": "tblo85b3uaik2dvvkjg2",
+        "SystemId": "r026-1f28c17f-150a-434e-ae0f-a2a321fd4536"
       },
       "SubnetIIDs": [
         {
-          "NameId": "tbr5pgg6n3mkoagtfkgc",
-          "SystemId": "02h7-18fae5ee-0b08-4e95-b9dd-10bea99baa06"
+          "NameId": "tbp1ba7rn56rirasj2pe",
+          "SystemId": "02h7-f7ea2bcc-1ff6-41d8-a8f8-e2acdb019147"
         }
       ],
       "SecurityGroupIIDs": [
         {
-          "NameId": "kube-dal6mt0s03rqu2pe3mrg",
-          "SystemId": "r026-fcd88d9c-5f39-4f96-819e-05a8fc86a7de"
+          "NameId": "kube-db32f95s0learmn856i0",
+          "SystemId": "r026-02b8e88f-2be0-4f01-8592-ce88b2a66999"
         }
       ],
       "KeyValueList": [
         {
           "key": "VpcIID",
-          "value": "{NameId:tbjitcfui5iupk1ohrn2,SystemId:r026-ea7b8de8-38c6-4d7a-bd4d-1b9f2be79653}"
+          "value": "{NameId:tblo85b3uaik2dvvkjg2,SystemId:r026-1f28c17f-150a-434e-ae0f-a2a321fd4536}"
         },
         {
           "key": "SubnetIIDs",
-          "value": "{NameId:tbr5pgg6n3mkoagtfkgc,SystemId:02h7-18fae5ee-0b08-4e95-b9dd-10bea99baa06}"
+          "value": "{NameId:tbp1ba7rn56rirasj2pe,SystemId:02h7-f7ea2bcc-1ff6-41d8-a8f8-e2acdb019147}"
         },
         {
           "key": "SecurityGroupIIDs",
-          "value": "{NameId:kube-dal6mt0s03rqu2pe3mrg,SystemId:r026-fcd88d9c-5f39-4f96-819e-05a8fc86a7de}"
+          "value": "{NameId:kube-db32f95s0learmn856i0,SystemId:r026-02b8e88f-2be0-4f01-8592-ce88b2a66999}"
         },
         {
           "key": "KeyValueList",
-          "value": "{Key:VpcIID,Value:{NameId:tbjitcfui5iupk1ohrn2,SystemId:r026-ea7b8de8-38c6-4d7a-bd4d-1b9f2be79653}}; {Key:SubnetIIDs,Value:{NameId:tbr5pgg6n3mkoagtfkgc,SystemId:02h7-18fae5ee-0b08-4e95-b9dd-10bea99baa06}}; {Key:SecurityGroupIIDs,Value:{NameId:kube-dal6mt0s03rqu2pe3mrg,SystemId:r026-fcd88d9c-5f39-4f96-819e-05a8fc86a7de}}"
+          "value": "{Key:VpcIID,Value:{NameId:tblo85b3uaik2dvvkjg2,SystemId:r026-1f28c17f-150a-434e-ae0f-a2a321fd4536}}; {Key:SubnetIIDs,Value:{NameId:tbp1ba7rn56rirasj2pe,SystemId:02h7-f7ea2bcc-1ff6-41d8-a8f8-e2acdb019147}}; {Key:SecurityGroupIIDs,Value:{NameId:kube-db32f95s0learmn856i0,SystemId:r026-02b8e88f-2be0-4f01-8592-ce88b2a66999}}"
         }
       ]
     },
@@ -577,7 +638,7 @@
       {
         "IId": {
           "NameId": "workers1",
-          "SystemId": "dal6mt0s03rqu2pe3mrg-f09c430"
+          "SystemId": "db32f95s0learmn856i0-c67c62f"
         },
         "ImageIID": {
           "NameId": "Not visible in IBM",
@@ -592,23 +653,23 @@
         },
         "OnAutoScaling": false,
         "DesiredNodeSize": 2,
-        "MinNodeSize": -1,
-        "MaxNodeSize": -1,
+        "MinNodeSize": 0,
+        "MaxNodeSize": 0,
         "Status": "Active",
         "Nodes": [
           {
             "NameId": "Not visible in IBM",
-            "SystemId": "kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-0000019b"
+            "SystemId": "kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-00000168"
           },
           {
             "NameId": "Not visible in IBM",
-            "SystemId": "kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-000002b1"
+            "SystemId": "kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-000002da"
           }
         ],
         "KeyValueList": [
           {
             "key": "IId",
-            "value": "{NameId:workers1,SystemId:dal6mt0s03rqu2pe3mrg-f09c430}"
+            "value": "{NameId:workers1,SystemId:db32f95s0learmn856i0-c67c62f}"
           },
           {
             "key": "ImageIID",
@@ -652,20 +713,20 @@
           },
           {
             "key": "Nodes",
-            "value": "{NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-0000019b}; {NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-000002b1}"
+            "value": "{NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-00000168}; {NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-000002da}"
           }
         ]
       }
     ],
     "AccessInfo": {
-      "Endpoint": "https://c104.au-syd.containers.cloud.ibm.com:31606",
-      "Kubeconfig": "apiVersion: v1\nclusters:\n- cluster:\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURRRENDQWlpZ0F3SUJBZ0lVYzEwNit1NWxCMGtLUE5xR2hJS0svcDhOeFZZd0RRWUpLb1pJaHZjTkFRRUwKQlFBd09ERTJNRFFHQTFVRUF4TXRaR0ZzTm0xME1ITXdNM0p4ZFRKd1pUTnRjbWN0YTNWaVpYSnVaWFJsY3kxagpZUzB4TnpnNU5UVXpOVGt3TUI0WERUSTJNRGt4TmpFd01EZ3dNRm9YRFRNMk1Ea3hNekV3TURnd01Gb3dPREUyCk1EUUdBMVVFQXhNdFpHRnNObTEwTUhNd00zSnhkVEp3WlROdGNtY3RhM1ZpWlhKdVpYUmxjeTFqWVMweE56ZzUKTlRVek5Ua3dNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXNWL20rQ1VNTlpiZQpIdFdReTRXdmZBS0d4eVZmR2h3TEZ5R0hyZVBwRWZCSGdwbnlHMlNydVhSbGlqbVE4L0JBblA1a2VtUm5ScGp4CnR5TGZmYmxTeEwzRHpNSXhNclFqd01MaFp2MWVkM3lJeXAzVzQ0TE5aTVd6WitrUndyWTNKN0cxWTU5S2orNGwKVVpjajZETTVORXFocFhEelhtTEtVWHN2dUwxNTVoQXZHV0ljY0NuK0NFR2F6L245NlROYjJhV3A5VTVBVUtUWQphZVE5TFRTTEdMbm41bGVKLzQ5YzVsMmxzR0FCaWc3amJuM2lLQmNMdlJ3UFhpM0c4U2E1czh0ZXlLWUFDTjI2CnB6cGh2T00ySlltWkNCbzRxV1JNRUt2ZE04bkk1REZpOHI1M3RoVjdyRzVJb091Q1NCaHYyMllrN3Jad1FPNlIKMy9xcnhBczlFd0lEQVFBQm8wSXdRREFPQmdOVkhROEJBZjhFQkFNQ0FZWXdEd1lEVlIwVEFRSC9CQVV3QXdFQgovekFkQmdOVkhRNEVGZ1FVMUFhZTE2NllnelppdEVzM3V4ck5wUFFBdW9vd0RRWUpLb1pJaHZjTkFRRUxCUUFECmdnRUJBSWoxMW5LbFd1cDI0UEJMSDUvN3RFNDNWNGFtQXgyR3JOaGUycFk3NVN6Nm05MzJCMGdYT2R6N3dLZkQKUVhCUFJ1SmV3S0tnZUpudmFXNU9oS1kzeG1XWVhQZ2xvL202L1R4MjV1MXR6Q2lkZE8weVpwenQzZlRsVE0yVQp2WERyVlRvd1JnazVrR1FlcUQwOHFKbG5WVFJGcVRiOW9TRURkOTc5OHRVTHlDZzUzN0hlWjZ4M1BEcTMrZWJkCmdzMGcxZUdrb1BEUGRUVVk5WlphaGRIdDltV0EwaHNOQ3lielptU2h4VHVINmFrQTVobEQrR1ZNS1hUZ3ZMZUEKY0IxWDFnYzJOY0tKZTRmeW5teTI3S0VTcU1mL0tRaXJTR2tjNEJ4Y1o5eGNiUlUyQ002YjVlY0c5Q2JTM2dsegowY3FpanFvUjNuUEhreUN1c3l3RFYzOTJmOTQ9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\n    server: https://c104.au-syd.containers.cloud.ibm.com:31606\n  name: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg\ncontexts:\n- context:\n    cluster: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg\n    namespace: default\n    user: admin/dal6mt0s03rqu2pe3mrg\n  name: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg/admin\ncurrent-context: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg/admin\nkind: Config\nusers:\n- name: admin/dal6mt0s03rqu2pe3mrg\n  user:\n    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURzRENDQXBpZ0F3SUJBZ0lSQUt0em9vaWZ5dXVZMW94YmlGdjYxc2d3RFFZSktvWklodmNOQVFFTEJRQXcKT0RFMk1EUUdBMVVFQXhNdFpHRnNObTEwTUhNd00zSnhkVEp3WlROdGNtY3RhM1ZpWlhKdVpYUmxjeTFqWVMweApOemc1TlRVek5Ua3dNQjRYRFRJMk1Ea3hOakV3TWpZd05Gb1hEVEk0TURreE5qRXdNall3TkZvd2F6RUxNQWtHCkExVUVCaE1DVlZNeEZqQVVCZ05WQkFnVERWTmhiaUJHY21GdVkybHpZMjh4Q3pBSkJnTlZCQWNUQWtOQk1STXcKRVFZRFZRUUtFd3BwWW0wdFlXUnRhVzV6TVNJd0lBWURWUVFEREJsTGRXSmxRMlZ5ZENOSlFrMXBaQzAyT1RRdwpNREZDVHpkWE1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBOFpYbHpaeDlrd0xOCjRVQlBTRTcvaVFHVWFZQmducDFMZlNmVWRTNTlHQmRUMm9XQXNrWTdLV2VPZlFaT3UycitFRXJnaEZKR0JoQlgKc0pYTjVQVDVyMWZyWit1TStFdGhBRHBBMXpVZU5GRldNall5Qjdta1BHNFVhZ2N6b3BUblM3NFBuc2VRRmVtRwptOHI2NE1CYjRnVHpDNzNCTWVFd01wbXpPRVlQWkkzcmFoeks3VWFvMVUvVTg1UlRUYnkyTkZCSjdtY1l1SWNGClp3c0RWQ0dnNWVqbW45eFVMajA3c3RNSFVCZ2RIU2pCcGgzbmVIekZIZVFkYm9acUpCZFFJcG9QUHNZcVZrdUMKWE5NajFDaEJ2YXJxR2lZeVRlTkdZbllZbzRER2VvdGJWWUt3U0I4Y1hWbUMrWHJuRHhNb3RjYzE3TVZTR2xYeAp5YU84NFpWS0J3SURBUUFCbzRHQk1IOHdEZ1lEVlIwUEFRSC9CQVFEQWdLRU1CMEdBMVVkSlFRV01CUUdDQ3NHCkFRVUZCd01DQmdnckJnRUZCUWNEQVRBTUJnTlZIUk1CQWY4RUFqQUFNQjhHQTFVZEl3UVlNQmFBRk5RR250ZXUKbUlNMllyUkxON3NhemFUMEFMcUtNQjhHQTFVZEVRUVlNQmFCRkdoaGJtbDZZVzVuTnpkQVoyMWhhV3d1WTI5dApNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUJDMTVuVDBIWDZpclF4Tm1KYXE5ZWNOUVZXU1BkV2NRTmt1WUpKCkpGd1Zsb2tGSVExbSs3RWY0RmRhMERDbUE2aDJyQ0FPVE1HeXZrS0YyQzJTN05qN0RKcjM1ZitEcmRid2VHUUkKUnFWQTA2Zm1Va1BCWERMNDBsUDVFeXNaQW1CbGNnNUxvNFliYlRqNk5DMnZWTEYvbEhvWTFlcURoV0R3Qi91cAo5dHJnbGlzWXdXUC9kQUtEb2hhcmI0ZnNYb0pWWHU0WXhtVjB0c21DS041dGhlYkVJb1FEa0RqM1djWmxaOXJICkI0SEhKclh1LzlQUm8yTGdINUMvMytTY3V2Qk0yUXpJSDNnanZJdThKbWRKdWpEbGZ0NjVNdllMMzZIc2lGeGcKWkhPQUFGM3NON2h2bVpIZ1JWcjlRTTlyRWpTWXJweEI2N1lBOGRmbzRhNmhabmJ4Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\n    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBOFpYbHpaeDlrd0xONFVCUFNFNy9pUUdVYVlCZ25wMUxmU2ZVZFM1OUdCZFQyb1dBCnNrWTdLV2VPZlFaT3UycitFRXJnaEZKR0JoQlhzSlhONVBUNXIxZnJaK3VNK0V0aEFEcEExelVlTkZGV01qWXkKQjdta1BHNFVhZ2N6b3BUblM3NFBuc2VRRmVtR204cjY0TUJiNGdUekM3M0JNZUV3TXBtek9FWVBaSTNyYWh6Swo3VWFvMVUvVTg1UlRUYnkyTkZCSjdtY1l1SWNGWndzRFZDR2c1ZWptbjl4VUxqMDdzdE1IVUJnZEhTakJwaDNuCmVIekZIZVFkYm9acUpCZFFJcG9QUHNZcVZrdUNYTk1qMUNoQnZhcnFHaVl5VGVOR1luWVlvNERHZW90YlZZS3cKU0I4Y1hWbUMrWHJuRHhNb3RjYzE3TVZTR2xYeHlhTzg0WlZLQndJREFRQUJBb0lCQUE5MXlra0lOTGtOdXVNcApYR21DTkxRdDE3T1F0WjR3N3IzSnFMei9CcDVlRDgyeU1YUTNMbDROOUg1bnd1NFhnTDdHSyt3TDM5TlBoRzBXCmlTQ1gxTXExMDZqSTJES2prRWVWY3NUUzcyWGx0cUJyKzNPbkc2MktWZUFiS2VERHFyR2NMaCs1SWExbFRtbjEKNld3c296U3BvR3dsN3BFa21oTUM1d2M0NUk5SXJlMGw3YmZQeS9UaDhzbWs1T2sxYVBoZ0xvZHhBMGIzTkRPSQp0ZGU5czlKRGRTOU1zY3pBUGxza3I0bUx3N2w0WEYzWW5tUXc5UjY5RnRJQXlCMDJOa05Zbi9zTHA1d1cxdHlDCkRhL1FYM0lSdlBqOUZaa2NZb1ZHOGQxQ2xuRWlWTnJzRE5BK1FrdXN3SjF5TC9QamZvSnlsY1NydTZxUWNBLysKU0NaZmwzRUNnWUVBKzNHaXE1ZDhZKzBSL0VrNnUzZm5ZNDRHRGhpMjBwdE04M3oyM09xWURaekY3MFBNaHJxQwpLOXZzYlJ1MHcvQXBTY2RVRzV5ekJ3NDdpdXJVeXBIY1JjTDlFYkdXU0Z2NTllRGZ1bzBLQTlBMCtldnN1WWFxCnpvdXIwem5WVjBhNUI5Y2F4OW04NnF4SmJmQXhMNS9oNkhqQnRFVmZ0elZWcjhZR0l2WTJRaE1DZ1lFQTlmYUkKV2xDeFFkQlI0ekJwalRWSGsvbVpoNnM3cFBpUzMxUWNINHhibEFVdXVETE9iRStYdHFNVFhTYWl3SUJmYnJPaQpXYXBEZjFTK0ZjNFFlTUFjekFTY0xVMzQ2RGd2YmorV2YwS1krZ1pLNXhvek5iNnRFNEsxMEhMTVNyZTk4SWg3CnMyNVJiN1kvamFOc3lqcmFyQ2p2QjkxRHBYOU5mdWZDdEY3ZnRyMENnWUVBMG9xSVIxNEZEamNJQkZQZEZmU0UKajl2d1BnVjdzRVhSM1dBWjVVbWFJR3ZSWVZOSUF0aFEveUNiaTVEVGYrMnM1TlkvR3cvTzZHMkdkZi9FUmdwMApnd1dPbWk0MVJFbWZ0NzZnRjdqWlZmQVZLOS9jekV4eTRaZ2FQRGdFNTV1VWUzZ21PSW1kb25LNDJaRngzZ3JtClFwNDZ0QlFTM1htUFVpdGlJQXhCeW5rQ2dZQWxnL0RRTmJhVG56NmVOR2dsRFpkWlRweklRS25jUTczREtvVVAKbXN6dENzMVJjdzVoSHRLNUhLNTdhc1V3TDJSZThpODFGZTh0b0xOTmlCeWpEa3BXSSszZVN5Skg2U255MnVnTgppUTdrTThtQTdsSVpSSGdKbmNvMWZRMEQ2SHFrRVcwc3RRcmV5eUZ1YlJyT3phTkUxd2wrWFpWUHpOYjVJRWhtClVvSTAwUUtCZ1FEWkhTTllUbjZETWM5R0N2S3ZKNTRGME43d3hXYzcyak9JYkVXUWNXUUw0Tk5hNW5OVkRmRlkKMWQ0aktSOFg2UmZ3Tzg3QW5qaTBvdWc5YUs4ZitFL2J2cUdiK0lubjR3N0pHTlJ1dWJOM0JwQ0xEbjR3cmg3KwpTNk5keHBWMTFBWVpqRkN1TmhJL3k5WDBoZk9USHNiZ1IzeGpBaGJxcFUrK3dMUXY1ZWR6SFE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=\n"
+      "Endpoint": "https://c105.au-syd.containers.cloud.ibm.com:32343",
+      "Kubeconfig": "apiVersion: v1\nclusters:\n- cluster:\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURRRENDQWlpZ0F3SUJBZ0lVZnp2VEoxdkpXQVVoOU93cnk0T0J2VHdqNExFd0RRWUpLb1pJaHZjTkFRRUwKQlFBd09ERTJNRFFHQTFVRUF4TXRaR0l6TW1ZNU5YTXdiR1ZoY20xdU9EVTJhVEF0YTNWaVpYSnVaWFJsY3kxagpZUzB4TnpreE16Y3hNalF5TUI0WERUSTJNVEF3TnpFeE1ETXdNRm9YRFRNMk1UQXdOREV4TURNd01Gb3dPREUyCk1EUUdBMVVFQXhNdFpHSXpNbVk1TlhNd2JHVmhjbTF1T0RVMmFUQXRhM1ZpWlhKdVpYUmxjeTFqWVMweE56a3gKTXpjeE1qUXlNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQThubGY3V3FQeFlhNgphRG0rc0VCWS9qSVBiNlFXb2RBY09zTEdTNDdRT24xTEN6TWlpRTJSZzdtemtoQmNnamNkUWRTQ1NCVTF3RWFQCkN1N01oNCtJTWlsUGxYdzRmaG13RHIwbVlpR01qdFVhN3UrcWtNYmlsSTU5cUpoYXVFMFBVYXV4ZWpEZUxzb3cKaXpuellXaVZ4MDFlcG9PQ3RHUDEzU3oxWmFzSjNBbXl2Z1B3T1BmTnk2U2hESGRtWUUrWGJEZW5qR2tOMWwxUwovVGZEcjk3bU5WREdDNHhUSU1Kcjl3S3htdmIyYnV0bksrb3NaUlNFRkpoRmFDYmRlQXNkb05mVEdlemFiLzNxCmQ0S2w0d1hkdk1wcnZGT3gyWS91UzlXSDlJZ21GSUc4N254RzE4cXNkV2E0OUxPSGFBT1Rrczl4Tmg4ZEhUNk0KWDFXRlNMRU1IUUlEQVFBQm8wSXdRREFPQmdOVkhROEJBZjhFQkFNQ0FZWXdEd1lEVlIwVEFRSC9CQVV3QXdFQgovekFkQmdOVkhRNEVGZ1FVWGtCVlU5QmZpczc2aHNtZ3hVeHRERVU0ZjZrd0RRWUpLb1pJaHZjTkFRRUxCUUFECmdnRUJBS3RrcnppcVdSNVVpTk5uOW1kRmN2L1haRFJlYkEraDMwVHFGTXA5UFRSM2dFVWhmclJqUVlJMGJWWUIKOEgxZUdQdStoV0lvUElzVUJvYTJDM3g2c1dJQWN6c0tUWm9lQ0xJdXJ4YWZlVXVjdEpmaHFVRHhiN3FxSFl1SAoxanp1TmdzZ2pDZGliSFpUeGFLSURWbTF4TW0vVWpQMW05TXc1eWUvcXhETElEaTRFaGtSTGQyc0xsdDZoTTQxCks2YlRYMjUydFFIbDA0Y05ISStPY1kyOVhSVnpvVW82VzNVdDEzZnEzMTBGbGNJZm0zQndUcWNDL2VYZFFCdkQKRFhJbjh1RXFBVGdHanpGM1BocDVVVHlSd2ZJNnUrWnFSdXlPNXFveW9jVC9uTUQxbUgyQW85UUNRQmhOL1JHUQp5WnQrcjJXSXdiVjFGaE5NcUl5MWk2SXBIL009Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\n    server: https://c105.au-syd.containers.cloud.ibm.com:32343\n  name: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0\ncontexts:\n- context:\n    cluster: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0\n    namespace: default\n    user: admin/db32f95s0learmn856i0\n  name: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0/admin\ncurrent-context: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0/admin\nkind: Config\nusers:\n- name: admin/db32f95s0learmn856i0\n  user:\n    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURzRENDQXBpZ0F3SUJBZ0lSQVBDUk1tUGZnS1hMLytyRG5QU1NhY1l3RFFZSktvWklodmNOQVFFTEJRQXcKT0RFMk1EUUdBMVVFQXhNdFpHSXpNbVk1TlhNd2JHVmhjbTF1T0RVMmFUQXRhM1ZpWlhKdVpYUmxjeTFqWVMweApOemt4TXpjeE1qUXlNQjRYRFRJMk1UQXdOekV4TVRrMU4xb1hEVEk0TVRBd056RXhNVGsxTjFvd2F6RUxNQWtHCkExVUVCaE1DVlZNeEZqQVVCZ05WQkFnVERWTmhiaUJHY21GdVkybHpZMjh4Q3pBSkJnTlZCQWNUQWtOQk1STXcKRVFZRFZRUUtFd3BwWW0wdFlXUnRhVzV6TVNJd0lBWURWUVFEREJsTGRXSmxRMlZ5ZENOSlFrMXBaQzAyT1RRdwpNREZDVHpkWE1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBdC8vc0J3cFA1bDhpClNzM3RiSkFZZi9jN0U5QlM2N0s1YXRGRFJlcEYzUVZJUzBUNTBoY285WElqSW5IREl2Umo1VFMyYzlnQi9FekoKT3BoM3lJOFNVWTgzanVzZUlBalVLaHBadFUwNEMvZWFFcEhYVk9hdzQ3Qi9iTXlhY3Era3NLUHZ5WnN2eS9qeAo2bW1UOUxEZ1E2dTFHbTVtUkpnYzFUb2NvVDFacW1XSXN6WWFRY25VVnpDVGdFa3V3dkpyQkJjQ09tdllqWitrCnRLc3czM3pIQ01aNElkS2hZN3N4c0dEVTk4VHpLaG9ybEhZRGlMRWR3RThmeCtRUkREbVByRDZqbDlYTDFESUYKVUZ4Y2N4ZVZTS0FKcm9vRVRIN09nTmxTVWFZZ2I4UTZoZ1RJUVRaM1ZEYlZlQmR0OWdUMksxQXhxNkNnSzZ2ZQpEZEpuRzVmaTN3SURBUUFCbzRHQk1IOHdEZ1lEVlIwUEFRSC9CQVFEQWdLRU1CMEdBMVVkSlFRV01CUUdDQ3NHCkFRVUZCd01DQmdnckJnRUZCUWNEQVRBTUJnTlZIUk1CQWY4RUFqQUFNQjhHQTFVZEl3UVlNQmFBRkY1QVZWUFEKWDRyTytvYkpvTVZNYlF4Rk9IK3BNQjhHQTFVZEVRUVlNQmFCRkdoaGJtbDZZVzVuTnpkQVoyMWhhV3d1WTI5dApNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUF3OUVkQkJWWmhTUHMrWXJqUDhoNUJVVWxWTzBzZnZhR1djMlVKCi9VTlVHVUJTZm1FTXFSanZHYythV1JtbjdnV1VBMW92azJ4NE10NU5WTWpNYkVOVEMwWk1Ja1NTdWttR3hOYW4KSkE2RGdXMXpOdlBzazIvMDNnQU1DbUJtd1RheC93V0lwWC9QQTU2RXk4bEhIRVZpdWttNS9uU0lGYUIxZ0ZNbQpvczB2OE1WdFc4YVVlRGEySTVrajRaQlZicytOc3hXU0RCK2RoL2NBcUlGVS9sQzgwakRjeFMxbkl0K2o3UnN3CjVQeFJHcEllbUM1NjdDNEMxdUpZa2tLazJ2WStvZ05GczlQVzlGTXBjdjdPUEtMc3ZNb0lyNER4L1lvK3V4dTEKS3BuRm40M21tUVk5TERMelliTCtyK2R2Nm9ZVVFEZDZqS0VQSS9CK293d3BzcGxxCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\n    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBdC8vc0J3cFA1bDhpU3MzdGJKQVlmL2M3RTlCUzY3SzVhdEZEUmVwRjNRVklTMFQ1CjBoY285WElqSW5IREl2Umo1VFMyYzlnQi9FekpPcGgzeUk4U1VZODNqdXNlSUFqVUtocFp0VTA0Qy9lYUVwSFgKVk9hdzQ3Qi9iTXlhY3Era3NLUHZ5WnN2eS9qeDZtbVQ5TERnUTZ1MUdtNW1SSmdjMVRvY29UMVpxbVdJc3pZYQpRY25VVnpDVGdFa3V3dkpyQkJjQ09tdllqWitrdEtzdzMzekhDTVo0SWRLaFk3c3hzR0RVOThUektob3JsSFlECmlMRWR3RThmeCtRUkREbVByRDZqbDlYTDFESUZVRnhjY3hlVlNLQUpyb29FVEg3T2dObFNVYVlnYjhRNmhnVEkKUVRaM1ZEYlZlQmR0OWdUMksxQXhxNkNnSzZ2ZURkSm5HNWZpM3dJREFRQUJBb0lCQUFhRkpoc0FiWXU1OXFBZgpUZmpaTTZwaWhoQm5XRzQyWmhyMzVyZGYzREUvSjZ4Vnp3M05JNkZzU3Z4dkpaSzVNRXBiVDMvVURyWDBZL08vClJXSUdWOTJBclYrb3l6elNzMFNrQWJ2S29iVjRMNjNWY2RqMkFuSC9FTW8zM0lmbDIzaDY4VnRSTkNTNU4wYXUKNDc3NXFaTnhvK0xzNHo0dVdibmdsa3AzRkduL29iRDFpcGdoTzVTbkxQOWhpUDRjM3psNnE0T3dibXk0d0M0MApRcHlKTk9LcVVRa2hoVzhlREV4aDlGNW9GYUtMWmxLb2RaejN0c3llUHlPa3dFdHNBSVRoMG13S1RhZlNxdWlOCjBWUDlBMVZWTzlUMXpzZURMK0FZdFBNN2lZekRUN0tSbmNsUE43NmNrTEp5aytpQUlsejFQTzB2QWFEb2p4NmoKUGVpd0d0a0NnWUVBM3dkY1BRcHNSTVdnSWlMVU1xTVdEb0E0RlFxb2lOQmc1SVAxb1RYa1Rhc01ZSVM4NUQ3ZwpxakZXR0RLSnNSZ3I4eCtvSFoxa1BuWThPdlVBTWw1REwxWnZTcC9RRHpCYktlc1lXeU96MFNRWjZsMHZmbjNUClFNNllOektGWm5ZcXlGTXIxTUpNQStMV3hsbUxVNTRhbHdXQUUrWEErMWsvOFk1LzY1UkdIbHNDZ1lFQTB6TjgKbFBuTTdkVE1DMSsvK2V2K0JPQ05iWFdWY1F5OXdFVEw5WUVmZ0VCaDVyc0xQYmR5eWtBazJuNXBTMmhHMDVYNAowcDRzaHAvbmZRaEJaRXovVDlBWVppemtPUGhRL1RhRkY4aFF4VDVkeTVlVFc4OURBa3Jtb3EzbWpBTFdiWjVtCnRhbW1QelgyTTArMzA1bnc0L2d1N2lSalpPVkpvMUVxOVdHdy9NMENnWUVBcUt2TVdtMnpqQjlhQi9jSFBIU1MKamN6eW5SYytkcG9CYlZGUFJ1aVhEUlk3ZWhOcE44VkY2L0Q4QjdqUTRacENRdERDT0FOOGVMQzZ4R3ZlQmptNwozZVVrcmU5SFR2Vm5QTUNMM3dHVlVLcFkzeUl5ZFJ0NzFSdHBpdlV1WmxzZjUvamV3VDFnZDkvcVJvQWFHdGNMCmpRT2Y1V3h4RXFaZzhiS3ZrOTdEV05rQ2dZRUFoaHMxU2l0c0VzQ0NaOTUrdWlVOWdMOU5UbW5SWUoxa2g0ZW4Kc3RZd3VIRXBPU2NmdGlxY093eUwyaWxXbHNrNTMvUmtzT2c3QWFqYmhxc05TckVSbFE1Zno5RkZnVjg3bmUxVwppWWxxc0RRdnZxMGFwcnR1b3pBSVR0ZjVnb0h5d2x4SWY2V2ZxSmVOSTN2RkVCbTV1aWZITlBQcUlSRHV0ME04CjhkNzhVU2tDZ1lFQXpIMWlpL0xWYUJxOFducFBaUFVBOHhtRjZkUEtESGR1T0JVQURNNklFUGx0TXdjWm03NmoKQ3V4RXdkVTE1MVhkNUNDRUxzYVU3d1d0Tjd2TzEvRk9kZTljUStSR2NOd3JCRTR1MWxEMkpseUltOUROZ1BiaApoNm8rOWJQMHlqdGZzNHAreEZVVm5ab0NGd0hqYks4eUM2Q3pqYVZjK2M2NFhuSk1VUmlRNnZJPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=\n"
     },
     "Addons": {
       "KeyValueList": [
         {
           "key": "cluster-autoscaler",
-          "value": "{\"allowed_upgrade_versions\":[\"2.0.0\"],\"installOptionsTemplate\":{},\"name\":\"cluster-autoscaler\",\"targetVersion\":\"1.2.4\",\"version\":\"1.2.4\"}"
+          "value": "{\"installOptionsTemplate\":{},\"name\":\"cluster-autoscaler\",\"targetVersion\":\"2.0.0\",\"version\":\"2.0.0\"}"
         },
         {
           "key": "ibm-storage-operator",
@@ -678,31 +739,31 @@
       ]
     },
     "Status": "Active",
-    "CreatedTime": "2026-09-16T10:12:03Z",
+    "CreatedTime": "2026-10-07T11:06:11Z",
     "KeyValueList": [
       {
         "key": "IId",
-        "value": "{NameId:tbj7i7ch33krh023o26f,SystemId:dal6mt0s03rqu2pe3mrg}"
+        "value": "{NameId:tbn9e2fqrrhumthk6j20,SystemId:db32f95s0learmn856i0}"
       },
       {
         "key": "Version",
-        "value": "1.33.13_1580"
+        "value": "1.35.9_1546"
       },
       {
         "key": "Network",
-        "value": "{VpcIID:{NameId:tbjitcfui5iupk1ohrn2,SystemId:r026-ea7b8de8-38c6-4d7a-bd4d-1b9f2be79653},SubnetIIDs:[{NameId:tbr5pgg6n3mkoagtfkgc,SystemId:02h7-18fae5ee-0b08-4e95-b9dd-10bea99baa06}],SecurityGroupIIDs:[{NameId:kube-dal6mt0s03rqu2pe3mrg,SystemId:r026-fcd88d9c-5f39-4f96-819e-05a8fc86a7de}],KeyValueList:[{Key:VpcIID,Value:{NameId:tbjitcfui5iupk1ohrn2,SystemId:r026-ea7b8de8-38c6-4d7a-bd4d-1b9f2be79653}},{Key:SubnetIIDs,Value:{NameId:tbr5pgg6n3mkoagtfkgc,SystemId:02h7-18fae5ee-0b08-4e95-b9dd-10bea99baa06}},{Key:SecurityGroupIIDs,Value:{NameId:kube-dal6mt0s03rqu2pe3mrg,SystemId:r026-fcd88d9c-5f39-4f96-819e-05a8fc86a7de}},{Key:KeyValueList,Value:{Key:VpcIID,Value:{NameId:tbjitcfui5iupk1ohrn2,SystemId:r026-ea7b8de8-38c6-4d7a-bd4d-1b9f2be79653}}; {Key:SubnetIIDs,Value:{NameId:tbr5pgg6n3mkoagtfkgc,SystemId:02h7-18fae5ee-0b08-4e95-b9dd-10bea99baa06}}; {Key:SecurityGroupIIDs,Value:{NameId:kube-dal6mt0s03rqu2pe3mrg,SystemId:r026-fcd88d9c-5f39-4f96-819e-05a8fc86a7de}}}]}"
+        "value": "{VpcIID:{NameId:tblo85b3uaik2dvvkjg2,SystemId:r026-1f28c17f-150a-434e-ae0f-a2a321fd4536},SubnetIIDs:[{NameId:tbp1ba7rn56rirasj2pe,SystemId:02h7-f7ea2bcc-1ff6-41d8-a8f8-e2acdb019147}],SecurityGroupIIDs:[{NameId:kube-db32f95s0learmn856i0,SystemId:r026-02b8e88f-2be0-4f01-8592-ce88b2a66999}],KeyValueList:[{Key:VpcIID,Value:{NameId:tblo85b3uaik2dvvkjg2,SystemId:r026-1f28c17f-150a-434e-ae0f-a2a321fd4536}},{Key:SubnetIIDs,Value:{NameId:tbp1ba7rn56rirasj2pe,SystemId:02h7-f7ea2bcc-1ff6-41d8-a8f8-e2acdb019147}},{Key:SecurityGroupIIDs,Value:{NameId:kube-db32f95s0learmn856i0,SystemId:r026-02b8e88f-2be0-4f01-8592-ce88b2a66999}},{Key:KeyValueList,Value:{Key:VpcIID,Value:{NameId:tblo85b3uaik2dvvkjg2,SystemId:r026-1f28c17f-150a-434e-ae0f-a2a321fd4536}}; {Key:SubnetIIDs,Value:{NameId:tbp1ba7rn56rirasj2pe,SystemId:02h7-f7ea2bcc-1ff6-41d8-a8f8-e2acdb019147}}; {Key:SecurityGroupIIDs,Value:{NameId:kube-db32f95s0learmn856i0,SystemId:r026-02b8e88f-2be0-4f01-8592-ce88b2a66999}}}]}"
       },
       {
         "key": "NodeGroupList",
-        "value": "{IId:{NameId:workers1,SystemId:dal6mt0s03rqu2pe3mrg-f09c430},ImageIID:{NameId:Not visible in IBM,SystemId:Not visible in IBM},VMSpecName:cxf.4x8,RootDiskType:Not visible in IBM,RootDiskSize:Not visible in IBM,KeyPairIID:{NameId:Not visible in IBM,SystemId:Not visible in IBM},OnAutoScaling:false,DesiredNodeSize:2,MinNodeSize:-1,MaxNodeSize:-1,Status:Active,Nodes:[{NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-0000019b},{NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-000002b1}],KeyValueList:[{Key:IId,Value:{NameId:workers1,SystemId:dal6mt0s03rqu2pe3mrg-f09c430}},{Key:ImageIID,Value:{NameId:Not visible in IBM,SystemId:Not visible in IBM}},{Key:VMSpecName,Value:cxf.4x8},{Key:RootDiskType,Value:Not visible in IBM},{Key:RootDiskSize,Value:Not visible in IBM},{Key:KeyPairIID,Value:{NameId:Not visible in IBM,SystemId:Not visible in IBM}},{Key:OnAutoScaling,Value:false},{Key:DesiredNodeSize,Value:2},{Key:MinNodeSize,Value:0},{Key:MaxNodeSize,Value:0},{Key:Status,Value:Active},{Key:Nodes,Value:{NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-0000019b}; {NameId:Not visible in IBM,SystemId:kube-dal6mt0s03rqu2pe3mrg-tbj7i7ch33k-workers-000002b1}}]}"
+        "value": "{IId:{NameId:workers1,SystemId:db32f95s0learmn856i0-c67c62f},ImageIID:{NameId:Not visible in IBM,SystemId:Not visible in IBM},VMSpecName:cxf.4x8,RootDiskType:Not visible in IBM,RootDiskSize:Not visible in IBM,KeyPairIID:{NameId:Not visible in IBM,SystemId:Not visible in IBM},OnAutoScaling:false,DesiredNodeSize:2,MinNodeSize:0,MaxNodeSize:0,AutoScalingInfoAvailable:false,Status:Active,Nodes:[{NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-00000168},{NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-000002da}],KeyValueList:[{Key:IId,Value:{NameId:workers1,SystemId:db32f95s0learmn856i0-c67c62f}},{Key:ImageIID,Value:{NameId:Not visible in IBM,SystemId:Not visible in IBM}},{Key:VMSpecName,Value:cxf.4x8},{Key:RootDiskType,Value:Not visible in IBM},{Key:RootDiskSize,Value:Not visible in IBM},{Key:KeyPairIID,Value:{NameId:Not visible in IBM,SystemId:Not visible in IBM}},{Key:OnAutoScaling,Value:false},{Key:DesiredNodeSize,Value:2},{Key:MinNodeSize,Value:0},{Key:MaxNodeSize,Value:0},{Key:Status,Value:Active},{Key:Nodes,Value:{NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-00000168}; {NameId:Not visible in IBM,SystemId:kube-db32f95s0learmn856i0-tbn9e2fqrrh-workers-000002da}}]}"
       },
       {
         "key": "AccessInfo",
-        "value": "{Endpoint:https://c104.au-syd.containers.cloud.ibm.com:31606,Kubeconfig:apiVersion: v1\\nclusters:\\n- cluster:\\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURRRENDQWlpZ0F3SUJBZ0lVYzEwNit1NWxCMGtLUE5xR2hJS0svcDhOeFZZd0RRWUpLb1pJaHZjTkFRRUwKQlFBd09ERTJNRFFHQTFVRUF4TXRaR0ZzTm0xME1ITXdNM0p4ZFRKd1pUTnRjbWN0YTNWaVpYSnVaWFJsY3kxagpZUzB4TnpnNU5UVXpOVGt3TUI0WERUSTJNRGt4TmpFd01EZ3dNRm9YRFRNMk1Ea3hNekV3TURnd01Gb3dPREUyCk1EUUdBMVVFQXhNdFpHRnNObTEwTUhNd00zSnhkVEp3WlROdGNtY3RhM1ZpWlhKdVpYUmxjeTFqWVMweE56ZzUKTlRVek5Ua3dNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXNWL20rQ1VNTlpiZQpIdFdReTRXdmZBS0d4eVZmR2h3TEZ5R0hyZVBwRWZCSGdwbnlHMlNydVhSbGlqbVE4L0JBblA1a2VtUm5ScGp4CnR5TGZmYmxTeEwzRHpNSXhNclFqd01MaFp2MWVkM3lJeXAzVzQ0TE5aTVd6WitrUndyWTNKN0cxWTU5S2orNGwKVVpjajZETTVORXFocFhEelhtTEtVWHN2dUwxNTVoQXZHV0ljY0NuK0NFR2F6L245NlROYjJhV3A5VTVBVUtUWQphZVE5TFRTTEdMbm41bGVKLzQ5YzVsMmxzR0FCaWc3amJuM2lLQmNMdlJ3UFhpM0c4U2E1czh0ZXlLWUFDTjI2CnB6cGh2T00ySlltWkNCbzRxV1JNRUt2ZE04bkk1REZpOHI1M3RoVjdyRzVJb091Q1NCaHYyMllrN3Jad1FPNlIKMy9xcnhBczlFd0lEQVFBQm8wSXdRREFPQmdOVkhROEJBZjhFQkFNQ0FZWXdEd1lEVlIwVEFRSC9CQVV3QXdFQgovekFkQmdOVkhRNEVGZ1FVMUFhZTE2NllnelppdEVzM3V4ck5wUFFBdW9vd0RRWUpLb1pJaHZjTkFRRUxCUUFECmdnRUJBSWoxMW5LbFd1cDI0UEJMSDUvN3RFNDNWNGFtQXgyR3JOaGUycFk3NVN6Nm05MzJCMGdYT2R6N3dLZkQKUVhCUFJ1SmV3S0tnZUpudmFXNU9oS1kzeG1XWVhQZ2xvL202L1R4MjV1MXR6Q2lkZE8weVpwenQzZlRsVE0yVQp2WERyVlRvd1JnazVrR1FlcUQwOHFKbG5WVFJGcVRiOW9TRURkOTc5OHRVTHlDZzUzN0hlWjZ4M1BEcTMrZWJkCmdzMGcxZUdrb1BEUGRUVVk5WlphaGRIdDltV0EwaHNOQ3lielptU2h4VHVINmFrQTVobEQrR1ZNS1hUZ3ZMZUEKY0IxWDFnYzJOY0tKZTRmeW5teTI3S0VTcU1mL0tRaXJTR2tjNEJ4Y1o5eGNiUlUyQ002YjVlY0c5Q2JTM2dsegowY3FpanFvUjNuUEhreUN1c3l3RFYzOTJmOTQ9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\\n    server: https://c104.au-syd.containers.cloud.ibm.com:31606\\n  name: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg\\ncontexts:\\n- context:\\n    cluster: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg\\n    namespace: default\\n    user: admin/dal6mt0s03rqu2pe3mrg\\n  name: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg/admin\\ncurrent-context: tbj7i7ch33krh023o26f/dal6mt0s03rqu2pe3mrg/admin\\nkind: Config\\nusers:\\n- name: admin/dal6mt0s03rqu2pe3mrg\\n  user:\\n    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURzRENDQXBpZ0F3SUJBZ0lSQUt0em9vaWZ5dXVZMW94YmlGdjYxc2d3RFFZSktvWklodmNOQVFFTEJRQXcKT0RFMk1EUUdBMVVFQXhNdFpHRnNObTEwTUhNd00zSnhkVEp3WlROdGNtY3RhM1ZpWlhKdVpYUmxjeTFqWVMweApOemc1TlRVek5Ua3dNQjRYRFRJMk1Ea3hOakV3TWpZd05Gb1hEVEk0TURreE5qRXdNall3TkZvd2F6RUxNQWtHCkExVUVCaE1DVlZNeEZqQVVCZ05WQkFnVERWTmhiaUJHY21GdVkybHpZMjh4Q3pBSkJnTlZCQWNUQWtOQk1STXcKRVFZRFZRUUtFd3BwWW0wdFlXUnRhVzV6TVNJd0lBWURWUVFEREJsTGRXSmxRMlZ5ZENOSlFrMXBaQzAyT1RRdwpNREZDVHpkWE1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBOFpYbHpaeDlrd0xOCjRVQlBTRTcvaVFHVWFZQmducDFMZlNmVWRTNTlHQmRUMm9XQXNrWTdLV2VPZlFaT3UycitFRXJnaEZKR0JoQlgKc0pYTjVQVDVyMWZyWit1TStFdGhBRHBBMXpVZU5GRldNall5Qjdta1BHNFVhZ2N6b3BUblM3NFBuc2VRRmVtRwptOHI2NE1CYjRnVHpDNzNCTWVFd01wbXpPRVlQWkkzcmFoeks3VWFvMVUvVTg1UlRUYnkyTkZCSjdtY1l1SWNGClp3c0RWQ0dnNWVqbW45eFVMajA3c3RNSFVCZ2RIU2pCcGgzbmVIekZIZVFkYm9acUpCZFFJcG9QUHNZcVZrdUMKWE5NajFDaEJ2YXJxR2lZeVRlTkdZbllZbzRER2VvdGJWWUt3U0I4Y1hWbUMrWHJuRHhNb3RjYzE3TVZTR2xYeAp5YU84NFpWS0J3SURBUUFCbzRHQk1IOHdEZ1lEVlIwUEFRSC9CQVFEQWdLRU1CMEdBMVVkSlFRV01CUUdDQ3NHCkFRVUZCd01DQmdnckJnRUZCUWNEQVRBTUJnTlZIUk1CQWY4RUFqQUFNQjhHQTFVZEl3UVlNQmFBRk5RR250ZXUKbUlNMllyUkxON3NhemFUMEFMcUtNQjhHQTFVZEVRUVlNQmFCRkdoaGJtbDZZVzVuTnpkQVoyMWhhV3d1WTI5dApNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUJDMTVuVDBIWDZpclF4Tm1KYXE5ZWNOUVZXU1BkV2NRTmt1WUpKCkpGd1Zsb2tGSVExbSs3RWY0RmRhMERDbUE2aDJyQ0FPVE1HeXZrS0YyQzJTN05qN0RKcjM1ZitEcmRid2VHUUkKUnFWQTA2Zm1Va1BCWERMNDBsUDVFeXNaQW1CbGNnNUxvNFliYlRqNk5DMnZWTEYvbEhvWTFlcURoV0R3Qi91cAo5dHJnbGlzWXdXUC9kQUtEb2hhcmI0ZnNYb0pWWHU0WXhtVjB0c21DS041dGhlYkVJb1FEa0RqM1djWmxaOXJICkI0SEhKclh1LzlQUm8yTGdINUMvMytTY3V2Qk0yUXpJSDNnanZJdThKbWRKdWpEbGZ0NjVNdllMMzZIc2lGeGcKWkhPQUFGM3NON2h2bVpIZ1JWcjlRTTlyRWpTWXJweEI2N1lBOGRmbzRhNmhabmJ4Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\\n    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBOFpYbHpaeDlrd0xONFVCUFNFNy9pUUdVYVlCZ25wMUxmU2ZVZFM1OUdCZFQyb1dBCnNrWTdLV2VPZlFaT3UycitFRXJnaEZKR0JoQlhzSlhONVBUNXIxZnJaK3VNK0V0aEFEcEExelVlTkZGV01qWXkKQjdta1BHNFVhZ2N6b3BUblM3NFBuc2VRRmVtR204cjY0TUJiNGdUekM3M0JNZUV3TXBtek9FWVBaSTNyYWh6Swo3VWFvMVUvVTg1UlRUYnkyTkZCSjdtY1l1SWNGWndzRFZDR2c1ZWptbjl4VUxqMDdzdE1IVUJnZEhTakJwaDNuCmVIekZIZVFkYm9acUpCZFFJcG9QUHNZcVZrdUNYTk1qMUNoQnZhcnFHaVl5VGVOR1luWVlvNERHZW90YlZZS3cKU0I4Y1hWbUMrWHJuRHhNb3RjYzE3TVZTR2xYeHlhTzg0WlZLQndJREFRQUJBb0lCQUE5MXlra0lOTGtOdXVNcApYR21DTkxRdDE3T1F0WjR3N3IzSnFMei9CcDVlRDgyeU1YUTNMbDROOUg1bnd1NFhnTDdHSyt3TDM5TlBoRzBXCmlTQ1gxTXExMDZqSTJES2prRWVWY3NUUzcyWGx0cUJyKzNPbkc2MktWZUFiS2VERHFyR2NMaCs1SWExbFRtbjEKNld3c296U3BvR3dsN3BFa21oTUM1d2M0NUk5SXJlMGw3YmZQeS9UaDhzbWs1T2sxYVBoZ0xvZHhBMGIzTkRPSQp0ZGU5czlKRGRTOU1zY3pBUGxza3I0bUx3N2w0WEYzWW5tUXc5UjY5RnRJQXlCMDJOa05Zbi9zTHA1d1cxdHlDCkRhL1FYM0lSdlBqOUZaa2NZb1ZHOGQxQ2xuRWlWTnJzRE5BK1FrdXN3SjF5TC9QamZvSnlsY1NydTZxUWNBLysKU0NaZmwzRUNnWUVBKzNHaXE1ZDhZKzBSL0VrNnUzZm5ZNDRHRGhpMjBwdE04M3oyM09xWURaekY3MFBNaHJxQwpLOXZzYlJ1MHcvQXBTY2RVRzV5ekJ3NDdpdXJVeXBIY1JjTDlFYkdXU0Z2NTllRGZ1bzBLQTlBMCtldnN1WWFxCnpvdXIwem5WVjBhNUI5Y2F4OW04NnF4SmJmQXhMNS9oNkhqQnRFVmZ0elZWcjhZR0l2WTJRaE1DZ1lFQTlmYUkKV2xDeFFkQlI0ekJwalRWSGsvbVpoNnM3cFBpUzMxUWNINHhibEFVdXVETE9iRStYdHFNVFhTYWl3SUJmYnJPaQpXYXBEZjFTK0ZjNFFlTUFjekFTY0xVMzQ2RGd2YmorV2YwS1krZ1pLNXhvek5iNnRFNEsxMEhMTVNyZTk4SWg3CnMyNVJiN1kvamFOc3lqcmFyQ2p2QjkxRHBYOU5mdWZDdEY3ZnRyMENnWUVBMG9xSVIxNEZEamNJQkZQZEZmU0UKajl2d1BnVjdzRVhSM1dBWjVVbWFJR3ZSWVZOSUF0aFEveUNiaTVEVGYrMnM1TlkvR3cvTzZHMkdkZi9FUmdwMApnd1dPbWk0MVJFbWZ0NzZnRjdqWlZmQVZLOS9jekV4eTRaZ2FQRGdFNTV1VWUzZ21PSW1kb25LNDJaRngzZ3JtClFwNDZ0QlFTM1htUFVpdGlJQXhCeW5rQ2dZQWxnL0RRTmJhVG56NmVOR2dsRFpkWlRweklRS25jUTczREtvVVAKbXN6dENzMVJjdzVoSHRLNUhLNTdhc1V3TDJSZThpODFGZTh0b0xOTmlCeWpEa3BXSSszZVN5Skg2U255MnVnTgppUTdrTThtQTdsSVpSSGdKbmNvMWZRMEQ2SHFrRVcwc3RRcmV5eUZ1YlJyT3phTkUxd2wrWFpWUHpOYjVJRWhtClVvSTAwUUtCZ1FEWkhTTllUbjZETWM5R0N2S3ZKNTRGME43d3hXYzcyak9JYkVXUWNXUUw0Tk5hNW5OVkRmRlkKMWQ0aktSOFg2UmZ3Tzg3QW5qaTBvdWc5YUs4ZitFL2J2cUdiK0lubjR3N0pHTlJ1dWJOM0JwQ0xEbjR3cmg3KwpTNk5keHBWMTFBWVpqRkN1TmhJL3k5WDBoZk9USHNiZ1IzeGpBaGJxcFUrK3dMUXY1ZWR6SFE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=\\n}"
+        "value": "{Endpoint:https://c105.au-syd.containers.cloud.ibm.com:32343,Kubeconfig:apiVersion: v1\\nclusters:\\n- cluster:\\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURRRENDQWlpZ0F3SUJBZ0lVZnp2VEoxdkpXQVVoOU93cnk0T0J2VHdqNExFd0RRWUpLb1pJaHZjTkFRRUwKQlFBd09ERTJNRFFHQTFVRUF4TXRaR0l6TW1ZNU5YTXdiR1ZoY20xdU9EVTJhVEF0YTNWaVpYSnVaWFJsY3kxagpZUzB4TnpreE16Y3hNalF5TUI0WERUSTJNVEF3TnpFeE1ETXdNRm9YRFRNMk1UQXdOREV4TURNd01Gb3dPREUyCk1EUUdBMVVFQXhNdFpHSXpNbVk1TlhNd2JHVmhjbTF1T0RVMmFUQXRhM1ZpWlhKdVpYUmxjeTFqWVMweE56a3gKTXpjeE1qUXlNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQThubGY3V3FQeFlhNgphRG0rc0VCWS9qSVBiNlFXb2RBY09zTEdTNDdRT24xTEN6TWlpRTJSZzdtemtoQmNnamNkUWRTQ1NCVTF3RWFQCkN1N01oNCtJTWlsUGxYdzRmaG13RHIwbVlpR01qdFVhN3UrcWtNYmlsSTU5cUpoYXVFMFBVYXV4ZWpEZUxzb3cKaXpuellXaVZ4MDFlcG9PQ3RHUDEzU3oxWmFzSjNBbXl2Z1B3T1BmTnk2U2hESGRtWUUrWGJEZW5qR2tOMWwxUwovVGZEcjk3bU5WREdDNHhUSU1Kcjl3S3htdmIyYnV0bksrb3NaUlNFRkpoRmFDYmRlQXNkb05mVEdlemFiLzNxCmQ0S2w0d1hkdk1wcnZGT3gyWS91UzlXSDlJZ21GSUc4N254RzE4cXNkV2E0OUxPSGFBT1Rrczl4Tmg4ZEhUNk0KWDFXRlNMRU1IUUlEQVFBQm8wSXdRREFPQmdOVkhROEJBZjhFQkFNQ0FZWXdEd1lEVlIwVEFRSC9CQVV3QXdFQgovekFkQmdOVkhRNEVGZ1FVWGtCVlU5QmZpczc2aHNtZ3hVeHRERVU0ZjZrd0RRWUpLb1pJaHZjTkFRRUxCUUFECmdnRUJBS3RrcnppcVdSNVVpTk5uOW1kRmN2L1haRFJlYkEraDMwVHFGTXA5UFRSM2dFVWhmclJqUVlJMGJWWUIKOEgxZUdQdStoV0lvUElzVUJvYTJDM3g2c1dJQWN6c0tUWm9lQ0xJdXJ4YWZlVXVjdEpmaHFVRHhiN3FxSFl1SAoxanp1TmdzZ2pDZGliSFpUeGFLSURWbTF4TW0vVWpQMW05TXc1eWUvcXhETElEaTRFaGtSTGQyc0xsdDZoTTQxCks2YlRYMjUydFFIbDA0Y05ISStPY1kyOVhSVnpvVW82VzNVdDEzZnEzMTBGbGNJZm0zQndUcWNDL2VYZFFCdkQKRFhJbjh1RXFBVGdHanpGM1BocDVVVHlSd2ZJNnUrWnFSdXlPNXFveW9jVC9uTUQxbUgyQW85UUNRQmhOL1JHUQp5WnQrcjJXSXdiVjFGaE5NcUl5MWk2SXBIL009Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\\n    server: https://c105.au-syd.containers.cloud.ibm.com:32343\\n  name: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0\\ncontexts:\\n- context:\\n    cluster: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0\\n    namespace: default\\n    user: admin/db32f95s0learmn856i0\\n  name: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0/admin\\ncurrent-context: tbn9e2fqrrhumthk6j20/db32f95s0learmn856i0/admin\\nkind: Config\\nusers:\\n- name: admin/db32f95s0learmn856i0\\n  user:\\n    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURzRENDQXBpZ0F3SUJBZ0lSQVBDUk1tUGZnS1hMLytyRG5QU1NhY1l3RFFZSktvWklodmNOQVFFTEJRQXcKT0RFMk1EUUdBMVVFQXhNdFpHSXpNbVk1TlhNd2JHVmhjbTF1T0RVMmFUQXRhM1ZpWlhKdVpYUmxjeTFqWVMweApOemt4TXpjeE1qUXlNQjRYRFRJMk1UQXdOekV4TVRrMU4xb1hEVEk0TVRBd056RXhNVGsxTjFvd2F6RUxNQWtHCkExVUVCaE1DVlZNeEZqQVVCZ05WQkFnVERWTmhiaUJHY21GdVkybHpZMjh4Q3pBSkJnTlZCQWNUQWtOQk1STXcKRVFZRFZRUUtFd3BwWW0wdFlXUnRhVzV6TVNJd0lBWURWUVFEREJsTGRXSmxRMlZ5ZENOSlFrMXBaQzAyT1RRdwpNREZDVHpkWE1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBdC8vc0J3cFA1bDhpClNzM3RiSkFZZi9jN0U5QlM2N0s1YXRGRFJlcEYzUVZJUzBUNTBoY285WElqSW5IREl2Umo1VFMyYzlnQi9FekoKT3BoM3lJOFNVWTgzanVzZUlBalVLaHBadFUwNEMvZWFFcEhYVk9hdzQ3Qi9iTXlhY3Era3NLUHZ5WnN2eS9qeAo2bW1UOUxEZ1E2dTFHbTVtUkpnYzFUb2NvVDFacW1XSXN6WWFRY25VVnpDVGdFa3V3dkpyQkJjQ09tdllqWitrCnRLc3czM3pIQ01aNElkS2hZN3N4c0dEVTk4VHpLaG9ybEhZRGlMRWR3RThmeCtRUkREbVByRDZqbDlYTDFESUYKVUZ4Y2N4ZVZTS0FKcm9vRVRIN09nTmxTVWFZZ2I4UTZoZ1RJUVRaM1ZEYlZlQmR0OWdUMksxQXhxNkNnSzZ2ZQpEZEpuRzVmaTN3SURBUUFCbzRHQk1IOHdEZ1lEVlIwUEFRSC9CQVFEQWdLRU1CMEdBMVVkSlFRV01CUUdDQ3NHCkFRVUZCd01DQmdnckJnRUZCUWNEQVRBTUJnTlZIUk1CQWY4RUFqQUFNQjhHQTFVZEl3UVlNQmFBRkY1QVZWUFEKWDRyTytvYkpvTVZNYlF4Rk9IK3BNQjhHQTFVZEVRUVlNQmFCRkdoaGJtbDZZVzVuTnpkQVoyMWhhV3d1WTI5dApNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUF3OUVkQkJWWmhTUHMrWXJqUDhoNUJVVWxWTzBzZnZhR1djMlVKCi9VTlVHVUJTZm1FTXFSanZHYythV1JtbjdnV1VBMW92azJ4NE10NU5WTWpNYkVOVEMwWk1Ja1NTdWttR3hOYW4KSkE2RGdXMXpOdlBzazIvMDNnQU1DbUJtd1RheC93V0lwWC9QQTU2RXk4bEhIRVZpdWttNS9uU0lGYUIxZ0ZNbQpvczB2OE1WdFc4YVVlRGEySTVrajRaQlZicytOc3hXU0RCK2RoL2NBcUlGVS9sQzgwakRjeFMxbkl0K2o3UnN3CjVQeFJHcEllbUM1NjdDNEMxdUpZa2tLazJ2WStvZ05GczlQVzlGTXBjdjdPUEtMc3ZNb0lyNER4L1lvK3V4dTEKS3BuRm40M21tUVk5TERMelliTCtyK2R2Nm9ZVVFEZDZqS0VQSS9CK293d3BzcGxxCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\\n    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBdC8vc0J3cFA1bDhpU3MzdGJKQVlmL2M3RTlCUzY3SzVhdEZEUmVwRjNRVklTMFQ1CjBoY285WElqSW5IREl2Umo1VFMyYzlnQi9FekpPcGgzeUk4U1VZODNqdXNlSUFqVUtocFp0VTA0Qy9lYUVwSFgKVk9hdzQ3Qi9iTXlhY3Era3NLUHZ5WnN2eS9qeDZtbVQ5TERnUTZ1MUdtNW1SSmdjMVRvY29UMVpxbVdJc3pZYQpRY25VVnpDVGdFa3V3dkpyQkJjQ09tdllqWitrdEtzdzMzekhDTVo0SWRLaFk3c3hzR0RVOThUektob3JsSFlECmlMRWR3RThmeCtRUkREbVByRDZqbDlYTDFESUZVRnhjY3hlVlNLQUpyb29FVEg3T2dObFNVYVlnYjhRNmhnVEkKUVRaM1ZEYlZlQmR0OWdUMksxQXhxNkNnSzZ2ZURkSm5HNWZpM3dJREFRQUJBb0lCQUFhRkpoc0FiWXU1OXFBZgpUZmpaTTZwaWhoQm5XRzQyWmhyMzVyZGYzREUvSjZ4Vnp3M05JNkZzU3Z4dkpaSzVNRXBiVDMvVURyWDBZL08vClJXSUdWOTJBclYrb3l6elNzMFNrQWJ2S29iVjRMNjNWY2RqMkFuSC9FTW8zM0lmbDIzaDY4VnRSTkNTNU4wYXUKNDc3NXFaTnhvK0xzNHo0dVdibmdsa3AzRkduL29iRDFpcGdoTzVTbkxQOWhpUDRjM3psNnE0T3dibXk0d0M0MApRcHlKTk9LcVVRa2hoVzhlREV4aDlGNW9GYUtMWmxLb2RaejN0c3llUHlPa3dFdHNBSVRoMG13S1RhZlNxdWlOCjBWUDlBMVZWTzlUMXpzZURMK0FZdFBNN2lZekRUN0tSbmNsUE43NmNrTEp5aytpQUlsejFQTzB2QWFEb2p4NmoKUGVpd0d0a0NnWUVBM3dkY1BRcHNSTVdnSWlMVU1xTVdEb0E0RlFxb2lOQmc1SVAxb1RYa1Rhc01ZSVM4NUQ3ZwpxakZXR0RLSnNSZ3I4eCtvSFoxa1BuWThPdlVBTWw1REwxWnZTcC9RRHpCYktlc1lXeU96MFNRWjZsMHZmbjNUClFNNllOektGWm5ZcXlGTXIxTUpNQStMV3hsbUxVNTRhbHdXQUUrWEErMWsvOFk1LzY1UkdIbHNDZ1lFQTB6TjgKbFBuTTdkVE1DMSsvK2V2K0JPQ05iWFdWY1F5OXdFVEw5WUVmZ0VCaDVyc0xQYmR5eWtBazJuNXBTMmhHMDVYNAowcDRzaHAvbmZRaEJaRXovVDlBWVppemtPUGhRL1RhRkY4aFF4VDVkeTVlVFc4OURBa3Jtb3EzbWpBTFdiWjVtCnRhbW1QelgyTTArMzA1bnc0L2d1N2lSalpPVkpvMUVxOVdHdy9NMENnWUVBcUt2TVdtMnpqQjlhQi9jSFBIU1MKamN6eW5SYytkcG9CYlZGUFJ1aVhEUlk3ZWhOcE44VkY2L0Q4QjdqUTRacENRdERDT0FOOGVMQzZ4R3ZlQmptNwozZVVrcmU5SFR2Vm5QTUNMM3dHVlVLcFkzeUl5ZFJ0NzFSdHBpdlV1WmxzZjUvamV3VDFnZDkvcVJvQWFHdGNMCmpRT2Y1V3h4RXFaZzhiS3ZrOTdEV05rQ2dZRUFoaHMxU2l0c0VzQ0NaOTUrdWlVOWdMOU5UbW5SWUoxa2g0ZW4Kc3RZd3VIRXBPU2NmdGlxY093eUwyaWxXbHNrNTMvUmtzT2c3QWFqYmhxc05TckVSbFE1Zno5RkZnVjg3bmUxVwppWWxxc0RRdnZxMGFwcnR1b3pBSVR0ZjVnb0h5d2x4SWY2V2ZxSmVOSTN2RkVCbTV1aWZITlBQcUlSRHV0ME04CjhkNzhVU2tDZ1lFQXpIMWlpL0xWYUJxOFducFBaUFVBOHhtRjZkUEtESGR1T0JVQURNNklFUGx0TXdjWm03NmoKQ3V4RXdkVTE1MVhkNUNDRUxzYVU3d1d0Tjd2TzEvRk9kZTljUStSR2NOd3JCRTR1MWxEMkpseUltOUROZ1BiaApoNm8rOWJQMHlqdGZzNHAreEZVVm5ab0NGd0hqYks4eUM2Q3pqYVZjK2M2NFhuSk1VUmlRNnZJPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=\\n}"
       },
       {
         "key": "Addons",
-        "value": "{KeyValueList:[{Key:cluster-autoscaler,Value:{\\allowed_upgrade_versions\\:[\\2.0.0\\],\\installOptionsTemplate\\:{},\\name\\:\\cluster-autoscaler\\,\\targetVersion\\:\\1.2.4\\,\\version\\:\\1.2.4\\}},{Key:ibm-storage-operator,Value:{\\healthStatus\\:\\Enabling\\,\\installOptionsTemplate\\:{},\\name\\:\\ibm-storage-operator\\,\\targetVersion\\:\\1.0\\,\\version\\:\\1.0\\}},{Key:vpc-block-csi-driver,Value:{\\allowed_upgrade_versions\\:[\\5.2\\],\\healthStatus\\:\\Enabling\\,\\installOptionsTemplate\\:{},\\name\\:\\vpc-block-csi-driver\\,\\targetVersion\\:\\5.1\\,\\version\\:\\5.1\\}}]}"
+        "value": "{KeyValueList:[{Key:cluster-autoscaler,Value:{\\installOptionsTemplate\\:{},\\name\\:\\cluster-autoscaler\\,\\targetVersion\\:\\2.0.0\\,\\version\\:\\2.0.0\\}},{Key:ibm-storage-operator,Value:{\\healthStatus\\:\\Enabling\\,\\installOptionsTemplate\\:{},\\name\\:\\ibm-storage-operator\\,\\targetVersion\\:\\1.0\\,\\version\\:\\1.0\\}},{Key:vpc-block-csi-driver,Value:{\\allowed_upgrade_versions\\:[\\5.2\\],\\healthStatus\\:\\Enabling\\,\\installOptionsTemplate\\:{},\\name\\:\\vpc-block-csi-driver\\,\\targetVersion\\:\\5.1\\,\\version\\:\\5.1\\}}]}"
       },
       {
         "key": "Status",
@@ -710,7 +771,7 @@
       },
       {
         "key": "CreatedTime",
-        "value": "2026-09-16T10:12:03Z"
+        "value": "2026-10-07T11:06:11Z"
       },
       {
         "key": "TagList",
