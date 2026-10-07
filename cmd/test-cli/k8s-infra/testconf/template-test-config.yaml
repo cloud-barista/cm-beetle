@@ -1,14 +1,22 @@
 test:
+  # executionMode: migration (default) | recommendation | validation | all
+  # Can be overridden by the CLI flag `-mode <mode>`.
+  executionMode: migration
+
   set:
     mode: parallel # parallel (per target) or sequential
+    # Stagger between parallel target starts, so concurrent runs do not burst
+    # Tumblebug's read APIs at once.
+    startDelaySeconds: 10
 
-  # Target CSP/region pairs. Recommendation does not provision anything, so enabling
-  # several at once is cheap.
+  # Target CSP/region pairs. Used across all modes.
+  # For migration: enable one CSP at a time to prevent unexpected cloud costs.
+  # For recommendation/validation: no provisioning occurs, so enabling multiple is fast and free.
   cases:
     - csp: aws
       region: ap-northeast-2
       name: AWS-Seoul
-      execute: true
+      execute: false
     - csp: azure
       region: koreasouth
       name: Azure-Busan
@@ -38,11 +46,7 @@ test:
       name: NHNCloud-Pangyo
       execute: false
 
-  # On-premise fixtures and what each must produce.
-  #
-  # expect.statusCode is required. The other expect fields are optional — omit one to skip
-  # that check. Structural checks (non-empty name/version/specId, desiredNodeSize >= 1) always
-  # run for statusCode 200.
+  # On-premise scenario fixtures for recommendation mode (and the recommendation phase of 'all' mode).
   scenarios:
     - file: testconf/scenarios/honeybee-k8s-refined-infra.json
       name: baseline
@@ -56,7 +60,7 @@ test:
       name: workers0
       execute: true
       expect:
-        statusCode: 400 # control-plane only: recommendation cannot be formed
+        statusCode: 400
 
     - file: testconf/scenarios/honeybee-k8s-workers1.json
       name: workers1
@@ -82,9 +86,6 @@ test:
         nodeGroupCount: 1
         totalNodeSize: 1
 
-    # Three distinct worker sizes (4/8, 8/16, 16/64). The two smaller ones consolidate — the
-    # 4 vCPU worker sits at exactly 50% of the 8 vCPU spec — while 16/64 stays apart, since a
-    # 4 vCPU worker would only use 25% of it.
     - file: testconf/scenarios/honeybee-k8s-3groups.json
       name: three-groups
       execute: true
@@ -101,9 +102,6 @@ test:
         nodeGroupCount: 2
         totalNodeSize: 2
 
-    # Two source sizes that provably resolve to one target spec: both sit at or below the
-    # minimum viable worker (2 vCPU / 4 GiB), so both searches run with identical clamped
-    # bounds. Grouping on the source signature produced two node groups here.
     - file: testconf/scenarios/honeybee-k8s-converge.json
       name: converge-on-target-spec
       execute: true
@@ -112,17 +110,11 @@ test:
         nodeGroupCount: 1
         totalNodeSize: 2
 
-    # Workers as honeybee reports them when it discovers nodes through the Kubernetes API:
-    # cpus/cores are 0 and the total CPU count lands in threads. Same memory, different CPU
-    # count, so these must stay apart — the old key computed cpus*threads and collapsed both
-    # to one group sized from whichever worker came first.
     - file: testconf/scenarios/honeybee-k8s-k8sapi-cpus0.json
       name: k8s-api-collected-cpus0
       execute: true
       expect:
         statusCode: 200
-        # Consolidated: 4 vCPU is 50% of the 8 vCPU spec and the memory matches exactly.
-        # The workers still resolve to different specs first — that part is unchanged.
         nodeGroupCount: 1
         totalNodeSize: 2
 
@@ -174,7 +166,7 @@ test:
       name: version-1.99-fallback
       execute: true
       expect:
-        statusCode: 200 # non-existent upstream version must fall back to the latest available
+        statusCode: 200
 
     - file: testconf/scenarios/honeybee-k8s-norole.json
       name: no-worker-role
@@ -182,13 +174,11 @@ test:
       expect:
         statusCode: 400
 
-    # Negative fixtures: cm-honeybee payloads captured before /infra/refined. Feeding these
-    # directly is a realistic user mistake, and the API must reject them cleanly.
     - file: testconf/scenarios/negative/honeybee-k8s-raw-source-group.json
       name: neg-raw-source-group
       execute: true
       expect:
-        statusCode: 400 # top-level JSON array: request binding fails
+        statusCode: 400
 
     - file: testconf/scenarios/negative/honeybee-k8s-raw-connection-info.json
       name: neg-raw-connection-info
@@ -204,4 +194,37 @@ test:
 
 beetle:
   endpoint: http://localhost:8056
+  namespaceId: mig01
   authConfigFile: testconf/auth-config.json
+  requestBodyFile: testconf/recommendation-request.json
+  nameSeed: mig
+
+migration:
+  mode: async # async (default) or sync
+  timeoutSec: 2400
+
+poll:
+  intervalSec: 15
+  timeoutSec: 2400
+
+delete:
+  timeoutSec: 1800
+  retryIntervalSec: 10
+  maxRetries: 3
+
+verify:
+  residualResources: true
+
+workload:
+  enabled: true
+  kubeconfigTimeoutSec: 120
+  kubeconfigPollSec: 5
+  nodeReadyTimeoutSec: 600
+  nodePollSec: 10
+  podReadyTimeoutSec: 300
+  podPollSec: 5
+  loadBalancerEnabled: true
+  lbAddressTimeoutSec: 300
+  lbAccessTimeoutSec: 180
+  lbPollSec: 10
+
