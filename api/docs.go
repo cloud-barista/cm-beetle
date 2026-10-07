@@ -5471,6 +5471,106 @@ const docTemplate = `{
                 }
             }
         },
+        "/report/migration/ns/{nsId}/k8sCluster/{clusterId}": {
+            "post": {
+                "description": "Generate a comprehensive Kubernetes migration report comparing on-premise nodes with target cloud managed K8s, including worker node group consolidation, sizing rationales, version differences, cost summary, and recommendations in Markdown, HTML, or JSON format",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "text/markdown",
+                    "text/html"
+                ],
+                "tags": [
+                    "[Summary/Report] Infrastructure Analysis for Migration"
+                ],
+                "summary": "Generate K8s migration report (with worker consolidation \u0026 version analysis)",
+                "operationId": "GenerateK8sMigrationReport",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "example": "\"mig01\"",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "mig-k8s-cluster",
+                        "example": "\"mig-k8s-cluster\"",
+                        "description": "K8s Cluster ID",
+                        "name": "clusterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "md",
+                            "html",
+                            "json"
+                        ],
+                        "type": "string",
+                        "default": "md",
+                        "description": "Report format: md, html, or json",
+                        "name": "format",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "true",
+                            "false"
+                        ],
+                        "type": "string",
+                        "default": "false",
+                        "description": "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)",
+                        "name": "download",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Source infrastructure data from on-premise",
+                        "name": "onpremiseInfraModel",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.GenerateMigrationReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully generated K8s migration report (format varies by 'format' parameter)",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-report_K8sMigrationReport"
+                        },
+                        "headers": {
+                            "Content-Disposition": {
+                                "type": "string",
+                                "description": "inline; filename=\"k8s-migration-report.md\" or \"k8s-migration-report.html\" (or attachment when download=true)"
+                            },
+                            "Content-Type": {
+                                "type": "string",
+                                "description": "text/markdown; charset=utf-8 or text/html; charset=utf-8 or application/json"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during report generation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
         "/request/{reqId}": {
             "get": {
                 "description": "Retrieves the details of a specific API request tracked by Beetle.\n\n[Note]\n- Request tracking is managed independently by Beetle (not shared with Tumblebug).\n- The reqId corresponds to the X-Request-Id header value from a previous API call.\n- Do NOT call Tumblebug's /request/{reqId} API with this reqId; each system manages its own request tracking.\n\n[Status Values]\n- Handling: Request is currently being processed\n- Success: Request completed successfully\n- Error: Request failed with an error\n\n[Retry Information]\n- retry.retryable: Whether the failed request can be retried (present only for retriable errors)\n- retry.retryAfter: Suggested retry delay in seconds\n- retry.retryReason: Human-readable reason for retry requirement (e.g., \"Rate Limit Exceeded\")",
@@ -5816,6 +5916,101 @@ const docTemplate = `{
                             "Content-Disposition": {
                                 "type": "string",
                                 "description": "inline; filename=\"target-summary.md\" or \"target-summary.html\" (or attachment when download=true)"
+                            },
+                            "Content-Type": {
+                                "type": "string",
+                                "description": "text/markdown; charset=utf-8 or text/html; charset=utf-8"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during summary generation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/summary/target/ns/{nsId}/k8sCluster/{clusterId}": {
+            "get": {
+                "description": "Generate a comprehensive target K8s infrastructure summary in multiple formats based on 'format' query parameter:\n\n**Response Format by 'format' Parameter:**\n- ` + "`" + `format=md` + "`" + ` (default): Returns markdown string with Content-Type: text/markdown; charset=utf-8\n- ` + "`" + `format=html` + "`" + `: Returns HTML string with Content-Type: text/html; charset=utf-8\n- ` + "`" + `format=json` + "`" + `: Returns ApiResponse[TargetK8sInfraSummary] with Content-Type: application/json\n\n**Download Behavior:**\n- ` + "`" + `download=false` + "`" + ` (default): Content displayed inline (viewable in browser/Swagger UI)\n- ` + "`" + `download=true` + "`" + `: Content downloaded as file (Content-Disposition: attachment)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "text/markdown",
+                    "text/html"
+                ],
+                "tags": [
+                    "[Summary/Report] Infrastructure Analysis for Migration"
+                ],
+                "summary": "Generate target K8s infrastructure summary",
+                "operationId": "GenerateTargetK8sInfraSummary",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "mig-k8s-cluster",
+                        "description": "K8s Cluster ID",
+                        "name": "clusterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "md",
+                            "html",
+                            "json"
+                        ],
+                        "type": "string",
+                        "default": "md",
+                        "description": "Summary format: md, html, or json",
+                        "name": "format",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "true",
+                            "false"
+                        ],
+                        "type": "string",
+                        "default": "false",
+                        "description": "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)",
+                        "name": "download",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully generated target K8s infrastructure summary (format varies by 'format' parameter)",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-summary_TargetK8sInfraSummary"
+                        },
+                        "headers": {
+                            "Content-Disposition": {
+                                "type": "string",
+                                "description": "inline; filename=\"target-k8s-summary.md\" or \"target-k8s-summary.html\" (or attachment when download=true)"
                             },
                             "Content-Type": {
                                 "type": "string",
@@ -10856,6 +11051,34 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-report_K8sMigrationReport": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/report.K8sMigrationReport"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-storagemodel_IdList": {
             "type": "object",
             "properties": {
@@ -11056,6 +11279,34 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/summary.TargetInfraSummary"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-summary_TargetK8sInfraSummary": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/summary.TargetK8sInfraSummary"
                         }
                     ]
                 },
@@ -14532,6 +14783,393 @@ const docTemplate = `{
                 }
             }
         },
+        "report.ComponentCost": {
+            "type": "object",
+            "properties": {
+                "componentName": {
+                    "type": "string",
+                    "example": "cm-nfs (migrated)"
+                },
+                "costPercentage": {
+                    "type": "number",
+                    "example": 64.8
+                },
+                "monthlyCost": {
+                    "type": "number",
+                    "example": 247.68
+                },
+                "specName": {
+                    "type": "string",
+                    "example": "c5a.2xlarge"
+                }
+            }
+        },
+        "report.CostSummary": {
+            "type": "object",
+            "properties": {
+                "costByComponent": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/report.ComponentCost"
+                    }
+                },
+                "totalDailyCost": {
+                    "type": "number",
+                    "example": 12.75
+                },
+                "totalHourlyCost": {
+                    "type": "number",
+                    "example": 0.5312
+                },
+                "totalMonthlyCost": {
+                    "type": "number",
+                    "example": 382.46
+                },
+                "totalYearlyCost": {
+                    "type": "number",
+                    "example": 4589.52
+                }
+            }
+        },
+        "report.ExcludedWorkerItem": {
+            "type": "object",
+            "properties": {
+                "hostname": {
+                    "type": "string",
+                    "example": "k8s-master-01"
+                },
+                "reason": {
+                    "type": "string",
+                    "example": "Control-plane abstracted into CSP managed control plane"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "control-plane"
+                }
+            }
+        },
+        "report.K8sExecutiveSummary": {
+            "type": "object",
+            "properties": {
+                "migrationStatus": {
+                    "type": "string",
+                    "example": "Completed"
+                },
+                "monthlyCostUsd": {
+                    "type": "number",
+                    "example": 221.76
+                },
+                "sourceClusterName": {
+                    "type": "string",
+                    "example": "on-prem-k8s"
+                },
+                "sourceTotalNodes": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "sourceWorkerNodes": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "targetCloud": {
+                    "type": "string",
+                    "example": "AWS"
+                },
+                "targetClusterName": {
+                    "type": "string",
+                    "example": "mig-k8s-cluster"
+                },
+                "targetNodeGroupCount": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "targetRegion": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                },
+                "targetTotalNodes": {
+                    "type": "integer",
+                    "example": 2
+                }
+            }
+        },
+        "report.K8sMigrationReport": {
+            "type": "object",
+            "properties": {
+                "costSummary": {
+                    "$ref": "#/definitions/report.CostSummary"
+                },
+                "excludedWorkers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/report.ExcludedWorkerItem"
+                    }
+                },
+                "executiveSummary": {
+                    "$ref": "#/definitions/report.K8sExecutiveSummary"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/report.ReportMetadata"
+                },
+                "nodeGroupMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/report.WorkerNodeGroupMapping"
+                    }
+                },
+                "recommendations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/report.Recommendation"
+                    }
+                },
+                "resourceComparison": {
+                    "$ref": "#/definitions/report.K8sResourceComparison"
+                },
+                "sizingAnalysis": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/report.WorkerSizingItem"
+                    }
+                },
+                "sourceDetails": {
+                    "$ref": "#/definitions/summary.SourceInfraSummary"
+                },
+                "targetDetails": {
+                    "$ref": "#/definitions/summary.TargetK8sInfraSummary"
+                },
+                "versionAnalysis": {
+                    "$ref": "#/definitions/report.K8sVersionAnalysis"
+                }
+            }
+        },
+        "report.K8sResourceComparison": {
+            "type": "object",
+            "properties": {
+                "memoryGibDelta": {
+                    "$ref": "#/definitions/report.ResourceChange"
+                },
+                "storageGbDelta": {
+                    "$ref": "#/definitions/report.ResourceChange"
+                },
+                "vcpuDelta": {
+                    "$ref": "#/definitions/report.ResourceChange"
+                },
+                "workerCountDelta": {
+                    "$ref": "#/definitions/report.ResourceChange"
+                }
+            }
+        },
+        "report.K8sVersionAnalysis": {
+            "type": "object",
+            "properties": {
+                "notes": {
+                    "type": "string",
+                    "example": "Upgraded to target CSP supported minimum stable version"
+                },
+                "sourceVersion": {
+                    "type": "string",
+                    "example": "1.28.0"
+                },
+                "targetVersion": {
+                    "type": "string",
+                    "example": "1.34"
+                },
+                "upgradeStatus": {
+                    "type": "string",
+                    "example": "Upgraded (Compatible)"
+                }
+            }
+        },
+        "report.Recommendation": {
+            "type": "object",
+            "properties": {
+                "actionItems": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "category": {
+                    "type": "string",
+                    "example": "Cost Optimization"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Reserved Instances can save up to 35% (~$248/month)"
+                },
+                "priority": {
+                    "description": "High, Medium, Low",
+                    "type": "string",
+                    "example": "High"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Consider Reserved Instances"
+                }
+            }
+        },
+        "report.ReportMetadata": {
+            "type": "object",
+            "properties": {
+                "generatedAt": {
+                    "type": "string",
+                    "example": "2025-11-04T10:30:00Z"
+                },
+                "infraId": {
+                    "type": "string",
+                    "example": "infra01"
+                },
+                "migrationId": {
+                    "type": "string",
+                    "example": "mig01/mmci01"
+                },
+                "namespace": {
+                    "type": "string",
+                    "example": "mig01"
+                },
+                "reportVersion": {
+                    "type": "string",
+                    "example": "1.0"
+                }
+            }
+        },
+        "report.ResourceChange": {
+            "type": "object",
+            "properties": {
+                "changeRatio": {
+                    "description": "Multiplier or percentage",
+                    "type": "number",
+                    "example": 4
+                },
+                "changeType": {
+                    "description": "Upgrade, Downgrade, Same, Added, Removed",
+                    "type": "string",
+                    "example": "Upgrade"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "+6 cores (4x upgrade)"
+                },
+                "resourceType": {
+                    "type": "string",
+                    "example": "CPU"
+                },
+                "sourceValue": {
+                    "type": "string",
+                    "example": "2 cores"
+                },
+                "targetValue": {
+                    "type": "string",
+                    "example": "8 vCPU"
+                }
+            }
+        },
+        "report.SourceServerBrief": {
+            "type": "object",
+            "properties": {
+                "cpuModel": {
+                    "type": "string",
+                    "example": "Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz"
+                },
+                "cpuThreads": {
+                    "type": "integer",
+                    "example": 16
+                },
+                "cpus": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "diskGb": {
+                    "type": "integer",
+                    "example": 1093
+                },
+                "diskType": {
+                    "type": "string",
+                    "example": "HDD"
+                },
+                "firewallRules": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "hostname": {
+                    "type": "string",
+                    "example": "cm-nfs"
+                },
+                "machineId": {
+                    "type": "string",
+                    "example": "0036e4b9-c8b4-e811-906e-000ffee02d5c"
+                },
+                "memoryGb": {
+                    "type": "integer",
+                    "example": 16
+                },
+                "osName": {
+                    "type": "string",
+                    "example": "Ubuntu 22.04"
+                },
+                "primaryIp": {
+                    "type": "string",
+                    "example": "172.29.0.102"
+                }
+            }
+        },
+        "report.WorkerNodeGroupMapping": {
+            "type": "object",
+            "properties": {
+                "assignedWorkers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/report.SourceServerBrief"
+                    }
+                },
+                "nodeGroupName": {
+                    "type": "string",
+                    "example": "workers1"
+                },
+                "targetNodeCount": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "targetSpecId": {
+                    "type": "string",
+                    "example": "c5a.xlarge"
+                }
+            }
+        },
+        "report.WorkerSizingItem": {
+            "type": "object",
+            "properties": {
+                "sizingReason": {
+                    "type": "string",
+                    "example": "Upscaled to minimum viable K8s worker floor (2vCPU / 4GiB)"
+                },
+                "sourceMemoryGb": {
+                    "type": "number",
+                    "example": 2
+                },
+                "sourceVcpu": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "targetMemoryGb": {
+                    "type": "number",
+                    "example": 8
+                },
+                "targetSpecId": {
+                    "type": "string",
+                    "example": "c5a.xlarge"
+                },
+                "targetVcpu": {
+                    "type": "integer",
+                    "example": 4
+                },
+                "workerHostname": {
+                    "type": "string",
+                    "example": "k8s-worker-01"
+                }
+            }
+        },
         "resource.RestGetAllSecurityGroupResponse": {
             "type": "object",
             "properties": {
@@ -14997,6 +15635,23 @@ const docTemplate = `{
                 "versioningEnabled": {
                     "description": "Whether to enable versioning",
                     "type": "boolean"
+                }
+            }
+        },
+        "summary.K8sComputeOverview": {
+            "type": "object",
+            "properties": {
+                "totalMemoryGib": {
+                    "type": "number",
+                    "example": 32
+                },
+                "totalStorageGb": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "totalVcpus": {
+                    "type": "integer",
+                    "example": 16
                 }
             }
         },
@@ -15790,6 +16445,19 @@ const docTemplate = `{
                 }
             }
         },
+        "summary.SummaryK8sNodeInfo": {
+            "type": "object",
+            "properties": {
+                "cspResourceId": {
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "cspResourceName": {
+                    "type": "string",
+                    "example": "i-0abcd1234ef567890"
+                }
+            }
+        },
         "summary.SummaryNetworkResources": {
             "type": "object",
             "properties": {
@@ -15798,6 +16466,69 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/summary.SummaryVNetInfo"
                     }
+                }
+            }
+        },
+        "summary.SummaryNodeGroupInfo": {
+            "type": "object",
+            "properties": {
+                "desiredNodeSize": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "hourlyCostUsd": {
+                    "type": "number",
+                    "example": 0.308
+                },
+                "maxNodeSize": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "memoryGib": {
+                    "type": "number",
+                    "example": 8
+                },
+                "minNodeSize": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "monthlyCostUsd": {
+                    "type": "number",
+                    "example": 221.76
+                },
+                "name": {
+                    "type": "string",
+                    "example": "workers1"
+                },
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/summary.SummaryK8sNodeInfo"
+                    }
+                },
+                "onAutoScaling": {
+                    "type": "string",
+                    "example": "false"
+                },
+                "rootDiskSizeGb": {
+                    "type": "integer",
+                    "example": 50
+                },
+                "rootDiskType": {
+                    "type": "string",
+                    "example": "default"
+                },
+                "specId": {
+                    "type": "string",
+                    "example": "c5a.xlarge"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "Active"
+                },
+                "vcpu": {
+                    "type": "integer",
+                    "example": 4
                 }
             }
         },
@@ -16276,6 +17007,105 @@ const docTemplate = `{
                 },
                 "summaryMetadata": {
                     "$ref": "#/definitions/summary.TargetSummaryMetadata"
+                }
+            }
+        },
+        "summary.TargetK8sInfraOverview": {
+            "type": "object",
+            "properties": {
+                "activeNodeCount": {
+                    "type": "integer",
+                    "example": 4
+                },
+                "clusterName": {
+                    "type": "string",
+                    "example": "mig-k8s-cluster"
+                },
+                "connectionName": {
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
+                },
+                "cspClusterId": {
+                    "type": "string",
+                    "example": "arn:aws:eks:..."
+                },
+                "k8sVersion": {
+                    "type": "string",
+                    "example": "1.34"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "Active"
+                },
+                "targetCloud": {
+                    "type": "string",
+                    "example": "AWS"
+                },
+                "targetRegion": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                },
+                "totalNodeGroupCount": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "totalWorkerNodeCount": {
+                    "type": "integer",
+                    "example": 4
+                }
+            }
+        },
+        "summary.TargetK8sInfraSummary": {
+            "type": "object",
+            "properties": {
+                "computeOverview": {
+                    "$ref": "#/definitions/summary.K8sComputeOverview"
+                },
+                "costEstimation": {
+                    "$ref": "#/definitions/summary.SummaryCostEstimation"
+                },
+                "networkResources": {
+                    "$ref": "#/definitions/summary.SummaryNetworkResources"
+                },
+                "nodeGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/summary.SummaryNodeGroupInfo"
+                    }
+                },
+                "overview": {
+                    "$ref": "#/definitions/summary.TargetK8sInfraOverview"
+                },
+                "securityResources": {
+                    "$ref": "#/definitions/summary.SummarySecurityResources"
+                },
+                "summaryMetadata": {
+                    "$ref": "#/definitions/summary.TargetK8sSummaryMetadata"
+                }
+            }
+        },
+        "summary.TargetK8sSummaryMetadata": {
+            "type": "object",
+            "properties": {
+                "clusterId": {
+                    "type": "string",
+                    "example": "mig-k8s-cluster"
+                },
+                "clusterName": {
+                    "type": "string",
+                    "example": "mig-k8s-cluster"
+                },
+                "generatedAt": {
+                    "type": "string",
+                    "example": "2026-10-07T15:00:00Z"
+                },
+                "namespace": {
+                    "type": "string",
+                    "example": "mig01"
+                },
+                "summaryVersion": {
+                    "type": "string",
+                    "example": "1.0"
                 }
             }
         },

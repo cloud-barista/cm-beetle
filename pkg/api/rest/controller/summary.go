@@ -101,7 +101,7 @@ func GenerateTargetInfraSummary(c echo.Context) error {
 		log.Error().Err(err).Msg("failed to generate infrastructure summary")
 
 		// Map "not found" errors to 404
-		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") {
+		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") || strings.Contains(err.Error(), "not exist") || strings.Contains(err.Error(), "status: 404") {
 			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Infrastructure not found"))
 		}
 
@@ -146,6 +146,121 @@ func GenerateTargetInfraSummary(c echo.Context) error {
 
 	// Return JSON format (default)
 	return c.JSON(http.StatusOK, model.SuccessResponse(infraSum))
+}
+
+// GenerateTargetK8sInfraSummary godoc
+// @ID GenerateTargetK8sInfraSummary
+// @Summary Generate target K8s infrastructure summary
+// @Description Generate a comprehensive target K8s infrastructure summary in multiple formats based on 'format' query parameter:
+// @Description
+// @Description **Response Format by 'format' Parameter:**
+// @Description - `format=md` (default): Returns markdown string with Content-Type: text/markdown; charset=utf-8
+// @Description - `format=html`: Returns HTML string with Content-Type: text/html; charset=utf-8
+// @Description - `format=json`: Returns ApiResponse[TargetK8sInfraSummary] with Content-Type: application/json
+// @Description
+// @Description **Download Behavior:**
+// @Description - `download=false` (default): Content displayed inline (viewable in browser/Swagger UI)
+// @Description - `download=true`: Content downloaded as file (Content-Disposition: attachment)
+// @Tags [Summary/Report] Infrastructure Analysis for Migration
+// @Accept  json
+// @Produce  json
+// @Produce  text/markdown
+// @Produce  text/html
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param clusterId path string true "K8s Cluster ID" default(mig-k8s-cluster)
+// @Param format query string false "Summary format: md, html, or json" Enums(md,html,json) default(md)
+// @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Success 200 {object} model.ApiResponse[summary.TargetK8sInfraSummary] "Successfully generated target K8s infrastructure summary (format varies by 'format' parameter)"
+// @Header 200 {string} Content-Disposition "inline; filename="target-k8s-summary.md" or "target-k8s-summary.html" (or attachment when download=true)"
+// @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during summary generation"
+// @Router /summary/target/ns/{nsId}/k8sCluster/{clusterId} [get]
+func GenerateTargetK8sInfraSummary(c echo.Context) error {
+
+	// [Input]
+	nsId := c.Param("nsId")
+	if nsId == "" {
+		log.Warn().Msg("Namespace ID is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Namespace ID required"))
+	}
+
+	clusterId := c.Param("clusterId")
+	if clusterId == "" {
+		log.Warn().Msg("Cluster ID is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Cluster ID required"))
+	}
+
+	format := c.QueryParam("format")
+	if format == "" {
+		format = "md" // default format
+	}
+	if format != "json" && format != "md" && format != "html" {
+		log.Warn().Msgf("Invalid format: %s", format)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Format must be 'json', 'md', or 'html'"))
+	}
+
+	download := c.QueryParam("download")
+	if download == "" {
+		download = "false" // default: inline display
+	}
+	if download != "true" && download != "false" {
+		log.Warn().Msgf("Invalid download parameter: %s", download)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Download parameter must be 'true' or 'false'"))
+	}
+
+	// [Process]
+	log.Info().Msgf("Generating K8s infrastructure summary (nsId: %s, clusterId: %s, format: %s, download: %s)", nsId, clusterId, format, download)
+
+	// Generate target K8s infrastructure summary
+	k8sSummary, err := summary.GenerateTargetK8sInfraSummary(nsId, clusterId)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to generate K8s infrastructure summary")
+
+		// Map "not found" errors to 404
+		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") || strings.Contains(err.Error(), "not exist") || strings.Contains(err.Error(), "status: 404") {
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("K8s infrastructure not found"))
+		}
+
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Summary generation failed"))
+	}
+
+	// [Output]
+	if format == "md" || format == "html" {
+		// Generate markdown summary
+		markdownSummary := summary.GenerateMarkdownK8sInfraSummary(k8sSummary)
+
+		var content []byte
+		var contentType string
+		var fileExtension string
+
+		if format == "html" {
+			// Convert markdown to HTML
+			content = summary.ConvertMarkdownToHTML([]byte(markdownSummary))
+			contentType = "text/html; charset=utf-8"
+			fileExtension = "html"
+		} else {
+			// Return as markdown
+			content = []byte(markdownSummary)
+			contentType = "text/markdown; charset=utf-8"
+			fileExtension = "md"
+		}
+
+		filename := fmt.Sprintf("target-k8s-summary-%s-%s.%s", nsId, clusterId, fileExtension)
+		dispositionType := "inline"
+		if download == "true" {
+			dispositionType = "attachment"
+		}
+		disposition := dispositionType + "; filename=\"" + filename + "\""
+		c.Response().Header().Set(echo.HeaderContentDisposition, disposition)
+
+		// Return with proper Content-Type
+		return c.Blob(http.StatusOK, contentType, content)
+	}
+
+	// Return JSON format (default)
+	return c.JSON(http.StatusOK, model.SuccessResponse(k8sSummary))
 }
 
 // GenerateSourceInfraSummaryRequest represents the request body for source infrastructure summary

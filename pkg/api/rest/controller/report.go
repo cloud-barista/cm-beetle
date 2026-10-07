@@ -111,7 +111,7 @@ func GenerateMigrationReport(c echo.Context) error {
 		log.Error().Err(err).Msg("Failed to generate migration report")
 
 		// Map "not found" errors to 404
-		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") {
+		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") || strings.Contains(err.Error(), "not exist") || strings.Contains(err.Error(), "status: 404") {
 			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Infrastructure not found"))
 		}
 
@@ -152,3 +152,127 @@ func GenerateMigrationReport(c echo.Context) error {
 	// Return with proper Content-Type
 	return c.Blob(http.StatusOK, contentType, content)
 }
+
+// GenerateK8sMigrationReport godoc
+// @ID GenerateK8sMigrationReport
+// @Summary Generate K8s migration report (with worker consolidation & version analysis)
+// @Description Generate a comprehensive Kubernetes migration report comparing on-premise nodes with target cloud managed K8s, including worker node group consolidation, sizing rationales, version differences, cost summary, and recommendations in Markdown, HTML, or JSON format
+// @Tags [Summary/Report] Infrastructure Analysis for Migration
+// @Accept json
+// @Produce json
+// @Produce text/markdown
+// @Produce text/html
+// @Param nsId path string true "Namespace ID" example("mig01") default(mig01)
+// @Param clusterId path string true "K8s Cluster ID" example("mig-k8s-cluster") default(mig-k8s-cluster)
+// @Param format query string false "Report format: md, html, or json" Enums(md,html,json) default(md)
+// @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
+// @Param onpremiseInfraModel body controller.GenerateMigrationReportRequest true "Source infrastructure data from on-premise"
+// @Success 200 {object} model.ApiResponse[report.K8sMigrationReport] "Successfully generated K8s migration report (format varies by 'format' parameter)"
+// @Header 200 {string} Content-Disposition "inline; filename="k8s-migration-report.md" or "k8s-migration-report.html" (or attachment when download=true)"
+// @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8 or application/json"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during report generation"
+// @Router /report/migration/ns/{nsId}/k8sCluster/{clusterId} [post]
+func GenerateK8sMigrationReport(c echo.Context) error {
+	// Extract path parameters
+	nsId := c.Param("nsId")
+	if nsId == "" {
+		log.Warn().Msg("nsId is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Namespace ID required"))
+	}
+
+	clusterId := c.Param("clusterId")
+	if clusterId == "" {
+		log.Warn().Msg("clusterId is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Cluster ID required"))
+	}
+
+	// Extract query parameters
+	format := c.QueryParam("format")
+	if format == "" {
+		format = "md" // default format
+	}
+	if format != "md" && format != "html" && format != "json" {
+		log.Warn().Msgf("Invalid format: %s", format)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Format must be 'md', 'html', or 'json'"))
+	}
+
+	download := c.QueryParam("download")
+	if download == "" {
+		download = "false" // default: inline display
+	}
+	if download != "true" && download != "false" {
+		log.Warn().Msgf("Invalid download parameter: %s", download)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Download must be 'true' or 'false'"))
+	}
+
+	// Parse request body
+	var req GenerateMigrationReportRequest
+	if err := c.Bind(&req); err != nil {
+		log.Error().Err(err).Msg("Failed to bind request body")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
+	}
+
+	// Validate source infrastructure
+	if len(req.OnpremiseInfraModel.Nodes) == 0 {
+		log.Warn().Msg("Source infrastructure must contain at least one node")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one source node required"))
+	}
+
+	// Generate K8s migration report
+	log.Info().
+		Str("nsId", nsId).
+		Str("clusterId", clusterId).
+		Int("sourceNodes", len(req.OnpremiseInfraModel.Nodes)).
+		Str("format", format).
+		Str("download", download).
+		Msg("Generating K8s migration report")
+
+	k8sReport, err := report.GenerateK8sMigrationReport(nsId, clusterId, req.OnpremiseInfraModel)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to generate K8s migration report")
+
+		// Map "not found" errors to 404
+		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") || strings.Contains(err.Error(), "not exist") || strings.Contains(err.Error(), "status: 404") {
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("K8s infrastructure not found"))
+		}
+
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Report generation failed"))
+	}
+
+	// [Output]
+	if format == "json" {
+		return c.JSON(http.StatusOK, model.SuccessResponse(k8sReport))
+	}
+
+	// Generate markdown report
+	markdownReport := report.GenerateK8sMigrationReportMarkdown(k8sReport)
+
+	var content []byte
+	var contentType string
+	var fileExtension string
+
+	if format == "html" {
+		// Convert markdown to HTML
+		content = summary.ConvertMarkdownToHTML([]byte(markdownReport))
+		contentType = "text/html; charset=utf-8"
+		fileExtension = "html"
+	} else {
+		// Return as markdown (default)
+		content = []byte(markdownReport)
+		contentType = "text/markdown; charset=utf-8"
+		fileExtension = "md"
+	}
+
+	filename := fmt.Sprintf("k8s-migration-report-%s-%s.%s", nsId, clusterId, fileExtension)
+	dispositionType := "inline"
+	if download == "true" {
+		dispositionType = "attachment"
+	}
+	disposition := dispositionType + "; filename=\"" + filename + "\""
+	c.Response().Header().Set(echo.HeaderContentDisposition, disposition)
+
+	// Return with proper Content-Type
+	return c.Blob(http.StatusOK, contentType, content)
+}
+

@@ -3624,6 +3624,25 @@ definitions:
         example: true
         type: boolean
     type: object
+  model.ApiResponse-report_K8sMigrationReport:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/report.K8sMigrationReport'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
   model.ApiResponse-storagemodel_IdList:
     properties:
       data:
@@ -3761,6 +3780,25 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/summary.TargetInfraSummary'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-summary_TargetK8sInfraSummary:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/summary.TargetK8sInfraSummary'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -6289,6 +6327,281 @@ definitions:
         example: true
         type: boolean
     type: object
+  report.ComponentCost:
+    properties:
+      componentName:
+        example: cm-nfs (migrated)
+        type: string
+      costPercentage:
+        example: 64.8
+        type: number
+      monthlyCost:
+        example: 247.68
+        type: number
+      specName:
+        example: c5a.2xlarge
+        type: string
+    type: object
+  report.CostSummary:
+    properties:
+      costByComponent:
+        items:
+          $ref: '#/definitions/report.ComponentCost'
+        type: array
+      totalDailyCost:
+        example: 12.75
+        type: number
+      totalHourlyCost:
+        example: 0.5312
+        type: number
+      totalMonthlyCost:
+        example: 382.46
+        type: number
+      totalYearlyCost:
+        example: 4589.52
+        type: number
+    type: object
+  report.ExcludedWorkerItem:
+    properties:
+      hostname:
+        example: k8s-master-01
+        type: string
+      reason:
+        example: Control-plane abstracted into CSP managed control plane
+        type: string
+      role:
+        example: control-plane
+        type: string
+    type: object
+  report.K8sExecutiveSummary:
+    properties:
+      migrationStatus:
+        example: Completed
+        type: string
+      monthlyCostUsd:
+        example: 221.76
+        type: number
+      sourceClusterName:
+        example: on-prem-k8s
+        type: string
+      sourceTotalNodes:
+        example: 3
+        type: integer
+      sourceWorkerNodes:
+        example: 2
+        type: integer
+      targetCloud:
+        example: AWS
+        type: string
+      targetClusterName:
+        example: mig-k8s-cluster
+        type: string
+      targetNodeGroupCount:
+        example: 1
+        type: integer
+      targetRegion:
+        example: ap-northeast-2
+        type: string
+      targetTotalNodes:
+        example: 2
+        type: integer
+    type: object
+  report.K8sMigrationReport:
+    properties:
+      costSummary:
+        $ref: '#/definitions/report.CostSummary'
+      excludedWorkers:
+        items:
+          $ref: '#/definitions/report.ExcludedWorkerItem'
+        type: array
+      executiveSummary:
+        $ref: '#/definitions/report.K8sExecutiveSummary'
+      metadata:
+        $ref: '#/definitions/report.ReportMetadata'
+      nodeGroupMappings:
+        items:
+          $ref: '#/definitions/report.WorkerNodeGroupMapping'
+        type: array
+      recommendations:
+        items:
+          $ref: '#/definitions/report.Recommendation'
+        type: array
+      resourceComparison:
+        $ref: '#/definitions/report.K8sResourceComparison'
+      sizingAnalysis:
+        items:
+          $ref: '#/definitions/report.WorkerSizingItem'
+        type: array
+      sourceDetails:
+        $ref: '#/definitions/summary.SourceInfraSummary'
+      targetDetails:
+        $ref: '#/definitions/summary.TargetK8sInfraSummary'
+      versionAnalysis:
+        $ref: '#/definitions/report.K8sVersionAnalysis'
+    type: object
+  report.K8sResourceComparison:
+    properties:
+      memoryGibDelta:
+        $ref: '#/definitions/report.ResourceChange'
+      storageGbDelta:
+        $ref: '#/definitions/report.ResourceChange'
+      vcpuDelta:
+        $ref: '#/definitions/report.ResourceChange'
+      workerCountDelta:
+        $ref: '#/definitions/report.ResourceChange'
+    type: object
+  report.K8sVersionAnalysis:
+    properties:
+      notes:
+        example: Upgraded to target CSP supported minimum stable version
+        type: string
+      sourceVersion:
+        example: 1.28.0
+        type: string
+      targetVersion:
+        example: "1.34"
+        type: string
+      upgradeStatus:
+        example: Upgraded (Compatible)
+        type: string
+    type: object
+  report.Recommendation:
+    properties:
+      actionItems:
+        items:
+          type: string
+        type: array
+      category:
+        example: Cost Optimization
+        type: string
+      description:
+        example: Reserved Instances can save up to 35% (~$248/month)
+        type: string
+      priority:
+        description: High, Medium, Low
+        example: High
+        type: string
+      title:
+        example: Consider Reserved Instances
+        type: string
+    type: object
+  report.ReportMetadata:
+    properties:
+      generatedAt:
+        example: "2025-11-04T10:30:00Z"
+        type: string
+      infraId:
+        example: infra01
+        type: string
+      migrationId:
+        example: mig01/mmci01
+        type: string
+      namespace:
+        example: mig01
+        type: string
+      reportVersion:
+        example: "1.0"
+        type: string
+    type: object
+  report.ResourceChange:
+    properties:
+      changeRatio:
+        description: Multiplier or percentage
+        example: 4
+        type: number
+      changeType:
+        description: Upgrade, Downgrade, Same, Added, Removed
+        example: Upgrade
+        type: string
+      description:
+        example: +6 cores (4x upgrade)
+        type: string
+      resourceType:
+        example: CPU
+        type: string
+      sourceValue:
+        example: 2 cores
+        type: string
+      targetValue:
+        example: 8 vCPU
+        type: string
+    type: object
+  report.SourceServerBrief:
+    properties:
+      cpuModel:
+        example: Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz
+        type: string
+      cpuThreads:
+        example: 16
+        type: integer
+      cpus:
+        example: 1
+        type: integer
+      diskGb:
+        example: 1093
+        type: integer
+      diskType:
+        example: HDD
+        type: string
+      firewallRules:
+        example: 3
+        type: integer
+      hostname:
+        example: cm-nfs
+        type: string
+      machineId:
+        example: 0036e4b9-c8b4-e811-906e-000ffee02d5c
+        type: string
+      memoryGb:
+        example: 16
+        type: integer
+      osName:
+        example: Ubuntu 22.04
+        type: string
+      primaryIp:
+        example: 172.29.0.102
+        type: string
+    type: object
+  report.WorkerNodeGroupMapping:
+    properties:
+      assignedWorkers:
+        items:
+          $ref: '#/definitions/report.SourceServerBrief'
+        type: array
+      nodeGroupName:
+        example: workers1
+        type: string
+      targetNodeCount:
+        example: 2
+        type: integer
+      targetSpecId:
+        example: c5a.xlarge
+        type: string
+    type: object
+  report.WorkerSizingItem:
+    properties:
+      sizingReason:
+        example: Upscaled to minimum viable K8s worker floor (2vCPU / 4GiB)
+        type: string
+      sourceMemoryGb:
+        example: 2
+        type: number
+      sourceVcpu:
+        example: 1
+        type: integer
+      targetMemoryGb:
+        example: 8
+        type: number
+      targetSpecId:
+        example: c5a.xlarge
+        type: string
+      targetVcpu:
+        example: 4
+        type: integer
+      workerHostname:
+        example: k8s-worker-01
+        type: string
+    type: object
   resource.RestGetAllSecurityGroupResponse:
     properties:
       securityGroup:
@@ -6613,6 +6926,18 @@ definitions:
       versioningEnabled:
         description: Whether to enable versioning
         type: boolean
+    type: object
+  summary.K8sComputeOverview:
+    properties:
+      totalMemoryGib:
+        example: 32
+        type: number
+      totalStorageGb:
+        example: 200
+        type: integer
+      totalVcpus:
+        example: 16
+        type: integer
     type: object
   summary.SourceCPUInfo:
     properties:
@@ -7175,12 +7500,67 @@ definitions:
         example: 3
         type: integer
     type: object
+  summary.SummaryK8sNodeInfo:
+    properties:
+      cspResourceId:
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        example: i-0abcd1234ef567890
+        type: string
+    type: object
   summary.SummaryNetworkResources:
     properties:
       vnets:
         items:
           $ref: '#/definitions/summary.SummaryVNetInfo'
         type: array
+    type: object
+  summary.SummaryNodeGroupInfo:
+    properties:
+      desiredNodeSize:
+        example: 2
+        type: integer
+      hourlyCostUsd:
+        example: 0.308
+        type: number
+      maxNodeSize:
+        example: 0
+        type: integer
+      memoryGib:
+        example: 8
+        type: number
+      minNodeSize:
+        example: 0
+        type: integer
+      monthlyCostUsd:
+        example: 221.76
+        type: number
+      name:
+        example: workers1
+        type: string
+      nodes:
+        items:
+          $ref: '#/definitions/summary.SummaryK8sNodeInfo'
+        type: array
+      onAutoScaling:
+        example: "false"
+        type: string
+      rootDiskSizeGb:
+        example: 50
+        type: integer
+      rootDiskType:
+        example: default
+        type: string
+      specId:
+        example: c5a.xlarge
+        type: string
+      status:
+        example: Active
+        type: string
+      vcpu:
+        example: 4
+        type: integer
     type: object
   summary.SummarySecurityGroupInfo:
     properties:
@@ -7526,6 +7906,76 @@ definitions:
         $ref: '#/definitions/summary.SummarySecurityResources'
       summaryMetadata:
         $ref: '#/definitions/summary.TargetSummaryMetadata'
+    type: object
+  summary.TargetK8sInfraOverview:
+    properties:
+      activeNodeCount:
+        example: 4
+        type: integer
+      clusterName:
+        example: mig-k8s-cluster
+        type: string
+      connectionName:
+        example: aws-ap-northeast-2
+        type: string
+      cspClusterId:
+        example: arn:aws:eks:...
+        type: string
+      k8sVersion:
+        example: "1.34"
+        type: string
+      status:
+        example: Active
+        type: string
+      targetCloud:
+        example: AWS
+        type: string
+      targetRegion:
+        example: ap-northeast-2
+        type: string
+      totalNodeGroupCount:
+        example: 2
+        type: integer
+      totalWorkerNodeCount:
+        example: 4
+        type: integer
+    type: object
+  summary.TargetK8sInfraSummary:
+    properties:
+      computeOverview:
+        $ref: '#/definitions/summary.K8sComputeOverview'
+      costEstimation:
+        $ref: '#/definitions/summary.SummaryCostEstimation'
+      networkResources:
+        $ref: '#/definitions/summary.SummaryNetworkResources'
+      nodeGroupList:
+        items:
+          $ref: '#/definitions/summary.SummaryNodeGroupInfo'
+        type: array
+      overview:
+        $ref: '#/definitions/summary.TargetK8sInfraOverview'
+      securityResources:
+        $ref: '#/definitions/summary.SummarySecurityResources'
+      summaryMetadata:
+        $ref: '#/definitions/summary.TargetK8sSummaryMetadata'
+    type: object
+  summary.TargetK8sSummaryMetadata:
+    properties:
+      clusterId:
+        example: mig-k8s-cluster
+        type: string
+      clusterName:
+        example: mig-k8s-cluster
+        type: string
+      generatedAt:
+        example: "2026-10-07T15:00:00Z"
+        type: string
+      namespace:
+        example: mig01
+        type: string
+      summaryVersion:
+        example: "1.0"
+        type: string
     type: object
   summary.TargetSummaryMetadata:
     properties:
@@ -12162,6 +12612,85 @@ paths:
       summary: Generate migration report (with source-target correlation analysis)
       tags:
       - '[Summary/Report] Infrastructure Analysis for Migration'
+  /report/migration/ns/{nsId}/k8sCluster/{clusterId}:
+    post:
+      consumes:
+      - application/json
+      description: Generate a comprehensive Kubernetes migration report comparing
+        on-premise nodes with target cloud managed K8s, including worker node group
+        consolidation, sizing rationales, version differences, cost summary, and recommendations
+        in Markdown, HTML, or JSON format
+      operationId: GenerateK8sMigrationReport
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        example: '"mig01"'
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - default: mig-k8s-cluster
+        description: K8s Cluster ID
+        example: '"mig-k8s-cluster"'
+        in: path
+        name: clusterId
+        required: true
+        type: string
+      - default: md
+        description: 'Report format: md, html, or json'
+        enum:
+        - md
+        - html
+        - json
+        in: query
+        name: format
+        type: string
+      - default: "false"
+        description: 'Download as file: true for file download, false for inline display
+          (only affects browsers/Swagger UI, not curl)'
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: download
+        type: string
+      - description: Source infrastructure data from on-premise
+        in: body
+        name: onpremiseInfraModel
+        required: true
+        schema:
+          $ref: '#/definitions/controller.GenerateMigrationReportRequest'
+      produces:
+      - application/json
+      - text/markdown
+      - text/html
+      responses:
+        "200":
+          description: Successfully generated K8s migration report (format varies
+            by 'format' parameter)
+          headers:
+            Content-Disposition:
+              description: inline; filename="k8s-migration-report.md" or "k8s-migration-report.html"
+                (or attachment when download=true)
+              type: string
+            Content-Type:
+              description: text/markdown; charset=utf-8 or text/html; charset=utf-8
+                or application/json
+              type: string
+          schema:
+            $ref: '#/definitions/model.ApiResponse-report_K8sMigrationReport'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error during report generation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Generate K8s migration report (with worker consolidation & version
+        analysis)
+      tags:
+      - '[Summary/Report] Infrastructure Analysis for Migration'
   /request/{reqId}:
     delete:
       consumes:
@@ -12493,6 +13022,87 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Generate target infrastructure summary
+      tags:
+      - '[Summary/Report] Infrastructure Analysis for Migration'
+  /summary/target/ns/{nsId}/k8sCluster/{clusterId}:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Generate a comprehensive target K8s infrastructure summary in multiple formats based on 'format' query parameter:
+
+        **Response Format by 'format' Parameter:**
+        - `format=md` (default): Returns markdown string with Content-Type: text/markdown; charset=utf-8
+        - `format=html`: Returns HTML string with Content-Type: text/html; charset=utf-8
+        - `format=json`: Returns ApiResponse[TargetK8sInfraSummary] with Content-Type: application/json
+
+        **Download Behavior:**
+        - `download=false` (default): Content displayed inline (viewable in browser/Swagger UI)
+        - `download=true`: Content downloaded as file (Content-Disposition: attachment)
+      operationId: GenerateTargetK8sInfraSummary
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - default: mig-k8s-cluster
+        description: K8s Cluster ID
+        in: path
+        name: clusterId
+        required: true
+        type: string
+      - default: md
+        description: 'Summary format: md, html, or json'
+        enum:
+        - md
+        - html
+        - json
+        in: query
+        name: format
+        type: string
+      - default: "false"
+        description: 'Download as file: true for file download, false for inline display
+          (only affects browsers/Swagger UI, not curl)'
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: download
+        type: string
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      - text/markdown
+      - text/html
+      responses:
+        "200":
+          description: Successfully generated target K8s infrastructure summary (format
+            varies by 'format' parameter)
+          headers:
+            Content-Disposition:
+              description: inline; filename="target-k8s-summary.md" or "target-k8s-summary.html"
+                (or attachment when download=true)
+              type: string
+            Content-Type:
+              description: text/markdown; charset=utf-8 or text/html; charset=utf-8
+              type: string
+          schema:
+            $ref: '#/definitions/model.ApiResponse-summary_TargetK8sInfraSummary'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error during summary generation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Generate target K8s infrastructure summary
       tags:
       - '[Summary/Report] Infrastructure Analysis for Migration'
   /test/auth:
