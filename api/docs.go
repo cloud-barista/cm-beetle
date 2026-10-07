@@ -8848,6 +8848,9 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "lineage": {
+                    "$ref": "#/definitions/lineage.MigrationLineage"
+                },
                 "status": {
                     "type": "string"
                 },
@@ -9532,6 +9535,9 @@ const docTemplate = `{
                 "desiredCspAndRegionPair": {
                     "$ref": "#/definitions/cloudmodel.CloudProperty"
                 },
+                "lineage": {
+                    "$ref": "#/definitions/lineage.MigrationLineage"
+                },
                 "onpremiseInfraModel": {
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 }
@@ -9542,6 +9548,9 @@ const docTemplate = `{
             "properties": {
                 "desiredCspAndRegionPair": {
                     "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "lineage": {
+                    "$ref": "#/definitions/lineage.MigrationLineage"
                 },
                 "onpremiseInfraModel": {
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
@@ -9578,6 +9587,9 @@ const docTemplate = `{
                 "desiredRegion": {
                     "description": "Target region (e.g., \"ap-northeast-2\")",
                     "type": "string"
+                },
+                "lineage": {
+                    "$ref": "#/definitions/lineage.MigrationLineage"
                 },
                 "sourceInfra": {
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
@@ -9913,6 +9925,27 @@ const docTemplate = `{
                 },
                 "targetVNet": {
                     "$ref": "#/definitions/cloudmodel.VNetReq"
+                }
+            }
+        },
+        "lineage.MigrationLineage": {
+            "type": "object",
+            "properties": {
+                "planningModelId": {
+                    "type": "string",
+                    "example": "plan-mdl-101"
+                },
+                "sourceGroupId": {
+                    "type": "string",
+                    "example": "sg-ecommerce-prod"
+                },
+                "sourceModelId": {
+                    "type": "string",
+                    "example": "src-mdl-101"
+                },
+                "targetModelId": {
+                    "type": "string",
+                    "example": "tgt-mdl-201"
                 }
             }
         },
@@ -16084,13 +16117,13 @@ const docTemplate = `{
                     "$ref": "#/definitions/summary.SummaryVmImageInfo"
                 },
                 "label": {
-                    "description": "Label carries the node's labels as set at NodeGroup creation time, e.g.\n{\"sourceMachineIds\": \"\u003cid1\u003e,\u003cid2\u003e,...\"} recording which source machine(s)\nthis VM's NodeGroup was recommended from. For an NLB backend NodeGroup\n(NodeGroupSize \u003e 1) this same label is shared verbatim by every VM in the\ngroup, so resolving the single machine ID for one specific VM additionally\nrequires its 1-based index within the group (see the VM name's trailing\n\"-N\" suffix, which CB-Tumblebug assigns in the same order as this list).",
+                    "description": "Label carries the node's labels as set at NodeGroup creation time, e.g.\n{\"cm-source-machine-ids\": \"\u003cid1\u003e,\u003cid2\u003e,...\"} recording which source machine(s)\nthis VM's NodeGroup was recommended from. For an NLB backend NodeGroup\n(NodeGroupSize \u003e 1) this same label is shared verbatim by every VM in the\ngroup, so resolving the single machine ID for one specific VM additionally\nrequires its 1-based index within the group (see the VM name's trailing\n\"-N\" suffix, which CB-Tumblebug assigns in the same order as this list).",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     },
                     "example": {
-                        "{\"sourceMachineIds\"": "\"0036e4b9-c8b4-e811-906e-000ffee02d5c\"}"
+                        "{\"cm-source-machine-ids\"": "\"0036e4b9-c8b4-e811-906e-000ffee02d5c\"}"
                     }
                 },
                 "misc": {

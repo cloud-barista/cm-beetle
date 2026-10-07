@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/rs/zerolog/log"
 )
@@ -274,7 +275,7 @@ func RecommendCompositeInfraCandidates(
 				RootDiskSize:     rootDiskSize,
 				NodeGroupSize:    1,
 				Description:      fmt.Sprintf("Standalone VM %02d for %s", i+1, node.MachineId),
-				Label:            map[string]string{"sourceMachineIds": node.MachineId},
+				Label:            map[string]string{lineage.LabelSourceMachineIds: node.MachineId},
 			},
 		})
 	}
@@ -501,7 +502,7 @@ func buildSingleConsolidatedBlueprint(
 			RootDiskSize:     rootDiskSize,
 			NodeGroupSize:    len(machineIds),
 			Description:      fmt.Sprintf("Consolidated NodeGroup for NLB backend: %s", groupSuffix),
-			Label:            map[string]string{"sourceMachineIds": strings.Join(machineIds, ",")},
+			Label:            map[string]string{lineage.LabelSourceMachineIds: strings.Join(machineIds, ",")},
 		},
 	}
 

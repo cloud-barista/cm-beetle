@@ -10,6 +10,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/similarity"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 
 	"github.com/rs/zerolog/log"
@@ -553,7 +554,7 @@ func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmode
 			NodeUserPassword: "",                                                   // TBD
 			NodeGroupSize:    1,                                                    // TBD
 			Label: map[string]string{
-				"sourceMachineId": node.MachineId,
+				lineage.LabelSourceMachineIds: node.MachineId,
 			},
 		}
 
@@ -675,7 +676,7 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 			NodeUserPassword: "",                                                // TBD
 			NodeGroupSize:    1,                                                 // Default: 1
 			Label: map[string]string{
-				"sourceMachineId": node.MachineId,
+				lineage.LabelSourceMachineIds: node.MachineId,
 			},
 		}
 

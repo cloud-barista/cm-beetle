@@ -22,7 +22,7 @@ import (
 // TestBuildMigrationMappingsNlbGroup reproduces the 3-server sample used across
 // the test-cli reports: one solo node whose NodeGroup has its own machine ID
 // label, plus two NLB backend nodes sharing a single NodeGroup (and therefore
-// the same comma-separated "sourceMachineIds" label). All three must resolve
+// the same comma-separated "cm-source-machine-ids" label). All three must resolve
 // to a mapping — previously the two NLB-group members were silently dropped,
 // which is what caused the Cost Breakdown table to only show 1 of 3 VMs.
 func TestBuildMigrationMappingsNlbGroup(t *testing.T) {
@@ -37,7 +37,7 @@ func TestBuildMigrationMappingsNlbGroup(t *testing.T) {
 	}
 
 	nlbLabel := map[string]string{
-		"sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+		"cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
 	}
 	targetSummary := &summary.TargetInfraSummary{
 		ComputeResources: summary.SummaryComputeResources{
@@ -46,7 +46,7 @@ func TestBuildMigrationMappingsNlbGroup(t *testing.T) {
 					Name:   "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
 					Status: "Running",
 					Spec:   summary.SummaryVmSpecInfo{Name: "t3a.small", VCpus: 2, MemoryGiB: 2},
-					Label:  map[string]string{"sourceMachineIds": "ec268ed7-821e-9d73-e79f-961262161624"},
+					Label:  map[string]string{"cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"},
 				},
 				{
 					Name:   "my-ng-influxdb-back-1",

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/rs/zerolog/log"
 )
@@ -190,7 +191,7 @@ func RecommendGpuInfraCandidates(
 			NodeGroupSize:    1,
 			SecurityGroupIds: []string{recommendedSg.Name},
 			Label: map[string]string{
-				"sourceMachineId": node.MachineId,
+				lineage.LabelSourceMachineIds: node.MachineId,
 			},
 		}
 

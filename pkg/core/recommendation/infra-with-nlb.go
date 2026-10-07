@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/rs/zerolog/log"
 )
@@ -237,8 +238,8 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 				NodeGroupSize:    nodeGroupSize,
 				Description:      fmt.Sprintf("Recommended VM for NLB backend %s (%d nodes)", backendName, nodeGroupSize),
 				Label: map[string]string{
-					"sourceMachineIds": strings.Join(rnlb.memberMachineIds, ","),
-					"nlbBackend":       backendName,
+					lineage.LabelSourceMachineIds: strings.Join(rnlb.memberMachineIds, ","),
+					"nlbBackend":                     backendName,
 				},
 			},
 		})
@@ -283,7 +284,7 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 				RootDiskSize:     rootDiskSize,
 				NodeGroupSize:    1,
 				Description:      fmt.Sprintf("Recommended VM %02d for %s", i+1, node.MachineId),
-				Label:            map[string]string{"sourceMachineIds": node.MachineId},
+				Label:            map[string]string{lineage.LabelSourceMachineIds: node.MachineId},
 			},
 		})
 	}
