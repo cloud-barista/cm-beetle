@@ -11,10 +11,12 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -371,9 +373,10 @@ func runNginxWorkload(k8s *resty.Client, server string, cfg TestConfig, res *Ste
 				"metadata": map[string]interface{}{"labels": map[string]string{"app": nginxDeploymentName}},
 				"spec": map[string]interface{}{
 					"containers": []map[string]interface{}{{
-						"name":  "nginx",
-						"image": "nginx:stable-alpine",
-						"ports": []map[string]interface{}{{"containerPort": 80}},
+						"name":            "nginx",
+						"image":           "public.ecr.aws/nginx/nginx:alpine",
+						"imagePullPolicy": "IfNotPresent",
+						"ports":           []map[string]interface{}{{"containerPort": 80}},
 					}},
 				},
 			},
@@ -404,7 +407,15 @@ func runNginxWorkload(k8s *resty.Client, server string, cfg TestConfig, res *Ste
 			var pods struct {
 				Items []struct {
 					Status struct {
-						Phase string `json:"phase"`
+						Phase             string `json:"phase"`
+						ContainerStatuses []struct {
+							State struct {
+								Waiting *struct {
+									Reason  string `json:"reason"`
+									Message string `json:"message"`
+								} `json:"waiting"`
+							} `json:"state"`
+						} `json:"containerStatuses"`
 					} `json:"status"`
 				} `json:"items"`
 			}
@@ -416,7 +427,15 @@ func runNginxWorkload(k8s *resty.Client, server string, cfg TestConfig, res *Ste
 					}
 				}
 				if len(pods.Items) > 0 {
-					progressf(res.Target, "... nginx pod phase: %s (attempt %d)", pods.Items[0].Status.Phase, attempt)
+					p := pods.Items[0]
+					detail := p.Status.Phase
+					if len(p.Status.ContainerStatuses) > 0 && p.Status.ContainerStatuses[0].State.Waiting != nil {
+						w := p.Status.ContainerStatuses[0].State.Waiting
+						if w.Reason != "" {
+							detail = fmt.Sprintf("%s (%s)", p.Status.Phase, w.Reason)
+						}
+					}
+					progressf(res.Target, "... nginx pod phase: %s (attempt %d)", detail, attempt)
 				}
 			}
 		}
@@ -510,33 +529,66 @@ func waitForLoadBalancerAddress(k8s *resty.Client, server string, cfg TestConfig
 // load balancer is actually forwarding traffic — health checks must pass first, and an AWS
 // hostname additionally has to resolve — so the first attempts are expected to fail.
 func fetchThroughLoadBalancer(address string, cfg TestConfig, res *StepResult) error {
-	client := resty.New().SetTimeout(15 * time.Second).SetLogger(restyNoopLogger{})
-	url := "http://" + address + "/"
+	if net.ParseIP(address) == nil {
+		// Wait 3 minutes for cloud DNS and backend propagation when given a hostname.
+		progressf(res.Target, "... LoadBalancer hostname (%s) assigned; waiting 3m for cloud DNS and backend propagation", address)
+		time.Sleep(180 * time.Second)
+	}
 
+	client := resty.New().SetTimeout(15 * time.Second).SetLogger(restyNoopLogger{})
 	deadline := time.Now().Add(time.Duration(cfg.Workload.LbAccessTimeoutSec) * time.Second)
 	interval := time.Duration(cfg.Workload.LbPollSec) * time.Second
 	lastErr := "no attempt made"
 
 	for attempt := 1; ; attempt++ {
-		resp, err := client.R().Get(url)
+		target := resolveAddress(address)
+		req := client.R()
+		if target != address {
+			req.SetHeader("Host", address)
+		}
+		resp, err := req.Get("http://" + target + "/")
 		switch {
 		case err != nil:
 			lastErr = err.Error()
 		case resp.StatusCode() == http.StatusOK:
 			res.Notes = append(res.Notes,
-				fmt.Sprintf("✅ nginx served over the LoadBalancer at %s (attempt %d)", url, attempt))
+				fmt.Sprintf("✅ nginx served over the LoadBalancer at %s (attempt %d)", address, attempt))
 			return nil
 		default:
 			lastErr = fmt.Sprintf("HTTP %d", resp.StatusCode())
 		}
 
 		if time.Now().After(deadline) {
-			return fmt.Errorf("LoadBalancer at %s did not serve within %ds (last: %s)",
-				url, cfg.Workload.LbAccessTimeoutSec, lastErr)
+			return fmt.Errorf("LoadBalancer at http://%s/ did not serve within %ds (last: %s)",
+				address, cfg.Workload.LbAccessTimeoutSec, lastErr)
 		}
 		progressf(res.Target, "... LoadBalancer not serving yet: %s (attempt %d)", lastErr, attempt)
 		time.Sleep(interval)
 	}
+}
+
+// resolveAddress resolves hostnames to IPs with public DNS fallback to bypass local negative caches.
+func resolveAddress(address string) string {
+	if net.ParseIP(address) != nil {
+		return address
+	}
+	if addrs, err := net.LookupHost(address); err == nil && len(addrs) > 0 {
+		return addrs[0]
+	}
+	// Fall back to public DNS 8.8.8.8 to bypass local negative caching.
+	r := &net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, server string) (net.Conn, error) {
+			d := net.Dialer{Timeout: 3 * time.Second}
+			return d.DialContext(ctx, "udp", "8.8.8.8:53")
+		},
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if addrs, err := r.LookupHost(ctx, address); err == nil && len(addrs) > 0 {
+		return addrs[0]
+	}
+	return address
 }
 
 // deleteNginx removes the Service first, then the Deployment.
