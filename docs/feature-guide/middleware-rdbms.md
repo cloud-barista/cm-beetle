@@ -57,17 +57,17 @@ CM-Beetle Managed RDBMS supports multi-cloud database provisioning across 9 majo
 
 MySQL is verified and supported across all 9 CSPs:
 
-| CSP           | Service Brand                    | Supported Versions     |   Access Mode    | Subnet Requirement                              | Provisioning Characteristics                                            |
-| :------------ | :------------------------------- | :--------------------- | :--------------: | :---------------------------------------------- | :---------------------------------------------------------------------- |
-| **AWS**       | Amazon RDS for MySQL             | 8.4, 8.0, 5.7          | Public / Private | Multi-AZ Subnet Group (>= 2 subnets across AZs) | High availability and automated failover                                |
-| **Azure**     | Azure Database for MySQL         | 8.4, 8.0 (8.0.21), 5.7 | Public / Private | Single or Multi-Subnet                          | Flexible server architecture; supports 8.4 & 9.5                        |
-| **GCP**       | Google Cloud SQL for MySQL       | 8.4, 8.0, 5.7          | Public / Private | Authorized Networks / VPC Peering               | Highly performant storage scaling                                       |
-| **Alibaba**   | Alibaba Cloud ApsaraDB for MySQL | 8.4, 8.0, 5.7          | Public / Private | VNet Subnet Binding                             | Broad engine version choices                                            |
-| **Tencent**   | Tencent Cloud CDB for MySQL      | 8.4, 8.0, 5.7, 5.6     | Public / Private | Multi-AZ VPC Subnet Group                       | Fast regional provisioning                                              |
-| **IBM**       | IBM Cloud Databases for MySQL    | 8.4 (replaces 8.0)     | Public / Private | Resource Group / VPC bound                      | Asynchronous provisioning (~20-25m) with robust status polling          |
-| **NCP**       | NAVER Cloud DB for MySQL         | 8.4, 8.0               |   Private Only   | Single Subnet + Dedicated DB Port               | Private access enforced; verified via Internal Runner VM                |
-| **NHN**       | NHN Cloud RDS for MySQL          | 8.4, 8.0, 5.7          | Public / Private | Standard VPC Subnet                             | Inbound security group rules required                                   |
-| **OpenStack** | OpenStack Trove (MySQL)          | 5.7.29                 | Public / Private | Standard VPC Subnet / Floating IP               | Flexible private cloud deployment; verified external & internal SQL I/O |
+| CSP           | Service Brand                    | Supported Versions     |   Access Mode    | Subnet Requirement                              | Provisioning Characteristics                                              |
+| :------------ | :------------------------------- | :--------------------- | :--------------: | :---------------------------------------------- | :------------------------------------------------------------------------ |
+| **AWS**       | Amazon RDS for MySQL             | 8.4, 8.0, 5.7          | Public / Private | Multi-AZ Subnet Group (>= 2 subnets across AZs) | High availability and automated failover                                  |
+| **Azure**     | Azure Database for MySQL         | 8.4, 8.0 (8.0.21), 5.7 | Public / Private | Single or Multi-Subnet                          | Flexible server architecture; supports 8.4 & 9.5                          |
+| **GCP**       | Google Cloud SQL for MySQL       | 8.4, 8.0, 5.7          | Public / Private | Authorized Networks / VPC Peering               | Highly performant storage scaling                                         |
+| **Alibaba**   | Alibaba Cloud ApsaraDB for MySQL | 8.4, 8.0, 5.7          | Public / Private | VNet Subnet Binding                             | Broad engine version choices                                              |
+| **Tencent**   | Tencent Cloud CDB for MySQL      | 8.4, 8.0, 5.7, 5.6     | Public / Private | Multi-AZ VPC Subnet Group                       | Fast regional provisioning                                                |
+| **IBM**       | IBM Cloud Databases for MySQL    | 8.4 (replaces 8.0)     | Public / Private | Resource Group / VPC bound                      | `multitenant` (~9-10m) vs dedicated `b3c.*` (35-45+m) hosting models      |
+| **NCP**       | NAVER Cloud DB for MySQL         | 8.0 (8.0.36)           |   Private Only   | Single Subnet + Dedicated DB Port               | Private access enforced; verified via Internal Runner VM                  |
+| **NHN**       | NHN Cloud RDS for MySQL          | 8.4, 8.0, 5.7          | Public / Private | Standard VPC Subnet                             | Dedicated DB Security Group required (nhnDBSGToAllowAllInbound supported) |
+| **OpenStack** | OpenStack Trove (MySQL)          | 5.7.29                 | Public / Private | Standard VPC Subnet / Floating IP               | Flexible private cloud deployment; verified external & internal SQL I/O   |
 
 ### 2. MariaDB Support Matrix
 
@@ -308,18 +308,64 @@ Provisions the recommended Managed RDBMS instance in the specified namespace.
 
 Once the managed RDBMS is provisioned, logical tenant databases can be created, inspected, and deleted.
 
+> [!NOTE]
+> **Zero-Credential Security Policy**:
+> Neither CB-Tumblebug nor CM-Beetle persists or stores database administrator credentials.
+> All logical database management requests require callers to explicitly provide credentials via HTTP headers:
+>
+> - `X-Admin-User-Name`: Database master/administrator username
+> - `X-Admin-User-Password`: Database master/administrator password
+
 - **Create Database**: `POST /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database`
-  ```json
-  {
-    "databaseName": "customerdb"
-  }
-  ```
+  - **Headers**: `X-Admin-User-Name: <username>`, `X-Admin-User-Password: <password>`
+  - **Body**:
+    ```json
+    {
+      "databaseName": "customerdb"
+    }
+    ```
 - **List Databases**: `GET /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database`
+  - **Headers**: `X-Admin-User-Name: <username>`, `X-Admin-User-Password: <password>`
 - **Delete Database**: `DELETE /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{databaseName}`
+  - **Headers**: `X-Admin-User-Name: <username>`, `X-Admin-User-Password: <password>`
 
 ---
 
-#### 3.3 Delete Managed RDBMS
+#### 3.3 Secure Transport & Server CA Certificate Inspection
+
+Inspects live TLS/SSL enforcement status, active cipher suite, and server CA certificate from the cloud provider.
+
+- **Endpoint**: `GET /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/secure-transport`
+- **Headers**:
+  - `X-Admin-User-Name`: Database master/administrator username
+  - `X-Admin-User-Password`: Database master/administrator password
+- **Sample Response**:
+  ```json
+  {
+    "status": "SUCCESS",
+    "message": "Successfully retrieved secure transport info",
+    "data": {
+      "engine": "mysql",
+      "requireSecureTransport": "ON",
+      "enforced": true,
+      "rules": "REQUIRE SSL",
+      "tlsInUse": true,
+      "tlsCipher": "ECDHE-RSA-AES128-GCM-SHA256",
+      "caCertificate": {
+        "pem": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+        "subject": "CN=rds.amazonaws.com",
+        "issuer": "CN=Amazon Root CA 1",
+        "notAfter": "2027-10-08T00:00:00Z",
+        "isSelfSigned": false
+      },
+      "recommendedSSLMode": "VERIFY_IDENTITY"
+    }
+  }
+  ```
+
+---
+
+#### 3.4 Delete Managed RDBMS
 
 Terminates and removes the RDBMS instance.
 
@@ -334,7 +380,14 @@ Terminates and removes the RDBMS instance.
 1. **Pre-requisite Infrastructure Alignment**:
    - Always ensure pre-requisite Virtual Networks (`VNet`), `Subnets`, and `Security Groups` are provisioned prior to issuing the RDBMS migration request.
    - For AWS and Tencent, ensure at least **two subnets in different Availability Zones** are attached to satisfy CSP subnet group requirements.
-2. **Private Network Isolation (NCP & Enterprise Deployments)**:
+2. **Private Network Isolation & Access Control (NCP & Enterprise Deployments)**:
    - For CSPs like NAVER Cloud Platform (NCP) that enforce private database isolation, perform validation and connectivity tests using a temporary internal Runner VM provisioned within the same VNet.
-3. **Provisioning Timeouts**:
-   - Cloud database provisioning (especially IBM Cloud Databases and Azure Multi-AZ) typically takes between 10 to 25 minutes. Ensure client and proxy timeouts are configured with at least **35 minutes** to prevent client-side context cancellation while server-side provisioning completes.
+   - **NCP ACG Default Deny Policy**: NCP Cloud DB ACGs default to **0 inbound rules (Default Deny)**. Even internal traffic from a runner VM within the same VPC is blocked on port 3306 unless an inbound ACG rule is configured in NCP Console (`Database > Cloud DB for MySQL > ACG`) or `ncpDBACGToAllowAllInbound: true` is configured in the creation request (convenience option for test/dev only).
+3. **Provisioning Timeouts & Asynchronous Execution**:
+   - Cloud database provisioning typically takes 5 to 15 minutes across most CSPs.
+   - For **IBM Cloud Databases**:
+     - The **`multitenant`** hosting model provisions in approximately **9 to 10 minutes** and is recommended by default.
+     - Dedicated/encrypted host flavors (e.g., **`b3c.4x16.encrypted`**) take **35 to 45+ minutes** due to dedicated bare-metal/VPC hardware slice allocation and storage encryption.
+   - Ensure client and reverse-proxy timeouts are configured with at least **50 minutes** if calling synchronously with dedicated host flavors, or execute via the asynchronous API (`Prefer: respond-async`).
+4. **Storage Capacity Metric Standardization**:
+   - Storage size ranges and capabilities are standardized to 10-decimal Gigabytes (`storageSizeRangeGB`, $10^9$ bytes) per CB-Spider issue #1820. Validation and UI sliders should align with `storageSizeRangeGB` returned from capability APIs.

@@ -1399,7 +1399,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Provision and migrate managed RDBMS / RDS instances in target cloud based on recommendation results (supports AWS RDS, GCP Cloud SQL, Azure Database, NCP Cloud DB, NHN RDS, Alibaba ApsaraDB, TencentDB, IBM Databases)\n\n[Note]\n- This API provisions managed RDBMS instances in the target cloud within the specified namespace.\n- Input should be the output from the RecommendRDBMS API.\n- Connection name is automatically resolved from CSP and region in the request body.\n\n[Note] ` + "`" + `nameSeed` + "`" + ` enables dynamic naming via **Late Binding**.\n- If ` + "`" + `nameSeed` + "`" + ` query param is set (e.g., ` + "`" + `?nameSeed=my` + "`" + `), instance names are prefixed: ` + "`" + `my-rdbms-01` + "`" + `.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes): receive 202 Accepted with a reqId.",
+                "description": "Provision and migrate managed RDBMS / RDS instances in target cloud based on recommendation results (supports AWS RDS, GCP Cloud SQL, Azure Database, NCP Cloud DB, NHN RDS, Alibaba ApsaraDB, TencentDB, IBM Databases)\n\n[Note]\n- This API provisions managed RDBMS instances in the target cloud within the specified namespace.\n- Input should be the output from the RecommendRDBMS API.\n- Connection name is automatically resolved from CSP and region in the request body.\n\n[Note] ` + "`" + `nameSeed` + "`" + ` enables dynamic naming via **Late Binding**.\n- If ` + "`" + `nameSeed` + "`" + ` query param is set (e.g., ` + "`" + `?nameSeed=my` + "`" + `), instance names are prefixed: ` + "`" + `my-rdbms-01` + "`" + `.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes, or 35-45+ minutes for IBM dedicated flavors): receive 202 Accepted with a reqId.\n- IBM Cloud Databases hosting note: 'multitenant' shared model provisions in ~10 minutes, whereas Dedicated flavors ('b3c.*') take 35-45+ minutes. Ensure client/proxy timeouts are configured for \u003e= 50 minutes if calling synchronously with dedicated flavors.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1679,9 +1679,17 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Admin User Name",
+                        "name": "X-Admin-User-Name",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "Admin User Password",
                         "name": "X-Admin-User-Password",
-                        "in": "header"
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1732,6 +1740,20 @@ const docTemplate = `{
                         "description": "RDBMS Instance ID",
                         "name": "rdbmsId",
                         "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin User Name",
+                        "name": "X-Admin-User-Name",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin User Password",
+                        "name": "X-Admin-User-Password",
+                        "in": "header",
                         "required": true
                     },
                     {
@@ -1805,9 +1827,17 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Admin User Name",
+                        "name": "X-Admin-User-Name",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "Admin User Password",
                         "name": "X-Admin-User-Password",
-                        "in": "header"
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1815,6 +1845,73 @@ const docTemplate = `{
                         "description": "Successfully deleted logical database",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/secure-transport": {
+            "get": {
+                "description": "Retrieve live TLS enforcement status, active cipher, and server CA certificate via CB-Tumblebug and CB-Spider",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed RDBMS"
+                ],
+                "summary": "Get secure transport status and server CA certificate of an RDBMS instance",
+                "operationId": "GetRDBMSSecureTransport",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "RDBMS Instance ID",
+                        "name": "rdbmsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin User Name",
+                        "name": "X-Admin-User-Name",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin User Password",
+                        "name": "X-Admin-User-Password",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved secure transport info",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-rdbmsmodel_RDBMSSecureTransportInfo"
                         }
                     },
                     "400": {
@@ -4501,7 +4598,7 @@ const docTemplate = `{
         },
         "/recommendation/middleware/rdbms": {
             "post": {
-                "description": "Recommend optimal Managed RDBMS / RDS (MySQL, MariaDB) instance specs, engine versions, and storage configurations for target cloud migration (supports AWS RDS, GCP Cloud SQL, Azure Database, Alibaba ApsaraDB, TencentDB, IBM Databases, NCP Cloud DB, NHN RDS)\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can be set in the query parameter or the request body.\n- If set in the request body, the query parameter values will be overridden.\n\n[Note] The recommended instance names use default patterns (` + "`" + `mig-rdbms-01` + "`" + `, ` + "`" + `mig-rdbms-02` + "`" + `, ...).\n- To apply a naming prefix at migration time, use the ` + "`" + `nameSeed` + "`" + ` query parameter on the migration API.",
+                "description": "Recommend optimal Managed RDBMS / RDS (MySQL, MariaDB) instance specs, engine versions, and storage configurations for target cloud migration (supports AWS RDS, GCP Cloud SQL, Azure Database, Alibaba ApsaraDB, TencentDB, IBM Databases, NCP Cloud DB, NHN RDS)\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can be set in the query parameter or the request body.\n- If set in the request body, the query parameter values will be overridden.\n\n[Note] The recommended instance names use default patterns (` + "`" + `mig-rdbms-01` + "`" + `, ` + "`" + `mig-rdbms-02` + "`" + `, ...).\n- To apply a naming prefix at migration time, use the ` + "`" + `nameSeed` + "`" + ` query parameter on the migration API.\n- IBM Cloud Databases hosting note: defaults to 'multitenant' shared model for fast provisioning (~10 minutes). Dedicated host flavors ('b3c.*') take 35-45+ minutes.",
                 "consumes": [
                     "application/json"
                 ],
@@ -10828,6 +10925,34 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-rdbmsmodel_RDBMSSecureTransportInfo": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rdbmsmodel.RDBMSSecureTransportInfo"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-rdbmsmodel_RecommendedRDBMS": {
             "type": "object",
             "properties": {
@@ -13582,6 +13707,26 @@ const docTemplate = `{
                 }
             }
         },
+        "rdbmsmodel.RDBMSCACertificate": {
+            "type": "object",
+            "properties": {
+                "isSelfSigned": {
+                    "type": "boolean"
+                },
+                "issuer": {
+                    "type": "string"
+                },
+                "notAfter": {
+                    "type": "string"
+                },
+                "pem": {
+                    "type": "string"
+                },
+                "subject": {
+                    "type": "string"
+                }
+            }
+        },
         "rdbmsmodel.RDBMSCSPSupportInfo": {
             "type": "object",
             "properties": {
@@ -13700,6 +13845,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "rdbms-01"
                 },
+                "ncpDBACGToAllowAllInbound": {
+                    "type": "boolean",
+                    "example": false
+                },
                 "nhnDBSGToAllowAllInbound": {
                     "type": "boolean",
                     "example": false
@@ -13793,7 +13942,13 @@ const docTemplate = `{
                 "maxStorageSize": {
                     "type": "integer"
                 },
+                "maxStorageSizeGB": {
+                    "type": "integer"
+                },
                 "minStorageSize": {
+                    "type": "integer"
+                },
+                "minStorageSizeGB": {
                     "type": "integer"
                 },
                 "note": {
@@ -13810,14 +13965,9 @@ const docTemplate = `{
         "rdbmsmodel.RDBMSDatabaseCreateReq": {
             "type": "object",
             "required": [
-                "adminUserPassword",
                 "databaseName"
             ],
             "properties": {
-                "adminUserPassword": {
-                    "type": "string",
-                    "example": "Password123!"
-                },
                 "databaseName": {
                     "type": "string",
                     "example": "sampledb"
@@ -13858,10 +14008,6 @@ const docTemplate = `{
         "rdbmsmodel.RDBMSInfo": {
             "type": "object",
             "properties": {
-                "adminUserName": {
-                    "type": "string",
-                    "example": "admin"
-                },
                 "backupRetentionDays": {
                     "type": "integer",
                     "example": 7
@@ -13940,6 +14086,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "rdbms-01"
+                },
+                "ncpDBACGToAllowAllInbound": {
+                    "type": "boolean"
                 },
                 "nhnDBSGToAllowAllInbound": {
                     "type": "boolean"
@@ -14087,7 +14236,7 @@ const docTemplate = `{
                         "$ref": "#/definitions/rdbmsmodel.StaticFieldNote"
                     }
                 },
-                "storageSizeRange": {
+                "storageSizeRangeGB": {
                     "$ref": "#/definitions/rdbmsmodel.StorageSizeRange"
                 },
                 "storageTypeGuidance": {
@@ -14158,6 +14307,45 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/rdbmsmodel.StorageTypeNote"
                     }
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSSecureTransportInfo": {
+            "type": "object",
+            "properties": {
+                "caCertificate": {
+                    "$ref": "#/definitions/rdbmsmodel.RDBMSCACertificate"
+                },
+                "caCertificateError": {
+                    "type": "string"
+                },
+                "enforced": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "engine": {
+                    "type": "string",
+                    "example": "mysql"
+                },
+                "recommendedSSLMode": {
+                    "type": "string",
+                    "example": "VERIFY_IDENTITY"
+                },
+                "requireSecureTransport": {
+                    "type": "string",
+                    "example": "ON"
+                },
+                "rules": {
+                    "type": "string",
+                    "example": "REQUIRE SSL"
+                },
+                "tlsCipher": {
+                    "type": "string",
+                    "example": "ECDHE-RSA-AES128-GCM-SHA256"
+                },
+                "tlsInUse": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
@@ -14350,7 +14538,15 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 65536
                 },
+                "maxSizeGB": {
+                    "type": "integer",
+                    "example": 65536
+                },
                 "minSize": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "minSizeGB": {
                     "type": "integer",
                     "example": 100
                 },
@@ -14384,10 +14580,6 @@ const docTemplate = `{
                 "databaseName"
             ],
             "properties": {
-                "characterSet": {
-                    "type": "string",
-                    "example": "utf8mb4"
-                },
                 "databaseName": {
                     "type": "string",
                     "example": "order_db"
@@ -14448,6 +14640,10 @@ const docTemplate = `{
                 "iops": {
                     "type": "string",
                     "example": "3000"
+                },
+                "ncpDBACGToAllowAllInbound": {
+                    "type": "boolean",
+                    "example": false
                 },
                 "nhnDBSGToAllowAllInbound": {
                     "description": "CSP-Specific Options",
@@ -14519,6 +14715,10 @@ const docTemplate = `{
                     "example": 0
                 },
                 "highAvailability": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "ncpDBACGToAllowAllInbound": {
                     "type": "boolean",
                     "example": false
                 },

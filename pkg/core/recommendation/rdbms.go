@@ -95,6 +95,21 @@ func ValidateRDBMS(nsId string, req rdbmsmodel.RDBMSCreateRequest) (rdbmsmodel.R
 		}
 	}
 
+	// 4. NCP Cloud specific flag & publicAccess validation
+	if strings.HasPrefix(strings.ToLower(targetConn), csp.NCP) {
+		if req.PublicAccess {
+			return emptyRes, fmt.Errorf("NCP Cloud DB does not support publicAccess=true; VPC-private access is enforced")
+		}
+	}
+	if req.NCPDBACGToAllowAllInbound {
+		if !strings.HasPrefix(strings.ToLower(targetConn), csp.NCP) {
+			return emptyRes, fmt.Errorf("ncpDBACGToAllowAllInbound is only supported for NCP Cloud")
+		}
+		if req.PublicAccess {
+			return emptyRes, fmt.Errorf("ncpDBACGToAllowAllInbound requires publicAccess=false")
+		}
+	}
+
 	// 4. Pass to Tumblebug for live CSP capability strict dry-run validation (autoFillDefaults=false)
 	req.AutoFillDefaults = false
 	log.Info().Str("nsId", nsId).Str("rdbmsName", req.Name).Str("connection", targetConn).Msg("Validating RDBMS create request via CB-Tumblebug (strict mode: autoFillDefaults=false)")
@@ -334,11 +349,12 @@ func AutoFillSourceRDBMSDefaults(sources []rdbmsmodel.SourceRDBMSProperty) ([]rd
 
 // TargetPreferences represents user-desired deployment preferences and policies for target cloud databases.
 type TargetPreferences struct {
-	AdminUserName            string `json:"adminUserName,omitempty" example:"dbadmin"`
-	HighAvailability         *bool  `json:"highAvailability,omitempty" example:"false"`
-	PublicAccess             *bool  `json:"publicAccess,omitempty" example:"true"`
-	BackupRetentionDays      int    `json:"backupRetentionDays,omitempty" example:"0"`
-	NHNDBSGToAllowAllInbound bool   `json:"nhnDBSGToAllowAllInbound,omitempty" example:"false"`
+	AdminUserName             string `json:"adminUserName,omitempty" example:"dbadmin"`
+	HighAvailability          *bool  `json:"highAvailability,omitempty" example:"false"`
+	PublicAccess              *bool  `json:"publicAccess,omitempty" example:"true"`
+	BackupRetentionDays       int    `json:"backupRetentionDays,omitempty" example:"0"`
+	NHNDBSGToAllowAllInbound  bool   `json:"nhnDBSGToAllowAllInbound,omitempty" example:"false"`
+	NCPDBACGToAllowAllInbound bool   `json:"ncpDBACGToAllowAllInbound,omitempty" example:"false"`
 }
 
 // RecommendRDBMS recommends optimal managed RDBMS instances for target cloud migration.
@@ -390,13 +406,11 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 	targetPublicAccess := true
 	if desiredCsp == "ncp" {
 		targetPublicAccess = false
-	}
-	if pref != nil && pref.PublicAccess != nil {
+		if pref != nil && pref.PublicAccess != nil && *pref.PublicAccess {
+			warnings = append(warnings, "NCP Cloud DB does not support publicAccess=true (Open API does not support public domain allocation). Enforced private access. You may manually request a public domain in the NCP Console after provisioning.")
+		}
+	} else if pref != nil && pref.PublicAccess != nil {
 		targetPublicAccess = *pref.PublicAccess
-	}
-	if desiredCsp == "ncp" && targetPublicAccess {
-		// Public domain request: Database > Cloud DB for ... > Select DB Server > DB Management > Manage Public Domain.
-		warnings = append(warnings, "NCP Cloud DB with publicAccess=true opens ACG inbound to 0.0.0.0/0; public domain must be requested in NCP Console (Database > Cloud DB for ... > Select DB Server > DB Management > Manage Public Domain).")
 	}
 
 	targetHA := false
@@ -427,6 +441,11 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 	targetNHNDBSG := false
 	if pref != nil && strings.EqualFold(desiredCsp, csp.NHN) {
 		targetNHNDBSG = pref.NHNDBSGToAllowAllInbound
+	}
+
+	targetNCPDBACG := false
+	if pref != nil && strings.EqualFold(desiredCsp, csp.NCP) {
+		targetNCPDBACG = pref.NCPDBACGToAllowAllInbound
 	}
 
 	// 2. Fetch CSP support info from Tumblebug & Validate CSP support
@@ -492,6 +511,10 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 			return emptyRes, err
 		}
 
+		if strings.EqualFold(desiredCsp, "ibm") && strings.EqualFold(targetSpec, "multitenant") {
+			warnings = append(warnings, fmt.Sprintf("IBM Cloud Databases 'multitenant' hosting model was recommended for instance '%s' for fast provisioning (~10 minutes). Dedicated host flavors (e.g., 'b3c.4x16.encrypted') take 35~45+ minutes to provision.", instName))
+		}
+
 		// 3. Storage Type Recommendation using live Notes.StorageTypes and StorageTypeOptions
 		targetStorageType, selectedNote, err := selectStorageType(storageType, capa, &warnings, instName)
 		if err != nil {
@@ -500,13 +523,17 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 		}
 
 		// Determine storage size boundaries using live capability info
-		minStorage := capa.StorageSizeRange.Min
-		maxStorage := capa.StorageSizeRange.Max
+		minStorage := capa.StorageSizeRangeGB.Min
+		maxStorage := capa.StorageSizeRangeGB.Max
 		if selectedNote != nil {
-			if selectedNote.MinSize > 0 {
+			if selectedNote.MinSizeGB > 0 {
+				minStorage = selectedNote.MinSizeGB
+			} else if selectedNote.MinSize > 0 {
 				minStorage = selectedNote.MinSize
 			}
-			if selectedNote.MaxSize > 0 {
+			if selectedNote.MaxSizeGB > 0 {
+				maxStorage = selectedNote.MaxSizeGB
+			} else if selectedNote.MaxSize > 0 {
 				maxStorage = selectedNote.MaxSize
 			}
 		}
@@ -547,26 +574,26 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 		for _, db := range src.InnerDatabases {
 			targetDatabases = append(targetDatabases, rdbmsmodel.TargetDatabase{
 				DatabaseName: db.DatabaseName,
-				CharacterSet: db.CharacterSet,
 			})
 		}
 
 		targetInst := rdbmsmodel.TargetRDBMSInstance{
-			SourceInstanceName:       instName,
-			SourceMachineId:          src.DBNode.MachineId,
-			RDBMSName:                targetName,
-			DBEngine:                 targetEngine,
-			DBEngineVersion:          targetVersion,
-			DBInstanceSpec:           targetSpec,
-			StorageType:              targetStorageType,
-			StorageSize:              targetStorageSize,
-			Iops:                     targetIops,
-			AdminUserName:            targetAdminUser,
-			HighAvailability:         targetHA,
-			BackupRetentionDays:      targetBackupDays,
-			PublicAccess:             targetPublicAccess,
-			NHNDBSGToAllowAllInbound: targetNHNDBSG,
-			Databases:                targetDatabases,
+			SourceInstanceName:        instName,
+			SourceMachineId:           src.DBNode.MachineId,
+			RDBMSName:                 targetName,
+			DBEngine:                  targetEngine,
+			DBEngineVersion:           targetVersion,
+			DBInstanceSpec:            targetSpec,
+			StorageType:               targetStorageType,
+			StorageSize:               targetStorageSize,
+			Iops:                      targetIops,
+			AdminUserName:             targetAdminUser,
+			HighAvailability:          targetHA,
+			BackupRetentionDays:       targetBackupDays,
+			PublicAccess:              targetPublicAccess,
+			NHNDBSGToAllowAllInbound:  targetNHNDBSG,
+			NCPDBACGToAllowAllInbound: targetNCPDBACG,
+			Databases:                 targetDatabases,
 		}
 
 		targetInstances = append(targetInstances, targetInst)
@@ -1012,6 +1039,15 @@ type dbSpecCandidate struct {
 // recommendDBInstanceSpec recommends the best-fitting DB instance spec dynamically from Tumblebug capability.
 func recommendDBInstanceSpec(vcpu, memoryMb, storageSizeGb int, engine string, capa rdbmsmodel.RDBMSMetaInfo) (string, error) {
 	engineLower := strings.ToLower(engine)
+
+	// Prefer IBM Cloud Databases 'multitenant' hosting model by default for fast provisioning (~10m)
+	if strings.EqualFold(capa.ProviderName, "ibm") {
+		for _, opt := range capa.DBInstanceSpecOptions {
+			if strings.EqualFold(opt, "multitenant") {
+				return "multitenant", nil
+			}
+		}
+	}
 
 	// 1. If detailed DBInstanceSpecs list is available, evaluate requirements via proximity ranking
 	// * Strategy: Conservative Capacity Proximity (Target >= Source for vCPU, RAM, and Disk)

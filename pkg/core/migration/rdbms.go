@@ -96,6 +96,7 @@ func CreateRDBMS(nsId string, req rdbmsmodel.RecommendedRDBMS, seed string) erro
 			BackupRetentionDays:      backupDays,
 			PublicAccess:             target.PublicAccess,
 			NHNDBSGToAllowAllInbound: target.NHNDBSGToAllowAllInbound,
+			NCPDBACGToAllowAllInbound: target.NCPDBACGToAllowAllInbound,
 			DeletionProtection:       target.DeletionProtection,
 			Description:              fmt.Sprintf("Migrated by CM-Beetle from source instance %s", target.SourceInstanceName),
 			AutoFillDefaults:         true,
@@ -122,10 +123,9 @@ func CreateRDBMS(nsId string, req rdbmsmodel.RecommendedRDBMS, seed string) erro
 
 			for _, db := range target.Databases {
 				dbReq := rdbmsmodel.RDBMSDatabaseCreateReq{
-					DatabaseName:      db.DatabaseName,
-					AdminUserPassword: adminPass,
+					DatabaseName: db.DatabaseName,
 				}
-				if dbErr := tbSess.CreateRDBMSDatabase(nsId, target.RDBMSName, dbReq); dbErr != nil {
+				if dbErr := tbSess.CreateRDBMSDatabase(nsId, target.RDBMSName, adminUser, adminPass, dbReq); dbErr != nil {
 					log.Warn().
 						Err(dbErr).
 						Str("rdbmsName", target.RDBMSName).
@@ -210,10 +210,10 @@ func DeleteRDBMS(nsId, rdbmsId, option string) error {
 }
 
 // CreateRDBMSDatabase creates a logical database in a specific RDBMS instance.
-func CreateRDBMSDatabase(nsId, rdbmsId string, req rdbmsmodel.RDBMSDatabaseCreateReq) error {
+func CreateRDBMSDatabase(nsId, rdbmsId, adminUserName, adminPassword string, req rdbmsmodel.RDBMSDatabaseCreateReq) error {
 	log.Info().Str("nsId", nsId).Str("rdbmsId", rdbmsId).Str("databaseName", req.DatabaseName).Msg("Creating logical database")
 
-	err := tbclient.NewSession().CreateRDBMSDatabase(nsId, rdbmsId, req)
+	err := tbclient.NewSession().CreateRDBMSDatabase(nsId, rdbmsId, adminUserName, adminPassword, req)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Str("databaseName", req.DatabaseName).Msg("Failed to create logical database")
 		return err
@@ -224,10 +224,10 @@ func CreateRDBMSDatabase(nsId, rdbmsId string, req rdbmsmodel.RDBMSDatabaseCreat
 }
 
 // ListRDBMSDatabases returns logical databases in a specific RDBMS instance.
-func ListRDBMSDatabases(nsId, rdbmsId, adminPassword string) (rdbmsmodel.RDBMSDatabaseListResponse, error) {
+func ListRDBMSDatabases(nsId, rdbmsId, adminUserName, adminPassword string) (rdbmsmodel.RDBMSDatabaseListResponse, error) {
 	log.Info().Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Listing logical databases")
 
-	result, err := tbclient.NewSession().ListRDBMSDatabases(nsId, rdbmsId, adminPassword)
+	result, err := tbclient.NewSession().ListRDBMSDatabases(nsId, rdbmsId, adminUserName, adminPassword)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to list logical databases")
 		return rdbmsmodel.RDBMSDatabaseListResponse{}, err
@@ -238,10 +238,10 @@ func ListRDBMSDatabases(nsId, rdbmsId, adminPassword string) (rdbmsmodel.RDBMSDa
 }
 
 // DeleteRDBMSDatabase deletes a logical database in a specific RDBMS instance.
-func DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminPassword string) error {
+func DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminUserName, adminPassword string) error {
 	log.Info().Str("nsId", nsId).Str("rdbmsId", rdbmsId).Str("dbName", dbName).Msg("Deleting logical database")
 
-	err := tbclient.NewSession().DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminPassword)
+	err := tbclient.NewSession().DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminUserName, adminPassword)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Str("dbName", dbName).Msg("Failed to delete logical database")
 		return err
@@ -249,4 +249,18 @@ func DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminPassword string) error {
 
 	log.Info().Str("nsId", nsId).Str("rdbmsId", rdbmsId).Str("dbName", dbName).Msg("Logical database deleted")
 	return nil
+}
+
+// GetRDBMSSecureTransport retrieves live TLS status and server CA certificate for an RDBMS instance.
+func GetRDBMSSecureTransport(nsId, rdbmsId, adminUserName, adminPassword string) (rdbmsmodel.RDBMSSecureTransportInfo, error) {
+	log.Info().Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Retrieving RDBMS secure transport info")
+
+	result, err := tbclient.NewSession().GetRDBMSSecureTransport(nsId, rdbmsId, adminUserName, adminPassword)
+	if err != nil {
+		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to retrieve secure transport info")
+		return rdbmsmodel.RDBMSSecureTransportInfo{}, err
+	}
+
+	log.Info().Str("nsId", nsId).Str("rdbmsId", rdbmsId).Bool("enforced", result.Enforced).Msg("Retrieved secure transport info")
+	return result, nil
 }

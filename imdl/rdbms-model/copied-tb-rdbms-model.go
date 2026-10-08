@@ -1,9 +1,11 @@
 package rdbmsmodel
 
+import "time"
+
 // * To avoid circular/version dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
 // * Source: CB-Tumblebug (src/core/model/rdbms.go, src/core/model/common.go, src/core/model/net.go)
-// * Synchronized: 2026-08-27 (RDBMSInfo, RDBMSListResponse, RDBMSCreateRequest, RDBMSCapabilityResponse, RDBMSSupportResponse, RDBMSDatabaseCreateReq, RDBMSDatabaseInfo, RDBMSDatabaseListResponse, etc.)
+// * Synchronized: 2026-10-08 (RDBMSInfo, RDBMSListResponse, RDBMSCreateRequest, RDBMSCapabilityResponse, RDBMSSupportResponse, RDBMSDatabaseCreateReq, RDBMSSecureTransportInfo, etc.)
 
 // StorageSizeRange defines the minimum and maximum storage capacity in Tumblebug format.
 type StorageSizeRange struct {
@@ -16,6 +18,8 @@ type StorageTypeNote struct {
 	StorageType         string            `json:"storageType" example:"gp3"`
 	DisplayName         string            `json:"displayName" example:"General Purpose SSD v3"`
 	Description         string            `json:"description" example:"Cost-effective, 3000 baseline IOPS, recommended for general workloads"`
+	MinSizeGB           int               `json:"minSizeGB,omitempty" example:"100"`
+	MaxSizeGB           int               `json:"maxSizeGB,omitempty" example:"65536"`
 	MinSize             int               `json:"minSize,omitempty" example:"100"`
 	MaxSize             int               `json:"maxSize,omitempty" example:"65536"`
 	RequiresIops        bool              `json:"requiresIops,omitempty" example:"true"`
@@ -49,6 +53,8 @@ type RDBMSStorageTypeConfig struct {
 	Description             string            `yaml:"description"`
 	RecommendationLevel     string            `yaml:"recommendationLevel"` // legacy|standard|recommended|premium
 	RequiresIops            bool              `yaml:"requiresIops"`
+	MinStorageSizeGB        int               `yaml:"minStorageSizeGB,omitempty"`
+	MaxStorageSizeGB        int               `yaml:"maxStorageSizeGB,omitempty"`
 	MinStorageSize          int               `yaml:"minStorageSize,omitempty"`
 	MaxStorageSize          int               `yaml:"maxStorageSize,omitempty"`
 	IopsRange               *StorageSizeRange `yaml:"iopsRange,omitempty"`
@@ -60,12 +66,14 @@ type RDBMSStorageTypeConfig struct {
 
 // RDBMSDBMSRequirement is one DB-engine entry for requirements.
 type RDBMSDBMSRequirement struct {
-	MinStorageSize          int      `json:"minStorageSize,omitempty"`
-	MaxStorageSize          int      `json:"maxStorageSize,omitempty"`
-	DefaultPort             int      `json:"defaultPort,omitempty"`
-	Note                    string   `json:"note,omitempty"`
-	ReferenceEngineVersion  string   `json:"referenceEngineVersion,omitempty"`
-	ReferenceDBInstanceSpec string   `json:"referenceDBInstanceSpec,omitempty"`
+	MinStorageSizeGB        int    `json:"minStorageSizeGB,omitempty"`
+	MaxStorageSizeGB        int    `json:"maxStorageSizeGB,omitempty"`
+	MinStorageSize          int    `json:"minStorageSize,omitempty"`
+	MaxStorageSize          int    `json:"maxStorageSize,omitempty"`
+	DefaultPort             int    `json:"defaultPort,omitempty"`
+	Note                    string `json:"note,omitempty"`
+	ReferenceEngineVersion  string `json:"referenceEngineVersion,omitempty"`
+	ReferenceDBInstanceSpec string `json:"referenceDBInstanceSpec,omitempty"`
 	// DeprecatedVersions lists engine versions that are deprecated by the CSP and discouraged for new deployments.
 	DeprecatedVersions []string `json:"deprecatedVersions,omitempty"`
 	// EndOfLifeVersions lists engine versions that have reached official End of Life (EOL) and cannot be provisioned.
@@ -111,7 +119,7 @@ type RDBMSMetaInfo struct {
 	LiveSupportedEngines             []string                           `json:"liveSupportedEngines,omitempty"`
 	StorageTypeOptions               []string                           `json:"storageTypeOptions" example:"gp2,gp3"`
 	DefaultStorageType               string                             `json:"defaultStorageType" example:"gp3"`
-	StorageSizeRange                 StorageSizeRange                   `json:"storageSizeRange"`
+	StorageSizeRangeGB               StorageSizeRange                   `json:"storageSizeRangeGB"`
 	SupportsTag                      bool                               `json:"supportsTag" example:"true"`
 	SupportsStorageTypeSelection     bool                               `json:"supportsStorageTypeSelection" example:"true"`
 	SupportsStorageSizeConfiguration bool                               `json:"supportsStorageSizeConfiguration" example:"true"`
@@ -157,27 +165,28 @@ type RDBMSCSPSupportInfo struct {
 
 // RDBMSCreateRequest is the Tumblebug-facing request to create an RDBMS instance.
 type RDBMSCreateRequest struct {
-	Name                     string     `json:"name" validate:"required" example:"rdbms-01"`
-	ConnectionName           string     `json:"connectionName" validate:"required" example:"aws-ap-northeast-2"`
-	VNetId                   string     `json:"vNetId" validate:"required" example:"vnet-01"`
-	SubnetIds                []string   `json:"subnetIds,omitempty" example:"subnet-01"`
-	SecurityGroupIds         []string   `json:"securityGroupIds,omitempty" example:"sg-01"`
-	DBEngine                 string     `json:"dbEngine" validate:"required" example:"mysql" enums:"mysql,mariadb"`
-	DBEngineVersion          string     `json:"dbEngineVersion,omitempty" example:"8.0"`
-	DBInstanceSpec           string     `json:"dbInstanceSpec,omitempty" example:"db.t3.medium"`
-	StorageType              string     `json:"storageType,omitempty" example:"gp3"`
-	StorageSize              int        `json:"storageSize,omitempty" example:"100"`
-	Iops                     string     `json:"iops,omitempty" example:"3000"`
-	AdminUserName            string     `json:"adminUserName" validate:"required" example:"admin"`
-	AdminUserPassword        string     `json:"adminUserPassword" validate:"required" example:"Password123!"`
-	HighAvailability         bool       `json:"highAvailability,omitempty" example:"false"`
-	BackupRetentionDays      int        `json:"backupRetentionDays,omitempty" example:"7"`
-	PublicAccess             bool       `json:"publicAccess,omitempty" example:"false"`
-	NHNDBSGToAllowAllInbound bool       `json:"nhnDBSGToAllowAllInbound,omitempty" example:"false"`
-	DeletionProtection       bool       `json:"deletionProtection,omitempty" example:"false"`
-	Description              string     `json:"description,omitempty" example:"managed by CB-Tumblebug"`
-	AutoFillDefaults         bool       `json:"autoFillDefaults,omitempty" example:"false"`
-	TagList                  []KeyValue `json:"tagList,omitempty"`
+	Name                      string     `json:"name" validate:"required" example:"rdbms-01"`
+	ConnectionName            string     `json:"connectionName" validate:"required" example:"aws-ap-northeast-2"`
+	VNetId                    string     `json:"vNetId" validate:"required" example:"vnet-01"`
+	SubnetIds                 []string   `json:"subnetIds,omitempty" example:"subnet-01"`
+	SecurityGroupIds          []string   `json:"securityGroupIds,omitempty" example:"sg-01"`
+	DBEngine                  string     `json:"dbEngine" validate:"required" example:"mysql" enums:"mysql,mariadb"`
+	DBEngineVersion           string     `json:"dbEngineVersion,omitempty" example:"8.0"`
+	DBInstanceSpec            string     `json:"dbInstanceSpec,omitempty" example:"db.t3.medium"`
+	StorageType               string     `json:"storageType,omitempty" example:"gp3"`
+	StorageSize               int        `json:"storageSize,omitempty" example:"100"`
+	Iops                      string     `json:"iops,omitempty" example:"3000"`
+	AdminUserName             string     `json:"adminUserName" validate:"required" example:"admin"`
+	AdminUserPassword         string     `json:"adminUserPassword" validate:"required" example:"Password123!"`
+	HighAvailability          bool       `json:"highAvailability,omitempty" example:"false"`
+	BackupRetentionDays       int        `json:"backupRetentionDays,omitempty" example:"7"`
+	PublicAccess              bool       `json:"publicAccess,omitempty" example:"false"`
+	NHNDBSGToAllowAllInbound  bool       `json:"nhnDBSGToAllowAllInbound,omitempty" example:"false"`
+	NCPDBACGToAllowAllInbound bool       `json:"ncpDBACGToAllowAllInbound,omitempty" example:"false"`
+	DeletionProtection        bool       `json:"deletionProtection,omitempty" example:"false"`
+	Description               string     `json:"description,omitempty" example:"managed by CB-Tumblebug"`
+	AutoFillDefaults          bool       `json:"autoFillDefaults,omitempty" example:"false"`
+	TagList                   []KeyValue `json:"tagList,omitempty"`
 }
 
 // RDBMSInfo is the Tumblebug-facing RDBMS instance resource (persisted and returned to callers).
@@ -203,23 +212,23 @@ type RDBMSInfo struct {
 	SubnetIds        []string `json:"subnetIds,omitempty"`
 	SecurityGroupIds []string `json:"securityGroupIds,omitempty"`
 
-	DBEngine                 string     `json:"dbEngine" example:"mysql"`
-	DBEngineVersion          string     `json:"dbEngineVersion" example:"8.0"`
-	DBInstanceSpec           string     `json:"dbInstanceSpec" example:"db.t3.medium"`
-	DBInstanceType           string     `json:"dbInstanceType,omitempty" example:"Primary" enums:"Primary,ReadReplica"`
-	StorageType              string     `json:"storageType,omitempty" example:"gp3"`
-	StorageSize              int        `json:"storageSize" example:"100"`
-	Iops                     string     `json:"iops,omitempty" example:"3000"`
-	AdminUserName            string     `json:"adminUserName" example:"admin"`
-	HighAvailability         bool       `json:"highAvailability" example:"false"`
-	BackupRetentionDays      int        `json:"backupRetentionDays,omitempty" example:"7"`
-	BackupTime               string     `json:"backupTime,omitempty" example:"03:00"`
-	PublicAccess             bool       `json:"publicAccess" example:"false"`
-	NHNDBSGToAllowAllInbound bool       `json:"nhnDBSGToAllowAllInbound,omitempty"`
-	DeletionProtection       bool       `json:"deletionProtection" example:"false"`
-	Encryption               bool       `json:"encryption,omitempty"`
-	Endpoint                 string     `json:"endpoint,omitempty" example:"rdbms-01.xxxx.rds.amazonaws.com:3306"`
-	TagList                  []KeyValue `json:"tagList,omitempty"`
+	DBEngine                  string     `json:"dbEngine" example:"mysql"`
+	DBEngineVersion           string     `json:"dbEngineVersion" example:"8.0"`
+	DBInstanceSpec            string     `json:"dbInstanceSpec" example:"db.t3.medium"`
+	DBInstanceType            string     `json:"dbInstanceType,omitempty" example:"Primary" enums:"Primary,ReadReplica"`
+	StorageType               string     `json:"storageType,omitempty" example:"gp3"`
+	StorageSize               int        `json:"storageSize" example:"100"`
+	Iops                      string     `json:"iops,omitempty" example:"3000"`
+	HighAvailability          bool       `json:"highAvailability" example:"false"`
+	BackupRetentionDays       int        `json:"backupRetentionDays,omitempty" example:"7"`
+	BackupTime                string     `json:"backupTime,omitempty" example:"03:00"`
+	PublicAccess              bool       `json:"publicAccess" example:"false"`
+	NHNDBSGToAllowAllInbound  bool       `json:"nhnDBSGToAllowAllInbound,omitempty"`
+	NCPDBACGToAllowAllInbound bool       `json:"ncpDBACGToAllowAllInbound,omitempty"`
+	DeletionProtection        bool       `json:"deletionProtection" example:"false"`
+	Encryption                bool       `json:"encryption,omitempty"`
+	Endpoint                  string     `json:"endpoint,omitempty" example:"rdbms-01.xxxx.rds.amazonaws.com:3306"`
+	TagList                   []KeyValue `json:"tagList,omitempty"`
 }
 
 // RDBMSListResponse is the response structure for listing RDBMS instances.
@@ -229,8 +238,7 @@ type RDBMSListResponse struct {
 
 // RDBMSDatabaseCreateReq creates a logical database inside an Available RDBMS instance.
 type RDBMSDatabaseCreateReq struct {
-	DatabaseName      string `json:"databaseName" validate:"required" example:"sampledb"`
-	AdminUserPassword string `json:"adminUserPassword" validate:"required" example:"Password123!"`
+	DatabaseName string `json:"databaseName" validate:"required" example:"sampledb"`
 }
 
 // RDBMSDatabaseInfo represents one logical database inside an RDBMS instance.
@@ -304,4 +312,26 @@ type ConnConfig struct {
 	RegionDetail         RegionDetail   `json:"regionDetail"`
 	RegionRepresentative bool           `json:"regionRepresentative"`
 	Verified             bool           `json:"verified"`
+}
+
+// RDBMSSecureTransportInfo represents TLS status and server CA certificate of an RDBMS instance.
+type RDBMSSecureTransportInfo struct {
+	Engine                 string             `json:"engine" example:"mysql"`
+	RequireSecureTransport string             `json:"requireSecureTransport" example:"ON"`
+	Enforced               bool               `json:"enforced" example:"true"`
+	Rules                  string             `json:"rules" example:"REQUIRE SSL"`
+	TLSInUse               bool               `json:"tlsInUse" example:"true"`
+	TLSCipher              string             `json:"tlsCipher" example:"ECDHE-RSA-AES128-GCM-SHA256"`
+	CACertificate          RDBMSCACertificate `json:"caCertificate"`
+	CACertificateError     string             `json:"caCertificateError,omitempty"`
+	RecommendedSSLMode     string             `json:"recommendedSSLMode" example:"VERIFY_IDENTITY"`
+}
+
+// RDBMSCACertificate holds details of the server CA certificate obtained from CB-Spider.
+type RDBMSCACertificate struct {
+	PEM          string    `json:"pem"`
+	Subject      string    `json:"subject"`
+	Issuer       string    `json:"issuer"`
+	NotAfter     time.Time `json:"notAfter"`
+	IsSelfSigned bool      `json:"isSelfSigned"`
 }

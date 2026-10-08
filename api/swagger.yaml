@@ -3605,6 +3605,25 @@ definitions:
         example: true
         type: boolean
     type: object
+  model.ApiResponse-rdbmsmodel_RDBMSSecureTransportInfo:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/rdbmsmodel.RDBMSSecureTransportInfo'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
   model.ApiResponse-rdbmsmodel_RecommendedRDBMS:
     properties:
       data:
@@ -5613,6 +5632,19 @@ definitions:
       requiresSpecialChar:
         type: boolean
     type: object
+  rdbmsmodel.RDBMSCACertificate:
+    properties:
+      isSelfSigned:
+        type: boolean
+      issuer:
+        type: string
+      notAfter:
+        type: string
+      pem:
+        type: string
+      subject:
+        type: string
+    type: object
   rdbmsmodel.RDBMSCSPSupportInfo:
     properties:
       dbOperationMethod:
@@ -5693,6 +5725,9 @@ definitions:
       name:
         example: rdbms-01
         type: string
+      ncpDBACGToAllowAllInbound:
+        example: false
+        type: boolean
       nhnDBSGToAllowAllInbound:
         example: false
         type: boolean
@@ -5767,7 +5802,11 @@ definitions:
         type: array
       maxStorageSize:
         type: integer
+      maxStorageSizeGB:
+        type: integer
       minStorageSize:
+        type: integer
+      minStorageSizeGB:
         type: integer
       note:
         type: string
@@ -5778,14 +5817,10 @@ definitions:
     type: object
   rdbmsmodel.RDBMSDatabaseCreateReq:
     properties:
-      adminUserPassword:
-        example: Password123!
-        type: string
       databaseName:
         example: sampledb
         type: string
     required:
-    - adminUserPassword
     - databaseName
     type: object
   rdbmsmodel.RDBMSDatabaseListResponse:
@@ -5810,9 +5845,6 @@ definitions:
     type: object
   rdbmsmodel.RDBMSInfo:
     properties:
-      adminUserName:
-        example: admin
-        type: string
       backupRetentionDays:
         example: 7
         type: integer
@@ -5870,6 +5902,8 @@ definitions:
       name:
         example: rdbms-01
         type: string
+      ncpDBACGToAllowAllInbound:
+        type: boolean
       nhnDBSGToAllowAllInbound:
         type: boolean
       publicAccess:
@@ -5971,7 +6005,7 @@ definitions:
         items:
           $ref: '#/definitions/rdbmsmodel.StaticFieldNote'
         type: array
-      storageSizeRange:
+      storageSizeRangeGB:
         $ref: '#/definitions/rdbmsmodel.StorageSizeRange'
       storageTypeGuidance:
         additionalProperties:
@@ -6022,6 +6056,34 @@ definitions:
         items:
           $ref: '#/definitions/rdbmsmodel.StorageTypeNote'
         type: array
+    type: object
+  rdbmsmodel.RDBMSSecureTransportInfo:
+    properties:
+      caCertificate:
+        $ref: '#/definitions/rdbmsmodel.RDBMSCACertificate'
+      caCertificateError:
+        type: string
+      enforced:
+        example: true
+        type: boolean
+      engine:
+        example: mysql
+        type: string
+      recommendedSSLMode:
+        example: VERIFY_IDENTITY
+        type: string
+      requireSecureTransport:
+        example: "ON"
+        type: string
+      rules:
+        example: REQUIRE SSL
+        type: string
+      tlsCipher:
+        example: ECDHE-RSA-AES128-GCM-SHA256
+        type: string
+      tlsInUse:
+        example: true
+        type: boolean
     type: object
   rdbmsmodel.RDBMSSupportResponse:
     properties:
@@ -6154,7 +6216,13 @@ definitions:
       maxSize:
         example: 65536
         type: integer
+      maxSizeGB:
+        example: 65536
+        type: integer
       minSize:
+        example: 100
+        type: integer
+      minSizeGB:
         example: 100
         type: integer
       recommendationLevel:
@@ -6177,9 +6245,6 @@ definitions:
     type: object
   rdbmsmodel.TargetDatabase:
     properties:
-      characterSet:
-        example: utf8mb4
-        type: string
       databaseName:
         example: order_db
         type: string
@@ -6224,6 +6289,9 @@ definitions:
       iops:
         example: "3000"
         type: string
+      ncpDBACGToAllowAllInbound:
+        example: false
+        type: boolean
       nhnDBSGToAllowAllInbound:
         description: CSP-Specific Options
         example: true
@@ -6280,6 +6348,9 @@ definitions:
         example: 0
         type: integer
       highAvailability:
+        example: false
+        type: boolean
+      ncpDBACGToAllowAllInbound:
         example: false
         type: boolean
       nhnDBSGToAllowAllInbound:
@@ -8987,7 +9058,8 @@ paths:
         - If `nameSeed` query param is set (e.g., `?nameSeed=my`), instance names are prefixed: `my-rdbms-01`.
 
         By default this API runs synchronously. Send header `Prefer: respond-async` to run it
-        asynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes): receive 202 Accepted with a reqId.
+        asynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes, or 35-45+ minutes for IBM dedicated flavors): receive 202 Accepted with a reqId.
+        - IBM Cloud Databases hosting note: 'multitenant' shared model provisions in ~10 minutes, whereas Dedicated flavors ('b3c.*') take 35-45+ minutes. Ensure client/proxy timeouts are configured for >= 50 minutes if calling synchronously with dedicated flavors.
       operationId: MigrateRDBMS
       parameters:
       - default: mig01
@@ -9137,9 +9209,15 @@ paths:
         name: rdbmsId
         required: true
         type: string
+      - description: Admin User Name
+        in: header
+        name: X-Admin-User-Name
+        required: true
+        type: string
       - description: Admin User Password
         in: header
         name: X-Admin-User-Password
+        required: true
         type: string
       produces:
       - application/json
@@ -9175,6 +9253,16 @@ paths:
       - description: RDBMS Instance ID
         in: path
         name: rdbmsId
+        required: true
+        type: string
+      - description: Admin User Name
+        in: header
+        name: X-Admin-User-Name
+        required: true
+        type: string
+      - description: Admin User Password
+        in: header
+        name: X-Admin-User-Password
         required: true
         type: string
       - description: Database creation request
@@ -9224,9 +9312,15 @@ paths:
         name: dbName
         required: true
         type: string
+      - description: Admin User Name
+        in: header
+        name: X-Admin-User-Name
+        required: true
+        type: string
       - description: Admin User Password
         in: header
         name: X-Admin-User-Password
+        required: true
         type: string
       produces:
       - application/json
@@ -9244,6 +9338,53 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Delete a logical database inside a Managed RDBMS (RDS) instance
+      tags:
+      - '[Migration] Managed RDBMS'
+  /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/secure-transport:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve live TLS enforcement status, active cipher, and server
+        CA certificate via CB-Tumblebug and CB-Spider
+      operationId: GetRDBMSSecureTransport
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: RDBMS Instance ID
+        in: path
+        name: rdbmsId
+        required: true
+        type: string
+      - description: Admin User Name
+        in: header
+        name: X-Admin-User-Name
+        required: true
+        type: string
+      - description: Admin User Password
+        in: header
+        name: X-Admin-User-Password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved secure transport info
+          schema:
+            $ref: '#/definitions/model.ApiResponse-rdbmsmodel_RDBMSSecureTransportInfo'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Get secure transport status and server CA certificate of an RDBMS instance
       tags:
       - '[Migration] Managed RDBMS'
   /migration/middleware/ns/{nsId}/rdbms/validate:
@@ -11387,6 +11528,7 @@ paths:
 
         [Note] The recommended instance names use default patterns (`mig-rdbms-01`, `mig-rdbms-02`, ...).
         - To apply a naming prefix at migration time, use the `nameSeed` query parameter on the migration API.
+        - IBM Cloud Databases hosting note: defaults to 'multitenant' shared model for fast provisioning (~10 minutes). Dedicated host flavors ('b3c.*') take 35-45+ minutes.
       operationId: RecommendRDBMS
       parameters:
       - description: Specify source RDBMS instances to be migrated

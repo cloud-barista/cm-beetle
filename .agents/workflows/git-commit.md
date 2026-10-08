@@ -45,13 +45,14 @@ This workflow helps you generate a high-quality, conventional commit message tai
 
 5. **Generate the Commit Message**  
    Compose the message following these strict requirements:
-   - **Title**: `type(scope): description` (Max 50 characters, imperative mood).
+   - **Title**: `type(scope): description` (or `type(scope)!: description` for breaking changes; Max 50 characters, imperative mood).
+     - **Breaking Change Indicator (`!`)**: When introducing breaking changes, append `!` immediately before the colon (e.g., `feat(migration)!: ...` or `refactor(api)!: ...`).
      - **Lowercase Description**: The description after the colon must start with a lowercase letter (e.g., `feat(rdbms): add ...`).
      - **No Symbols**: Do NOT use `&` or symbols in the title; use `and` or concise plain wording instead.
    - **Body**: **Max 5 bullet points**, each **≤ 60 characters**.
      - **Capitalized Bullets**: Each bullet point must start with a capital letter (e.g., `- Add ...`, `- Implement ...`).
      - Focus on functional impact only. Omit obvious or low-value lines (e.g., "update README", "regenerate swagger").
-   - **Breaking Changes**: Add `BREAKING CHANGE: <description>` in the footer if public APIs or configs changed.
+   - **Breaking Changes**: Append `!` to the title (`type(scope)!:`) AND add `BREAKING CHANGE: <description>` in the footer if public APIs, label schemas, or configs changed in a breaking manner.
    - **Release Staging**: If bumping versions or refreshing multiple test results, use `release: staging vX.Y.Z with [highlights]`.
 
 6. **Output the Result**  

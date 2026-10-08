@@ -74,7 +74,8 @@ When staging changes for a release (version bump, dependency updates, test resul
 
 **Title Requirements:**
 
-- Format: `type(scope): description`
+- Format: `type(scope): description` (or `type(scope)!: description` for breaking changes)
+- **Breaking Change Indicator (`!`)**: When introducing breaking changes, append `!` immediately before the colon (e.g., `feat(migration)!: apply ...` or `refactor(api)!: ...`)
 - Description after colon MUST start with a lowercase letter (e.g., `feat(rdbms): add ...`)
 - Maximum 50 characters
 - Imperative mood (add, fix, improve)
@@ -87,7 +88,9 @@ When staging changes for a release (version bump, dependency updates, test resul
 - Each bullet point MUST start with a capital letter (e.g., `- Add ...`, `- Implement ...`)
 - Focus on functional impact for migration/recommendation features
 - Essential changes only, omit implementation details
-- **Breaking Changes:** If the change modifies public API signatures or configuration structures in a non-backward-compatible way, append `BREAKING CHANGE: <description>` in the footer.
+- **Breaking Changes:** If the change modifies public API signatures, label schemas, or configuration structures in a non-backward-compatible way:
+  - Append `!` immediately before the colon in the title: `type(scope)!: description` (e.g., `feat(migration)!: ...`)
+  - Append `BREAKING CHANGE: <description>` in the footer.
 
 ## CM-Beetle Specific Guidelines
 
@@ -125,6 +128,20 @@ feat(migration): add proximity-based VM sorting
 - Sort by vCPU/memory distance for all machine types
 - Add Azure hypervisor generation compatibility
 - Improve infrastructure creation workflow
+```
+
+### Breaking Change
+
+```
+feat(migration)!: apply cm-source-machine-ids standard and lineage
+
+- Upgrade imdl dependency to v0.1.16
+- Standardize node label key to cm-source-machine-ids
+- Inject migration lineage labels and timestamp during provisioning
+- Update migration reports and swagger documentation
+- Add subsystem announcement documents for breaking changes
+
+BREAKING CHANGE: node label key renamed to cm-source-machine-ids
 ```
 
 ### Bug Fix
@@ -237,7 +254,7 @@ git status --porcelain
 
 ### Validation Checklist
 
-- [ ] Follows conventional commit format: `type(scope): description`
+- [ ] Follows conventional commit format: `type(scope): description` (or `type(scope)!: description` for breaking changes)
 - [ ] Title under 50 characters
 - [ ] Uses imperative mood throughout
 - [ ] Scope matches CM-Beetle component structure
