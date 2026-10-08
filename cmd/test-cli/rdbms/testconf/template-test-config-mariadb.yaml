@@ -17,16 +17,16 @@ test:
       region: ap-northeast-2
       rdbmsId: test-rdbms-mariadb-aws
       connectionName: aws-ap-northeast-2
-      vNetName: test-rdbms-vnet-aws
-      cidrBlock: 10.0.0.0/16
+      vNetName: test-rdbms-vnet-mariadb-aws
+      cidrBlock: 10.10.0.0/16
       subnets:
         - name: subnet-1
-          cidr: 10.0.1.0/24
+          cidr: 10.10.1.0/24
           zone: ap-northeast-2a
         - name: subnet-2
-          cidr: 10.0.2.0/24
+          cidr: 10.10.2.0/24
           zone: ap-northeast-2c
-      securityGroupName: test-rdbms-sg-aws
+      securityGroupName: test-rdbms-sg-mariadb-aws
       dbEngine: mariadb
       dbEngineVersion: "10.6"
       adminUserName: root
@@ -52,13 +52,13 @@ test:
       region: ap-northeast-2
       rdbmsId: test-rdbms-mariadb-alibaba
       connectionName: alibaba-ap-northeast-2
-      vNetName: test-rdbms-vnet-alibaba
-      cidrBlock: 10.3.0.0/16
+      vNetName: test-rdbms-vnet-mariadb-alibaba
+      cidrBlock: 10.13.0.0/16
       subnets:
         - name: subnet-1
-          cidr: 10.3.1.0/24
+          cidr: 10.13.1.0/24
           zone: ap-northeast-2a
-      securityGroupName: test-rdbms-sg-alibaba
+      securityGroupName: test-rdbms-sg-mariadb-alibaba
       dbEngine: mariadb
       dbEngineVersion: "10.6"
       adminUserName: dbadmin
@@ -83,13 +83,13 @@ test:
       region: kr1
       rdbmsId: test-rdbms-mariadb-nhn
       connectionName: nhn-kr1
-      vNetName: test-rdbms-vnet-nhn
-      cidrBlock: 10.8.0.0/16
+      vNetName: test-rdbms-vnet-mariadb-nhn
+      cidrBlock: 10.18.0.0/16
       subnets:
         - name: subnet-1
-          cidr: 10.8.1.0/24
+          cidr: 10.18.1.0/24
           zone: ""
-      securityGroupName: test-rdbms-sg-nhn
+      securityGroupName: test-rdbms-sg-mariadb-nhn
       dbEngine: mariadb
       dbEngineVersion: "MARIADB_V101118"
       adminUserName: myadmin
@@ -138,4 +138,6 @@ test:
       vmMemoryGiB: "4"
       vmImageId: ""
       vmSpecId: ""
-      execute: true
+      # Excluded pending Spider OpenStack MariaDB < 10.5 Secure Transport fix (cb-spider#1869) and privilege grant fix (cb-spider#1866)
+      execute: false
+      exclusionReason: "Pending Spider OpenStack MariaDB < 10.5 Secure Transport (cb-spider#1869) and privilege grant fix (cb-spider#1866)"

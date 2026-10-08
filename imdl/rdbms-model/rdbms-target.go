@@ -44,7 +44,8 @@ type TargetRDBMSInstance struct {
 	DeletionProtection  bool `json:"deletionProtection,omitempty" example:"false"`
 
 	// CSP-Specific Options
-	NHNDBSGToAllowAllInbound bool `json:"nhnDBSGToAllowAllInbound,omitempty" example:"true"`
+	NHNDBSGToAllowAllInbound  bool `json:"nhnDBSGToAllowAllInbound,omitempty" example:"true"`
+	NCPDBACGToAllowAllInbound bool `json:"ncpDBACGToAllowAllInbound,omitempty" example:"false"`
 
 	// Optional Inner Databases to create after instance provisioning
 	Databases []TargetDatabase `json:"databases,omitempty"`
@@ -53,5 +54,4 @@ type TargetRDBMSInstance struct {
 // TargetDatabase represents a logical database to create inside the target RDBMS instance.
 type TargetDatabase struct {
 	DatabaseName string `json:"databaseName" validate:"required" example:"order_db"`
-	CharacterSet string `json:"characterSet,omitempty" example:"utf8mb4"`
 }

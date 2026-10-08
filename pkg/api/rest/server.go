@@ -480,6 +480,7 @@ func RunServer(port string) {
 	gMigrationMiddleware.POST("/ns/:nsId/rdbms/:rdbmsId/database", controller.CreateRDBMSDatabase)
 	gMigrationMiddleware.GET("/ns/:nsId/rdbms/:rdbmsId/database", controller.ListRDBMSDatabases)
 	gMigrationMiddleware.DELETE("/ns/:nsId/rdbms/:rdbmsId/database/:dbName", controller.DeleteRDBMSDatabase)
+	gMigrationMiddleware.GET("/ns/:nsId/rdbms/:rdbmsId/secure-transport", controller.GetRDBMSSecureTransport)
 
 	/*
 	 * API group for migration reports

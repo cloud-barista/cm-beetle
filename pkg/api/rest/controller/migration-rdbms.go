@@ -56,7 +56,8 @@ type MigrateRDBMSRequest struct {
 // @Description - If `nameSeed` query param is set (e.g., `?nameSeed=my`), instance names are prefixed: `my-rdbms-01`.
 // @Description
 // @Description By default this API runs synchronously. Send header `Prefer: respond-async` to run it
-// @Description asynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes): receive 202 Accepted with a reqId.
+// @Description asynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes, or 35-45+ minutes for IBM dedicated flavors): receive 202 Accepted with a reqId.
+// @Description - IBM Cloud Databases hosting note: 'multitenant' shared model provisions in ~10 minutes, whereas Dedicated flavors ('b3c.*') take 35-45+ minutes. Ensure client/proxy timeouts are configured for >= 50 minutes if calling synchronously with dedicated flavors.
 // @Tags [Migration] Managed RDBMS
 // @Accept json
 // @Produce json
@@ -273,6 +274,8 @@ func DeleteRDBMS(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param rdbmsId path string true "RDBMS Instance ID"
+// @Param X-Admin-User-Name header string true "Admin User Name"
+// @Param X-Admin-User-Password header string true "Admin User Password"
 // @Param request body rdbmsmodel.RDBMSDatabaseCreateReq true "Database creation request"
 // @Success 201 {object} model.ApiResponse[any] "Successfully created logical database"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
@@ -281,8 +284,14 @@ func DeleteRDBMS(c echo.Context) error {
 func CreateRDBMSDatabase(c echo.Context) error {
 	nsId := c.Param("nsId")
 	rdbmsId := c.Param("rdbmsId")
+	adminUser := c.Request().Header.Get("X-Admin-User-Name")
+	adminPass := c.Request().Header.Get("X-Admin-User-Password")
+
 	if nsId == "" || rdbmsId == "" {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId and rdbmsId required"))
+	}
+	if adminUser == "" || adminPass == "" {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("X-Admin-User-Name and X-Admin-User-Password headers required"))
 	}
 
 	var req rdbmsmodel.RDBMSDatabaseCreateReq
@@ -290,7 +299,7 @@ func CreateRDBMSDatabase(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
-	if err := migration.CreateRDBMSDatabase(nsId, rdbmsId, req); err != nil {
+	if err := migration.CreateRDBMSDatabase(nsId, rdbmsId, adminUser, adminPass, req); err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to create logical database")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
@@ -307,7 +316,8 @@ func CreateRDBMSDatabase(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param rdbmsId path string true "RDBMS Instance ID"
-// @Param X-Admin-User-Password header string false "Admin User Password"
+// @Param X-Admin-User-Name header string true "Admin User Name"
+// @Param X-Admin-User-Password header string true "Admin User Password"
 // @Success 200 {object} model.ApiResponse[rdbmsmodel.RDBMSDatabaseListResponse] "Successfully retrieved logical databases"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
@@ -315,13 +325,17 @@ func CreateRDBMSDatabase(c echo.Context) error {
 func ListRDBMSDatabases(c echo.Context) error {
 	nsId := c.Param("nsId")
 	rdbmsId := c.Param("rdbmsId")
+	adminUser := c.Request().Header.Get("X-Admin-User-Name")
 	adminPass := c.Request().Header.Get("X-Admin-User-Password")
 
 	if nsId == "" || rdbmsId == "" {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId and rdbmsId required"))
 	}
+	if adminUser == "" || adminPass == "" {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("X-Admin-User-Name and X-Admin-User-Password headers required"))
+	}
 
-	res, err := migration.ListRDBMSDatabases(nsId, rdbmsId, adminPass)
+	res, err := migration.ListRDBMSDatabases(nsId, rdbmsId, adminUser, adminPass)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to list logical databases")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
@@ -340,7 +354,8 @@ func ListRDBMSDatabases(c echo.Context) error {
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param rdbmsId path string true "RDBMS Instance ID"
 // @Param dbName path string true "Database Name"
-// @Param X-Admin-User-Password header string false "Admin User Password"
+// @Param X-Admin-User-Name header string true "Admin User Name"
+// @Param X-Admin-User-Password header string true "Admin User Password"
 // @Success 200 {object} model.ApiResponse[any] "Successfully deleted logical database"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
@@ -349,16 +364,57 @@ func DeleteRDBMSDatabase(c echo.Context) error {
 	nsId := c.Param("nsId")
 	rdbmsId := c.Param("rdbmsId")
 	dbName := c.Param("dbName")
+	adminUser := c.Request().Header.Get("X-Admin-User-Name")
 	adminPass := c.Request().Header.Get("X-Admin-User-Password")
 
 	if nsId == "" || rdbmsId == "" || dbName == "" {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId, rdbmsId, and dbName required"))
 	}
+	if adminUser == "" || adminPass == "" {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("X-Admin-User-Name and X-Admin-User-Password headers required"))
+	}
 
-	if err := migration.DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminPass); err != nil {
+	if err := migration.DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminUser, adminPass); err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Str("dbName", dbName).Msg("Failed to delete logical database")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, model.SimpleSuccessResponse(fmt.Sprintf("Logical database '%s' deleted successfully", dbName)))
+}
+
+// GetRDBMSSecureTransport godoc
+// @ID GetRDBMSSecureTransport
+// @Summary Get secure transport status and server CA certificate of an RDBMS instance
+// @Description Retrieve live TLS enforcement status, active cipher, and server CA certificate via CB-Tumblebug and CB-Spider
+// @Tags [Migration] Managed RDBMS
+// @Accept json
+// @Produce json
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param rdbmsId path string true "RDBMS Instance ID"
+// @Param X-Admin-User-Name header string true "Admin User Name"
+// @Param X-Admin-User-Password header string true "Admin User Password"
+// @Success 200 {object} model.ApiResponse[rdbmsmodel.RDBMSSecureTransportInfo] "Successfully retrieved secure transport info"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error"
+// @Router /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/secure-transport [get]
+func GetRDBMSSecureTransport(c echo.Context) error {
+	nsId := c.Param("nsId")
+	rdbmsId := c.Param("rdbmsId")
+	adminUser := c.Request().Header.Get("X-Admin-User-Name")
+	adminPass := c.Request().Header.Get("X-Admin-User-Password")
+
+	if nsId == "" || rdbmsId == "" {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId and rdbmsId required"))
+	}
+	if adminUser == "" || adminPass == "" {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("X-Admin-User-Name and X-Admin-User-Password headers required"))
+	}
+
+	res, err := migration.GetRDBMSSecureTransport(nsId, rdbmsId, adminUser, adminPass)
+	if err != nil {
+		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to get secure transport info")
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(res, "Successfully retrieved secure transport info"))
 }

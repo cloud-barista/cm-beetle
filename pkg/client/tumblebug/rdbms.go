@@ -316,13 +316,18 @@ func (s *Session) DeleteRDBMS(nsId, rdbmsId, option string) error {
 // ============================================================================
 
 // CreateRDBMSDatabase creates a logical database inside an existing RDBMS instance.
-func (s *Session) CreateRDBMSDatabase(nsId, rdbmsId string, req rdbmsmodel.RDBMSDatabaseCreateReq) error {
+func (s *Session) CreateRDBMSDatabase(nsId, rdbmsId, adminUserName, adminPassword string, req rdbmsmodel.RDBMSDatabaseCreateReq) error {
 	log.Debug().Msgf("Creating database '%s' in RDBMS: %s, namespace: %s", req.DatabaseName, rdbmsId, nsId)
 
-	resp, err := s.
-		SetBody(req).
-		Post(fmt.Sprintf("/ns/%s/resources/rdbms/%s/database", nsId, rdbmsId))
+	reqClient := s.SetBody(req)
+	if adminUserName != "" {
+		reqClient = reqClient.SetHeader("X-Admin-User-Name", adminUserName)
+	}
+	if adminPassword != "" {
+		reqClient = reqClient.SetHeader("X-Admin-User-Password", adminPassword)
+	}
 
+	resp, err := reqClient.Post(fmt.Sprintf("/ns/%s/resources/rdbms/%s/database", nsId, rdbmsId))
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed to create database '%s' in RDBMS '%s'", req.DatabaseName, rdbmsId)
 		return err
@@ -344,12 +349,15 @@ func (s *Session) CreateRDBMSDatabase(nsId, rdbmsId string, req rdbmsmodel.RDBMS
 }
 
 // ListRDBMSDatabases retrieves the list of databases inside an RDBMS instance.
-func (s *Session) ListRDBMSDatabases(nsId, rdbmsId, adminPassword string) (rdbmsmodel.RDBMSDatabaseListResponse, error) {
+func (s *Session) ListRDBMSDatabases(nsId, rdbmsId, adminUserName, adminPassword string) (rdbmsmodel.RDBMSDatabaseListResponse, error) {
 	log.Debug().Msgf("Listing databases in RDBMS: %s, namespace: %s", rdbmsId, nsId)
 
 	var resBody rdbmsmodel.RDBMSDatabaseListResponse
 	req := s.SetResult(&resBody)
 
+	if adminUserName != "" {
+		req = req.SetHeader("X-Admin-User-Name", adminUserName)
+	}
 	if adminPassword != "" {
 		req = req.SetHeader("X-Admin-User-Password", adminPassword)
 	}
@@ -376,10 +384,13 @@ func (s *Session) ListRDBMSDatabases(nsId, rdbmsId, adminPassword string) (rdbms
 }
 
 // DeleteRDBMSDatabase deletes a logical database inside an RDBMS instance.
-func (s *Session) DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminPassword string) error {
+func (s *Session) DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminUserName, adminPassword string) error {
 	log.Debug().Msgf("Deleting database '%s' in RDBMS: %s, namespace: %s", dbName, rdbmsId, nsId)
 
 	req := s
+	if adminUserName != "" {
+		req = req.SetHeader("X-Admin-User-Name", adminUserName)
+	}
 	if adminPassword != "" {
 		req = req.SetHeader("X-Admin-User-Password", adminPassword)
 	}
@@ -403,4 +414,39 @@ func (s *Session) DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminPassword strin
 
 	log.Debug().Msgf("Database '%s' deleted successfully in RDBMS '%s'", dbName, rdbmsId)
 	return nil
+}
+
+// GetRDBMSSecureTransport retrieves live TLS status and server CA certificate for an RDBMS instance.
+func (s *Session) GetRDBMSSecureTransport(nsId, rdbmsId, adminUserName, adminPassword string) (rdbmsmodel.RDBMSSecureTransportInfo, error) {
+	log.Debug().Msgf("Retrieving secure transport info for RDBMS: %s, namespace: %s", rdbmsId, nsId)
+
+	var resBody rdbmsmodel.RDBMSSecureTransportInfo
+	req := s.SetResult(&resBody)
+
+	if adminUserName != "" {
+		req = req.SetHeader("X-Admin-User-Name", adminUserName)
+	}
+	if adminPassword != "" {
+		req = req.SetHeader("X-Admin-User-Password", adminPassword)
+	}
+
+	resp, err := req.Get(fmt.Sprintf("/ns/%s/resources/rdbms/%s/secure-transport", nsId, rdbmsId))
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to retrieve secure transport for RDBMS: %s", rdbmsId)
+		return rdbmsmodel.RDBMSSecureTransportInfo{}, err
+	}
+
+	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return rdbmsmodel.RDBMSSecureTransportInfo{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
+		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		log.Error().Err(err).Msgf("Failed to retrieve secure transport for RDBMS: %s", rdbmsId)
+		return rdbmsmodel.RDBMSSecureTransportInfo{}, err
+	}
+
+	log.Debug().Msgf("Retrieved secure transport for RDBMS (%s) successfully", rdbmsId)
+	return resBody, nil
 }

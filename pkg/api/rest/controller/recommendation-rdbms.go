@@ -145,6 +145,7 @@ type RecommendRDBMSRequest struct {
 // @Description
 // @Description [Note] The recommended instance names use default patterns (`mig-rdbms-01`, `mig-rdbms-02`, ...).
 // @Description - To apply a naming prefix at migration time, use the `nameSeed` query parameter on the migration API.
+// @Description - IBM Cloud Databases hosting note: defaults to 'multitenant' shared model for fast provisioning (~10 minutes). Dedicated host flavors ('b3c.*') take 35-45+ minutes.
 // @Tags [Recommendation] Managed RDBMS
 // @Accept json
 // @Produce json

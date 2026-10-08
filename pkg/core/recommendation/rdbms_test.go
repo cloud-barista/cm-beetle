@@ -672,6 +672,30 @@ func TestRecommendDBInstanceSpec_Proximity(t *testing.T) {
 	}
 }
 
+func TestRecommendDBInstanceSpec_IBMMultitenant(t *testing.T) {
+	capa := rdbmsmodel.RDBMSMetaInfo{
+		ProviderName: "ibm",
+		DBInstanceSpecOptions: []string{
+			"b3c.4x16.encrypted",
+			"b3c.8x32.encrypted",
+			"multitenant",
+		},
+		DBInstanceSpecs: []rdbmsmodel.RDBMSDBInstanceSpecInfo{
+			{Name: "b3c.4x16.encrypted", VCpuCount: "4", MemSizeMiB: "16384"},
+			{Name: "b3c.8x32.encrypted", VCpuCount: "8", MemSizeMiB: "32768"},
+			{Name: "multitenant", VCpuCount: "0", MemSizeMiB: "12288"},
+		},
+	}
+
+	spec, err := recommendDBInstanceSpec(4, 16384, 100, "mysql", capa)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if spec != "multitenant" {
+		t.Errorf("expected 'multitenant' for IBM Cloud Databases, got '%s'", spec)
+	}
+}
+
 func TestRecommendDBInstanceSpec_DiskAware(t *testing.T) {
 	capa := rdbmsmodel.RDBMSMetaInfo{
 		DBInstanceSpecs: []rdbmsmodel.RDBMSDBInstanceSpecInfo{
