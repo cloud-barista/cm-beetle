@@ -490,6 +490,7 @@ func RunServer(port string) {
 
 	// Report APIs for migration analysis
 	gReport.POST("/migration/ns/:nsId/infra/:infraId", controller.GenerateMigrationReport)
+	gReport.POST("/migration/ns/:nsId/k8sCluster/:clusterId", controller.GenerateK8sMigrationReport)
 
 	/*
 	 * API group for infrastructure summary
@@ -500,6 +501,7 @@ func RunServer(port string) {
 
 	// Summary APIs for target infrastructure
 	gSummary.GET("/target/ns/:nsId/infra/:infraId", controller.GenerateTargetInfraSummary)
+	gSummary.GET("/target/ns/:nsId/k8sCluster/:clusterId", controller.GenerateTargetK8sInfraSummary)
 
 	// Summary APIs for source infrastructure
 	gSummary.POST("/source", controller.GenerateSourceInfraSummary)
