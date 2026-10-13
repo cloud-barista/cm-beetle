@@ -110,6 +110,31 @@ func FilterNcpVmSpecsByHypervisor(vmSpecs []cloudmodel.SpecInfo) []cloudmodel.Sp
 	return filteredSpecs
 }
 
+// IsNcpSpecAvailableInZone checks if an NCP spec can be provisioned in the specified zone.
+// KR-1 zone cannot provision KVM MICRO servers (mi1-g3) due to capacity shortage (issue #497, notice #2220).
+func IsNcpSpecAvailableInZone(zone, cspSpecName string) bool {
+	if strings.EqualFold(strings.TrimSpace(zone), "KR-1") && strings.EqualFold(strings.TrimSpace(cspSpecName), "mi1-g3") {
+		return false
+	}
+	return true
+}
+
+// FilterNcpUnavailableSpecs drops NCP specs that are unavailable in the specified zone.
+func FilterNcpUnavailableSpecs(zone string, vmSpecs []cloudmodel.SpecInfo) []cloudmodel.SpecInfo {
+	if len(vmSpecs) == 0 {
+		return vmSpecs
+	}
+	filtered := make([]cloudmodel.SpecInfo, 0, len(vmSpecs))
+	for _, spec := range vmSpecs {
+		if IsNcpSpecAvailableInZone(zone, spec.CspSpecName) {
+			filtered = append(filtered, spec)
+		} else {
+			log.Debug().Msgf("NCP: filtered out unavailable spec %s in zone %s", spec.CspSpecName, zone)
+		}
+	}
+	return filtered
+}
+
 // === CPU Vendor Detection ===
 
 // ncpSpecCodePattern matches NCP VPC ServerSpecCode names like "c2-g3" (family "c", size "2",

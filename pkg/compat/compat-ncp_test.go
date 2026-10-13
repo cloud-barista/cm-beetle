@@ -13,7 +13,11 @@ limitations under the License.
 
 package compat
 
-import "testing"
+import (
+	"testing"
+
+	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+)
 
 func TestGetNcpCpuVendor(t *testing.T) {
 	tests := []struct {
@@ -40,5 +44,46 @@ func TestGetNcpCpuVendor(t *testing.T) {
 				t.Errorf("getNcpCpuVendor(%q) = %q, want %q", tt.cspSpecName, got, tt.wantVendor)
 			}
 		})
+	}
+}
+
+func TestIsNcpSpecAvailableInZone(t *testing.T) {
+	tests := []struct {
+		name        string
+		zone        string
+		cspSpecName string
+		want        bool
+	}{
+		{"mi1-g3 in KR-1 is unavailable (issue #497)", "KR-1", "mi1-g3", false},
+		{"mi1-g3 case-insensitive in KR-1", "kr-1", "MI1-G3", false},
+		{"mi1-g3 in KR-2 is available", "KR-2", "mi1-g3", true},
+		{"s2-g3 in KR-1 is available", "KR-1", "s2-g3", true},
+		{"mi1-g2 in KR-1 is available", "KR-1", "mi1-g2", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsNcpSpecAvailableInZone(tt.zone, tt.cspSpecName); got != tt.want {
+				t.Errorf("IsNcpSpecAvailableInZone(%q, %q) = %v, want %v", tt.zone, tt.cspSpecName, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFilterNcpUnavailableSpecs(t *testing.T) {
+	specs := []cloudmodel.SpecInfo{
+		{CspSpecName: "s2-g3"},
+		{CspSpecName: "mi1-g3"},
+		{CspSpecName: "c2-g3"},
+	}
+
+	filteredKR1 := FilterNcpUnavailableSpecs("KR-1", specs)
+	if len(filteredKR1) != 2 || filteredKR1[0].CspSpecName != "s2-g3" || filteredKR1[1].CspSpecName != "c2-g3" {
+		t.Errorf("FilterNcpUnavailableSpecs(KR-1) got %+v, want 2 specs without mi1-g3", filteredKR1)
+	}
+
+	filteredKR2 := FilterNcpUnavailableSpecs("KR-2", specs)
+	if len(filteredKR2) != 3 {
+		t.Errorf("FilterNcpUnavailableSpecs(KR-2) got %+v, want all 3 specs", filteredKR2)
 	}
 }
