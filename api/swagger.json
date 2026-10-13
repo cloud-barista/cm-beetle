@@ -7810,9 +7810,6 @@
         "cloudmodel.NodeInfo": {
             "type": "object",
             "properties": {
-                "RootDeviceName": {
-                    "type": "string"
-                },
                 "addtionalDetails": {
                     "type": "array",
                     "items": {
@@ -7949,6 +7946,9 @@
                 },
                 "resourceType": {
                     "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "rootDeviceName": {
                     "type": "string"
                 },
                 "rootDiskSize": {

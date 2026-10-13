@@ -7816,9 +7816,6 @@ const docTemplate = `{
         "cloudmodel.NodeInfo": {
             "type": "object",
             "properties": {
-                "RootDeviceName": {
-                    "type": "string"
-                },
                 "addtionalDetails": {
                     "type": "array",
                     "items": {
@@ -7955,6 +7952,9 @@ const docTemplate = `{
                 },
                 "resourceType": {
                     "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "rootDeviceName": {
                     "type": "string"
                 },
                 "rootDiskSize": {
