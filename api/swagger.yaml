@@ -1197,8 +1197,6 @@ definitions:
     type: object
   cloudmodel.NodeInfo:
     properties:
-      RootDeviceName:
-        type: string
       addtionalDetails:
         items:
           $ref: '#/definitions/cloudmodel.KeyValue'
@@ -1299,6 +1297,8 @@ definitions:
         description: AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}
       resourceType:
         description: ResourceType is the type of the resource
+        type: string
+      rootDeviceName:
         type: string
       rootDiskSize:
         type: integer

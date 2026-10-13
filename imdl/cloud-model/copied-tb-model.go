@@ -4,8 +4,8 @@ import "time"
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.13.3 (commit: af9ba2056d6f075e35e08c2ab32a0d90fd22b71a)
-// * Synchronized: 2026-09-08
+// * Version: CB-Tumblebug v0.13.5 (commit: 16407239df37b38e8e81ce64b81bff0e6a42e370)
+// * Synchronized: 2026-10-12
 
 // InfraReq is struct for requirements to create Infra
 type InfraReq struct {
@@ -659,7 +659,7 @@ type NodeInfo struct {
 	PrivateDNS     string     `json:"privateDNS"`
 	RootDiskType   string     `json:"rootDiskType"`
 	RootDiskSize   int        `json:"rootDiskSize"`
-	RootDeviceName string     `json:"RootDeviceName"`
+	RootDeviceName string     `json:"rootDeviceName"`
 
 	ConnectionName   string       `json:"connectionName"`
 	ConnectionConfig ConnConfig   `json:"connectionConfig"`
