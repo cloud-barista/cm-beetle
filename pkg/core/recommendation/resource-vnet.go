@@ -87,157 +87,94 @@ func RecommendVNet(csp string, region string, srcInfra onpremmodel.OnpremInfra) 
 	log.Debug().Msgf("CIDR blocks for %s: %v", netutil.PrivateNetwork172Dot, cidrs172)
 	log.Debug().Msgf("CIDR blocks for %s: %v", netutil.PrivateNetwork192Dot, cidrs192)
 
-	// Calculate the super network of each group
-	var supernet10, supernet172, supernet192 string = "", "", ""
-
-	if len(cidrs10) > 0 {
-		supernet10, err = netutil.CalculateSupernet(cidrs10)
-		if err != nil {
-			log.Warn().Err(err).Msg("failed to calculate supernet")
-		}
-		log.Debug().Msgf("supernet10: %s\n", supernet10)
-	}
-
-	if len(cidrs172) > 0 {
-		supernet172, err = netutil.CalculateSupernet(cidrs172)
-		if err != nil {
-			log.Warn().Err(err).Msg("failed to calculate supernet")
-		}
-		log.Debug().Msgf("supernet172: %s\n", supernet172)
-	}
-
-	if len(cidrs192) > 0 {
-		supernet192, err = netutil.CalculateSupernet(cidrs192)
-		if err != nil {
-			log.Warn().Err(err).Msg("failed to calculate supernet")
-		}
-		log.Debug().Msgf("supernet192: %s\n", supernet192)
-	}
-
-	// Estimate the more :D super network for each private network
-	// TODO: Set the number of networks to be included in the super network
+	// Build recommended VNet for each private network group using CSP network constraints
 	estimateNumNetworks := 4
-	if len(supernet10) > 0 {
-		supernet10, err = estimateSupernet(supernet10, estimateNumNetworks)
+	groups := []struct {
+		name  string
+		cidrs []string
+	}{
+		{netutil.PrivateNetwork10Dot, cidrs10},
+		{netutil.PrivateNetwork172Dot, cidrs172},
+		{netutil.PrivateNetwork192Dot, cidrs192},
+	}
+
+	for _, g := range groups {
+		if len(g.cidrs) == 0 {
+			continue
+		}
+		vnet, err := buildRecommendedVNet(csp, region, g.name, g.cidrs, estimateNumNetworks)
 		if err != nil {
-			log.Warn().Err(err).Msg("failed to estimate supernet for 10.x.x.x")
+			log.Warn().Err(err).Msgf("failed to build recommended vNet for %s in %s", g.name, csp)
+			continue
 		}
-	}
-	if len(supernet172) > 0 {
-		supernet172, err = estimateSupernet(supernet172, estimateNumNetworks)
-		if err != nil {
-			log.Warn().Err(err).Msg("failed to estimate supernet for 172.x.x.x")
+		if vnet != nil {
+			recommendedVNets = append(recommendedVNets, *vnet)
 		}
-	}
-	if len(supernet192) > 0 {
-		supernet192, err = estimateSupernet(supernet192, estimateNumNetworks)
-		if err != nil {
-			log.Warn().Err(err).Msg("failed to estimate supernet for 192.x.x.x")
-		}
-	}
-
-	// Select a super network for the vNet
-	// ? But how to select the super network?
-	// * Currrently, a list of recommended networks is returned.
-
-	if supernet10 != "" {
-		// Set tempSubnets by the CIDR blocks from the source computing infra
-		tempSubnets := []cloudmodel.SubnetReq{}
-		for _, cidr := range cidrs10 {
-			networkAddr, err := toNetworkAddress(cidr)
-			if err != nil {
-				log.Warn().Err(err).Msgf("failed to parse CIDR block %s", cidr)
-				continue
-			}
-
-			tempSubnets = append(tempSubnets, cloudmodel.SubnetReq{
-				Name:        "INSERT_YOUR_SUBNET_NAME", // TODO: Set a name for the subnet
-				Description: "subnet from source computing infra",
-				IPv4_CIDR:   networkAddr,
-			})
-		}
-
-		// Set the calculated supernet as the tempVNet
-		tempVNet := cloudmodel.VNetReq{
-			Name:           "INSERT_YOUR_VNET_NAME", // TODO: Set a name for the vNet
-			ConnectionName: fmt.Sprintf("%s-%s", csp, region),
-			Description:    "Recommended vNet for " + netutil.PrivateNetwork10Dot,
-			CidrBlock:      supernet10,
-			SubnetInfoList: tempSubnets,
-		}
-
-		// Append recommended virtual network info to the list
-		recommendedVNets = append(recommendedVNets, tempVNet)
-	}
-
-	if supernet172 != "" {
-
-		// Set tempSubnets by the CIDR blocks from the source computing infra
-		tempSubnets := []cloudmodel.SubnetReq{}
-		for _, cidr := range cidrs172 {
-			networkAddr, err := toNetworkAddress(cidr)
-			if err != nil {
-				log.Warn().Err(err).Msgf("failed to parse CIDR block %s", cidr)
-				continue
-			}
-
-			tempSubnets = append(tempSubnets, cloudmodel.SubnetReq{
-				Name:        "INSERT_YOUR_SUBNET_NAME", // TODO: Set a name for the subnet
-				Description: "subnet from source computing infra",
-				IPv4_CIDR:   networkAddr,
-			})
-		}
-
-		tempVNet := cloudmodel.VNetReq{
-			Name:           "INSERT_YOUR_VNET_NAME", // TODO: Set a name for the vNet
-			ConnectionName: fmt.Sprintf("%s-%s", csp, region),
-			Description:    "Recommended vNet for " + netutil.PrivateNetwork172Dot,
-			CidrBlock:      supernet172,
-			SubnetInfoList: tempSubnets,
-		}
-
-		// Append recommended virtual network info to the list
-		recommendedVNets = append(recommendedVNets, tempVNet)
-	}
-
-	if supernet192 != "" {
-
-		// Set tempSubnets by the CIDR blocks from the source computing infra
-		tempSubnets := []cloudmodel.SubnetReq{}
-		for _, cidr := range cidrs192 {
-
-			networkAddr, err := toNetworkAddress(cidr)
-			if err != nil {
-				log.Warn().Err(err).Msgf("failed to parse CIDR block %s", cidr)
-				continue
-			}
-
-			tempSubnets = append(tempSubnets, cloudmodel.SubnetReq{
-				Name:        "INSERT_YOUR_SUBNET_NAME", // TODO: Set a name for the subnet
-				Description: "subnet from source computing infra",
-				IPv4_CIDR:   networkAddr,
-			})
-		}
-
-		// Set the calculated supernet as the vNet
-		tempVNet := cloudmodel.VNetReq{
-			Name:           "INSERT_YOUR_VNET_NAME", // TODO: Set a name for the vNet
-			ConnectionName: fmt.Sprintf("%s-%s", csp, region),
-			Description:    "Recommended vNet for " + netutil.PrivateNetwork192Dot,
-			CidrBlock:      supernet192,
-			SubnetInfoList: tempSubnets,
-		}
-
-		// Append recommended virtual network info to the list
-		recommendedVNets = append(recommendedVNets, tempVNet)
 	}
 
 	// [Output]
 	if len(recommendedVNets) == 0 {
-		return emptyRes, fmt.Errorf("no recommended virtual network found for the source computing infra")
+		return emptyRes, fmt.Errorf("no recommended virtual network found for %s: check if source networks conform to CSP network constraints", csp)
 	}
 
 	return recommendedVNets, nil
+}
+
+// buildRecommendedVNet creates a VNet recommendation for a single private network group under CSP constraints.
+func buildRecommendedVNet(csp, region, privateNetName string, cidrs []string, estimateNumNetworks int) (*cloudmodel.VNetReq, error) {
+	if len(cidrs) == 0 {
+		return nil, nil
+	}
+
+	supernet, err := netutil.CalculateSupernet(cidrs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to calculate supernet for %s: %w", privateNetName, err)
+	}
+
+	adjustedVNetCidr, note, err := AdjustVNetCidrForCsp(csp, supernet, estimateNumNetworks)
+	if err != nil {
+		return nil, fmt.Errorf("failed to adjust vNet CIDR for %s (%s): %w", csp, privateNetName, err)
+	}
+
+	tempSubnets := make([]cloudmodel.SubnetReq, 0, len(cidrs))
+	for _, cidr := range cidrs {
+		networkAddr, err := toNetworkAddress(cidr)
+		if err != nil {
+			log.Warn().Err(err).Msgf("failed to parse CIDR block %s", cidr)
+			continue
+		}
+
+		adjustedSubnet, err := AdjustSubnetCidrForCsp(csp, adjustedVNetCidr, networkAddr)
+		if err != nil {
+			log.Warn().Err(err).Msgf("failed to adjust subnet CIDR %s for %s; skipping", networkAddr, csp)
+			continue
+		}
+
+		tempSubnets = append(tempSubnets, cloudmodel.SubnetReq{
+			Name:        "INSERT_YOUR_SUBNET_NAME",
+			Description: "subnet from source computing infra",
+			IPv4_CIDR:   adjustedSubnet,
+		})
+	}
+
+	if len(tempSubnets) == 0 {
+		return nil, fmt.Errorf("no valid subnets could be recommended for %s in %s", privateNetName, csp)
+	}
+
+	vnetDesc := "Recommended vNet for " + privateNetName
+	if note != "" {
+		vnetDesc += " (" + note + ")"
+	}
+
+	vnet := &cloudmodel.VNetReq{
+		Name:           "INSERT_YOUR_VNET_NAME",
+		ConnectionName: fmt.Sprintf("%s-%s", csp, region),
+		Description:    vnetDesc,
+		CidrBlock:      adjustedVNetCidr,
+		SubnetInfoList: tempSubnets,
+	}
+
+	return vnet, nil
 }
 
 func deriveSourceNetworksFromDefaultGateways(srcInfra onpremmodel.OnpremInfra) ([]string, error) {
