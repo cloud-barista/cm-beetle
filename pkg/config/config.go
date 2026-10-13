@@ -22,17 +22,18 @@ type Config struct {
 }
 
 type BeetleConfig struct {
-	Root        string            `mapstructure:"root"`
-	Self        SelfConfig        `mapstructure:"self"`
-	API         ApiConfig         `mapstructure:"api"`
-	UI          UiConfig          `mapstructure:"ui"`
-	LKVStore    LkvStoreConfig    `mapstructure:"lkvstore"`
-	LogFile     LogfileConfig     `mapstructure:"logfile"`
-	LogLevel    string            `mapstructure:"loglevel"`
-	LogWriter   string            `mapstructure:"logwriter"`
-	Node        NodeConfig        `mapstructure:"node"`
-	AutoControl AutoControlConfig `mapstructure:"autocontrol"`
-	Tumblebug   TumblebugConfig   `mapstructure:"tumblebug"`
+	Root              string            `mapstructure:"root"`
+	Self              SelfConfig        `mapstructure:"self"`
+	API               ApiConfig         `mapstructure:"api"`
+	UI                UiConfig          `mapstructure:"ui"`
+	LKVStore          LkvStoreConfig    `mapstructure:"lkvstore"`
+	LogFile           LogfileConfig     `mapstructure:"logfile"`
+	LogLevel          string            `mapstructure:"loglevel"`
+	LogWriter         string            `mapstructure:"logwriter"`
+	LogMaskingEnabled *bool             `mapstructure:"log_masking_enabled"`
+	Node              NodeConfig        `mapstructure:"node"`
+	AutoControl       AutoControlConfig `mapstructure:"autocontrol"`
+	Tumblebug         TumblebugConfig   `mapstructure:"tumblebug"`
 }
 
 type SelfConfig struct {
@@ -216,6 +217,7 @@ func bindEnvironmentVariables() {
 	viper.BindEnv("beetle.logfile.compress", "BEETLE_LOGFILE_COMPRESS")
 	viper.BindEnv("beetle.loglevel", "BEETLE_LOGLEVEL")
 	viper.BindEnv("beetle.logwriter", "BEETLE_LOGWRITER")
+	viper.BindEnv("beetle.log_masking_enabled", "BEETLE_LOG_MASKING_ENABLED")
 	viper.BindEnv("beetle.node.env", "BEETLE_NODE_ENV")
 	viper.BindEnv("beetle.autocontrol.duration_ms", "BEETLE_AUTOCONTROL_DURATION_MS")
 	viper.BindEnv("beetle.tumblebug.endpoint", "BEETLE_TUMBLEBUG_ENDPOINT")

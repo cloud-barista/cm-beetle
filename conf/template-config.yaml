@@ -38,6 +38,9 @@ beetle:
   # Set log writer, such as file, stdout, or both
   logwriter: both
 
+  # Sensitive data masking in logs: true (default) or false
+  log_masking_enabled: true
+
   # Set execution environment, such as development or production
   node:
     env: development

@@ -7,6 +7,7 @@ data:
   BEETLE_SELF_ENDPOINT: "cm-beetle:8056"
   BEETLE_TUMBLEBUG_ENDPOINT: "http://cb-tumblebug:1323"
   BEETLE_LOGLEVEL: "debug"
+  BEETLE_LOG_MASKING_ENABLED: "true"
   BEETLE_NODE_ENV: "development"
 ---
 apiVersion: v1

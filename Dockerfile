@@ -98,7 +98,8 @@ ENV BEETLE_LOGFILE_PATH=/app/log/beetle.log \
   BEETLE_LOGFILE_MAXAGE=30 \
   BEETLE_LOGFILE_COMPRESS=false \
   BEETLE_LOGLEVEL=info \
-  BEETLE_LOGWRITER=both
+  BEETLE_LOGWRITER=both \
+  BEETLE_LOG_MASKING_ENABLED=true
 
 # Set execution environment, such as development or production
 ENV BEETLE_NODE_ENV=production

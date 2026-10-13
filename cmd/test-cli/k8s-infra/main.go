@@ -30,13 +30,14 @@ var (
 func init() {
 	config.Init()
 	l := logger.NewLogger(logger.Config{
-		LogLevel:    config.Beetle.LogLevel,
-		LogWriter:   config.Beetle.LogWriter,
-		LogFilePath: config.Beetle.LogFile.Path,
-		MaxSize:     config.Beetle.LogFile.MaxSize,
-		MaxBackups:  config.Beetle.LogFile.MaxBackups,
-		MaxAge:      config.Beetle.LogFile.MaxAge,
-		Compress:    config.Beetle.LogFile.Compress,
+		LogLevel:          config.Beetle.LogLevel,
+		LogWriter:         config.Beetle.LogWriter,
+		LogFilePath:       config.Beetle.LogFile.Path,
+		MaxSize:           config.Beetle.LogFile.MaxSize,
+		MaxBackups:        config.Beetle.LogFile.MaxBackups,
+		MaxAge:            config.Beetle.LogFile.MaxAge,
+		Compress:          config.Beetle.LogFile.Compress,
+		LogMaskingEnabled: config.Beetle.LogMaskingEnabled,
 	})
 	log.Logger = *l
 }

@@ -44,6 +44,7 @@ services:
       # - BEETLE_LOGFILE_COMPRESS=false
       # - BEETLE_LOGLEVEL=debug
       # - BEETLE_LOGWRITER=both
+      # - BEETLE_LOG_MASKING_ENABLED=true   # enable/disable sensitive data masking (default: true)
       - BEETLE_NODE_ENV=development
       # - BEETLE_AUTOCONTROL_DURATION_MS=10000
       - BEETLE_TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323
