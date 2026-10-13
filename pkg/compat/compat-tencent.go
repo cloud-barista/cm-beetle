@@ -9,8 +9,8 @@ import (
 func CheckTencent(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	log.Trace().Msgf("Starting Tencent Cloud compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
-	// TODO: Add Tencent Cloud-specific compatibility checks using Detail information
-	log.Info().Msg("Tencent Cloud compatibility validation is planned for future implementation")
+	// Tencent compatibility validation planned for future implementation
+	log.Trace().Msg("Tencent Cloud compatibility validation is planned for future implementation")
 
 	log.Trace().Msgf("Tencent Cloud compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 	return true
