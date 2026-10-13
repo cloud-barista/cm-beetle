@@ -137,12 +137,6 @@
         "imageId": "ami-07b9264ffe2d09a8e"
       },
       {
-        "name": "g23-aws-me-central-1",
-        "nodeGroupSize": 1,
-        "specId": "aws+me-central-1+c5.large",
-        "imageId": "ami-0c0d7a3f7f76dd1a6"
-      },
-      {
         "name": "g24-aws-sa-east-1",
         "nodeGroupSize": 1,
         "specId": "aws+sa-east-1+t3.nano",
