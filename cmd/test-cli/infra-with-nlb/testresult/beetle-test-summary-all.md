@@ -5,15 +5,15 @@
 
 ## Execution details
 
-- **Test Date**: September 8, 2026
-- **Start Time**: 17:10:35 KST
-- **End Time**: 17:17:44 KST
-- **Total Execution Duration**: 7m46s
-- **CM-Beetle Version**: v0.6.0+ (44cc606)
-- **imdl Version**: v0.1.13+ (44cc606)
-- **CB-Tumblebug Version**: v0.13.3
-- **CB-Spider Version**: v0.13.4
-- **CB-MapUI Version**: v0.13.7
+- **Test Date**: October 12, 2026
+- **Start Time**: 21:19:03 KST
+- **End Time**: 21:25:13 KST
+- **Total Execution Duration**: 6m9s
+- **CM-Beetle Version**: v0.6.1+ (3649ed7)
+- **imdl Version**: v0.1.16+ (3649ed7)
+- **CB-Tumblebug Version**: unknown
+- **CB-Spider Version**: unknown
+- **CB-MapUI Version**: v0.13.13
 
 ## High-level test status
 
@@ -31,5 +31,5 @@
 
 | Provider-Region | Status | Duration | Steps Passed | Details |
 |-----------------|--------|----------|--------------|---------|
-| **AWS-Seoul** | ✅ **PASS** | 7m40s | 15 / 15 | [View Report](beetle-test-results-aws.md) |
+| **Tencent-Seoul** | ✅ **PASS** | 6m4s | 15 / 15 | [View Report](beetle-test-results-tencent.md) |
 
