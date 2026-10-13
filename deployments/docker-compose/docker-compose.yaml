@@ -51,8 +51,8 @@ services:
       # - BEETLE_TUMBLEBUG_API_USERNAME=default
       # - BEETLE_TUMBLEBUG_API_PASSWORD=default
       # Set REQUESTS_PER_SEC to CB-Tumblebug's own per-client-IP limit
-      # - BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC=2
-      # - BEETLE_TUMBLEBUG_RETRIEVAL_MAX_WAIT_SEC=8
+      - BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC=5
+      - BEETLE_TUMBLEBUG_RETRIEVAL_MAX_WAIT_SEC=30
     healthcheck:
       # for CM-Beetle
       test: ["CMD", "curl", "-f", "http://localhost:8056/beetle/readyz"]

@@ -25,9 +25,8 @@ import (
 )
 
 const (
-	// Tumblebug's limit on the read APIs Beetle paces. It applies per source IP, so one process
-	// gets one budget. Configurable; see docs/tumblebug-call-pacer.md.
-	defaultTumblebugRequestsPerSec = 2.0
+	// Tumblebug v0.13.5 rate limit for retrieval APIs (TB_API_RATE_LIMIT_INFRA_GET default is 5 req/s).
+	defaultTumblebugRequestsPerSec = 5.0
 	minTumblebugRequestsPerSec     = 0.1
 	maxTumblebugRequestsPerSec     = 100.0
 
@@ -36,7 +35,7 @@ const (
 	pacingHeadroom = 0.8
 
 	// How long a call waits for a slot when its context carries no deadline of its own.
-	defaultPacingWait = 8 * time.Second
+	defaultPacingWait = 30 * time.Second
 	maxPacingWait     = 120 * time.Second
 
 	// Bounded retry for the 429s pacing can't prevent. Tumblebug sends no Retry-After, so

@@ -470,7 +470,7 @@ var clientCircuitBreakers = sync.Map{}
 
 const (
 	// Circuit breaker thresholds
-	circuitBreakerFailureThreshold = 5                // Number of failures before opening circuit
+	circuitBreakerFailureThreshold = 10               // Number of failures before opening circuit
 	circuitBreakerOpenDuration     = 30 * time.Second // How long to keep circuit open
 )
 
@@ -723,8 +723,9 @@ func ExecuteHttpRequest[B any, T any](
 
 		if method == "GET" {
 			requestDone(requestKey)
-			// Record circuit breaker failure for GET requests
-			recordCircuitBreakerFailure(requestKey)
+			if resp.StatusCode() != http.StatusNotFound {
+				recordCircuitBreakerFailure(requestKey)
+			}
 		}
 		cleanedBody := cleanErrorMessage(string(resp.Body()))
 		cleanedURL := cleanURL(url)

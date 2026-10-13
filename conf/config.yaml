@@ -61,7 +61,7 @@ beetle:
     ## paces itself below it. max_wait_sec: wait for a slot before giving up with 503.
     ## See docs/tumblebug-call-pacer.md.
     retrieval:
-      requests_per_sec: 2
+      requests_per_sec: 5
       max_wait_sec: 8
 
   ## UI configuration
