@@ -197,14 +197,10 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 		syntheticNode := synthesizeGroupRepresentativeNode(rnlb.memberMachineIds, nodeByMachineId)
 		nodeWithMergedFirewallRules := mergeNodesFirewallRules(rnlb.memberMachineIds, nodeByMachineId, syntheticNode)
 
-		// Cloud NLBs (AWS, GCP, Azure) operate in pass-through mode: they preserve the original
-		// client source IP instead of SNAT-ing to their own IP. In the source HAProxy setup the
-		// backend port (8086) was restricted to the internal VPC CIDR because haproxy was a proxy
-		// that always forwarded from its own internal IP. In the cloud NLB equivalent the backend
-		// VMs receive packets whose source IP is the external client IP, so the SG must allow
-		// the target port from 0.0.0.0/0. (Health checks still originate from VPC-internal NLB
-		// node IPs, so the existing VPC-CIDR rule continues to satisfy them.)
-		nodeWithMergedFirewallRules = ensurePortOpenToPublic(nodeWithMergedFirewallRules, rnlb.backendPort)
+		// Supplement inbound firewall rules for remote client traffic to backend port.
+		nodeWithMergedFirewallRules = supplementFirewallIncomingFromRemote(nodeWithMergedFirewallRules, rnlb, csp)
+		// Supplement inbound firewall rules for NLB health check and proxy traffic.
+		nodeWithMergedFirewallRules = supplementFirewallNlbToNode(nodeWithMergedFirewallRules, rnlb, csp, skeleton)
 
 		sg, sgErr := RecommendSecurityGroup(csp, region, nodeWithMergedFirewallRules)
 		if sgErr != nil {
@@ -239,7 +235,7 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 				Description:      fmt.Sprintf("Recommended VM for NLB backend %s (%d nodes)", backendName, nodeGroupSize),
 				Label: map[string]string{
 					lineage.LabelSourceMachineIds: strings.Join(rnlb.memberMachineIds, ","),
-					"nlbBackend":                     backendName,
+					"nlbBackend":                  backendName,
 				},
 			},
 		})
@@ -803,10 +799,47 @@ func normalizeProtocol(proto string) string {
 	}
 }
 
-// ensurePortOpenToPublic returns a copy of node whose FirewallTable is guaranteed to contain
-// an inbound TCP rule that allows the given port from 0.0.0.0/0.
-// If such a rule already exists (exact port or wildcard "*") it is a no-op.
-func ensurePortOpenToPublic(node onpremmodel.NodeProperty, port int) onpremmodel.NodeProperty {
+// supplementFirewallNlbToNode supplements inbound firewall rules for NLB-to-VM traffic (health check and proxy forwarding).
+func supplementFirewallNlbToNode(node onpremmodel.NodeProperty, rnlb resolvedNlb, csp string, skeleton cloudmodel.RecommendedInfra) onpremmodel.NodeProperty {
+	// NHN Cloud load balancer forwards traffic and health checks from within the target subnet/VNet to the backend port.
+	if strings.EqualFold(csp, "nhn") {
+		targetCidrs := make([]string, 0, len(skeleton.TargetVNet.SubnetInfoList)+1)
+		if skeleton.TargetVNet.CidrBlock != "" {
+			targetCidrs = append(targetCidrs, skeleton.TargetVNet.CidrBlock)
+		}
+		for _, subnet := range skeleton.TargetVNet.SubnetInfoList {
+			if subnet.IPv4_CIDR != "" {
+				targetCidrs = append(targetCidrs, subnet.IPv4_CIDR)
+			}
+		}
+		for _, cidr := range targetCidrs {
+			node = allowInboundPortOpen(node, rnlb.backendPort, cidr)
+		}
+	}
+	return node
+}
+
+// supplementFirewallIncomingFromRemote supplements inbound firewall rules for remote client traffic (0.0.0.0/0).
+func supplementFirewallIncomingFromRemote(node onpremmodel.NodeProperty, rnlb resolvedNlb, csp string) onpremmodel.NodeProperty {
+	// TODO: obtain and set remote client CIDR from user
+	// Allow remote client traffic to incoming listener port.
+	if rnlb.sourceNlb.Listener.Port > 0 {
+		node = allowInboundPortOpen(node, rnlb.sourceNlb.Listener.Port, "0.0.0.0/0")
+	}
+
+	// For pass-through NLBs, remote client IP reaches the backend port directly.
+	if rnlb.backendPort > 0 && rnlb.backendPort != rnlb.sourceNlb.Listener.Port {
+		node = allowInboundPortOpen(node, rnlb.backendPort, "0.0.0.0/0")
+	}
+	return node
+}
+
+// allowInboundPortOpen returns a copy of node whose FirewallTable is guaranteed to contain
+// an inbound TCP rule for the given port and source CIDR.
+func allowInboundPortOpen(node onpremmodel.NodeProperty, port int, cidr string) onpremmodel.NodeProperty {
+	if port <= 0 || cidr == "" {
+		return node
+	}
 	portStr := fmt.Sprintf("%d", port)
 	for _, rule := range node.FirewallTable {
 		if rule.Direction != "inbound" || rule.Action != "allow" {
@@ -819,15 +852,15 @@ func ensurePortOpenToPublic(node onpremmodel.NodeProperty, port int) onpremmodel
 		if rule.DstPorts != portStr && rule.DstPorts != "*" {
 			continue
 		}
-		if rule.SrcCIDR == "0.0.0.0/0" || rule.SrcCIDR == "*" || rule.SrcCIDR == "" {
-			return node // already open to public
+		if rule.SrcCIDR == cidr || (cidr == "0.0.0.0/0" && (rule.SrcCIDR == "*" || rule.SrcCIDR == "")) {
+			return node
 		}
 	}
 	node.FirewallTable = append(node.FirewallTable, onpremmodel.FirewallRuleProperty{
 		Action:    "allow",
 		Direction: "inbound",
 		Protocol:  "tcp",
-		SrcCIDR:   "0.0.0.0/0",
+		SrcCIDR:   cidr,
 		SrcPorts:  "*",
 		DstCIDR:   "0.0.0.0/0",
 		DstPorts:  portStr,

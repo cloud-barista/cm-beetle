@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-07-01 06:30:05*
+*Report generated: 2026-10-12 10:58:40*
 
 ---
 
@@ -12,7 +12,7 @@ This report provides a comprehensive summary of the infrastructure migration fro
 
 **Target Region:** ap-northeast-2
 
-**Namespace:** mig01 | **Infra ID:** my-infra101
+**Namespace:** mig01 | **Infra ID:** my04-infra101
 
 **Migration Status:** Completed
 
@@ -33,9 +33,9 @@ Summary of key infrastructure resources created or configured in the target clou
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
 | 2 | **VM Spec** | 2 | ✅ Selected | ecs.e-c1m1.large, ecs.e-c1m4.xlarge |
 | 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
-| 4 | **VNet (VPC)** | 1 | ✅ Created | my-mig-vnet-01, CIDR: 10.0.0.0/21 |
-| 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my-mig-vnet-01) |
-| 6 | **Security Group** | 2 security groups | ✅ Created | Total 9 rules in 2 sgs |
+| 4 | **VNet (VPC)** | 1 | ✅ Created | my04-mig-vnet-01, CIDR: 10.0.0.0/21 |
+| 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my04-mig-vnet-01) |
+| 6 | **Security Group** | 2 security groups | ✅ Created | Total 10 rules in 2 sgs |
 | 7 | **SSH Key** | 1 keys | ✅ Created | For VM access control |
 
 ---
@@ -46,9 +46,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my-ng-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-mj72v2gcuu4t9s3674t1<br>**Label(sourceMachineId):** ng-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** ng-ec268ed7-821e-9d73-e79f |
-| 2 | **VM Name:** my-ng-influxdb-back-1<br>**VM ID:** i-mj7el4jrcshrdb07v7y5<br>**Label(sourceMachineId):** ng | **Hostname:** N/A<br>**Machine ID:** ng |
-| 3 | **VM Name:** my-ng-influxdb-back-2<br>**VM ID:** i-mj72g1bx55n3xahf3n2t<br>**Label(sourceMachineId):** ng | **Hostname:** N/A<br>**Machine ID:** ng |
+| 1 | **VM Name:** my04-ng-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-mj78vnkdsw3hgl5t0j1i<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
+| 2 | **VM Name:** my04-ng-influxdb-back-1<br>**VM ID:** i-mj75o7wmbqfttpuy12n7<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| 3 | **VM Name:** my04-ng-influxdb-back-2<br>**VM ID:** i-mj75o7wmbqfttpuy12n8<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
 
 ---
 
@@ -58,9 +58,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | VM Spec | Source Server | Source Server Spec |
 |-----|-------------|---------|---------------|--------------------|
-| 1 | my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** ecs.e-c1m1.large<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** ng-ec268ed7-821e-9d73-e79f | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
-| 2 | my-ng-influxdb-back-1 | **Spec ID:** ecs.e-c1m4.xlarge<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** ng | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
-| 3 | my-ng-influxdb-back-2 | **Spec ID:** ecs.e-c1m4.xlarge<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** ng | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
+| 1 | my04-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** ecs.e-c1m1.large<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 2 GB<br>**Root Disk:** 8 GB |
+| 2 | my04-ng-influxdb-back-1 | **Spec ID:** ecs.e-c1m4.xlarge<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 30 GB |
+| 3 | my04-ng-influxdb-back-2 | **Spec ID:** ecs.e-c1m4.xlarge<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 8 GB<br>**Root Disk:** 30 GB |
 
 ---
 
@@ -70,45 +70,46 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | VM OS Image Info | Source Server | Source OS |
 |-----|-------------|------------------|---------------|-----------|
-| 1 | my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** ubuntu_22_04_x64_20G_alibase_20260522.vhd<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu  22.04 64 bit | **Hostname:** N/A<br>**Machine ID:** ng-ec268ed7-821e-9d73-e79f | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
-| 2 | my-ng-influxdb-back-1 | **Image ID:** ubuntu_22_04_x64_20G_alibase_20260522.vhd<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu  22.04 64 bit | **Hostname:** N/A<br>**Machine ID:** ng | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
-| 3 | my-ng-influxdb-back-2 | **Image ID:** ubuntu_22_04_x64_20G_alibase_20260522.vhd<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu  22.04 64 bit | **Hostname:** N/A<br>**Machine ID:** ng | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
+| 1 | my04-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** ubuntu_22_04_x64_20G_alibase_20260810.vhd<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu  22.04 64 bit | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 2 | my04-ng-influxdb-back-1 | **Image ID:** ubuntu_22_04_x64_20G_alibase_20260810.vhd<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu  22.04 64 bit | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 3 | my04-ng-influxdb-back-2 | **Image ID:** ubuntu_22_04_x64_20G_alibase_20260810.vhd<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu  22.04 64 bit | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
 
 ---
 
 ## 🔒 Security Groups
 
-**Summary:** 2 security group(s) with 9 security rule(s) have been created and configured for the migrated VMs.
+**Summary:** 2 security group(s) with 10 security rule(s) have been created and configured for the migrated VMs.
 
-### Security Group: my-mig-sg-01
+### Security Group: my04-mig-sg-01
 
-**CSP ID:** sg-mj7gfnq2bzbgd0f3ief0 | **VNet:** my-mig-vnet-01 | **Rules:** 5
+**CSP ID:** sg-mj755w3u7hdkfhqme0dt | **VNet:** my04-mig-vnet-01 | **Rules:** 6
 
 **Assigned VMs:**
 
-- **VM:** my-ng-influxdb-back-1
-  - **Source Server:** **Hostname:** N/A, **Machine ID:** ng
-- **VM:** my-ng-influxdb-back-2
-  - **Source Server:** **Hostname:** N/A, **Machine ID:** ng
+- **VM:** my04-ng-influxdb-back-1
+  - **Source Server:** **Hostname:** ip-10-0-1-221, **Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932
+- **VM:** my04-ng-influxdb-back-2
+  - **Source Server:** **Hostname:** ip-10-0-1-138, **Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf
 
 **Security Rules:**
 
 | No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
 |-----|-----------|----------|------|------|----------------------|------|
 | 1 | inbound | TCP | 8086 | 0.0.0.0/0 | - | Created by system |
-| 2 | inbound | ALL |  | 10.0.0.0/16 | inbound * * from 10.0.0.0/16 | Migrated from source |
-| 3 | inbound | TCP | 8086 | 10.0.0.0/16 | inbound tcp 8086 from 10.0.0.0/16 | Migrated from source |
-| 4 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
-| 5 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
+| 2 | inbound | TCP | 9999 | 0.0.0.0/0 | inbound tcp 9999 | Migrated from source |
+| 3 | inbound | ALL |  | 10.0.0.0/16 | inbound * * from 10.0.0.0/16 | Migrated from source |
+| 4 | inbound | TCP | 8086 | 10.0.0.0/16 | inbound tcp 8086 from 10.0.0.0/16 | Migrated from source |
+| 5 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 6 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
 
-### Security Group: my-mig-sg-02
+### Security Group: my04-mig-sg-02
 
-**CSP ID:** sg-mj7c5h3pubp9gdjeyqfa | **VNet:** my-mig-vnet-01 | **Rules:** 4
+**CSP ID:** sg-mj78vnkdsw3hgl5xrwmf | **VNet:** my04-mig-vnet-01 | **Rules:** 4
 
 **Assigned VMs:**
 
-- **VM:** my-ng-ec268ed7-821e-9d73-e79f-961262161624-1
-  - **Source Server:** **Hostname:** N/A, **Machine ID:** ng-ec268ed7-821e-9d73-e79f
+- **VM:** my04-ng-ec268ed7-821e-9d73-e79f-961262161624-1
+  - **Source Server:** **Hostname:** ip-10-0-1-30, **Machine ID:** ec268ed7-821e-9d73-e79f-961262161624
 
 **Security Rules:**
 
@@ -129,13 +130,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my-mig-vnet-01<br>**ID:** vpc-mj7bs5xicpvmokn3j8rx6 | 10.0.0.0/21 |
+| 1 | **Name:** my04-mig-vnet-01<br>**ID:** vpc-mj7r2m3wqm09p88ugm6if | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my-mig-subnet-01<br>**ID:** vsw-mj725y065dz05gozxllw0 | 10.0.1.0/24 | my-mig-vnet-01 |
+| 1 | **Name:** my04-mig-subnet-01<br>**ID:** vsw-mj77koiujuio5e71st964 | 10.0.1.0/24 | my04-mig-vnet-01 |
 
 ### Source Network Information
 
@@ -150,6 +151,14 @@ Summary of key infrastructure resources created or configured in the target clou
 | Interface | IP Address | State |
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
+| ens5 | 10.0.1.30/24 | up |
+
+**Main Routes:**
+
+| Destination | Gateway | Interface |
+|-------------|---------|-----------|
+| 0.0.0.0/0 | 10.0.1.1 | ens5 |
+| 10.0.1.0/24 | 10.0.1.1 | ens5 |
 
 #### 2. ip-10-0-1-221
 
@@ -158,6 +167,14 @@ Summary of key infrastructure resources created or configured in the target clou
 | Interface | IP Address | State |
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
+| ens5 | 10.0.1.221/24 | up |
+
+**Main Routes:**
+
+| Destination | Gateway | Interface |
+|-------------|---------|-----------|
+| 0.0.0.0/0 | 10.0.1.1 | ens5 |
+| 10.0.1.0/24 | 10.0.1.1 | ens5 |
 
 #### 3. ip-10-0-1-138
 
@@ -166,6 +183,14 @@ Summary of key infrastructure resources created or configured in the target clou
 | Interface | IP Address | State |
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
+| ens5 | 10.0.1.138/24 | up |
+
+**Main Routes:**
+
+| Destination | Gateway | Interface |
+|-------------|---------|-----------|
+| 0.0.0.0/0 | 10.0.1.1 | ens5 |
+| 10.0.1.0/24 | 10.0.1.1 | ens5 |
 
 ---
 
@@ -177,7 +202,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my-mig-sshkey-01 | tbbj6mafh101dhopefl6 | 938129357923abb15fa633e7158ce0ff | Used by all 3 VMs |
+| 1 | my04-mig-sshkey-01 | tbghcomebhflfpstm793 | 5b366c3fab1f3601a78f3e16aa933205 | Used by all 3 VMs |
 
 ---
 
@@ -197,6 +222,8 @@ Summary of key infrastructure resources created or configured in the target clou
 | Component | Spec | Monthly Cost | Percentage |
 |-----------|------|--------------|------------|
 | ip-10-0-1-30 (migrated) | ecs.e-c1m1.large | $12.82 | 5.3% |
+| ip-10-0-1-221 (migrated) | ecs.e-c1m4.xlarge | $113.90 | 47.3% |
+| ip-10-0-1-138 (migrated) | ecs.e-c1m4.xlarge | $113.90 | 47.3% |
 
 ---
 

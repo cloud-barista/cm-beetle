@@ -2,6 +2,7 @@ package recommendation
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
@@ -126,6 +127,12 @@ func preFilterByCsp(csp string, specs []cloudmodel.SpecInfo, images []cloudmodel
 		log.Debug().Msgf("NCP pre-filtering: %d specs filtered to %d KVM specs", len(specs), len(filteredSpecs))
 		return filteredSpecs, images
 
+	case "tencent":
+		// Filter out BF1 family due to frequent regional inventory exhaustion
+		filteredSpecs := filterTencentVmSpecs(specs)
+		log.Debug().Msgf("Tencent pre-filtering: %d specs filtered to %d reliable specs", len(specs), len(filteredSpecs))
+		return filteredSpecs, images
+
 	default:
 		// No specific filtering for GCP and others
 		// Rely on comprehensive compatibility checks in findCompatiblePair
@@ -225,5 +232,57 @@ func filterNcpVmSpecsByHypervisor(vmSpecs []cloudmodel.SpecInfo) []cloudmodel.Sp
 		return vmSpecs
 	}
 
+	return filteredSpecs
+}
+
+// legacyTencentSpecPattern matches previous-generation Tencent instance types.
+var legacyTencentSpecPattern = regexp.MustCompile(`(?i)^(S[1-4]|SA[1-2]|C[1-4]|M[1-3]|I[1-2]|D[1-2])\.`)
+
+// filterTencentVmSpecs filters out Tencent VM specs that are sold out, understocked, or legacy generations
+func filterTencentVmSpecs(vmSpecs []cloudmodel.SpecInfo) []cloudmodel.SpecInfo {
+	if len(vmSpecs) == 0 {
+		return vmSpecs
+	}
+
+	log.Debug().Msgf("Tencent filtering: checking %d VM specs for stock availability", len(vmSpecs))
+
+	var filteredSpecs []cloudmodel.SpecInfo
+	for _, spec := range vmSpecs {
+		// Exclude BF1 (BeFast 1) family due to persistent stock exhaustion in regional zones
+		if strings.HasPrefix(strings.ToUpper(spec.CspSpecName), "BF1.") {
+			log.Debug().Msgf("Tencent: filtered out VM spec %s (understocked BF1 family)", spec.CspSpecName)
+			continue
+		}
+
+		// Exclude legacy generations with limited regional capacity
+		// e.g. S1-S4, SA1-SA2, C1-C4, M1-M3, I1-I2, D1-D2
+		if legacyTencentSpecPattern.MatchString(spec.CspSpecName) {
+			log.Debug().Msgf("Tencent: filtered out VM spec %s (legacy generation)", spec.CspSpecName)
+			continue
+		}
+
+		// Check Tencent CSP stock status from spec details
+		hasStock := true
+		for _, detail := range spec.Details {
+			if strings.EqualFold(detail.Key, "Status") && strings.EqualFold(detail.Value, "SOLD_OUT") {
+				hasStock = false
+				break
+			}
+			if strings.EqualFold(detail.Key, "StatusCategory") &&
+				(strings.EqualFold(detail.Value, "UnderStock") || strings.EqualFold(detail.Value, "WithoutStock")) {
+				hasStock = false
+				break
+			}
+		}
+
+		if !hasStock {
+			log.Debug().Msgf("Tencent: filtered out VM spec %s (sold out or understocked)", spec.CspSpecName)
+			continue
+		}
+
+		filteredSpecs = append(filteredSpecs, spec)
+	}
+
+	log.Debug().Msgf("Tencent filtering: %d VM specs filtered to %d in-stock specs", len(vmSpecs), len(filteredSpecs))
 	return filteredSpecs
 }

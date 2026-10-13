@@ -1,10 +1,10 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-07-01 06:30:00
+**Generated At:** 2026-10-12 10:58:16
 
 **Namespace:** mig01
 
-**Infra Name:** my-infra101
+**Infra Name:** my04-infra101
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Property | Value |
 |----------|-------|
-| **Infra Name** | my-infra101 |
+| **Infra Name** | my04-infra101 |
 | **Description** | NLB-aware recommended infrastructure for cloud migration |
 | **Status** | Running:3 (R:3/3) |
 | **Target Cloud** | ALIBABA |
@@ -28,34 +28,34 @@
 
 | Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
-| ecs.e-c1m4.xlarge | 4 | 16.0 | - | x86_64 |  | $0.1582 | 2 |
 | ecs.e-c1m1.large | 2 | 2.0 | - | x86_64 |  | $0.0178 | 1 |
+| ecs.e-c1m4.xlarge | 4 | 16.0 | - | x86_64 |  | $0.1582 | 2 |
 
 ### VM Images
 
 | Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 |------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
-| ubuntu_22_04_x64_20G_alibase_20260522.vhd | Ubuntu  22.04 64 bit | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 20 GB | 3 |
+| ubuntu_22_04_x64_20G_alibase_20260810.vhd | Ubuntu  22.04 64 bit | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 20 GB | 3 |
 
 ### Virtual Machines
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | i-mj72v2gcuu4t9s3674t1 | Running | 2 vCPU, 2.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 47.80.7.206<br>**Private IP:** 10.0.1.202<br>**SGs:** my-mig-sg-02<br>**SSH:** my-mig-sshkey-01 |
-| my-ng-influxdb-back-1 | i-mj7el4jrcshrdb07v7y5 | Running | 4 vCPU, 16.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 8.213.149.169<br>**Private IP:** 10.0.1.201<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
-| my-ng-influxdb-back-2 | i-mj72g1bx55n3xahf3n2t | Running | 4 vCPU, 16.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 47.80.12.1<br>**Private IP:** 10.0.1.203<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
+| my04-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | i-mj78vnkdsw3hgl5t0j1i | Running | 2 vCPU, 2.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-mig-vnet-01<br>**Subnet:** my04-mig-subnet-01<br>**Public IP:** 47.80.249.240<br>**Private IP:** 10.0.1.73<br>**SGs:** my04-mig-sg-02<br>**SSH:** my04-mig-sshkey-01 |
+| my04-ng-influxdb-back-1 | i-mj75o7wmbqfttpuy12n7 | Running | 4 vCPU, 16.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-mig-vnet-01<br>**Subnet:** my04-mig-subnet-01<br>**Public IP:** 47.80.251.194<br>**Private IP:** 10.0.1.72<br>**SGs:** my04-mig-sg-01<br>**SSH:** my04-mig-sshkey-01 |
+| my04-ng-influxdb-back-2 | i-mj75o7wmbqfttpuy12n8 | Running | 4 vCPU, 16.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-mig-vnet-01<br>**Subnet:** my04-mig-subnet-01<br>**Public IP:** 47.80.250.25<br>**Private IP:** 10.0.1.74<br>**SGs:** my04-mig-sg-01<br>**SSH:** my04-mig-sshkey-01 |
 
 
 ## Network Resources
 
 ### Virtual Networks (VPC/VNet)
 
-#### VNet: my-mig-vnet-01
+#### VNet: my04-mig-vnet-01
 
 | Property | Value |
 |----------|-------|
-| **Name** | my-mig-vnet-01 |
-| **CSP VNet ID** | vpc-mj7bs5xicpvmokn3j8rx6 |
+| **Name** | my04-mig-vnet-01 |
+| **CSP VNet ID** | vpc-mj7r2m3wqm09p88ugm6if |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | alibaba-ap-northeast-2 |
 | **Subnet Count** | 1 |
@@ -64,7 +64,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my-mig-subnet-01 | vsw-mj725y065dz05gozxllw0 | 10.0.1.0/24 | ap-northeast-2a |
+| my04-mig-subnet-01 | vsw-mj77koiujuio5e71st964 | 10.0.1.0/24 | ap-northeast-2a |
 
 
 ## Security Resources
@@ -73,36 +73,37 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my-mig-sshkey-01 | tbbj6mafh101dhopefl6 |  | 938129357923abb15fa633e7158ce0ff |
+| my04-mig-sshkey-01 | tbghcomebhflfpstm793 |  | 5b366c3fab1f3601a78f3e16aa933205 |
 
 ### Security Groups
 
-#### Security Group: my-mig-sg-01
+#### Security Group: my04-mig-sg-01
 
 | Property | Value |
 |----------|-------|
-| **Name** | my-mig-sg-01 |
-| **CSP Security Group ID** | sg-mj7gfnq2bzbgd0f3ief0 |
-| **VNet** | my-mig-vnet-01 |
-| **Rule Count** | 5 rules |
+| **Name** | my04-mig-sg-01 |
+| **CSP Security Group ID** | sg-mj755w3u7hdkfhqme0dt |
+| **VNet** | my04-mig-vnet-01 |
+| **Rule Count** | 6 rules |
 
 **Security Group Rules:**
 
 | Direction | Protocol | Port Range | CIDR |
 |-----------|----------|------------|------|
 | inbound | TCP | 8086 | 0.0.0.0/0 |
+| inbound | TCP | 9999 | 0.0.0.0/0 |
 | inbound | ALL |  | 10.0.0.0/16 |
 | inbound | TCP | 8086 | 10.0.0.0/16 |
 | inbound | TCP | 22 | 0.0.0.0/0 |
 | outbound | ALL |  | 0.0.0.0/0 |
 
-#### Security Group: my-mig-sg-02
+#### Security Group: my04-mig-sg-02
 
 | Property | Value |
 |----------|-------|
-| **Name** | my-mig-sg-02 |
-| **CSP Security Group ID** | sg-mj7c5h3pubp9gdjeyqfa |
-| **VNet** | my-mig-vnet-01 |
+| **Name** | my04-mig-sg-02 |
+| **CSP Security Group ID** | sg-mj78vnkdsw3hgl5xrwmf |
+| **VNet** | my04-mig-vnet-01 |
 | **Rule Count** | 4 rules |
 
 **Security Group Rules:**
@@ -135,8 +136,8 @@
 
 | VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
 |---------|------|-----------------|------------------|
-| my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | ecs.e-c1m1.large | $0.0178 | $12.82 |
-| my-ng-influxdb-back-1 | ecs.e-c1m4.xlarge | $0.1582 | $113.90 |
-| my-ng-influxdb-back-2 | ecs.e-c1m4.xlarge | $0.1582 | $113.90 |
+| my04-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | ecs.e-c1m1.large | $0.0178 | $12.82 |
+| my04-ng-influxdb-back-1 | ecs.e-c1m4.xlarge | $0.1582 | $113.90 |
+| my04-ng-influxdb-back-2 | ecs.e-c1m4.xlarge | $0.1582 | $113.90 |
 
 

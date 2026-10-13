@@ -7,23 +7,24 @@
 
 ### Environment
 
-- CM-Beetle: b418c24
-- imdl: unknown
-- CB-Tumblebug: Unknown (Fallback to Latest)
-- CB-Spider: Unknown (Fallback to Latest)
-- CB-MapUI: Unknown (Fallback to Latest)
+- CM-Beetle: v0.6.1+ (3649ed7)
+- imdl: v0.1.16+ (3649ed7)
+- CB-Tumblebug: unknown
+- CB-Spider: unknown
+- CB-MapUI: v0.13.13
 - Target CSP: GCP
 - Target Region: asia-northeast3
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: July 13, 2026
-- Test Time: 18:15:27 KST
-- Test Execution: 2026-07-13 18:15:27 KST
+- Test Date: October 12, 2026
+- Test Time: 19:54:25 KST
+- Test Execution: 2026-10-12 19:54:25 KST
 
 ### Scenario
 
 1. Recommend target model for computing infra with NLB via Beetle
+1. Validate the target model for computing infra via Beetle
 1. Migrate the computing infra as defined in the target model via Beetle
 1. List all MCIs via Beetle
 1. List MCI IDs via Beetle
@@ -47,26 +48,27 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/infraWithNlb` | ✅ **PASS** | 11.98s | Pass |
-| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 3m43.747s | Pass |
-| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 17ms | Pass |
-| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ **PASS** | 4ms | Pass |
-| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 21ms | Pass |
-| 6 | Remote Command Accessibility Check | ✅ **PASS** | 10.858s | Pass |
-| 7 | `POST /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb` | ✅ **PASS** | 43.754s | Pass |
-| 8 | `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb` | ✅ **PASS** | 4ms | Pass |
-| 9 | `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}` | ✅ **PASS** | 5ms | Pass |
-| 10 | NLB Load Balancing Verification | ✅ **PASS** | 1m35.144s | Pass |
-| 11 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.215s | Pass |
-| 12 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.208s | Pass |
-| 13 | `DELETE /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}` | ✅ **PASS** | 50.438s | Pass |
-| 14 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 6m13.93s | Pass |
+| 1 | `POST /beetle/recommendation/infraWithNlb` | ✅ **PASS** | 17.279s | Pass |
+| 2 | `POST /beetle/validation/ns/mig01/infra` | ✅ **PASS** | 1.23s | Pass |
+| 3 | `POST /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 3m26.685s | Pass |
+| 4 | `GET /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 60ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ **PASS** | 18ms | Pass |
+| 6 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 110ms | Pass |
+| 7 | Remote Command Accessibility Check | ✅ **PASS** | 2.191s | Pass |
+| 8 | `POST /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb` | ✅ **PASS** | 25.589s | Pass |
+| 9 | `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb` | ✅ **PASS** | 6ms | Pass |
+| 10 | `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}` | ✅ **PASS** | 11ms | Pass |
+| 11 | NLB Load Balancing Verification | ✅ **PASS** | 1m28.827s | Pass |
+| 12 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.265s | Pass |
+| 13 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.253s | Pass |
+| 14 | `DELETE /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}` | ✅ **PASS** | 42.059s | Pass |
+| 15 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 4m23.091s | Pass |
 
-**Overall Result**: 14/14 tests passed ✅
+**Overall Result**: 15/15 tests passed ✅
 
-**Total Duration**: 14m25.665842032s
+**Total Duration**: 11m48.170123145s
 
-*Test executed on July 13, 2026 at 18:15:27 KST (2026-07-13 18:15:27 KST) using CM-Beetle automated test CLI*
+*Test executed on October 12, 2026 at 19:54:25 KST (2026-10-12 19:54:25 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -90,6 +92,7 @@
 
 ```json
 {
+  "lineage": {},
   "desiredCsp": "gcp",
   "desiredRegion": "asia-northeast3",
   "sourceInfra": {
@@ -518,7 +521,7 @@
   "data": [
     {
       "status": "partially-matched",
-      "description": "Candidate #1 | partially-matched | 1 NLB(s) | Overall Match Rate: Min=80.0% Max=100.0% Avg=92.6% | VMs: 2 total, 0 matched, 2 acceptable | 1 NLB warning(s): NLB backend 'influxdb_back': load-balancing algorithm 'roundrobin' cannot be directly mapped to cloud NLB. CSP default algorithm will be used.",
+      "description": "Candidate #1 | partially-matched | 1 NLB(s) | Overall Match Rate: Min=80.0% Max=100.0% Avg=90.9% | VMs: 2 total, 0 matched, 2 acceptable | 1 NLB warning(s): NLB backend 'influxdb_back': load-balancing algorithm 'roundrobin' cannot be directly mapped to cloud NLB. CSP default algorithm will be used.",
       "targetCloud": {
         "csp": "gcp",
         "region": "asia-northeast3"
@@ -534,13 +537,13 @@
             "name": "ng-influxdb-back",
             "nodeGroupSize": 2,
             "label": {
-              "nlbBackend": "influxdb_back",
-              "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf"
+              "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+              "nlbBackend": "influxdb_back"
             },
             "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
             "connectionName": "gcp-asia-northeast3",
-            "specId": "gcp+asia-northeast3+e2-standard-4",
-            "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+            "specId": "gcp+asia-northeast3+n4-standard-4",
+            "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
             "vNetId": "mig-vnet-01",
             "subnetId": "mig-subnet-01",
             "securityGroupIds": [
@@ -554,12 +557,12 @@
             "name": "ng-ec268ed7-821e-9d73-e79f-961262161624",
             "nodeGroupSize": 1,
             "label": {
-              "sourceMachineIds": "ec268ed7-821e-9d73-e79f-961262161624"
+              "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"
             },
-            "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
+            "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=87.8% Image=80.0%",
             "connectionName": "gcp-asia-northeast3",
-            "specId": "gcp+asia-northeast3+e2-highcpu-2",
-            "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
+            "specId": "gcp+asia-northeast3+n1-highcpu-2",
+            "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
             "vNetId": "mig-vnet-01",
             "subnetId": "mig-subnet-01",
             "securityGroupIds": [
@@ -570,10 +573,6 @@
             "dataDiskIds": null
           }
         ],
-        "postCommand": {
-          "userName": "",
-          "command": null
-        },
         "policyOnPartialFailure": ""
       },
       "targetVNet": {
@@ -602,10 +601,10 @@
       },
       "targetSpecList": [
         {
-          "id": "gcp+asia-northeast3+e2-standard-4",
-          "uid": "tbjkou3d0g0gqutn1g4u",
-          "cspSpecName": "e2-standard-4",
-          "name": "gcp+asia-northeast3+e2-standard-4",
+          "id": "gcp+asia-northeast3+n4-standard-4",
+          "uid": "tbtg35suro3tjfhfk2at",
+          "cspSpecName": "n4-standard-4",
+          "name": "gcp+asia-northeast3+n4-standard-4",
           "namespace": "system",
           "connectionName": "gcp-asia-northeast3",
           "providerName": "gcp",
@@ -617,7 +616,7 @@
           "vCPU": 4,
           "memoryGiB": 15.625,
           "diskSizeGB": -1,
-          "costPerHour": 0.171931,
+          "costPerHour": 0.232954,
           "evaluationScore01": -1,
           "evaluationScore02": -1,
           "evaluationScore03": -1,
@@ -633,12 +632,16 @@
           "systemLabel": "auto-gen",
           "details": [
             {
+              "key": "Architecture",
+              "value": "X86_64"
+            },
+            {
               "key": "CreationTimestamp",
               "value": "1969-12-31T16:00:00.000-08:00"
             },
             {
               "key": "Description",
-              "value": "Efficient Instance, 4 vCPUs, 16 GB RAM"
+              "value": "4 vCPUs, 16 GB RAM"
             },
             {
               "key": "GuestCpus",
@@ -646,7 +649,7 @@
             },
             {
               "key": "Id",
-              "value": "335004"
+              "value": "1750002"
             },
             {
               "key": "ImageSpaceGb",
@@ -674,11 +677,11 @@
             },
             {
               "key": "Name",
-              "value": "e2-standard-4"
+              "value": "n4-standard-4"
             },
             {
               "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/seokho-etri/zones/asia-northeast3-a/machineTypes/e2-standard-4"
+              "value": "https://www.googleapis.com/compute/v1/projects/seokho-etri/zones/asia-northeast3-a/machineTypes/n4-standard-4"
             },
             {
               "key": "Zone",
@@ -687,10 +690,10 @@
           ]
         },
         {
-          "id": "gcp+asia-northeast3+e2-highcpu-2",
-          "uid": "tb5vdhg2g76dc1jdvku8",
-          "cspSpecName": "e2-highcpu-2",
-          "name": "gcp+asia-northeast3+e2-highcpu-2",
+          "id": "gcp+asia-northeast3+n1-highcpu-2",
+          "uid": "tbuaoej0i7lm24gthk7e",
+          "cspSpecName": "n1-highcpu-2",
+          "name": "gcp+asia-northeast3+n1-highcpu-2",
           "namespace": "system",
           "connectionName": "gcp-asia-northeast3",
           "providerName": "gcp",
@@ -700,9 +703,9 @@
           "infraType": "node",
           "architecture": "x86_64",
           "vCPU": 2,
-          "memoryGiB": 1.953125,
+          "memoryGiB": 1.7568359,
           "diskSizeGB": -1,
-          "costPerHour": 0.063531,
+          "costPerHour": 0.09099,
           "evaluationScore01": -1,
           "evaluationScore02": -1,
           "evaluationScore03": -1,
@@ -723,7 +726,7 @@
             },
             {
               "key": "Description",
-              "value": "Efficient Instance, 2 vCPUs, 2 GB RAM"
+              "value": "2 vCPUs, 1.8 GB RAM"
             },
             {
               "key": "GuestCpus",
@@ -731,11 +734,11 @@
             },
             {
               "key": "Id",
-              "value": "337002"
+              "value": "4002"
             },
             {
               "key": "ImageSpaceGb",
-              "value": "0"
+              "value": "10"
             },
             {
               "key": "IsSharedCpu",
@@ -755,15 +758,15 @@
             },
             {
               "key": "MemoryMb",
-              "value": "2048"
+              "value": "1843"
             },
             {
               "key": "Name",
-              "value": "e2-highcpu-2"
+              "value": "n1-highcpu-2"
             },
             {
               "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/seokho-etri/zones/asia-northeast3-a/machineTypes/e2-highcpu-2"
+              "value": "https://www.googleapis.com/compute/v1/projects/seokho-etri/zones/asia-northeast3-a/machineTypes/n1-highcpu-2"
             },
             {
               "key": "Zone",
@@ -777,18 +780,18 @@
           "resourceType": "image",
           "namespace": "system",
           "providerName": "gcp",
-          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
           "regionList": [
             "common"
           ],
-          "id": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
-          "uid": "tbgi22itnhj6oho5semi",
-          "name": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+          "id": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+          "uid": "tbta9p6tv2cjgah4d9rr",
+          "name": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
           "sourceNodeUid": "",
           "sourceCspImageName": "",
           "connectionName": "gcp-africa-south1",
           "infraType": "",
-          "fetchedTime": "2026.06.29 18:06:43 Mon",
+          "fetchedTime": "2026.08.21 13:58:59 Fri",
           "creationDate": "",
           "isGPUImage": false,
           "isKubernetesImage": false,
@@ -797,7 +800,7 @@
           "osType": "Ubuntu 22.04",
           "osArchitecture": "x86_64",
           "osPlatform": "Linux/UNIX",
-          "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23",
+          "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20",
           "osDiskType": "NA",
           "osDiskSizeGB": 10,
           "imageStatus": "Available",
@@ -808,15 +811,15 @@
             },
             {
               "key": "ArchiveSizeBytes",
-              "value": "3633714624"
+              "value": "63898864000"
             },
             {
               "key": "CreationTimestamp",
-              "value": "2026-06-23T08:11:14.769-07:00"
+              "value": "2026-08-20T06:17:20.257-07:00"
             },
             {
               "key": "Description",
-              "value": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23"
+              "value": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20"
             },
             {
               "key": "DiskSizeGb",
@@ -836,7 +839,7 @@
             },
             {
               "key": "Id",
-              "value": "768974430924119293"
+              "value": "6494416155768996016"
             },
             {
               "key": "Kind",
@@ -860,7 +863,7 @@
             },
             {
               "key": "Name",
-              "value": "ubuntu-2204-jammy-v20260623"
+              "value": "ubuntu-2204-jammy-v20260820"
             },
             {
               "key": "RawDisk",
@@ -876,7 +879,7 @@
             },
             {
               "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623"
+              "value": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820"
             },
             {
               "key": "SourceType",
@@ -888,133 +891,11 @@
             },
             {
               "key": "StorageLocations",
-              "value": "eu; us; asia"
+              "value": "asia; europe-west8; us-east7; northamerica-south1; northamerica-northeast2; asia-east1; asia-southeast3; southamerica-east1; europe-west2; europe-north1; us-west3; europe-west15; us-central2; asia-northeast1; asia-southeast2; me-central2; europe-west4; us-east5; us-west8; northamerica-northeast1; us-west4; us-central1; southamerica-west1; asia-southeast1; me-central1; australia-southeast1; europe-central2; asia-northeast3; australia-southeast2; asia-south1; us-east4; us-south1; africa-south1; us; europe-west6; europe-north2; me-west1; us-west1; europe-west9; europe-west1; asia-northeast2; us-east1; europe-west3; asia-south2; europe-west10; europe-southwest1; europe-west12; eu; asia-east2; us-west2"
             }
           ],
           "systemLabel": "",
-          "description": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23",
-          "commandHistory": null
-        },
-        {
-          "resourceType": "image",
-          "namespace": "system",
-          "providerName": "gcp",
-          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
-          "regionList": [
-            "common"
-          ],
-          "id": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
-          "uid": "tb5h42jnp3crmnrvk1qh",
-          "name": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
-          "sourceNodeUid": "",
-          "sourceCspImageName": "",
-          "connectionName": "gcp-africa-south1",
-          "infraType": "",
-          "fetchedTime": "2026.06.29 18:06:52 Mon",
-          "creationDate": "",
-          "isGPUImage": false,
-          "isKubernetesImage": false,
-          "isBasicImage": true,
-          "isBasicGpuImage": false,
-          "osType": "Ubuntu 22.04",
-          "osArchitecture": "x86_64",
-          "osPlatform": "Linux/UNIX",
-          "osDistribution": "Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-06-23",
-          "osDiskType": "NA",
-          "osDiskSizeGB": 10,
-          "imageStatus": "Available",
-          "details": [
-            {
-              "key": "Architecture",
-              "value": "X86_64"
-            },
-            {
-              "key": "ArchiveSizeBytes",
-              "value": "3921927744"
-            },
-            {
-              "key": "CreationTimestamp",
-              "value": "2026-06-23T08:09:32.727-07:00"
-            },
-            {
-              "key": "Description",
-              "value": "Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-06-23"
-            },
-            {
-              "key": "DiskSizeGb",
-              "value": "10"
-            },
-            {
-              "key": "EnableConfidentialCompute",
-              "value": "false"
-            },
-            {
-              "key": "Family",
-              "value": "ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e"
-            },
-            {
-              "key": "GuestOsFeatures",
-              "value": "{type:VIRTIO_SCSI_MULTIQUEUE}; {type:SEV_CAPABLE}; {type:SEV_SNP_CAPABLE}; {type:SEV_LIVE_MIGRATABLE}; {type:SEV_LIVE_MIGRATABLE_V2}; {type:IDPF}; {type:TDX_CAPABLE}; {type:UEFI_COMPATIBLE}; {type:GVNIC}"
-            },
-            {
-              "key": "Id",
-              "value": "6725596184982265667"
-            },
-            {
-              "key": "Kind",
-              "value": "compute#image"
-            },
-            {
-              "key": "LabelFingerprint",
-              "value": "iNBmVNCFF9w="
-            },
-            {
-              "key": "Labels",
-              "value": "{public-image:true}"
-            },
-            {
-              "key": "LicenseCodes",
-              "value": "5511465778777431107; 3491824550911535745"
-            },
-            {
-              "key": "Licenses",
-              "value": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2204-lts; https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/licenses/ubuntu-2204-lts-tpu"
-            },
-            {
-              "key": "Name",
-              "value": "ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623"
-            },
-            {
-              "key": "RawDisk",
-              "value": "{containerType:TAR}"
-            },
-            {
-              "key": "SatisfiesPzi",
-              "value": "false"
-            },
-            {
-              "key": "SatisfiesPzs",
-              "value": "false"
-            },
-            {
-              "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623"
-            },
-            {
-              "key": "SourceType",
-              "value": "RAW"
-            },
-            {
-              "key": "Status",
-              "value": "READY"
-            },
-            {
-              "key": "StorageLocations",
-              "value": "eu; asia; us"
-            }
-          ],
-          "systemLabel": "",
-          "description": "Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-06-23",
+          "description": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20",
           "commandHistory": null
         }
       ],
@@ -1042,6 +923,12 @@
               "Protocol": "ALL",
               "Direction": "inbound",
               "CIDR": "10.0.0.0/16"
+            },
+            {
+              "Ports": "9999",
+              "Protocol": "tcp",
+              "Direction": "inbound",
+              "CIDR": "0.0.0.0/0"
             },
             {
               "Ports": "8086",
@@ -1100,7 +987,20 @@
             "timeout": 10
           }
         }
-      ]
+      ],
+      "targetK8sCluster": {
+        "connectionName": "",
+        "description": "",
+        "name": "",
+        "version": "",
+        "vNetId": "",
+        "subnetIds": null,
+        "securityGroupIds": null,
+        "k8sNodeGroupList": null,
+        "cspResourceId": "",
+        "label": null,
+        "systemLabel": ""
+      }
     },
     {
       "status": "partially-matched",
@@ -1120,13 +1020,13 @@
             "name": "ng-influxdb-back",
             "nodeGroupSize": 2,
             "label": {
-              "nlbBackend": "influxdb_back",
-              "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf"
+              "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+              "nlbBackend": "influxdb_back"
             },
             "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
             "connectionName": "gcp-asia-northeast3",
-            "specId": "gcp+asia-northeast3+n2d-standard-4",
-            "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+            "specId": "gcp+asia-northeast3+n2-standard-4",
+            "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
             "vNetId": "mig-vnet-01",
             "subnetId": "mig-subnet-01",
             "securityGroupIds": [
@@ -1140,12 +1040,12 @@
             "name": "ng-ec268ed7-821e-9d73-e79f-961262161624",
             "nodeGroupSize": 1,
             "label": {
-              "sourceMachineIds": "ec268ed7-821e-9d73-e79f-961262161624"
+              "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"
             },
             "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
             "connectionName": "gcp-asia-northeast3",
-            "specId": "gcp+asia-northeast3+n2d-highcpu-2",
-            "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
+            "specId": "gcp+asia-northeast3+n2-highcpu-2",
+            "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
             "vNetId": "mig-vnet-01",
             "subnetId": "mig-subnet-01",
             "securityGroupIds": [
@@ -1156,10 +1056,6 @@
             "dataDiskIds": null
           }
         ],
-        "postCommand": {
-          "userName": "",
-          "command": null
-        },
         "policyOnPartialFailure": ""
       },
       "targetVNet": {
@@ -1188,10 +1084,10 @@
       },
       "targetSpecList": [
         {
-          "id": "gcp+asia-northeast3+n2d-standard-4",
-          "uid": "tbg6v2c6adbnbld6nc05",
-          "cspSpecName": "n2d-standard-4",
-          "name": "gcp+asia-northeast3+n2d-standard-4",
+          "id": "gcp+asia-northeast3+n2-standard-4",
+          "uid": "tb2krgi3rsv0p6pfoeeu",
+          "cspSpecName": "n2-standard-4",
+          "name": "gcp+asia-northeast3+n2-standard-4",
           "namespace": "system",
           "connectionName": "gcp-asia-northeast3",
           "providerName": "gcp",
@@ -1203,7 +1099,7 @@
           "vCPU": 4,
           "memoryGiB": 15.625,
           "diskSizeGB": -1,
-          "costPerHour": 0.217708,
+          "costPerHour": 0.249436,
           "evaluationScore01": -1,
           "evaluationScore02": -1,
           "evaluationScore03": -1,
@@ -1232,7 +1128,7 @@
             },
             {
               "key": "Id",
-              "value": "911004"
+              "value": "901004"
             },
             {
               "key": "ImageSpaceGb",
@@ -1260,11 +1156,11 @@
             },
             {
               "key": "Name",
-              "value": "n2d-standard-4"
+              "value": "n2-standard-4"
             },
             {
               "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/seokho-etri/zones/asia-northeast3-a/machineTypes/n2d-standard-4"
+              "value": "https://www.googleapis.com/compute/v1/projects/seokho-etri/zones/asia-northeast3-a/machineTypes/n2-standard-4"
             },
             {
               "key": "Zone",
@@ -1273,10 +1169,10 @@
           ]
         },
         {
-          "id": "gcp+asia-northeast3+n2d-highcpu-2",
-          "uid": "tbsbe60fntfghnkvihur",
-          "cspSpecName": "n2d-highcpu-2",
-          "name": "gcp+asia-northeast3+n2d-highcpu-2",
+          "id": "gcp+asia-northeast3+n2-highcpu-2",
+          "uid": "tbr0pd6ifdsag3bm25g0",
+          "cspSpecName": "n2-highcpu-2",
+          "name": "gcp+asia-northeast3+n2-highcpu-2",
           "namespace": "system",
           "connectionName": "gcp-asia-northeast3",
           "providerName": "gcp",
@@ -1288,7 +1184,7 @@
           "vCPU": 2,
           "memoryGiB": 1.953125,
           "diskSizeGB": -1,
-          "costPerHour": 0.080366,
+          "costPerHour": 0.092072,
           "evaluationScore01": -1,
           "evaluationScore02": -1,
           "evaluationScore03": -1,
@@ -1317,7 +1213,7 @@
             },
             {
               "key": "Id",
-              "value": "910002"
+              "value": "903002"
             },
             {
               "key": "ImageSpaceGb",
@@ -1345,11 +1241,11 @@
             },
             {
               "key": "Name",
-              "value": "n2d-highcpu-2"
+              "value": "n2-highcpu-2"
             },
             {
               "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/seokho-etri/zones/asia-northeast3-a/machineTypes/n2d-highcpu-2"
+              "value": "https://www.googleapis.com/compute/v1/projects/seokho-etri/zones/asia-northeast3-a/machineTypes/n2-highcpu-2"
             },
             {
               "key": "Zone",
@@ -1363,18 +1259,18 @@
           "resourceType": "image",
           "namespace": "system",
           "providerName": "gcp",
-          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
           "regionList": [
             "common"
           ],
-          "id": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
-          "uid": "tbgi22itnhj6oho5semi",
-          "name": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+          "id": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+          "uid": "tbta9p6tv2cjgah4d9rr",
+          "name": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
           "sourceNodeUid": "",
           "sourceCspImageName": "",
           "connectionName": "gcp-africa-south1",
           "infraType": "",
-          "fetchedTime": "2026.06.29 18:06:43 Mon",
+          "fetchedTime": "2026.08.21 13:58:59 Fri",
           "creationDate": "",
           "isGPUImage": false,
           "isKubernetesImage": false,
@@ -1383,7 +1279,7 @@
           "osType": "Ubuntu 22.04",
           "osArchitecture": "x86_64",
           "osPlatform": "Linux/UNIX",
-          "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23",
+          "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20",
           "osDiskType": "NA",
           "osDiskSizeGB": 10,
           "imageStatus": "Available",
@@ -1394,15 +1290,15 @@
             },
             {
               "key": "ArchiveSizeBytes",
-              "value": "3633714624"
+              "value": "63898864000"
             },
             {
               "key": "CreationTimestamp",
-              "value": "2026-06-23T08:11:14.769-07:00"
+              "value": "2026-08-20T06:17:20.257-07:00"
             },
             {
               "key": "Description",
-              "value": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23"
+              "value": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20"
             },
             {
               "key": "DiskSizeGb",
@@ -1422,7 +1318,7 @@
             },
             {
               "key": "Id",
-              "value": "768974430924119293"
+              "value": "6494416155768996016"
             },
             {
               "key": "Kind",
@@ -1446,7 +1342,7 @@
             },
             {
               "key": "Name",
-              "value": "ubuntu-2204-jammy-v20260623"
+              "value": "ubuntu-2204-jammy-v20260820"
             },
             {
               "key": "RawDisk",
@@ -1462,7 +1358,7 @@
             },
             {
               "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623"
+              "value": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820"
             },
             {
               "key": "SourceType",
@@ -1474,133 +1370,11 @@
             },
             {
               "key": "StorageLocations",
-              "value": "eu; us; asia"
+              "value": "asia; europe-west8; us-east7; northamerica-south1; northamerica-northeast2; asia-east1; asia-southeast3; southamerica-east1; europe-west2; europe-north1; us-west3; europe-west15; us-central2; asia-northeast1; asia-southeast2; me-central2; europe-west4; us-east5; us-west8; northamerica-northeast1; us-west4; us-central1; southamerica-west1; asia-southeast1; me-central1; australia-southeast1; europe-central2; asia-northeast3; australia-southeast2; asia-south1; us-east4; us-south1; africa-south1; us; europe-west6; europe-north2; me-west1; us-west1; europe-west9; europe-west1; asia-northeast2; us-east1; europe-west3; asia-south2; europe-west10; europe-southwest1; europe-west12; eu; asia-east2; us-west2"
             }
           ],
           "systemLabel": "",
-          "description": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23",
-          "commandHistory": null
-        },
-        {
-          "resourceType": "image",
-          "namespace": "system",
-          "providerName": "gcp",
-          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
-          "regionList": [
-            "common"
-          ],
-          "id": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
-          "uid": "tb5h42jnp3crmnrvk1qh",
-          "name": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
-          "sourceNodeUid": "",
-          "sourceCspImageName": "",
-          "connectionName": "gcp-africa-south1",
-          "infraType": "",
-          "fetchedTime": "2026.06.29 18:06:52 Mon",
-          "creationDate": "",
-          "isGPUImage": false,
-          "isKubernetesImage": false,
-          "isBasicImage": true,
-          "isBasicGpuImage": false,
-          "osType": "Ubuntu 22.04",
-          "osArchitecture": "x86_64",
-          "osPlatform": "Linux/UNIX",
-          "osDistribution": "Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-06-23",
-          "osDiskType": "NA",
-          "osDiskSizeGB": 10,
-          "imageStatus": "Available",
-          "details": [
-            {
-              "key": "Architecture",
-              "value": "X86_64"
-            },
-            {
-              "key": "ArchiveSizeBytes",
-              "value": "3921927744"
-            },
-            {
-              "key": "CreationTimestamp",
-              "value": "2026-06-23T08:09:32.727-07:00"
-            },
-            {
-              "key": "Description",
-              "value": "Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-06-23"
-            },
-            {
-              "key": "DiskSizeGb",
-              "value": "10"
-            },
-            {
-              "key": "EnableConfidentialCompute",
-              "value": "false"
-            },
-            {
-              "key": "Family",
-              "value": "ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e"
-            },
-            {
-              "key": "GuestOsFeatures",
-              "value": "{type:VIRTIO_SCSI_MULTIQUEUE}; {type:SEV_CAPABLE}; {type:SEV_SNP_CAPABLE}; {type:SEV_LIVE_MIGRATABLE}; {type:SEV_LIVE_MIGRATABLE_V2}; {type:IDPF}; {type:TDX_CAPABLE}; {type:UEFI_COMPATIBLE}; {type:GVNIC}"
-            },
-            {
-              "key": "Id",
-              "value": "6725596184982265667"
-            },
-            {
-              "key": "Kind",
-              "value": "compute#image"
-            },
-            {
-              "key": "LabelFingerprint",
-              "value": "iNBmVNCFF9w="
-            },
-            {
-              "key": "Labels",
-              "value": "{public-image:true}"
-            },
-            {
-              "key": "LicenseCodes",
-              "value": "5511465778777431107; 3491824550911535745"
-            },
-            {
-              "key": "Licenses",
-              "value": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2204-lts; https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/licenses/ubuntu-2204-lts-tpu"
-            },
-            {
-              "key": "Name",
-              "value": "ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623"
-            },
-            {
-              "key": "RawDisk",
-              "value": "{containerType:TAR}"
-            },
-            {
-              "key": "SatisfiesPzi",
-              "value": "false"
-            },
-            {
-              "key": "SatisfiesPzs",
-              "value": "false"
-            },
-            {
-              "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623"
-            },
-            {
-              "key": "SourceType",
-              "value": "RAW"
-            },
-            {
-              "key": "Status",
-              "value": "READY"
-            },
-            {
-              "key": "StorageLocations",
-              "value": "eu; asia; us"
-            }
-          ],
-          "systemLabel": "",
-          "description": "Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-06-23",
+          "description": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20",
           "commandHistory": null
         }
       ],
@@ -1628,6 +1402,12 @@
               "Protocol": "ALL",
               "Direction": "inbound",
               "CIDR": "10.0.0.0/16"
+            },
+            {
+              "Ports": "9999",
+              "Protocol": "tcp",
+              "Direction": "inbound",
+              "CIDR": "0.0.0.0/0"
             },
             {
               "Ports": "8086",
@@ -1686,7 +1466,20 @@
             "timeout": 10
           }
         }
-      ]
+      ],
+      "targetK8sCluster": {
+        "connectionName": "",
+        "description": "",
+        "name": "",
+        "version": "",
+        "vNetId": "",
+        "subnetIds": null,
+        "securityGroupIds": null,
+        "k8sNodeGroupList": null,
+        "cspResourceId": "",
+        "label": null,
+        "systemLabel": ""
+      }
     }
   ],
   "message": "2 candidate(s) recommended — each with 1 NLB(s) and 2 NodeGroup(s)"
@@ -1695,20 +1488,539 @@
 
 </details>
 
-### Test Case 2: Migrate the computing infra as defined in the target model
+### Test Case 2: Validate the target model for computing infra
 
 #### 2.1 API Request Information
+
+- **API Endpoint**: `POST /beetle/validation/ns/mig01/infra`
+- **Purpose**: Validate the recommended target model before migration (name collisions, spec/image compatibility, resource availability)
+
+**Request Body**:
+
+<details>
+  <summary> <ins>Click to see the request body </ins> </summary>
+
+```json
+{
+  "status": "partially-matched",
+  "description": "Candidate #1 | partially-matched | 1 NLB(s) | Overall Match Rate: Min=80.0% Max=100.0% Avg=90.9% | VMs: 2 total, 0 matched, 2 acceptable | 1 NLB warning(s): NLB backend 'influxdb_back': load-balancing algorithm 'roundrobin' cannot be directly mapped to cloud NLB. CSP default algorithm will be used.",
+  "targetCloud": {
+    "csp": "gcp",
+    "region": "asia-northeast3"
+  },
+  "targetInfra": {
+    "name": "infra101",
+    "installMonAgent": "",
+    "label": null,
+    "systemLabel": "",
+    "description": "NLB-aware recommended infrastructure for cloud migration",
+    "nodeGroups": [
+      {
+        "name": "ng-influxdb-back",
+        "nodeGroupSize": 2,
+        "label": {
+          "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+          "nlbBackend": "influxdb_back"
+        },
+        "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
+        "connectionName": "gcp-asia-northeast3",
+        "specId": "gcp+asia-northeast3+n4-standard-4",
+        "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+        "vNetId": "mig-vnet-01",
+        "subnetId": "mig-subnet-01",
+        "securityGroupIds": [
+          "mig-sg-01"
+        ],
+        "sshKeyId": "mig-sshkey-01",
+        "rootDiskSize": 30,
+        "dataDiskIds": null
+      },
+      {
+        "name": "ng-ec268ed7-821e-9d73-e79f-961262161624",
+        "nodeGroupSize": 1,
+        "label": {
+          "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"
+        },
+        "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=87.8% Image=80.0%",
+        "connectionName": "gcp-asia-northeast3",
+        "specId": "gcp+asia-northeast3+n1-highcpu-2",
+        "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+        "vNetId": "mig-vnet-01",
+        "subnetId": "mig-subnet-01",
+        "securityGroupIds": [
+          "mig-sg-02"
+        ],
+        "sshKeyId": "mig-sshkey-01",
+        "rootDiskSize": 10,
+        "dataDiskIds": null
+      }
+    ],
+    "policyOnPartialFailure": ""
+  },
+  "targetVNet": {
+    "name": "mig-vnet-01",
+    "connectionName": "gcp-asia-northeast3",
+    "cidrBlock": "10.0.0.0/21",
+    "subnetInfoList": [
+      {
+        "name": "mig-subnet-01",
+        "ipv4_CIDR": "10.0.1.0/24",
+        "description": "a recommended subnet for migration"
+      }
+    ],
+    "description": "a recommended vNet for migration"
+  },
+  "targetSshKey": {
+    "name": "mig-sshkey-01",
+    "connectionName": "gcp-asia-northeast3",
+    "description": "SSH key pair for migration (Note: provided ONLY once, MUST be downloaded)",
+    "cspResourceId": "",
+    "fingerprint": "",
+    "username": "",
+    "verifiedUsername": "",
+    "publicKey": "",
+    "privateKey": ""
+  },
+  "targetSpecList": [
+    {
+      "id": "gcp+asia-northeast3+n4-standard-4",
+      "uid": "tbtg35suro3tjfhfk2at",
+      "cspSpecName": "n4-standard-4",
+      "name": "gcp+asia-northeast3+n4-standard-4",
+      "namespace": "system",
+      "connectionName": "gcp-asia-northeast3",
+      "providerName": "gcp",
+      "regionName": "asia-northeast3",
+      "regionLatitude": 37.2,
+      "regionLongitude": 127,
+      "infraType": "node",
+      "architecture": "x86_64",
+      "vCPU": 4,
+      "memoryGiB": 15.625,
+      "diskSizeGB": -1,
+      "costPerHour": 0.232954,
+      "evaluationScore01": -1,
+      "evaluationScore02": -1,
+      "evaluationScore03": -1,
+      "evaluationScore04": -1,
+      "evaluationScore05": -1,
+      "evaluationScore06": -1,
+      "evaluationScore07": -1,
+      "evaluationScore08": -1,
+      "evaluationScore09": -1,
+      "evaluationScore10": -1,
+      "rootDiskType": "",
+      "rootDiskSize": -1,
+      "systemLabel": "auto-gen",
+      "details": [
+        {
+          "key": "Architecture",
+          "value": "X86_64"
+        },
+        {
+          "key": "CreationTimestamp",
+          "value": "1969-12-31T16:00:00.000-08:00"
+        },
+        {
+          "key": "Description",
+          "value": "4 vCPUs, 16 GB RAM"
+        },
+        {
+          "key": "GuestCpus",
+          "value": "4"
+        },
+        {
+          "key": "Id",
+          "value": "1750002"
+        },
+        {
+          "key": "ImageSpaceGb",
+          "value": "0"
+        },
+        {
+          "key": "IsSharedCpu",
+          "value": "false"
+        },
+        {
+          "key": "Kind",
+          "value": "compute#machineType"
+        },
+        {
+          "key": "MaximumPersistentDisks",
+          "value": "128"
+        },
+        {
+          "key": "MaximumPersistentDisksSizeGb",
+          "value": "263168"
+        },
+        {
+          "key": "MemoryMb",
+          "value": "16384"
+        },
+        {
+          "key": "Name",
+          "value": "n4-standard-4"
+        },
+        {
+          "key": "SelfLink",
+          "value": "https://www.googleapis.com/compute/v1/projects/seokho-etri/zones/asia-northeast3-a/machineTypes/n4-standard-4"
+        },
+        {
+          "key": "Zone",
+          "value": "asia-northeast3-a"
+        }
+      ]
+    },
+    {
+      "id": "gcp+asia-northeast3+n1-highcpu-2",
+      "uid": "tbuaoej0i7lm24gthk7e",
+      "cspSpecName": "n1-highcpu-2",
+      "name": "gcp+asia-northeast3+n1-highcpu-2",
+      "namespace": "system",
+      "connectionName": "gcp-asia-northeast3",
+      "providerName": "gcp",
+      "regionName": "asia-northeast3",
+      "regionLatitude": 37.2,
+      "regionLongitude": 127,
+      "infraType": "node",
+      "architecture": "x86_64",
+      "vCPU": 2,
+      "memoryGiB": 1.7568359,
+      "diskSizeGB": -1,
+      "costPerHour": 0.09099,
+      "evaluationScore01": -1,
+      "evaluationScore02": -1,
+      "evaluationScore03": -1,
+      "evaluationScore04": -1,
+      "evaluationScore05": -1,
+      "evaluationScore06": -1,
+      "evaluationScore07": -1,
+      "evaluationScore08": -1,
+      "evaluationScore09": -1,
+      "evaluationScore10": -1,
+      "rootDiskType": "",
+      "rootDiskSize": -1,
+      "systemLabel": "auto-gen",
+      "details": [
+        {
+          "key": "CreationTimestamp",
+          "value": "1969-12-31T16:00:00.000-08:00"
+        },
+        {
+          "key": "Description",
+          "value": "2 vCPUs, 1.8 GB RAM"
+        },
+        {
+          "key": "GuestCpus",
+          "value": "2"
+        },
+        {
+          "key": "Id",
+          "value": "4002"
+        },
+        {
+          "key": "ImageSpaceGb",
+          "value": "10"
+        },
+        {
+          "key": "IsSharedCpu",
+          "value": "false"
+        },
+        {
+          "key": "Kind",
+          "value": "compute#machineType"
+        },
+        {
+          "key": "MaximumPersistentDisks",
+          "value": "128"
+        },
+        {
+          "key": "MaximumPersistentDisksSizeGb",
+          "value": "263168"
+        },
+        {
+          "key": "MemoryMb",
+          "value": "1843"
+        },
+        {
+          "key": "Name",
+          "value": "n1-highcpu-2"
+        },
+        {
+          "key": "SelfLink",
+          "value": "https://www.googleapis.com/compute/v1/projects/seokho-etri/zones/asia-northeast3-a/machineTypes/n1-highcpu-2"
+        },
+        {
+          "key": "Zone",
+          "value": "asia-northeast3-a"
+        }
+      ]
+    }
+  ],
+  "targetOsImageList": [
+    {
+      "resourceType": "image",
+      "namespace": "system",
+      "providerName": "gcp",
+      "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+      "regionList": [
+        "common"
+      ],
+      "id": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+      "uid": "tbta9p6tv2cjgah4d9rr",
+      "name": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+      "sourceNodeUid": "",
+      "sourceCspImageName": "",
+      "connectionName": "gcp-africa-south1",
+      "infraType": "",
+      "fetchedTime": "2026.08.21 13:58:59 Fri",
+      "creationDate": "",
+      "isGPUImage": false,
+      "isKubernetesImage": false,
+      "isBasicImage": true,
+      "isBasicGpuImage": false,
+      "osType": "Ubuntu 22.04",
+      "osArchitecture": "x86_64",
+      "osPlatform": "Linux/UNIX",
+      "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20",
+      "osDiskType": "NA",
+      "osDiskSizeGB": 10,
+      "imageStatus": "Available",
+      "details": [
+        {
+          "key": "Architecture",
+          "value": "X86_64"
+        },
+        {
+          "key": "ArchiveSizeBytes",
+          "value": "63898864000"
+        },
+        {
+          "key": "CreationTimestamp",
+          "value": "2026-08-20T06:17:20.257-07:00"
+        },
+        {
+          "key": "Description",
+          "value": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20"
+        },
+        {
+          "key": "DiskSizeGb",
+          "value": "10"
+        },
+        {
+          "key": "EnableConfidentialCompute",
+          "value": "false"
+        },
+        {
+          "key": "Family",
+          "value": "ubuntu-2204-lts"
+        },
+        {
+          "key": "GuestOsFeatures",
+          "value": "{type:VIRTIO_SCSI_MULTIQUEUE}; {type:SEV_CAPABLE}; {type:SEV_SNP_CAPABLE}; {type:SEV_LIVE_MIGRATABLE}; {type:SEV_LIVE_MIGRATABLE_V2}; {type:IDPF}; {type:TDX_CAPABLE}; {type:UEFI_COMPATIBLE}; {type:GVNIC}"
+        },
+        {
+          "key": "Id",
+          "value": "6494416155768996016"
+        },
+        {
+          "key": "Kind",
+          "value": "compute#image"
+        },
+        {
+          "key": "LabelFingerprint",
+          "value": "iNBmVNCFF9w="
+        },
+        {
+          "key": "Labels",
+          "value": "{public-image:true}"
+        },
+        {
+          "key": "LicenseCodes",
+          "value": "5511465778777431107"
+        },
+        {
+          "key": "Licenses",
+          "value": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2204-lts"
+        },
+        {
+          "key": "Name",
+          "value": "ubuntu-2204-jammy-v20260820"
+        },
+        {
+          "key": "RawDisk",
+          "value": "{containerType:TAR}"
+        },
+        {
+          "key": "SatisfiesPzi",
+          "value": "false"
+        },
+        {
+          "key": "SatisfiesPzs",
+          "value": "false"
+        },
+        {
+          "key": "SelfLink",
+          "value": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820"
+        },
+        {
+          "key": "SourceType",
+          "value": "RAW"
+        },
+        {
+          "key": "Status",
+          "value": "READY"
+        },
+        {
+          "key": "StorageLocations",
+          "value": "asia; europe-west8; us-east7; northamerica-south1; northamerica-northeast2; asia-east1; asia-southeast3; southamerica-east1; europe-west2; europe-north1; us-west3; europe-west15; us-central2; asia-northeast1; asia-southeast2; me-central2; europe-west4; us-east5; us-west8; northamerica-northeast1; us-west4; us-central1; southamerica-west1; asia-southeast1; me-central1; australia-southeast1; europe-central2; asia-northeast3; australia-southeast2; asia-south1; us-east4; us-south1; africa-south1; us; europe-west6; europe-north2; me-west1; us-west1; europe-west9; europe-west1; asia-northeast2; us-east1; europe-west3; asia-south2; europe-west10; europe-southwest1; europe-west12; eu; asia-east2; us-west2"
+        }
+      ],
+      "systemLabel": "",
+      "description": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20",
+      "commandHistory": null
+    }
+  ],
+  "targetSecurityGroupList": [
+    {
+      "name": "mig-sg-01",
+      "connectionName": "gcp-asia-northeast3",
+      "vNetId": "mig-vnet-01",
+      "description": "Recommended security group for NLB backend influxdb_back",
+      "firewallRules": [
+        {
+          "Ports": "22",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "8086",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "",
+          "Protocol": "ALL",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "9999",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "8086",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        }
+      ],
+      "cspResourceId": ""
+    },
+    {
+      "name": "mig-sg-02",
+      "connectionName": "gcp-asia-northeast3",
+      "vNetId": "mig-vnet-01",
+      "description": "Recommended security group for ec268ed7-821e-9d73-e79f-961262161624",
+      "firewallRules": [
+        {
+          "Ports": "22",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "9999",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "",
+          "Protocol": "ALL",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        }
+      ],
+      "cspResourceId": ""
+    }
+  ],
+  "targetNlbList": [
+    {
+      "description": "Migrated from HAProxy backend: influxdb_back",
+      "type": "PUBLIC",
+      "scope": "REGION",
+      "listener": {
+        "protocol": "TCP",
+        "port": "8086"
+      },
+      "targetGroup": {
+        "protocol": "TCP",
+        "port": "8086",
+        "nodeGroupId": "ng-influxdb-back"
+      },
+      "healthChecker": {
+        "interval": 10,
+        "threshold": 3,
+        "timeout": 10
+      }
+    }
+  ],
+  "targetK8sCluster": {
+    "connectionName": "",
+    "description": "",
+    "name": "",
+    "version": "",
+    "vNetId": "",
+    "subnetIds": null,
+    "securityGroupIds": null,
+    "k8sNodeGroupList": null,
+    "cspResourceId": "",
+    "label": null,
+    "systemLabel": ""
+  }
+}
+```
+
+</details>
+
+#### 2.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: Target model is valid, no issues found
+
+**Response Body**:
+
+<details>
+  <summary> <ins>Click to see the response body</ins> </summary>
+
+```json
+{
+  "valid": true,
+  "issues": []
+}
+```
+
+</details>
+
+### Test Case 3: Migrate the computing infra as defined in the target model
+
+#### 3.1 API Request Information
 
 - **API Endpoint**: `POST /beetle/migration/ns/mig01/infra`
 - **Purpose**: Create and migrate infrastructure based on recommendation
 - **Namespace ID**: `mig01`
 - **Request Body**: Uses the response from the previous recommendation step
 
-#### 2.2 API Response Information
+#### 3.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
-- **MCI ID**: `my-infra101`
-- **MCI Name**: `my-infra101`
+- **MCI ID**: `my03-infra101`
+- **MCI Name**: `my03-infra101`
 - **Status**: `Running:3 (R:3/3)`
 
 **Response Body**:
@@ -1719,9 +2031,9 @@
 ```json
 {
   "resourceType": "infra",
-  "id": "my-infra101",
-  "uid": "tb6llm23eif1q7e2v20j",
-  "name": "my-infra101",
+  "id": "my03-infra101",
+  "uid": "tbaciag0qhpm0el9ei0q",
+  "name": "my03-infra101",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
     "countTotal": 3,
@@ -1735,6 +2047,7 @@
     "countResuming": 0,
     "countTerminating": 0,
     "countRegistering": 0,
+    "countReconciling": 0,
     "countUndefined": 0
   },
   "targetStatus": "None",
@@ -1742,13 +2055,14 @@
   "installMonAgent": "",
   "configureCloudAdaptiveNetwork": "",
   "label": {
+    "cm-migrated-at": "2026-10-12T10:57:22Z",
     "sys.description": "NLB-aware recommended infrastructure for cloud migration",
-    "sys.id": "my-infra101",
+    "sys.id": "my03-infra101",
     "sys.labelType": "infra",
     "sys.manager": "cb-tumblebug",
-    "sys.name": "my-infra101",
+    "sys.name": "my03-infra101",
     "sys.namespace": "mig01",
-    "sys.uid": "tb6llm23eif1q7e2v20j"
+    "sys.uid": "tbaciag0qhpm0el9ei0q"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -1756,12 +2070,12 @@
   "node": [
     {
       "resourceType": "node",
-      "id": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "tb1pu9f78qonoie5ajod",
-      "cspResourceName": "tb1pu9f78qonoie5ajod",
-      "cspResourceId": "tb1pu9f78qonoie5ajod",
-      "name": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "nodeGroupId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624",
+      "id": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "uid": "tb34cj51eke012cm5vec",
+      "cspResourceName": "tb34cj51eke012cm5vec",
+      "cspResourceId": "tb34cj51eke012cm5vec",
+      "name": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "nodeGroupId": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624",
       "location": {
         "display": "South Korea (Seoul)",
         "latitude": 37.2,
@@ -1773,284 +2087,23 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-07-13 09:19:02",
+      "createdTime": "2026-10-12 10:57:45",
       "label": {
-        "keypair": "tb0ffm8vtk5l3ahog7h1",
-        "sourceMachineIds": "ec268ed7-821e-9d73-e79f-961262161624",
-        "sys.connectionName": "gcp-asia-northeast3",
-        "sys.createdTime": "2026-07-13 09:19:02",
-        "sys.cspResourceId": "tb1pu9f78qonoie5ajod",
-        "sys.cspResourceName": "tb1pu9f78qonoie5ajod",
-        "sys.id": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "sys.infraId": "my-infra101",
-        "sys.labelType": "node",
-        "sys.manager": "cb-tumblebug",
-        "sys.name": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "sys.namespace": "mig01",
-        "sys.nodeGroupId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624",
-        "sys.subnetId": "my-mig-subnet-01",
-        "sys.uid": "tb1pu9f78qonoie5ajod",
-        "sys.vNetId": "my-mig-vnet-01"
+        "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"
       },
-      "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
+      "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=87.8% Image=80.0%",
       "region": {
         "region": "asia-northeast3",
         "zone": "asia-northeast3-a"
       },
-      "publicIP": "34.64.195.188",
-      "sshPort": 22,
-      "publicDNS": "",
-      "privateIP": "10.0.1.4",
-      "privateDNS": "",
-      "rootDiskType": "pd-standard",
-      "rootDiskSize": 10,
-      "RootDeviceName": "persistent-disk-0",
-      "connectionName": "gcp-asia-northeast3",
-      "connectionConfig": {
-        "configName": "gcp-asia-northeast3",
-        "providerName": "gcp",
-        "driverName": "gcp-driver-v1.0.so",
-        "credentialName": "gcp",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "gcp-asia-northeast3",
-        "regionZoneInfo": {
-          "assignedRegion": "asia-northeast3",
-          "assignedZone": "asia-northeast3-a"
-        },
-        "regionDetail": {
-          "regionId": "asia-northeast3",
-          "regionName": "asia-northeast3",
-          "description": "Seoul South Korea",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.2,
-            "longitude": 127
-          },
-          "zones": [
-            "asia-northeast3-a",
-            "asia-northeast3-b",
-            "asia-northeast3-c"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "gcp+asia-northeast3+e2-highcpu-2",
-      "cspSpecName": "e2-highcpu-2",
-      "spec": {
-        "cspSpecName": "e2-highcpu-2",
-        "vCPU": 2,
-        "memoryGiB": 1.953125,
-        "costPerHour": 0.063531
-      },
-      "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
-      "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
-      "image": {
-        "resourceType": "image",
-        "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
-        "osType": "Ubuntu 22.04",
-        "osArchitecture": "x86_64",
-        "osDistribution": "Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-06-23"
-      },
-      "vNetId": "my-mig-vnet-01",
-      "cspVNetId": "tb6qc3e779ji5e5kqg7k",
-      "subnetId": "my-mig-subnet-01",
-      "cspSubnetId": "tb08efe9m19o55jbt2pp",
-      "networkInterface": "nic0",
-      "securityGroupIds": [
-        "my-mig-sg-02"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "my-mig-sshkey-01",
-      "cspSshKeyId": "tb0ffm8vtk5l3ahog7h1",
-      "nodeUserName": "cb-user",
-      "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGqm7KRJjGvBKrIt6Exfjzucx67wuUm/nj+gaOV9Ky6kP1o0gIJxdDPsEgLQDWLTWyIkQBD06kUCHIWenkF806Y=",
-        "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:AW1o1PfIfEsqC0Q956shJ5kMBWEbmKsxnd/txVkAPM4",
-        "firstUsedAt": "2026-07-13T09:19:13Z"
-      },
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2026-07-13T09:19:12Z",
-          "completedTime": "2026-07-13T09:19:14Z",
-          "elapsedTime": 2,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux tb1pu9f78qonoie5ajod 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "CanIpForward",
-          "value": "false"
-        },
-        {
-          "key": "CpuPlatform",
-          "value": "Intel Broadwell"
-        },
-        {
-          "key": "CreationTimestamp",
-          "value": "2026-07-13T02:18:20.464-07:00"
-        },
-        {
-          "key": "DeletionProtection",
-          "value": "false"
-        },
-        {
-          "key": "Description",
-          "value": "compute sample instance"
-        },
-        {
-          "key": "Disks",
-          "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:10,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2204-lts,https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/licenses/ubuntu-2204-lts-tpu],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/disks/tb1pu9f78qonoie5ajod,type:PERSISTENT}"
-        },
-        {
-          "key": "Fingerprint",
-          "value": "YdsSlUtErnc="
-        },
-        {
-          "key": "Id",
-          "value": "69656031750853555"
-        },
-        {
-          "key": "Kind",
-          "value": "compute#instance"
-        },
-        {
-          "key": "LabelFingerprint",
-          "value": "hpJPIa5xQEk="
-        },
-        {
-          "key": "Labels",
-          "value": "{keypair:tb0ffm8vtk5l3ahog7h1}"
-        },
-        {
-          "key": "LastStartTimestamp",
-          "value": "2026-07-13T02:18:28.104-07:00"
-        },
-        {
-          "key": "MachineType",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/machineTypes/e2-highcpu-2"
-        },
-        {
-          "key": "Metadata",
-          "value": "{fingerprint:EaVRkxGYCT8=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNYQTsR6YY0L8RJs96TMpl5gPye9R63LiKkn3OqgmFStcBfQyThBeoteg37qHvu3ZHriU8a27iZg8jfhi9OqJidbwljur/rQF4nwXLsrSj6wfagobNIo1LUSxLH0dDUbmDz4CvgC9e+d57mWyPfIkalRfoORxyxQpO1jD8TCwXXPkBLxlxRoftvZiGiqmqobThpWkrLjUQVPNohXciJJQNPJEOvo6UV/X2aECsgvr3fXA/vnZij71tE9MBRWH1cZCjyhGchsTvxaUJL8OjiCjM5VKCSmgZ3KhvGQC5QP+wDogAm/9XClt2fgNlnhS2suKpPXT7gnqxqHGRcb6cEEe/hOAmn8rsrWA0aiT1/YiPXSik3hd35mJ/4nFposCH4d7n323GnMimjvy4nfc1oJr3w9wHXp3xzoDYEDykAqml8Q50xmBW/TJeQimBg8uCbZvSGJtpACxuivu2e62LCUnlhJTfPoPJS3OUEm5NAVr02gEoWuWUvKWmzXxWzRG2kGTVI0MLEUtBQzvx+32ZawMY/Lt88GcprahddXXDEYDdVugxAXbOxKkua99YgJ6YPL7nlHtWEbNI+iB4ndWvh4vLuDdHc5LMamD82nG3wRlGbRtsy7XdYycZa5jveKIZAR8bs07vd2uK3E0op5c/TgWEuiW0d6G22whWMopulZcPAQ== cb-user}],kind:compute#metadata}"
-        },
-        {
-          "key": "Name",
-          "value": "tb1pu9f78qonoie5ajod"
-        },
-        {
-          "key": "NetworkInterfaces",
-          "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.64.195.188,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:wBXwrarXbvk=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/ykkim-etri/global/networks/tb6qc3e779ji5e5kqg7k,networkIP:10.0.1.4,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/subnetworks/tb08efe9m19o55jbt2pp}"
-        },
-        {
-          "key": "ResourceStatus",
-          "value": "{effectiveInstanceMetadata:{vmDnsSettingMetadataValue:ZonalOnly}}"
-        },
-        {
-          "key": "SatisfiesPzi",
-          "value": "true"
-        },
-        {
-          "key": "SatisfiesPzs",
-          "value": "false"
-        },
-        {
-          "key": "Scheduling",
-          "value": "{automaticRestart:true,onHostMaintenance:MIGRATE,provisioningModel:STANDARD}"
-        },
-        {
-          "key": "SelfLink",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/instances/tb1pu9f78qonoie5ajod"
-        },
-        {
-          "key": "ServiceAccounts",
-          "value": "{email:kimy-service-account@ykkim-etri.iam.gserviceaccount.com,scopes:[https://www.googleapis.com/auth/devstorage.full_control,https://www.googleapis.com/auth/compute]}"
-        },
-        {
-          "key": "ShieldedInstanceConfig",
-          "value": "{enableIntegrityMonitoring:true,enableVtpm:true}"
-        },
-        {
-          "key": "ShieldedInstanceIntegrityPolicy",
-          "value": "{updateAutoLearnPolicy:true}"
-        },
-        {
-          "key": "StartRestricted",
-          "value": "false"
-        },
-        {
-          "key": "Status",
-          "value": "RUNNING"
-        },
-        {
-          "key": "Tags",
-          "value": "{fingerprint:fXE212sEmT4=,items:[tb2kpd806s3hu3mifdtj]}"
-        },
-        {
-          "key": "Zone",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a"
-        }
-      ]
-    },
-    {
-      "resourceType": "node",
-      "id": "my-ng-influxdb-back-1",
-      "uid": "tbrah6jesqlv0jaeqia5",
-      "cspResourceName": "tbrah6jesqlv0jaeqia5",
-      "cspResourceId": "tbrah6jesqlv0jaeqia5",
-      "name": "my-ng-influxdb-back-1",
-      "nodeGroupId": "my-ng-influxdb-back",
-      "location": {
-        "display": "South Korea (Seoul)",
-        "latitude": 37.2,
-        "longitude": 127
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2026-07-13 09:18:59",
-      "label": {
-        "keypair": "tb0ffm8vtk5l3ahog7h1",
-        "nlbBackend": "influxdb_back",
-        "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "sys.connectionName": "gcp-asia-northeast3",
-        "sys.createdTime": "2026-07-13 09:18:59",
-        "sys.cspResourceId": "tbrah6jesqlv0jaeqia5",
-        "sys.cspResourceName": "tbrah6jesqlv0jaeqia5",
-        "sys.id": "my-ng-influxdb-back-1",
-        "sys.infraId": "my-infra101",
-        "sys.labelType": "node",
-        "sys.manager": "cb-tumblebug",
-        "sys.name": "my-ng-influxdb-back-1",
-        "sys.namespace": "mig01",
-        "sys.nodeGroupId": "my-ng-influxdb-back",
-        "sys.subnetId": "my-mig-subnet-01",
-        "sys.uid": "tbrah6jesqlv0jaeqia5",
-        "sys.vNetId": "my-mig-vnet-01"
-      },
-      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
-      "region": {
-        "region": "asia-northeast3",
-        "zone": "asia-northeast3-a"
-      },
-      "publicIP": "34.47.124.15",
+      "publicIP": "34.50.50.20",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.3",
       "privateDNS": "",
       "rootDiskType": "pd-standard",
-      "rootDiskSize": 30,
-      "RootDeviceName": "persistent-disk-0",
+      "rootDiskSize": 10,
+      "rootDeviceName": "persistent-disk-0",
       "connectionName": "gcp-asia-northeast3",
       "connectionConfig": {
         "configName": "gcp-asia-northeast3",
@@ -2081,178 +2134,88 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "gcp+asia-northeast3+e2-standard-4",
-      "cspSpecName": "e2-standard-4",
+      "specId": "gcp+asia-northeast3+n1-highcpu-2",
+      "cspSpecName": "n1-highcpu-2",
       "spec": {
-        "cspSpecName": "e2-standard-4",
-        "vCPU": 4,
-        "memoryGiB": 15.625,
-        "costPerHour": 0.171931
+        "cspSpecName": "n1-highcpu-2",
+        "vCPU": 2,
+        "memoryGiB": 1.7568359,
+        "costPerHour": 0.09099
       },
-      "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
-      "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+      "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+      "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
       "image": {
         "resourceType": "image",
-        "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+        "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
         "osType": "Ubuntu 22.04",
         "osArchitecture": "x86_64",
-        "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23"
+        "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20"
       },
-      "vNetId": "my-mig-vnet-01",
-      "cspVNetId": "tb6qc3e779ji5e5kqg7k",
-      "subnetId": "my-mig-subnet-01",
-      "cspSubnetId": "tb08efe9m19o55jbt2pp",
+      "vNetId": "my03-mig-vnet-01",
+      "cspVNetId": "tb6ei259h9mvdch4rumt",
+      "subnetId": "my03-mig-subnet-01",
+      "cspSubnetId": "tbvssd98bnj6fq03668o",
       "networkInterface": "nic0",
       "securityGroupIds": [
-        "my-mig-sg-01"
+        "my03-mig-sg-02"
       ],
       "dataDiskIds": null,
-      "sshKeyId": "my-mig-sshkey-01",
-      "cspSshKeyId": "tb0ffm8vtk5l3ahog7h1",
+      "sshKeyId": "my03-mig-sshkey-01",
+      "cspSshKeyId": "tbo0ov0jqt6lbp7d7e4m",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBBDkAdCzKgYDJPyL7tedFntUSar5CmzrXe1F9Zy/hWbQoPMUFAyu/f+p7/5nWMBstIbvt5xMQeVryRG7Gtv+OFQ=",
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBM8zYSkEXIanKf2/xxl68IYjJSRwaTLUn2WLZ0V9VWVBhO52CurQmDfkvlYTV2rn8lZS1S7v37NUQh0tRGoWK7U=",
         "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:tTZZ/sg0gbpE3c3MGAbQPZw1sKMEpPC0b7/hMKaqnxE",
-        "firstUsedAt": "2026-07-13T09:19:13Z"
+        "fingerprint": "SHA256:q9fJZ8oLStKNnh3sm1a6xAGqQ8tsxVShPxSQEb70zQw",
+        "firstUsedAt": "2026-10-12T10:58:05Z"
       },
       "commandStatus": [
         {
           "index": 1,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Failed",
+          "startedTime": "2026-10-12T10:57:46Z",
+          "completedTime": "2026-10-12T10:58:05Z",
+          "elapsedTime": 19,
+          "resultSummary": "Command execution failed",
+          "errorMessage": "SSH authentication failed. Please check: 1) private key is valid 2) user 'cb-user' exists on target 3) authorized_keys is properly configured"
+        },
+        {
+          "index": 2,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Completed",
+          "startedTime": "2026-10-12T10:58:16Z",
+          "completedTime": "2026-10-12T10:58:18Z",
+          "elapsedTime": 2,
+          "resultSummary": "Command executed successfully",
+          "stdout": "\n",
+          "stderr": "\n"
+        },
+        {
+          "index": 3,
+          "xRequestId": "pc-my03-infra101-tbqg3ujansbjm2sbcdm9",
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-07-13T09:19:12Z",
-          "completedTime": "2026-07-13T09:19:14Z",
-          "elapsedTime": 2,
+          "startedTime": "2026-10-12T10:58:19Z",
+          "completedTime": "2026-10-12T10:58:20Z",
+          "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tbrah6jesqlv0jaeqia5 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tb34cj51eke012cm5vec 6.8.0-1066-gcp #74~22.04.1-Ubuntu SMP Fri Aug  7 21:51:15 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "CanIpForward",
-          "value": "false"
-        },
-        {
-          "key": "CpuPlatform",
-          "value": "Intel Broadwell"
-        },
-        {
-          "key": "CreationTimestamp",
-          "value": "2026-07-13T02:18:18.359-07:00"
-        },
-        {
-          "key": "DeletionProtection",
-          "value": "false"
-        },
-        {
-          "key": "Description",
-          "value": "compute sample instance"
-        },
-        {
-          "key": "Disks",
-          "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:30,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/disks/tbrah6jesqlv0jaeqia5,type:PERSISTENT}"
-        },
-        {
-          "key": "Fingerprint",
-          "value": "f76-KtKrepE="
-        },
-        {
-          "key": "Id",
-          "value": "6820223286706246581"
-        },
-        {
-          "key": "Kind",
-          "value": "compute#instance"
-        },
-        {
-          "key": "LabelFingerprint",
-          "value": "hpJPIa5xQEk="
-        },
-        {
-          "key": "Labels",
-          "value": "{keypair:tb0ffm8vtk5l3ahog7h1}"
-        },
-        {
-          "key": "LastStartTimestamp",
-          "value": "2026-07-13T02:18:26.195-07:00"
-        },
-        {
-          "key": "MachineType",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/machineTypes/e2-standard-4"
-        },
-        {
-          "key": "Metadata",
-          "value": "{fingerprint:EaVRkxGYCT8=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNYQTsR6YY0L8RJs96TMpl5gPye9R63LiKkn3OqgmFStcBfQyThBeoteg37qHvu3ZHriU8a27iZg8jfhi9OqJidbwljur/rQF4nwXLsrSj6wfagobNIo1LUSxLH0dDUbmDz4CvgC9e+d57mWyPfIkalRfoORxyxQpO1jD8TCwXXPkBLxlxRoftvZiGiqmqobThpWkrLjUQVPNohXciJJQNPJEOvo6UV/X2aECsgvr3fXA/vnZij71tE9MBRWH1cZCjyhGchsTvxaUJL8OjiCjM5VKCSmgZ3KhvGQC5QP+wDogAm/9XClt2fgNlnhS2suKpPXT7gnqxqHGRcb6cEEe/hOAmn8rsrWA0aiT1/YiPXSik3hd35mJ/4nFposCH4d7n323GnMimjvy4nfc1oJr3w9wHXp3xzoDYEDykAqml8Q50xmBW/TJeQimBg8uCbZvSGJtpACxuivu2e62LCUnlhJTfPoPJS3OUEm5NAVr02gEoWuWUvKWmzXxWzRG2kGTVI0MLEUtBQzvx+32ZawMY/Lt88GcprahddXXDEYDdVugxAXbOxKkua99YgJ6YPL7nlHtWEbNI+iB4ndWvh4vLuDdHc5LMamD82nG3wRlGbRtsy7XdYycZa5jveKIZAR8bs07vd2uK3E0op5c/TgWEuiW0d6G22whWMopulZcPAQ== cb-user}],kind:compute#metadata}"
-        },
-        {
-          "key": "Name",
-          "value": "tbrah6jesqlv0jaeqia5"
-        },
-        {
-          "key": "NetworkInterfaces",
-          "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.47.124.15,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:Gp6cH14WOLg=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/ykkim-etri/global/networks/tb6qc3e779ji5e5kqg7k,networkIP:10.0.1.3,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/subnetworks/tb08efe9m19o55jbt2pp}"
-        },
-        {
-          "key": "ResourceStatus",
-          "value": "{effectiveInstanceMetadata:{vmDnsSettingMetadataValue:ZonalOnly}}"
-        },
-        {
-          "key": "SatisfiesPzi",
-          "value": "true"
-        },
-        {
-          "key": "SatisfiesPzs",
-          "value": "false"
-        },
-        {
-          "key": "Scheduling",
-          "value": "{automaticRestart:true,onHostMaintenance:MIGRATE,provisioningModel:STANDARD}"
-        },
-        {
-          "key": "SelfLink",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/instances/tbrah6jesqlv0jaeqia5"
-        },
-        {
-          "key": "ServiceAccounts",
-          "value": "{email:kimy-service-account@ykkim-etri.iam.gserviceaccount.com,scopes:[https://www.googleapis.com/auth/devstorage.full_control,https://www.googleapis.com/auth/compute]}"
-        },
-        {
-          "key": "ShieldedInstanceConfig",
-          "value": "{enableIntegrityMonitoring:true,enableVtpm:true}"
-        },
-        {
-          "key": "ShieldedInstanceIntegrityPolicy",
-          "value": "{updateAutoLearnPolicy:true}"
-        },
-        {
-          "key": "StartRestricted",
-          "value": "false"
-        },
-        {
-          "key": "Status",
-          "value": "RUNNING"
-        },
-        {
-          "key": "Tags",
-          "value": "{fingerprint:7VBbY9V0wIg=,items:[tb74avigphtcuf3958vc]}"
-        },
-        {
-          "key": "Zone",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a"
         }
       ]
     },
     {
       "resourceType": "node",
-      "id": "my-ng-influxdb-back-2",
-      "uid": "tbq36hhnk3jjdfpfuu73",
-      "cspResourceName": "tbq36hhnk3jjdfpfuu73",
-      "cspResourceId": "tbq36hhnk3jjdfpfuu73",
-      "name": "my-ng-influxdb-back-2",
-      "nodeGroupId": "my-ng-influxdb-back",
+      "id": "my03-ng-influxdb-back-1",
+      "uid": "tb6iphm7mug3sutkbmrj",
+      "cspResourceName": "tb6iphm7mug3sutkbmrj",
+      "cspResourceId": "tb6iphm7mug3sutkbmrj",
+      "name": "my03-ng-influxdb-back-1",
+      "nodeGroupId": "my03-ng-influxdb-back",
       "location": {
         "display": "South Korea (Seoul)",
         "latitude": 37.2,
@@ -2264,39 +2227,24 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-07-13 09:18:58",
+      "createdTime": "2026-10-12 10:57:46",
       "label": {
-        "keypair": "tb0ffm8vtk5l3ahog7h1",
-        "nlbBackend": "influxdb_back",
-        "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "sys.connectionName": "gcp-asia-northeast3",
-        "sys.createdTime": "2026-07-13 09:18:58",
-        "sys.cspResourceId": "tbq36hhnk3jjdfpfuu73",
-        "sys.cspResourceName": "tbq36hhnk3jjdfpfuu73",
-        "sys.id": "my-ng-influxdb-back-2",
-        "sys.infraId": "my-infra101",
-        "sys.labelType": "node",
-        "sys.manager": "cb-tumblebug",
-        "sys.name": "my-ng-influxdb-back-2",
-        "sys.namespace": "mig01",
-        "sys.nodeGroupId": "my-ng-influxdb-back",
-        "sys.subnetId": "my-mig-subnet-01",
-        "sys.uid": "tbq36hhnk3jjdfpfuu73",
-        "sys.vNetId": "my-mig-vnet-01"
+        "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "nlbBackend": "influxdb_back"
       },
       "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
       "region": {
         "region": "asia-northeast3",
         "zone": "asia-northeast3-a"
       },
-      "publicIP": "8.230.19.201",
+      "publicIP": "8.230.11.202",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.2",
+      "privateIP": "10.0.1.4",
       "privateDNS": "",
-      "rootDiskType": "pd-standard",
+      "rootDiskType": "hyperdisk-balanced",
       "rootDiskSize": 30,
-      "RootDeviceName": "persistent-disk-0",
+      "rootDeviceName": "persistent-disk-0",
       "connectionName": "gcp-asia-northeast3",
       "connectionConfig": {
         "configName": "gcp-asia-northeast3",
@@ -2327,244 +2275,318 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "gcp+asia-northeast3+e2-standard-4",
-      "cspSpecName": "e2-standard-4",
+      "specId": "gcp+asia-northeast3+n4-standard-4",
+      "cspSpecName": "n4-standard-4",
       "spec": {
-        "cspSpecName": "e2-standard-4",
+        "cspSpecName": "n4-standard-4",
         "vCPU": 4,
         "memoryGiB": 15.625,
-        "costPerHour": 0.171931
+        "costPerHour": 0.232954
       },
-      "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
-      "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+      "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+      "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
       "image": {
         "resourceType": "image",
-        "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+        "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
         "osType": "Ubuntu 22.04",
         "osArchitecture": "x86_64",
-        "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23"
+        "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20"
       },
-      "vNetId": "my-mig-vnet-01",
-      "cspVNetId": "tb6qc3e779ji5e5kqg7k",
-      "subnetId": "my-mig-subnet-01",
-      "cspSubnetId": "tb08efe9m19o55jbt2pp",
+      "vNetId": "my03-mig-vnet-01",
+      "cspVNetId": "tb6ei259h9mvdch4rumt",
+      "subnetId": "my03-mig-subnet-01",
+      "cspSubnetId": "tbvssd98bnj6fq03668o",
       "networkInterface": "nic0",
       "securityGroupIds": [
-        "my-mig-sg-01"
+        "my03-mig-sg-01"
       ],
       "dataDiskIds": null,
-      "sshKeyId": "my-mig-sshkey-01",
-      "cspSshKeyId": "tb0ffm8vtk5l3ahog7h1",
+      "sshKeyId": "my03-mig-sshkey-01",
+      "cspSshKeyId": "tbo0ov0jqt6lbp7d7e4m",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBN0hMfrekkyROVSveoZGsCeo0oPeeDORUexhxHc5peKEzw1/abt2djbg20vUUqqGrbH1d15K1gpSj6AZBQqj/V8=",
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLjliD44vE5PCrW1U7mbEdy3URpVuboXLtGAbsViINDIBE34m/9NmoNAoLEcMoJf+i/lzicHNnxJ0VBLFpCK8K0=",
         "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:EdgVwUKxu+60R9ACsX+IxKJ2XBexCbLL494NU7S4fnk",
-        "firstUsedAt": "2026-07-13T09:19:12Z"
+        "fingerprint": "SHA256:EgOi/PHy3t27JYSxFg/Rs84BVY5/mTW/uTzZZvN0Jzs",
+        "firstUsedAt": "2026-10-12T10:58:05Z"
       },
       "commandStatus": [
         {
           "index": 1,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Completed",
+          "startedTime": "2026-10-12T10:57:46Z",
+          "completedTime": "2026-10-12T10:58:05Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "\n",
+          "stderr": "\n",
+          "repeatCount": 2,
+          "lastOccurredTime": "2026-10-12T10:58:17Z"
+        },
+        {
+          "index": 2,
+          "xRequestId": "pc-my03-infra101-tbqg3ujansbjm2sbcdm9",
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-07-13T09:19:12Z",
-          "completedTime": "2026-07-13T09:19:15Z",
-          "elapsedTime": 3,
+          "startedTime": "2026-10-12T10:58:19Z",
+          "completedTime": "2026-10-12T10:58:20Z",
+          "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tbq36hhnk3jjdfpfuu73 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tb6iphm7mug3sutkbmrj 6.8.0-1066-gcp #74~22.04.1-Ubuntu SMP Fri Aug  7 21:51:15 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
+      ]
+    },
+    {
+      "resourceType": "node",
+      "id": "my03-ng-influxdb-back-2",
+      "uid": "tb0vbtatce8oe2gk7l55",
+      "cspResourceName": "tb0vbtatce8oe2gk7l55",
+      "cspResourceId": "tb0vbtatce8oe2gk7l55",
+      "name": "my03-ng-influxdb-back-2",
+      "nodeGroupId": "my03-ng-influxdb-back",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.2,
+        "longitude": 127
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2026-10-12 10:57:44",
+      "label": {
+        "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "nlbBackend": "influxdb_back"
+      },
+      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
+      "region": {
+        "region": "asia-northeast3",
+        "zone": "asia-northeast3-a"
+      },
+      "publicIP": "34.64.253.99",
+      "sshPort": 22,
+      "publicDNS": "",
+      "privateIP": "10.0.1.2",
+      "privateDNS": "",
+      "rootDiskType": "hyperdisk-balanced",
+      "rootDiskSize": 30,
+      "rootDeviceName": "persistent-disk-0",
+      "connectionName": "gcp-asia-northeast3",
+      "connectionConfig": {
+        "configName": "gcp-asia-northeast3",
+        "providerName": "gcp",
+        "driverName": "gcp-driver-v1.0.so",
+        "credentialName": "gcp",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "gcp-asia-northeast3",
+        "regionZoneInfo": {
+          "assignedRegion": "asia-northeast3",
+          "assignedZone": "asia-northeast3-a"
+        },
+        "regionDetail": {
+          "regionId": "asia-northeast3",
+          "regionName": "asia-northeast3",
+          "description": "Seoul South Korea",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.2,
+            "longitude": 127
+          },
+          "zones": [
+            "asia-northeast3-a",
+            "asia-northeast3-b",
+            "asia-northeast3-c"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "gcp+asia-northeast3+n4-standard-4",
+      "cspSpecName": "n4-standard-4",
+      "spec": {
+        "cspSpecName": "n4-standard-4",
+        "vCPU": 4,
+        "memoryGiB": 15.625,
+        "costPerHour": 0.232954
+      },
+      "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+      "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+      "image": {
+        "resourceType": "image",
+        "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+        "osType": "Ubuntu 22.04",
+        "osArchitecture": "x86_64",
+        "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20"
+      },
+      "vNetId": "my03-mig-vnet-01",
+      "cspVNetId": "tb6ei259h9mvdch4rumt",
+      "subnetId": "my03-mig-subnet-01",
+      "cspSubnetId": "tbvssd98bnj6fq03668o",
+      "networkInterface": "nic0",
+      "securityGroupIds": [
+        "my03-mig-sg-01"
       ],
-      "addtionalDetails": [
+      "dataDiskIds": null,
+      "sshKeyId": "my03-mig-sshkey-01",
+      "cspSshKeyId": "tbo0ov0jqt6lbp7d7e4m",
+      "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBDeIsbMfzzqEvfiUhQHvOi2sDyEpHteM3NNcBFij/3KPdYJACPERwVpKGjzZZGiF9j6myzFN/OzPD1tOgLGLOZI=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:WOcmaNRs49Zb9fRPIQstvOxUugXWx4QW/pW79ziu8jc",
+        "firstUsedAt": "2026-10-12T10:58:04Z"
+      },
+      "commandStatus": [
         {
-          "key": "CanIpForward",
-          "value": "false"
+          "index": 1,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Completed",
+          "startedTime": "2026-10-12T10:57:46Z",
+          "completedTime": "2026-10-12T10:58:06Z",
+          "elapsedTime": 3,
+          "resultSummary": "Command executed successfully",
+          "stdout": "\n",
+          "stderr": "\n",
+          "repeatCount": 2,
+          "lastOccurredTime": "2026-10-12T10:58:19Z"
         },
         {
-          "key": "CpuPlatform",
-          "value": "Intel Broadwell"
-        },
-        {
-          "key": "CreationTimestamp",
-          "value": "2026-07-13T02:18:17.910-07:00"
-        },
-        {
-          "key": "DeletionProtection",
-          "value": "false"
-        },
-        {
-          "key": "Description",
-          "value": "compute sample instance"
-        },
-        {
-          "key": "Disks",
-          "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:30,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/disks/tbq36hhnk3jjdfpfuu73,type:PERSISTENT}"
-        },
-        {
-          "key": "Fingerprint",
-          "value": "9ZZizxjggT8="
-        },
-        {
-          "key": "Id",
-          "value": "3947188695974089654"
-        },
-        {
-          "key": "Kind",
-          "value": "compute#instance"
-        },
-        {
-          "key": "LabelFingerprint",
-          "value": "hpJPIa5xQEk="
-        },
-        {
-          "key": "Labels",
-          "value": "{keypair:tb0ffm8vtk5l3ahog7h1}"
-        },
-        {
-          "key": "LastStartTimestamp",
-          "value": "2026-07-13T02:18:25.872-07:00"
-        },
-        {
-          "key": "MachineType",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/machineTypes/e2-standard-4"
-        },
-        {
-          "key": "Metadata",
-          "value": "{fingerprint:EaVRkxGYCT8=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNYQTsR6YY0L8RJs96TMpl5gPye9R63LiKkn3OqgmFStcBfQyThBeoteg37qHvu3ZHriU8a27iZg8jfhi9OqJidbwljur/rQF4nwXLsrSj6wfagobNIo1LUSxLH0dDUbmDz4CvgC9e+d57mWyPfIkalRfoORxyxQpO1jD8TCwXXPkBLxlxRoftvZiGiqmqobThpWkrLjUQVPNohXciJJQNPJEOvo6UV/X2aECsgvr3fXA/vnZij71tE9MBRWH1cZCjyhGchsTvxaUJL8OjiCjM5VKCSmgZ3KhvGQC5QP+wDogAm/9XClt2fgNlnhS2suKpPXT7gnqxqHGRcb6cEEe/hOAmn8rsrWA0aiT1/YiPXSik3hd35mJ/4nFposCH4d7n323GnMimjvy4nfc1oJr3w9wHXp3xzoDYEDykAqml8Q50xmBW/TJeQimBg8uCbZvSGJtpACxuivu2e62LCUnlhJTfPoPJS3OUEm5NAVr02gEoWuWUvKWmzXxWzRG2kGTVI0MLEUtBQzvx+32ZawMY/Lt88GcprahddXXDEYDdVugxAXbOxKkua99YgJ6YPL7nlHtWEbNI+iB4ndWvh4vLuDdHc5LMamD82nG3wRlGbRtsy7XdYycZa5jveKIZAR8bs07vd2uK3E0op5c/TgWEuiW0d6G22whWMopulZcPAQ== cb-user}],kind:compute#metadata}"
-        },
-        {
-          "key": "Name",
-          "value": "tbq36hhnk3jjdfpfuu73"
-        },
-        {
-          "key": "NetworkInterfaces",
-          "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:8.230.19.201,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:BG1-eHXkxAs=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/ykkim-etri/global/networks/tb6qc3e779ji5e5kqg7k,networkIP:10.0.1.2,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/subnetworks/tb08efe9m19o55jbt2pp}"
-        },
-        {
-          "key": "ResourceStatus",
-          "value": "{effectiveInstanceMetadata:{vmDnsSettingMetadataValue:ZonalOnly}}"
-        },
-        {
-          "key": "SatisfiesPzi",
-          "value": "true"
-        },
-        {
-          "key": "SatisfiesPzs",
-          "value": "false"
-        },
-        {
-          "key": "Scheduling",
-          "value": "{automaticRestart:true,onHostMaintenance:MIGRATE,provisioningModel:STANDARD}"
-        },
-        {
-          "key": "SelfLink",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/instances/tbq36hhnk3jjdfpfuu73"
-        },
-        {
-          "key": "ServiceAccounts",
-          "value": "{email:kimy-service-account@ykkim-etri.iam.gserviceaccount.com,scopes:[https://www.googleapis.com/auth/devstorage.full_control,https://www.googleapis.com/auth/compute]}"
-        },
-        {
-          "key": "ShieldedInstanceConfig",
-          "value": "{enableIntegrityMonitoring:true,enableVtpm:true}"
-        },
-        {
-          "key": "ShieldedInstanceIntegrityPolicy",
-          "value": "{updateAutoLearnPolicy:true}"
-        },
-        {
-          "key": "StartRestricted",
-          "value": "false"
-        },
-        {
-          "key": "Status",
-          "value": "RUNNING"
-        },
-        {
-          "key": "Tags",
-          "value": "{fingerprint:7VBbY9V0wIg=,items:[tb74avigphtcuf3958vc]}"
-        },
-        {
-          "key": "Zone",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a"
+          "index": 2,
+          "xRequestId": "pc-my03-infra101-tbqg3ujansbjm2sbcdm9",
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2026-10-12T10:58:19Z",
+          "completedTime": "2026-10-12T10:58:20Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux tb0vbtatce8oe2gk7l55 6.8.0-1066-gcp #74~22.04.1-Ubuntu SMP Fri Aug  7 21:51:15 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
         }
       ]
     }
   ],
+  "cluster": [
+    {
+      "id": "my03-mig-vnet-01",
+      "name": "my03-mig-vnet-01",
+      "infraId": "my03-infra101",
+      "vNetId": "my03-mig-vnet-01",
+      "connectionNames": [
+        "gcp-asia-northeast3"
+      ],
+      "providerNames": [
+        "gcp"
+      ],
+      "regionNames": [
+        "asia-northeast3"
+      ],
+      "nodeGroupIds": [
+        "my03-ng-ec268ed7-821e-9d73-e79f-961262161624",
+        "my03-ng-influxdb-back"
+      ],
+      "nodeIds": [
+        "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "my03-ng-influxdb-back-1",
+        "my03-ng-influxdb-back-2"
+      ],
+      "nodeGroupCount": 2,
+      "nodeCount": 3,
+      "representativeNodeGroupId": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624",
+      "representativeNodeId": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1"
+    }
+  ],
   "newNodeList": null,
-  "postCommand": {
-    "userName": "cb-user",
-    "command": [
-      "uname -a"
-    ]
-  },
-  "postCommandResult": {
-    "results": [
-      {
-        "infraId": "my-infra101",
-        "nodeId": "my-ng-influxdb-back-1",
-        "nodeIp": "34.47.124.15",
-        "command": {
-          "0": "uname -a"
-        },
-        "stdout": {
-          "0": "Linux tbrah6jesqlv0jaeqia5 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-        },
-        "stderr": {
-          "0": ""
-        },
-        "err": null
-      },
-      {
-        "infraId": "my-infra101",
-        "nodeId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "nodeIp": "34.64.195.188",
-        "command": {
-          "0": "uname -a"
-        },
-        "stdout": {
-          "0": "Linux tb1pu9f78qonoie5ajod 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-        },
-        "stderr": {
-          "0": ""
-        },
-        "err": null
-      },
-      {
-        "infraId": "my-infra101",
-        "nodeId": "my-ng-influxdb-back-2",
-        "nodeIp": "8.230.19.201",
-        "command": {
-          "0": "uname -a"
-        },
-        "stdout": {
-          "0": "Linux tbq36hhnk3jjdfpfuu73 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-        },
-        "stderr": {
-          "0": ""
-        },
-        "err": null
+  "postCommands": [
+    {
+      "userName": "cb-user",
+      "command": [
+        "uname -a"
+      ]
+    }
+  ],
+  "postCommandResults": [
+    {
+      "phase": 1,
+      "target": "all nodes",
+      "status": "Completed",
+      "results": {
+        "results": [
+          {
+            "infraId": "my03-infra101",
+            "nodeId": "my03-ng-influxdb-back-1",
+            "nodeIp": "8.230.11.202",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux tb6iphm7mug3sutkbmrj 6.8.0-1066-gcp #74~22.04.1-Ubuntu SMP Fri Aug  7 21:51:15 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "error": ""
+          },
+          {
+            "infraId": "my03-infra101",
+            "nodeId": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "nodeIp": "34.50.50.20",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux tb34cj51eke012cm5vec 6.8.0-1066-gcp #74~22.04.1-Ubuntu SMP Fri Aug  7 21:51:15 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "error": ""
+          },
+          {
+            "infraId": "my03-infra101",
+            "nodeId": "my03-ng-influxdb-back-2",
+            "nodeIp": "34.64.253.99",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux tb0vbtatce8oe2gk7l55 6.8.0-1066-gcp #74~22.04.1-Ubuntu SMP Fri Aug  7 21:51:15 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "error": ""
+          }
+        ]
       }
-    ]
-  }
+    }
+  ],
+  "postCommandStatus": "Completed",
+  "postCommandRequestId": "pc-my03-infra101-tbqg3ujansbjm2sbcdm9"
 }
 ```
 
 </details>
 
-### Test Case 3: Get a list of infras
+### Test Case 4: Get a list of infras
 
-#### 3.1 API Request Information
+#### 4.1 API Request Information
 
 - **API Endpoint**: `GET /beetle/migration/ns/mig01/infra`
 - **Purpose**: Get a list of all migrated infrastructures
 - **Namespace ID**: `mig01`
 
-#### 3.2 API Response Information
+#### 4.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
-- **Count**: 1
+- **Count**: 8
 
 **Response Body**:
 
@@ -2576,9 +2598,9 @@
   "infra": [
     {
       "resourceType": "infra",
-      "id": "my-infra101",
-      "uid": "tb6llm23eif1q7e2v20j",
-      "name": "my-infra101",
+      "id": "my01-infra101",
+      "uid": "tb7jivaqmhqeqh8mpt2e",
+      "name": "my01-infra101",
       "status": "Running:3 (R:3/3)",
       "statusCount": {
         "countTotal": 3,
@@ -2592,6 +2614,7 @@
         "countResuming": 0,
         "countTerminating": 0,
         "countRegistering": 0,
+        "countReconciling": 0,
         "countUndefined": 0
       },
       "targetStatus": "None",
@@ -2599,13 +2622,14 @@
       "installMonAgent": "",
       "configureCloudAdaptiveNetwork": "",
       "label": {
+        "cm-migrated-at": "2026-10-12T10:54:50Z",
         "sys.description": "NLB-aware recommended infrastructure for cloud migration",
-        "sys.id": "my-infra101",
+        "sys.id": "my01-infra101",
         "sys.labelType": "infra",
         "sys.manager": "cb-tumblebug",
-        "sys.name": "my-infra101",
+        "sys.name": "my01-infra101",
         "sys.namespace": "mig01",
-        "sys.uid": "tb6llm23eif1q7e2v20j"
+        "sys.uid": "tb7jivaqmhqeqh8mpt2e"
       },
       "systemLabel": "",
       "systemMessage": null,
@@ -2613,257 +2637,742 @@
       "node": [
         {
           "resourceType": "node",
-          "id": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "uid": "tb1pu9f78qonoie5ajod",
-          "cspResourceName": "tb1pu9f78qonoie5ajod",
-          "cspResourceId": "tb1pu9f78qonoie5ajod",
-          "name": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "nodeGroupId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624",
+          "id": "my01-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "uid": "tb285m5mg1j774dvvu4k",
+          "cspResourceName": "tb285m5mg1j774dvvu4k",
+          "cspResourceId": "i-01e11280c6d560912",
+          "name": "my01-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "nodeGroupId": "my01-ng-ec268ed7-821e-9d73-e79f-961262161624",
           "location": {
             "display": "South Korea (Seoul)",
-            "latitude": 37.2,
-            "longitude": 127
+            "latitude": 37.36,
+            "longitude": 126.78
           },
           "status": "Running",
           "targetStatus": "None",
           "targetAction": "None",
           "monAgentStatus": "notInstalled",
-          "networkAgentStatus": "notInstalled",
-          "systemMessage": "",
-          "createdTime": "2026-07-13 09:19:02",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:55:13",
           "label": {
-            "keypair": "tb0ffm8vtk5l3ahog7h1",
-            "sourceMachineIds": "ec268ed7-821e-9d73-e79f-961262161624",
-            "sys.connectionName": "gcp-asia-northeast3",
-            "sys.createdTime": "2026-07-13 09:19:02",
-            "sys.cspResourceId": "tb1pu9f78qonoie5ajod",
-            "sys.cspResourceName": "tb1pu9f78qonoie5ajod",
-            "sys.id": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "sys.infraId": "my-infra101",
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.connectionName": "aws-ap-northeast-2",
+            "sys.createdTime": "2026-10-12 10:55:13",
+            "sys.cspResourceId": "i-01e11280c6d560912",
+            "sys.cspResourceName": "tb285m5mg1j774dvvu4k",
+            "sys.id": "my01-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.infraId": "my01-infra101",
             "sys.labelType": "node",
             "sys.manager": "cb-tumblebug",
-            "sys.name": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.name": "my01-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
             "sys.namespace": "mig01",
-            "sys.nodeGroupId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624",
-            "sys.subnetId": "my-mig-subnet-01",
-            "sys.uid": "tb1pu9f78qonoie5ajod",
-            "sys.vNetId": "my-mig-vnet-01"
+            "sys.nodeGroupId": "my01-ng-ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.subnetId": "my01-mig-subnet-01",
+            "sys.uid": "tb285m5mg1j774dvvu4k",
+            "sys.vNetId": "my01-mig-vnet-01"
           },
-          "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
+          "description": "",
           "region": {
-            "region": "asia-northeast3",
-            "zone": "asia-northeast3-a"
+            "region": "ap-northeast-2",
+            "zone": "ap-northeast-2a"
           },
-          "publicIP": "34.64.195.188",
+          "publicIP": "43.202.65.168",
           "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "10.0.1.4",
-          "privateDNS": "",
-          "rootDiskType": "pd-standard",
+          "privateIP": "10.0.1.45",
+          "privateDNS": "ip-10-0-1-45.ap-northeast-2.compute.internal",
+          "rootDiskType": "gp2",
           "rootDiskSize": 10,
-          "RootDeviceName": "persistent-disk-0",
-          "connectionName": "gcp-asia-northeast3",
+          "rootDeviceName": "",
+          "connectionName": "aws-ap-northeast-2",
           "connectionConfig": {
-            "configName": "gcp-asia-northeast3",
-            "providerName": "gcp",
-            "driverName": "gcp-driver-v1.0.so",
-            "credentialName": "gcp",
+            "configName": "aws-ap-northeast-2",
+            "providerName": "aws",
+            "driverName": "aws-driver-v1.0.so",
+            "credentialName": "aws",
             "credentialHolder": "admin",
-            "regionZoneInfoName": "gcp-asia-northeast3",
+            "regionZoneInfoName": "aws-ap-northeast-2",
             "regionZoneInfo": {
-              "assignedRegion": "asia-northeast3",
-              "assignedZone": "asia-northeast3-a"
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
             },
             "regionDetail": {
-              "regionId": "asia-northeast3",
-              "regionName": "asia-northeast3",
-              "description": "Seoul South Korea",
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "Asia Pacific (Seoul)",
               "location": {
                 "display": "South Korea (Seoul)",
-                "latitude": 37.2,
-                "longitude": 127
+                "latitude": 37.36,
+                "longitude": 126.78
               },
               "zones": [
-                "asia-northeast3-a",
-                "asia-northeast3-b",
-                "asia-northeast3-c"
+                "ap-northeast-2a",
+                "ap-northeast-2b",
+                "ap-northeast-2c",
+                "ap-northeast-2d"
               ]
             },
             "regionRepresentative": true,
             "verified": true
           },
-          "specId": "gcp+asia-northeast3+e2-highcpu-2",
-          "cspSpecName": "e2-highcpu-2",
+          "specId": "aws+ap-northeast-2+t3.small",
+          "cspSpecName": "t3.small",
           "spec": {
-            "cspSpecName": "e2-highcpu-2",
+            "cspSpecName": "t3.small",
             "vCPU": 2,
-            "memoryGiB": 1.953125,
-            "costPerHour": 0.063531
+            "memoryGiB": 2,
+            "costPerHour": 0.026
           },
-          "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
-          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
+          "imageId": "ami-012a353bb3afb92ee",
+          "cspImageName": "ami-012a353bb3afb92ee",
           "image": {
             "resourceType": "image",
-            "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
+            "cspImageName": "ami-012a353bb3afb92ee",
             "osType": "Ubuntu 22.04",
             "osArchitecture": "x86_64",
-            "osDistribution": "Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-06-23"
+            "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731"
           },
-          "vNetId": "my-mig-vnet-01",
-          "cspVNetId": "tb6qc3e779ji5e5kqg7k",
-          "subnetId": "my-mig-subnet-01",
-          "cspSubnetId": "tb08efe9m19o55jbt2pp",
-          "networkInterface": "nic0",
+          "vNetId": "my01-mig-vnet-01",
+          "cspVNetId": "vpc-08afb74d5d25b8401",
+          "subnetId": "my01-mig-subnet-01",
+          "cspSubnetId": "subnet-07356212594969c9e",
+          "networkInterface": "eni-0523e5626d1021d81",
           "securityGroupIds": [
-            "my-mig-sg-02"
+            "my01-mig-sg-02"
           ],
           "dataDiskIds": null,
-          "sshKeyId": "my-mig-sshkey-01",
-          "cspSshKeyId": "tb0ffm8vtk5l3ahog7h1",
-          "nodeUserName": "cb-user",
-          "sshHostKeyInfo": {
-            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGqm7KRJjGvBKrIt6Exfjzucx67wuUm/nj+gaOV9Ky6kP1o0gIJxdDPsEgLQDWLTWyIkQBD06kUCHIWenkF806Y=",
-            "keyType": "ecdsa-sha2-nistp256",
-            "fingerprint": "SHA256:AW1o1PfIfEsqC0Q956shJ5kMBWEbmKsxnd/txVkAPM4",
-            "firstUsedAt": "2026-07-13T09:19:13Z"
-          },
-          "commandStatus": [
-            {
-              "index": 1,
-              "commandRequested": "uname -a",
-              "commandExecuted": "uname -a",
-              "status": "Completed",
-              "startedTime": "2026-07-13T09:19:12Z",
-              "completedTime": "2026-07-13T09:19:14Z",
-              "elapsedTime": 2,
-              "resultSummary": "Command executed successfully",
-              "stdout": "Linux tb1pu9f78qonoie5ajod 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-              "stderr": "\n"
-            }
-          ],
-          "addtionalDetails": [
-            {
-              "key": "CanIpForward",
-              "value": "false"
-            },
-            {
-              "key": "CpuPlatform",
-              "value": "Intel Broadwell"
-            },
-            {
-              "key": "CreationTimestamp",
-              "value": "2026-07-13T02:18:20.464-07:00"
-            },
-            {
-              "key": "DeletionProtection",
-              "value": "false"
-            },
-            {
-              "key": "Description",
-              "value": "compute sample instance"
-            },
-            {
-              "key": "Disks",
-              "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:10,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2204-lts,https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/licenses/ubuntu-2204-lts-tpu],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/disks/tb1pu9f78qonoie5ajod,type:PERSISTENT}"
-            },
-            {
-              "key": "Fingerprint",
-              "value": "YdsSlUtErnc="
-            },
-            {
-              "key": "Id",
-              "value": "69656031750853555"
-            },
-            {
-              "key": "Kind",
-              "value": "compute#instance"
-            },
-            {
-              "key": "LabelFingerprint",
-              "value": "hpJPIa5xQEk="
-            },
-            {
-              "key": "Labels",
-              "value": "{keypair:tb0ffm8vtk5l3ahog7h1}"
-            },
-            {
-              "key": "LastStartTimestamp",
-              "value": "2026-07-13T02:18:28.104-07:00"
-            },
-            {
-              "key": "MachineType",
-              "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/machineTypes/e2-highcpu-2"
-            },
-            {
-              "key": "Metadata",
-              "value": "{fingerprint:EaVRkxGYCT8=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNYQTsR6YY0L8RJs96TMpl5gPye9R63LiKkn3OqgmFStcBfQyThBeoteg37qHvu3ZHriU8a27iZg8jfhi9OqJidbwljur/rQF4nwXLsrSj6wfagobNIo1LUSxLH0dDUbmDz4CvgC9e+d57mWyPfIkalRfoORxyxQpO1jD8TCwXXPkBLxlxRoftvZiGiqmqobThpWkrLjUQVPNohXciJJQNPJEOvo6UV/X2aECsgvr3fXA/vnZij71tE9MBRWH1cZCjyhGchsTvxaUJL8OjiCjM5VKCSmgZ3KhvGQC5QP+wDogAm/9XClt2fgNlnhS2suKpPXT7gnqxqHGRcb6cEEe/hOAmn8rsrWA0aiT1/YiPXSik3hd35mJ/4nFposCH4d7n323GnMimjvy4nfc1oJr3w9wHXp3xzoDYEDykAqml8Q50xmBW/TJeQimBg8uCbZvSGJtpACxuivu2e62LCUnlhJTfPoPJS3OUEm5NAVr02gEoWuWUvKWmzXxWzRG2kGTVI0MLEUtBQzvx+32ZawMY/Lt88GcprahddXXDEYDdVugxAXbOxKkua99YgJ6YPL7nlHtWEbNI+iB4ndWvh4vLuDdHc5LMamD82nG3wRlGbRtsy7XdYycZa5jveKIZAR8bs07vd2uK3E0op5c/TgWEuiW0d6G22whWMopulZcPAQ== cb-user}],kind:compute#metadata}"
-            },
-            {
-              "key": "Name",
-              "value": "tb1pu9f78qonoie5ajod"
-            },
-            {
-              "key": "NetworkInterfaces",
-              "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.64.195.188,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:wBXwrarXbvk=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/ykkim-etri/global/networks/tb6qc3e779ji5e5kqg7k,networkIP:10.0.1.4,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/subnetworks/tb08efe9m19o55jbt2pp}"
-            },
-            {
-              "key": "ResourceStatus",
-              "value": "{effectiveInstanceMetadata:{vmDnsSettingMetadataValue:ZonalOnly}}"
-            },
-            {
-              "key": "SatisfiesPzi",
-              "value": "true"
-            },
-            {
-              "key": "SatisfiesPzs",
-              "value": "false"
-            },
-            {
-              "key": "Scheduling",
-              "value": "{automaticRestart:true,onHostMaintenance:MIGRATE,provisioningModel:STANDARD}"
-            },
-            {
-              "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/instances/tb1pu9f78qonoie5ajod"
-            },
-            {
-              "key": "ServiceAccounts",
-              "value": "{email:kimy-service-account@ykkim-etri.iam.gserviceaccount.com,scopes:[https://www.googleapis.com/auth/devstorage.full_control,https://www.googleapis.com/auth/compute]}"
-            },
-            {
-              "key": "ShieldedInstanceConfig",
-              "value": "{enableIntegrityMonitoring:true,enableVtpm:true}"
-            },
-            {
-              "key": "ShieldedInstanceIntegrityPolicy",
-              "value": "{updateAutoLearnPolicy:true}"
-            },
-            {
-              "key": "StartRestricted",
-              "value": "false"
-            },
-            {
-              "key": "Status",
-              "value": "RUNNING"
-            },
-            {
-              "key": "Tags",
-              "value": "{fingerprint:fXE212sEmT4=,items:[tb2kpd806s3hu3mifdtj]}"
-            },
-            {
-              "key": "Zone",
-              "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a"
-            }
-          ]
+          "sshKeyId": "my01-mig-sshkey-01",
+          "cspSshKeyId": "tblqeie98atc8phigbn8"
         },
         {
           "resourceType": "node",
-          "id": "my-ng-influxdb-back-1",
-          "uid": "tbrah6jesqlv0jaeqia5",
-          "cspResourceName": "tbrah6jesqlv0jaeqia5",
-          "cspResourceId": "tbrah6jesqlv0jaeqia5",
-          "name": "my-ng-influxdb-back-1",
-          "nodeGroupId": "my-ng-influxdb-back",
+          "id": "my01-ng-influxdb-back-1",
+          "uid": "tb0rphiopmk4jbj63gu9",
+          "cspResourceName": "tb0rphiopmk4jbj63gu9",
+          "cspResourceId": "i-0ccffb9271ef8b826",
+          "name": "my01-ng-influxdb-back-1",
+          "nodeGroupId": "my01-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:55:12",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "aws-ap-northeast-2",
+            "sys.createdTime": "2026-10-12 10:55:12",
+            "sys.cspResourceId": "i-0ccffb9271ef8b826",
+            "sys.cspResourceName": "tb0rphiopmk4jbj63gu9",
+            "sys.id": "my01-ng-influxdb-back-1",
+            "sys.infraId": "my01-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my01-ng-influxdb-back-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my01-ng-influxdb-back",
+            "sys.subnetId": "my01-mig-subnet-01",
+            "sys.uid": "tb0rphiopmk4jbj63gu9",
+            "sys.vNetId": "my01-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-northeast-2",
+            "zone": "ap-northeast-2a"
+          },
+          "publicIP": "3.35.0.184",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.252",
+          "privateDNS": "ip-10-0-1-252.ap-northeast-2.compute.internal",
+          "rootDiskType": "gp2",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "aws-ap-northeast-2",
+          "connectionConfig": {
+            "configName": "aws-ap-northeast-2",
+            "providerName": "aws",
+            "driverName": "aws-driver-v1.0.so",
+            "credentialName": "aws",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "aws-ap-northeast-2",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
+            },
+            "regionDetail": {
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "Asia Pacific (Seoul)",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.36,
+                "longitude": 126.78
+              },
+              "zones": [
+                "ap-northeast-2a",
+                "ap-northeast-2b",
+                "ap-northeast-2c",
+                "ap-northeast-2d"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "aws+ap-northeast-2+t3.xlarge",
+          "cspSpecName": "t3.xlarge",
+          "spec": {
+            "cspSpecName": "t3.xlarge",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.208
+          },
+          "imageId": "ami-012a353bb3afb92ee",
+          "cspImageName": "ami-012a353bb3afb92ee",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "ami-012a353bb3afb92ee",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731"
+          },
+          "vNetId": "my01-mig-vnet-01",
+          "cspVNetId": "vpc-08afb74d5d25b8401",
+          "subnetId": "my01-mig-subnet-01",
+          "cspSubnetId": "subnet-07356212594969c9e",
+          "networkInterface": "eni-003a26766f6ec524f",
+          "securityGroupIds": [
+            "my01-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my01-mig-sshkey-01",
+          "cspSshKeyId": "tblqeie98atc8phigbn8"
+        },
+        {
+          "resourceType": "node",
+          "id": "my01-ng-influxdb-back-2",
+          "uid": "tbvicduatqk2kbkh4sh1",
+          "cspResourceName": "tbvicduatqk2kbkh4sh1",
+          "cspResourceId": "i-0fe239de8057ad524",
+          "name": "my01-ng-influxdb-back-2",
+          "nodeGroupId": "my01-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:55:13",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "aws-ap-northeast-2",
+            "sys.createdTime": "2026-10-12 10:55:13",
+            "sys.cspResourceId": "i-0fe239de8057ad524",
+            "sys.cspResourceName": "tbvicduatqk2kbkh4sh1",
+            "sys.id": "my01-ng-influxdb-back-2",
+            "sys.infraId": "my01-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my01-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my01-ng-influxdb-back",
+            "sys.subnetId": "my01-mig-subnet-01",
+            "sys.uid": "tbvicduatqk2kbkh4sh1",
+            "sys.vNetId": "my01-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-northeast-2",
+            "zone": "ap-northeast-2a"
+          },
+          "publicIP": "13.124.59.129",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.157",
+          "privateDNS": "ip-10-0-1-157.ap-northeast-2.compute.internal",
+          "rootDiskType": "gp2",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "aws-ap-northeast-2",
+          "connectionConfig": {
+            "configName": "aws-ap-northeast-2",
+            "providerName": "aws",
+            "driverName": "aws-driver-v1.0.so",
+            "credentialName": "aws",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "aws-ap-northeast-2",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
+            },
+            "regionDetail": {
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "Asia Pacific (Seoul)",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.36,
+                "longitude": 126.78
+              },
+              "zones": [
+                "ap-northeast-2a",
+                "ap-northeast-2b",
+                "ap-northeast-2c",
+                "ap-northeast-2d"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "aws+ap-northeast-2+t3.xlarge",
+          "cspSpecName": "t3.xlarge",
+          "spec": {
+            "cspSpecName": "t3.xlarge",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.208
+          },
+          "imageId": "ami-012a353bb3afb92ee",
+          "cspImageName": "ami-012a353bb3afb92ee",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "ami-012a353bb3afb92ee",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731"
+          },
+          "vNetId": "my01-mig-vnet-01",
+          "cspVNetId": "vpc-08afb74d5d25b8401",
+          "subnetId": "my01-mig-subnet-01",
+          "cspSubnetId": "subnet-07356212594969c9e",
+          "networkInterface": "eni-0bdf4f149596775ca",
+          "securityGroupIds": [
+            "my01-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my01-mig-sshkey-01",
+          "cspSshKeyId": "tblqeie98atc8phigbn8"
+        }
+      ],
+      "newNodeList": null
+    },
+    {
+      "resourceType": "infra",
+      "id": "my02-infra101",
+      "uid": "tbhgfnet31pr9ql9j7bk",
+      "name": "my02-infra101",
+      "status": "Running:3 (R:3/3)",
+      "statusCount": {
+        "countTotal": 3,
+        "countCreating": 0,
+        "countRunning": 3,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countRegistering": 0,
+        "countReconciling": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "installMonAgent": "",
+      "configureCloudAdaptiveNetwork": "",
+      "label": {
+        "cm-migrated-at": "2026-10-12T10:55:25Z",
+        "sys.description": "NLB-aware recommended infrastructure for cloud migration",
+        "sys.id": "my02-infra101",
+        "sys.labelType": "infra",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my02-infra101",
+        "sys.namespace": "mig01",
+        "sys.uid": "tbhgfnet31pr9ql9j7bk"
+      },
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "node": [
+        {
+          "resourceType": "node",
+          "id": "my02-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "uid": "tbgo8nk6f2vdi4ud1di3",
+          "cspResourceName": "tbgo8nk6f2vdi4ud1di3",
+          "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbgo8nk6f2vdi4ud1di3",
+          "name": "my02-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "nodeGroupId": "my02-ng-ec268ed7-821e-9d73-e79f-961262161624",
+          "location": {
+            "display": "Korea South",
+            "latitude": 35.1796,
+            "longitude": 129.0756
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:55:38",
+          "label": {
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.connectionName": "azure-koreasouth",
+            "sys.createdTime": "2026-10-12 10:55:38",
+            "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbgo8nk6f2vdi4ud1di3",
+            "sys.cspResourceName": "tbgo8nk6f2vdi4ud1di3",
+            "sys.id": "my02-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.infraId": "my02-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my02-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my02-ng-ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.subnetId": "my02-mig-subnet-01",
+            "sys.uid": "tbgo8nk6f2vdi4ud1di3",
+            "sys.vNetId": "my02-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "koreasouth"
+          },
+          "publicIP": "52.231.199.148",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.5",
+          "privateDNS": "",
+          "rootDiskType": "PremiumSSD",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "azure-koreasouth",
+          "connectionConfig": {
+            "configName": "azure-koreasouth",
+            "providerName": "azure",
+            "driverName": "azure-driver-v1.0.so",
+            "credentialName": "azure",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "azure-koreasouth",
+            "regionZoneInfo": {
+              "assignedRegion": "koreasouth",
+              "assignedZone": ""
+            },
+            "regionDetail": {
+              "regionId": "koreasouth",
+              "regionName": "koreasouth",
+              "description": "Korea South",
+              "location": {
+                "display": "Korea South",
+                "latitude": 35.1796,
+                "longitude": 129.0756
+              },
+              "zones": []
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "azure+koreasouth+standard_f2s_v2",
+          "cspSpecName": "Standard_F2s_v2",
+          "spec": {
+            "cspSpecName": "Standard_F2s_v2",
+            "vCPU": 2,
+            "memoryGiB": 3.90625,
+            "costPerHour": 0.0961
+          },
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202608060",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202608060",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202608060",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202608060"
+          },
+          "vNetId": "my02-mig-vnet-01",
+          "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbr90eqdo0i08mloa9d4",
+          "subnetId": "my02-mig-subnet-01",
+          "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbr90eqdo0i08mloa9d4/subnets/tb65ekb0igsd7f9m5um8",
+          "networkInterface": "tbgo8nk6f2vdi4ud1di3-76427-VNic",
+          "securityGroupIds": [
+            "my02-mig-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my02-mig-sshkey-01",
+          "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/tben35a2d0tikbeoom6u"
+        },
+        {
+          "resourceType": "node",
+          "id": "my02-ng-influxdb-back-1",
+          "uid": "tbj14c6t6l7e1i7n3o19",
+          "cspResourceName": "tbj14c6t6l7e1i7n3o19",
+          "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbj14c6t6l7e1i7n3o19",
+          "name": "my02-ng-influxdb-back-1",
+          "nodeGroupId": "my02-ng-influxdb-back",
+          "location": {
+            "display": "Korea South",
+            "latitude": 35.1796,
+            "longitude": 129.0756
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:55:36",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "azure-koreasouth",
+            "sys.createdTime": "2026-10-12 10:55:36",
+            "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbj14c6t6l7e1i7n3o19",
+            "sys.cspResourceName": "tbj14c6t6l7e1i7n3o19",
+            "sys.id": "my02-ng-influxdb-back-1",
+            "sys.infraId": "my02-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my02-ng-influxdb-back-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my02-ng-influxdb-back",
+            "sys.subnetId": "my02-mig-subnet-01",
+            "sys.uid": "tbj14c6t6l7e1i7n3o19",
+            "sys.vNetId": "my02-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "koreasouth"
+          },
+          "publicIP": "20.214.14.38",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.6",
+          "privateDNS": "",
+          "rootDiskType": "PremiumSSD",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "azure-koreasouth",
+          "connectionConfig": {
+            "configName": "azure-koreasouth",
+            "providerName": "azure",
+            "driverName": "azure-driver-v1.0.so",
+            "credentialName": "azure",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "azure-koreasouth",
+            "regionZoneInfo": {
+              "assignedRegion": "koreasouth",
+              "assignedZone": ""
+            },
+            "regionDetail": {
+              "regionId": "koreasouth",
+              "regionName": "koreasouth",
+              "description": "Korea South",
+              "location": {
+                "display": "Korea South",
+                "latitude": 35.1796,
+                "longitude": 129.0756
+              },
+              "zones": []
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "azure+koreasouth+standard_d4s_v4",
+          "cspSpecName": "Standard_D4s_v4",
+          "spec": {
+            "cspSpecName": "Standard_D4s_v4",
+            "vCPU": 4,
+            "memoryGiB": 15.625,
+            "costPerHour": 0.221
+          },
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202608060",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202608060",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202608060",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202608060"
+          },
+          "vNetId": "my02-mig-vnet-01",
+          "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbr90eqdo0i08mloa9d4",
+          "subnetId": "my02-mig-subnet-01",
+          "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbr90eqdo0i08mloa9d4/subnets/tb65ekb0igsd7f9m5um8",
+          "networkInterface": "tbj14c6t6l7e1i7n3o19-84301-VNic",
+          "securityGroupIds": [
+            "my02-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my02-mig-sshkey-01",
+          "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/tben35a2d0tikbeoom6u"
+        },
+        {
+          "resourceType": "node",
+          "id": "my02-ng-influxdb-back-2",
+          "uid": "tbs7emlcpd5nlm03jso5",
+          "cspResourceName": "tbs7emlcpd5nlm03jso5",
+          "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbs7emlcpd5nlm03jso5",
+          "name": "my02-ng-influxdb-back-2",
+          "nodeGroupId": "my02-ng-influxdb-back",
+          "location": {
+            "display": "Korea South",
+            "latitude": 35.1796,
+            "longitude": 129.0756
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:55:37",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "azure-koreasouth",
+            "sys.createdTime": "2026-10-12 10:55:37",
+            "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbs7emlcpd5nlm03jso5",
+            "sys.cspResourceName": "tbs7emlcpd5nlm03jso5",
+            "sys.id": "my02-ng-influxdb-back-2",
+            "sys.infraId": "my02-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my02-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my02-ng-influxdb-back",
+            "sys.subnetId": "my02-mig-subnet-01",
+            "sys.uid": "tbs7emlcpd5nlm03jso5",
+            "sys.vNetId": "my02-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "koreasouth"
+          },
+          "publicIP": "20.200.157.253",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.4",
+          "privateDNS": "",
+          "rootDiskType": "PremiumSSD",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "azure-koreasouth",
+          "connectionConfig": {
+            "configName": "azure-koreasouth",
+            "providerName": "azure",
+            "driverName": "azure-driver-v1.0.so",
+            "credentialName": "azure",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "azure-koreasouth",
+            "regionZoneInfo": {
+              "assignedRegion": "koreasouth",
+              "assignedZone": ""
+            },
+            "regionDetail": {
+              "regionId": "koreasouth",
+              "regionName": "koreasouth",
+              "description": "Korea South",
+              "location": {
+                "display": "Korea South",
+                "latitude": 35.1796,
+                "longitude": 129.0756
+              },
+              "zones": []
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "azure+koreasouth+standard_d4s_v4",
+          "cspSpecName": "Standard_D4s_v4",
+          "spec": {
+            "cspSpecName": "Standard_D4s_v4",
+            "vCPU": 4,
+            "memoryGiB": 15.625,
+            "costPerHour": 0.221
+          },
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202608060",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202608060",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202608060",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202608060"
+          },
+          "vNetId": "my02-mig-vnet-01",
+          "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbr90eqdo0i08mloa9d4",
+          "subnetId": "my02-mig-subnet-01",
+          "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbr90eqdo0i08mloa9d4/subnets/tb65ekb0igsd7f9m5um8",
+          "networkInterface": "tbs7emlcpd5nlm03jso5-17738-VNic",
+          "securityGroupIds": [
+            "my02-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my02-mig-sshkey-01",
+          "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/tben35a2d0tikbeoom6u"
+        }
+      ],
+      "newNodeList": null
+    },
+    {
+      "resourceType": "infra",
+      "id": "my03-infra101",
+      "uid": "tbaciag0qhpm0el9ei0q",
+      "name": "my03-infra101",
+      "status": "Running:3 (R:3/3)",
+      "statusCount": {
+        "countTotal": 3,
+        "countCreating": 0,
+        "countRunning": 3,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countRegistering": 0,
+        "countReconciling": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "installMonAgent": "",
+      "configureCloudAdaptiveNetwork": "",
+      "label": {
+        "cm-migrated-at": "2026-10-12T10:57:22Z",
+        "sys.description": "NLB-aware recommended infrastructure for cloud migration",
+        "sys.id": "my03-infra101",
+        "sys.labelType": "infra",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my03-infra101",
+        "sys.namespace": "mig01",
+        "sys.uid": "tbaciag0qhpm0el9ei0q"
+      },
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "node": [
+        {
+          "resourceType": "node",
+          "id": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "uid": "tb34cj51eke012cm5vec",
+          "cspResourceName": "tb34cj51eke012cm5vec",
+          "cspResourceId": "tb34cj51eke012cm5vec",
+          "name": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "nodeGroupId": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624",
           "location": {
             "display": "South Korea (Seoul)",
             "latitude": 37.2,
@@ -2873,41 +3382,39 @@
           "targetStatus": "None",
           "targetAction": "None",
           "monAgentStatus": "notInstalled",
-          "networkAgentStatus": "notInstalled",
-          "systemMessage": "",
-          "createdTime": "2026-07-13 09:18:59",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:57:45",
           "label": {
-            "keypair": "tb0ffm8vtk5l3ahog7h1",
-            "nlbBackend": "influxdb_back",
-            "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
             "sys.connectionName": "gcp-asia-northeast3",
-            "sys.createdTime": "2026-07-13 09:18:59",
-            "sys.cspResourceId": "tbrah6jesqlv0jaeqia5",
-            "sys.cspResourceName": "tbrah6jesqlv0jaeqia5",
-            "sys.id": "my-ng-influxdb-back-1",
-            "sys.infraId": "my-infra101",
+            "sys.createdTime": "2026-10-12 10:57:45",
+            "sys.cspResourceId": "tb34cj51eke012cm5vec",
+            "sys.cspResourceName": "tb34cj51eke012cm5vec",
+            "sys.id": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.infraId": "my03-infra101",
             "sys.labelType": "node",
             "sys.manager": "cb-tumblebug",
-            "sys.name": "my-ng-influxdb-back-1",
+            "sys.name": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
             "sys.namespace": "mig01",
-            "sys.nodeGroupId": "my-ng-influxdb-back",
-            "sys.subnetId": "my-mig-subnet-01",
-            "sys.uid": "tbrah6jesqlv0jaeqia5",
-            "sys.vNetId": "my-mig-vnet-01"
+            "sys.nodeGroupId": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.subnetId": "my03-mig-subnet-01",
+            "sys.uid": "tb34cj51eke012cm5vec",
+            "sys.vNetId": "my03-mig-vnet-01"
           },
-          "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
+          "description": "",
           "region": {
             "region": "asia-northeast3",
             "zone": "asia-northeast3-a"
           },
-          "publicIP": "34.47.124.15",
+          "publicIP": "34.50.50.20",
           "sshPort": 22,
           "publicDNS": "",
           "privateIP": "10.0.1.3",
           "privateDNS": "",
           "rootDiskType": "pd-standard",
-          "rootDiskSize": 30,
-          "RootDeviceName": "persistent-disk-0",
+          "rootDiskSize": 10,
+          "rootDeviceName": "",
           "connectionName": "gcp-asia-northeast3",
           "connectionConfig": {
             "configName": "gcp-asia-northeast3",
@@ -2938,178 +3445,43 @@
             "regionRepresentative": true,
             "verified": true
           },
-          "specId": "gcp+asia-northeast3+e2-standard-4",
-          "cspSpecName": "e2-standard-4",
+          "specId": "gcp+asia-northeast3+n1-highcpu-2",
+          "cspSpecName": "n1-highcpu-2",
           "spec": {
-            "cspSpecName": "e2-standard-4",
-            "vCPU": 4,
-            "memoryGiB": 15.625,
-            "costPerHour": 0.171931
+            "cspSpecName": "n1-highcpu-2",
+            "vCPU": 2,
+            "memoryGiB": 1.7568359,
+            "costPerHour": 0.09099
           },
-          "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
-          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+          "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
           "image": {
             "resourceType": "image",
-            "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+            "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
             "osType": "Ubuntu 22.04",
             "osArchitecture": "x86_64",
-            "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23"
+            "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20"
           },
-          "vNetId": "my-mig-vnet-01",
-          "cspVNetId": "tb6qc3e779ji5e5kqg7k",
-          "subnetId": "my-mig-subnet-01",
-          "cspSubnetId": "tb08efe9m19o55jbt2pp",
+          "vNetId": "my03-mig-vnet-01",
+          "cspVNetId": "tb6ei259h9mvdch4rumt",
+          "subnetId": "my03-mig-subnet-01",
+          "cspSubnetId": "tbvssd98bnj6fq03668o",
           "networkInterface": "nic0",
           "securityGroupIds": [
-            "my-mig-sg-01"
+            "my03-mig-sg-02"
           ],
           "dataDiskIds": null,
-          "sshKeyId": "my-mig-sshkey-01",
-          "cspSshKeyId": "tb0ffm8vtk5l3ahog7h1",
-          "nodeUserName": "cb-user",
-          "sshHostKeyInfo": {
-            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBBDkAdCzKgYDJPyL7tedFntUSar5CmzrXe1F9Zy/hWbQoPMUFAyu/f+p7/5nWMBstIbvt5xMQeVryRG7Gtv+OFQ=",
-            "keyType": "ecdsa-sha2-nistp256",
-            "fingerprint": "SHA256:tTZZ/sg0gbpE3c3MGAbQPZw1sKMEpPC0b7/hMKaqnxE",
-            "firstUsedAt": "2026-07-13T09:19:13Z"
-          },
-          "commandStatus": [
-            {
-              "index": 1,
-              "commandRequested": "uname -a",
-              "commandExecuted": "uname -a",
-              "status": "Completed",
-              "startedTime": "2026-07-13T09:19:12Z",
-              "completedTime": "2026-07-13T09:19:14Z",
-              "elapsedTime": 2,
-              "resultSummary": "Command executed successfully",
-              "stdout": "Linux tbrah6jesqlv0jaeqia5 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-              "stderr": "\n"
-            }
-          ],
-          "addtionalDetails": [
-            {
-              "key": "CanIpForward",
-              "value": "false"
-            },
-            {
-              "key": "CpuPlatform",
-              "value": "Intel Broadwell"
-            },
-            {
-              "key": "CreationTimestamp",
-              "value": "2026-07-13T02:18:18.359-07:00"
-            },
-            {
-              "key": "DeletionProtection",
-              "value": "false"
-            },
-            {
-              "key": "Description",
-              "value": "compute sample instance"
-            },
-            {
-              "key": "Disks",
-              "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:30,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/disks/tbrah6jesqlv0jaeqia5,type:PERSISTENT}"
-            },
-            {
-              "key": "Fingerprint",
-              "value": "f76-KtKrepE="
-            },
-            {
-              "key": "Id",
-              "value": "6820223286706246581"
-            },
-            {
-              "key": "Kind",
-              "value": "compute#instance"
-            },
-            {
-              "key": "LabelFingerprint",
-              "value": "hpJPIa5xQEk="
-            },
-            {
-              "key": "Labels",
-              "value": "{keypair:tb0ffm8vtk5l3ahog7h1}"
-            },
-            {
-              "key": "LastStartTimestamp",
-              "value": "2026-07-13T02:18:26.195-07:00"
-            },
-            {
-              "key": "MachineType",
-              "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/machineTypes/e2-standard-4"
-            },
-            {
-              "key": "Metadata",
-              "value": "{fingerprint:EaVRkxGYCT8=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNYQTsR6YY0L8RJs96TMpl5gPye9R63LiKkn3OqgmFStcBfQyThBeoteg37qHvu3ZHriU8a27iZg8jfhi9OqJidbwljur/rQF4nwXLsrSj6wfagobNIo1LUSxLH0dDUbmDz4CvgC9e+d57mWyPfIkalRfoORxyxQpO1jD8TCwXXPkBLxlxRoftvZiGiqmqobThpWkrLjUQVPNohXciJJQNPJEOvo6UV/X2aECsgvr3fXA/vnZij71tE9MBRWH1cZCjyhGchsTvxaUJL8OjiCjM5VKCSmgZ3KhvGQC5QP+wDogAm/9XClt2fgNlnhS2suKpPXT7gnqxqHGRcb6cEEe/hOAmn8rsrWA0aiT1/YiPXSik3hd35mJ/4nFposCH4d7n323GnMimjvy4nfc1oJr3w9wHXp3xzoDYEDykAqml8Q50xmBW/TJeQimBg8uCbZvSGJtpACxuivu2e62LCUnlhJTfPoPJS3OUEm5NAVr02gEoWuWUvKWmzXxWzRG2kGTVI0MLEUtBQzvx+32ZawMY/Lt88GcprahddXXDEYDdVugxAXbOxKkua99YgJ6YPL7nlHtWEbNI+iB4ndWvh4vLuDdHc5LMamD82nG3wRlGbRtsy7XdYycZa5jveKIZAR8bs07vd2uK3E0op5c/TgWEuiW0d6G22whWMopulZcPAQ== cb-user}],kind:compute#metadata}"
-            },
-            {
-              "key": "Name",
-              "value": "tbrah6jesqlv0jaeqia5"
-            },
-            {
-              "key": "NetworkInterfaces",
-              "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.47.124.15,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:Gp6cH14WOLg=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/ykkim-etri/global/networks/tb6qc3e779ji5e5kqg7k,networkIP:10.0.1.3,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/subnetworks/tb08efe9m19o55jbt2pp}"
-            },
-            {
-              "key": "ResourceStatus",
-              "value": "{effectiveInstanceMetadata:{vmDnsSettingMetadataValue:ZonalOnly}}"
-            },
-            {
-              "key": "SatisfiesPzi",
-              "value": "true"
-            },
-            {
-              "key": "SatisfiesPzs",
-              "value": "false"
-            },
-            {
-              "key": "Scheduling",
-              "value": "{automaticRestart:true,onHostMaintenance:MIGRATE,provisioningModel:STANDARD}"
-            },
-            {
-              "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/instances/tbrah6jesqlv0jaeqia5"
-            },
-            {
-              "key": "ServiceAccounts",
-              "value": "{email:kimy-service-account@ykkim-etri.iam.gserviceaccount.com,scopes:[https://www.googleapis.com/auth/devstorage.full_control,https://www.googleapis.com/auth/compute]}"
-            },
-            {
-              "key": "ShieldedInstanceConfig",
-              "value": "{enableIntegrityMonitoring:true,enableVtpm:true}"
-            },
-            {
-              "key": "ShieldedInstanceIntegrityPolicy",
-              "value": "{updateAutoLearnPolicy:true}"
-            },
-            {
-              "key": "StartRestricted",
-              "value": "false"
-            },
-            {
-              "key": "Status",
-              "value": "RUNNING"
-            },
-            {
-              "key": "Tags",
-              "value": "{fingerprint:7VBbY9V0wIg=,items:[tb74avigphtcuf3958vc]}"
-            },
-            {
-              "key": "Zone",
-              "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a"
-            }
-          ]
+          "sshKeyId": "my03-mig-sshkey-01",
+          "cspSshKeyId": "tbo0ov0jqt6lbp7d7e4m"
         },
         {
           "resourceType": "node",
-          "id": "my-ng-influxdb-back-2",
-          "uid": "tbq36hhnk3jjdfpfuu73",
-          "cspResourceName": "tbq36hhnk3jjdfpfuu73",
-          "cspResourceId": "tbq36hhnk3jjdfpfuu73",
-          "name": "my-ng-influxdb-back-2",
-          "nodeGroupId": "my-ng-influxdb-back",
+          "id": "my03-ng-influxdb-back-1",
+          "uid": "tb6iphm7mug3sutkbmrj",
+          "cspResourceName": "tb6iphm7mug3sutkbmrj",
+          "cspResourceId": "tb6iphm7mug3sutkbmrj",
+          "name": "my03-ng-influxdb-back-1",
+          "nodeGroupId": "my03-ng-influxdb-back",
           "location": {
             "display": "South Korea (Seoul)",
             "latitude": 37.2,
@@ -3119,41 +3491,40 @@
           "targetStatus": "None",
           "targetAction": "None",
           "monAgentStatus": "notInstalled",
-          "networkAgentStatus": "notInstalled",
-          "systemMessage": "",
-          "createdTime": "2026-07-13 09:18:58",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:57:46",
           "label": {
-            "keypair": "tb0ffm8vtk5l3ahog7h1",
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "nlbBackend": "influxdb_back",
-            "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "sys.connectionName": "gcp-asia-northeast3",
-            "sys.createdTime": "2026-07-13 09:18:58",
-            "sys.cspResourceId": "tbq36hhnk3jjdfpfuu73",
-            "sys.cspResourceName": "tbq36hhnk3jjdfpfuu73",
-            "sys.id": "my-ng-influxdb-back-2",
-            "sys.infraId": "my-infra101",
+            "sys.createdTime": "2026-10-12 10:57:46",
+            "sys.cspResourceId": "tb6iphm7mug3sutkbmrj",
+            "sys.cspResourceName": "tb6iphm7mug3sutkbmrj",
+            "sys.id": "my03-ng-influxdb-back-1",
+            "sys.infraId": "my03-infra101",
             "sys.labelType": "node",
             "sys.manager": "cb-tumblebug",
-            "sys.name": "my-ng-influxdb-back-2",
+            "sys.name": "my03-ng-influxdb-back-1",
             "sys.namespace": "mig01",
-            "sys.nodeGroupId": "my-ng-influxdb-back",
-            "sys.subnetId": "my-mig-subnet-01",
-            "sys.uid": "tbq36hhnk3jjdfpfuu73",
-            "sys.vNetId": "my-mig-vnet-01"
+            "sys.nodeGroupId": "my03-ng-influxdb-back",
+            "sys.subnetId": "my03-mig-subnet-01",
+            "sys.uid": "tb6iphm7mug3sutkbmrj",
+            "sys.vNetId": "my03-mig-vnet-01"
           },
-          "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
+          "description": "",
           "region": {
             "region": "asia-northeast3",
             "zone": "asia-northeast3-a"
           },
-          "publicIP": "8.230.19.201",
+          "publicIP": "8.230.11.202",
           "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "10.0.1.2",
+          "privateIP": "10.0.1.4",
           "privateDNS": "",
-          "rootDiskType": "pd-standard",
+          "rootDiskType": "hyperdisk-balanced",
           "rootDiskSize": 30,
-          "RootDeviceName": "persistent-disk-0",
+          "rootDeviceName": "",
           "connectionName": "gcp-asia-northeast3",
           "connectionConfig": {
             "configName": "gcp-asia-northeast3",
@@ -3184,227 +3555,1990 @@
             "regionRepresentative": true,
             "verified": true
           },
-          "specId": "gcp+asia-northeast3+e2-standard-4",
-          "cspSpecName": "e2-standard-4",
+          "specId": "gcp+asia-northeast3+n4-standard-4",
+          "cspSpecName": "n4-standard-4",
           "spec": {
-            "cspSpecName": "e2-standard-4",
+            "cspSpecName": "n4-standard-4",
             "vCPU": 4,
             "memoryGiB": 15.625,
-            "costPerHour": 0.171931
+            "costPerHour": 0.232954
           },
-          "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
-          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+          "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
           "image": {
             "resourceType": "image",
-            "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+            "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
             "osType": "Ubuntu 22.04",
             "osArchitecture": "x86_64",
-            "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23"
+            "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20"
           },
-          "vNetId": "my-mig-vnet-01",
-          "cspVNetId": "tb6qc3e779ji5e5kqg7k",
-          "subnetId": "my-mig-subnet-01",
-          "cspSubnetId": "tb08efe9m19o55jbt2pp",
+          "vNetId": "my03-mig-vnet-01",
+          "cspVNetId": "tb6ei259h9mvdch4rumt",
+          "subnetId": "my03-mig-subnet-01",
+          "cspSubnetId": "tbvssd98bnj6fq03668o",
           "networkInterface": "nic0",
           "securityGroupIds": [
-            "my-mig-sg-01"
+            "my03-mig-sg-01"
           ],
           "dataDiskIds": null,
-          "sshKeyId": "my-mig-sshkey-01",
-          "cspSshKeyId": "tb0ffm8vtk5l3ahog7h1",
-          "nodeUserName": "cb-user",
-          "sshHostKeyInfo": {
-            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBN0hMfrekkyROVSveoZGsCeo0oPeeDORUexhxHc5peKEzw1/abt2djbg20vUUqqGrbH1d15K1gpSj6AZBQqj/V8=",
-            "keyType": "ecdsa-sha2-nistp256",
-            "fingerprint": "SHA256:EdgVwUKxu+60R9ACsX+IxKJ2XBexCbLL494NU7S4fnk",
-            "firstUsedAt": "2026-07-13T09:19:12Z"
+          "sshKeyId": "my03-mig-sshkey-01",
+          "cspSshKeyId": "tbo0ov0jqt6lbp7d7e4m"
+        },
+        {
+          "resourceType": "node",
+          "id": "my03-ng-influxdb-back-2",
+          "uid": "tb0vbtatce8oe2gk7l55",
+          "cspResourceName": "tb0vbtatce8oe2gk7l55",
+          "cspResourceId": "tb0vbtatce8oe2gk7l55",
+          "name": "my03-ng-influxdb-back-2",
+          "nodeGroupId": "my03-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.2,
+            "longitude": 127
           },
-          "commandStatus": [
-            {
-              "index": 1,
-              "commandRequested": "uname -a",
-              "commandExecuted": "uname -a",
-              "status": "Completed",
-              "startedTime": "2026-07-13T09:19:12Z",
-              "completedTime": "2026-07-13T09:19:15Z",
-              "elapsedTime": 3,
-              "resultSummary": "Command executed successfully",
-              "stdout": "Linux tbq36hhnk3jjdfpfuu73 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-              "stderr": "\n"
-            }
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:57:44",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "gcp-asia-northeast3",
+            "sys.createdTime": "2026-10-12 10:57:44",
+            "sys.cspResourceId": "tb0vbtatce8oe2gk7l55",
+            "sys.cspResourceName": "tb0vbtatce8oe2gk7l55",
+            "sys.id": "my03-ng-influxdb-back-2",
+            "sys.infraId": "my03-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my03-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my03-ng-influxdb-back",
+            "sys.subnetId": "my03-mig-subnet-01",
+            "sys.uid": "tb0vbtatce8oe2gk7l55",
+            "sys.vNetId": "my03-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "asia-northeast3",
+            "zone": "asia-northeast3-a"
+          },
+          "publicIP": "34.64.253.99",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.2",
+          "privateDNS": "",
+          "rootDiskType": "hyperdisk-balanced",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "gcp-asia-northeast3",
+          "connectionConfig": {
+            "configName": "gcp-asia-northeast3",
+            "providerName": "gcp",
+            "driverName": "gcp-driver-v1.0.so",
+            "credentialName": "gcp",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "gcp-asia-northeast3",
+            "regionZoneInfo": {
+              "assignedRegion": "asia-northeast3",
+              "assignedZone": "asia-northeast3-a"
+            },
+            "regionDetail": {
+              "regionId": "asia-northeast3",
+              "regionName": "asia-northeast3",
+              "description": "Seoul South Korea",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.2,
+                "longitude": 127
+              },
+              "zones": [
+                "asia-northeast3-a",
+                "asia-northeast3-b",
+                "asia-northeast3-c"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "gcp+asia-northeast3+n4-standard-4",
+          "cspSpecName": "n4-standard-4",
+          "spec": {
+            "cspSpecName": "n4-standard-4",
+            "vCPU": 4,
+            "memoryGiB": 15.625,
+            "costPerHour": 0.232954
+          },
+          "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20"
+          },
+          "vNetId": "my03-mig-vnet-01",
+          "cspVNetId": "tb6ei259h9mvdch4rumt",
+          "subnetId": "my03-mig-subnet-01",
+          "cspSubnetId": "tbvssd98bnj6fq03668o",
+          "networkInterface": "nic0",
+          "securityGroupIds": [
+            "my03-mig-sg-01"
           ],
-          "addtionalDetails": [
-            {
-              "key": "CanIpForward",
-              "value": "false"
-            },
-            {
-              "key": "CpuPlatform",
-              "value": "Intel Broadwell"
-            },
-            {
-              "key": "CreationTimestamp",
-              "value": "2026-07-13T02:18:17.910-07:00"
-            },
-            {
-              "key": "DeletionProtection",
-              "value": "false"
-            },
-            {
-              "key": "Description",
-              "value": "compute sample instance"
-            },
-            {
-              "key": "Disks",
-              "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:30,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/disks/tbq36hhnk3jjdfpfuu73,type:PERSISTENT}"
-            },
-            {
-              "key": "Fingerprint",
-              "value": "9ZZizxjggT8="
-            },
-            {
-              "key": "Id",
-              "value": "3947188695974089654"
-            },
-            {
-              "key": "Kind",
-              "value": "compute#instance"
-            },
-            {
-              "key": "LabelFingerprint",
-              "value": "hpJPIa5xQEk="
-            },
-            {
-              "key": "Labels",
-              "value": "{keypair:tb0ffm8vtk5l3ahog7h1}"
-            },
-            {
-              "key": "LastStartTimestamp",
-              "value": "2026-07-13T02:18:25.872-07:00"
-            },
-            {
-              "key": "MachineType",
-              "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/machineTypes/e2-standard-4"
-            },
-            {
-              "key": "Metadata",
-              "value": "{fingerprint:EaVRkxGYCT8=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNYQTsR6YY0L8RJs96TMpl5gPye9R63LiKkn3OqgmFStcBfQyThBeoteg37qHvu3ZHriU8a27iZg8jfhi9OqJidbwljur/rQF4nwXLsrSj6wfagobNIo1LUSxLH0dDUbmDz4CvgC9e+d57mWyPfIkalRfoORxyxQpO1jD8TCwXXPkBLxlxRoftvZiGiqmqobThpWkrLjUQVPNohXciJJQNPJEOvo6UV/X2aECsgvr3fXA/vnZij71tE9MBRWH1cZCjyhGchsTvxaUJL8OjiCjM5VKCSmgZ3KhvGQC5QP+wDogAm/9XClt2fgNlnhS2suKpPXT7gnqxqHGRcb6cEEe/hOAmn8rsrWA0aiT1/YiPXSik3hd35mJ/4nFposCH4d7n323GnMimjvy4nfc1oJr3w9wHXp3xzoDYEDykAqml8Q50xmBW/TJeQimBg8uCbZvSGJtpACxuivu2e62LCUnlhJTfPoPJS3OUEm5NAVr02gEoWuWUvKWmzXxWzRG2kGTVI0MLEUtBQzvx+32ZawMY/Lt88GcprahddXXDEYDdVugxAXbOxKkua99YgJ6YPL7nlHtWEbNI+iB4ndWvh4vLuDdHc5LMamD82nG3wRlGbRtsy7XdYycZa5jveKIZAR8bs07vd2uK3E0op5c/TgWEuiW0d6G22whWMopulZcPAQ== cb-user}],kind:compute#metadata}"
-            },
-            {
-              "key": "Name",
-              "value": "tbq36hhnk3jjdfpfuu73"
-            },
-            {
-              "key": "NetworkInterfaces",
-              "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:8.230.19.201,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:BG1-eHXkxAs=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/ykkim-etri/global/networks/tb6qc3e779ji5e5kqg7k,networkIP:10.0.1.2,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/subnetworks/tb08efe9m19o55jbt2pp}"
-            },
-            {
-              "key": "ResourceStatus",
-              "value": "{effectiveInstanceMetadata:{vmDnsSettingMetadataValue:ZonalOnly}}"
-            },
-            {
-              "key": "SatisfiesPzi",
-              "value": "true"
-            },
-            {
-              "key": "SatisfiesPzs",
-              "value": "false"
-            },
-            {
-              "key": "Scheduling",
-              "value": "{automaticRestart:true,onHostMaintenance:MIGRATE,provisioningModel:STANDARD}"
-            },
-            {
-              "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/instances/tbq36hhnk3jjdfpfuu73"
-            },
-            {
-              "key": "ServiceAccounts",
-              "value": "{email:kimy-service-account@ykkim-etri.iam.gserviceaccount.com,scopes:[https://www.googleapis.com/auth/devstorage.full_control,https://www.googleapis.com/auth/compute]}"
-            },
-            {
-              "key": "ShieldedInstanceConfig",
-              "value": "{enableIntegrityMonitoring:true,enableVtpm:true}"
-            },
-            {
-              "key": "ShieldedInstanceIntegrityPolicy",
-              "value": "{updateAutoLearnPolicy:true}"
-            },
-            {
-              "key": "StartRestricted",
-              "value": "false"
-            },
-            {
-              "key": "Status",
-              "value": "RUNNING"
-            },
-            {
-              "key": "Tags",
-              "value": "{fingerprint:7VBbY9V0wIg=,items:[tb74avigphtcuf3958vc]}"
-            },
-            {
-              "key": "Zone",
-              "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a"
-            }
-          ]
+          "dataDiskIds": null,
+          "sshKeyId": "my03-mig-sshkey-01",
+          "cspSshKeyId": "tbo0ov0jqt6lbp7d7e4m"
         }
       ],
-      "newNodeList": null,
-      "postCommand": {
-        "userName": "cb-user",
-        "command": [
-          "uname -a"
-        ]
+      "newNodeList": null
+    },
+    {
+      "resourceType": "infra",
+      "id": "my04-infra101",
+      "uid": "tbr6e4i4thobqvnp77cd",
+      "name": "my04-infra101",
+      "status": "Running:3 (R:3/3)",
+      "statusCount": {
+        "countTotal": 3,
+        "countCreating": 0,
+        "countRunning": 3,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countRegistering": 0,
+        "countReconciling": 0,
+        "countUndefined": 0
       },
-      "postCommandResult": {
-        "results": [
-          {
-            "infraId": "my-infra101",
-            "nodeId": "my-ng-influxdb-back-1",
-            "nodeIp": "34.47.124.15",
-            "command": {
-              "0": "uname -a"
-            },
-            "stdout": {
-              "0": "Linux tbrah6jesqlv0jaeqia5 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-            },
-            "stderr": {
-              "0": ""
-            },
-            "err": null
+      "targetStatus": "None",
+      "targetAction": "None",
+      "installMonAgent": "",
+      "configureCloudAdaptiveNetwork": "",
+      "label": {
+        "cm-migrated-at": "2026-10-12T10:54:58Z",
+        "sys.description": "NLB-aware recommended infrastructure for cloud migration",
+        "sys.id": "my04-infra101",
+        "sys.labelType": "infra",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my04-infra101",
+        "sys.namespace": "mig01",
+        "sys.uid": "tbr6e4i4thobqvnp77cd"
+      },
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "node": [
+        {
+          "resourceType": "node",
+          "id": "my04-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "uid": "tbs1873dgjmra2nm490f",
+          "cspResourceName": "tbs1873dgjmra2nm490f",
+          "cspResourceId": "i-mj78vnkdsw3hgl5t0j1i",
+          "name": "my04-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "nodeGroupId": "my04-ng-ec268ed7-821e-9d73-e79f-961262161624",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
           },
-          {
-            "infraId": "my-infra101",
-            "nodeId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "nodeIp": "34.64.195.188",
-            "command": {
-              "0": "uname -a"
-            },
-            "stdout": {
-              "0": "Linux tb1pu9f78qonoie5ajod 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-            },
-            "stderr": {
-              "0": ""
-            },
-            "err": null
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:55:10",
+          "label": {
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.connectionName": "alibaba-ap-northeast-2",
+            "sys.createdTime": "2026-10-12 10:55:10",
+            "sys.cspResourceId": "i-mj78vnkdsw3hgl5t0j1i",
+            "sys.cspResourceName": "tbs1873dgjmra2nm490f",
+            "sys.id": "my04-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.infraId": "my04-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my04-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my04-ng-ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.subnetId": "my04-mig-subnet-01",
+            "sys.uid": "tbs1873dgjmra2nm490f",
+            "sys.vNetId": "my04-mig-vnet-01"
           },
-          {
-            "infraId": "my-infra101",
-            "nodeId": "my-ng-influxdb-back-2",
-            "nodeIp": "8.230.19.201",
-            "command": {
-              "0": "uname -a"
+          "description": "",
+          "region": {
+            "region": "ap-northeast-2",
+            "zone": "ap-northeast-2a"
+          },
+          "publicIP": "47.80.249.240",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.73",
+          "privateDNS": "",
+          "rootDiskType": "cloud_auto",
+          "rootDiskSize": 40,
+          "rootDeviceName": "",
+          "connectionName": "alibaba-ap-northeast-2",
+          "connectionConfig": {
+            "configName": "alibaba-ap-northeast-2",
+            "providerName": "alibaba",
+            "driverName": "alibaba-driver-v1.0.so",
+            "credentialName": "alibaba",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "alibaba-ap-northeast-2",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
             },
-            "stdout": {
-              "0": "Linux tbq36hhnk3jjdfpfuu73 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            "regionDetail": {
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "South Korea (Seoul)",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.36,
+                "longitude": 126.78
+              },
+              "zones": [
+                "ap-northeast-2a",
+                "ap-northeast-2b"
+              ]
             },
-            "stderr": {
-              "0": ""
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "alibaba+ap-northeast-2+ecs.e-c1m1.large",
+          "cspSpecName": "ecs.e-c1m1.large",
+          "spec": {
+            "cspSpecName": "ecs.e-c1m1.large",
+            "vCPU": 2,
+            "memoryGiB": 2,
+            "costPerHour": 0.0178
+          },
+          "imageId": "ubuntu_22_04_x64_20G_alibase_20260810.vhd",
+          "cspImageName": "ubuntu_22_04_x64_20G_alibase_20260916.vhd",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "ubuntu_22_04_x64_20G_alibase_20260810.vhd",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu  22.04 64 bit"
+          },
+          "vNetId": "my04-mig-vnet-01",
+          "cspVNetId": "vpc-mj7r2m3wqm09p88ugm6if",
+          "subnetId": "my04-mig-subnet-01",
+          "cspSubnetId": "vsw-mj77koiujuio5e71st964",
+          "networkInterface": "eni-mj78vnkdsw3hgl5yycxw",
+          "securityGroupIds": [
+            "my04-mig-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my04-mig-sshkey-01",
+          "cspSshKeyId": "tbghcomebhflfpstm793"
+        },
+        {
+          "resourceType": "node",
+          "id": "my04-ng-influxdb-back-1",
+          "uid": "tbstgdpvnav7m9kapobr",
+          "cspResourceName": "tbstgdpvnav7m9kapobr",
+          "cspResourceId": "i-mj75o7wmbqfttpuy12n7",
+          "name": "my04-ng-influxdb-back-1",
+          "nodeGroupId": "my04-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:55:06",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "alibaba-ap-northeast-2",
+            "sys.createdTime": "2026-10-12 10:55:06",
+            "sys.cspResourceId": "i-mj75o7wmbqfttpuy12n7",
+            "sys.cspResourceName": "tbstgdpvnav7m9kapobr",
+            "sys.id": "my04-ng-influxdb-back-1",
+            "sys.infraId": "my04-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my04-ng-influxdb-back-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my04-ng-influxdb-back",
+            "sys.subnetId": "my04-mig-subnet-01",
+            "sys.uid": "tbstgdpvnav7m9kapobr",
+            "sys.vNetId": "my04-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-northeast-2",
+            "zone": "ap-northeast-2a"
+          },
+          "publicIP": "47.80.251.194",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.72",
+          "privateDNS": "",
+          "rootDiskType": "cloud_auto",
+          "rootDiskSize": 40,
+          "rootDeviceName": "",
+          "connectionName": "alibaba-ap-northeast-2",
+          "connectionConfig": {
+            "configName": "alibaba-ap-northeast-2",
+            "providerName": "alibaba",
+            "driverName": "alibaba-driver-v1.0.so",
+            "credentialName": "alibaba",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "alibaba-ap-northeast-2",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
             },
-            "err": null
-          }
-        ]
-      }
+            "regionDetail": {
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "South Korea (Seoul)",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.36,
+                "longitude": 126.78
+              },
+              "zones": [
+                "ap-northeast-2a",
+                "ap-northeast-2b"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "alibaba+ap-northeast-2+ecs.e-c1m4.xlarge",
+          "cspSpecName": "ecs.e-c1m4.xlarge",
+          "spec": {
+            "cspSpecName": "ecs.e-c1m4.xlarge",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.1582
+          },
+          "imageId": "ubuntu_22_04_x64_20G_alibase_20260810.vhd",
+          "cspImageName": "ubuntu_22_04_x64_20G_alibase_20260916.vhd",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "ubuntu_22_04_x64_20G_alibase_20260810.vhd",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu  22.04 64 bit"
+          },
+          "vNetId": "my04-mig-vnet-01",
+          "cspVNetId": "vpc-mj7r2m3wqm09p88ugm6if",
+          "subnetId": "my04-mig-subnet-01",
+          "cspSubnetId": "vsw-mj77koiujuio5e71st964",
+          "networkInterface": "eni-mj75o7wmbqfttpv47h21",
+          "securityGroupIds": [
+            "my04-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my04-mig-sshkey-01",
+          "cspSshKeyId": "tbghcomebhflfpstm793"
+        },
+        {
+          "resourceType": "node",
+          "id": "my04-ng-influxdb-back-2",
+          "uid": "tbpsj9r6espo7v0rf7ff",
+          "cspResourceName": "tbpsj9r6espo7v0rf7ff",
+          "cspResourceId": "i-mj75o7wmbqfttpuy12n8",
+          "name": "my04-ng-influxdb-back-2",
+          "nodeGroupId": "my04-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:55:11",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "alibaba-ap-northeast-2",
+            "sys.createdTime": "2026-10-12 10:55:11",
+            "sys.cspResourceId": "i-mj75o7wmbqfttpuy12n8",
+            "sys.cspResourceName": "tbpsj9r6espo7v0rf7ff",
+            "sys.id": "my04-ng-influxdb-back-2",
+            "sys.infraId": "my04-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my04-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my04-ng-influxdb-back",
+            "sys.subnetId": "my04-mig-subnet-01",
+            "sys.uid": "tbpsj9r6espo7v0rf7ff",
+            "sys.vNetId": "my04-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-northeast-2",
+            "zone": "ap-northeast-2a"
+          },
+          "publicIP": "47.80.250.25",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.74",
+          "privateDNS": "",
+          "rootDiskType": "cloud_auto",
+          "rootDiskSize": 40,
+          "rootDeviceName": "",
+          "connectionName": "alibaba-ap-northeast-2",
+          "connectionConfig": {
+            "configName": "alibaba-ap-northeast-2",
+            "providerName": "alibaba",
+            "driverName": "alibaba-driver-v1.0.so",
+            "credentialName": "alibaba",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "alibaba-ap-northeast-2",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
+            },
+            "regionDetail": {
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "South Korea (Seoul)",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.36,
+                "longitude": 126.78
+              },
+              "zones": [
+                "ap-northeast-2a",
+                "ap-northeast-2b"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "alibaba+ap-northeast-2+ecs.e-c1m4.xlarge",
+          "cspSpecName": "ecs.e-c1m4.xlarge",
+          "spec": {
+            "cspSpecName": "ecs.e-c1m4.xlarge",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.1582
+          },
+          "imageId": "ubuntu_22_04_x64_20G_alibase_20260810.vhd",
+          "cspImageName": "ubuntu_22_04_x64_20G_alibase_20260916.vhd",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "ubuntu_22_04_x64_20G_alibase_20260810.vhd",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu  22.04 64 bit"
+          },
+          "vNetId": "my04-mig-vnet-01",
+          "cspVNetId": "vpc-mj7r2m3wqm09p88ugm6if",
+          "subnetId": "my04-mig-subnet-01",
+          "cspSubnetId": "vsw-mj77koiujuio5e71st964",
+          "networkInterface": "eni-mj75o7wmbqfttpv47h24",
+          "securityGroupIds": [
+            "my04-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my04-mig-sshkey-01",
+          "cspSshKeyId": "tbghcomebhflfpstm793"
+        }
+      ],
+      "newNodeList": null
+    },
+    {
+      "resourceType": "infra",
+      "id": "my05-infra101",
+      "uid": "tbmsm54ptrs85bg2d7sv",
+      "name": "my05-infra101",
+      "status": "Running:3 (R:3/3)",
+      "statusCount": {
+        "countTotal": 3,
+        "countCreating": 0,
+        "countRunning": 3,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countRegistering": 0,
+        "countReconciling": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "installMonAgent": "",
+      "configureCloudAdaptiveNetwork": "",
+      "label": {
+        "cm-migrated-at": "2026-10-12T10:55:20Z",
+        "sys.description": "NLB-aware recommended infrastructure for cloud migration",
+        "sys.id": "my05-infra101",
+        "sys.labelType": "infra",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my05-infra101",
+        "sys.namespace": "mig01",
+        "sys.uid": "tbmsm54ptrs85bg2d7sv"
+      },
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "node": [
+        {
+          "resourceType": "node",
+          "id": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "uid": "tb7cfn4jaa4fg0i9flen",
+          "cspResourceName": "tb7cfn4jaa4fg0i9flen",
+          "cspResourceId": "ins-hzhqfrzx",
+          "name": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "nodeGroupId": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.566536,
+            "longitude": 126.977966
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:55:34",
+          "label": {
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.connectionName": "tencent-ap-seoul",
+            "sys.createdTime": "2026-10-12 10:55:34",
+            "sys.cspResourceId": "ins-hzhqfrzx",
+            "sys.cspResourceName": "tb7cfn4jaa4fg0i9flen",
+            "sys.id": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.infraId": "my05-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.subnetId": "my05-mig-subnet-01",
+            "sys.uid": "tb7cfn4jaa4fg0i9flen",
+            "sys.vNetId": "my05-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-seoul",
+            "zone": "ap-seoul-1"
+          },
+          "publicIP": "43.133.248.198",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.9",
+          "privateDNS": "",
+          "rootDiskType": "CLOUD_PREMIUM",
+          "rootDiskSize": 50,
+          "rootDeviceName": "",
+          "connectionName": "tencent-ap-seoul",
+          "connectionConfig": {
+            "configName": "tencent-ap-seoul",
+            "providerName": "tencent",
+            "driverName": "tencent-driver-v1.0.so",
+            "credentialName": "tencent",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "tencent-ap-seoul",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-seoul",
+              "assignedZone": "ap-seoul-1"
+            },
+            "regionDetail": {
+              "regionId": "ap-seoul",
+              "regionName": "ap-seoul",
+              "description": "Seoul",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.566536,
+                "longitude": 126.977966
+              },
+              "zones": [
+                "ap-seoul-1",
+                "ap-seoul-2"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "tencent+ap-seoul+bf1.medium2",
+          "cspSpecName": "BF1.MEDIUM2",
+          "spec": {
+            "cspSpecName": "BF1.MEDIUM2",
+            "vCPU": 2,
+            "memoryGiB": 2,
+            "costPerHour": 0.02
+          },
+          "imageId": "img-7rotv4ux",
+          "cspImageName": "img-7rotv4ux",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "img-7rotv4ux",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI"
+          },
+          "vNetId": "my05-mig-vnet-01",
+          "cspVNetId": "vpc-2hz6b4vc",
+          "subnetId": "my05-mig-subnet-01",
+          "cspSubnetId": "subnet-mn81rac7",
+          "networkInterface": "eni-1579pusm",
+          "securityGroupIds": [
+            "my05-mig-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my05-mig-sshkey-01",
+          "cspSshKeyId": "skey-0u5rnpeb"
+        },
+        {
+          "resourceType": "node",
+          "id": "my05-ng-influxdb-back-1",
+          "uid": "tb2ah0srjvbcm440j9gg",
+          "cspResourceName": "tb2ah0srjvbcm440j9gg",
+          "cspResourceId": "ins-c6vp1w4f",
+          "name": "my05-ng-influxdb-back-1",
+          "nodeGroupId": "my05-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.566536,
+            "longitude": 126.977966
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:55:49",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "tencent-ap-seoul",
+            "sys.createdTime": "2026-10-12 10:55:49",
+            "sys.cspResourceId": "ins-c6vp1w4f",
+            "sys.cspResourceName": "tb2ah0srjvbcm440j9gg",
+            "sys.id": "my05-ng-influxdb-back-1",
+            "sys.infraId": "my05-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my05-ng-influxdb-back-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my05-ng-influxdb-back",
+            "sys.subnetId": "my05-mig-subnet-01",
+            "sys.uid": "tb2ah0srjvbcm440j9gg",
+            "sys.vNetId": "my05-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-seoul",
+            "zone": "ap-seoul-1"
+          },
+          "publicIP": "43.155.200.27",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.8",
+          "privateDNS": "",
+          "rootDiskType": "CLOUD_PREMIUM",
+          "rootDiskSize": 50,
+          "rootDeviceName": "",
+          "connectionName": "tencent-ap-seoul",
+          "connectionConfig": {
+            "configName": "tencent-ap-seoul",
+            "providerName": "tencent",
+            "driverName": "tencent-driver-v1.0.so",
+            "credentialName": "tencent",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "tencent-ap-seoul",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-seoul",
+              "assignedZone": "ap-seoul-1"
+            },
+            "regionDetail": {
+              "regionId": "ap-seoul",
+              "regionName": "ap-seoul",
+              "description": "Seoul",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.566536,
+                "longitude": 126.977966
+              },
+              "zones": [
+                "ap-seoul-1",
+                "ap-seoul-2"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "tencent+ap-seoul+bf1.large16",
+          "cspSpecName": "BF1.LARGE16",
+          "spec": {
+            "cspSpecName": "BF1.LARGE16",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.15
+          },
+          "imageId": "img-7rotv4ux",
+          "cspImageName": "img-7rotv4ux",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "img-7rotv4ux",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI"
+          },
+          "vNetId": "my05-mig-vnet-01",
+          "cspVNetId": "vpc-2hz6b4vc",
+          "subnetId": "my05-mig-subnet-01",
+          "cspSubnetId": "subnet-mn81rac7",
+          "networkInterface": "eni-bbgu30vi",
+          "securityGroupIds": [
+            "my05-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my05-mig-sshkey-01",
+          "cspSshKeyId": "skey-0u5rnpeb"
+        },
+        {
+          "resourceType": "node",
+          "id": "my05-ng-influxdb-back-2",
+          "uid": "tb5kvr71nkkbsfmd33v8",
+          "cspResourceName": "tb5kvr71nkkbsfmd33v8",
+          "cspResourceId": "ins-90viujqt",
+          "name": "my05-ng-influxdb-back-2",
+          "nodeGroupId": "my05-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.566536,
+            "longitude": 126.977966
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:55:35",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "tencent-ap-seoul",
+            "sys.createdTime": "2026-10-12 10:55:35",
+            "sys.cspResourceId": "ins-90viujqt",
+            "sys.cspResourceName": "tb5kvr71nkkbsfmd33v8",
+            "sys.id": "my05-ng-influxdb-back-2",
+            "sys.infraId": "my05-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my05-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my05-ng-influxdb-back",
+            "sys.subnetId": "my05-mig-subnet-01",
+            "sys.uid": "tb5kvr71nkkbsfmd33v8",
+            "sys.vNetId": "my05-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-seoul",
+            "zone": "ap-seoul-1"
+          },
+          "publicIP": "43.155.157.6",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.4",
+          "privateDNS": "",
+          "rootDiskType": "CLOUD_PREMIUM",
+          "rootDiskSize": 50,
+          "rootDeviceName": "",
+          "connectionName": "tencent-ap-seoul",
+          "connectionConfig": {
+            "configName": "tencent-ap-seoul",
+            "providerName": "tencent",
+            "driverName": "tencent-driver-v1.0.so",
+            "credentialName": "tencent",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "tencent-ap-seoul",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-seoul",
+              "assignedZone": "ap-seoul-1"
+            },
+            "regionDetail": {
+              "regionId": "ap-seoul",
+              "regionName": "ap-seoul",
+              "description": "Seoul",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.566536,
+                "longitude": 126.977966
+              },
+              "zones": [
+                "ap-seoul-1",
+                "ap-seoul-2"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "tencent+ap-seoul+bf1.large16",
+          "cspSpecName": "BF1.LARGE16",
+          "spec": {
+            "cspSpecName": "BF1.LARGE16",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.15
+          },
+          "imageId": "img-7rotv4ux",
+          "cspImageName": "img-7rotv4ux",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "img-7rotv4ux",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI"
+          },
+          "vNetId": "my05-mig-vnet-01",
+          "cspVNetId": "vpc-2hz6b4vc",
+          "subnetId": "my05-mig-subnet-01",
+          "cspSubnetId": "subnet-mn81rac7",
+          "networkInterface": "eni-27rmbrhk",
+          "securityGroupIds": [
+            "my05-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my05-mig-sshkey-01",
+          "cspSshKeyId": "skey-0u5rnpeb"
+        }
+      ],
+      "newNodeList": null
+    },
+    {
+      "resourceType": "infra",
+      "id": "my06-infra101",
+      "uid": "tbdbo98h4av8i7ot3ms7",
+      "name": "my06-infra101",
+      "status": "Running:3 (R:3/3)",
+      "statusCount": {
+        "countTotal": 3,
+        "countCreating": 0,
+        "countRunning": 3,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countRegistering": 0,
+        "countReconciling": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "installMonAgent": "",
+      "configureCloudAdaptiveNetwork": "",
+      "label": {
+        "cm-migrated-at": "2026-10-12T10:55:51Z",
+        "sys.description": "NLB-aware recommended infrastructure for cloud migration",
+        "sys.id": "my06-infra101",
+        "sys.labelType": "infra",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my06-infra101",
+        "sys.namespace": "mig01",
+        "sys.uid": "tbdbo98h4av8i7ot3ms7"
+      },
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "node": [
+        {
+          "resourceType": "node",
+          "id": "my06-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "uid": "tbicmmgcumo0subq1boh",
+          "cspResourceName": "tbicmmgcumo0subq1boh",
+          "cspResourceId": "02h7_b73ff4f6-7d9a-4c6d-93ab-a0d4c6ef31c5",
+          "name": "my06-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "nodeGroupId": "my06-ng-ec268ed7-821e-9d73-e79f-961262161624",
+          "location": {
+            "display": "Australia (Sydney)",
+            "latitude": -33.86882,
+            "longitude": 151.209296
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:56:11",
+          "label": {
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.connectionName": "ibm-au-syd",
+            "sys.createdTime": "2026-10-12 10:56:11",
+            "sys.cspResourceId": "02h7_b73ff4f6-7d9a-4c6d-93ab-a0d4c6ef31c5",
+            "sys.cspResourceName": "tbicmmgcumo0subq1boh",
+            "sys.id": "my06-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.infraId": "my06-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my06-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my06-ng-ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.subnetId": "my06-mig-subnet-01",
+            "sys.uid": "tbicmmgcumo0subq1boh",
+            "sys.vNetId": "my06-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "au-syd",
+            "zone": "au-syd-1"
+          },
+          "publicIP": "159.23.93.202",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.5",
+          "privateDNS": "",
+          "rootDiskType": "general-purpose",
+          "rootDiskSize": 100,
+          "rootDeviceName": "",
+          "connectionName": "ibm-au-syd",
+          "connectionConfig": {
+            "configName": "ibm-au-syd",
+            "providerName": "ibm",
+            "driverName": "ibm-driver-v1.0.so",
+            "credentialName": "ibm",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "ibm-au-syd",
+            "regionZoneInfo": {
+              "assignedRegion": "au-syd",
+              "assignedZone": "au-syd-1"
+            },
+            "regionDetail": {
+              "regionId": "au-syd",
+              "regionName": "au-syd",
+              "description": "Sydney (Australia)",
+              "location": {
+                "display": "Australia (Sydney)",
+                "latitude": -33.86882,
+                "longitude": 151.209296
+              },
+              "zones": [
+                "au-syd-1",
+                "au-syd-2",
+                "au-syd-3"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "ibm+au-syd+cx2-2x4",
+          "cspSpecName": "cx2-2x4",
+          "spec": {
+            "cspSpecName": "cx2-2x4",
+            "vCPU": 2,
+            "memoryGiB": 4,
+            "costPerHour": 0.106
+          },
+          "imageId": "r026-b879575b-8209-4e6a-a46e-0e01adf56aaf",
+          "cspImageName": "r026-b879575b-8209-4e6a-a46e-0e01adf56aaf",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "r026-b879575b-8209-4e6a-a46e-0e01adf56aaf",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
+          },
+          "vNetId": "my06-mig-vnet-01",
+          "cspVNetId": "r026-d88398f2-3008-4600-a9b7-09de248c9d82",
+          "subnetId": "my06-mig-subnet-01",
+          "cspSubnetId": "02h7-0cdc9592-fc29-40bb-a412-28b334f8caae",
+          "networkInterface": "neatness-plunder-sacked-babbling",
+          "securityGroupIds": [
+            "my06-mig-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my06-mig-sshkey-01",
+          "cspSshKeyId": "r026-2afea093-cd50-4d8f-bb32-0bd32af60c50"
+        },
+        {
+          "resourceType": "node",
+          "id": "my06-ng-influxdb-back-1",
+          "uid": "tbnsjqfoqfr7q502ba95",
+          "cspResourceName": "tbnsjqfoqfr7q502ba95",
+          "cspResourceId": "02h7_70df7833-98d3-456c-8aa7-43a3f51f73d6",
+          "name": "my06-ng-influxdb-back-1",
+          "nodeGroupId": "my06-ng-influxdb-back",
+          "location": {
+            "display": "Australia (Sydney)",
+            "latitude": -33.86882,
+            "longitude": 151.209296
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:56:11",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "ibm-au-syd",
+            "sys.createdTime": "2026-10-12 10:56:11",
+            "sys.cspResourceId": "02h7_70df7833-98d3-456c-8aa7-43a3f51f73d6",
+            "sys.cspResourceName": "tbnsjqfoqfr7q502ba95",
+            "sys.id": "my06-ng-influxdb-back-1",
+            "sys.infraId": "my06-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my06-ng-influxdb-back-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my06-ng-influxdb-back",
+            "sys.subnetId": "my06-mig-subnet-01",
+            "sys.uid": "tbnsjqfoqfr7q502ba95",
+            "sys.vNetId": "my06-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "au-syd",
+            "zone": "au-syd-1"
+          },
+          "publicIP": "159.23.99.21",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.6",
+          "privateDNS": "",
+          "rootDiskType": "general-purpose",
+          "rootDiskSize": 100,
+          "rootDeviceName": "",
+          "connectionName": "ibm-au-syd",
+          "connectionConfig": {
+            "configName": "ibm-au-syd",
+            "providerName": "ibm",
+            "driverName": "ibm-driver-v1.0.so",
+            "credentialName": "ibm",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "ibm-au-syd",
+            "regionZoneInfo": {
+              "assignedRegion": "au-syd",
+              "assignedZone": "au-syd-1"
+            },
+            "regionDetail": {
+              "regionId": "au-syd",
+              "regionName": "au-syd",
+              "description": "Sydney (Australia)",
+              "location": {
+                "display": "Australia (Sydney)",
+                "latitude": -33.86882,
+                "longitude": 151.209296
+              },
+              "zones": [
+                "au-syd-1",
+                "au-syd-2",
+                "au-syd-3"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "ibm+au-syd+bx2-4x16",
+          "cspSpecName": "bx2-4x16",
+          "spec": {
+            "cspSpecName": "bx2-4x16",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.241
+          },
+          "imageId": "r026-b879575b-8209-4e6a-a46e-0e01adf56aaf",
+          "cspImageName": "r026-b879575b-8209-4e6a-a46e-0e01adf56aaf",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "r026-b879575b-8209-4e6a-a46e-0e01adf56aaf",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
+          },
+          "vNetId": "my06-mig-vnet-01",
+          "cspVNetId": "r026-d88398f2-3008-4600-a9b7-09de248c9d82",
+          "subnetId": "my06-mig-subnet-01",
+          "cspSubnetId": "02h7-0cdc9592-fc29-40bb-a412-28b334f8caae",
+          "networkInterface": "sanitizer-ethically-majestic-unrevised",
+          "securityGroupIds": [
+            "my06-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my06-mig-sshkey-01",
+          "cspSshKeyId": "r026-2afea093-cd50-4d8f-bb32-0bd32af60c50"
+        },
+        {
+          "resourceType": "node",
+          "id": "my06-ng-influxdb-back-2",
+          "uid": "tbosamc62njbprdica60",
+          "cspResourceName": "tbosamc62njbprdica60",
+          "cspResourceId": "02h7_d3acbb7a-5ae4-4bb3-9d9e-62c1a321294f",
+          "name": "my06-ng-influxdb-back-2",
+          "nodeGroupId": "my06-ng-influxdb-back",
+          "location": {
+            "display": "Australia (Sydney)",
+            "latitude": -33.86882,
+            "longitude": 151.209296
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:56:11",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "ibm-au-syd",
+            "sys.createdTime": "2026-10-12 10:56:11",
+            "sys.cspResourceId": "02h7_d3acbb7a-5ae4-4bb3-9d9e-62c1a321294f",
+            "sys.cspResourceName": "tbosamc62njbprdica60",
+            "sys.id": "my06-ng-influxdb-back-2",
+            "sys.infraId": "my06-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my06-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my06-ng-influxdb-back",
+            "sys.subnetId": "my06-mig-subnet-01",
+            "sys.uid": "tbosamc62njbprdica60",
+            "sys.vNetId": "my06-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "au-syd",
+            "zone": "au-syd-1"
+          },
+          "publicIP": "159.23.103.103",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.4",
+          "privateDNS": "",
+          "rootDiskType": "general-purpose",
+          "rootDiskSize": 100,
+          "rootDeviceName": "",
+          "connectionName": "ibm-au-syd",
+          "connectionConfig": {
+            "configName": "ibm-au-syd",
+            "providerName": "ibm",
+            "driverName": "ibm-driver-v1.0.so",
+            "credentialName": "ibm",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "ibm-au-syd",
+            "regionZoneInfo": {
+              "assignedRegion": "au-syd",
+              "assignedZone": "au-syd-1"
+            },
+            "regionDetail": {
+              "regionId": "au-syd",
+              "regionName": "au-syd",
+              "description": "Sydney (Australia)",
+              "location": {
+                "display": "Australia (Sydney)",
+                "latitude": -33.86882,
+                "longitude": 151.209296
+              },
+              "zones": [
+                "au-syd-1",
+                "au-syd-2",
+                "au-syd-3"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "ibm+au-syd+bx2-4x16",
+          "cspSpecName": "bx2-4x16",
+          "spec": {
+            "cspSpecName": "bx2-4x16",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.241
+          },
+          "imageId": "r026-b879575b-8209-4e6a-a46e-0e01adf56aaf",
+          "cspImageName": "r026-b879575b-8209-4e6a-a46e-0e01adf56aaf",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "r026-b879575b-8209-4e6a-a46e-0e01adf56aaf",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
+          },
+          "vNetId": "my06-mig-vnet-01",
+          "cspVNetId": "r026-d88398f2-3008-4600-a9b7-09de248c9d82",
+          "subnetId": "my06-mig-subnet-01",
+          "cspSubnetId": "02h7-0cdc9592-fc29-40bb-a412-28b334f8caae",
+          "networkInterface": "sterilize-prankster-ensure-likewise",
+          "securityGroupIds": [
+            "my06-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my06-mig-sshkey-01",
+          "cspSshKeyId": "r026-2afea093-cd50-4d8f-bb32-0bd32af60c50"
+        }
+      ],
+      "newNodeList": null
+    },
+    {
+      "resourceType": "infra",
+      "id": "my08-infra101",
+      "uid": "tbu9j7gf6ltd4dvfnn2q",
+      "name": "my08-infra101",
+      "status": "Running:3 (R:3/3)",
+      "statusCount": {
+        "countTotal": 3,
+        "countCreating": 0,
+        "countRunning": 3,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countRegistering": 0,
+        "countReconciling": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "installMonAgent": "",
+      "configureCloudAdaptiveNetwork": "",
+      "label": {
+        "cm-migrated-at": "2026-10-12T10:56:28Z",
+        "sys.description": "NLB-aware recommended infrastructure for cloud migration",
+        "sys.id": "my08-infra101",
+        "sys.labelType": "infra",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my08-infra101",
+        "sys.namespace": "mig01",
+        "sys.uid": "tbu9j7gf6ltd4dvfnn2q"
+      },
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "node": [
+        {
+          "resourceType": "node",
+          "id": "my08-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "uid": "tb0i614dcarcujrioaab",
+          "cspResourceName": "tb0i614dcarcujrioaab",
+          "cspResourceId": "146264585",
+          "name": "my08-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "nodeGroupId": "my08-ng-ec268ed7-821e-9d73-e79f-961262161624",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:58:08",
+          "label": {
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.connectionName": "ncp-kr",
+            "sys.createdTime": "2026-10-12 10:58:08",
+            "sys.cspResourceId": "146264585",
+            "sys.cspResourceName": "tb0i614dcarcujrioaab",
+            "sys.id": "my08-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.infraId": "my08-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my08-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my08-ng-ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.subnetId": "my08-mig-subnet-01",
+            "sys.uid": "tb0i614dcarcujrioaab",
+            "sys.vNetId": "my08-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "KR",
+            "zone": "KR-1"
+          },
+          "publicIP": "211.233.199.16",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.6",
+          "privateDNS": "",
+          "rootDiskType": "HDD",
+          "rootDiskSize": 50,
+          "rootDeviceName": "",
+          "connectionName": "ncp-kr",
+          "connectionConfig": {
+            "configName": "ncp-kr",
+            "providerName": "ncp",
+            "driverName": "ncp-driver-v1.0.so",
+            "credentialName": "ncp",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "ncp-kr",
+            "regionZoneInfo": {
+              "assignedRegion": "KR",
+              "assignedZone": "KR-1"
+            },
+            "regionDetail": {
+              "regionId": "KR",
+              "regionName": "kr",
+              "description": "Korea 1",
+              "location": {
+                "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+                "latitude": 37.4754,
+                "longitude": 126.8831
+              },
+              "zones": [
+                "KR-1",
+                "KR-2"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "ncp+kr+ci2-g3",
+          "cspSpecName": "ci2-g3",
+          "spec": {
+            "cspSpecName": "ci2-g3",
+            "vCPU": 2,
+            "memoryGiB": 4,
+            "costPerHour": 0.073
+          },
+          "imageId": "23214590",
+          "cspImageName": "23214590",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "23214590",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
+          },
+          "vNetId": "my08-mig-vnet-01",
+          "cspVNetId": "150301",
+          "subnetId": "my08-mig-subnet-01",
+          "cspSubnetId": "329426",
+          "networkInterface": "nic-6072482",
+          "securityGroupIds": [
+            "my08-mig-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my08-mig-sshkey-01",
+          "cspSshKeyId": "tbbrmposh4nl13mhejhr"
+        },
+        {
+          "resourceType": "node",
+          "id": "my08-ng-influxdb-back-1",
+          "uid": "tbu2m9qgqvljp90p6ik3",
+          "cspResourceName": "tbu2m9qgqvljp90p6ik3",
+          "cspResourceId": "146264588",
+          "name": "my08-ng-influxdb-back-1",
+          "nodeGroupId": "my08-ng-influxdb-back",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:58:11",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "ncp-kr",
+            "sys.createdTime": "2026-10-12 10:58:11",
+            "sys.cspResourceId": "146264588",
+            "sys.cspResourceName": "tbu2m9qgqvljp90p6ik3",
+            "sys.id": "my08-ng-influxdb-back-1",
+            "sys.infraId": "my08-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my08-ng-influxdb-back-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my08-ng-influxdb-back",
+            "sys.subnetId": "my08-mig-subnet-01",
+            "sys.uid": "tbu2m9qgqvljp90p6ik3",
+            "sys.vNetId": "my08-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "KR",
+            "zone": "KR-1"
+          },
+          "publicIP": "211.233.204.234",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.8",
+          "privateDNS": "",
+          "rootDiskType": "HDD",
+          "rootDiskSize": 50,
+          "rootDeviceName": "",
+          "connectionName": "ncp-kr",
+          "connectionConfig": {
+            "configName": "ncp-kr",
+            "providerName": "ncp",
+            "driverName": "ncp-driver-v1.0.so",
+            "credentialName": "ncp",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "ncp-kr",
+            "regionZoneInfo": {
+              "assignedRegion": "KR",
+              "assignedZone": "KR-1"
+            },
+            "regionDetail": {
+              "regionId": "KR",
+              "regionName": "kr",
+              "description": "Korea 1",
+              "location": {
+                "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+                "latitude": 37.4754,
+                "longitude": 126.8831
+              },
+              "zones": [
+                "KR-1",
+                "KR-2"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "ncp+kr+s4-g3",
+          "cspSpecName": "s4-g3",
+          "spec": {
+            "cspSpecName": "s4-g3",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.1747
+          },
+          "imageId": "23214590",
+          "cspImageName": "23214590",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "23214590",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
+          },
+          "vNetId": "my08-mig-vnet-01",
+          "cspVNetId": "150301",
+          "subnetId": "my08-mig-subnet-01",
+          "cspSubnetId": "329426",
+          "networkInterface": "nic-6072484",
+          "securityGroupIds": [
+            "my08-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my08-mig-sshkey-01",
+          "cspSshKeyId": "tbbrmposh4nl13mhejhr"
+        },
+        {
+          "resourceType": "node",
+          "id": "my08-ng-influxdb-back-2",
+          "uid": "tbt6qgooqti510ghbklm",
+          "cspResourceName": "tbt6qgooqti510ghbklm",
+          "cspResourceId": "146264582",
+          "name": "my08-ng-influxdb-back-2",
+          "nodeGroupId": "my08-ng-influxdb-back",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:58:08",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "ncp-kr",
+            "sys.createdTime": "2026-10-12 10:58:08",
+            "sys.cspResourceId": "146264582",
+            "sys.cspResourceName": "tbt6qgooqti510ghbklm",
+            "sys.id": "my08-ng-influxdb-back-2",
+            "sys.infraId": "my08-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my08-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my08-ng-influxdb-back",
+            "sys.subnetId": "my08-mig-subnet-01",
+            "sys.uid": "tbt6qgooqti510ghbklm",
+            "sys.vNetId": "my08-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "KR",
+            "zone": "KR-1"
+          },
+          "publicIP": "211.233.199.17",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.7",
+          "privateDNS": "",
+          "rootDiskType": "HDD",
+          "rootDiskSize": 50,
+          "rootDeviceName": "",
+          "connectionName": "ncp-kr",
+          "connectionConfig": {
+            "configName": "ncp-kr",
+            "providerName": "ncp",
+            "driverName": "ncp-driver-v1.0.so",
+            "credentialName": "ncp",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "ncp-kr",
+            "regionZoneInfo": {
+              "assignedRegion": "KR",
+              "assignedZone": "KR-1"
+            },
+            "regionDetail": {
+              "regionId": "KR",
+              "regionName": "kr",
+              "description": "Korea 1",
+              "location": {
+                "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+                "latitude": 37.4754,
+                "longitude": 126.8831
+              },
+              "zones": [
+                "KR-1",
+                "KR-2"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "ncp+kr+s4-g3",
+          "cspSpecName": "s4-g3",
+          "spec": {
+            "cspSpecName": "s4-g3",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.1747
+          },
+          "imageId": "23214590",
+          "cspImageName": "23214590",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "23214590",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
+          },
+          "vNetId": "my08-mig-vnet-01",
+          "cspVNetId": "150301",
+          "subnetId": "my08-mig-subnet-01",
+          "cspSubnetId": "329426",
+          "networkInterface": "nic-6072483",
+          "securityGroupIds": [
+            "my08-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my08-mig-sshkey-01",
+          "cspSshKeyId": "tbbrmposh4nl13mhejhr"
+        }
+      ],
+      "newNodeList": null
+    },
+    {
+      "resourceType": "infra",
+      "id": "my09-infra101",
+      "uid": "tbamt74trtru61e9kjd9",
+      "name": "my09-infra101",
+      "status": "Running:3 (R:3/3)",
+      "statusCount": {
+        "countTotal": 3,
+        "countCreating": 0,
+        "countRunning": 3,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countRegistering": 0,
+        "countReconciling": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "installMonAgent": "",
+      "configureCloudAdaptiveNetwork": "",
+      "label": {
+        "cm-migrated-at": "2026-10-12T10:55:45Z",
+        "sys.description": "NLB-aware recommended infrastructure for cloud migration",
+        "sys.id": "my09-infra101",
+        "sys.labelType": "infra",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my09-infra101",
+        "sys.namespace": "mig01",
+        "sys.uid": "tbamt74trtru61e9kjd9"
+      },
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "node": [
+        {
+          "resourceType": "node",
+          "id": "my09-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "uid": "tbumqdg2mjttqidbelrn",
+          "cspResourceName": "tbumqdg2mjttqidbelrn",
+          "cspResourceId": "c54494b3-165c-4fe0-a924-32b4a0fec1fc",
+          "name": "my09-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "nodeGroupId": "my09-ng-ec268ed7-821e-9d73-e79f-961262161624",
+          "location": {
+            "display": "Pangyo (South Korea)",
+            "latitude": 37.390889,
+            "longitude": 127.096792
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:57:38",
+          "label": {
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.connectionName": "nhn-kr1",
+            "sys.createdTime": "2026-10-12 10:57:38",
+            "sys.cspResourceId": "c54494b3-165c-4fe0-a924-32b4a0fec1fc",
+            "sys.cspResourceName": "tbumqdg2mjttqidbelrn",
+            "sys.id": "my09-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.infraId": "my09-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my09-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my09-ng-ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.subnetId": "my09-mig-subnet-01",
+            "sys.uid": "tbumqdg2mjttqidbelrn",
+            "sys.vNetId": "my09-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "KR1",
+            "zone": "kr-pub-a"
+          },
+          "publicIP": "133.186.223.136",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.11",
+          "privateDNS": "",
+          "rootDiskType": "General_HDD",
+          "rootDiskSize": 20,
+          "rootDeviceName": "",
+          "connectionName": "nhn-kr1",
+          "connectionConfig": {
+            "configName": "nhn-kr1",
+            "providerName": "nhn",
+            "driverName": "nhn-driver-v1.0.so",
+            "credentialName": "nhn",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "nhn-kr1",
+            "regionZoneInfo": {
+              "assignedRegion": "KR1",
+              "assignedZone": "kr-pub-a"
+            },
+            "regionDetail": {
+              "regionId": "KR1",
+              "regionName": "kr1",
+              "description": "Pangyo (South Korea)",
+              "location": {
+                "display": "Pangyo (South Korea)",
+                "latitude": 37.390889,
+                "longitude": 127.096792
+              },
+              "zones": [
+                "kr-pub-a",
+                "kr-pub-b"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "nhn+kr1+c2.c2m2",
+          "cspSpecName": "c2.c2m2",
+          "spec": {
+            "cspSpecName": "c2.c2m2",
+            "vCPU": 2,
+            "memoryGiB": 2,
+            "costPerHour": 0.042179998
+          },
+          "imageId": "0f07c795-2a46-44fc-a61b-fa0d96763ce2",
+          "cspImageName": "0f07c795-2a46-44fc-a61b-fa0d96763ce2",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "0f07c795-2a46-44fc-a61b-fa0d96763ce2",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Server 22.04.5 LTS (2026.03.10)"
+          },
+          "vNetId": "my09-mig-vnet-01",
+          "cspVNetId": "63f62c96-b2f4-4602-8385-62d049b22434",
+          "subnetId": "my09-mig-subnet-01",
+          "cspSubnetId": "b31a5d3f-d214-4469-92ca-c8588598023d",
+          "networkInterface": "ac3c341f-2011-4db1-9259-75cc5083ab5b",
+          "securityGroupIds": [
+            "my09-mig-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my09-mig-sshkey-01",
+          "cspSshKeyId": "tbhjbjpobn3enr3num8l"
+        },
+        {
+          "resourceType": "node",
+          "id": "my09-ng-influxdb-back-1",
+          "uid": "tbjimg37g8bs1tp9a3ct",
+          "cspResourceName": "tbjimg37g8bs1tp9a3ct",
+          "cspResourceId": "246fe00a-bfd2-402b-b140-22545a2f1c6c",
+          "name": "my09-ng-influxdb-back-1",
+          "nodeGroupId": "my09-ng-influxdb-back",
+          "location": {
+            "display": "Pangyo (South Korea)",
+            "latitude": 37.390889,
+            "longitude": 127.096792
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:57:21",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "nhn-kr1",
+            "sys.createdTime": "2026-10-12 10:57:21",
+            "sys.cspResourceId": "246fe00a-bfd2-402b-b140-22545a2f1c6c",
+            "sys.cspResourceName": "tbjimg37g8bs1tp9a3ct",
+            "sys.id": "my09-ng-influxdb-back-1",
+            "sys.infraId": "my09-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my09-ng-influxdb-back-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my09-ng-influxdb-back",
+            "sys.subnetId": "my09-mig-subnet-01",
+            "sys.uid": "tbjimg37g8bs1tp9a3ct",
+            "sys.vNetId": "my09-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "KR1",
+            "zone": "kr-pub-a"
+          },
+          "publicIP": "133.186.209.144",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.87",
+          "privateDNS": "",
+          "rootDiskType": "General_HDD",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "nhn-kr1",
+          "connectionConfig": {
+            "configName": "nhn-kr1",
+            "providerName": "nhn",
+            "driverName": "nhn-driver-v1.0.so",
+            "credentialName": "nhn",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "nhn-kr1",
+            "regionZoneInfo": {
+              "assignedRegion": "KR1",
+              "assignedZone": "kr-pub-a"
+            },
+            "regionDetail": {
+              "regionId": "KR1",
+              "regionName": "kr1",
+              "description": "Pangyo (South Korea)",
+              "location": {
+                "display": "Pangyo (South Korea)",
+                "latitude": 37.390889,
+                "longitude": 127.096792
+              },
+              "zones": [
+                "kr-pub-a",
+                "kr-pub-b"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "nhn+kr1+r2.c4m16",
+          "cspSpecName": "r2.c4m16",
+          "spec": {
+            "cspSpecName": "r2.c4m16",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.19535999
+          },
+          "imageId": "0f07c795-2a46-44fc-a61b-fa0d96763ce2",
+          "cspImageName": "0f07c795-2a46-44fc-a61b-fa0d96763ce2",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "0f07c795-2a46-44fc-a61b-fa0d96763ce2",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Server 22.04.5 LTS (2026.03.10)"
+          },
+          "vNetId": "my09-mig-vnet-01",
+          "cspVNetId": "63f62c96-b2f4-4602-8385-62d049b22434",
+          "subnetId": "my09-mig-subnet-01",
+          "cspSubnetId": "b31a5d3f-d214-4469-92ca-c8588598023d",
+          "networkInterface": "c7d34596-85ef-452e-9a4a-362053792dec",
+          "securityGroupIds": [
+            "my09-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my09-mig-sshkey-01",
+          "cspSshKeyId": "tbhjbjpobn3enr3num8l"
+        },
+        {
+          "resourceType": "node",
+          "id": "my09-ng-influxdb-back-2",
+          "uid": "tbtcvsqdbqus3diq9190",
+          "cspResourceName": "tbtcvsqdbqus3diq9190",
+          "cspResourceId": "b0993afa-0c7a-44c7-809b-236ca241113f",
+          "name": "my09-ng-influxdb-back-2",
+          "nodeGroupId": "my09-ng-influxdb-back",
+          "location": {
+            "display": "Pangyo (South Korea)",
+            "latitude": 37.390889,
+            "longitude": 127.096792
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-10-12 10:57:26",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "nhn-kr1",
+            "sys.createdTime": "2026-10-12 10:57:26",
+            "sys.cspResourceId": "b0993afa-0c7a-44c7-809b-236ca241113f",
+            "sys.cspResourceName": "tbtcvsqdbqus3diq9190",
+            "sys.id": "my09-ng-influxdb-back-2",
+            "sys.infraId": "my09-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my09-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my09-ng-influxdb-back",
+            "sys.subnetId": "my09-mig-subnet-01",
+            "sys.uid": "tbtcvsqdbqus3diq9190",
+            "sys.vNetId": "my09-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "KR1",
+            "zone": "kr-pub-a"
+          },
+          "publicIP": "133.186.209.114",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.100",
+          "privateDNS": "",
+          "rootDiskType": "General_HDD",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "nhn-kr1",
+          "connectionConfig": {
+            "configName": "nhn-kr1",
+            "providerName": "nhn",
+            "driverName": "nhn-driver-v1.0.so",
+            "credentialName": "nhn",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "nhn-kr1",
+            "regionZoneInfo": {
+              "assignedRegion": "KR1",
+              "assignedZone": "kr-pub-a"
+            },
+            "regionDetail": {
+              "regionId": "KR1",
+              "regionName": "kr1",
+              "description": "Pangyo (South Korea)",
+              "location": {
+                "display": "Pangyo (South Korea)",
+                "latitude": 37.390889,
+                "longitude": 127.096792
+              },
+              "zones": [
+                "kr-pub-a",
+                "kr-pub-b"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "nhn+kr1+r2.c4m16",
+          "cspSpecName": "r2.c4m16",
+          "spec": {
+            "cspSpecName": "r2.c4m16",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.19535999
+          },
+          "imageId": "0f07c795-2a46-44fc-a61b-fa0d96763ce2",
+          "cspImageName": "0f07c795-2a46-44fc-a61b-fa0d96763ce2",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "0f07c795-2a46-44fc-a61b-fa0d96763ce2",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Server 22.04.5 LTS (2026.03.10)"
+          },
+          "vNetId": "my09-mig-vnet-01",
+          "cspVNetId": "63f62c96-b2f4-4602-8385-62d049b22434",
+          "subnetId": "my09-mig-subnet-01",
+          "cspSubnetId": "b31a5d3f-d214-4469-92ca-c8588598023d",
+          "networkInterface": "9509e6a0-72e1-4a56-8104-f9a230f89e4f",
+          "securityGroupIds": [
+            "my09-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my09-mig-sshkey-01",
+          "cspSshKeyId": "tbhjbjpobn3enr3num8l"
+        }
+      ],
+      "newNodeList": null
     }
   ]
 }
@@ -3412,24 +5546,24 @@
 
 </details>
 
-### Test Case 4: Get a list of infra IDs
+### Test Case 5: Get a list of infra IDs
 
-#### 4.1 API Request Information
+#### 5.1 API Request Information
 
 - **API Endpoint**: `GET /beetle/migration/ns/mig01/infra?option=id`
 - **Purpose**: Get a list of IDs of all migrated infrastructures
 
-#### 4.2 API Response Information
+#### 5.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
-- **IDs**: [my-infra101]
+- **IDs**: [my01-infra101 my02-infra101 my03-infra101 my04-infra101 my05-infra101 my06-infra101 my08-infra101 my09-infra101]
 
-### Test Case 5: Get a specific infra
+### Test Case 6: Get a specific infra
 
-#### 5.1 API Request Information
+#### 6.1 API Request Information
 
 - **API Endpoint**: `GET /beetle/migration/ns/mig01/infra/{{infraId}}`
-#### 5.2 API Response Information
+#### 6.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
 
@@ -3441,9 +5575,9 @@
 ```json
 {
   "resourceType": "infra",
-  "id": "my-infra101",
-  "uid": "tb6llm23eif1q7e2v20j",
-  "name": "my-infra101",
+  "id": "my03-infra101",
+  "uid": "tbaciag0qhpm0el9ei0q",
+  "name": "my03-infra101",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
     "countTotal": 3,
@@ -3457,6 +5591,7 @@
     "countResuming": 0,
     "countTerminating": 0,
     "countRegistering": 0,
+    "countReconciling": 0,
     "countUndefined": 0
   },
   "targetStatus": "None",
@@ -3464,13 +5599,14 @@
   "installMonAgent": "",
   "configureCloudAdaptiveNetwork": "",
   "label": {
+    "cm-migrated-at": "2026-10-12T10:57:22Z",
     "sys.description": "NLB-aware recommended infrastructure for cloud migration",
-    "sys.id": "my-infra101",
+    "sys.id": "my03-infra101",
     "sys.labelType": "infra",
     "sys.manager": "cb-tumblebug",
-    "sys.name": "my-infra101",
+    "sys.name": "my03-infra101",
     "sys.namespace": "mig01",
-    "sys.uid": "tb6llm23eif1q7e2v20j"
+    "sys.uid": "tbaciag0qhpm0el9ei0q"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -3478,12 +5614,12 @@
   "node": [
     {
       "resourceType": "node",
-      "id": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "tb1pu9f78qonoie5ajod",
-      "cspResourceName": "tb1pu9f78qonoie5ajod",
-      "cspResourceId": "tb1pu9f78qonoie5ajod",
-      "name": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "nodeGroupId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624",
+      "id": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "uid": "tb34cj51eke012cm5vec",
+      "cspResourceName": "tb34cj51eke012cm5vec",
+      "cspResourceId": "tb34cj51eke012cm5vec",
+      "name": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "nodeGroupId": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624",
       "location": {
         "display": "South Korea (Seoul)",
         "latitude": 37.2,
@@ -3495,284 +5631,23 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-07-13 09:19:02",
+      "createdTime": "2026-10-12 10:57:45",
       "label": {
-        "keypair": "tb0ffm8vtk5l3ahog7h1",
-        "sourceMachineIds": "ec268ed7-821e-9d73-e79f-961262161624",
-        "sys.connectionName": "gcp-asia-northeast3",
-        "sys.createdTime": "2026-07-13 09:19:02",
-        "sys.cspResourceId": "tb1pu9f78qonoie5ajod",
-        "sys.cspResourceName": "tb1pu9f78qonoie5ajod",
-        "sys.id": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "sys.infraId": "my-infra101",
-        "sys.labelType": "node",
-        "sys.manager": "cb-tumblebug",
-        "sys.name": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "sys.namespace": "mig01",
-        "sys.nodeGroupId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624",
-        "sys.subnetId": "my-mig-subnet-01",
-        "sys.uid": "tb1pu9f78qonoie5ajod",
-        "sys.vNetId": "my-mig-vnet-01"
+        "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"
       },
-      "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
+      "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=87.8% Image=80.0%",
       "region": {
         "region": "asia-northeast3",
         "zone": "asia-northeast3-a"
       },
-      "publicIP": "34.64.195.188",
-      "sshPort": 22,
-      "publicDNS": "",
-      "privateIP": "10.0.1.4",
-      "privateDNS": "",
-      "rootDiskType": "pd-standard",
-      "rootDiskSize": 10,
-      "RootDeviceName": "persistent-disk-0",
-      "connectionName": "gcp-asia-northeast3",
-      "connectionConfig": {
-        "configName": "gcp-asia-northeast3",
-        "providerName": "gcp",
-        "driverName": "gcp-driver-v1.0.so",
-        "credentialName": "gcp",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "gcp-asia-northeast3",
-        "regionZoneInfo": {
-          "assignedRegion": "asia-northeast3",
-          "assignedZone": "asia-northeast3-a"
-        },
-        "regionDetail": {
-          "regionId": "asia-northeast3",
-          "regionName": "asia-northeast3",
-          "description": "Seoul South Korea",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.2,
-            "longitude": 127
-          },
-          "zones": [
-            "asia-northeast3-a",
-            "asia-northeast3-b",
-            "asia-northeast3-c"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "gcp+asia-northeast3+e2-highcpu-2",
-      "cspSpecName": "e2-highcpu-2",
-      "spec": {
-        "cspSpecName": "e2-highcpu-2",
-        "vCPU": 2,
-        "memoryGiB": 1.953125,
-        "costPerHour": 0.063531
-      },
-      "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
-      "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
-      "image": {
-        "resourceType": "image",
-        "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623",
-        "osType": "Ubuntu 22.04",
-        "osArchitecture": "x86_64",
-        "osDistribution": "Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-06-23"
-      },
-      "vNetId": "my-mig-vnet-01",
-      "cspVNetId": "tb6qc3e779ji5e5kqg7k",
-      "subnetId": "my-mig-subnet-01",
-      "cspSubnetId": "tb08efe9m19o55jbt2pp",
-      "networkInterface": "nic0",
-      "securityGroupIds": [
-        "my-mig-sg-02"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "my-mig-sshkey-01",
-      "cspSshKeyId": "tb0ffm8vtk5l3ahog7h1",
-      "nodeUserName": "cb-user",
-      "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGqm7KRJjGvBKrIt6Exfjzucx67wuUm/nj+gaOV9Ky6kP1o0gIJxdDPsEgLQDWLTWyIkQBD06kUCHIWenkF806Y=",
-        "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:AW1o1PfIfEsqC0Q956shJ5kMBWEbmKsxnd/txVkAPM4",
-        "firstUsedAt": "2026-07-13T09:19:13Z"
-      },
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2026-07-13T09:19:12Z",
-          "completedTime": "2026-07-13T09:19:14Z",
-          "elapsedTime": 2,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux tb1pu9f78qonoie5ajod 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "CanIpForward",
-          "value": "false"
-        },
-        {
-          "key": "CpuPlatform",
-          "value": "Intel Broadwell"
-        },
-        {
-          "key": "CreationTimestamp",
-          "value": "2026-07-13T02:18:20.464-07:00"
-        },
-        {
-          "key": "DeletionProtection",
-          "value": "false"
-        },
-        {
-          "key": "Description",
-          "value": "compute sample instance"
-        },
-        {
-          "key": "Disks",
-          "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:10,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2204-lts,https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/licenses/ubuntu-2204-lts-tpu],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/disks/tb1pu9f78qonoie5ajod,type:PERSISTENT}"
-        },
-        {
-          "key": "Fingerprint",
-          "value": "YdsSlUtErnc="
-        },
-        {
-          "key": "Id",
-          "value": "69656031750853555"
-        },
-        {
-          "key": "Kind",
-          "value": "compute#instance"
-        },
-        {
-          "key": "LabelFingerprint",
-          "value": "hpJPIa5xQEk="
-        },
-        {
-          "key": "Labels",
-          "value": "{keypair:tb0ffm8vtk5l3ahog7h1}"
-        },
-        {
-          "key": "LastStartTimestamp",
-          "value": "2026-07-13T02:18:28.104-07:00"
-        },
-        {
-          "key": "MachineType",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/machineTypes/e2-highcpu-2"
-        },
-        {
-          "key": "Metadata",
-          "value": "{fingerprint:EaVRkxGYCT8=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNYQTsR6YY0L8RJs96TMpl5gPye9R63LiKkn3OqgmFStcBfQyThBeoteg37qHvu3ZHriU8a27iZg8jfhi9OqJidbwljur/rQF4nwXLsrSj6wfagobNIo1LUSxLH0dDUbmDz4CvgC9e+d57mWyPfIkalRfoORxyxQpO1jD8TCwXXPkBLxlxRoftvZiGiqmqobThpWkrLjUQVPNohXciJJQNPJEOvo6UV/X2aECsgvr3fXA/vnZij71tE9MBRWH1cZCjyhGchsTvxaUJL8OjiCjM5VKCSmgZ3KhvGQC5QP+wDogAm/9XClt2fgNlnhS2suKpPXT7gnqxqHGRcb6cEEe/hOAmn8rsrWA0aiT1/YiPXSik3hd35mJ/4nFposCH4d7n323GnMimjvy4nfc1oJr3w9wHXp3xzoDYEDykAqml8Q50xmBW/TJeQimBg8uCbZvSGJtpACxuivu2e62LCUnlhJTfPoPJS3OUEm5NAVr02gEoWuWUvKWmzXxWzRG2kGTVI0MLEUtBQzvx+32ZawMY/Lt88GcprahddXXDEYDdVugxAXbOxKkua99YgJ6YPL7nlHtWEbNI+iB4ndWvh4vLuDdHc5LMamD82nG3wRlGbRtsy7XdYycZa5jveKIZAR8bs07vd2uK3E0op5c/TgWEuiW0d6G22whWMopulZcPAQ== cb-user}],kind:compute#metadata}"
-        },
-        {
-          "key": "Name",
-          "value": "tb1pu9f78qonoie5ajod"
-        },
-        {
-          "key": "NetworkInterfaces",
-          "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.64.195.188,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:wBXwrarXbvk=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/ykkim-etri/global/networks/tb6qc3e779ji5e5kqg7k,networkIP:10.0.1.4,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/subnetworks/tb08efe9m19o55jbt2pp}"
-        },
-        {
-          "key": "ResourceStatus",
-          "value": "{effectiveInstanceMetadata:{vmDnsSettingMetadataValue:ZonalOnly}}"
-        },
-        {
-          "key": "SatisfiesPzi",
-          "value": "true"
-        },
-        {
-          "key": "SatisfiesPzs",
-          "value": "false"
-        },
-        {
-          "key": "Scheduling",
-          "value": "{automaticRestart:true,onHostMaintenance:MIGRATE,provisioningModel:STANDARD}"
-        },
-        {
-          "key": "SelfLink",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/instances/tb1pu9f78qonoie5ajod"
-        },
-        {
-          "key": "ServiceAccounts",
-          "value": "{email:kimy-service-account@ykkim-etri.iam.gserviceaccount.com,scopes:[https://www.googleapis.com/auth/devstorage.full_control,https://www.googleapis.com/auth/compute]}"
-        },
-        {
-          "key": "ShieldedInstanceConfig",
-          "value": "{enableIntegrityMonitoring:true,enableVtpm:true}"
-        },
-        {
-          "key": "ShieldedInstanceIntegrityPolicy",
-          "value": "{updateAutoLearnPolicy:true}"
-        },
-        {
-          "key": "StartRestricted",
-          "value": "false"
-        },
-        {
-          "key": "Status",
-          "value": "RUNNING"
-        },
-        {
-          "key": "Tags",
-          "value": "{fingerprint:fXE212sEmT4=,items:[tb2kpd806s3hu3mifdtj]}"
-        },
-        {
-          "key": "Zone",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a"
-        }
-      ]
-    },
-    {
-      "resourceType": "node",
-      "id": "my-ng-influxdb-back-1",
-      "uid": "tbrah6jesqlv0jaeqia5",
-      "cspResourceName": "tbrah6jesqlv0jaeqia5",
-      "cspResourceId": "tbrah6jesqlv0jaeqia5",
-      "name": "my-ng-influxdb-back-1",
-      "nodeGroupId": "my-ng-influxdb-back",
-      "location": {
-        "display": "South Korea (Seoul)",
-        "latitude": 37.2,
-        "longitude": 127
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2026-07-13 09:18:59",
-      "label": {
-        "keypair": "tb0ffm8vtk5l3ahog7h1",
-        "nlbBackend": "influxdb_back",
-        "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "sys.connectionName": "gcp-asia-northeast3",
-        "sys.createdTime": "2026-07-13 09:18:59",
-        "sys.cspResourceId": "tbrah6jesqlv0jaeqia5",
-        "sys.cspResourceName": "tbrah6jesqlv0jaeqia5",
-        "sys.id": "my-ng-influxdb-back-1",
-        "sys.infraId": "my-infra101",
-        "sys.labelType": "node",
-        "sys.manager": "cb-tumblebug",
-        "sys.name": "my-ng-influxdb-back-1",
-        "sys.namespace": "mig01",
-        "sys.nodeGroupId": "my-ng-influxdb-back",
-        "sys.subnetId": "my-mig-subnet-01",
-        "sys.uid": "tbrah6jesqlv0jaeqia5",
-        "sys.vNetId": "my-mig-vnet-01"
-      },
-      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
-      "region": {
-        "region": "asia-northeast3",
-        "zone": "asia-northeast3-a"
-      },
-      "publicIP": "34.47.124.15",
+      "publicIP": "34.50.50.20",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.3",
       "privateDNS": "",
       "rootDiskType": "pd-standard",
-      "rootDiskSize": 30,
-      "RootDeviceName": "persistent-disk-0",
+      "rootDiskSize": 10,
+      "rootDeviceName": "persistent-disk-0",
       "connectionName": "gcp-asia-northeast3",
       "connectionConfig": {
         "configName": "gcp-asia-northeast3",
@@ -3803,178 +5678,88 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "gcp+asia-northeast3+e2-standard-4",
-      "cspSpecName": "e2-standard-4",
+      "specId": "gcp+asia-northeast3+n1-highcpu-2",
+      "cspSpecName": "n1-highcpu-2",
       "spec": {
-        "cspSpecName": "e2-standard-4",
-        "vCPU": 4,
-        "memoryGiB": 15.625,
-        "costPerHour": 0.171931
+        "cspSpecName": "n1-highcpu-2",
+        "vCPU": 2,
+        "memoryGiB": 1.7568359,
+        "costPerHour": 0.09099
       },
-      "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
-      "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+      "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+      "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
       "image": {
         "resourceType": "image",
-        "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+        "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
         "osType": "Ubuntu 22.04",
         "osArchitecture": "x86_64",
-        "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23"
+        "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20"
       },
-      "vNetId": "my-mig-vnet-01",
-      "cspVNetId": "tb6qc3e779ji5e5kqg7k",
-      "subnetId": "my-mig-subnet-01",
-      "cspSubnetId": "tb08efe9m19o55jbt2pp",
+      "vNetId": "my03-mig-vnet-01",
+      "cspVNetId": "tb6ei259h9mvdch4rumt",
+      "subnetId": "my03-mig-subnet-01",
+      "cspSubnetId": "tbvssd98bnj6fq03668o",
       "networkInterface": "nic0",
       "securityGroupIds": [
-        "my-mig-sg-01"
+        "my03-mig-sg-02"
       ],
       "dataDiskIds": null,
-      "sshKeyId": "my-mig-sshkey-01",
-      "cspSshKeyId": "tb0ffm8vtk5l3ahog7h1",
+      "sshKeyId": "my03-mig-sshkey-01",
+      "cspSshKeyId": "tbo0ov0jqt6lbp7d7e4m",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBBDkAdCzKgYDJPyL7tedFntUSar5CmzrXe1F9Zy/hWbQoPMUFAyu/f+p7/5nWMBstIbvt5xMQeVryRG7Gtv+OFQ=",
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBM8zYSkEXIanKf2/xxl68IYjJSRwaTLUn2WLZ0V9VWVBhO52CurQmDfkvlYTV2rn8lZS1S7v37NUQh0tRGoWK7U=",
         "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:tTZZ/sg0gbpE3c3MGAbQPZw1sKMEpPC0b7/hMKaqnxE",
-        "firstUsedAt": "2026-07-13T09:19:13Z"
+        "fingerprint": "SHA256:q9fJZ8oLStKNnh3sm1a6xAGqQ8tsxVShPxSQEb70zQw",
+        "firstUsedAt": "2026-10-12T10:58:05Z"
       },
       "commandStatus": [
         {
           "index": 1,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Failed",
+          "startedTime": "2026-10-12T10:57:46Z",
+          "completedTime": "2026-10-12T10:58:05Z",
+          "elapsedTime": 19,
+          "resultSummary": "Command execution failed",
+          "errorMessage": "SSH authentication failed. Please check: 1) private key is valid 2) user 'cb-user' exists on target 3) authorized_keys is properly configured"
+        },
+        {
+          "index": 2,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Completed",
+          "startedTime": "2026-10-12T10:58:16Z",
+          "completedTime": "2026-10-12T10:58:18Z",
+          "elapsedTime": 2,
+          "resultSummary": "Command executed successfully",
+          "stdout": "\n",
+          "stderr": "\n"
+        },
+        {
+          "index": 3,
+          "xRequestId": "pc-my03-infra101-tbqg3ujansbjm2sbcdm9",
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-07-13T09:19:12Z",
-          "completedTime": "2026-07-13T09:19:14Z",
-          "elapsedTime": 2,
+          "startedTime": "2026-10-12T10:58:19Z",
+          "completedTime": "2026-10-12T10:58:20Z",
+          "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tbrah6jesqlv0jaeqia5 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tb34cj51eke012cm5vec 6.8.0-1066-gcp #74~22.04.1-Ubuntu SMP Fri Aug  7 21:51:15 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "CanIpForward",
-          "value": "false"
-        },
-        {
-          "key": "CpuPlatform",
-          "value": "Intel Broadwell"
-        },
-        {
-          "key": "CreationTimestamp",
-          "value": "2026-07-13T02:18:18.359-07:00"
-        },
-        {
-          "key": "DeletionProtection",
-          "value": "false"
-        },
-        {
-          "key": "Description",
-          "value": "compute sample instance"
-        },
-        {
-          "key": "Disks",
-          "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:30,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/disks/tbrah6jesqlv0jaeqia5,type:PERSISTENT}"
-        },
-        {
-          "key": "Fingerprint",
-          "value": "f76-KtKrepE="
-        },
-        {
-          "key": "Id",
-          "value": "6820223286706246581"
-        },
-        {
-          "key": "Kind",
-          "value": "compute#instance"
-        },
-        {
-          "key": "LabelFingerprint",
-          "value": "hpJPIa5xQEk="
-        },
-        {
-          "key": "Labels",
-          "value": "{keypair:tb0ffm8vtk5l3ahog7h1}"
-        },
-        {
-          "key": "LastStartTimestamp",
-          "value": "2026-07-13T02:18:26.195-07:00"
-        },
-        {
-          "key": "MachineType",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/machineTypes/e2-standard-4"
-        },
-        {
-          "key": "Metadata",
-          "value": "{fingerprint:EaVRkxGYCT8=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNYQTsR6YY0L8RJs96TMpl5gPye9R63LiKkn3OqgmFStcBfQyThBeoteg37qHvu3ZHriU8a27iZg8jfhi9OqJidbwljur/rQF4nwXLsrSj6wfagobNIo1LUSxLH0dDUbmDz4CvgC9e+d57mWyPfIkalRfoORxyxQpO1jD8TCwXXPkBLxlxRoftvZiGiqmqobThpWkrLjUQVPNohXciJJQNPJEOvo6UV/X2aECsgvr3fXA/vnZij71tE9MBRWH1cZCjyhGchsTvxaUJL8OjiCjM5VKCSmgZ3KhvGQC5QP+wDogAm/9XClt2fgNlnhS2suKpPXT7gnqxqHGRcb6cEEe/hOAmn8rsrWA0aiT1/YiPXSik3hd35mJ/4nFposCH4d7n323GnMimjvy4nfc1oJr3w9wHXp3xzoDYEDykAqml8Q50xmBW/TJeQimBg8uCbZvSGJtpACxuivu2e62LCUnlhJTfPoPJS3OUEm5NAVr02gEoWuWUvKWmzXxWzRG2kGTVI0MLEUtBQzvx+32ZawMY/Lt88GcprahddXXDEYDdVugxAXbOxKkua99YgJ6YPL7nlHtWEbNI+iB4ndWvh4vLuDdHc5LMamD82nG3wRlGbRtsy7XdYycZa5jveKIZAR8bs07vd2uK3E0op5c/TgWEuiW0d6G22whWMopulZcPAQ== cb-user}],kind:compute#metadata}"
-        },
-        {
-          "key": "Name",
-          "value": "tbrah6jesqlv0jaeqia5"
-        },
-        {
-          "key": "NetworkInterfaces",
-          "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.47.124.15,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:Gp6cH14WOLg=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/ykkim-etri/global/networks/tb6qc3e779ji5e5kqg7k,networkIP:10.0.1.3,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/subnetworks/tb08efe9m19o55jbt2pp}"
-        },
-        {
-          "key": "ResourceStatus",
-          "value": "{effectiveInstanceMetadata:{vmDnsSettingMetadataValue:ZonalOnly}}"
-        },
-        {
-          "key": "SatisfiesPzi",
-          "value": "true"
-        },
-        {
-          "key": "SatisfiesPzs",
-          "value": "false"
-        },
-        {
-          "key": "Scheduling",
-          "value": "{automaticRestart:true,onHostMaintenance:MIGRATE,provisioningModel:STANDARD}"
-        },
-        {
-          "key": "SelfLink",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/instances/tbrah6jesqlv0jaeqia5"
-        },
-        {
-          "key": "ServiceAccounts",
-          "value": "{email:kimy-service-account@ykkim-etri.iam.gserviceaccount.com,scopes:[https://www.googleapis.com/auth/devstorage.full_control,https://www.googleapis.com/auth/compute]}"
-        },
-        {
-          "key": "ShieldedInstanceConfig",
-          "value": "{enableIntegrityMonitoring:true,enableVtpm:true}"
-        },
-        {
-          "key": "ShieldedInstanceIntegrityPolicy",
-          "value": "{updateAutoLearnPolicy:true}"
-        },
-        {
-          "key": "StartRestricted",
-          "value": "false"
-        },
-        {
-          "key": "Status",
-          "value": "RUNNING"
-        },
-        {
-          "key": "Tags",
-          "value": "{fingerprint:7VBbY9V0wIg=,items:[tb74avigphtcuf3958vc]}"
-        },
-        {
-          "key": "Zone",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a"
         }
       ]
     },
     {
       "resourceType": "node",
-      "id": "my-ng-influxdb-back-2",
-      "uid": "tbq36hhnk3jjdfpfuu73",
-      "cspResourceName": "tbq36hhnk3jjdfpfuu73",
-      "cspResourceId": "tbq36hhnk3jjdfpfuu73",
-      "name": "my-ng-influxdb-back-2",
-      "nodeGroupId": "my-ng-influxdb-back",
+      "id": "my03-ng-influxdb-back-1",
+      "uid": "tb6iphm7mug3sutkbmrj",
+      "cspResourceName": "tb6iphm7mug3sutkbmrj",
+      "cspResourceId": "tb6iphm7mug3sutkbmrj",
+      "name": "my03-ng-influxdb-back-1",
+      "nodeGroupId": "my03-ng-influxdb-back",
       "location": {
         "display": "South Korea (Seoul)",
         "latitude": 37.2,
@@ -3986,39 +5771,24 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-07-13 09:18:58",
+      "createdTime": "2026-10-12 10:57:46",
       "label": {
-        "keypair": "tb0ffm8vtk5l3ahog7h1",
-        "nlbBackend": "influxdb_back",
-        "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "sys.connectionName": "gcp-asia-northeast3",
-        "sys.createdTime": "2026-07-13 09:18:58",
-        "sys.cspResourceId": "tbq36hhnk3jjdfpfuu73",
-        "sys.cspResourceName": "tbq36hhnk3jjdfpfuu73",
-        "sys.id": "my-ng-influxdb-back-2",
-        "sys.infraId": "my-infra101",
-        "sys.labelType": "node",
-        "sys.manager": "cb-tumblebug",
-        "sys.name": "my-ng-influxdb-back-2",
-        "sys.namespace": "mig01",
-        "sys.nodeGroupId": "my-ng-influxdb-back",
-        "sys.subnetId": "my-mig-subnet-01",
-        "sys.uid": "tbq36hhnk3jjdfpfuu73",
-        "sys.vNetId": "my-mig-vnet-01"
+        "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "nlbBackend": "influxdb_back"
       },
       "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
       "region": {
         "region": "asia-northeast3",
         "zone": "asia-northeast3-a"
       },
-      "publicIP": "8.230.19.201",
+      "publicIP": "8.230.11.202",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.2",
+      "privateIP": "10.0.1.4",
       "privateDNS": "",
-      "rootDiskType": "pd-standard",
+      "rootDiskType": "hyperdisk-balanced",
       "rootDiskSize": 30,
-      "RootDeviceName": "persistent-disk-0",
+      "rootDeviceName": "persistent-disk-0",
       "connectionName": "gcp-asia-northeast3",
       "connectionConfig": {
         "configName": "gcp-asia-northeast3",
@@ -4049,252 +5819,324 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "gcp+asia-northeast3+e2-standard-4",
-      "cspSpecName": "e2-standard-4",
+      "specId": "gcp+asia-northeast3+n4-standard-4",
+      "cspSpecName": "n4-standard-4",
       "spec": {
-        "cspSpecName": "e2-standard-4",
+        "cspSpecName": "n4-standard-4",
         "vCPU": 4,
         "memoryGiB": 15.625,
-        "costPerHour": 0.171931
+        "costPerHour": 0.232954
       },
-      "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
-      "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+      "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+      "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
       "image": {
         "resourceType": "image",
-        "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623",
+        "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
         "osType": "Ubuntu 22.04",
         "osArchitecture": "x86_64",
-        "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23"
+        "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20"
       },
-      "vNetId": "my-mig-vnet-01",
-      "cspVNetId": "tb6qc3e779ji5e5kqg7k",
-      "subnetId": "my-mig-subnet-01",
-      "cspSubnetId": "tb08efe9m19o55jbt2pp",
+      "vNetId": "my03-mig-vnet-01",
+      "cspVNetId": "tb6ei259h9mvdch4rumt",
+      "subnetId": "my03-mig-subnet-01",
+      "cspSubnetId": "tbvssd98bnj6fq03668o",
       "networkInterface": "nic0",
       "securityGroupIds": [
-        "my-mig-sg-01"
+        "my03-mig-sg-01"
       ],
       "dataDiskIds": null,
-      "sshKeyId": "my-mig-sshkey-01",
-      "cspSshKeyId": "tb0ffm8vtk5l3ahog7h1",
+      "sshKeyId": "my03-mig-sshkey-01",
+      "cspSshKeyId": "tbo0ov0jqt6lbp7d7e4m",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBN0hMfrekkyROVSveoZGsCeo0oPeeDORUexhxHc5peKEzw1/abt2djbg20vUUqqGrbH1d15K1gpSj6AZBQqj/V8=",
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLjliD44vE5PCrW1U7mbEdy3URpVuboXLtGAbsViINDIBE34m/9NmoNAoLEcMoJf+i/lzicHNnxJ0VBLFpCK8K0=",
         "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:EdgVwUKxu+60R9ACsX+IxKJ2XBexCbLL494NU7S4fnk",
-        "firstUsedAt": "2026-07-13T09:19:12Z"
+        "fingerprint": "SHA256:EgOi/PHy3t27JYSxFg/Rs84BVY5/mTW/uTzZZvN0Jzs",
+        "firstUsedAt": "2026-10-12T10:58:05Z"
       },
       "commandStatus": [
         {
           "index": 1,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Completed",
+          "startedTime": "2026-10-12T10:57:46Z",
+          "completedTime": "2026-10-12T10:58:05Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "\n",
+          "stderr": "\n",
+          "repeatCount": 2,
+          "lastOccurredTime": "2026-10-12T10:58:17Z"
+        },
+        {
+          "index": 2,
+          "xRequestId": "pc-my03-infra101-tbqg3ujansbjm2sbcdm9",
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-07-13T09:19:12Z",
-          "completedTime": "2026-07-13T09:19:15Z",
-          "elapsedTime": 3,
+          "startedTime": "2026-10-12T10:58:19Z",
+          "completedTime": "2026-10-12T10:58:20Z",
+          "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tbq36hhnk3jjdfpfuu73 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tb6iphm7mug3sutkbmrj 6.8.0-1066-gcp #74~22.04.1-Ubuntu SMP Fri Aug  7 21:51:15 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
+      ]
+    },
+    {
+      "resourceType": "node",
+      "id": "my03-ng-influxdb-back-2",
+      "uid": "tb0vbtatce8oe2gk7l55",
+      "cspResourceName": "tb0vbtatce8oe2gk7l55",
+      "cspResourceId": "tb0vbtatce8oe2gk7l55",
+      "name": "my03-ng-influxdb-back-2",
+      "nodeGroupId": "my03-ng-influxdb-back",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.2,
+        "longitude": 127
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2026-10-12 10:57:44",
+      "label": {
+        "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "nlbBackend": "influxdb_back"
+      },
+      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=97.7% Image=80.0%",
+      "region": {
+        "region": "asia-northeast3",
+        "zone": "asia-northeast3-a"
+      },
+      "publicIP": "34.64.253.99",
+      "sshPort": 22,
+      "publicDNS": "",
+      "privateIP": "10.0.1.2",
+      "privateDNS": "",
+      "rootDiskType": "hyperdisk-balanced",
+      "rootDiskSize": 30,
+      "rootDeviceName": "persistent-disk-0",
+      "connectionName": "gcp-asia-northeast3",
+      "connectionConfig": {
+        "configName": "gcp-asia-northeast3",
+        "providerName": "gcp",
+        "driverName": "gcp-driver-v1.0.so",
+        "credentialName": "gcp",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "gcp-asia-northeast3",
+        "regionZoneInfo": {
+          "assignedRegion": "asia-northeast3",
+          "assignedZone": "asia-northeast3-a"
+        },
+        "regionDetail": {
+          "regionId": "asia-northeast3",
+          "regionName": "asia-northeast3",
+          "description": "Seoul South Korea",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.2,
+            "longitude": 127
+          },
+          "zones": [
+            "asia-northeast3-a",
+            "asia-northeast3-b",
+            "asia-northeast3-c"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "gcp+asia-northeast3+n4-standard-4",
+      "cspSpecName": "n4-standard-4",
+      "spec": {
+        "cspSpecName": "n4-standard-4",
+        "vCPU": 4,
+        "memoryGiB": 15.625,
+        "costPerHour": 0.232954
+      },
+      "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+      "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+      "image": {
+        "resourceType": "image",
+        "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820",
+        "osType": "Ubuntu 22.04",
+        "osArchitecture": "x86_64",
+        "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20"
+      },
+      "vNetId": "my03-mig-vnet-01",
+      "cspVNetId": "tb6ei259h9mvdch4rumt",
+      "subnetId": "my03-mig-subnet-01",
+      "cspSubnetId": "tbvssd98bnj6fq03668o",
+      "networkInterface": "nic0",
+      "securityGroupIds": [
+        "my03-mig-sg-01"
       ],
-      "addtionalDetails": [
+      "dataDiskIds": null,
+      "sshKeyId": "my03-mig-sshkey-01",
+      "cspSshKeyId": "tbo0ov0jqt6lbp7d7e4m",
+      "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBDeIsbMfzzqEvfiUhQHvOi2sDyEpHteM3NNcBFij/3KPdYJACPERwVpKGjzZZGiF9j6myzFN/OzPD1tOgLGLOZI=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:WOcmaNRs49Zb9fRPIQstvOxUugXWx4QW/pW79ziu8jc",
+        "firstUsedAt": "2026-10-12T10:58:04Z"
+      },
+      "commandStatus": [
         {
-          "key": "CanIpForward",
-          "value": "false"
+          "index": 1,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Completed",
+          "startedTime": "2026-10-12T10:57:46Z",
+          "completedTime": "2026-10-12T10:58:06Z",
+          "elapsedTime": 3,
+          "resultSummary": "Command executed successfully",
+          "stdout": "\n",
+          "stderr": "\n",
+          "repeatCount": 2,
+          "lastOccurredTime": "2026-10-12T10:58:19Z"
         },
         {
-          "key": "CpuPlatform",
-          "value": "Intel Broadwell"
-        },
-        {
-          "key": "CreationTimestamp",
-          "value": "2026-07-13T02:18:17.910-07:00"
-        },
-        {
-          "key": "DeletionProtection",
-          "value": "false"
-        },
-        {
-          "key": "Description",
-          "value": "compute sample instance"
-        },
-        {
-          "key": "Disks",
-          "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:30,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/disks/tbq36hhnk3jjdfpfuu73,type:PERSISTENT}"
-        },
-        {
-          "key": "Fingerprint",
-          "value": "9ZZizxjggT8="
-        },
-        {
-          "key": "Id",
-          "value": "3947188695974089654"
-        },
-        {
-          "key": "Kind",
-          "value": "compute#instance"
-        },
-        {
-          "key": "LabelFingerprint",
-          "value": "hpJPIa5xQEk="
-        },
-        {
-          "key": "Labels",
-          "value": "{keypair:tb0ffm8vtk5l3ahog7h1}"
-        },
-        {
-          "key": "LastStartTimestamp",
-          "value": "2026-07-13T02:18:25.872-07:00"
-        },
-        {
-          "key": "MachineType",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/machineTypes/e2-standard-4"
-        },
-        {
-          "key": "Metadata",
-          "value": "{fingerprint:EaVRkxGYCT8=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNYQTsR6YY0L8RJs96TMpl5gPye9R63LiKkn3OqgmFStcBfQyThBeoteg37qHvu3ZHriU8a27iZg8jfhi9OqJidbwljur/rQF4nwXLsrSj6wfagobNIo1LUSxLH0dDUbmDz4CvgC9e+d57mWyPfIkalRfoORxyxQpO1jD8TCwXXPkBLxlxRoftvZiGiqmqobThpWkrLjUQVPNohXciJJQNPJEOvo6UV/X2aECsgvr3fXA/vnZij71tE9MBRWH1cZCjyhGchsTvxaUJL8OjiCjM5VKCSmgZ3KhvGQC5QP+wDogAm/9XClt2fgNlnhS2suKpPXT7gnqxqHGRcb6cEEe/hOAmn8rsrWA0aiT1/YiPXSik3hd35mJ/4nFposCH4d7n323GnMimjvy4nfc1oJr3w9wHXp3xzoDYEDykAqml8Q50xmBW/TJeQimBg8uCbZvSGJtpACxuivu2e62LCUnlhJTfPoPJS3OUEm5NAVr02gEoWuWUvKWmzXxWzRG2kGTVI0MLEUtBQzvx+32ZawMY/Lt88GcprahddXXDEYDdVugxAXbOxKkua99YgJ6YPL7nlHtWEbNI+iB4ndWvh4vLuDdHc5LMamD82nG3wRlGbRtsy7XdYycZa5jveKIZAR8bs07vd2uK3E0op5c/TgWEuiW0d6G22whWMopulZcPAQ== cb-user}],kind:compute#metadata}"
-        },
-        {
-          "key": "Name",
-          "value": "tbq36hhnk3jjdfpfuu73"
-        },
-        {
-          "key": "NetworkInterfaces",
-          "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:8.230.19.201,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:BG1-eHXkxAs=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/ykkim-etri/global/networks/tb6qc3e779ji5e5kqg7k,networkIP:10.0.1.2,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/subnetworks/tb08efe9m19o55jbt2pp}"
-        },
-        {
-          "key": "ResourceStatus",
-          "value": "{effectiveInstanceMetadata:{vmDnsSettingMetadataValue:ZonalOnly}}"
-        },
-        {
-          "key": "SatisfiesPzi",
-          "value": "true"
-        },
-        {
-          "key": "SatisfiesPzs",
-          "value": "false"
-        },
-        {
-          "key": "Scheduling",
-          "value": "{automaticRestart:true,onHostMaintenance:MIGRATE,provisioningModel:STANDARD}"
-        },
-        {
-          "key": "SelfLink",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a/instances/tbq36hhnk3jjdfpfuu73"
-        },
-        {
-          "key": "ServiceAccounts",
-          "value": "{email:kimy-service-account@ykkim-etri.iam.gserviceaccount.com,scopes:[https://www.googleapis.com/auth/devstorage.full_control,https://www.googleapis.com/auth/compute]}"
-        },
-        {
-          "key": "ShieldedInstanceConfig",
-          "value": "{enableIntegrityMonitoring:true,enableVtpm:true}"
-        },
-        {
-          "key": "ShieldedInstanceIntegrityPolicy",
-          "value": "{updateAutoLearnPolicy:true}"
-        },
-        {
-          "key": "StartRestricted",
-          "value": "false"
-        },
-        {
-          "key": "Status",
-          "value": "RUNNING"
-        },
-        {
-          "key": "Tags",
-          "value": "{fingerprint:7VBbY9V0wIg=,items:[tb74avigphtcuf3958vc]}"
-        },
-        {
-          "key": "Zone",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/zones/asia-northeast3-a"
+          "index": 2,
+          "xRequestId": "pc-my03-infra101-tbqg3ujansbjm2sbcdm9",
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2026-10-12T10:58:19Z",
+          "completedTime": "2026-10-12T10:58:20Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux tb0vbtatce8oe2gk7l55 6.8.0-1066-gcp #74~22.04.1-Ubuntu SMP Fri Aug  7 21:51:15 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
         }
       ]
     }
   ],
+  "cluster": [
+    {
+      "id": "my03-mig-vnet-01",
+      "name": "my03-mig-vnet-01",
+      "infraId": "my03-infra101",
+      "vNetId": "my03-mig-vnet-01",
+      "connectionNames": [
+        "gcp-asia-northeast3"
+      ],
+      "providerNames": [
+        "gcp"
+      ],
+      "regionNames": [
+        "asia-northeast3"
+      ],
+      "nodeGroupIds": [
+        "my03-ng-ec268ed7-821e-9d73-e79f-961262161624",
+        "my03-ng-influxdb-back"
+      ],
+      "nodeIds": [
+        "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "my03-ng-influxdb-back-1",
+        "my03-ng-influxdb-back-2"
+      ],
+      "nodeGroupCount": 2,
+      "nodeCount": 3,
+      "representativeNodeGroupId": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624",
+      "representativeNodeId": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1"
+    }
+  ],
   "newNodeList": null,
-  "postCommand": {
-    "userName": "cb-user",
-    "command": [
-      "uname -a"
-    ]
-  },
-  "postCommandResult": {
-    "results": [
-      {
-        "infraId": "my-infra101",
-        "nodeId": "my-ng-influxdb-back-1",
-        "nodeIp": "34.47.124.15",
-        "command": {
-          "0": "uname -a"
-        },
-        "stdout": {
-          "0": "Linux tbrah6jesqlv0jaeqia5 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-        },
-        "stderr": {
-          "0": ""
-        },
-        "err": null
-      },
-      {
-        "infraId": "my-infra101",
-        "nodeId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "nodeIp": "34.64.195.188",
-        "command": {
-          "0": "uname -a"
-        },
-        "stdout": {
-          "0": "Linux tb1pu9f78qonoie5ajod 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-        },
-        "stderr": {
-          "0": ""
-        },
-        "err": null
-      },
-      {
-        "infraId": "my-infra101",
-        "nodeId": "my-ng-influxdb-back-2",
-        "nodeIp": "8.230.19.201",
-        "command": {
-          "0": "uname -a"
-        },
-        "stdout": {
-          "0": "Linux tbq36hhnk3jjdfpfuu73 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-        },
-        "stderr": {
-          "0": ""
-        },
-        "err": null
+  "postCommands": [
+    {
+      "userName": "cb-user",
+      "command": [
+        "uname -a"
+      ]
+    }
+  ],
+  "postCommandResults": [
+    {
+      "phase": 1,
+      "target": "all nodes",
+      "status": "Completed",
+      "results": {
+        "results": [
+          {
+            "infraId": "my03-infra101",
+            "nodeId": "my03-ng-influxdb-back-1",
+            "nodeIp": "8.230.11.202",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux tb6iphm7mug3sutkbmrj 6.8.0-1066-gcp #74~22.04.1-Ubuntu SMP Fri Aug  7 21:51:15 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "error": ""
+          },
+          {
+            "infraId": "my03-infra101",
+            "nodeId": "my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "nodeIp": "34.50.50.20",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux tb34cj51eke012cm5vec 6.8.0-1066-gcp #74~22.04.1-Ubuntu SMP Fri Aug  7 21:51:15 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "error": ""
+          },
+          {
+            "infraId": "my03-infra101",
+            "nodeId": "my03-ng-influxdb-back-2",
+            "nodeIp": "34.64.253.99",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux tb0vbtatce8oe2gk7l55 6.8.0-1066-gcp #74~22.04.1-Ubuntu SMP Fri Aug  7 21:51:15 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "error": ""
+          }
+        ]
       }
-    ]
-  }
+    }
+  ],
+  "postCommandStatus": "Completed",
+  "postCommandRequestId": "pc-my03-infra101-tbqg3ujansbjm2sbcdm9"
 }
 ```
 
 </details>
 
-### Test Case 6: Remote Command Accessibility Check
+### Test Case 7: Remote Command Accessibility Check
 
-#### 6.1 Test Information
+#### 7.1 Test Information
 
 - **Test Type**: SSH Connectivity Test for All VMs
 - **Command Executed**: `uname -a` (to verify system information)
 
-#### 6.2 Test Result Information
+#### 7.2 Test Result Information
 
 - **Status**: ✅ **SUCCESS**
-**Summary**: 3/3 VMs accessible via SSH
+### Test Case 8: Migrate NLBs to the cloud infra
 
-### Test Case 7: Migrate NLBs to the cloud infra
-
-#### 7.1 API Request Information
+#### 8.1 API Request Information
 
 - **API Endpoint**: `POST /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb`
 - **Purpose**: Create target load balancers mapped from source HAProxy configuration
 
-#### 7.2 API Response Information
+#### 8.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
 - **NLB Status**: `created`
@@ -4312,46 +6154,50 @@
   "nlbList": [
     {
       "resourceType": "",
-      "id": "my-ng-influxdb-back",
-      "cspResourceName": "tb1r38gq84m6n07noqfm",
-      "cspResourceId": "tb1r38gq84m6n07noqfm",
-      "name": "my-ng-influxdb-back",
+      "id": "my03-ng-influxdb-back",
+      "cspResourceName": "tbcn9co7segnj4qfq5ok",
+      "cspResourceId": "tbcn9co7segnj4qfq5ok",
+      "name": "my03-ng-influxdb-back",
       "connectionName": "gcp-asia-northeast3",
       "connectionConfig": {
-        "configName": "",
-        "providerName": "",
-        "driverName": "",
-        "credentialName": "",
-        "credentialHolder": "",
-        "regionZoneInfoName": "",
+        "configName": "gcp-asia-northeast3",
+        "providerName": "gcp",
+        "driverName": "gcp-driver-v1.0.so",
+        "credentialName": "gcp",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "gcp-asia-northeast3",
         "regionZoneInfo": {
-          "assignedRegion": "",
-          "assignedZone": ""
+          "assignedRegion": "asia-northeast3",
+          "assignedZone": "asia-northeast3-a"
         },
         "regionDetail": {
-          "regionId": "",
-          "regionName": "",
-          "description": "",
+          "regionId": "asia-northeast3",
+          "regionName": "asia-northeast3",
+          "description": "Seoul South Korea",
           "location": {
-            "display": "",
-            "latitude": 0,
-            "longitude": 0
+            "display": "South Korea (Seoul)",
+            "latitude": 37.2,
+            "longitude": 127
           },
-          "zones": null
+          "zones": [
+            "asia-northeast3-a",
+            "asia-northeast3-b",
+            "asia-northeast3-c"
+          ]
         },
-        "regionRepresentative": false,
-        "verified": false
+        "regionRepresentative": true,
+        "verified": true
       },
       "type": "",
       "scope": "REGION",
       "listener": {
         "protocol": "TCP",
-        "ip": "34.47.73.75",
+        "ip": "34.50.44.206",
         "port": "8086",
         "keyValueList": [
           {
             "key": "IPAddress",
-            "value": "34.47.73.75"
+            "value": "34.50.44.206"
           },
           {
             "key": "IPProtocol",
@@ -4371,7 +6217,7 @@
           },
           {
             "key": "CreationTimestamp",
-            "value": "2026-07-13T02:20:05.554-07:00"
+            "value": "2026-10-12T03:59:02.341-07:00"
           },
           {
             "key": "ExternalManagedBackendBucketMigrationTestingPercentage",
@@ -4379,11 +6225,11 @@
           },
           {
             "key": "Fingerprint",
-            "value": "IrMhuTszlUc="
+            "value": "ScaBAhNGkYY="
           },
           {
             "key": "Id",
-            "value": "3947952749181211434"
+            "value": "7721215006290805657"
           },
           {
             "key": "IsMirroringCollector",
@@ -4403,7 +6249,7 @@
           },
           {
             "key": "Name",
-            "value": "tb1r38gq84m6n07noqfm"
+            "value": "tbcn9co7segnj4qfq5ok"
           },
           {
             "key": "NetworkTier",
@@ -4427,25 +6273,25 @@
           },
           {
             "key": "SelfLink",
-            "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/forwardingRules/tb1r38gq84m6n07noqfm"
+            "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/forwardingRules/tbcn9co7segnj4qfq5ok"
           },
           {
             "key": "SelfLinkWithId",
-            "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/forwardingRules/3947952749181211434"
+            "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/forwardingRules/7721215006290805657"
           },
           {
             "key": "Target",
-            "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/targetPools/tb1r38gq84m6n07noqfm"
+            "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/targetPools/tbcn9co7segnj4qfq5ok"
           }
         ]
       },
       "targetGroup": {
         "protocol": "TCP",
         "port": "8086",
-        "nodeGroupId": "my-ng-influxdb-back",
+        "nodeGroupId": "my03-ng-influxdb-back",
         "nodes": [
-          "my-ng-influxdb-back-1",
-          "my-ng-influxdb-back-2"
+          "my03-ng-influxdb-back-1",
+          "my03-ng-influxdb-back-2"
         ]
       },
       "healthChecker": {
@@ -4471,13 +6317,13 @@
 
 </details>
 
-### Test Case 8: Get a list of migrated NLBs
+### Test Case 9: Get a list of migrated NLBs
 
-#### 8.1 API Request Information
+#### 9.1 API Request Information
 
 - **API Endpoint**: `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb`
 
-#### 8.2 API Response Information
+#### 9.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
 
@@ -4490,46 +6336,50 @@
 [
   {
     "resourceType": "",
-    "id": "my-ng-influxdb-back",
-    "cspResourceName": "tb1r38gq84m6n07noqfm",
-    "cspResourceId": "tb1r38gq84m6n07noqfm",
-    "name": "my-ng-influxdb-back",
+    "id": "my03-ng-influxdb-back",
+    "cspResourceName": "tbcn9co7segnj4qfq5ok",
+    "cspResourceId": "tbcn9co7segnj4qfq5ok",
+    "name": "my03-ng-influxdb-back",
     "connectionName": "gcp-asia-northeast3",
     "connectionConfig": {
-      "configName": "",
-      "providerName": "",
-      "driverName": "",
-      "credentialName": "",
-      "credentialHolder": "",
-      "regionZoneInfoName": "",
+      "configName": "gcp-asia-northeast3",
+      "providerName": "gcp",
+      "driverName": "gcp-driver-v1.0.so",
+      "credentialName": "gcp",
+      "credentialHolder": "admin",
+      "regionZoneInfoName": "gcp-asia-northeast3",
       "regionZoneInfo": {
-        "assignedRegion": "",
-        "assignedZone": ""
+        "assignedRegion": "asia-northeast3",
+        "assignedZone": "asia-northeast3-a"
       },
       "regionDetail": {
-        "regionId": "",
-        "regionName": "",
-        "description": "",
+        "regionId": "asia-northeast3",
+        "regionName": "asia-northeast3",
+        "description": "Seoul South Korea",
         "location": {
-          "display": "",
-          "latitude": 0,
-          "longitude": 0
+          "display": "South Korea (Seoul)",
+          "latitude": 37.2,
+          "longitude": 127
         },
-        "zones": null
+        "zones": [
+          "asia-northeast3-a",
+          "asia-northeast3-b",
+          "asia-northeast3-c"
+        ]
       },
-      "regionRepresentative": false,
-      "verified": false
+      "regionRepresentative": true,
+      "verified": true
     },
     "type": "",
     "scope": "REGION",
     "listener": {
       "protocol": "TCP",
-      "ip": "34.47.73.75",
+      "ip": "34.50.44.206",
       "port": "8086",
       "keyValueList": [
         {
           "key": "IPAddress",
-          "value": "34.47.73.75"
+          "value": "34.50.44.206"
         },
         {
           "key": "IPProtocol",
@@ -4549,7 +6399,7 @@
         },
         {
           "key": "CreationTimestamp",
-          "value": "2026-07-13T02:20:05.554-07:00"
+          "value": "2026-10-12T03:59:02.341-07:00"
         },
         {
           "key": "ExternalManagedBackendBucketMigrationTestingPercentage",
@@ -4557,11 +6407,11 @@
         },
         {
           "key": "Fingerprint",
-          "value": "IrMhuTszlUc="
+          "value": "ScaBAhNGkYY="
         },
         {
           "key": "Id",
-          "value": "3947952749181211434"
+          "value": "7721215006290805657"
         },
         {
           "key": "IsMirroringCollector",
@@ -4581,7 +6431,7 @@
         },
         {
           "key": "Name",
-          "value": "tb1r38gq84m6n07noqfm"
+          "value": "tbcn9co7segnj4qfq5ok"
         },
         {
           "key": "NetworkTier",
@@ -4605,25 +6455,25 @@
         },
         {
           "key": "SelfLink",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/forwardingRules/tb1r38gq84m6n07noqfm"
+          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/forwardingRules/tbcn9co7segnj4qfq5ok"
         },
         {
           "key": "SelfLinkWithId",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/forwardingRules/3947952749181211434"
+          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/forwardingRules/7721215006290805657"
         },
         {
           "key": "Target",
-          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/targetPools/tb1r38gq84m6n07noqfm"
+          "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/targetPools/tbcn9co7segnj4qfq5ok"
         }
       ]
     },
     "targetGroup": {
       "protocol": "TCP",
       "port": "8086",
-      "nodeGroupId": "my-ng-influxdb-back",
+      "nodeGroupId": "my03-ng-influxdb-back",
       "nodes": [
-        "my-ng-influxdb-back-1",
-        "my-ng-influxdb-back-2"
+        "my03-ng-influxdb-back-1",
+        "my03-ng-influxdb-back-2"
       ]
     },
     "healthChecker": {
@@ -4648,13 +6498,13 @@
 
 </details>
 
-### Test Case 9: Get details of a specific migrated NLB
+### Test Case 10: Get details of a specific migrated NLB
 
-#### 9.1 API Request Information
+#### 10.1 API Request Information
 
 - **API Endpoint**: `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}`
 
-#### 9.2 API Response Information
+#### 10.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
 
@@ -4666,46 +6516,50 @@
 ```json
 {
   "resourceType": "",
-  "id": "my-ng-influxdb-back",
-  "cspResourceName": "tb1r38gq84m6n07noqfm",
-  "cspResourceId": "tb1r38gq84m6n07noqfm",
-  "name": "my-ng-influxdb-back",
+  "id": "my03-ng-influxdb-back",
+  "cspResourceName": "tbcn9co7segnj4qfq5ok",
+  "cspResourceId": "tbcn9co7segnj4qfq5ok",
+  "name": "my03-ng-influxdb-back",
   "connectionName": "gcp-asia-northeast3",
   "connectionConfig": {
-    "configName": "",
-    "providerName": "",
-    "driverName": "",
-    "credentialName": "",
-    "credentialHolder": "",
-    "regionZoneInfoName": "",
+    "configName": "gcp-asia-northeast3",
+    "providerName": "gcp",
+    "driverName": "gcp-driver-v1.0.so",
+    "credentialName": "gcp",
+    "credentialHolder": "admin",
+    "regionZoneInfoName": "gcp-asia-northeast3",
     "regionZoneInfo": {
-      "assignedRegion": "",
-      "assignedZone": ""
+      "assignedRegion": "asia-northeast3",
+      "assignedZone": "asia-northeast3-a"
     },
     "regionDetail": {
-      "regionId": "",
-      "regionName": "",
-      "description": "",
+      "regionId": "asia-northeast3",
+      "regionName": "asia-northeast3",
+      "description": "Seoul South Korea",
       "location": {
-        "display": "",
-        "latitude": 0,
-        "longitude": 0
+        "display": "South Korea (Seoul)",
+        "latitude": 37.2,
+        "longitude": 127
       },
-      "zones": null
+      "zones": [
+        "asia-northeast3-a",
+        "asia-northeast3-b",
+        "asia-northeast3-c"
+      ]
     },
-    "regionRepresentative": false,
-    "verified": false
+    "regionRepresentative": true,
+    "verified": true
   },
   "type": "",
   "scope": "REGION",
   "listener": {
     "protocol": "TCP",
-    "ip": "34.47.73.75",
+    "ip": "34.50.44.206",
     "port": "8086",
     "keyValueList": [
       {
         "key": "IPAddress",
-        "value": "34.47.73.75"
+        "value": "34.50.44.206"
       },
       {
         "key": "IPProtocol",
@@ -4725,7 +6579,7 @@
       },
       {
         "key": "CreationTimestamp",
-        "value": "2026-07-13T02:20:05.554-07:00"
+        "value": "2026-10-12T03:59:02.341-07:00"
       },
       {
         "key": "ExternalManagedBackendBucketMigrationTestingPercentage",
@@ -4733,11 +6587,11 @@
       },
       {
         "key": "Fingerprint",
-        "value": "IrMhuTszlUc="
+        "value": "ScaBAhNGkYY="
       },
       {
         "key": "Id",
-        "value": "3947952749181211434"
+        "value": "7721215006290805657"
       },
       {
         "key": "IsMirroringCollector",
@@ -4757,7 +6611,7 @@
       },
       {
         "key": "Name",
-        "value": "tb1r38gq84m6n07noqfm"
+        "value": "tbcn9co7segnj4qfq5ok"
       },
       {
         "key": "NetworkTier",
@@ -4781,25 +6635,25 @@
       },
       {
         "key": "SelfLink",
-        "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/forwardingRules/tb1r38gq84m6n07noqfm"
+        "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/forwardingRules/tbcn9co7segnj4qfq5ok"
       },
       {
         "key": "SelfLinkWithId",
-        "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/forwardingRules/3947952749181211434"
+        "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/forwardingRules/7721215006290805657"
       },
       {
         "key": "Target",
-        "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/targetPools/tb1r38gq84m6n07noqfm"
+        "value": "https://www.googleapis.com/compute/v1/projects/ykkim-etri/regions/asia-northeast3/targetPools/tbcn9co7segnj4qfq5ok"
       }
     ]
   },
   "targetGroup": {
     "protocol": "TCP",
     "port": "8086",
-    "nodeGroupId": "my-ng-influxdb-back",
+    "nodeGroupId": "my03-ng-influxdb-back",
     "nodes": [
-      "my-ng-influxdb-back-1",
-      "my-ng-influxdb-back-2"
+      "my03-ng-influxdb-back-1",
+      "my03-ng-influxdb-back-2"
     ]
   },
   "healthChecker": {
@@ -4823,40 +6677,48 @@
 
 </details>
 
-### Test Case 10: NLB Load Balancing Verification
+### Test Case 11: NLB Load Balancing Verification
 
-#### 10.1 Test Information
+#### 11.1 Test Information
 
 - **Test Type**: Active Traffic Distribution Verification via NLB Endpoint
 - **Target Port**: `8086` (Backend Mock Web Server)
 - **Listener Port**: `9999` (NLB Listener)
 - **Requests Sent**: 15 HTTP GET requests
 
-#### 10.2 Test Result Information
+#### 11.2 Test Result Information
 
 - **Status**: ✅ **SUCCESS**
 
-**Summary**: Load balancing confirmed: traffic distributed across 2 unique VMs
+### Test Case 12: Target Infrastructure Summary
 
-### Test Case 11: Target Infrastructure Summary
-
-#### 11.1 API Request Information
+#### 12.1 API Request Information
 
 - **API Endpoint**: `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}?format=md`
 
-#### 11.2 API Response Information
+#### 12.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
 
-**Target Infrastructure Summary**:
+### Test Case 13: Migration Report
+
+#### 13.1 API Request Information
+
+- **API Endpoint**: `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}`
+
+#### 13.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+
+**Migration Report**:
 
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-07-13 09:22:10
+**Generated At:** 2026-10-12 11:01:03
 
 **Namespace:** mig01
 
-**Infra Name:** my-infra101
+**Infra Name:** my03-infra101
 
 ---
 
@@ -4864,7 +6726,7 @@
 
 | Property | Value |
 |----------|-------|
-| **Infra Name** | my-infra101 |
+| **Infra Name** | my03-infra101 |
 | **Description** | NLB-aware recommended infrastructure for cloud migration |
 | **Status** | Running:3 (R:3/3) |
 | **Target Cloud** | GCP |
@@ -4880,35 +6742,34 @@
 
 | Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
-| e2-highcpu-2 | 2 | 2.0 | - | x86_64 |  | $0.0635 | 1 |
-| e2-standard-4 | 4 | 15.6 | - | x86_64 |  | $0.1719 | 2 |
+| n4-standard-4 | 4 | 15.6 | - | x86_64 |  | $0.2330 | 2 |
+| n1-highcpu-2 | 2 | 1.8 | - | x86_64 |  | $0.0910 | 1 |
 
 ### VM Images
 
 | Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 |------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
-| https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623 | Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-06-23 | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 10 GB | 1 |
-| https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623 | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23 | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 10 GB | 2 |
+| https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260820 | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20 | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 10 GB | 3 |
 
 ### Virtual Machines
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | tb1pu9f78qonoie5ajod | Running | 2 vCPU, 2.0 GiB | Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-06-23 (Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-06-23) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 34.64.195.188<br>**Private IP:** 10.0.1.4<br>**SGs:** my-mig-sg-02<br>**SSH:** my-mig-sshkey-01 |
-| my-ng-influxdb-back-1 | tbrah6jesqlv0jaeqia5 | Running | 4 vCPU, 15.6 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 34.47.124.15<br>**Private IP:** 10.0.1.3<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
-| my-ng-influxdb-back-2 | tbq36hhnk3jjdfpfuu73 | Running | 4 vCPU, 15.6 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 8.230.19.201<br>**Private IP:** 10.0.1.2<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
+| my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | tb34cj51eke012cm5vec | Running | 2 vCPU, 1.8 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20) | **VNet:** my03-mig-vnet-01<br>**Subnet:** my03-mig-subnet-01<br>**Public IP:** 34.50.50.20<br>**Private IP:** 10.0.1.3<br>**SGs:** my03-mig-sg-02<br>**SSH:** my03-mig-sshkey-01 |
+| my03-ng-influxdb-back-1 | tb6iphm7mug3sutkbmrj | Running | 4 vCPU, 15.6 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20) | **VNet:** my03-mig-vnet-01<br>**Subnet:** my03-mig-subnet-01<br>**Public IP:** 8.230.11.202<br>**Private IP:** 10.0.1.4<br>**SGs:** my03-mig-sg-01<br>**SSH:** my03-mig-sshkey-01 |
+| my03-ng-influxdb-back-2 | tb0vbtatce8oe2gk7l55 | Running | 4 vCPU, 15.6 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-08-20) | **VNet:** my03-mig-vnet-01<br>**Subnet:** my03-mig-subnet-01<br>**Public IP:** 34.64.253.99<br>**Private IP:** 10.0.1.2<br>**SGs:** my03-mig-sg-01<br>**SSH:** my03-mig-sshkey-01 |
 
 
 ## Network Resources
 
 ### Virtual Networks (VPC/VNet)
 
-#### VNet: my-mig-vnet-01
+#### VNet: my03-mig-vnet-01
 
 | Property | Value |
 |----------|-------|
-| **Name** | my-mig-vnet-01 |
-| **CSP VNet ID** | tb6qc3e779ji5e5kqg7k |
+| **Name** | my03-mig-vnet-01 |
+| **CSP VNet ID** | tb6ei259h9mvdch4rumt |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | gcp-asia-northeast3 |
 | **Subnet Count** | 1 |
@@ -4917,7 +6778,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my-mig-subnet-01 | tb08efe9m19o55jbt2pp | 10.0.1.0/24 |  |
+| my03-mig-subnet-01 | tbvssd98bnj6fq03668o | 10.0.1.0/24 |  |
 
 
 ## Security Resources
@@ -4926,18 +6787,18 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my-mig-sshkey-01 | tb0ffm8vtk5l3ahog7h1 |  |  |
+| my03-mig-sshkey-01 | tbo0ov0jqt6lbp7d7e4m |  |  |
 
 ### Security Groups
 
-#### Security Group: my-mig-sg-01
+#### Security Group: my03-mig-sg-01
 
 | Property | Value |
 |----------|-------|
-| **Name** | my-mig-sg-01 |
-| **CSP Security Group ID** | tb74avigphtcuf3958vc |
-| **VNet** | my-mig-vnet-01 |
-| **Rule Count** | 5 rules |
+| **Name** | my03-mig-sg-01 |
+| **CSP Security Group ID** | tbjs9h2h9ossf4jdga7u |
+| **VNet** | my03-mig-vnet-01 |
+| **Rule Count** | 6 rules |
 
 **Security Group Rules:**
 
@@ -4946,16 +6807,17 @@
 | inbound | TCP | 22 | 0.0.0.0/0 |
 | inbound | TCP | 8086 | 10.0.0.0/16 |
 | inbound | ALL |  | 10.0.0.0/16 |
+| inbound | TCP | 9999 | 0.0.0.0/0 |
 | inbound | TCP | 8086 | 0.0.0.0/0 |
 | outbound | ALL |  | 0.0.0.0/0 |
 
-#### Security Group: my-mig-sg-02
+#### Security Group: my03-mig-sg-02
 
 | Property | Value |
 |----------|-------|
-| **Name** | my-mig-sg-02 |
-| **CSP Security Group ID** | tb2kpd806s3hu3mifdtj |
-| **VNet** | my-mig-vnet-01 |
+| **Name** | my03-mig-sg-02 |
+| **CSP Security Group ID** | tbk826ghvc2um7m13tup |
+| **VNet** | my03-mig-vnet-01 |
 | **Rule Count** | 4 rules |
 
 **Security Group Rules:**
@@ -4974,270 +6836,50 @@
 
 | Period | Cost (USD) |
 |--------|------------|
-| **Per Hour** | $0.4074 |
-| **Per Day** | $9.78 |
-| **Per Month (30 days)** | $293.32 |
+| **Per Hour** | $0.5569 |
+| **Per Day** | $13.37 |
+| **Per Month (30 days)** | $400.97 |
 
 ### Cost by Region
 
 | CSP | Region | VM Count | Cost/Hour (USD) | Cost/Month (USD) |
 |-----|--------|----------|-----------------|------------------|
-| GCP | asia-northeast3 | 3 | $0.4074 | $293.32 |
+| GCP | asia-northeast3 | 3 | $0.5569 | $400.97 |
 
 ### Cost by Virtual Machine
 
 | VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
 |---------|------|-----------------|------------------|
-| my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | e2-highcpu-2 | $0.0635 | $45.74 |
-| my-ng-influxdb-back-1 | e2-standard-4 | $0.1719 | $123.79 |
-| my-ng-influxdb-back-2 | e2-standard-4 | $0.1719 | $123.79 |
+| my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | n1-highcpu-2 | $0.0910 | $65.51 |
+| my03-ng-influxdb-back-1 | n4-standard-4 | $0.2330 | $167.73 |
+| my03-ng-influxdb-back-2 | n4-standard-4 | $0.2330 | $167.73 |
 
 
 
 
-### Test Case 12: Migration Report
-
-#### 12.1 API Request Information
-
-- **API Endpoint**: `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}`
-
-#### 12.2 API Response Information
-
-- **Status**: ✅ **SUCCESS**
-
-**Migration Report**:
-
-# 🚀 Infrastructure Migration Report
-
-This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
-
-*Report generated: 2026-07-13 09:22:16*
-
----
-
-## 📊 Migration Summary
-
-**Target Cloud:** GCP
-
-**Target Region:** asia-northeast3
-
-**Namespace:** mig01 | **Infra ID:** my-infra101
-
-**Migration Status:** Completed
-
-**Total Servers:** 3
-
-**Migrated Servers:** 3
-
-**💰 Estimated Monthly Cost:** $293.32 USD
-
----
-
-## 📦 Migrated Resources Overview
-
-Summary of key infrastructure resources created or configured in the target cloud:
-
-| # | Resource Type | Count | Status | Details |
-|---|---------------|-------|--------|----------|
-| 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
-| 2 | **VM Spec** | 2 | ✅ Selected | e2-standard-4, e2-highcpu-2 |
-| 3 | **VM OS Image** | 2 | ✅ Selected | Ubuntu 22.04 |
-| 4 | **VNet (VPC)** | 1 | ✅ Created | my-mig-vnet-01, CIDR: 10.0.0.0/21 |
-| 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my-mig-vnet-01) |
-| 6 | **Security Group** | 2 security groups | ✅ Created | Total 9 rules in 2 sgs |
-| 7 | **SSH Key** | 1 keys | ✅ Created | For VM access control |
-
----
-
-## 💻 Virtual Machines (VMs)
-
-**Summary:** 3 VM(s) have been successfully created in the target cloud, migrated from 3 source node(s) in the on-premise infrastructure.
-
-| No. | Migrated VM | Source Server |
-|-----|-------------|---------------|
-| 1 | **VM Name:** my-ng-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** tb1pu9f78qonoie5ajod<br>**Label(sourceMachineId):** ng-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** ng-ec268ed7-821e-9d73-e79f |
-| 2 | **VM Name:** my-ng-influxdb-back-1<br>**VM ID:** tbrah6jesqlv0jaeqia5<br>**Label(sourceMachineId):** ng | **Hostname:** N/A<br>**Machine ID:** ng |
-| 3 | **VM Name:** my-ng-influxdb-back-2<br>**VM ID:** tbq36hhnk3jjdfpfuu73<br>**Label(sourceMachineId):** ng | **Hostname:** N/A<br>**Machine ID:** ng |
-
----
-
-## ⚙️ VM Specs
-
-**Summary:** 2 VM specification(s) have been selected and used for the migrated VMs.
-
-| No. | Migrated VM | VM Spec | Source Server | Source Server Spec |
-|-----|-------------|---------|---------------|--------------------|
-| 1 | my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** e2-highcpu-2<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** ng-ec268ed7-821e-9d73-e79f | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
-| 2 | my-ng-influxdb-back-1 | **Spec ID:** e2-standard-4<br>**vCPUs:** 4<br>**Memory:** 15.6 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** ng | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
-| 3 | my-ng-influxdb-back-2 | **Spec ID:** e2-standard-4<br>**vCPUs:** 4<br>**Memory:** 15.6 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** ng | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
-
----
-
-## 💿 VM OS Images
-
-**Summary:** 2 OS image(s) have been selected and used for the migrated VMs.
-
-| No. | Migrated VM | VM OS Image Info | Source Server | Source OS |
-|-----|-------------|------------------|---------------|-----------|
-| 1 | my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** https://www.googleapis.com/compute/v1/projects/ubuntu-os-accelerator-images/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260623<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-06-23 | **Hostname:** N/A<br>**Machine ID:** ng-ec268ed7-821e-9d73-e79f | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
-| 2 | my-ng-influxdb-back-1 | **Image ID:** https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23 | **Hostname:** N/A<br>**Machine ID:** ng | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
-| 3 | my-ng-influxdb-back-2 | **Image ID:** https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20260623<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23 | **Hostname:** N/A<br>**Machine ID:** ng | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
-
----
-
-## 🔒 Security Groups
-
-**Summary:** 2 security group(s) with 9 security rule(s) have been created and configured for the migrated VMs.
-
-### Security Group: my-mig-sg-01
-
-**CSP ID:** tb74avigphtcuf3958vc | **VNet:** my-mig-vnet-01 | **Rules:** 5
-
-**Assigned VMs:**
-
-- **VM:** my-ng-influxdb-back-1
-  - **Source Server:** **Hostname:** N/A, **Machine ID:** ng
-- **VM:** my-ng-influxdb-back-2
-  - **Source Server:** **Hostname:** N/A, **Machine ID:** ng
-
-**Security Rules:**
-
-| No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
-|-----|-----------|----------|------|------|----------------------|------|
-| 1 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
-| 2 | inbound | TCP | 8086 | 10.0.0.0/16 | inbound tcp 8086 from 10.0.0.0/16 | Migrated from source |
-| 3 | inbound | ALL |  | 10.0.0.0/16 | inbound * * from 10.0.0.0/16 | Migrated from source |
-| 4 | inbound | TCP | 8086 | 0.0.0.0/0 | - | Created by system |
-| 5 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
-
-### Security Group: my-mig-sg-02
-
-**CSP ID:** tb2kpd806s3hu3mifdtj | **VNet:** my-mig-vnet-01 | **Rules:** 4
-
-**Assigned VMs:**
-
-- **VM:** my-ng-ec268ed7-821e-9d73-e79f-961262161624-1
-  - **Source Server:** **Hostname:** N/A, **Machine ID:** ng-ec268ed7-821e-9d73-e79f
-
-**Security Rules:**
-
-| No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
-|-----|-----------|----------|------|------|----------------------|------|
-| 1 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
-| 2 | inbound | TCP | 9999 | 0.0.0.0/0 | inbound tcp 9999 | Migrated from source |
-| 3 | inbound | ALL |  | 10.0.0.0/16 | inbound * * from 10.0.0.0/16 | Migrated from source |
-| 4 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
-
----
-
-## 🌐 VPC(VNet) and Subnets
-
-**Summary:** Virtual Private Cloud (VPC) and subnet infrastructure have been created based on the source node network information.
-
-### VPC(VNet)
-
-| No. | VPC(VNet) | CIDR Block |
-|-----|-----------|------------|
-| 1 | **Name:** my-mig-vnet-01<br>**ID:** tb6qc3e779ji5e5kqg7k | 10.0.0.0/21 |
-
-### Subnets
-
-| No. | Subnet | CIDR Block | Associated VPC(VNet) |
-|-----|--------|------------|----------------------|
-| 1 | **Name:** my-mig-subnet-01<br>**ID:** tb08efe9m19o55jbt2pp | 10.0.1.0/24 | my-mig-vnet-01 |
-
-### Source Network Information
-
-**CIDR:** 10.0.1.0/24 | **Gateway:** 10.0.1.1 | **Connected Servers:** 3
-
-### Network Details by Server (3 servers)
-
-#### 1. ip-10-0-1-30
-
-**Active Interfaces:**
-
-| Interface | IP Address | State |
-|-----------|------------|-------|
-| lo | 127.0.0.1/8 | up |
-
-#### 2. ip-10-0-1-221
-
-**Active Interfaces:**
-
-| Interface | IP Address | State |
-|-----------|------------|-------|
-| lo | 127.0.0.1/8 | up |
-
-#### 3. ip-10-0-1-138
-
-**Active Interfaces:**
-
-| Interface | IP Address | State |
-|-----------|------------|-------|
-| lo | 127.0.0.1/8 | up |
-
----
-
-## 🔑 SSH Keys
-
-**Summary:** 1 SSH key(s) have been created for secure access to the migrated VMs.
-
-> **Note:** Due to security constraints and operational efficiency, it is challenging to transfer existing SSH keys from the source infrastructure. Therefore, new SSH key(s) have been generated and are commonly used across all migrated VMs. This approach ensures secure access while simplifying key management in the cloud environment.
-
-| No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
-|-----|--------------|------------|-------------|-------|
-| 1 | my-mig-sshkey-01 | tb0ffm8vtk5l3ahog7h1 |  | Used by all 3 VMs |
-
----
-
-## 💰 Cost Summary
-
-### Total Estimated Costs
-
-| Period | Cost (USD) |
-|--------|------------|
-| Hourly | $0.4074 |
-| Daily | $9.78 |
-| Monthly | $293.32 |
-| Yearly | $3519.88 |
-
-### Cost Breakdown by Component
-
-| Component | Spec | Monthly Cost | Percentage |
-|-----------|------|--------------|------------|
-| ip-10-0-1-30 (migrated) | e2-highcpu-2 | $45.74 | 15.6% |
-
----
-
-
----
-
-*Report generated by CM-Beetle*
-
-
-### Test Case 13: Delete the migrated NLBs
-
-#### 13.1 API Request Information
-
-- **API Endpoint**: `DELETE /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}`
-
-#### 13.2 API Response Information
-
-- **Status**: ✅ **SUCCESS**
-### Test Case 14: Delete the migrated computing infra
+### Test Case 14: Delete the migrated NLBs
 
 #### 14.1 API Request Information
 
-- **API Endpoint**: `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}?option=terminate`
+- **API Endpoint**: `DELETE /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}`
 
 #### 14.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+### Test Case 15: Delete the migrated computing infra
+
+#### 15.1 API Request Information
+
+- **API Endpoint**: `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}?option=terminate`
+
+#### 15.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
 **Response Body**:
 
 ```json
 {
-  "message": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: my-infra101)",
+  "message": "Infrastructure and resources deleted successfully (nsId: mig01, infraId: my03-infra101)",
   "success": true
 }
 ```
