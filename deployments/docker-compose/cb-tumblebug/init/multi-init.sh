@@ -7,9 +7,25 @@ SCRIPT_DIR=$(cd $(dirname "$0") && pwd)
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "CB-Tumblebug Initialization"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-read -s -p "Enter the password for credentials.yaml.enc: " MULTI_INIT_PWD
-echo ""
-export MULTI_INIT_PWD
+
+# Skip the password prompt when a decryption key source already exists
+# (MULTI_INIT_PWD env, ~/.cloud-barista/.tmp_enc_key, or non-interactive stdin)
+if [ -n "$MULTI_INIT_PWD" ]; then
+    echo "Using password from MULTI_INIT_PWD environment variable."
+elif [ -f "$HOME/.cloud-barista/.tmp_enc_key" ]; then
+    echo "Using decryption key file: ~/.cloud-barista/.tmp_enc_key"
+elif [ -t 0 ]; then
+    echo "(Tip: save the key to ~/.cloud-barista/.tmp_enc_key via 'make enc-cred' to skip this prompt)"
+    read -s -p "Enter the password for credentials.yaml.enc: " MULTI_INIT_PWD
+    echo ""
+    if [ -z "$MULTI_INIT_PWD" ]; then
+        echo "No password entered — you will be prompted again during credential registration."
+    fi
+else
+    echo "Warning: no password source available in non-interactive mode (set MULTI_INIT_PWD or ~/.cloud-barista/.tmp_enc_key)."
+fi
+# Export only when non-empty (an empty value would trigger a doomed decrypt attempt)
+[ -n "$MULTI_INIT_PWD" ] && export MULTI_INIT_PWD || true
 
 # 1. Step 1 script execution code is deprecated (to be removed) for operational simplicity:
 #    CB-Tumblebug server registers credentials to OpenBao automatically during Step 2.
@@ -31,11 +47,12 @@ export MULTI_INIT_PWD
 # if [ $? -ne 0 ]; then exit 1; fi
 
 # 2. Tumblebug
+# Extra arguments are forwarded to init.py (e.g., -y for headless runs)
 if [ -f "$SCRIPT_DIR/init.sh" ]; then
     echo ""
     echo "Step 2. Registering credentials to Tumblebug..."
     chmod +x "$SCRIPT_DIR/init.sh" 2>/dev/null || true
-    bash "$SCRIPT_DIR/init.sh"
+    bash "$SCRIPT_DIR/init.sh" "$@"
     if [ $? -ne 0 ]; then exit 1; fi
 else
     echo "Error: Cannot find init.sh"

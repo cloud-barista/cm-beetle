@@ -60,7 +60,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.13.3
+    image: cloudbaristaorg/cb-tumblebug:0.13.5
     container_name: cb-tumblebug
     # build:
     #   context: ${PROJECT_ROOT}/../cb-tumblebug
@@ -99,6 +99,7 @@ services:
       - TB_POSTGRES_DATABASE=${POSTGRES_DB:-tumblebug}
       - TB_POSTGRES_USER=${POSTGRES_USER:-tumblebug}
       - TB_POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tumblebug}
+      # - TB_POSTGRES_SSLMODE=disable
       - TB_SPIDER_USERNAME=${SP_API_USERNAME:?Please set SP_API_USERNAME}
       - TB_SPIDER_PASSWORD=${SP_API_PASSWORD:?Please set SP_API_PASSWORD}
       - TB_TERRARIUM_API_USERNAME=${TERRARIUM_API_USERNAME:?Please set TERRARIUM_API_USERNAME}
@@ -118,14 +119,21 @@ services:
       # - TB_LOGFILE_COMPRESS=false
       - TB_LOGLEVEL=debug
       # - TB_LOGWRITER=both
+      # - TB_LOGFORMAT=console  # 'json' for log collectors (stdout format)
+      # - TB_LOG_MASKING_ENABLED=true   # enable/disable sensitive data masking (default: true)
+      # - TB_REQUEST_DUMP_ENABLED=false
+      # - TB_READYZ_CHECK_DEPS=true  # readyz also verifies etcd/PostgreSQL connectivity
       # - TB_NODE_ENV=development
+      # Graceful shutdown timeout (raise stop_grace_period together when increasing)
+      # - TB_SHUTDOWN_TIMEOUT_MS=10000
       - VAULT_ADDR=http://openbao:8200
       - VAULT_TOKEN=${VAULT_TOKEN:-}
+    restart: unless-stopped
+    # stop_grace_period: 10s
     healthcheck:
       # for CB-Tumblebug
       test: ["CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz"]
       <<: *default-healthcheck
-    restart: unless-stopped
 
   # CB-Tumblebug ETCD
   # This is used for storing CB-Tumblebug metadata.
@@ -167,6 +175,9 @@ services:
       - stderr
       - --auth-token
       - simple
+      - --quota-backend-bytes=8589934592
+      - --auto-compaction-mode=periodic
+      - --auto-compaction-retention=1h
     healthcheck:
       # for etcd
       test: ["CMD", "/usr/local/bin/etcdctl", "endpoint", "health", "--endpoints=http://localhost:2379"]
@@ -199,7 +210,7 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.13.4
+    image: cloudbaristaorg/cb-spider:0.13.14
     container_name: cb-spider
     # build:
     #   context: ${PROJECT_ROOT}/../cb-spider
@@ -262,7 +273,7 @@ services:
   # CB-MapUI
   # This is the Map-based client for CB-Tumblebug.
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.13.7
+    image: cloudbaristaorg/cb-mapui:0.13.13
     container_name: cb-mapui
     # build:
     #   context: ${PROJECT_ROOT}/../cb-mapui
@@ -294,6 +305,7 @@ services:
   # TB-MCP (Tumblebug Model Context Protocol Server)
   # This provides MCP interface for CB-Tumblebug to work with AI assistants like Claude
   # cb-tumblebug-mcp-server:
+  #   # image: cloudbaristaorg/cb-tumblebug-mcp-server:0.13.5
   #   build:
   #     context: ${PROJECT_ROOT}/../cb-tumblebug/src/interface/mcp
   #     dockerfile: Dockerfile

@@ -85,6 +85,8 @@ github.com/cloud-barista/cb-log v0.9.0 h1:pti3gxl85NyqaEiQDF8Dba4zniOy9+6XMy7Jzv
 github.com/cloud-barista/cb-log v0.9.0/go.mod h1:nGgfTFMPwl1MpCO3FBjexUkNdOYA0BNJoyM9Pd0lMms=
 github.com/cloud-barista/cb-tumblebug v0.13.3 h1:xTg5qT7XcPyYpSs9td7ANjtKsUBPttBAPsxOfSgM9jw=
 github.com/cloud-barista/cb-tumblebug v0.13.3/go.mod h1:MD92UfL6ltQKGTRG0PlCv0sbkNYtgIfUNhuZxy3ms34=
+github.com/cloud-barista/cb-tumblebug v0.13.5 h1:WfbXF3gTiT/5Pw7M0BTf7FgA2029zU8h3W10RcWo8UE=
+github.com/cloud-barista/cb-tumblebug v0.13.5/go.mod h1:mjvFXCO61bx8ntgyi1Eai3GWseflH8SUi9SJEJhGKRE=
 github.com/cloud-barista/cm-beetle/transx v0.1.3 h1:g8ZhHOuj/1zphRV+xA7mdVE73RWhjBcnMb3Ckckzk4c=
 github.com/cloud-barista/cm-beetle/transx v0.1.3/go.mod h1:Jb8XAIXp7qJgSpWm0GM/EX7N6s/fB5iMMeMEkVA55O4=
 github.com/cloud-barista/ktcloudvpc-sdk-go v0.0.0-20260713072217-58ff4a0ab139 h1:4vZeAomyjMJKUVzseDoUaLkrQIXwN1eeqDSq3dhacWE=

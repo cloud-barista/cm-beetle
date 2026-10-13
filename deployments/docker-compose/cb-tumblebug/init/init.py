@@ -9,6 +9,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from getpass import getpass
+from urllib.parse import quote
 
 import requests
 import yaml
@@ -32,6 +33,8 @@ Examples:
   %(prog)s --load-assets-only                 # Load assets (specs and images) only
   %(prog)s --fetch-price-only                 # Fetch price information only
   %(prog)s --load-templates-only              # Load template files only
+  %(prog)s -y --providers openstack-dev01     # Fetch specs/images for one CSP only (minutes)
+  %(prog)s -y --providers aws,gcp             # Fetch specs/images for a few CSPs
   %(prog)s --credentials --load-assets        # Register credentials and load assets
   %(prog)s -y --credentials --fetch-price     # Register credentials and fetch price (no confirmation)
   %(prog)s --key-file /path/to/keyfile        # Use key file for decryption
@@ -72,6 +75,16 @@ parser.add_argument(
     default=None,
     help="Path to decryption key file (default: ~/.cloud-barista/.tmp_enc_key, then prompt)",
 )
+parser.add_argument(
+    "--providers",
+    type=str,
+    default=None,
+    metavar="LIST",
+    help="Comma-separated providers to fetch specs/images for (ex: aws,gcp). "
+    "Names are the ones from GET /provider, so a single registered CSP can be targeted. "
+    "Fetching one provider takes minutes instead of the 10-40 minutes a full run needs. "
+    "Skips the backup prompt and the price step.",
+)
 args = parser.parse_args()
 
 # Determine which operations to run
@@ -81,6 +94,15 @@ run_credentials = run_all or args.credentials_only
 run_load_assets = run_all or args.load_assets_only
 run_fetch_price = run_all or args.fetch_price_only
 run_load_templates = run_all or args.load_templates_only
+
+# Providers to fetch specs/images for. Empty means every provider.
+target_providers = [p.strip() for p in (args.providers or "").split(",") if p.strip()]
+if target_providers:
+    # A targeted fetch is for topping up one or two CSPs, so restoring the full backup
+    # would undo the point, and pricing is a whole-system pass that is not worth
+    # 10 minutes here (private clouds have no price data at all).
+    run_fetch_price = args.fetch_price_only
+    run_load_assets = True
 
 # Initialize colorama
 init(autoreset=True)
@@ -196,6 +218,8 @@ backup_db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", 
 backup_available = os.path.isfile(backup_db_path)
 backup_size_mb = 0
 backup_age_days = 0
+backup_summary = None   # From the backup manifest sidecar, if present
+backup_created = None   # From the backup manifest sidecar, if present
 use_backup = False  # Decision variable
 patch_after_restore = False  # Decision variable: patch CSV assets after backup restore
 include_azure = False  # Decision variable for Azure image fetch
@@ -226,8 +250,67 @@ if backup_available:
         backup_mtime = os.path.getmtime(backup_db_path)
         backup_age_days = int((time.time() - backup_mtime) / 86400)
 
+    # Read the manifest sidecar (written next to the dump by backup-assets.sh) so the
+    # menu can show what this specific backup holds, not a generic description.
+    info_path = backup_db_path + ".info"
+    if os.path.isfile(info_path):
+        try:
+            with open(info_path, encoding="utf-8") as info_file:
+                for line in info_file:
+                    if line.startswith("summary:"):
+                        backup_summary = line.split(":", 1)[1].strip()
+                    elif line.startswith("created:"):
+                        backup_created = line.split(":", 1)[1].strip()
+        except OSError:
+            pass
+
+def prompt_for_providers():
+    """Ask which providers to fetch, listing the ones actually registered.
+
+    Returns a list of provider names, or [] if the user backs out.
+    """
+    try:
+        resp = requests.get(f"http://{TUMBLEBUG_SERVER}/tumblebug/provider", headers=HEADERS, timeout=15)
+        resp.raise_for_status()
+        body = resp.json()
+        providers = sorted(body.get("providers") or body.get("output") or body)
+    except Exception as e:
+        print(Fore.RED + f"Could not list providers from the server: {e}")
+        print(Fore.WHITE + "Enter names manually, comma-separated (or leave empty to cancel).")
+        providers = []
+
+    if providers:
+        print("")
+        print(Fore.CYAN + "Registered providers:")
+        for i, p in enumerate(providers, 1):
+            print(Fore.WHITE + f"  {i:2}. {p}")
+        print("")
+        raw = input(Fore.CYAN + "Numbers or names (comma-separated): " + Fore.RESET)
+    else:
+        raw = input(Fore.CYAN + "Provider names (comma-separated): " + Fore.RESET)
+
+    selected = []
+    for token in raw.split(","):
+        token = token.strip()
+        if not token:
+            continue
+        if token.isdigit() and providers:
+            idx = int(token)
+            if 1 <= idx <= len(providers):
+                selected.append(providers[idx - 1])
+            else:
+                print(Fore.RED + f"  Ignoring out-of-range number: {idx}")
+        else:
+            selected.append(token)
+    return selected
+
+
 # Ask for backup choice BEFORE showing operations summary
-if run_load_assets and backup_available and not args.yes:
+if run_load_assets and target_providers:
+    # Provider list came from --providers; nothing to ask.
+    use_backup = False
+    include_azure = False
+elif run_load_assets and backup_available and not args.yes:
     print(Fore.CYAN + "=" * 80)
     print(Fore.CYAN + "🚀 Choose Initialization Method")
     print(Fore.CYAN + "=" * 80)
@@ -238,7 +321,12 @@ if run_load_assets and backup_available and not args.yes:
         print(Fore.YELLOW + f"     ⚠️  Backup is {backup_age_days} days old - data may be outdated")
     elif backup_age_days > 7:
         print(Fore.YELLOW + f"     ℹ️  Backup is {backup_age_days} days old - consider fetching fresh data for latest info")
-    print(Fore.WHITE + "     Contains: Specs, Images, and Pricing data")
+    if backup_summary:
+        print(Fore.WHITE + f"     Contains: {backup_summary}")
+    else:
+        print(Fore.WHITE + "     Contains: Specs, Images, and Pricing data")
+    if backup_created:
+        print(Fore.WHITE + f"     Backup taken: {backup_created}")
     print(Fore.WHITE + "     → Steps 2 & 3 will be skipped")
     print("")
     print(Fore.GREEN + "  a+. ⏩ Restore from backup + patch CSV assets (~2 minutes)")
@@ -254,9 +342,14 @@ if run_load_assets and backup_available and not args.yes:
     print(Fore.WHITE + "     → Fetches from ALL cloud providers including Azure")
     print(Fore.YELLOW + "     ⚠️  Warning: Azure image fetch is very slow and may take 40+ minutes")
     print("")
+    print(Fore.CYAN + "  d. 🎯 Fetch from SELECTED CSPs only (~minutes)")
+    print(Fore.WHITE + "     → Pick from the providers registered on this server")
+    print(Fore.WHITE + "     → Use after registering a new CSP; leaves existing data untouched")
+    print(Fore.WHITE + "     → Step 3 (pricing) is skipped")
+    print("")
 
     while True:
-        choice = input(Fore.CYAN + "Select option (a/a+/b/c): " + Fore.RESET).lower()
+        choice = input(Fore.CYAN + "Select option (a/a+/b/c/d): " + Fore.RESET).lower()
         if choice in ["a"]:
             use_backup = True
             patch_after_restore = False
@@ -275,8 +368,19 @@ if run_load_assets and backup_available and not args.yes:
             use_backup = False
             include_azure = True
             break
+        elif choice in ["d"]:
+            selected = prompt_for_providers()
+            if not selected:
+                print(Fore.RED + "No provider selected. Choose again.")
+                continue
+            target_providers = selected
+            use_backup = False
+            include_azure = False
+            run_fetch_price = args.fetch_price_only
+            print(Fore.GREEN + f"\nSelected providers: {', '.join(target_providers)}")
+            break
         else:
-            print(Fore.RED + "Invalid input. Please enter 'a', 'a+', 'b', or 'c'.")
+            print(Fore.RED + "Invalid input. Please enter 'a', 'a+', 'b', 'c', or 'd'.")
     print("")
 elif run_load_assets and backup_available and args.yes:
     # Auto-yes mode: use backup by default
@@ -312,6 +416,8 @@ if run_load_assets:
         operations.append(f"Load assets from backup ({backup_size_mb:.1f} MB - includes specs, images, pricing)")
         if patch_after_restore:
             operations.append("Patch images from cloudimage.csv (POST /tumblebug/updateImagesFromAsset)")
+    elif target_providers:
+        operations.append(f"Load assets (fetch from {', '.join(target_providers)} only)")
     else:
         operations.append("Load assets (fetch from CSPs)")
 if run_fetch_price and not use_backup:
@@ -539,6 +645,10 @@ def register_credential(holder_name, provider, credentials):
 # Collects per-credential OpenBao registration failures for the final summary.
 openbao_issues = []
 
+# Collects regions that failed verification with the reason the server reported
+# (ConnConfig.verifiedMessage), so the ✗ marks can be explained in one summary.
+unverified_regions = []
+
 
 def print_credential_info(response):
     if "credentialName" in response and "credentialHolder" in response:
@@ -588,7 +698,11 @@ def print_credential_info(response):
                         "zones": set(),  # Use set for O(1) lookups
                         "all_verified": True,  # Track if all connections are verified
                         "any_verified": False,  # Track if any connection is verified
+                        "reasons": set(),  # Why verification failed (from the server)
                     }
+
+                if not is_verified:
+                    region_groups[region]["reasons"].add(" ".join(conn.get("verifiedMessage", "").split()))
 
                 # Update base_config_name to use shortest name (usually the base without zone suffix)
                 if len(config_name) < len(region_groups[region]["base_config_name"]):
@@ -628,6 +742,8 @@ def print_credential_info(response):
 
             # Use green check if all verified, red X if none verified, yellow ~ if mixed
             config_name = data["base_config_name"]
+            if not data["all_verified"]:
+                unverified_regions.append({"name": config_name, "reasons": sorted(r for r in data["reasons"] if r)})
             if data["all_verified"]:
                 print(f"{Fore.GREEN}✓{Style.RESET_ALL} {Fore.CYAN}{config_name}{Style.RESET_ALL} : {Fore.YELLOW}{region}{Style.RESET_ALL} ({zones_str})")
             elif not data["any_verified"]:
@@ -635,6 +751,26 @@ def print_credential_info(response):
             else:
                 # Mixed verification status
                 print(f"{Fore.YELLOW}~{Style.RESET_ALL} {Fore.CYAN}{config_name}{Style.RESET_ALL} : {Fore.YELLOW}{region}{Style.RESET_ALL} ({zones_str})")
+
+
+def print_unverified_summary():
+    """Explain the ✗ marks above, grouped by the reason the server reported."""
+    if not unverified_regions:
+        return
+
+    no_reason = "no reason reported (check the cb-tumblebug server log)"
+    by_reason = {}
+    for item in unverified_regions:
+        reason = " | ".join(item["reasons"]) or no_reason
+        by_reason.setdefault(reason, []).append(item["name"])
+
+    total = len(unverified_regions)
+    print(Fore.YELLOW + f"\n⚠ {total} connection(s) failed verification (✗ above) and are excluded from provisioning:")
+    for reason, names in sorted(by_reason.items(), key=lambda kv: (-len(kv[1]), kv[0])):
+        print(Fore.RED + f"  - {', '.join(sorted(names))}")
+        print(Fore.RED + f"      {reason[:300]}")
+    print(Fore.YELLOW + "  Re-run 'make init' to retry; a timeout here is usually transient load on CB-Spider.")
+    print(Fore.RESET)
 
 
 # Function to fetch price information from CSPs
@@ -758,6 +894,8 @@ if run_credentials:
                     if color == Fore.GREEN and isinstance(message, dict):
                         print_credential_info(message)
 
+print_unverified_summary()
+
 # Load assets (specs and images) if requested
 if run_load_assets:
     # use_backup was already determined earlier (before confirmation prompt)
@@ -880,7 +1018,11 @@ if run_load_assets:
     # If not using backup or backup failed, proceed with standard initialization
     if not use_backup and run_load_assets:
         # Adjust estimated time based on Azure inclusion
-        if include_azure:
+        if target_providers:
+            expected_completion_time_seconds = 300  # a handful of providers
+            print(Fore.YELLOW + f"\nLoading common Specs and Images from: {', '.join(target_providers)}")
+            print(Fore.CYAN + "Other providers keep the data they already have.")
+        elif include_azure:
             expected_completion_time_seconds = 2400  # 40 minutes for Azure
             print(Fore.YELLOW + "\nLoading common Specs and Images from ALL CSPs including Azure...")
             print(Fore.MAGENTA + "⚠️  This may take 40+ minutes due to Azure image fetch")
@@ -893,9 +1035,12 @@ if run_load_assets:
     def load_resources():
         global response_json
         try:
-            # Build URL with includeAzure parameter
+            # Build URL. providers takes precedence server-side: naming the providers
+            # already says what to fetch, so includeAzure no longer applies.
             url = f"http://{TUMBLEBUG_SERVER}/tumblebug/loadAssets"
-            if include_azure:
+            if target_providers:
+                url += "?providers=" + quote(",".join(target_providers))
+            elif include_azure:
                 url += "?includeAzure=true"
 
             response = requests.get(url, headers=HEADERS)
@@ -1061,7 +1206,17 @@ if run_load_templates:
                     if resp.status_code == 200:
                         print(Fore.GREEN + f"  ✅ Template loaded: {template_name} (type: {template_type}, ns: {ns_id})")
                     elif "already exists" in resp.text:
-                        print(Fore.CYAN + f"  ℹ️  Template already exists: {template_name} (type: {template_type}, ns: {ns_id})")
+                        # Already present: update it in place (PUT, id == name) so re-running init
+                        # refreshes edited template files instead of silently keeping the old copy.
+                        put_url = f"{url}/{template_name}"
+                        put_resp = requests.put(put_url, json=template_data, headers=HEADERS, timeout=30)
+                        if put_resp.status_code == 429:
+                            time.sleep(1)
+                            put_resp = requests.put(put_url, json=template_data, headers=HEADERS, timeout=30)
+                        if put_resp.status_code == 200:
+                            print(Fore.GREEN + f"  🔄 Template updated: {template_name} (type: {template_type}, ns: {ns_id})")
+                        else:
+                            print(Fore.RED + f"  ❌ Failed to update template {template_name}: {put_resp.text}")
                     else:
                         print(Fore.RED + f"  ❌ Failed to load template {template_name}: {resp.text}")
                 except Exception as e:

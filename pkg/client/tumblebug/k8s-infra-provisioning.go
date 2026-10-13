@@ -84,8 +84,7 @@ func (s *Session) K8sClusterRecommendNode(req tbmodel.RecommendSpecReq) ([]tbmod
 
 type k8sClusterDetailExt struct {
 	tbmodel.K8sClusterDetail
-	RequireNodeGroupName bool   `json:"require_nodegroup_name"`
-	NodeSpecNamingRule   string `json:"nodespec_naming_rule"`
+	RequireNodeGroupName bool `json:"require_nodegroup_name"`
 }
 
 type k8sClusterAssetInfoExt struct {
