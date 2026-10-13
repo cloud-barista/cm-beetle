@@ -471,7 +471,10 @@ func buildSingleConsolidatedBlueprint(
 	ngName := "ng-" + sanitizeName(groupSuffix)
 	repNode := synthesizeGroupRepresentativeNode(machineIds, nodeByMachineId)
 	repNodeWithFirewall := mergeNodesFirewallRules(machineIds, nodeByMachineId, repNode)
-	repNodeWithFirewall = ensurePortOpenToPublic(repNodeWithFirewall, rnlb.backendPort)
+	// Supplement inbound firewall rules for remote client traffic to backend port.
+	repNodeWithFirewall = supplementFirewallIncomingFromRemote(repNodeWithFirewall, rnlb, csp)
+	// Supplement inbound firewall rules for NLB health check and proxy traffic.
+	repNodeWithFirewall = supplementFirewallNlbToNode(repNodeWithFirewall, rnlb, csp, skeleton)
 
 	sg, err := RecommendSecurityGroup(csp, region, repNodeWithFirewall)
 	if err != nil {
