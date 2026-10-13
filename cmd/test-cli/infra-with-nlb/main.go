@@ -75,7 +75,8 @@ type CSPTestReport struct {
 type TestConfig struct {
 	Test struct {
 		Set struct {
-			Mode string `yaml:"mode" json:"mode"` // parallel or sequential
+			Mode              string `yaml:"mode" json:"mode"` // parallel or sequential
+			StartDelaySeconds int    `yaml:"startDelaySeconds" json:"startDelaySeconds"`
 		} `yaml:"set"`
 		Cases []TestCase `yaml:"cases" json:"desiredCspRegionPairs"`
 	} `yaml:"test"`
@@ -337,8 +338,12 @@ func main() {
 				runTestCase(i, cspPair, config, sourceInfraModel, caseNameSeed, suite, authConfig)
 			}(i, cspPair, caseNameSeed, currentStagger)
 
-			// Increment stagger for the next one (1~3s random)
-			currentStagger += time.Duration(1000+rand.Intn(2001)) * time.Millisecond
+			// Increment stagger for the next case based on startDelaySeconds or default 5-10s
+			delay := time.Duration(config.Test.Set.StartDelaySeconds) * time.Second
+			if delay <= 0 {
+				delay = time.Duration(5+rand.Intn(6)) * time.Second
+			}
+			currentStagger += delay
 		} else {
 			runTestCase(i, cspPair, config, sourceInfraModel, caseNameSeed, suite, authConfig)
 		}
@@ -453,8 +458,12 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, sourceInfraModel on
 	 */
 	var validationResult TestResults
 	if !stopTesting {
+		recommendedInfra := recommendationApiResponse.Data[0]
+		if nameSeed != "" {
+			recommendedInfra = common.ApplyNameSeed(recommendedInfra, nameSeed)
+		}
 		validationRequest := controller.ValidateInfraRequest{
-			RecommendedInfra: recommendationApiResponse.Data[0],
+			RecommendedInfra: recommendedInfra,
 		}
 		cspReport.ValidationRequest = &validationRequest
 		validationResult = runValidationTest(client, config, validationRequest, displayName)
