@@ -8,23 +8,22 @@ This covers the Beetle side. For the generic mechanism it builds on, see
 
 ## The limit being satisfied
 
-| Route                          | Limit            | Applies per |
-| ------------------------------ | ---------------- | ----------- |
-| All routes                     | 50 req/s         | Source IP   |
-| `GET /ns/:nsId/infra`          | 2 req/s, burst 2 | Source IP   |
-| `GET /ns/:nsId/infra/:infraId` | 2 req/s, burst 2 | Source IP   |
+| Route                          | Limit                     | Applies per |
+| ------------------------------ | ------------------------- | ----------- |
+| All routes (`GLOBAL`)          | 200 req/s, burst 400      | Source IP   |
+| `GET /ns/:nsId/infra`          | 10 req/s, burst 30        | Source IP   |
+| `GET /ns/:nsId/infra/:infraId` | 5 req/s, burst 15         | Source IP   |
 
 - **The limit applies per source IP**, not per namespace or infrastructure — Echo's default
   extractor is `ctx.RealIP()`, so one Beetle process shares one budget.
-- **Each route has its own limiter store**, so the two 2 req/s budgets are independent.
-- **Tumblebug's `429` carries no `Retry-After`**, so a client cannot learn the advised wait.
+- **Each route has its own limiter store**, configured via `TB_API_RATE_LIMIT_*`.
+- **Tumblebug's `429` carries `Retry-After: 1`** as of v0.13.5.
 
-Verified against cb-tumblebug v0.12.27 (`src/interface/rest/server/server.go`); `go.mod` pins
-v0.12.25. Re-check after an upgrade.
+Verified against cb-tumblebug v0.13.5 (`src/interface/rest/server/server.go`).
 
 ## Two layers
 
-**Pacing** keeps Beetle below the limit: one call every 625 ms (~1.6 req/s).
+**Pacing** keeps Beetle below the limit: one call every 250 ms (~4.0 req/s targeting 5.0 req/s).
 
 **A bounded retry** recovers from the `429`s pacing cannot prevent — Beetle may not be the only
 client behind its IP, and the global 50 req/s bucket is shared across all routes. Keep both: the
@@ -48,8 +47,8 @@ Defined in [call-pacer.go](../pkg/client/tumblebug/call-pacer.go).
 
 | Constant                               | Value     | Why                                                                        |
 | -------------------------------------- | --------- | -------------------------------------------------------------------------- |
-| `defaultTumblebugRequestsPerSec`       | 2.0       | Tumblebug's own limit; the one value to change if Tumblebug changes it     |
-| `pacingHeadroom`                       | 0.8       | Targets 1.6 req/s (one per 625 ms), leaving margin under the limit         |
+| `defaultTumblebugRequestsPerSec`       | 5.0       | Tumblebug's own limit; the one value to change if Tumblebug changes it     |
+| `pacingHeadroom`                       | 0.8       | Targets 4.0 req/s (one per 250 ms), leaving margin under the limit         |
 | `min` / `maxTumblebugRequestsPerSec`   | 0.1 / 100 | Bounds on the configured rate                                              |
 | Burst (in `NewPacer`)                  | 1         | Stops an idle period banking tokens that then fire back-to-back            |
 | `defaultPacingWait`                    | 8 s       | Budget when the caller sets no deadline                                    |

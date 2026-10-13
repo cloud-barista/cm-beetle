@@ -72,7 +72,7 @@ var clientCircuitBreakers = sync.Map{}
 
 const (
 	// Circuit breaker thresholds
-	circuitBreakerFailureThreshold = 5                // Number of failures before opening circuit
+	circuitBreakerFailureThreshold = 10               // Number of failures before opening circuit
 	circuitBreakerOpenDuration     = 30 * time.Second // How long to keep circuit open
 )
 
@@ -212,9 +212,15 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 	if resp.StatusCode >= 400 {
 		if method == "GET" {
 			requestDone(requestKey)
-			recordCircuitBreakerFailure(requestKey)
+			if resp.StatusCode != http.StatusNotFound {
+				recordCircuitBreakerFailure(requestKey)
+			}
 		}
-		log.Error().Int("status", resp.StatusCode).Str("method", method).Str("url", url).Dur("latency", duration).Msg("Internal Call Error")
+		if resp.StatusCode == http.StatusNotFound {
+			log.Debug().Int("status", resp.StatusCode).Str("method", method).Str("url", url).Dur("latency", duration).Msg("Resource Not Found")
+		} else {
+			log.Error().Int("status", resp.StatusCode).Str("method", method).Str("url", url).Dur("latency", duration).Msg("Internal Call Error")
+		}
 		// We still return the response so the caller can handle the error body
 		return resp, nil
 	}

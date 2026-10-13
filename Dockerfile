@@ -115,8 +115,8 @@ ENV BEETLE_TUMBLEBUG_ENDPOINT=http://localhost:1323 \
 ## Paces Beetle's calls under CB-Tumblebug's per-client-IP rate limit on retrieval APIs,
 ## which is far tighter than Tumblebug's global limit. See docs/tumblebug-call-pacer.md.
 ## REQUESTS_PER_SEC: TB's own limit; MAX_WAIT_SEC: wait for a slot before giving up with 503
-ENV BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC=2 \
-  BEETLE_TUMBLEBUG_RETRIEVAL_MAX_WAIT_SEC=8
+ENV BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC=5 \
+  BEETLE_TUMBLEBUG_RETRIEVAL_MAX_WAIT_SEC=30
 
 ENTRYPOINT [ "/app/cm-beetle" ]
 
