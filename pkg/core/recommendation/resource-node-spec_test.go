@@ -191,22 +191,24 @@ func TestExtractCpuVendor(t *testing.T) {
 	tests := []struct {
 		name   string
 		vendor string
+		model  string
 		want   string
 	}{
-		{"GenuineIntel", "GenuineIntel", "intel"},
-		{"AuthenticAMD", "AuthenticAMD", "amd"},
-		{"empty", "", ""},
-		{"unrecognized vendor string", "some-unknown-vendor", ""},
-		{"full model string containing Intel", "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz", "intel"},
-		{"full model string containing AMD", "AMD EPYC 7302 16-Core Processor", "amd"},
-		{"ARM vendor string", "ARM Limited", "arm"},
-		{"Ampere model string", "Ampere(R) Altra(R) Processor", "arm"},
+		{"GenuineIntel vendor", "GenuineIntel", "", "intel"},
+		{"AuthenticAMD vendor", "AuthenticAMD", "", "amd"},
+		{"empty vendor and model", "", "", ""},
+		{"unrecognized vendor and model", "some-unknown-vendor", "unknown-model", ""},
+		{"empty vendor with Intel model", "", "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz", "intel"},
+		{"empty vendor with AMD model", "", "AMD EPYC 7302 16-Core Processor", "amd"},
+		{"ARM vendor string", "ARM Limited", "", "arm"},
+		{"Ampere model string", "", "Ampere(R) Altra(R) Processor", "arm"},
+		{"both vendor and model matching Intel", "GenuineIntel", "Intel(R) Xeon(R) Gold 6140", "intel"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := extractCpuVendor(tt.vendor); got != tt.want {
-				t.Errorf("extractCpuVendor(%q) = %q, want %q", tt.vendor, got, tt.want)
+			if got := extractCpuVendor(tt.vendor, tt.model); got != tt.want {
+				t.Errorf("extractCpuVendor(%q, %q) = %q, want %q", tt.vendor, tt.model, got, tt.want)
 			}
 		})
 	}
