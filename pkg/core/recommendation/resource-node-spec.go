@@ -123,17 +123,23 @@ func recommendCpuNodeSpec(csp string, region string, node onpremmodel.NodeProper
 		}
 		nodeSpecInfoList = validNodeSpecs
 
-		// NCP-specific filtering for KVM hypervisor
+		// NCP-specific filtering for KVM hypervisor and zone availability (issue #497)
 		if strings.Contains(strings.ToLower(csp), "ncp") {
 			log.Debug().
 				Str("machineId", node.MachineId).
 				Int("rangeWeight", rangeWeight).
-				Msg("Filtering node specs for KVM hypervisor (NCP)")
+				Msg("Filtering node specs for KVM hypervisor and zone availability (NCP)")
 
 			kvmNodeSpecs := make([]tbmodel.SpecInfo, 0, len(nodeSpecInfoList))
 			for _, nodeSpec := range nodeSpecInfoList {
+				// Exclude specs unavailable in the target zone (e.g., mi1-g3 in KR-1)
+				if !compat.IsNcpSpecAvailableInZone(region, nodeSpec.CspSpecName) {
+					log.Debug().Msgf("NCP: excluded unavailable spec %s for zone/region %s", nodeSpec.CspSpecName, region)
+					continue
+				}
+
 				for _, detail := range nodeSpec.Details {
-					if detail.Key == "HypervisorType" && strings.Contains(strings.ToLower(detail.Value), "kvm") {
+					if strings.EqualFold(detail.Key, "HypervisorType") && strings.Contains(strings.ToLower(detail.Value), "kvm") {
 						kvmNodeSpecs = append(kvmNodeSpecs, nodeSpec)
 						break
 					}
@@ -186,19 +192,7 @@ func recommendCpuNodeSpec(csp string, region string, node onpremmodel.NodeProper
 		return emptyResp, -1, err
 	}
 
-	// Apply limit to results
-	finalSpecCount := len(nodeSpecInfoList)
-	if limit < finalSpecCount {
-		nodeSpecInfoList = nodeSpecInfoList[:limit]
-		finalSpecCount = limit
-	}
-
-	log.Debug().
-		Str("machineId", node.MachineId).
-		Int("finalSpecCount", finalSpecCount).
-		Msg("Finalized node spec recommendations")
-
-	// Convert model types with validation
+	// Convert all candidate specs before ranking
 	convertedNodeSpecList, err := modelconv.ConvertWithValidation[[]tbmodel.SpecInfo, []cloudmodel.SpecInfo](nodeSpecInfoList)
 	if err != nil {
 		log.Error().Err(err).
@@ -207,8 +201,18 @@ func recommendCpuNodeSpec(csp string, region string, node onpremmodel.NodeProper
 		return emptyResp, -1, fmt.Errorf("failed to convert node spec list model for machine %s: %w", node.MachineId, err)
 	}
 
-	// CPU-specific proximity ranking
-	sortByProximityWithCost(convertedNodeSpecList, vcpusCalculated, memory, providerName, extractCpuVendor(node.CPU.Vendor))
+	// Rank candidate specs by CPU vendor match, proximity, and cost
+	sortByProximityWithCost(convertedNodeSpecList, vcpusCalculated, memory, providerName, extractCpuVendor(node.CPU.Vendor, node.CPU.Model))
+
+	// Apply requested limit after ranking so top-ranked specs are preserved
+	if limit > 0 && len(convertedNodeSpecList) > limit {
+		convertedNodeSpecList = convertedNodeSpecList[:limit]
+	}
+
+	log.Debug().
+		Str("machineId", node.MachineId).
+		Int("finalSpecCount", len(convertedNodeSpecList)).
+		Msg("Finalized node spec recommendations")
 
 	log.Info().
 		Str("machineId", node.MachineId).
@@ -420,12 +424,17 @@ var cpuVendorAliases = []struct {
 	{"arm", "arm"},
 }
 
-// extractCpuVendor extracts a canonical vendor ("intel"/"amd"/"arm"/"") from a raw on-prem CPU vendor string.
-func extractCpuVendor(vendor string) string {
-	v := strings.ToLower(strings.TrimSpace(vendor))
-	for _, alias := range cpuVendorAliases {
-		if strings.Contains(v, alias.substring) {
-			return alias.vendor
+// extractCpuVendor extracts a canonical vendor ("intel"/"amd"/"arm"/"") from on-prem CPU vendor and model strings.
+func extractCpuVendor(vendor, model string) string {
+	for _, text := range []string{vendor, model} {
+		v := strings.ToLower(strings.TrimSpace(text))
+		if v == "" {
+			continue
+		}
+		for _, alias := range cpuVendorAliases {
+			if strings.Contains(v, alias.substring) {
+				return alias.vendor
+			}
 		}
 	}
 	return ""
