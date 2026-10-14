@@ -9,7 +9,7 @@ GO := $(GOPROXY_OPTION) go
 GOPATH := $(shell go env GOPATH)
 SWAG := ~/go/bin/swag
 
-.PHONY: all dependency tidy lint update swag swagger build arm prod run stop clean help up up-no-cache compose compose-no-cache test-infra test-rdbms test-infra-with-nlb test-os test-data test-async test-rate-limiting test-multi-infra-recommendation test-k8s-infra-recommendation test-k8s-infra-migration
+.PHONY: all dependency tidy lint update swag swagger build arm prod run stop clean help up up-no-cache compose compose-no-cache test-infra test-rdbms test-infra-with-nlb test-os test-data test-async test-rate-limiting test-multi-infra-recommendation test-k8s-infra-recommendation test-k8s-infra-migration test-aimx
 
 all: swag build ## Default target: build the project
 
@@ -107,6 +107,7 @@ clean: ## Remove previous build
 	@cd cmd/test-cli/multi-infra-recommendation && $(GO) clean
 	@cd cmd/test-cli/k8s-infra && $(GO) clean
 	@cd cmd/test-cli/rdbms && $(GO) clean
+	@cd cmd/aimx && $(GO) clean
 	@echo "Cleaned!"
 
 test-infra: ## Run the infra migration test CLI for all CSP-Region pairs
@@ -186,6 +187,18 @@ test-k8s-infra-recommendation: ## Run the K8s infra test CLI in recommendation m
 
 test-k8s-infra-migration: ## Run the K8s infra test CLI in migration mode (alias)
 	@$(MAKE) test-k8s-infra EXTRA_ARGS="-mode migration"
+
+test-aimx: ## Run AIMX (AI Migration X) GPU & AI service migration prototype CLI (Usage: make test-aimx EXTRA_ARGS="-mode setup-source")
+	@echo "Running AIMX (AI Migration X) CLI..."
+	@if [ ! -f cmd/aimx/testconf/auth-config.json ]; then \
+		cp cmd/aimx/testconf/template-auth-config.json cmd/aimx/testconf/auth-config.json; \
+		echo "Created cmd/aimx/testconf/auth-config.json from template."; \
+	fi
+	@if [ ! -f cmd/aimx/testconf/test-config.yaml ]; then \
+		cp cmd/aimx/testconf/template-test-config.yaml cmd/aimx/testconf/test-config.yaml; \
+		echo "Created cmd/aimx/testconf/test-config.yaml from template."; \
+	fi
+	@cd cmd/aimx && $(GO) run . -config testconf/test-config.yaml $(EXTRA_ARGS)
 
 test-data-clean: ## Clean up data migration test artifacts
 	@echo "Cleaning data migration test artifacts..."

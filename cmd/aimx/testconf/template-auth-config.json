@@ -1,0 +1,7 @@
+{
+  "beetleApiUsername": "default",
+  "beetleApiPassword": "default",
+  "tumblebugApiUsername": "default",
+  "tumblebugApiPassword": "default",
+  "tumblebugEndpoint": "http://localhost:1323"
+}

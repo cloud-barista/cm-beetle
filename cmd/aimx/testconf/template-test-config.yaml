@@ -1,0 +1,98 @@
+# AIMX (AI Migration X - AI Migration eXecutor) Configuration Template
+# Copy this file to testconf/test-config.yaml and customize as needed.
+
+test:
+  # Execution mode:
+  #   seq (or all)  - Run all stages sequentially with stabilization waits (setup-source -> recommend -> migrate -> verify)
+  #   setup-source  - Provision/reuse source GPU VM from template and deploy Ollama (Gemma) + Open WebUI
+  #   recommend     - Inspect live source GPU VM specs/models and request target GPU infra candidates from Beetle
+  #   migrate       - Provision target GPU VM via Beetle and migrate Gemma weights + Open WebUI DB via transx
+  #   verify        - Verify target GPU, Gemma inference tok/s, and Open WebUI DB hash, then generate Markdown report
+  #   cleanup       - Delete target GPU infra (and optionally source GPU infra + shared resources)
+  executionMode: seq
+
+  # Target cloud provider/region pairs for AI service migration (Korea region enabled by default).
+  cases:
+    - csp: aws
+      region: ap-northeast-2
+      name: AWS-Seoul-GPU
+      execute: true
+      nameSeed: aimx
+    - csp: gcp
+      region: asia-northeast3
+      name: GCP-Seoul-GPU
+      execute: false
+      nameSeed: aimx
+    - csp: aws
+      region: us-west-2
+      name: AWS-Oregon-GPU
+      execute: false
+      nameSeed: aimx
+
+beetle:
+  endpoint: http://localhost:8056
+  namespaceId: default
+  authConfigFile: testconf/auth-config.json
+  baseInfraFile: testconf/source-infra-base.json
+  stateFile: testresult/.aimx-state.json
+
+source:
+  # CB-Tumblebug namespace and Infra ID for the source GPU VM.
+  namespaceId: default
+  infraId: mc-daisy
+  # NodeGroup name and GPU VM specification for direct provisioning via POST /tumblebug/ns/{nsId}/infraDynamic:
+  # g4dn.xlarge in Korea (ap-northeast-2): 4 vCPU, 16 GiB RAM, 1x NVIDIA Tesla T4 (16GB VRAM).
+  nodeGroupName: nvidiat4
+  specId: aws+ap-northeast-2+g4dn.xlarge
+  imageId: ami-00ffffe72a332c865
+  rootDiskType: gp2
+  rootDiskSize: 100
+  # Auto-create source GPU VM via infraDynamic if source.infraId does not exist yet.
+  autoProvisionIfMissing: true
+  # Open AI service ports (3000, 11434) on source security group if needed.
+  openServicePortsOnSource: true
+  # If true, `-mode=cleanup` also terminates the source GPU VM and releases shared resources.
+  cleanupSourceInfra: false
+
+aiService:
+  # Host root directory on both Source and Target GPU VMs holding docker-compose.yml, ollama/, and open-webui/.
+  rootDir: /opt/aimx/ai-service
+  # Installed Gemma model tag for Ollama GPU serving.
+  modelName: gemma4:e2b
+  ollamaPort: 11434
+  openWebUIPort: 3000
+  # Test prompt used to benchmark and compare Source vs Target GPU inference.
+  testPrompt: "Explain in 2 concise sentences why GPU acceleration is essential for large language model inference."
+  # If true (default), transx transfers the entire rootDir including Gemma model weights (`ollama/`).
+  # If false, transx excludes `ollama/models/blobs*` and triggers `ollama pull` on Target after transfer.
+  transferModelWeights: true
+  # CM-Beetle transx transfer strategy: "relay" (default for cross-VM with distinct SSH keys), "auto", or "direct".
+  transxStrategy: relay
+  # CM-Beetle transx FilterOption (rsync --include / --exclude patterns relative to rootDir).
+  filter:
+    include: []
+    exclude:
+      - "open-webui/cache/**"
+      - "*.log"
+      - "*.tmp"
+      - "__pycache__/**"
+  # Encrypt SSH private keys with Beetle's 1-time RSA-OAEP/AES-GCM key bundle (GET /beetle/migration/data/encryptionKey).
+  useDataEncryption: true
+
+timing:
+  # Cooldown wait between consecutive stages in `-mode=seq` (setup-source -> recommend -> migrate -> verify).
+  stepTransitionSeconds: 10
+  # Wait after GPU VM enters Running state for cloud-init, sshd, and NVIDIA kernel drivers to settle.
+  vmBootStabilizeSeconds: 30
+  # Maximum retry attempts and interval when polling SSH / nvidia-smi readiness on GPU VMs.
+  sshRetryMaxAttempts: 12
+  sshRetryIntervalSeconds: 10
+  # Wait after `docker compose up -d` for Ollama (:11434) and Open WebUI (:3000, webui.db init) to start.
+  serviceInitWaitSeconds: 15
+  # Wait after `docker compose stop && sync` on Source VM to ensure SQLite WAL is flushed before transx rsync.
+  dbFlushWaitSeconds: 5
+  # Wait after Target containers start before executing Gemma GPU inference benchmark and DB verification.
+  targetServiceReadyWaitSeconds: 20
+  # Timeout in minutes for remote SSH command execution via CB-Tumblebug.
+  remoteCmdTimeoutMinutes: 20
+
