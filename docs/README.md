@@ -48,6 +48,7 @@ Documentation site for CM-Beetle, computing infrastructure migration.
 
 ## Developer Resources
 
+- [AI Service Migration PoC Design (AIMX)](poc/ai-service-migration-design.md) – Top-down 4-layer GPU infrastructure, LLM weights (`Ollama`/`Gemma`), and stateful app (`Open WebUI`) migration scenario and architecture.
 - [Unit Comparison Across Components](unit-comparison-across-components.md) – Unit standards across CB sub-systems and GPU memory normalization rationale.
 - [GPU Recommendation Pipeline Plan](plan/gpu-recommendation-pipeline-plan.md) – Architecture and design for GPU-equipped server recommendation.
 - [Tumblebug Call Pacer](tumblebug-call-pacer.md) – How CM-Beetle stays under CB-Tumblebug's rate limit, and how to maintain it.
