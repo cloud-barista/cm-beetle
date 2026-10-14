@@ -199,6 +199,21 @@ func (e *RsyncExecutor) executeAgentForward(source, destination DataLocation) er
 		return fmt.Errorf("failed to add key to agent: %w", err)
 	}
 
+	// Add destination private key to agent if provided for distinct source/destination keys
+	if dstSSH.PrivateKey != "" || dstSSH.PrivateKeyPath != "" {
+		dstKeyData, err := e.loadPrivateKeyData(dstSSH)
+		if err != nil {
+			return fmt.Errorf("failed to load destination private key data: %w", err)
+		}
+		dstRawKey, err := ssh.ParseRawPrivateKey(dstKeyData)
+		if err != nil {
+			return fmt.Errorf("failed to parse destination raw private key: %w", err)
+		}
+		if err := keyring.Add(agent.AddedKey{PrivateKey: dstRawKey}); err != nil {
+			return fmt.Errorf("failed to add destination key to agent: %w", err)
+		}
+	}
+
 	// SSH client config for source server
 	config := &ssh.ClientConfig{
 		User: srcSSH.Username,
