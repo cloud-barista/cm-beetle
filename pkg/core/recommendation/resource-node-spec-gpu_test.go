@@ -416,6 +416,100 @@ func TestSortGpuByProximityWithCost_CostTieBreak(t *testing.T) {
 	assert.Equal(t, "spec-expensive", specs[1].CspSpecName)
 }
 
+func TestDetectGpuModel(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"NVIDIA L4", "l4"},
+		{"NVIDIA L40S", "l40s"},
+		{"NVIDIA A10G", "a10g"},
+		{"A100-SXM4-80GB", "a100"},
+		{"Tesla T4", "t4"},
+		{"NVIDIA H100 80GB", "h100"},
+		{"AMD Instinct MI300X", "mi300"},
+		{"Unknown GPU", ""},
+	}
+
+	for _, tc := range tests {
+		assert.Equal(t, tc.expected, detectGpuModel(tc.input))
+	}
+}
+
+func TestSortGpuByProximityWithCost_ModelMatch(t *testing.T) {
+	node := onpremmodel.NodeProperty{
+		MachineId: "node-l4-32vcpu",
+		CPU:       onpremmodel.CpuProperty{Cpus: 1, Threads: 32},
+		Memory:    onpremmodel.MemoryProperty{TotalSize: 128},
+		GPUCards: []onpremmodel.GpuCardProperty{
+			{DriverIndex: "0", Vendor: "NVIDIA", Model: "NVIDIA L4", MemoryTotalGB: 24},
+		},
+	}
+
+	specs := []cloudmodel.SpecInfo{
+		{
+			CspSpecName:         "g5.8xlarge",
+			AcceleratorCount:    1,
+			AcceleratorMemoryGB: 24,
+			AcceleratorModel:    "NVIDIA A10G",
+			VCPU:                32,
+			MemoryGiB:           128,
+			CostPerHour:         1.8,
+		},
+		{
+			CspSpecName:         "g6.8xlarge",
+			AcceleratorCount:    1,
+			AcceleratorMemoryGB: 24,
+			AcceleratorModel:    "NVIDIA L4",
+			VCPU:                32,
+			MemoryGiB:           128,
+			CostPerHour:         2.0144,
+		},
+	}
+
+	sortGpuByProximityWithCost(specs, node, "aws")
+
+	// Exact GPU chip model (NVIDIA L4 -> g6.8xlarge) must rank ahead of A10G (g5.8xlarge).
+	assert.Equal(t, "g6.8xlarge", specs[0].CspSpecName)
+}
+
+func TestSortGpuByProximityWithCost_VramSufficiency(t *testing.T) {
+	node := onpremmodel.NodeProperty{
+		MachineId: "node-24gb",
+		CPU:       onpremmodel.CpuProperty{Cpus: 1, Threads: 8},
+		Memory:    onpremmodel.MemoryProperty{TotalSize: 32},
+		GPUCards: []onpremmodel.GpuCardProperty{
+			{DriverIndex: "0", Vendor: "NVIDIA", Model: "NVIDIA L4", MemoryTotalGB: 24},
+		},
+	}
+
+	specs := []cloudmodel.SpecInfo{
+		{
+			CspSpecName:         "spec-16gb-insufficient",
+			AcceleratorCount:    1,
+			AcceleratorMemoryGB: 16,
+			AcceleratorModel:    "Tesla T4",
+			VCPU:                8,
+			MemoryGiB:           32,
+			CostPerHour:         0.7,
+		},
+		{
+			CspSpecName:         "spec-32gb-sufficient",
+			AcceleratorCount:    1,
+			AcceleratorMemoryGB: 32,
+			AcceleratorModel:    "Tesla V100",
+			VCPU:                8,
+			MemoryGiB:           32,
+			CostPerHour:         3.0,
+		},
+	}
+
+	sortGpuByProximityWithCost(specs, node, "aws")
+
+	// 32GB (sufficient VRAM) must beat 16GB (insufficient VRAM) despite equal 8GB absolute difference.
+	assert.Equal(t, "spec-32gb-sufficient", specs[0].CspSpecName)
+}
+
 func TestRecommendGpuNodeSpec_LiveTumblebug(t *testing.T) {
 	node := onpremmodel.NodeProperty{
 		MachineId: "gpu-node-live-test",
