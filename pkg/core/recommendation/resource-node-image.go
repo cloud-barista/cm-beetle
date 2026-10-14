@@ -133,6 +133,8 @@ func RecommendVmOsImages(csp string, region string, node onpremmodel.NodePropert
 
 	isGpu := hasGpu(node)
 	if isGpu {
+		// Disable basic image filter because GPU images have isBasicImage=false in Tumblebug.
+		searchImageReq.IncludeBasicImageOnly = &falseValue
 		searchImageReq.IsGPUImage = &trueValue
 		log.Info().
 			Str("machineId", node.MachineId).

@@ -214,11 +214,29 @@ func buildGpuDeploymentPlan(
 	return plan, vcpusMin, vcpusMax, memoryMin, memoryMax
 }
 
+// gpuModelTokens lists canonical GPU chip identifiers ordered from specific to general.
+var gpuModelTokens = []string{
+	"b200", "h200", "h100", "a100", "l40s", "l40", "l4", "a10g", "a10", "t4", "v100", "p100", "k80", "m60",
+	"mi350", "mi300", "mi250", "mi210", "mi100", "v710", "v620", "v520", "gaudi3", "gaudi2", "gaudi",
+}
+
+// detectGpuModel extracts a canonical GPU chip token from a raw model string.
+func detectGpuModel(raw string) string {
+	lower := strings.ToLower(strings.TrimSpace(raw))
+	for _, token := range gpuModelTokens {
+		if strings.Contains(lower, token) {
+			return token
+		}
+	}
+	return ""
+}
+
 // gpuRankingContext carries the evaluation metrics for multi-dimensional GPU ranking.
 type gpuRankingContext struct {
 	targetCount  uint8
 	targetVram   float32
 	targetVendor string
+	targetModel  string
 	vcpus        uint32
 	memory       uint32
 	csp          string
@@ -246,10 +264,20 @@ func gpuCountProximity(ctx gpuRankingContext, a, b cloudmodel.SpecInfo) int {
 	return int(diffA - diffB)
 }
 
-// gpuVramProximity prioritizes the spec with VRAM closest to the requested per-GPU capacity (minimum surplus first).
+// gpuVramProximity prioritizes specs meeting target VRAM first, then closest capacity.
 func gpuVramProximity(ctx gpuRankingContext, a, b cloudmodel.SpecInfo) int {
 	if ctx.targetVram <= 0 {
 		return 0
+	}
+
+	// Prefer specs that meet or exceed target VRAM (with 0.5 GB tolerance) to prevent LLM OOM.
+	suffA := a.AcceleratorMemoryGB+vramTierToleranceGB >= ctx.targetVram
+	suffB := b.AcceleratorMemoryGB+vramTierToleranceGB >= ctx.targetVram
+	if suffA && !suffB {
+		return -1
+	}
+	if !suffA && suffB {
+		return 1
 	}
 
 	diffA := math.Abs(float64(a.AcceleratorMemoryGB - ctx.targetVram))
@@ -287,6 +315,28 @@ func gpuVendorMatch(ctx gpuRankingContext, a, b cloudmodel.SpecInfo) int {
 	return 0
 }
 
+// gpuModelMatch ranks specs with the same canonical GPU chip model (e.g. L4 -> L4) first.
+func gpuModelMatch(ctx gpuRankingContext, a, b cloudmodel.SpecInfo) int {
+	targetCanonical := detectGpuModel(ctx.targetModel)
+	if targetCanonical == "" {
+		return 0
+	}
+
+	modelA := detectGpuModel(a.AcceleratorModel)
+	modelB := detectGpuModel(b.AcceleratorModel)
+
+	matchA := (modelA == targetCanonical)
+	matchB := (modelB == targetCanonical)
+
+	if matchA && !matchB {
+		return -1
+	}
+	if !matchA && matchB {
+		return 1
+	}
+	return 0
+}
+
 // gpuHostResourceProximity ranks by combined vCPU and host memory distance (L1 Manhattan norm).
 func gpuHostResourceProximity(ctx gpuRankingContext, a, b cloudmodel.SpecInfo) int {
 	da := abs(int32(a.VCPU)-int32(ctx.vcpus)) + abs(int32(a.MemoryGiB)-int32(ctx.memory))
@@ -298,8 +348,9 @@ func gpuHostResourceProximity(ctx gpuRankingContext, a, b cloudmodel.SpecInfo) i
 // 1. GPU Vendor Match (e.g., NVIDIA -> NVIDIA: absolute prerequisite for driver/CUDA binary compatibility)
 // 2. GPU Count Proximity (Exact count match first, preventing architecture & parallelism mismatch)
 // 3. GPU VRAM Proximity (Closest per-device VRAM to avoid OOM or excessive overprovisioning)
-// 4. Host Resource Distance (vCPU + Memory Manhattan distance)
-// 5. CostPerHour (Lowest cost as final tie-breaker)
+// 4. GPU Model Match (Same canonical GPU chip family, e.g., L4 -> L4 over A10G)
+// 5. Host Resource Distance (vCPU + Memory Manhattan distance)
+// 6. CostPerHour (Lowest cost as final tie-breaker)
 func sortGpuByProximityWithCost(vmSpecs []cloudmodel.SpecInfo, node onpremmodel.NodeProperty, csp string) {
 	if len(vmSpecs) == 0 {
 		return
@@ -308,6 +359,7 @@ func sortGpuByProximityWithCost(vmSpecs []cloudmodel.SpecInfo, node onpremmodel.
 	targetCount := uint8(1)
 	targetVramPerGpu := float32(0)
 	targetVendor := ""
+	targetModel := ""
 
 	clusters := clusterGpuCards(node.GPUCards)
 	if len(clusters) > 0 {
@@ -315,6 +367,7 @@ func sortGpuByProximityWithCost(vmSpecs []cloudmodel.SpecInfo, node onpremmodel.
 		targetCount = uint8(primary.Count)
 		targetVramPerGpu = primary.MemoryTotalGB
 		targetVendor = primary.Vendor
+		targetModel = primary.Model
 	}
 
 	// Calculate host vCPUs
@@ -330,6 +383,7 @@ func sortGpuByProximityWithCost(vmSpecs []cloudmodel.SpecInfo, node onpremmodel.
 		targetCount:  targetCount,
 		targetVram:   targetVramPerGpu,
 		targetVendor: targetVendor,
+		targetModel:  targetModel,
 		vcpus:        vcpusCalculated,
 		memory:       memory,
 		csp:          csp,
@@ -339,14 +393,16 @@ func sortGpuByProximityWithCost(vmSpecs []cloudmodel.SpecInfo, node onpremmodel.
 		Uint8("targetGpuCount", targetCount).
 		Float32("targetVramPerGpu", targetVramPerGpu).
 		Str("targetVendor", targetVendor).
+		Str("targetModel", targetModel).
 		Int("specsToSort", len(vmSpecs)).
-		Msg("Sorting GPU VM specs with multi-dimensional proximity ranking (Vendor > Count > VRAM > Host > Cost)")
+		Msg("Sorting GPU VM specs with multi-dimensional proximity ranking (Vendor > Count > VRAM > Model > Host > Cost)")
 
 	sort.Slice(vmSpecs, func(i, j int) bool {
 		criteria := []gpuCriterion{
 			gpuVendorMatch,
 			gpuCountProximity,
 			gpuVramProximity,
+			gpuModelMatch,
 			gpuHostResourceProximity,
 			func(ctx gpuRankingContext, a, b cloudmodel.SpecInfo) int {
 				switch {
@@ -372,10 +428,16 @@ func sortGpuByProximityWithCost(vmSpecs []cloudmodel.SpecInfo, node onpremmodel.
 // standardVramTiers defines common discrete VRAM capacities in public cloud GPU instances (in GB).
 var standardVramTiers = []float32{8, 16, 24, 32, 40, 48, 80, 96, 144, 192, 288}
 
+// vramTierToleranceGB absorbs minor MB-to-GiB conversion rounding (e.g., 24.2 GB -> 24 GB tier).
+const vramTierToleranceGB float32 = 0.5
+
+// minGpuFetchLimit ensures large-host GPU specs (e.g., g6.8xlarge) are not truncated by cost-sorted limits.
+const minGpuFetchLimit = 100
+
 // rightSizeUpVramTier sizes a requested VRAM up to the nearest standard cloud GPU tier.
 func rightSizeUpVramTier(vram float32) float32 {
 	for _, tier := range standardVramTiers {
-		if tier >= vram {
+		if tier+vramTierToleranceGB >= vram {
 			return tier
 		}
 	}
@@ -398,7 +460,7 @@ func rightSizeUpGpuCount(count uint32) uint32 {
 
 // recommendGpuNodeSpec recommends appropriate GPU-accelerated node specs for the given node.
 // It executes a targeted, single-shot query with discrete VRAM and topology right-sizing up,
-// followed by multi-dimensional proximity ranking (Vendor > Count > VRAM > Host L1 > Cost).
+// followed by multi-dimensional proximity ranking (Vendor > Count > VRAM > Model > Host L1 > Cost).
 func recommendGpuNodeSpec(
 	csp string,
 	region string,
@@ -456,9 +518,9 @@ func recommendGpuNodeSpec(
 		}
 	}`
 
-	fetchLimit := limit * 3
-	if fetchLimit < 15 {
-		fetchLimit = 15
+	fetchLimit := limit * 5
+	if fetchLimit < minGpuFetchLimit {
+		fetchLimit = minGpuFetchLimit
 	}
 
 	plan := fmt.Sprintf(planTemplate,
