@@ -11,6 +11,30 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	// DefaultTargetVNetCidr is the default target VNet CIDR block recommended when source network info is absent
+	DefaultTargetVNetCidr = "10.0.0.0/16"
+	// DefaultTargetSubnetCidr is the default target Subnet CIDR block recommended when source network info is absent
+	DefaultTargetSubnetCidr = "10.0.1.0/24"
+)
+
+// buildDefaultVNet creates a standard default target virtual network (10.0.0.0/16, subnet 10.0.1.0/24).
+func buildDefaultVNet(csp, region string) cloudmodel.VNetReq {
+	return cloudmodel.VNetReq{
+		Name:           "INSERT_YOUR_VNET_NAME",
+		ConnectionName: fmt.Sprintf("%s-%s", csp, region),
+		Description:    fmt.Sprintf("Default target virtual network (%s) for migration", DefaultTargetVNetCidr),
+		CidrBlock:      DefaultTargetVNetCidr,
+		SubnetInfoList: []cloudmodel.SubnetReq{
+			{
+				Name:        "INSERT_YOUR_SUBNET_NAME",
+				Description: fmt.Sprintf("Default target subnet (%s) for migration", DefaultTargetSubnetCidr),
+				IPv4_CIDR:   DefaultTargetSubnetCidr,
+			},
+		},
+	}
+}
+
 // RecommendVNet recommends virtual network configurations based on source infrastructure
 func RecommendVNet(csp string, region string, srcInfra onpremmodel.OnpremInfra) ([]cloudmodel.VNetReq, error) {
 
@@ -24,27 +48,23 @@ func RecommendVNet(csp string, region string, srcInfra onpremmodel.OnpremInfra) 
 		return emptyRes, err
 	}
 
+	// When source network info is absent, recommend a standard default target VNet (10.0.0.0/16, subnet 10.0.1.0/24)
 	if len(srcInfra.Network.IPv4Networks.CidrBlocks) == 0 && len(srcInfra.Network.IPv4Networks.DefaultGateways) == 0 {
-		err := fmt.Errorf("no network information found in the source computing infrastructure")
-		log.Error().Err(err).Msg("failed to recommend a virtual network")
-		return emptyRes, err
+		log.Info().Msgf("no network information found in source infrastructure; recommending default target network (%s, subnet %s)", DefaultTargetVNetCidr, DefaultTargetSubnetCidr)
+		return []cloudmodel.VNetReq{buildDefaultVNet(csp, region)}, nil
 	}
 
 	var srcNetworks []string
-	// * Note: srcInfra.Network.IPv4Networks.CidrBlocks is the input from the user (e.g., network admin)
 	if len(srcInfra.Network.IPv4Networks.CidrBlocks) != 0 {
 		srcNetworks = srcInfra.Network.IPv4Networks.CidrBlocks
 	} else if len(srcInfra.Network.IPv4Networks.DefaultGateways) != 0 {
-		// * Note: To estimate the network address space of the source computing infrastructure,
-		// * Source networks are derived by combining the default gateway and network interface information of each node.
-		srcNetworks, err = deriveSourceNetworksFromDefaultGateways(srcInfra)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to derive CIDR blocks from default gateways")
-			return emptyRes, err
+		// Source networks are derived by combining default gateway and network interfaces
+		var deriveErr error
+		srcNetworks, deriveErr = deriveSourceNetworksFromDefaultGateways(srcInfra)
+		if deriveErr != nil || len(srcNetworks) == 0 {
+			log.Warn().Err(deriveErr).Msgf("failed to derive CIDR from gateways; recommending default target network (%s, subnet %s)", DefaultTargetVNetCidr, DefaultTargetSubnetCidr)
+			return []cloudmodel.VNetReq{buildDefaultVNet(csp, region)}, nil
 		}
-	} else {
-		log.Warn().Msg("no network information found in the source computing infrastructure")
-		return emptyRes, fmt.Errorf("no network information found in the source computing infrastructure")
 	}
 	log.Debug().Msgf("Source networks (CIDR blocks): %v", srcNetworks)
 

@@ -333,16 +333,14 @@ func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmode
 		log.Warn().Msg("no recommended virtual network found for the source computing infrastructure")
 	}
 
-	// Assign the recommended virtural network to the response body
-	// TODO: Consider the other index in the recommended virtual network
-	recommendedVmInfra.TargetVNet = recommendedVNetInfoList[0]
-
-	// * Set a name to indicate a dependency between resources.
-	recommendedVmInfra.TargetVNet.Name = "mig-vnet-01"
-	recommendedVmInfra.TargetVNet.Description = "a recommended vNet for migration"
-	for i := range recommendedVmInfra.TargetVNet.SubnetInfoList {
-		recommendedVmInfra.TargetVNet.SubnetInfoList[i].Name = fmt.Sprintf("mig-subnet-%02d", i+1)
-		recommendedVmInfra.TargetVNet.SubnetInfoList[i].Description = "a recommended subnet for migration"
+	if len(recommendedVNetInfoList) > 0 {
+		recommendedVmInfra.TargetVNet = recommendedVNetInfoList[0]
+		recommendedVmInfra.TargetVNet.Name = "mig-vnet-01"
+		recommendedVmInfra.TargetVNet.Description = "a recommended vNet for migration"
+		for i := range recommendedVmInfra.TargetVNet.SubnetInfoList {
+			recommendedVmInfra.TargetVNet.SubnetInfoList[i].Name = fmt.Sprintf("mig-subnet-%02d", i+1)
+			recommendedVmInfra.TargetVNet.SubnetInfoList[i].Description = "a recommended subnet for migration"
+		}
 	}
 
 	// 2. Recommend(?) SSH key pair
@@ -359,6 +357,11 @@ func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmode
 	var recommendedVmSpecList = []cloudmodel.SpecInfo{}
 	var recommendedVmOsImageList = []cloudmodel.ImageInfo{}
 	var recommendedSecurityGroupList = []cloudmodel.SecurityGroupReq{}
+
+	firstSubnetId := ""
+	if len(recommendedVmInfra.TargetVNet.SubnetInfoList) > 0 {
+		firstSubnetId = recommendedVmInfra.TargetVNet.SubnetInfoList[0].Name
+	}
 
 	for i, node := range srcInfra.Nodes {
 
@@ -544,7 +547,7 @@ func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmode
 			ImageId:          selectedVmOsImage.Id,
 			CspImageName:     resolvedCspImageName, // Set only when review resolved a newer image; TumbleBug sends this to Spider instead of looking up via ImageId.
 			VNetId:           recommendedVmInfra.TargetVNet.Name,
-			SubnetId:         recommendedVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
+			SubnetId:         firstSubnetId,
 			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
 			Name:             fmt.Sprintf("migrated-%s", node.MachineId),           // Set MachineId to identify the source node
 			RootDiskType:     suggestedSystemDisk,                                  // Confirmed-available disk type from specImagePairReview; empty → CSP default
@@ -623,16 +626,14 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 		log.Warn().Msg("no recommended virtual network found for the source computing infrastructure")
 	}
 
-	// Assign the recommended virtural network to the response body
-	// TODO: Consider the other index in the recommended virtual network
-	skeletonVmInfra.TargetVNet = recommendedVNetInfoList[0]
-
-	// * Set a name to indicate a dependency between resources.
-	skeletonVmInfra.TargetVNet.Name = "vnet-01"
-	skeletonVmInfra.TargetVNet.Description = "a recommended vNet for migration"
-	for i := range skeletonVmInfra.TargetVNet.SubnetInfoList {
-		skeletonVmInfra.TargetVNet.SubnetInfoList[i].Name = fmt.Sprintf("subnet-%02d", i+1)
-		skeletonVmInfra.TargetVNet.SubnetInfoList[i].Description = "a recommended subnet for migration"
+	if len(recommendedVNetInfoList) > 0 {
+		skeletonVmInfra.TargetVNet = recommendedVNetInfoList[0]
+		skeletonVmInfra.TargetVNet.Name = "vnet-01"
+		skeletonVmInfra.TargetVNet.Description = "a recommended vNet for migration"
+		for i := range skeletonVmInfra.TargetVNet.SubnetInfoList {
+			skeletonVmInfra.TargetVNet.SubnetInfoList[i].Name = fmt.Sprintf("subnet-%02d", i+1)
+			skeletonVmInfra.TargetVNet.SubnetInfoList[i].Description = "a recommended subnet for migration"
+		}
 	}
 
 	// 2. Recommend(?) SSH key pair
@@ -644,6 +645,11 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 
 	// 3. Generate a skeleton of NodeGroup List for VMs
 	var skeletonNodegroupList = []cloudmodel.CreateNodeGroupReq{}
+
+	firstSubnetId := ""
+	if len(skeletonVmInfra.TargetVNet.SubnetInfoList) > 0 {
+		firstSubnetId = skeletonVmInfra.TargetVNet.SubnetInfoList[0].Name
+	}
 
 	// TODO: Select a subnet by the node's network information (for now, select the first one)
 	// Ref: https://github.com/cloud-barista/cb-spider/blob/master/cloud-driver-libs/cloudos_meta.yaml
@@ -667,7 +673,7 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
 			Description:      fmt.Sprintf("Recommended VM %02d for %s", i+1, node.MachineId), // Set MachineId to identify the source node
 			VNetId:           skeletonVmInfra.TargetVNet.Name,
-			SubnetId:         skeletonVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
+			SubnetId:         firstSubnetId,
 			Name:             fmt.Sprintf("vm-%s", node.MachineId),              // Set MachineId to identify the source node
 			RootDiskType:     "",                                                // Set "" or default to use CSP's default
 			RootDiskSize:     rootDiskSize,                                      // max(source disk size, CSP minimum) to keep costs low
