@@ -608,14 +608,27 @@ func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	}
 	log.Debug().Msgf("Deleting security groups (nsId: %s, SGs: %v)", nsId, sgIdMap)
 
-	// Delete all security groups
+	// Delete all security groups with retry while CSP detaches network interfaces
+	const sgDeleteMaxRetries = 5
+	const sgDeleteRetryInterval = 6 * time.Second
 	for sgId := range sgIdMap {
-		msg, err := tbclient.NewSession().DeleteSecurityGroup(nsId, sgId)
-		if err != nil {
-			log.Error().Err(err).Msgf("failed to delete security group (nsId: %s, sgId: %s)", nsId, sgId)
-			// Continue deleting other resources even if this fails
-		} else {
-			log.Debug().Msgf("Security group deleted (nsId: %s, sgId: %s, msg: %s)", nsId, sgId, msg)
+		var sgErr error
+		for attempt := 1; attempt <= sgDeleteMaxRetries; attempt++ {
+			msg, err := tbclient.NewSession().DeleteSecurityGroup(nsId, sgId)
+			if err == nil || strings.Contains(strings.ToLower(err.Error()), "not found") || strings.Contains(strings.ToLower(err.Error()), "does not exist") {
+				log.Debug().Msgf("Security group deleted (nsId: %s, sgId: %s, msg: %s)", nsId, sgId, msg)
+				sgErr = nil
+				break
+			}
+			sgErr = err
+			if attempt < sgDeleteMaxRetries {
+				log.Warn().Err(err).Msgf("Security group deletion failed (nsId: %s, sgId: %s, attempt: %d/%d); retrying in %s...",
+					nsId, sgId, attempt, sgDeleteMaxRetries, sgDeleteRetryInterval)
+				time.Sleep(sgDeleteRetryInterval)
+			}
+		}
+		if sgErr != nil {
+			log.Error().Err(sgErr).Msgf("failed to delete security group (nsId: %s, sgId: %s)", nsId, sgId)
 		}
 	}
 
