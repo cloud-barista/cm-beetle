@@ -92,7 +92,9 @@ func CalcResourceSimilarity(text1 string, delimiters1 []string, text2 string, de
 			}
 
 			// if not mapped, calculate the similarity based on SequenceMatcher
-			similarity = NormalizedSequenceMatcher(word1, word2)
+			if similarity == 0.0 {
+				similarity = NormalizedSequenceMatcher(word1, word2)
+			}
 
 			// Check if the similarity is the best match
 			if similarity > bestMatch {

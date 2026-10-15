@@ -156,8 +156,6 @@ func RecommendVmOsImages(csp string, region string, node onpremmodel.NodePropert
 		if strings.Contains(strings.ToLower(img.CspImageName), "uefi") {
 			continue
 		}
-		// Add more filters as needed
-
 		filteredImages = append(filteredImages, img)
 	}
 
@@ -182,8 +180,6 @@ func RecommendVmOsImages(csp string, region string, node onpremmodel.NodePropert
 			if strings.Contains(strings.ToLower(img.CspImageName), "uefi") {
 				continue
 			}
-			// Add more filters as needed
-
 			filteredImages = append(filteredImages, img)
 		}
 
@@ -250,46 +246,23 @@ func SetKeywordsAndDelimeters(node onpremmodel.NodeProperty) (string, []string, 
 		node.OS.VersionCodename,
 		node.CPU.Architecture,
 		node.RootDisk.Type)
+	if len(node.GPUCards) > 0 {
+		keywords = fmt.Sprintf("%s %s %s", keywords, node.GPUCards[0].Vendor, node.GPUCards[0].Model)
+	}
 
-	kwDelimiters := []string{" ", "-", ",", "(", ")", "[", "]", "/"}
-	imgDelimiters := []string{" ", "-", ",", "(", ")", "[", "]", "/"}
+	kwDelimiters := []string{" ", "-", ",", "(", ")", "[", "]", "/", ":", "_"}
+	imgDelimiters := []string{" ", "-", ",", "(", ")", "[", "]", "/", ":", "_"}
 
 	return keywords, kwDelimiters, imgDelimiters
 }
 
 // FindBestVmOsImage finds the best matching image based on the similarity scores
 func FindBestVmOsImage(csp string, keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string) cloudmodel.ImageInfo {
-
-	var bestVmOsImage cloudmodel.ImageInfo
-	var highestScore float64 = 0.0
-
-	for _, image := range vmImages {
-
-		vmImgKeywords := fmt.Sprintf("%s %s %s %s",
-			image.OSType,
-			image.OSArchitecture,
-			image.OSDiskType,
-			image.OSDistribution,
-		)
-
-		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, vmImgKeywords, imgDelimiters)
-
-		// Apply penalty for low-priority images (e.g., Marketplace images)
-		priority := compat.GetImagePriority(csp, image)
-		if priority > 5 {
-			score *= 0.5
-		}
-
-		if score > highestScore {
-			highestScore = score
-			bestVmOsImage = image
-		}
-		// log.Debug().Msgf("VmImageName: %s, score: %f, description: %s", image.OSDistribution, score, image.Description)
-
+	sorted := FindAndSortVmOsImageInfoListBySimilarity(csp, keywords, kwDelimiters, vmImages, imgDelimiters)
+	if len(sorted) == 0 {
+		return cloudmodel.ImageInfo{}
 	}
-	log.Debug().Msgf("highestScore: %f, bestVmOsImage: %v", highestScore, bestVmOsImage)
-
-	return bestVmOsImage
+	return sorted[0]
 }
 
 type VmOsImageInfoWithScore struct {
@@ -348,7 +321,13 @@ func FindAndSortVmOsImageInfoListBySimilarity(csp string, keywords string, kwDel
 			return priorityI < priorityJ
 		}
 
-		// Otherwise, maintain original order (stable sort)
+		// Tie-breaker: prefer canonical base image with fewer unmatched qualifier suffixes.
+		lenI := len(imageInfoListForSorting[i].VmOsImageInfo.CspImageName)
+		lenJ := len(imageInfoListForSorting[j].VmOsImageInfo.CspImageName)
+		if lenI != lenJ {
+			return lenI < lenJ
+		}
+
 		return false
 	})
 
@@ -363,34 +342,6 @@ func FindAndSortVmOsImageInfoListBySimilarity(csp string, keywords string, kwDel
 
 // FindBestVmOsImageNameUsedInCsp finds the best matching image based on the similarity scores
 func FindBestVmOsImageNameUsedInCsp(csp string, keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string) string {
-
-	var bestVmOsImageNameUsedInCsp string
-	var highestScore float64 = 0.0
-
-	for _, image := range vmImages {
-		vmImgKeywords := fmt.Sprintf("%s %s %s %s",
-			image.OSType,
-			image.OSArchitecture,
-			image.OSDiskType,
-			image.OSDistribution,
-		)
-
-		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, vmImgKeywords, imgDelimiters)
-
-		// Apply penalty for low-priority images (e.g., Marketplace images)
-		priority := compat.GetImagePriority(csp, image)
-		if priority > 5 {
-			score *= 0.5
-		}
-
-		if score > highestScore {
-			highestScore = score
-			bestVmOsImageNameUsedInCsp = image.CspImageName
-		}
-		// log.Debug().Msgf("VmImageName: %s, score: %f, description: %s", image.OSDistribution, score, image.Description)
-
-	}
-	log.Debug().Msgf("bestVmOsImageID: %s, highestScore: %f", bestVmOsImageNameUsedInCsp, highestScore)
-
-	return bestVmOsImageNameUsedInCsp
+	best := FindBestVmOsImage(csp, keywords, kwDelimiters, vmImages, imgDelimiters)
+	return best.CspImageName
 }
