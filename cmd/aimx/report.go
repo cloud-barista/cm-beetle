@@ -24,28 +24,57 @@ func printComparisonSummary(state *MigrationState, aiCfg AIServiceConfig) {
 	srcUrl := firstNonEmpty(s.WebUIUrl, fmt.Sprintf("http://%s:%d", s.PublicIP, aiCfg.OpenWebUIPort))
 	tgtUrl := firstNonEmpty(t.WebUIUrl, fmt.Sprintf("http://%s:%d", t.PublicIP, aiCfg.OpenWebUIPort))
 
-	fmt.Println("\n--------------------------------------------------------------------------------")
+	type tableRow struct {
+		metric string
+		source string
+		target string
+	}
+
+	transferInfo := fmt.Sprintf("%s (strategy: %s)", state.DataTransferDuration, state.DataTransferStrategy)
+	rows := []tableRow{
+		{"Infra / Node ID", fmt.Sprintf("%s / %s", s.InfraID, s.NodeID), fmt.Sprintf("%s / %s", t.InfraID, t.NodeID)},
+		{"CSP / Region", fmt.Sprintf("%s / %s", s.Csp, s.Region), fmt.Sprintf("%s / %s", t.Csp, t.Region)},
+		{"Instance Spec", shortSpecName(s.SpecID), shortSpecName(t.SpecID)},
+		{"GPU Accelerator", fmt.Sprintf("%dx %s (%.0fGB)", s.GpuCount, s.GpuModel, s.GpuVramGB), fmt.Sprintf("%dx %s (%.0fGB)", t.GpuCount, t.GpuModel, t.GpuVramGB)},
+		{"Driver / CUDA", fmt.Sprintf("%s / %s", s.DriverVersion, s.CudaVersion), fmt.Sprintf("%s / %s", t.DriverVersion, t.CudaVersion)},
+		{"Gemma Model", s.ModelName, t.ModelName},
+		{"Ollama Processor", s.OllamaProcessor, t.OllamaProcessor},
+		{"Inference Speed", fmt.Sprintf("%.2f tokens/sec", s.EvalTokensPerSec), fmt.Sprintf("%.2f tokens/sec", t.EvalTokensPerSec)},
+		{"Open WebUI HTTP Status", fmt.Sprintf("HTTP %d (v%s)", s.WebUIHttpStatus, firstNonEmpty(s.WebUIVersion, "-")), fmt.Sprintf("HTTP %d (v%s)", t.WebUIHttpStatus, firstNonEmpty(t.WebUIVersion, "-"))},
+		{"Open WebUI /api/config", fmt.Sprintf("ok=%v (ext=%v)", s.WebUIConfigOK, s.ExternalWebUIReachable), fmt.Sprintf("ok=%v (ext=%v)", t.WebUIConfigOK, t.ExternalWebUIReachable)},
+		{"Data Volume Size", s.VolumeSizeHuman, t.VolumeSizeHuman},
+		{"WebUI SQLite SHA-256", shortHash(s.WebUIDbSha256), fmt.Sprintf("%s (%s)", shortHash(t.WebUIDbSha256), dbMatch)},
+		{"transx Transfer Duration", "Source -> Target", transferInfo},
+	}
+
+	w1, w2, w3 := len("Metric"), len("Source GPU VM"), len("Target GPU VM")
+	for _, r := range rows {
+		if len(r.metric) > w1 {
+			w1 = len(r.metric)
+		}
+		if len(r.source) > w2 {
+			w2 = len(r.source)
+		}
+		if len(r.target) > w3 {
+			w3 = len(r.target)
+		}
+	}
+
+	rowFmt := fmt.Sprintf("  %%-%ds | %%-%ds | %%-%ds\n", w1, w2, w3)
+	sepLine := strings.Repeat("-", w1+w2+w3+10)
+
+	fmt.Printf("\n%s\n", sepLine)
 	fmt.Println("📊 AIMX (AI Migration X) — Source vs. Target GPU AI Service Summary")
-	fmt.Println("--------------------------------------------------------------------------------")
-	fmt.Printf("  %-26s | %-28s | %-28s\n", "Metric", "Source GPU VM", "Target GPU VM")
-	fmt.Println("--------------------------------------------------------------------------------")
-	fmt.Printf("  %-26s | %-28s | %-28s\n", "Infra / Node ID", fmt.Sprintf("%s / %s", s.InfraID, s.NodeID), fmt.Sprintf("%s / %s", t.InfraID, t.NodeID))
-	fmt.Printf("  %-26s | %-28s | %-28s\n", "CSP / Region", fmt.Sprintf("%s / %s", s.Csp, s.Region), fmt.Sprintf("%s / %s", t.Csp, t.Region))
-	fmt.Printf("  %-26s | %-28s | %-28s\n", "Instance Spec", s.SpecID, t.SpecID)
-	fmt.Printf("  %-26s | %-28s | %-28s\n", "GPU Accelerator", fmt.Sprintf("%dx %s (%.0fGB)", s.GpuCount, s.GpuModel, s.GpuVramGB), fmt.Sprintf("%dx %s (%.0fGB)", t.GpuCount, t.GpuModel, t.GpuVramGB))
-	fmt.Printf("  %-26s | %-28s | %-28s\n", "Driver / CUDA", fmt.Sprintf("%s / %s", s.DriverVersion, s.CudaVersion), fmt.Sprintf("%s / %s", t.DriverVersion, t.CudaVersion))
-	fmt.Printf("  %-26s | %-28s | %-28s\n", "Gemma Model", s.ModelName, t.ModelName)
-	fmt.Printf("  %-26s | %-28s | %-28s\n", "Ollama Processor", s.OllamaProcessor, t.OllamaProcessor)
-	fmt.Printf("  %-26s | %-28s | %-28s\n", "Inference Speed", fmt.Sprintf("%.2f tokens/sec", s.EvalTokensPerSec), fmt.Sprintf("%.2f tokens/sec", t.EvalTokensPerSec))
-	fmt.Printf("  %-26s | %-28s | %-28s\n", "Open WebUI HTTP Status", fmt.Sprintf("HTTP %d (v%s)", s.WebUIHttpStatus, firstNonEmpty(s.WebUIVersion, "-")), fmt.Sprintf("HTTP %d (v%s)", t.WebUIHttpStatus, firstNonEmpty(t.WebUIVersion, "-")))
-	fmt.Printf("  %-26s | %-28s | %-28s\n", "Open WebUI /api/config", fmt.Sprintf("ok=%v (ext=%v)", s.WebUIConfigOK, s.ExternalWebUIReachable), fmt.Sprintf("ok=%v (ext=%v)", t.WebUIConfigOK, t.ExternalWebUIReachable))
-	fmt.Printf("  %-26s | %-28s | %-28s\n", "Data Volume Size", s.VolumeSizeHuman, t.VolumeSizeHuman)
-	fmt.Printf("  %-26s | %-59s\n", "WebUI SQLite SHA-256", dbMatch)
-	fmt.Printf("  %-26s | %-59s\n", "transx Transfer Duration", fmt.Sprintf("%s (strategy: %s)", state.DataTransferDuration, state.DataTransferStrategy))
-	fmt.Println("--------------------------------------------------------------------------------")
+	fmt.Println(sepLine)
+	fmt.Printf(rowFmt, "Metric", "Source GPU VM", "Target GPU VM")
+	fmt.Println(sepLine)
+	for _, r := range rows {
+		fmt.Printf(rowFmt, r.metric, r.source, r.target)
+	}
+	fmt.Println(sepLine)
 	fmt.Printf("🌐 [Source Open WebUI Browser URL] 👉 %s\n", srcUrl)
 	fmt.Printf("🌐 [Target Open WebUI Browser URL] 👉 %s\n", tgtUrl)
-	fmt.Println("--------------------------------------------------------------------------------")
+	fmt.Println(sepLine)
 }
 
 // writeMarkdownReport writes a comprehensive Markdown report to testresult/aimx-migration-report-{csp}-{region}.md.
@@ -91,7 +120,7 @@ func writeMarkdownReport(cfg TestConfig, target TestCase, state *MigrationState)
 	b.WriteString(fmt.Sprintf("| **Infra** | Infra ID / Node ID | `%s` / `%s` | `%s` / `%s` |\n", s.InfraID, s.NodeID, t.InfraID, t.NodeID))
 	b.WriteString(fmt.Sprintf("| **Infra** | CSP / Region | `%s` / `%s` | `%s` / `%s` |\n", s.Csp, s.Region, t.Csp, t.Region))
 	b.WriteString(fmt.Sprintf("| **Infra** | Public IP | `%s` | `%s` |\n", s.PublicIP, t.PublicIP))
-	b.WriteString(fmt.Sprintf("| **Infra** | Instance Spec | `%s` | `%s` |\n", s.SpecID, t.SpecID))
+	b.WriteString(fmt.Sprintf("| **Infra** | Instance Spec | `%s` | `%s` |\n", shortSpecName(s.SpecID), shortSpecName(t.SpecID)))
 	b.WriteString(fmt.Sprintf("| **Infra** | Machine Image | `%s` | `%s` |\n", s.ImageID, t.ImageID))
 	b.WriteString(fmt.Sprintf("| **GPU** | Accelerator Model | `%dx %s (%.0f GB VRAM)` | `%dx %s (%.0f GB VRAM)` |\n", s.GpuCount, s.GpuModel, s.GpuVramGB, t.GpuCount, t.GpuModel, t.GpuVramGB))
 	b.WriteString(fmt.Sprintf("| **GPU** | Driver / CUDA Version | `%s` / `CUDA %s` | `%s` / `CUDA %s` |\n", s.DriverVersion, s.CudaVersion, t.DriverVersion, t.CudaVersion))
@@ -123,6 +152,14 @@ func writeMarkdownReport(cfg TestConfig, target TestCase, state *MigrationState)
 		return "", fmt.Errorf("failed to write markdown report %s: %w", reportFile, err)
 	}
 	return reportFile, nil
+}
+
+// shortSpecName strips the "{csp}+{region}+" prefix from a composite Tumblebug spec ID.
+func shortSpecName(specID string) string {
+	if idx := strings.LastIndex(specID, "+"); idx >= 0 && idx+1 < len(specID) {
+		return specID[idx+1:]
+	}
+	return specID
 }
 
 // shortHash returns the first 16 hex characters of a SHA-256 digest for table readability.

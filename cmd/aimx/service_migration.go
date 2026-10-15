@@ -128,6 +128,11 @@ cd %s && sudo docker compose up -d`, cfg.AIService.RootDir, cfg.AIService.RootDi
 		}
 	}
 
+	fmt.Printf("🔥 [Stage 3-7] Pre-warming migrated model '%s' into Target GPU VRAM (cold load may take 3~5 min)...\n", cfg.AIService.ModelName)
+	warmupCmd := fmt.Sprintf(`curl -s http://localhost:%d/api/generate -d '{"model":"%s","prompt":"Hello","stream":false,"keep_alive":"30m"}' >/dev/null && sudo docker exec aimx-ollama ollama ps`,
+		cfg.AIService.OllamaPort, cfg.AIService.ModelName)
+	_, _ = execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, []string{warmupCmd})
+
 	state.Source.WebUIUrl = fmt.Sprintf("http://%s:%d", state.Source.PublicIP, cfg.AIService.OpenWebUIPort)
 	state.Target.WebUIUrl = fmt.Sprintf("http://%s:%d", state.Target.PublicIP, cfg.AIService.OpenWebUIPort)
 	state.StageDurations["migrate"] = time.Since(stageStart).Round(time.Second).String()

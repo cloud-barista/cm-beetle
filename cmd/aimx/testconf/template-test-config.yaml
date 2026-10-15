@@ -66,8 +66,8 @@ aiService:
   # If true (default), transx transfers the entire rootDir including Gemma model weights (`ollama/`).
   # If false, transx excludes `ollama/models/blobs*` and triggers `ollama pull` on Target after transfer.
   transferModelWeights: true
-  # CM-Beetle transx transfer strategy: "relay" (default for cross-VM with distinct SSH keys), "auto", or "direct".
-  transxStrategy: relay
+  # CM-Beetle transx transfer strategy: "direct" (SSH Agent Forwarding, Source -> Target directly), "relay", or "auto".
+  transxStrategy: direct
   # CM-Beetle transx FilterOption (rsync --include / --exclude patterns relative to rootDir).
   filter:
     include: []
