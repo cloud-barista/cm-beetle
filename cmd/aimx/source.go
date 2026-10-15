@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -14,6 +15,9 @@ import (
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/go-resty/resty/v2"
 )
+
+//go:embed scripts/ensure-gpu-runtime.sh
+var ensureGpuRuntimeScript string
 
 // cudaRegex extracts the CUDA version reported in the standard nvidia-smi banner.
 var cudaRegex = regexp.MustCompile(`CUDA Version:\s*([0-9.]+)`)
@@ -294,25 +298,10 @@ func buildDockerComposeYAML(aiCfg AIServiceConfig) string {
 `, aiCfg.OllamaPort, aiCfg.OpenWebUIPort)
 }
 
-// ensureDockerAndNvidiaRuntime verifies Docker Compose and NVIDIA Container Toolkit on a target/source GPU VM.
+// ensureDockerAndNvidiaRuntime verifies NVIDIA GPU driver, Docker Compose, and NVIDIA Container Toolkit across CSPs.
 func ensureDockerAndNvidiaRuntime(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string) error {
-	checkAndFixScript := `set -e
-if ! command -v docker >/dev/null 2>&1; then
-  curl -fsSL https://get.docker.com | sudo sh
-fi
-if ! sudo docker compose version >/dev/null 2>&1; then
-  sudo apt-get -o DPkg::Lock::Timeout=120 update -qq && sudo apt-get -o DPkg::Lock::Timeout=120 install -y -qq docker-compose-v2 || sudo apt-get -o DPkg::Lock::Timeout=120 install -y -qq docker-compose-plugin
-fi
-if command -v nvidia-ctk >/dev/null 2>&1; then
-  if ! grep -q "nvidia" /etc/docker/daemon.json 2>/dev/null; then
-    sudo nvidia-ctk runtime configure --runtime=docker >/dev/null 2>&1 || true
-    sudo systemctl restart docker
-  fi
-fi
-echo "RUNTIME_READY"`
-
-	_, err := execRemoteCmd(tb, tbEndpoint, nsID, infraID, nodeID, []string{checkAndFixScript})
-	if err != nil {
+	script := strings.ReplaceAll(ensureGpuRuntimeScript, "\r\n", "\n")
+	if _, err := execRemoteCmd(tb, tbEndpoint, nsID, infraID, nodeID, []string{script}); err != nil {
 		return fmt.Errorf("failed to verify Docker/NVIDIA container runtime on %s: %w", infraID, err)
 	}
 	return nil

@@ -200,78 +200,92 @@ func cleanupEnvironment(beetle, tb *resty.Client, cfg TestConfig, auth AuthConfi
 	fmt.Println("🧹 [Stage 5] Cleaning Up Migrated GPU Infrastructure")
 	fmt.Println("================================================================================")
 
-	if state.Target.InfraID != "" {
-		delURL := fmt.Sprintf("%s/beetle/migration/ns/%s/infra/%s?option=terminate",
-			strings.TrimRight(cfg.Beetle.Endpoint, "/"), cfg.Beetle.NamespaceID, state.Target.InfraID)
-		fmt.Printf("🗑️  Deleting Target GPU Infra '%s' via DELETE %s...\n", state.Target.InfraID, delURL)
-		var delResp model.ApiResponse[any]
-		resp, err := beetle.R().SetResult(&delResp).Delete(delURL)
-		if err != nil || resp.IsError() {
-			return fmt.Errorf("failed to delete target infra '%s': err=%v, status=%d, body=%s",
-				state.Target.InfraID, err, resp.StatusCode(), resp.String())
+	baseTB := strings.TrimRight(auth.TumblebugEndpoint, "/")
+	targetPrefixes := []string{"aimx-"}
+	for _, tc := range cfg.Test.Cases {
+		if seed := strings.TrimSpace(tc.NameSeed); seed != "" {
+			targetPrefixes = append(targetPrefixes, seed)
 		}
-		fmt.Printf("✅ Deleted Target GPU Infra '%s'\n", state.Target.InfraID)
-		cleanupBeetleNamespaceResources(beetle, cfg.Beetle.Endpoint, cfg.Beetle.NamespaceID)
-	} else {
-		fmt.Println("ℹ️  No Target GPU Infra recorded in state file; skipping target cleanup.")
 	}
 
+	targetInfraID := strings.TrimSpace(state.Target.InfraID)
+	if targetInfraID != "" {
+		targetPrefixes = append(targetPrefixes, targetInfraID)
+		delURL := fmt.Sprintf("%s/beetle/migration/ns/%s/infra/%s?option=terminate",
+			strings.TrimRight(cfg.Beetle.Endpoint, "/"), cfg.Beetle.NamespaceID, targetInfraID)
+		fmt.Printf("🗑️  Deleting Target GPU Infra '%s' via DELETE %s...\n", targetInfraID, delURL)
+		var delResp model.ApiResponse[any]
+		resp, err := beetle.R().SetResult(&delResp).Delete(delURL)
+		if err != nil {
+			fmt.Printf("⚠️  CM-Beetle DELETE interrupted (%v); ensuring Target Infra '%s' termination via CB-Tumblebug...\n", err, targetInfraID)
+			_, _ = tb.R().SetQueryParam("option", "terminate").Delete(fmt.Sprintf("%s/tumblebug/ns/%s/infra/%s", baseTB, cfg.Beetle.NamespaceID, targetInfraID))
+		} else if resp.IsError() && !isNotFoundResponse(resp.StatusCode(), resp.String()) {
+			return fmt.Errorf("failed to delete target infra '%s': status=%d, body=%s",
+				targetInfraID, resp.StatusCode(), resp.String())
+		}
+		fmt.Printf("✅ Deleted Target GPU Infra '%s'\n", targetInfraID)
+	} else {
+		fmt.Printf("ℹ️  No Target GPU Infra ID in state; checking namespace '%s' for remaining target resources...\n", cfg.Beetle.NamespaceID)
+	}
+
+	cleanupTumblebugResourcesByPrefix(tb, baseTB, cfg.Beetle.NamespaceID, targetPrefixes)
+
 	if cfg.Source.CleanupSourceInfra && cfg.Source.InfraID != "" {
-		baseTB := strings.TrimRight(auth.TumblebugEndpoint, "/")
 		srcDelURL := fmt.Sprintf("%s/tumblebug/ns/%s/infra/%s", baseTB, cfg.Source.NamespaceID, cfg.Source.InfraID)
 		fmt.Printf("🗑️  Deleting Source GPU Infra '%s' via DELETE %s...\n", cfg.Source.InfraID, srcDelURL)
 		resp, err := tb.R().SetQueryParam("option", "terminate").Delete(srcDelURL)
-		if err != nil || resp.IsError() {
-			return fmt.Errorf("failed to delete source infra '%s': err=%v, status=%d", cfg.Source.InfraID, err, resp.StatusCode())
+		if err != nil {
+			return fmt.Errorf("failed to delete source infra '%s': err=%v", cfg.Source.InfraID, err)
 		}
-		time.Sleep(5 * time.Second)
-		cleanupTumblebugSharedResources(tb, baseTB, cfg.Source.NamespaceID, cfg.Source.InfraID)
+		if resp.IsError() && !isNotFoundResponse(resp.StatusCode(), resp.String()) {
+			return fmt.Errorf("failed to delete source infra '%s': status=%d, body=%s", cfg.Source.InfraID, resp.StatusCode(), resp.String())
+		}
+		_, _ = tb.R().Delete(fmt.Sprintf("%s/tumblebug/ns/%s/sharedResources", baseTB, cfg.Source.NamespaceID))
+		_, _ = tb.R().Delete(fmt.Sprintf("%s/tumblebug/ns/%s/defaultResources", baseTB, cfg.Source.NamespaceID))
+		cleanupTumblebugResourcesByPrefix(tb, baseTB, cfg.Source.NamespaceID, []string{cfg.Source.InfraID, cfg.Source.NamespaceID + "-shared-"})
 		fmt.Printf("✅ Deleted Source GPU Infra '%s' and released associated network/security/key resources\n", cfg.Source.InfraID)
 	}
 
 	return nil
 }
 
-// idListResponse maps CB-Tumblebug and CM-Beetle `?option=id` responses (`{"output": [...]}`).
+// idListResponse maps CB-Tumblebug `?option=id` responses (`{"output": [...]}`).
 type idListResponse struct {
 	Output []string `json:"output"`
 }
 
-// cleanupBeetleNamespaceResources deletes migrated SecurityGroups, SSHKeys, and vNets via CM-Beetle in dependency order.
-func cleanupBeetleNamespaceResources(beetle *resty.Client, beetleEndpoint, nsID string) {
-	base := strings.TrimRight(beetleEndpoint, "/")
-	time.Sleep(5 * time.Second)
-	_, _ = beetle.R().Delete(fmt.Sprintf("%s/beetle/migration/ns/%s/resources/securityGroup", base, nsID))
-
-	var keysResp model.ApiResponse[idListResponse]
-	if r, err := beetle.R().SetResult(&keysResp).Get(fmt.Sprintf("%s/beetle/migration/ns/%s/resources/sshKey?option=id", base, nsID)); err == nil && !r.IsError() {
-		for _, kID := range keysResp.Data.Output {
-			if strings.HasPrefix(kID, "aimx-") {
-				_, _ = beetle.R().Delete(fmt.Sprintf("%s/beetle/migration/ns/%s/resources/sshKey/%s", base, nsID, kID))
-			}
-		}
-	}
-
-	var vnetsResp model.ApiResponse[idListResponse]
-	if r, err := beetle.R().SetResult(&vnetsResp).Get(fmt.Sprintf("%s/beetle/migration/ns/%s/resources/vNet?option=id", base, nsID)); err == nil && !r.IsError() {
-		for _, vID := range vnetsResp.Data.Output {
-			if strings.HasPrefix(vID, "aimx-") {
-				_, _ = beetle.R().Delete(fmt.Sprintf("%s/beetle/migration/ns/%s/resources/vNet/%s?action=withsubnets", base, nsID, vID))
-			}
-		}
-	}
+func isNotFoundResponse(status int, body string) bool {
+	lower := strings.ToLower(body)
+	return status == http.StatusNotFound || strings.Contains(lower, "does not exist") || strings.Contains(lower, "not found")
 }
 
-// cleanupTumblebugSharedResources deletes Source SecurityGroups, SSHKeys, and shared vNets in dependency order.
-func cleanupTumblebugSharedResources(tb *resty.Client, baseTB, nsID, infraPrefix string) {
-	_, _ = tb.R().Delete(fmt.Sprintf("%s/tumblebug/ns/%s/sharedResources", baseTB, nsID))
-	_, _ = tb.R().Delete(fmt.Sprintf("%s/tumblebug/ns/%s/defaultResources", baseTB, nsID))
+func hasAnyPrefix(id string, prefixes []string) bool {
+	for _, p := range prefixes {
+		if p != "" && strings.HasPrefix(id, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// cleanupTumblebugResourcesByPrefix deletes any remaining Infras, SecurityGroups, SSHKeys, and vNets matching prefixes in dependency order.
+func cleanupTumblebugResourcesByPrefix(tb *resty.Client, baseTB, nsID string, prefixes []string) {
+	var infras idListResponse
+	if r, err := tb.R().SetResult(&infras).Get(fmt.Sprintf("%s/tumblebug/ns/%s/infra?option=id", baseTB, nsID)); err == nil && !r.IsError() {
+		for _, infraID := range infras.Output {
+			if hasAnyPrefix(infraID, prefixes) {
+				fmt.Printf("  🗑️  Removing remaining Infra '%s'...\n", infraID)
+				_, _ = tb.R().SetQueryParam("option", "terminate").Delete(fmt.Sprintf("%s/tumblebug/ns/%s/infra/%s", baseTB, nsID, infraID))
+			}
+		}
+	}
 
 	var sgs idListResponse
 	if r, err := tb.R().SetResult(&sgs).Get(fmt.Sprintf("%s/tumblebug/ns/%s/resources/securityGroup?option=id", baseTB, nsID)); err == nil && !r.IsError() {
 		for _, sgID := range sgs.Output {
-			if strings.HasPrefix(sgID, infraPrefix) || strings.HasPrefix(sgID, nsID+"-shared-") {
-				_, _ = tb.R().Delete(fmt.Sprintf("%s/tumblebug/ns/%s/resources/securityGroup/%s", baseTB, nsID, sgID))
+			if hasAnyPrefix(sgID, prefixes) {
+				fmt.Printf("  🗑️  Removing SecurityGroup '%s'...\n", sgID)
+				deleteResourceWithRetry(tb, fmt.Sprintf("%s/tumblebug/ns/%s/resources/securityGroup/%s", baseTB, nsID, sgID), 5, 5*time.Second)
 			}
 		}
 	}
@@ -279,8 +293,9 @@ func cleanupTumblebugSharedResources(tb *resty.Client, baseTB, nsID, infraPrefix
 	var keys idListResponse
 	if r, err := tb.R().SetResult(&keys).Get(fmt.Sprintf("%s/tumblebug/ns/%s/resources/sshKey?option=id", baseTB, nsID)); err == nil && !r.IsError() {
 		for _, kID := range keys.Output {
-			if strings.HasPrefix(kID, infraPrefix) || strings.HasPrefix(kID, nsID+"-shared-") {
-				_, _ = tb.R().Delete(fmt.Sprintf("%s/tumblebug/ns/%s/resources/sshKey/%s", baseTB, nsID, kID))
+			if hasAnyPrefix(kID, prefixes) {
+				fmt.Printf("  🗑️  Removing SSHKey '%s'...\n", kID)
+				deleteResourceWithRetry(tb, fmt.Sprintf("%s/tumblebug/ns/%s/resources/sshKey/%s", baseTB, nsID, kID), 3, 3*time.Second)
 			}
 		}
 	}
@@ -288,9 +303,22 @@ func cleanupTumblebugSharedResources(tb *resty.Client, baseTB, nsID, infraPrefix
 	var vnets idListResponse
 	if r, err := tb.R().SetResult(&vnets).Get(fmt.Sprintf("%s/tumblebug/ns/%s/resources/vNet?option=id", baseTB, nsID)); err == nil && !r.IsError() {
 		for _, vID := range vnets.Output {
-			if strings.HasPrefix(vID, infraPrefix) || strings.HasPrefix(vID, nsID+"-shared-") {
-				_, _ = tb.R().Delete(fmt.Sprintf("%s/tumblebug/ns/%s/resources/vNet/%s?action=withsubnets", baseTB, nsID, vID))
+			if hasAnyPrefix(vID, prefixes) {
+				fmt.Printf("  🗑️  Removing vNet '%s' (with subnets)...\n", vID)
+				deleteResourceWithRetry(tb, fmt.Sprintf("%s/tumblebug/ns/%s/resources/vNet/%s?action=withsubnets", baseTB, nsID, vID), 5, 6*time.Second)
 			}
+		}
+	}
+}
+
+func deleteResourceWithRetry(tb *resty.Client, url string, maxRetries int, interval time.Duration) {
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		resp, err := tb.R().Delete(url)
+		if err == nil && (!resp.IsError() || isNotFoundResponse(resp.StatusCode(), resp.String())) {
+			return
+		}
+		if attempt < maxRetries {
+			time.Sleep(interval)
 		}
 	}
 }
