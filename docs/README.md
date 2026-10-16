@@ -10,6 +10,7 @@ Documentation site for CM-Beetle, computing infrastructure migration.
   - [Validation Guide](feature-guide/core-validation.md) – Pre-flight dry-run validation rules for target infrastructure.
 - **Infrastructure**
   - [Computing Infrastructure](feature-guide/infra-computing.md) – VM, VNet, Subnet, and Security Group migration support.
+  - [GPU Infrastructure Recommendation & Migration API Guide](feature-guide/gpu-infra-migration-api-guide.md) - End-to-end guide for recommending and migrating GPU infrastructure (`Tesla T4`, etc.) via CM-Beetle REST APIs.
   - [Kubernetes Infrastructure](feature-guide/infra-kubernetes.md) – Managed Kubernetes cluster recommendation and migration.
 - **Managed Middleware**
   - [Managed Middleware Overview](feature-guide/middleware-overview.md) – Multi-cloud support matrix for managed middleware.
