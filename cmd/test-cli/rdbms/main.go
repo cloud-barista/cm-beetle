@@ -713,8 +713,18 @@ func runSingleRDBMSTest(
 				inst.NHNDBSGToAllowAllInbound = true
 			}
 			inst.HighAvailability = tc.HighAvailability
+			recCharset := ""
+			recCollation := ""
+			if len(inst.Databases) > 0 {
+				recCharset = inst.Databases[0].Charset
+				recCollation = inst.Databases[0].Collation
+			}
 			inst.Databases = []rdbmsmodel.TargetDatabase{
-				{DatabaseName: dbName},
+				{
+					DatabaseName: dbName,
+					Charset:      recCharset,
+					Collation:    recCollation,
+				},
 			}
 		}
 	}
@@ -904,8 +914,16 @@ func runSingleRDBMSTest(
 	createDbStep := TestResults{TestName: "Beetle POST Create Logical Database", StartTime: time.Now()}
 	dynamicDbName := fmt.Sprintf("%s_dyn", dbName)
 	if createdRDBMSId != "" {
+		dynCharset := ""
+		dynCollation := ""
+		if len(recommendedResult.TargetRDBMSInstances) > 0 && len(recommendedResult.TargetRDBMSInstances[0].Databases) > 0 {
+			dynCharset = recommendedResult.TargetRDBMSInstances[0].Databases[0].Charset
+			dynCollation = recommendedResult.TargetRDBMSInstances[0].Databases[0].Collation
+		}
 		dbReq := rdbmsmodel.RDBMSDatabaseCreateReq{
 			DatabaseName: dynamicDbName,
+			Charset:      dynCharset,
+			Collation:    dynCollation,
 		}
 		createDbURL := fmt.Sprintf("%s/migration/middleware/ns/%s/rdbms/%s/database", cfg.Beetle.Endpoint, cfg.Beetle.NamespaceID, createdRDBMSId)
 		cDbResp, cDbErr := bClient.R().

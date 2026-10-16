@@ -570,12 +570,7 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 		targetAdminUser := resolveTargetAdminUser(userAdmin, capa.AdminUserNameRequirement, &warnings)
 
 		// 5. Map Inner Databases
-		targetDatabases := make([]rdbmsmodel.TargetDatabase, 0, len(src.InnerDatabases))
-		for _, db := range src.InnerDatabases {
-			targetDatabases = append(targetDatabases, rdbmsmodel.TargetDatabase{
-				DatabaseName: db.DatabaseName,
-			})
-		}
+		targetDatabases := resolveTargetDatabases(desiredCsp, targetEngine, instName, src.InnerDatabases, &warnings)
 
 		targetInst := rdbmsmodel.TargetRDBMSInstance{
 			SourceInstanceName:        instName,
@@ -1161,4 +1156,61 @@ func isDBEngineSupported(support rdbmsmodel.RDBMSCSPSupportInfo, hasSupport bool
 		}
 	}
 	return false
+}
+
+// resolveTargetDatabases maps source inner databases to target database specs while respecting CSP/engine constraints.
+func resolveTargetDatabases(csp, targetEngine, instName string, innerDBs []rdbmsmodel.InnerDatabaseProperty, warnings *[]string) []rdbmsmodel.TargetDatabase {
+	targetDatabases := make([]rdbmsmodel.TargetDatabase, 0, len(innerDBs))
+	cspLower := strings.ToLower(strings.TrimSpace(csp))
+	engineLower := strings.ToLower(strings.TrimSpace(targetEngine))
+
+	for _, db := range innerDBs {
+		dbName := strings.TrimSpace(db.DatabaseName)
+		charset := strings.TrimSpace(db.CharacterSet)
+		collation := strings.TrimSpace(db.Collation)
+
+		if charset != "" || collation != "" {
+			switch {
+			case engineLower != "mysql" && engineLower != "mariadb":
+				if warnings != nil {
+					msg := fmt.Sprintf("instance '%s' database '%s': charset/collation customization is only supported for MySQL/MariaDB (omitted for engine '%s')", instName, dbName, targetEngine)
+					log.Warn().Msg(msg)
+					*warnings = append(*warnings, msg)
+				}
+				charset = ""
+				collation = ""
+			case cspLower == "ncp":
+				if warnings != nil {
+					msg := fmt.Sprintf("instance '%s' database '%s': omitted charset/collation on NCP so database creation uses the native NCP REST API without requiring direct VPC SQL connectivity", instName, dbName)
+					log.Info().Msg(msg)
+					*warnings = append(*warnings, msg)
+				}
+				charset = ""
+				collation = ""
+			case cspLower == "nhn":
+				if warnings != nil {
+					msg := fmt.Sprintf("instance '%s' database '%s': omitted charset/collation on NHN Cloud so database creation uses the native NHN REST API without requiring console 'Direct Control' pre-activation", instName, dbName)
+					log.Info().Msg(msg)
+					*warnings = append(*warnings, msg)
+				}
+				charset = ""
+				collation = ""
+			case cspLower == "alibaba" && engineLower == "mariadb" && collation != "":
+				if warnings != nil {
+					msg := fmt.Sprintf("instance '%s' database '%s': omitted collation '%s' because Alibaba Cloud MariaDB OpenAPI accepts charset only", instName, dbName, collation)
+					log.Info().Msg(msg)
+					*warnings = append(*warnings, msg)
+				}
+				collation = ""
+			}
+		}
+
+		targetDatabases = append(targetDatabases, rdbmsmodel.TargetDatabase{
+			DatabaseName: dbName,
+			Charset:      charset,
+			Collation:    collation,
+		})
+	}
+
+	return targetDatabases
 }

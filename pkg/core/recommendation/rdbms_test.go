@@ -958,3 +958,59 @@ func TestResolveTargetAdminUser(t *testing.T) {
 		}
 	})
 }
+
+func TestResolveTargetDatabases(t *testing.T) {
+	innerDBs := []rdbmsmodel.InnerDatabaseProperty{
+		{
+			DatabaseName: "sampledb",
+			CharacterSet: "utf8mb4",
+			Collation:    "utf8mb4_unicode_ci",
+		},
+	}
+
+	t.Run("AWS MySQL preserves charset and collation", func(t *testing.T) {
+		var warnings []string
+		got := resolveTargetDatabases("aws", "mysql", "inst-1", innerDBs, &warnings)
+		if len(got) != 1 || got[0].Charset != "utf8mb4" || got[0].Collation != "utf8mb4_unicode_ci" {
+			t.Fatalf("unexpected target databases: %+v", got)
+		}
+		if len(warnings) != 0 {
+			t.Fatalf("expected 0 warnings, got %v", warnings)
+		}
+	})
+
+	t.Run("Alibaba MariaDB omits collation and keeps charset", func(t *testing.T) {
+		var warnings []string
+		got := resolveTargetDatabases("alibaba", "mariadb", "inst-1", innerDBs, &warnings)
+		if len(got) != 1 || got[0].Charset != "utf8mb4" || got[0].Collation != "" {
+			t.Fatalf("expected charset only on Alibaba MariaDB, got %+v", got)
+		}
+		if len(warnings) == 0 || !strings.Contains(warnings[0], "Alibaba Cloud MariaDB OpenAPI accepts charset only") {
+			t.Fatalf("expected Alibaba MariaDB collation warning, got %v", warnings)
+		}
+	})
+
+	t.Run("NCP and NHN omit charset and collation for native REST API", func(t *testing.T) {
+		for _, csp := range []string{"ncp", "nhn"} {
+			var warnings []string
+			got := resolveTargetDatabases(csp, "mysql", "inst-1", innerDBs, &warnings)
+			if len(got) != 1 || got[0].Charset != "" || got[0].Collation != "" {
+				t.Fatalf("expected empty charset/collation on %s, got %+v", csp, got)
+			}
+			if len(warnings) == 0 {
+				t.Fatalf("expected warning on %s, got none", csp)
+			}
+		}
+	})
+
+	t.Run("PostgreSQL omits charset and collation", func(t *testing.T) {
+		var warnings []string
+		got := resolveTargetDatabases("aws", "postgresql", "inst-1", innerDBs, &warnings)
+		if len(got) != 1 || got[0].Charset != "" || got[0].Collation != "" {
+			t.Fatalf("expected empty charset/collation on postgresql, got %+v", got)
+		}
+		if len(warnings) == 0 {
+			t.Fatalf("expected warning on postgresql, got none")
+		}
+	})
+}

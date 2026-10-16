@@ -1393,7 +1393,7 @@
                 }
             },
             "post": {
-                "description": "Provision and migrate managed RDBMS / RDS instances in target cloud based on recommendation results (supports AWS RDS, GCP Cloud SQL, Azure Database, NCP Cloud DB, NHN RDS, Alibaba ApsaraDB, TencentDB, IBM Databases)\n\n[Note]\n- This API provisions managed RDBMS instances in the target cloud within the specified namespace.\n- Input should be the output from the RecommendRDBMS API.\n- Connection name is automatically resolved from CSP and region in the request body.\n\n[Note] `nameSeed` enables dynamic naming via **Late Binding**.\n- If `nameSeed` query param is set (e.g., `?nameSeed=my`), instance names are prefixed: `my-rdbms-01`.\n\nBy default this API runs synchronously. Send header `Prefer: respond-async` to run it\nasynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes, or 35-45+ minutes for IBM dedicated flavors): receive 202 Accepted with a reqId.\n- IBM Cloud Databases hosting note: 'multitenant' shared model provisions in ~10 minutes, whereas Dedicated flavors ('b3c.*') take 35-45+ minutes. Ensure client/proxy timeouts are configured for \u003e= 50 minutes if calling synchronously with dedicated flavors.",
+                "description": "Provision and migrate managed RDBMS / RDS instances in target cloud based on recommendation results (supports AWS RDS, GCP Cloud SQL, Azure Database, NCP Cloud DB, NHN RDS, Alibaba ApsaraDB, TencentDB, IBM Databases)\n\n[Note]\n- This API provisions managed RDBMS instances in the target cloud within the specified namespace.\n- Input should be the output from the RecommendRDBMS API with `adminUserName` and `adminUserPassword` set for each target instance.\n- Connection name is automatically resolved from CSP and region in the request body.\n\n[Note] `nameSeed` enables dynamic naming via **Late Binding**.\n- If `nameSeed` query param is set (e.g., `?nameSeed=my`), instance names are prefixed: `my-rdbms-01`.\n\nBy default this API runs synchronously. Send header `Prefer: respond-async` to run it\nasynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes, or 35-45+ minutes for IBM dedicated flavors): receive 202 Accepted with a reqId.\n- IBM Cloud Databases hosting note: 'multitenant' shared model provisions in ~10 minutes, whereas Dedicated flavors ('b3c.*') take 35-45+ minutes. Ensure client/proxy timeouts are configured for \u003e= 50 minutes if calling synchronously with dedicated flavors.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1416,7 +1416,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "Optional prefix for instance names (e.g., 'my' → 'my-rdbms-01')",
+                        "description": "Optional prefix for instance names (e.g., 'my' -\u003e 'my-rdbms-01')",
                         "name": "nameSeed",
                         "in": "query"
                     },
@@ -14213,6 +14213,16 @@
                 "databaseName"
             ],
             "properties": {
+                "charset": {
+                    "description": "Charset is the optional character set for the new database (MySQL/MariaDB only, e.g., \"utf8mb4\").",
+                    "type": "string",
+                    "example": "utf8mb4"
+                },
+                "collation": {
+                    "description": "Collation is the optional collation for the new database (MySQL/MariaDB only, e.g., \"utf8mb4_unicode_ci\").",
+                    "type": "string",
+                    "example": "utf8mb4_unicode_ci"
+                },
                 "databaseName": {
                     "type": "string",
                     "example": "sampledb"
@@ -14825,6 +14835,14 @@
                 "databaseName"
             ],
             "properties": {
+                "charset": {
+                    "type": "string",
+                    "example": "utf8mb4"
+                },
+                "collation": {
+                    "type": "string",
+                    "example": "utf8mb4_unicode_ci"
+                },
                 "databaseName": {
                     "type": "string",
                     "example": "order_db"

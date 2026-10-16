@@ -64,13 +64,10 @@ func CreateRDBMS(nsId string, req rdbmsmodel.RecommendedRDBMS, seed string) erro
 			Str("engine", target.DBEngine).
 			Msg("Provisioning managed RDBMS instance")
 
-		adminUser := target.AdminUserName
-		if adminUser == "" {
-			adminUser = "dbadmin"
-		}
-		adminPass := target.AdminUserPassword
-		if adminPass == "" {
-			adminPass = "BeetleRdbms1234!" // default temporary password if omitted
+		adminUser := strings.TrimSpace(target.AdminUserName)
+		adminPass := strings.TrimSpace(target.AdminUserPassword)
+		if adminUser == "" || adminPass == "" {
+			return fmt.Errorf("adminUserName and adminUserPassword are required for target RDBMS instance '%s'", target.RDBMSName)
 		}
 
 		backupDays := target.BackupRetentionDays
@@ -124,6 +121,8 @@ func CreateRDBMS(nsId string, req rdbmsmodel.RecommendedRDBMS, seed string) erro
 			for _, db := range target.Databases {
 				dbReq := rdbmsmodel.RDBMSDatabaseCreateReq{
 					DatabaseName: db.DatabaseName,
+					Charset:      db.Charset,
+					Collation:    db.Collation,
 				}
 				if dbErr := tbSess.CreateRDBMSDatabase(nsId, target.RDBMSName, adminUser, adminPass, dbReq); dbErr != nil {
 					log.Warn().
@@ -211,6 +210,9 @@ func DeleteRDBMS(nsId, rdbmsId, option string) error {
 
 // CreateRDBMSDatabase creates a logical database in a specific RDBMS instance.
 func CreateRDBMSDatabase(nsId, rdbmsId, adminUserName, adminPassword string, req rdbmsmodel.RDBMSDatabaseCreateReq) error {
+	if strings.TrimSpace(adminUserName) == "" || strings.TrimSpace(adminPassword) == "" {
+		return fmt.Errorf("adminUserName and adminPassword are required")
+	}
 	log.Info().Str("nsId", nsId).Str("rdbmsId", rdbmsId).Str("databaseName", req.DatabaseName).Msg("Creating logical database")
 
 	err := tbclient.NewSession().CreateRDBMSDatabase(nsId, rdbmsId, adminUserName, adminPassword, req)
@@ -225,6 +227,9 @@ func CreateRDBMSDatabase(nsId, rdbmsId, adminUserName, adminPassword string, req
 
 // ListRDBMSDatabases returns logical databases in a specific RDBMS instance.
 func ListRDBMSDatabases(nsId, rdbmsId, adminUserName, adminPassword string) (rdbmsmodel.RDBMSDatabaseListResponse, error) {
+	if strings.TrimSpace(adminUserName) == "" || strings.TrimSpace(adminPassword) == "" {
+		return rdbmsmodel.RDBMSDatabaseListResponse{}, fmt.Errorf("adminUserName and adminPassword are required")
+	}
 	log.Info().Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Listing logical databases")
 
 	result, err := tbclient.NewSession().ListRDBMSDatabases(nsId, rdbmsId, adminUserName, adminPassword)
@@ -239,6 +244,9 @@ func ListRDBMSDatabases(nsId, rdbmsId, adminUserName, adminPassword string) (rdb
 
 // DeleteRDBMSDatabase deletes a logical database in a specific RDBMS instance.
 func DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminUserName, adminPassword string) error {
+	if strings.TrimSpace(adminUserName) == "" || strings.TrimSpace(adminPassword) == "" {
+		return fmt.Errorf("adminUserName and adminPassword are required")
+	}
 	log.Info().Str("nsId", nsId).Str("rdbmsId", rdbmsId).Str("dbName", dbName).Msg("Deleting logical database")
 
 	err := tbclient.NewSession().DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminUserName, adminPassword)
@@ -253,6 +261,9 @@ func DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminUserName, adminPassword str
 
 // GetRDBMSSecureTransport retrieves live TLS status and server CA certificate for an RDBMS instance.
 func GetRDBMSSecureTransport(nsId, rdbmsId, adminUserName, adminPassword string) (rdbmsmodel.RDBMSSecureTransportInfo, error) {
+	if strings.TrimSpace(adminUserName) == "" || strings.TrimSpace(adminPassword) == "" {
+		return rdbmsmodel.RDBMSSecureTransportInfo{}, fmt.Errorf("adminUserName and adminPassword are required")
+	}
 	log.Info().Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Retrieving RDBMS secure transport info")
 
 	result, err := tbclient.NewSession().GetRDBMSSecureTransport(nsId, rdbmsId, adminUserName, adminPassword)
