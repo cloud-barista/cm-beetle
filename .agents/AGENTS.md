@@ -45,3 +45,11 @@
    - Comments inside code blocks are strictly limited to **1 line**.
    - Exactly **1 additional line** is permitted only when providing an explicit example or reference.
    - Write all comments in concise English; explain *what* the code does, not obvious syntax or past history.
+
+## Documentation & Text Punctuation Rules
+
+1. **Avoid Book/Typesetting Symbols (`—` and `·`)**:
+   - Do **not** use em-dashes (`—`) or middle dots (`·`) when writing documentation, comments, UI text, or explanations, as they are not commonly typed by humans on a standard keyboard.
+   - Replace `—` with standard colons (`:`), commas (`,`), parentheses (`(...)`), or standard hyphens (`-`).
+   - Replace `·` with commas (`,`), slashes (`/`), or natural conjunctions (`및`, `와`, `과`, `and`).
+

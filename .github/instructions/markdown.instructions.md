@@ -23,3 +23,5 @@ applyTo: "**/*.md"
 - Use bullet points for lists.
 - Include links to related resources.
 - Use code blocks for code snippets.
+- Avoid typographic symbols not commonly typed on a standard keyboard, specifically em-dashes (`—`) and middle dots (`·`). Use standard colons (`:`), commas (`,`), slashes (`/`), or natural conjunctions (`and`, `및`, `와`, `과`) instead.
+
