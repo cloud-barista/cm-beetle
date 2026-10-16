@@ -31,9 +31,10 @@ applyTo:
 - **Key (Labels / Field Names):** Always standard weight (`font-normal text-text-muted`). Never bold.
 - **Value (Data / Metrics):** Always bold (`font-extrabold text-text-main`).
 - **Minimum Font Size:** Main labels and data values must be at least `text-sm` (16px). Avoid `text-[9px]`, `text-[10px]`, `text-[11px]`.
-- **Text Casing:** Title Case only — never `ALL CAPS` on static labels.
+- **Text Casing:** Title Case only: never `ALL CAPS` on static labels.
   - ✅ `Node Spec`, `Node Image`, `Root Disk`, `Security Group(s)`, `Node(s)`
   - ❌ `NODE SPEC`, `NODE IMAGE`, `ROOT DISK`, `SECURITY GROUP`
+- **Punctuation:** Avoid typographic symbols not commonly typed on a standard keyboard, specifically em-dashes (`—`) and middle dots (`·`). Use standard colons (`:`), commas (`,`), slashes (`/`), or conjunctions instead.
 - **Tailwind:** Do **not** use `uppercase` + `tracking-wider` on static labels. Reserve `uppercase` for dynamic value badges (e.g., `{status}`, `{protocol}`).
 
 ### Project Terminology Standards

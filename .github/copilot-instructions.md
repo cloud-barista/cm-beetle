@@ -99,6 +99,7 @@ This repository contains the source code for **CM-Beetle** (Computing Infrastruc
 - Write all code comments and documentation in English.
 - Use English for struct field comments, function comments, inline comments, and TODO/FIXME notes.
 - Ensure consistency and accessibility for international contributors.
+- Avoid typographic symbols not commonly typed on a standard keyboard, specifically em-dashes (`—`) and middle dots (`·`), across documentation, comments, and explanations. Use standard colons (`:`), commas (`,`), slashes (`/`), hyphens (`-`), or natural conjunctions (`and`, `및`, `와`, `과`) instead.
 - For detailed Go comment formatting guidelines, see `.github/instructions/go.instructions.md`.
 
 ### API Response Messages

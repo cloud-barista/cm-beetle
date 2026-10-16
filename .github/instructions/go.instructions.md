@@ -44,6 +44,7 @@ applyTo: "**/*.go"
 - **Be actionable**: Focus on **what** the code does, not how (implementation is in the code).
 - **Avoid redundancy**: Don't comment on obvious code behavior.
 - **Line Limit (Code Blocks):** Maximum of **1 line** per comment inside code blocks. Exactly **1 additional line** is permitted only when providing an explicit example or reference.
+- **Avoid book/typesetting symbols (`—` and `·`)**: Do not use em-dashes (`—`) or middle dots (`·`) in comments, logs, or docs; use standard keyboard punctuation (`:`, `,`, `/`, `-`) and natural conjunctions instead.
 - **No history/rationale narratives**: Never explain what a prior version did, why it was
   wrong, or "do not reintroduce X" warnings in code comments. That belongs in the commit
   message or PR description, not the source file. A comment describes the current code,
