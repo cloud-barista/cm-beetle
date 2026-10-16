@@ -5855,6 +5855,16 @@ definitions:
     type: object
   rdbmsmodel.RDBMSDatabaseCreateReq:
     properties:
+      charset:
+        description: Charset is the optional character set for the new database (MySQL/MariaDB
+          only, e.g., "utf8mb4").
+        example: utf8mb4
+        type: string
+      collation:
+        description: Collation is the optional collation for the new database (MySQL/MariaDB
+          only, e.g., "utf8mb4_unicode_ci").
+        example: utf8mb4_unicode_ci
+        type: string
       databaseName:
         example: sampledb
         type: string
@@ -6283,6 +6293,12 @@ definitions:
     type: object
   rdbmsmodel.TargetDatabase:
     properties:
+      charset:
+        example: utf8mb4
+        type: string
+      collation:
+        example: utf8mb4_unicode_ci
+        type: string
       databaseName:
         example: order_db
         type: string
@@ -9501,7 +9517,7 @@ paths:
 
         [Note]
         - This API provisions managed RDBMS instances in the target cloud within the specified namespace.
-        - Input should be the output from the RecommendRDBMS API.
+        - Input should be the output from the RecommendRDBMS API with `adminUserName` and `adminUserPassword` set for each target instance.
         - Connection name is automatically resolved from CSP and region in the request body.
 
         [Note] `nameSeed` enables dynamic naming via **Late Binding**.
@@ -9518,7 +9534,7 @@ paths:
         name: nsId
         required: true
         type: string
-      - description: Optional prefix for instance names (e.g., 'my' → 'my-rdbms-01')
+      - description: Optional prefix for instance names (e.g., 'my' -> 'my-rdbms-01')
         in: query
         name: nameSeed
         type: string

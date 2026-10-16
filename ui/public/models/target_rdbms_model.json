@@ -26,11 +26,13 @@
       "databases": [
         {
           "databaseName": "customer_db",
-          "characterSet": "utf8mb4"
+          "charset": "utf8mb4",
+          "collation": "utf8mb4_unicode_ci"
         },
         {
           "databaseName": "order_db",
-          "characterSet": "utf8mb4"
+          "charset": "utf8mb4",
+          "collation": "utf8mb4_unicode_ci"
         }
       ]
     }

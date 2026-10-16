@@ -49,7 +49,7 @@ type MigrateRDBMSRequest struct {
 // @Description
 // @Description [Note]
 // @Description - This API provisions managed RDBMS instances in the target cloud within the specified namespace.
-// @Description - Input should be the output from the RecommendRDBMS API.
+// @Description - Input should be the output from the RecommendRDBMS API with `adminUserName` and `adminUserPassword` set for each target instance.
 // @Description - Connection name is automatically resolved from CSP and region in the request body.
 // @Description
 // @Description [Note] `nameSeed` enables dynamic naming via **Late Binding**.
@@ -62,7 +62,7 @@ type MigrateRDBMSRequest struct {
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param nameSeed query string false "Optional prefix for instance names (e.g., 'my' → 'my-rdbms-01')"
+// @Param nameSeed query string false "Optional prefix for instance names (e.g., 'my' -> 'my-rdbms-01')"
 // @Param request body MigrateRDBMSRequest true "RDBMS migration request (use RecommendRDBMS response)"
 // @Param X-Request-Id header string false "Unique request ID"
 // @Param Prefer header string false "Set to 'respond-async' to run this migration asynchronously" Enums(respond-async)
@@ -93,6 +93,18 @@ func MigrateRDBMS(c echo.Context) error {
 	if len(req.TargetRDBMSInstances) == 0 {
 		log.Warn().Msg("At least one target RDBMS instance must be provided")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one target RDBMS instance required"))
+	}
+
+	for i, inst := range req.TargetRDBMSInstances {
+		if strings.TrimSpace(inst.AdminUserName) == "" || strings.TrimSpace(inst.AdminUserPassword) == "" {
+			instLabel := strings.TrimSpace(inst.RDBMSName)
+			if instLabel == "" {
+				instLabel = fmt.Sprintf("index %d", i)
+			}
+			msg := fmt.Sprintf("adminUserName and adminUserPassword are required for target RDBMS instance '%s'", instLabel)
+			log.Warn().Str("instance", instLabel).Msg(msg)
+			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(msg))
+		}
 	}
 
 	nameSeed := c.QueryParam("nameSeed")

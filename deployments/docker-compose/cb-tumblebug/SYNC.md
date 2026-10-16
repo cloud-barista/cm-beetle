@@ -53,41 +53,41 @@ When upgrading CB-Tumblebug, check each file against the upstream source and syn
 
 ---
 
-## v0.13.5 Sync (2026-10-12)
+## v0.13.7 Sync (2026-10-16)
 
-Based on CB-Tumblebug tag `v0.13.5` (`16407239df37b38e8e81ce64b81bff0e6a42e370`). Upgrade path: **v0.13.3 &rarr; v0.13.5**.
+Based on CB-Tumblebug tag `v0.13.7` (`09a796e61ef128e9ac0dbddc7911e8a86e55b2f7`). Upgrade path: **v0.13.5 &rarr; v0.13.7**.
 
-### Model Changes (v0.13.3 &rarr; v0.13.5)
+### Model Changes (v0.13.5 &rarr; v0.13.7)
 
 | Change | Description |
 | --- | --- |
-| **`NodeInfo`**: `RootDeviceName` | Updated JSON serialization tag from `json:"RootDeviceName"` to `json:"rootDeviceName"` matching upstream CB-Tumblebug standard casing |
-| **`k8sClusterDetailExt`** | Removed redundant `NodeSpecNamingRule` field from extension struct as it is now natively included in upstream `tbmodel.K8sClusterDetail` |
-| **Model Version Headers** | Updated `copied-tb-model.go`, `copied-tb-k8s-model.go`, and `copied-tb-rdbms-model.go` version headers to CB-Tumblebug `v0.13.5` (`16407239df37b38e8e81ce64b81bff0e6a42e370`) |
+| **`RDBMSDatabaseCreateReq`** | Added optional `Charset` (`json:"charset,omitempty"`) and `Collation` (`json:"collation,omitempty"`) fields for MySQL/MariaDB logical database creation |
+| **`TargetDatabase`** (`imdl/rdbms-model`) | Added `Charset` and `Collation` fields to propagate recommended database character set and collation into the RDBMS migration pipeline |
+| **Model Version Headers** | Updated `copied-tb-model.go`, `copied-tb-k8s-model.go`, and `copied-tb-rdbms-model.go` version headers to CB-Tumblebug `v0.13.7` (`09a796e61ef128e9ac0dbddc7911e8a86e55b2f7`) |
 
 ### Deployment File Changes
 
 | File | Action |
 | --- | --- |
 | **Model files (`imdl/`)** | |
-| `imdl/cloud-model/copied-tb-model.go` | **Updated** — Synced version header to `v0.13.5` (`16407239`), updated `RootDeviceName` tag to `json:"rootDeviceName"` |
-| `imdl/cloud-model/copied-tb-k8s-model.go` | **Updated** — Synced version header to `v0.13.5` (`16407239`) |
-| `imdl/rdbms-model/copied-tb-rdbms-model.go` | **Updated** — Synced version header to `v0.13.5` (`16407239`) |
+| `imdl/cloud-model/copied-tb-model.go` | **Updated** - Synced version header to `v0.13.7` (`09a796e6`) |
+| `imdl/cloud-model/copied-tb-k8s-model.go` | **Updated** - Synced version header to `v0.13.7` (`09a796e6`) |
+| `imdl/rdbms-model/copied-tb-rdbms-model.go` | **Updated** - Synced version header to `v0.13.7` (`09a796e6`) and added `Charset`/`Collation` fields to `RDBMSDatabaseCreateReq` |
 | **Go Module Dependencies (`go.mod`)** | |
-| `go.mod` | **Updated** — `github.com/cloud-barista/cb-tumblebug` updated from `v0.13.3` to `v0.13.5` |
+| `go.mod` | **Updated** - `github.com/cloud-barista/cb-tumblebug` updated from `v0.13.5` to `v0.13.7` |
 | **Docker Compose (`deployments/docker-compose/`)** | |
-| `docker-compose.yaml` | **Updated** — Synced service images: `cb-spider:0.13.14`, `cb-mapui:0.13.13`, `cb-tumblebug:0.13.5` |
+| `docker-compose.yaml` | **Updated** - Synced service images: `cb-spider:0.13.17`, `cb-mapui:0.13.13`, `cb-tumblebug:0.13.7` |
 | **Assets & Scripts (`deployments/docker-compose/cb-tumblebug/`)** | |
-| `assets/assets.dump.gz` | **No change** — Verified MD5 `dba8da8e89b5ebdd203daf7c4480147b` (matches upstream) |
-| `assets/assets.dump.gz.info` | **No change** — Verified matches upstream sidecar manifest |
-| `assets/diskinfo.yaml` | **Updated** — Synced KT default root/data disk type to SSD (and diskTypeOrder [SSD, HDD]) |
-| `assets/k8sclusterinfo.yaml` | **Updated** — Synced K8s version matrices (AWS, Azure, GCP, Alibaba, IBM) and nodeGroupNamingRule pattern |
-| `assets/rdbmsinfo.yaml` | **Maintained** — Preserved latest CM-Beetle RDBMS metadata |
-| `conf/cloud_conf.yaml` | **Updated** — Synced nlbInfraSpecId (`aws+ap-northeast-2+t2.small`) and nlbInfraImageId (`ubuntu 22.04`) |
-| `init/templates/*` | **Updated** — Synced standardized templates (including `infra-aws-global-extream.json`, `infra-global-extream.json`, and CSP region adjustments) |
-| `init/*` | **Updated** — Synced `init.sh`, `cleanDB.sh`, `init.py`, `multi-init.sh`, and `template.credentials.yaml` |
-| `scripts/*` | **No change** — Verified `backup-assets.sh`, `restore-assets.sh`, and `lib/pg-backend.sh` match upstream |
-| `interface/mcp/*` | **No change** — Verified 1:1 match with upstream `src/interface/mcp` |
+| `assets/assets.dump.gz` | **No change** - Verified MD5 `dba8da8e89b5ebdd203daf7c4480147b` (matches upstream) |
+| `assets/assets.dump.gz.info` | **No change** - Verified matches upstream sidecar manifest |
+| `assets/diskinfo.yaml` | **No change** - Verified matches upstream |
+| `assets/k8sclusterinfo.yaml` | **No change** - Verified matches upstream |
+| `assets/rdbmsinfo.yaml` | **Updated** - Synced `databaseRequirements.note` (charset/collation support details across Azure, GCP, Alibaba, Tencent, IBM, NCP, NHN, OpenStack) and CSP notes |
+| `conf/cloud_conf.yaml` | **No change** - Verified matches upstream |
+| `init/templates/*` | **Updated** - Synced Alibaba spec updates (`infra-across-global.json`, `infra-across-scale-test.json`, `infra-alibaba-global.json`) and added `infra-all-csp.json`, `infra-db-bastion.json` |
+| `init/*` | **No change** - Verified `init.sh`, `cleanDB.sh`, `init.py`, `multi-init.sh`, and `template.credentials.yaml` match upstream |
+| `scripts/*` | **No change** - Verified `backup-assets.sh`, `restore-assets.sh`, and `lib/pg-backend.sh` match upstream |
+| `interface/mcp/*` | **No change** - Verified 1:1 match with upstream `src/interface/mcp` |
 
 > **Note:** OpenBao files are maintained independently at `deployments/docker-compose/openbao/` with its own `SYNC.md`, not under `cb-tumblebug/init/openbao/`.
 
