@@ -4,9 +4,9 @@ import "time"
 
 // * To avoid circular/version dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.13.5 (commit: 16407239df37b38e8e81ce64b81bff0e6a42e370)
+// * Version: CB-Tumblebug v0.13.7 (commit: 09a796e61ef128e9ac0dbddc7911e8a86e55b2f7)
 // * Source: CB-Tumblebug (src/core/model/rdbms.go, src/core/model/common.go, src/core/model/net.go)
-// * Synchronized: 2026-10-12 (RDBMSInfo, RDBMSListResponse, RDBMSCreateRequest, RDBMSCapabilityResponse, RDBMSSupportResponse, RDBMSDatabaseCreateReq, RDBMSSecureTransportInfo, etc.)
+// * Synchronized: 2026-10-16 (RDBMSInfo, RDBMSListResponse, RDBMSCreateRequest, RDBMSCapabilityResponse, RDBMSSupportResponse, RDBMSDatabaseCreateReq, RDBMSSecureTransportInfo, etc.)
 
 // StorageSizeRange defines the minimum and maximum storage capacity in Tumblebug format.
 type StorageSizeRange struct {
@@ -240,6 +240,10 @@ type RDBMSListResponse struct {
 // RDBMSDatabaseCreateReq creates a logical database inside an Available RDBMS instance.
 type RDBMSDatabaseCreateReq struct {
 	DatabaseName string `json:"databaseName" validate:"required" example:"sampledb"`
+	// Charset is the optional character set for the new database (MySQL/MariaDB only, e.g., "utf8mb4").
+	Charset string `json:"charset,omitempty" example:"utf8mb4"`
+	// Collation is the optional collation for the new database (MySQL/MariaDB only, e.g., "utf8mb4_unicode_ci").
+	Collation string `json:"collation,omitempty" example:"utf8mb4_unicode_ci"`
 }
 
 // RDBMSDatabaseInfo represents one logical database inside an RDBMS instance.
