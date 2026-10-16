@@ -54,4 +54,6 @@ type TargetRDBMSInstance struct {
 // TargetDatabase represents a logical database to create inside the target RDBMS instance.
 type TargetDatabase struct {
 	DatabaseName string `json:"databaseName" validate:"required" example:"order_db"`
+	Charset      string `json:"charset,omitempty" example:"utf8mb4"`
+	Collation    string `json:"collation,omitempty" example:"utf8mb4_unicode_ci"`
 }
