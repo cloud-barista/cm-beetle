@@ -359,8 +359,14 @@ func RecommendCompositeInfraCandidates(
 				}
 			}
 
+			matchRateVec := calculateMatchRateVector(csp, ngBlueprints[ngIdx].representativeNode, selectedSpec, selectedImage)
 			candidateNodeGroups[ngIdx].SpecId = selectedSpec.Id
 			candidateNodeGroups[ngIdx].ImageId = selectedImage.Id
+			candidateNodeGroups[ngIdx].Description = fmt.Sprintf(
+				"%s | %s",
+				ngBlueprints[ngIdx].skeleton.Description,
+				matchRateVec.FormatMatchRateSummary(),
+			)
 
 			specAlreadyAdded := false
 			for _, sp := range candidateSpecList {
