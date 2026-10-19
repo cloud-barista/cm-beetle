@@ -203,6 +203,7 @@ test:
       adminUserName: dbadmin
       adminUserPassword: Password123!
       publicAccess: false
+      ncpDBACGToAllowAllInbound: true
       highAvailability: false
       databaseName: sampledb
       externalDataIOTest: true
@@ -212,9 +213,7 @@ test:
       vmMemoryGiB: "4"
       vmImageId: "23214590"
       vmSpecId: "s2-g3"
-      # Excluded pending Spider NCP Cloud DB ACG inbound automation and runner VPC connectivity (next-integration-of-spider-rdbms.md)
-      execute: false
-      exclusionReason: "Pending Spider NCP Cloud DB ACG inbound automation and runner VPC connectivity"
+      execute: true
 
     # 8. NHN
     - name: "NHN KR1 MySQL Test"

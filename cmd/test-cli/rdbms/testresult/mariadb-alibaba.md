@@ -1,9 +1,9 @@
 # Managed RDBMS (MariaDB) Test Report: ALIBABA (ap-northeast-2)
 
 - **Test Case:** Alibaba AP-Northeast-2 (Seoul) MariaDB Test
-- **Date & Time:** 2026-10-08 13:20:42
+- **Date & Time:** 2026-10-19 10:54:05
 - **Namespace:** `default`
-- **Total Duration:** 16m4.532s
+- **Total Duration:** 16m26.745s
 - **Overall Status:** ✅ PASSED
 
 ## Environment and Scenario
@@ -12,7 +12,7 @@
 - **Target CSP:** ALIBABA
 - **Target Region:** `ap-northeast-2`
 - **Namespace:** `default`
-- **Test Date:** 2026-10-08 13:20:42
+- **Test Date:** 2026-10-19 10:54:05
 
 ### Scenario & Tested APIs
 1. **Pre-flight Spec & Image Review**: `POST /tumblebug/specImagePairReview`
@@ -24,16 +24,17 @@
 7. **Migrate RDBMS (Provisioning)**: `POST /beetle/migration/middleware/ns/{nsId}/rdbms`
 8. **Get RDBMS Info & List**: `GET /beetle/migration/middleware/ns/{nsId}/rdbms`
 9. **Create Logical Database**: `POST /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database`
-10. **External Data I/O**: Direct TCP/SQL connectivity test
-11. **Internal Data I/O**: SQL execution via internal Runner VM (`POST /tumblebug/ns/{nsId}/infra`)
-12. **Delete Logical Database**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{databaseName}`
-13. **Delete RDBMS**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}`
-14. **Delete Pre-requisite SG & VNet**: `DELETE /tumblebug/ns/{nsId}/resources/securityGroup/{sgId}`, `DELETE /tumblebug/ns/{nsId}/resources/vNet/{vNetId}`
+10. **Get Secure Transport Info**: `GET /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/secure-transport`
+11. **External Data I/O**: Direct TCP/SQL connectivity & TLS handshake test
+12. **Internal Data I/O**: SQL execution via internal Runner VM (`POST /tumblebug/ns/{nsId}/infra`)
+13. **Delete Logical Database**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{databaseName}`
+14. **Delete RDBMS**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}`
+15. **Delete Pre-requisite SG & VNet**: `DELETE /tumblebug/ns/{nsId}/resources/securityGroup/{sgId}`, `DELETE /tumblebug/ns/{nsId}/resources/vNet/{vNetId}`
 
 ## Execution Steps & API Traces
 
 ### 1. Tumblebug POST /specImagePairReview (Pre-flight Spec & Image Review) [✅ SUCCESS]
-- **Duration:** 4.164s
+- **Duration:** 3.544s
 - **Request URL:** `http://localhost:1323/tumblebug/specImagePairReview`
 ```json
 // Request Body
@@ -49,7 +50,7 @@
     "available": true,
     "instanceType": "ecs.e-c1m2.large",
     "provider": "alibaba",
-    "queriedAt": "2026-10-08T04:20:44.72430011Z",
+    "queriedAt": "2026-10-19T01:54:08.238328507Z",
     "region": "ap-northeast-2",
     "source": "alibaba:DescribeAvailableResource",
     "zones": [
@@ -57,6 +58,16 @@
         "available": true,
         "status": "Available",
         "supportedDisks": [
+          "cloud_auto",
+          "cloud_essd"
+        ],
+        "zoneId": "ap-northeast-2b"
+      },
+      {
+        "available": true,
+        "status": "Available",
+        "supportedDisks": [
+          "cloud_auto",
           "cloud_essd"
         ],
         "zoneId": "ap-northeast-2c"
@@ -70,15 +81,6 @@
           "cloud_essd"
         ],
         "zoneId": "ap-northeast-2a"
-      },
-      {
-        "available": true,
-        "status": "Available",
-        "supportedDisks": [
-          "cloud_auto",
-          "cloud_essd"
-        ],
-        "zoneId": "ap-northeast-2b"
       }
     ]
   },
@@ -319,13 +321,13 @@
     "status": "Available"
   },
   "status": "OK",
-  "suggestedSystemDisk": "cloud_essd",
-  "suggestedZone": "ap-northeast-2c"
+  "suggestedSystemDisk": "cloud_auto",
+  "suggestedZone": "ap-northeast-2b"
 }
 ```
 
 ### 2. Tumblebug POST /resources/vNet (Create VNet & Subnets) [✅ SUCCESS]
-- **Duration:** 7.947s
+- **Duration:** 7.263s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/vNet`
 ```json
 // Request Body
@@ -350,19 +352,19 @@
   "cidrBlock": "10.13.0.0/16",
   "conditions": [
     {
-      "lastTransitionTime": "2026-10-08T04:21:09Z",
+      "lastTransitionTime": "2026-10-19T01:54:13Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-10-08T04:21:09Z",
+      "lastTransitionTime": "2026-10-19T01:54:13Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
     },
     {
-      "lastTransitionTime": "2026-10-08T04:21:09Z",
+      "lastTransitionTime": "2026-10-19T01:54:13Z",
       "reason": "AllReady",
       "status": "True",
       "type": "ChildrenReady"
@@ -397,15 +399,15 @@
     "verified": true
   },
   "connectionName": "alibaba-ap-northeast-2",
-  "cspResourceId": "vpc-mj7fftnxtw3lqyzgkvl0k",
-  "cspResourceName": "tbr86ha5b4gld46kcbml",
+  "cspResourceId": "vpc-mj75yufyvk3dkquefouu3",
+  "cspResourceName": "tbos3nb9baei6v0or5qt",
   "description": "Pre-requisite VNet for CM-Beetle RDBMS test",
   "id": "test-rdbms-vnet-mariadb-alibaba",
   "isAutoGenerated": false,
   "keyValueList": [
     {
       "key": "CreationTime",
-      "value": "2026-10-08T04:20:47Z"
+      "value": "2026-10-19T01:54:07Z"
     },
     {
       "key": "Status",
@@ -413,7 +415,7 @@
     },
     {
       "key": "VpcId",
-      "value": "vpc-mj7fftnxtw3lqyzgkvl0k"
+      "value": "vpc-mj75yufyvk3dkquefouu3"
     },
     {
       "key": "IsDefault",
@@ -433,11 +435,11 @@
     },
     {
       "key": "VpcName",
-      "value": "tbr86ha5b4gld46kcbml"
+      "value": "tbos3nb9baei6v0or5qt"
     },
     {
       "key": "VRouterId",
-      "value": "vrt-mj7ipjoyegq707vjsbzfp"
+      "value": "vrt-mj78qy4uj4xjrcrbcsd24"
     },
     {
       "key": "CidrBlock",
@@ -469,7 +471,7 @@
     },
     {
       "key": "VSwitchIds",
-      "value": "{VSwitchId:[vsw-mj7bn9jvpreipjcwp9loc]}"
+      "value": "{VSwitchId:[vsw-mj773d4fsaok8u6t1ktp6]}"
     },
     {
       "key": "SecondaryCidrBlocks",
@@ -485,7 +487,7 @@
     },
     {
       "key": "RouterTableIds",
-      "value": "{RouterTableIds:[vtb-mj7xivbta2lf3eznwsqau]}"
+      "value": "{RouterTableIds:[vtb-mj7iwq3jmj6ilak9ugzdp]}"
     },
     {
       "key": "Tags",
@@ -503,13 +505,13 @@
     {
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-08T04:21:09Z",
+          "lastTransitionTime": "2026-10-19T01:54:13Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-08T04:21:09Z",
+          "lastTransitionTime": "2026-10-19T01:54:13Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -544,17 +546,17 @@
         "verified": true
       },
       "connectionName": "alibaba-ap-northeast-2",
-      "cspResourceId": "vsw-mj7bn9jvpreipjcwp9loc",
-      "cspResourceName": "tb5v0b69mmo3c418rfke",
-      "cspVNetId": "vpc-mj7fftnxtw3lqyzgkvl0k",
-      "cspVNetName": "tbr86ha5b4gld46kcbml",
+      "cspResourceId": "vsw-mj773d4fsaok8u6t1ktp6",
+      "cspResourceName": "tb6vlmhn4els1b6mud6s",
+      "cspVNetId": "vpc-mj75yufyvk3dkquefouu3",
+      "cspVNetName": "tbos3nb9baei6v0or5qt",
       "description": "",
       "id": "subnet-1",
       "ipv4_CIDR": "10.13.1.0/24",
       "keyValueList": [
         {
           "key": "VpcId",
-          "value": "vpc-mj7fftnxtw3lqyzgkvl0k"
+          "value": "vpc-mj75yufyvk3dkquefouu3"
         },
         {
           "key": "Status",
@@ -562,7 +564,7 @@
         },
         {
           "key": "CreationTime",
-          "value": "2026-10-08T04:20:51Z"
+          "value": "2026-10-19T01:54:10Z"
         },
         {
           "key": "IsDefault",
@@ -578,7 +580,7 @@
         },
         {
           "key": "VSwitchId",
-          "value": "vsw-mj7bn9jvpreipjcwp9loc"
+          "value": "vsw-mj773d4fsaok8u6t1ktp6"
         },
         {
           "key": "CidrBlock",
@@ -594,7 +596,7 @@
         },
         {
           "key": "VSwitchName",
-          "value": "tb5v0b69mmo3c418rfke"
+          "value": "tb6vlmhn4els1b6mud6s"
         },
         {
           "key": "EnabledIpv6",
@@ -602,7 +604,7 @@
         },
         {
           "key": "RouteTable",
-          "value": "{ResourceGroupId:,CreationTime:,Status:,RouteTableType:System,VRouterId:,RouteTableId:vtb-mj7xivbta2lf3eznwsqau,VSwitchIds:{VSwitchId:null},RouteEntrys:{RouteEntry:null}}"
+          "value": "{ResourceGroupId:,CreationTime:,Status:,RouteTableType:System,VRouterId:,RouteTableId:vtb-mj7iwq3jmj6ilak9ugzdp,VSwitchIds:{VSwitchId:null},RouteEntrys:{RouteEntry:null}}"
         },
         {
           "key": "Tags",
@@ -612,17 +614,17 @@
       "name": "subnet-1",
       "resourceType": "subnet",
       "status": "Available",
-      "uid": "tb5v0b69mmo3c418rfke",
+      "uid": "tb6vlmhn4els1b6mud6s",
       "zone": "ap-northeast-2a"
     }
   ],
   "systemLabel": "",
-  "uid": "tbr86ha5b4gld46kcbml"
+  "uid": "tbos3nb9baei6v0or5qt"
 }
 ```
 
 ### 3. Tumblebug POST /resources/securityGroup (Create SecurityGroup) [✅ SUCCESS]
-- **Duration:** 651ms
+- **Duration:** 746ms
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/securityGroup`
 ```json
 // Request Body
@@ -680,8 +682,8 @@
     "verified": true
   },
   "connectionName": "alibaba-ap-northeast-2",
-  "cspResourceId": "sg-mj7i52l9d2z5xdaobgw4",
-  "cspResourceName": "tbdqnhcmd8tarjtagvve",
+  "cspResourceId": "sg-mj763vbw0y3ix2zjz1bt",
+  "cspResourceName": "tbhhdh8np9dpjlhcre98",
   "description": "Pre-requisite SecurityGroup for CM-Beetle RDBMS test",
   "firewallRules": [
     {
@@ -708,15 +710,15 @@
   "keyValueList": [
     {
       "key": "SecurityGroupId",
-      "value": "sg-mj7i52l9d2z5xdaobgw4"
+      "value": "sg-mj763vbw0y3ix2zjz1bt"
     },
     {
       "key": "SecurityGroupName",
-      "value": "tbdqnhcmd8tarjtagvve"
+      "value": "tbhhdh8np9dpjlhcre98"
     },
     {
       "key": "Description",
-      "value": "tbdqnhcmd8tarjtagvve"
+      "value": "tbhhdh8np9dpjlhcre98"
     },
     {
       "key": "SecurityGroupType",
@@ -724,11 +726,11 @@
     },
     {
       "key": "VpcId",
-      "value": "vpc-mj7fftnxtw3lqyzgkvl0k"
+      "value": "vpc-mj75yufyvk3dkquefouu3"
     },
     {
       "key": "CreationTime",
-      "value": "2026-10-08T04:20:54Z"
+      "value": "2026-10-19T01:54:13Z"
     },
     {
       "key": "EcsCount",
@@ -762,13 +764,13 @@
   "name": "test-rdbms-sg-mariadb-alibaba",
   "resourceType": "securityGroup",
   "systemLabel": "",
-  "uid": "tbdqnhcmd8tarjtagvve",
+  "uid": "tbhhdh8np9dpjlhcre98",
   "vNetId": "test-rdbms-vnet-mariadb-alibaba"
 }
 ```
 
 ### 4. Beetle GET RDBMS Support [✅ SUCCESS]
-- **Duration:** 19ms
+- **Duration:** 5ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/support?providerName=alibaba`
 ```json
 // Response Body
@@ -790,7 +792,7 @@
 ```
 
 ### 5. Beetle GET RDBMS Capability [✅ SUCCESS]
-- **Duration:** 1m0.473s
+- **Duration:** 44.262s
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/capability?connectionName=alibaba-ap-northeast-2&dbEngine=mariadb`
 ```json
 // Response Body
@@ -1026,7 +1028,7 @@
 ```
 
 ### 6. Beetle POST Recommend RDBMS [✅ SUCCESS]
-- **Duration:** 8ms
+- **Duration:** 6ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms`
 ```json
 // Request Body
@@ -1104,6 +1106,7 @@
       "backupRetentionDays": 7,
       "databases": [
         {
+          "charset": "utf8mb4",
           "databaseName": "sampledb"
         }
       ],
@@ -1125,12 +1128,15 @@
       ],
       "vNetId": "test-rdbms-vnet-mariadb-alibaba"
     }
+  ],
+  "warnings": [
+    "instance 'Source MySQL 01' database 'sampledb': omitted collation 'utf8mb4_unicode_ci' because Alibaba Cloud MariaDB OpenAPI accepts charset only"
   ]
 }
 ```
 
 ### 7. Beetle POST Validate RDBMS Recommendation [✅ SUCCESS]
-- **Duration:** 6.12s
+- **Duration:** 31.053s
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/validate?nsId=default`
 ```json
 // Request Body
@@ -1183,7 +1189,7 @@
 ```
 
 ### 8. Beetle POST Migrate RDBMS (Provisioning) [✅ SUCCESS]
-- **Duration:** 2m45.429s
+- **Duration:** 3m1.023s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms?nameSeed=test`
 ```json
 // Request Body
@@ -1201,6 +1207,7 @@
       "backupRetentionDays": 7,
       "databases": [
         {
+          "charset": "utf8mb4",
           "databaseName": "sampledb"
         }
       ],
@@ -1222,6 +1229,9 @@
       ],
       "vNetId": "test-rdbms-vnet-mariadb-alibaba"
     }
+  ],
+  "warnings": [
+    "instance 'Source MySQL 01' database 'sampledb': omitted collation 'utf8mb4_unicode_ci' because Alibaba Cloud MariaDB OpenAPI accepts charset only"
   ]
 }
 ```
@@ -1234,22 +1244,22 @@
 ```
 
 ### 9. Beetle GET RDBMS Info [✅ SUCCESS]
-- **Duration:** 4ms
+- **Duration:** 8ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-alibaba`
 ```json
 // Response Body
 {
   "backupRetentionDays": 7,
-  "backupTime": "16:00Z-17:00Z",
+  "backupTime": "11:00Z-12:00Z",
   "conditions": [
     {
-      "lastTransitionTime": "2026-10-08T04:24:46Z",
+      "lastTransitionTime": "2026-10-19T01:58:12Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-10-08T04:24:46Z",
+      "lastTransitionTime": "2026-10-19T01:58:12Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
@@ -1284,15 +1294,15 @@
     "verified": true
   },
   "connectionName": "alibaba-ap-northeast-2",
-  "cspResourceId": "rm-mj75n3v6blq0q6gef",
-  "cspResourceName": "tb4himg14kr1h819depl",
+  "cspResourceId": "rm-mj7b2xfo2q994pr91",
+  "cspResourceName": "tb26kia2eqnp7rdsts1r",
   "dbEngine": "mariadb",
   "dbEngineVersion": "10.6",
   "dbInstanceSpec": "mariadb.n2.medium.2c",
   "dbInstanceType": "HighAvailability",
   "deletionProtection": false,
   "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-  "endpoint": "43.108.66.234:3306",
+  "endpoint": "43.108.67.54:3306",
   "highAvailability": true,
   "id": "test-rdbms-mariadb-alibaba",
   "name": "test-rdbms-mariadb-alibaba",
@@ -1307,13 +1317,13 @@
   "subnetIds": [
     "subnet-1"
   ],
-  "uid": "tb4himg14kr1h819depl",
+  "uid": "tb26kia2eqnp7rdsts1r",
   "vNetId": "test-rdbms-vnet-mariadb-alibaba"
 }
 ```
 
 ### 10. Beetle GET RDBMS List [✅ SUCCESS]
-- **Duration:** 5ms
+- **Duration:** 8ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms`
 ```json
 // Response Body
@@ -1321,303 +1331,16 @@
   "rdbms": [
     {
       "backupRetentionDays": 7,
-      "backupTime": "18:34-19:04",
+      "backupTime": "11:00Z-12:00Z",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-08T04:21:30Z",
-          "message": "RDBMS creation in progress",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-10-08T04:21:30Z",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "aws-ap-northeast-2",
-        "credentialHolder": "admin",
-        "credentialName": "aws",
-        "driverName": "aws-driver-v1.0.so",
-        "providerName": "aws",
-        "regionDetail": {
-          "description": "Asia Pacific (Seoul)",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "regionId": "ap-northeast-2",
-          "regionName": "ap-northeast-2",
-          "zones": [
-            "ap-northeast-2a",
-            "ap-northeast-2b",
-            "ap-northeast-2c",
-            "ap-northeast-2d"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "ap-northeast-2",
-          "assignedZone": "ap-northeast-2a"
-        },
-        "regionZoneInfoName": "aws-ap-northeast-2",
-        "verified": true
-      },
-      "connectionName": "aws-ap-northeast-2",
-      "cspResourceId": "tb9i05t58qdva0pqii7q",
-      "cspResourceName": "tb9i05t58qdva0pqii7q",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "8.0.46",
-      "dbInstanceSpec": "db.t3.medium",
-      "dbInstanceType": "Primary",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "highAvailability": false,
-      "id": "test-rdbms-aws",
-      "iops": "3000",
-      "name": "test-rdbms-aws",
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-aws"
-      ],
-      "status": "Creating",
-      "storageSize": 100,
-      "storageType": "gp3",
-      "subnetIds": [
-        "subnet-1",
-        "subnet-2"
-      ],
-      "tagList": [
-        {
-          "key": "Name",
-          "value": "tb9i05t58qdva0pqii7q"
-        }
-      ],
-      "uid": "tb9i05t58qdva0pqii7q",
-      "vNetId": "test-rdbms-vnet-aws"
-    },
-    {
-      "backupRetentionDays": 7,
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-10-08T04:21:02Z",
-          "message": "RDBMS creation in progress",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-10-08T04:21:02Z",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "azure-koreacentral",
-        "credentialHolder": "admin",
-        "credentialName": "azure",
-        "driverName": "azure-driver-v1.0.so",
-        "providerName": "azure",
-        "regionDetail": {
-          "description": "Korea Central",
-          "location": {
-            "display": "Korea Central",
-            "latitude": 37.5665,
-            "longitude": 126.978
-          },
-          "regionId": "koreacentral",
-          "regionName": "koreacentral",
-          "zones": [
-            "1",
-            "2",
-            "3"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "koreacentral",
-          "assignedZone": ""
-        },
-        "regionZoneInfoName": "azure-koreacentral",
-        "verified": true
-      },
-      "connectionName": "azure-koreacentral",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "8.0.21",
-      "dbInstanceSpec": "Standard_B2s",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "highAvailability": false,
-      "id": "test-rdbms-azure",
-      "name": "test-rdbms-azure",
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-azure"
-      ],
-      "status": "Creating",
-      "storageSize": 100,
-      "subnetIds": [
-        "subnet-1"
-      ],
-      "uid": "tbncr09n28klnsbdp033",
-      "vNetId": "test-rdbms-vnet-azure"
-    },
-    {
-      "backupRetentionDays": 7,
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-10-08T04:21:57Z",
-          "message": "RDBMS creation in progress",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-10-08T04:21:57Z",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "gcp-us-central1",
-        "credentialHolder": "admin",
-        "credentialName": "gcp",
-        "driverName": "gcp-driver-v1.0.so",
-        "providerName": "gcp",
-        "regionDetail": {
-          "description": "Council Bluffs Iowa  USA",
-          "location": {
-            "display": "Council Bluffs Iowa USA",
-            "latitude": 41.2522,
-            "longitude": -95.8575
-          },
-          "regionId": "us-central1",
-          "regionName": "us-central1",
-          "zones": [
-            "us-central1-a",
-            "us-central1-b",
-            "us-central1-c",
-            "us-central1-f"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "us-central1",
-          "assignedZone": "us-central1-a"
-        },
-        "regionZoneInfoName": "gcp-us-central1",
-        "verified": true
-      },
-      "connectionName": "gcp-us-central1",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "8.0",
-      "dbInstanceSpec": "db-n1-standard-2",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "highAvailability": false,
-      "id": "test-rdbms-gcp",
-      "name": "test-rdbms-gcp",
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-gcp"
-      ],
-      "status": "Creating",
-      "storageSize": 100,
-      "storageType": "PD_SSD",
-      "subnetIds": [
-        "subnet-1"
-      ],
-      "uid": "tb5ivnnbbt2sn5eqjole",
-      "vNetId": "test-rdbms-vnet-gcp"
-    },
-    {
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-10-08T04:21:12Z",
-          "message": "RDBMS creation in progress",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-10-08T04:21:12Z",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "ibm-us-south",
-        "credentialHolder": "admin",
-        "credentialName": "ibm",
-        "driverName": "ibm-driver-v1.0.so",
-        "providerName": "ibm",
-        "regionDetail": {
-          "description": "us-south",
-          "location": {
-            "display": "Dallas USA",
-            "latitude": 32.81248,
-            "longitude": -96.77619
-          },
-          "regionId": "us-south",
-          "regionName": "us-south",
-          "zones": [
-            "us-south-1",
-            "us-south-2",
-            "us-south-3"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "us-south",
-          "assignedZone": "us-south-1"
-        },
-        "regionZoneInfoName": "ibm-us-south",
-        "verified": true
-      },
-      "connectionName": "ibm-us-south",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "8.4",
-      "dbInstanceSpec": "b3c.4x16.encrypted",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "highAvailability": false,
-      "id": "test-rdbms-ibm",
-      "name": "test-rdbms-ibm",
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-ibm"
-      ],
-      "status": "Creating",
-      "storageSize": 100,
-      "subnetIds": [
-        "subnet-1"
-      ],
-      "uid": "tbjg8pdr8lgovsqj2clo",
-      "vNetId": "test-rdbms-vnet-ibm"
-    },
-    {
-      "backupRetentionDays": 7,
-      "backupTime": "16:00Z-17:00Z",
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-10-08T04:24:46Z",
+          "lastTransitionTime": "2026-10-19T01:58:12Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-08T04:24:46Z",
+          "lastTransitionTime": "2026-10-19T01:58:12Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -1652,15 +1375,15 @@
         "verified": true
       },
       "connectionName": "alibaba-ap-northeast-2",
-      "cspResourceId": "rm-mj75n3v6blq0q6gef",
-      "cspResourceName": "tb4himg14kr1h819depl",
+      "cspResourceId": "rm-mj7b2xfo2q994pr91",
+      "cspResourceName": "tb26kia2eqnp7rdsts1r",
       "dbEngine": "mariadb",
       "dbEngineVersion": "10.6",
       "dbInstanceSpec": "mariadb.n2.medium.2c",
       "dbInstanceType": "HighAvailability",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "43.108.66.234:3306",
+      "endpoint": "43.108.67.54:3306",
       "highAvailability": true,
       "id": "test-rdbms-mariadb-alibaba",
       "name": "test-rdbms-mariadb-alibaba",
@@ -1675,22 +1398,22 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tb4himg14kr1h819depl",
+      "uid": "tb26kia2eqnp7rdsts1r",
       "vNetId": "test-rdbms-vnet-mariadb-alibaba"
     },
     {
       "backupRetentionDays": 7,
-      "backupTime": "16:33-17:03",
+      "backupTime": "19:07-19:37",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-08T04:22:18Z",
+          "lastTransitionTime": "2026-10-19T01:56:15Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-08T04:22:18Z",
+          "lastTransitionTime": "2026-10-19T01:56:15Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -1727,10 +1450,10 @@
         "verified": true
       },
       "connectionName": "aws-ap-northeast-2",
-      "cspResourceId": "tbnon77lqh7fau59hm9p",
-      "cspResourceName": "tbnon77lqh7fau59hm9p",
+      "cspResourceId": "tbt2u5olvrjvkdr9ks9h",
+      "cspResourceName": "tbt2u5olvrjvkdr9ks9h",
       "dbEngine": "mariadb",
-      "dbEngineVersion": "10.6.27",
+      "dbEngineVersion": "10.6.28",
       "dbInstanceSpec": "db.t3.medium",
       "dbInstanceType": "Primary",
       "deletionProtection": false,
@@ -1754,24 +1477,24 @@
       "tagList": [
         {
           "key": "Name",
-          "value": "tbnon77lqh7fau59hm9p"
+          "value": "tbt2u5olvrjvkdr9ks9h"
         }
       ],
-      "uid": "tbnon77lqh7fau59hm9p",
+      "uid": "tbt2u5olvrjvkdr9ks9h",
       "vNetId": "test-rdbms-vnet-mariadb-aws"
     },
     {
       "backupRetentionDays": 7,
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-08T04:21:25Z",
+          "lastTransitionTime": "2026-10-19T01:54:48Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-08T04:21:25Z",
+          "lastTransitionTime": "2026-10-19T01:54:48Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -1826,156 +1549,20 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tbfcn32o0g0dc0nn4ge4",
+      "uid": "tb50vr0addminmu2a8ql",
       "vNetId": "test-rdbms-vnet-mariadb-nhn"
-    },
-    {
-      "backupRetentionDays": 7,
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-10-08T04:21:23Z",
-          "message": "RDBMS creation in progress",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-10-08T04:21:23Z",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "nhn-kr1",
-        "credentialHolder": "admin",
-        "credentialName": "nhn",
-        "driverName": "nhn-driver-v1.0.so",
-        "providerName": "nhn",
-        "regionDetail": {
-          "description": "Pangyo (South Korea)",
-          "location": {
-            "display": "Pangyo (South Korea)",
-            "latitude": 37.390889,
-            "longitude": 127.096792
-          },
-          "regionId": "KR1",
-          "regionName": "kr1",
-          "zones": [
-            "kr-pub-a",
-            "kr-pub-b"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "KR1",
-          "assignedZone": "kr-pub-a"
-        },
-        "regionZoneInfoName": "nhn-kr1",
-        "verified": true
-      },
-      "connectionName": "nhn-kr1",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "MYSQL_V8046",
-      "dbInstanceSpec": "m2.c2m4",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "highAvailability": false,
-      "id": "test-rdbms-nhn",
-      "name": "test-rdbms-nhn",
-      "nhnDBSGToAllowAllInbound": true,
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-nhn"
-      ],
-      "status": "Creating",
-      "storageSize": 100,
-      "storageType": "General SSD",
-      "subnetIds": [
-        "subnet-1"
-      ],
-      "uid": "tbgv5t06psvjaa5r2i0d",
-      "vNetId": "test-rdbms-vnet-nhn"
-    },
-    {
-      "backupRetentionDays": 7,
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-10-08T04:21:06Z",
-          "message": "RDBMS creation in progress",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-10-08T04:21:06Z",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "tencent-ap-seoul",
-        "credentialHolder": "admin",
-        "credentialName": "tencent",
-        "driverName": "tencent-driver-v1.0.so",
-        "providerName": "tencent",
-        "regionDetail": {
-          "description": "Seoul",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.566536,
-            "longitude": 126.977966
-          },
-          "regionId": "ap-seoul",
-          "regionName": "ap-seoul",
-          "zones": [
-            "ap-seoul-1",
-            "ap-seoul-2"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "ap-seoul",
-          "assignedZone": "ap-seoul-1"
-        },
-        "regionZoneInfoName": "tencent-ap-seoul",
-        "verified": true
-      },
-      "connectionName": "tencent-ap-seoul",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "8.0",
-      "dbInstanceSpec": "4000",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "highAvailability": false,
-      "id": "test-rdbms-tencent",
-      "name": "test-rdbms-tencent",
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-tencent"
-      ],
-      "status": "Creating",
-      "storageSize": 100,
-      "storageType": "CLOUD_HSSD",
-      "subnetIds": [
-        "subnet-1"
-      ],
-      "uid": "tbgg0091uj25fuq62c78",
-      "vNetId": "test-rdbms-vnet-tencent"
     }
   ]
 }
 ```
 
 ### 11. Beetle POST Create Logical Database [✅ SUCCESS]
-- **Duration:** 942ms
+- **Duration:** 901ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-alibaba/database`
 ```json
 // Request Body
 {
+  "charset": "utf8mb4",
   "databaseName": "sampledb_dyn"
 }
 ```
@@ -1988,20 +1575,20 @@
 ```
 
 ### 12. Beetle GET List Logical Databases [✅ SUCCESS]
-- **Duration:** 1.408s
+- **Duration:** 794ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-alibaba/database`
 ```json
 // Response Body
 {
   "databases": [
-    "sampledb",
-    "sampledb_dyn"
+    "sampledb_dyn",
+    "sampledb"
   ]
 }
 ```
 
 ### 13. Beetle GET Secure Transport Info [✅ SUCCESS]
-- **Duration:** 735ms
+- **Duration:** 1.34s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-alibaba/secure-transport`
 ```json
 // Response Body
@@ -2033,7 +1620,7 @@
 ```
 
 ### 15. Data I/O Test (Internal VPC VM) [✅ SUCCESS]
-- **Duration:** 2m49.189s
+- **Duration:** 2m48.72s
 ```json
 // Response Body
 {
@@ -2042,16 +1629,16 @@
 ```
 
 ### 16. Beetle DELETE Logical Database [✅ SUCCESS]
-- **Duration:** 16.278s
+- **Duration:** 17.105s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-alibaba/database/sampledb`
 
 ### 17. Beetle DELETE RDBMS Instance [✅ SUCCESS]
-- **Duration:** 8m42.51s
+- **Duration:** 8m41.609s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-alibaba?option=force`
 
 ### 18. Tumblebug DELETE /resources/securityGroup [✅ SUCCESS]
-- **Duration:** 869ms
+- **Duration:** 1.04s
 
 ### 19. Tumblebug DELETE /resources/vNet [✅ SUCCESS]
-- **Duration:** 7.773s
+- **Duration:** 7.311s
 

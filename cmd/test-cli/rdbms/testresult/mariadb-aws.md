@@ -1,9 +1,9 @@
 # Managed RDBMS (MariaDB) Test Report: AWS (ap-northeast-2)
 
 - **Test Case:** AWS AP-Northeast-2 (Seoul) MariaDB Test
-- **Date & Time:** 2026-10-08 13:20:42
+- **Date & Time:** 2026-10-19 10:54:05
 - **Namespace:** `default`
-- **Total Duration:** 14m39.281s
+- **Total Duration:** 19m44.638s
 - **Overall Status:** ✅ PASSED
 
 ## Environment and Scenario
@@ -12,7 +12,7 @@
 - **Target CSP:** AWS
 - **Target Region:** `ap-northeast-2`
 - **Namespace:** `default`
-- **Test Date:** 2026-10-08 13:20:42
+- **Test Date:** 2026-10-19 10:54:05
 
 ### Scenario & Tested APIs
 1. **Pre-flight Spec & Image Review**: `POST /tumblebug/specImagePairReview`
@@ -24,16 +24,17 @@
 7. **Migrate RDBMS (Provisioning)**: `POST /beetle/migration/middleware/ns/{nsId}/rdbms`
 8. **Get RDBMS Info & List**: `GET /beetle/migration/middleware/ns/{nsId}/rdbms`
 9. **Create Logical Database**: `POST /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database`
-10. **External Data I/O**: Direct TCP/SQL connectivity test
-11. **Internal Data I/O**: SQL execution via internal Runner VM (`POST /tumblebug/ns/{nsId}/infra`)
-12. **Delete Logical Database**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{databaseName}`
-13. **Delete RDBMS**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}`
-14. **Delete Pre-requisite SG & VNet**: `DELETE /tumblebug/ns/{nsId}/resources/securityGroup/{sgId}`, `DELETE /tumblebug/ns/{nsId}/resources/vNet/{vNetId}`
+10. **Get Secure Transport Info**: `GET /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/secure-transport`
+11. **External Data I/O**: Direct TCP/SQL connectivity & TLS handshake test
+12. **Internal Data I/O**: SQL execution via internal Runner VM (`POST /tumblebug/ns/{nsId}/infra`)
+13. **Delete Logical Database**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{databaseName}`
+14. **Delete RDBMS**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}`
+15. **Delete Pre-requisite SG & VNet**: `DELETE /tumblebug/ns/{nsId}/resources/securityGroup/{sgId}`, `DELETE /tumblebug/ns/{nsId}/resources/vNet/{vNetId}`
 
 ## Execution Steps & API Traces
 
 ### 1. Tumblebug POST /specImagePairReview (Pre-flight Spec & Image Review) [✅ SUCCESS]
-- **Duration:** 5.388s
+- **Duration:** 1.596s
 - **Request URL:** `http://localhost:1323/tumblebug/specImagePairReview`
 ```json
 // Request Body
@@ -49,15 +50,10 @@
     "available": true,
     "instanceType": "t4g.medium",
     "provider": "aws",
-    "queriedAt": "2026-10-08T04:20:47.13378061Z",
+    "queriedAt": "2026-10-19T01:54:06.392378784Z",
     "region": "ap-northeast-2",
     "source": "aws:DescribeInstanceTypeOfferings",
     "zones": [
-      {
-        "available": true,
-        "status": "AVAILABLE",
-        "zoneId": "ap-northeast-2d"
-      },
       {
         "available": true,
         "status": "AVAILABLE",
@@ -66,12 +62,17 @@
       {
         "available": true,
         "status": "AVAILABLE",
-        "zoneId": "ap-northeast-2b"
+        "zoneId": "ap-northeast-2d"
       },
       {
         "available": true,
         "status": "AVAILABLE",
         "zoneId": "ap-northeast-2a"
+      },
+      {
+        "available": true,
+        "status": "AVAILABLE",
+        "zoneId": "ap-northeast-2b"
       }
     ]
   },
@@ -208,7 +209,7 @@
     "status": "Available"
   },
   "isValid": true,
-  "message": "Spec and image pair is valid for provisioning",
+  "message": "Spec and image pair is valid but has warnings",
   "providerName": "aws",
   "regionName": "ap-northeast-2",
   "specDetails": {
@@ -332,13 +333,16 @@
     "resourceName": "t4g.medium",
     "status": "Available"
   },
-  "status": "OK",
-  "suggestedZone": "ap-northeast-2d"
+  "status": "Warning",
+  "suggestedZone": "ap-northeast-2c",
+  "warnings": [
+    "Moderate provisioning failure risk: Image 'ami-04e3ca2324a305ad0' with spec 'aws+ap-northeast-2+t4g.medium' has succeeded before, but also had past failures. Recent failures: VM provisioning failed (status: Terminating) - check CSP console for details"
+  ]
 }
 ```
 
 ### 2. Tumblebug POST /resources/vNet (Create VNet & Subnets) [✅ SUCCESS]
-- **Duration:** 2.196s
+- **Duration:** 4.347s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/vNet`
 ```json
 // Request Body
@@ -368,19 +372,19 @@
   "cidrBlock": "10.10.0.0/16",
   "conditions": [
     {
-      "lastTransitionTime": "2026-10-08T04:20:50Z",
+      "lastTransitionTime": "2026-10-19T01:54:10Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-10-08T04:20:50Z",
+      "lastTransitionTime": "2026-10-19T01:54:10Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
     },
     {
-      "lastTransitionTime": "2026-10-08T04:20:50Z",
+      "lastTransitionTime": "2026-10-19T01:54:10Z",
       "reason": "AllReady",
       "status": "True",
       "type": "ChildrenReady"
@@ -417,8 +421,8 @@
     "verified": true
   },
   "connectionName": "aws-ap-northeast-2",
-  "cspResourceId": "vpc-0459f83f698b9ae21",
-  "cspResourceName": "tb6e0jlovsqbs48mj1qm",
+  "cspResourceId": "vpc-0dc81c6ac2fc6a890",
+  "cspResourceName": "tbn14buifgs962n082ra",
   "description": "Pre-requisite VNet for CM-Beetle RDBMS test",
   "id": "test-rdbms-vnet-mariadb-aws",
   "isAutoGenerated": false,
@@ -429,7 +433,7 @@
     },
     {
       "key": "CidrBlockAssociationSet",
-      "value": "{AssociationId:vpc-cidr-assoc-0a468513cb416a6f4,CidrBlock:10.10.0.0/16,CidrBlockState:{State:associated,StatusMessage:null}}"
+      "value": "{AssociationId:vpc-cidr-assoc-002a582b21694b5ee,CidrBlock:10.10.0.0/16,CidrBlockState:{State:associated,StatusMessage:null}}"
     },
     {
       "key": "DhcpOptionsId",
@@ -453,11 +457,11 @@
     },
     {
       "key": "Tags",
-      "value": "{Key:Name,Value:tb6e0jlovsqbs48mj1qm}"
+      "value": "{Key:Name,Value:tbn14buifgs962n082ra}"
     },
     {
       "key": "VpcId",
-      "value": "vpc-0459f83f698b9ae21"
+      "value": "vpc-0dc81c6ac2fc6a890"
     }
   ],
   "name": "test-rdbms-vnet-mariadb-aws",
@@ -467,13 +471,13 @@
     {
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-08T04:20:50Z",
+          "lastTransitionTime": "2026-10-19T01:54:10Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-08T04:20:50Z",
+          "lastTransitionTime": "2026-10-19T01:54:10Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -510,10 +514,10 @@
         "verified": true
       },
       "connectionName": "aws-ap-northeast-2",
-      "cspResourceId": "subnet-0605aee516975fd99",
-      "cspResourceName": "tbc96p09n9fsr21vkfsc",
-      "cspVNetId": "vpc-0459f83f698b9ae21",
-      "cspVNetName": "tb6e0jlovsqbs48mj1qm",
+      "cspResourceId": "subnet-0e5aa4038fe90dfc7",
+      "cspResourceName": "tbeqrfhn5qrll520fce7",
+      "cspVNetId": "vpc-0dc81c6ac2fc6a890",
+      "cspVNetName": "tbn14buifgs962n082ra",
       "description": "",
       "id": "subnet-1",
       "ipv4_CIDR": "10.10.1.0/24",
@@ -560,37 +564,37 @@
         },
         {
           "key": "SubnetArn",
-          "value": "arn:aws:ec2:ap-northeast-2:635484366616:subnet/subnet-0605aee516975fd99"
+          "value": "arn:aws:ec2:ap-northeast-2:635484366616:subnet/subnet-0e5aa4038fe90dfc7"
         },
         {
           "key": "SubnetId",
-          "value": "subnet-0605aee516975fd99"
+          "value": "subnet-0e5aa4038fe90dfc7"
         },
         {
           "key": "Tags",
-          "value": "{Key:Name,Value:tbc96p09n9fsr21vkfsc}"
+          "value": "{Key:Name,Value:tbeqrfhn5qrll520fce7}"
         },
         {
           "key": "VpcId",
-          "value": "vpc-0459f83f698b9ae21"
+          "value": "vpc-0dc81c6ac2fc6a890"
         }
       ],
       "name": "subnet-1",
       "resourceType": "subnet",
       "status": "Available",
-      "uid": "tbc96p09n9fsr21vkfsc",
+      "uid": "tbeqrfhn5qrll520fce7",
       "zone": "ap-northeast-2a"
     },
     {
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-08T04:20:50Z",
+          "lastTransitionTime": "2026-10-19T01:54:10Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-08T04:20:50Z",
+          "lastTransitionTime": "2026-10-19T01:54:10Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -627,10 +631,10 @@
         "verified": true
       },
       "connectionName": "aws-ap-northeast-2",
-      "cspResourceId": "subnet-04b4d2fc351a4df7f",
-      "cspResourceName": "tb8qma664tig6n6drnpo",
-      "cspVNetId": "vpc-0459f83f698b9ae21",
-      "cspVNetName": "tb6e0jlovsqbs48mj1qm",
+      "cspResourceId": "subnet-0fac26c1df03b5c97",
+      "cspResourceName": "tb7911qgomr5ptdb6mep",
+      "cspVNetId": "vpc-0dc81c6ac2fc6a890",
+      "cspVNetName": "tbn14buifgs962n082ra",
       "description": "",
       "id": "subnet-2",
       "ipv4_CIDR": "10.10.2.0/24",
@@ -677,35 +681,35 @@
         },
         {
           "key": "SubnetArn",
-          "value": "arn:aws:ec2:ap-northeast-2:635484366616:subnet/subnet-04b4d2fc351a4df7f"
+          "value": "arn:aws:ec2:ap-northeast-2:635484366616:subnet/subnet-0fac26c1df03b5c97"
         },
         {
           "key": "SubnetId",
-          "value": "subnet-04b4d2fc351a4df7f"
+          "value": "subnet-0fac26c1df03b5c97"
         },
         {
           "key": "Tags",
-          "value": "{Key:Name,Value:tb8qma664tig6n6drnpo}"
+          "value": "{Key:Name,Value:tb7911qgomr5ptdb6mep}"
         },
         {
           "key": "VpcId",
-          "value": "vpc-0459f83f698b9ae21"
+          "value": "vpc-0dc81c6ac2fc6a890"
         }
       ],
       "name": "subnet-2",
       "resourceType": "subnet",
       "status": "Available",
-      "uid": "tb8qma664tig6n6drnpo",
+      "uid": "tb7911qgomr5ptdb6mep",
       "zone": "ap-northeast-2c"
     }
   ],
   "systemLabel": "",
-  "uid": "tb6e0jlovsqbs48mj1qm"
+  "uid": "tbn14buifgs962n082ra"
 }
 ```
 
 ### 3. Tumblebug POST /resources/securityGroup (Create SecurityGroup) [✅ SUCCESS]
-- **Duration:** 1.345s
+- **Duration:** 2.107s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/securityGroup`
 ```json
 // Request Body
@@ -765,8 +769,8 @@
     "verified": true
   },
   "connectionName": "aws-ap-northeast-2",
-  "cspResourceId": "sg-0b7468eef13f6f6f0",
-  "cspResourceName": "tbe36jhubcddkalt813p",
+  "cspResourceId": "sg-0e0ffcb36114041d7",
+  "cspResourceName": "tbn7ols2uphh22op9u29",
   "description": "Pre-requisite SecurityGroup for CM-Beetle RDBMS test",
   "firewallRules": [
     {
@@ -793,11 +797,11 @@
   "keyValueList": [
     {
       "key": "GroupName",
-      "value": "tbe36jhubcddkalt813p"
+      "value": "tbn7ols2uphh22op9u29"
     },
     {
       "key": "VpcID",
-      "value": "vpc-0459f83f698b9ae21"
+      "value": "vpc-0dc81c6ac2fc6a890"
     },
     {
       "key": "OwnerID",
@@ -805,19 +809,19 @@
     },
     {
       "key": "Description",
-      "value": "tbe36jhubcddkalt813p"
+      "value": "tbn7ols2uphh22op9u29"
     }
   ],
   "name": "test-rdbms-sg-mariadb-aws",
   "resourceType": "securityGroup",
   "systemLabel": "",
-  "uid": "tbe36jhubcddkalt813p",
+  "uid": "tbn7ols2uphh22op9u29",
   "vNetId": "test-rdbms-vnet-mariadb-aws"
 }
 ```
 
 ### 4. Beetle GET RDBMS Support [✅ SUCCESS]
-- **Duration:** 2ms
+- **Duration:** 6ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/support?providerName=aws`
 ```json
 // Response Body
@@ -839,7 +843,7 @@
 ```
 
 ### 5. Beetle GET RDBMS Capability [✅ SUCCESS]
-- **Duration:** 1m17.751s
+- **Duration:** 1m56.504s
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/capability?connectionName=aws-ap-northeast-2&dbEngine=mariadb`
 ```json
 // Response Body
@@ -2507,7 +2511,7 @@
 ```
 
 ### 6. Beetle POST Recommend RDBMS [✅ SUCCESS]
-- **Duration:** 8ms
+- **Duration:** 4ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms`
 ```json
 // Request Body
@@ -2585,6 +2589,8 @@
       "backupRetentionDays": 7,
       "databases": [
         {
+          "charset": "utf8mb4",
+          "collation": "utf8mb4_unicode_ci",
           "databaseName": "sampledb"
         }
       ],
@@ -2612,7 +2618,7 @@
 ```
 
 ### 7. Beetle POST Validate RDBMS Recommendation [✅ SUCCESS]
-- **Duration:** 9.301s
+- **Duration:** 17.434s
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/validate?nsId=default`
 ```json
 // Request Body
@@ -2667,7 +2673,7 @@
 ```
 
 ### 8. Beetle POST Migrate RDBMS (Provisioning) [✅ SUCCESS]
-- **Duration:** 7m53.149s
+- **Duration:** 10m12.763s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms?nameSeed=test`
 ```json
 // Request Body
@@ -2685,6 +2691,8 @@
       "backupRetentionDays": 7,
       "databases": [
         {
+          "charset": "utf8mb4",
+          "collation": "utf8mb4_unicode_ci",
           "databaseName": "sampledb"
         }
       ],
@@ -2719,22 +2727,22 @@
 ```
 
 ### 9. Beetle GET RDBMS Info [✅ SUCCESS]
-- **Duration:** 11ms
+- **Duration:** 708ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-aws`
 ```json
 // Response Body
 {
   "backupRetentionDays": 7,
-  "backupTime": "16:33-17:03",
+  "backupTime": "19:07-19:37",
   "conditions": [
     {
-      "lastTransitionTime": "2026-10-08T04:30:11Z",
+      "lastTransitionTime": "2026-10-19T02:05:38Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-10-08T04:30:11Z",
+      "lastTransitionTime": "2026-10-19T02:05:38Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
@@ -2771,15 +2779,15 @@
     "verified": true
   },
   "connectionName": "aws-ap-northeast-2",
-  "cspResourceId": "tbnon77lqh7fau59hm9p",
-  "cspResourceName": "tbnon77lqh7fau59hm9p",
+  "cspResourceId": "tbt2u5olvrjvkdr9ks9h",
+  "cspResourceName": "tbt2u5olvrjvkdr9ks9h",
   "dbEngine": "mariadb",
-  "dbEngineVersion": "10.6.27",
+  "dbEngineVersion": "10.6.28",
   "dbInstanceSpec": "db.t3.medium",
   "dbInstanceType": "Primary",
   "deletionProtection": false,
   "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-  "endpoint": "tbnon77lqh7fau59hm9p.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com:3306",
+  "endpoint": "tbt2u5olvrjvkdr9ks9h.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com:3306",
   "highAvailability": false,
   "id": "test-rdbms-mariadb-aws",
   "iops": "3000",
@@ -2799,16 +2807,16 @@
   "tagList": [
     {
       "key": "Name",
-      "value": "tbnon77lqh7fau59hm9p"
+      "value": "tbt2u5olvrjvkdr9ks9h"
     }
   ],
-  "uid": "tbnon77lqh7fau59hm9p",
+  "uid": "tbt2u5olvrjvkdr9ks9h",
   "vNetId": "test-rdbms-vnet-mariadb-aws"
 }
 ```
 
 ### 10. Beetle GET RDBMS List [✅ SUCCESS]
-- **Duration:** 20ms
+- **Duration:** 6ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms`
 ```json
 // Response Body
@@ -2816,16 +2824,17 @@
   "rdbms": [
     {
       "backupRetentionDays": 7,
-      "backupTime": "03:00Z-04:00Z",
+      "backupTime": "11:00Z-12:00Z",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-08T04:28:49Z",
-          "reason": "Available",
-          "status": "True",
+          "lastTransitionTime": "2026-10-19T02:01:06Z",
+          "message": "RDBMS deletion in progress",
+          "reason": "Deleting",
+          "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-08T04:28:49Z",
+          "lastTransitionTime": "2026-10-19T01:58:12Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -2860,386 +2869,15 @@
         "verified": true
       },
       "connectionName": "alibaba-ap-northeast-2",
-      "cspResourceId": "rm-mj70u27m2xz7q307f",
-      "cspResourceName": "tbuq2stad7gl2m1pvu6c",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "8.0",
-      "dbInstanceSpec": "mysql.n2.medium.1",
-      "dbInstanceType": "Basic",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "43.108.67.227:3306",
-      "highAvailability": false,
-      "id": "test-rdbms-alibaba",
-      "name": "test-rdbms-alibaba",
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-alibaba"
-      ],
-      "status": "Available",
-      "storageSize": 100,
-      "storageType": "general_essd",
-      "subnetIds": [
-        "subnet-1"
-      ],
-      "uid": "tbuq2stad7gl2m1pvu6c",
-      "vNetId": "test-rdbms-vnet-alibaba"
-    },
-    {
-      "backupRetentionDays": 7,
-      "backupTime": "18:34-19:04",
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-10-08T04:29:43Z",
-          "reason": "Available",
-          "status": "True",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-10-08T04:29:43Z",
-          "reason": "Available",
-          "status": "True",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "aws-ap-northeast-2",
-        "credentialHolder": "admin",
-        "credentialName": "aws",
-        "driverName": "aws-driver-v1.0.so",
-        "providerName": "aws",
-        "regionDetail": {
-          "description": "Asia Pacific (Seoul)",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "regionId": "ap-northeast-2",
-          "regionName": "ap-northeast-2",
-          "zones": [
-            "ap-northeast-2a",
-            "ap-northeast-2b",
-            "ap-northeast-2c",
-            "ap-northeast-2d"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "ap-northeast-2",
-          "assignedZone": "ap-northeast-2a"
-        },
-        "regionZoneInfoName": "aws-ap-northeast-2",
-        "verified": true
-      },
-      "connectionName": "aws-ap-northeast-2",
-      "cspResourceId": "tb9i05t58qdva0pqii7q",
-      "cspResourceName": "tb9i05t58qdva0pqii7q",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "8.0.46",
-      "dbInstanceSpec": "db.t3.medium",
-      "dbInstanceType": "Primary",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "tb9i05t58qdva0pqii7q.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com:3306",
-      "highAvailability": false,
-      "id": "test-rdbms-aws",
-      "iops": "3000",
-      "name": "test-rdbms-aws",
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-aws"
-      ],
-      "status": "Available",
-      "storageSize": 100,
-      "storageType": "gp3",
-      "subnetIds": [
-        "subnet-1",
-        "subnet-2"
-      ],
-      "tagList": [
-        {
-          "key": "Name",
-          "value": "tb9i05t58qdva0pqii7q"
-        }
-      ],
-      "uid": "tb9i05t58qdva0pqii7q",
-      "vNetId": "test-rdbms-vnet-aws"
-    },
-    {
-      "backupRetentionDays": 7,
-      "backupTime": "AUTO",
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-10-08T04:25:05Z",
-          "reason": "Available",
-          "status": "True",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-10-08T04:25:05Z",
-          "reason": "Available",
-          "status": "True",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "azure-koreacentral",
-        "credentialHolder": "admin",
-        "credentialName": "azure",
-        "driverName": "azure-driver-v1.0.so",
-        "providerName": "azure",
-        "regionDetail": {
-          "description": "Korea Central",
-          "location": {
-            "display": "Korea Central",
-            "latitude": 37.5665,
-            "longitude": 126.978
-          },
-          "regionId": "koreacentral",
-          "regionName": "koreacentral",
-          "zones": [
-            "1",
-            "2",
-            "3"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "koreacentral",
-          "assignedZone": ""
-        },
-        "regionZoneInfoName": "azure-koreacentral",
-        "verified": true
-      },
-      "connectionName": "azure-koreacentral",
-      "cspResourceId": "tbncr09n28klnsbdp033",
-      "cspResourceName": "tbncr09n28klnsbdp033",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "8.0.21",
-      "dbInstanceSpec": "Standard_B2s",
-      "dbInstanceType": "Burstable",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "tbncr09n28klnsbdp033.mysql.database.azure.com:3306",
-      "highAvailability": false,
-      "id": "test-rdbms-azure",
-      "name": "test-rdbms-azure",
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-azure"
-      ],
-      "status": "Available",
-      "storageSize": 100,
-      "storageType": "Premium_LRS",
-      "subnetIds": [
-        "subnet-1"
-      ],
-      "uid": "tbncr09n28klnsbdp033",
-      "vNetId": "test-rdbms-vnet-azure"
-    },
-    {
-      "backupRetentionDays": 7,
-      "backupTime": "19:00",
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-10-08T04:29:40Z",
-          "message": "RDBMS deletion in progress",
-          "reason": "Deleting",
-          "status": "False",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-10-08T04:25:21Z",
-          "reason": "Available",
-          "status": "True",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "gcp-us-central1",
-        "credentialHolder": "admin",
-        "credentialName": "gcp",
-        "driverName": "gcp-driver-v1.0.so",
-        "providerName": "gcp",
-        "regionDetail": {
-          "description": "Council Bluffs Iowa  USA",
-          "location": {
-            "display": "Council Bluffs Iowa USA",
-            "latitude": 41.2522,
-            "longitude": -95.8575
-          },
-          "regionId": "us-central1",
-          "regionName": "us-central1",
-          "zones": [
-            "us-central1-a",
-            "us-central1-b",
-            "us-central1-c",
-            "us-central1-f"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "us-central1",
-          "assignedZone": "us-central1-a"
-        },
-        "regionZoneInfoName": "gcp-us-central1",
-        "verified": true
-      },
-      "connectionName": "gcp-us-central1",
-      "cspResourceId": "tb5ivnnbbt2sn5eqjole",
-      "cspResourceName": "tb5ivnnbbt2sn5eqjole",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "8.0",
-      "dbInstanceSpec": "db-n1-standard-2",
-      "dbInstanceType": "ZONAL",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "encryption": true,
-      "endpoint": "35.226.5.44:3306",
-      "highAvailability": false,
-      "id": "test-rdbms-gcp",
-      "name": "test-rdbms-gcp",
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-gcp"
-      ],
-      "status": "Deleting",
-      "storageSize": 100,
-      "storageType": "PD_SSD",
-      "subnetIds": [
-        "subnet-1"
-      ],
-      "uid": "tb5ivnnbbt2sn5eqjole",
-      "vNetId": "test-rdbms-vnet-gcp"
-    },
-    {
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-10-08T04:21:12Z",
-          "message": "RDBMS creation in progress",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-10-08T04:21:12Z",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "ibm-us-south",
-        "credentialHolder": "admin",
-        "credentialName": "ibm",
-        "driverName": "ibm-driver-v1.0.so",
-        "providerName": "ibm",
-        "regionDetail": {
-          "description": "us-south",
-          "location": {
-            "display": "Dallas USA",
-            "latitude": 32.81248,
-            "longitude": -96.77619
-          },
-          "regionId": "us-south",
-          "regionName": "us-south",
-          "zones": [
-            "us-south-1",
-            "us-south-2",
-            "us-south-3"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "us-south",
-          "assignedZone": "us-south-1"
-        },
-        "regionZoneInfoName": "ibm-us-south",
-        "verified": true
-      },
-      "connectionName": "ibm-us-south",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "8.4",
-      "dbInstanceSpec": "b3c.4x16.encrypted",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "highAvailability": false,
-      "id": "test-rdbms-ibm",
-      "name": "test-rdbms-ibm",
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-ibm"
-      ],
-      "status": "Creating",
-      "storageSize": 100,
-      "subnetIds": [
-        "subnet-1"
-      ],
-      "uid": "tbjg8pdr8lgovsqj2clo",
-      "vNetId": "test-rdbms-vnet-ibm"
-    },
-    {
-      "backupRetentionDays": 7,
-      "backupTime": "16:00Z-17:00Z",
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-10-08T04:27:55Z",
-          "message": "RDBMS deletion in progress",
-          "reason": "Deleting",
-          "status": "False",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-10-08T04:24:46Z",
-          "reason": "Available",
-          "status": "True",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "alibaba-ap-northeast-2",
-        "credentialHolder": "admin",
-        "credentialName": "alibaba",
-        "driverName": "alibaba-driver-v1.0.so",
-        "providerName": "alibaba",
-        "regionDetail": {
-          "description": "South Korea (Seoul)",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "regionId": "ap-northeast-2",
-          "regionName": "ap-northeast-2",
-          "zones": [
-            "ap-northeast-2a",
-            "ap-northeast-2b"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "ap-northeast-2",
-          "assignedZone": "ap-northeast-2a"
-        },
-        "regionZoneInfoName": "alibaba-ap-northeast-2",
-        "verified": true
-      },
-      "connectionName": "alibaba-ap-northeast-2",
-      "cspResourceId": "rm-mj75n3v6blq0q6gef",
-      "cspResourceName": "tb4himg14kr1h819depl",
+      "cspResourceId": "rm-mj7b2xfo2q994pr91",
+      "cspResourceName": "tb26kia2eqnp7rdsts1r",
       "dbEngine": "mariadb",
       "dbEngineVersion": "10.6",
       "dbInstanceSpec": "mariadb.n2.medium.2c",
       "dbInstanceType": "HighAvailability",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "43.108.66.234:3306",
+      "endpoint": "43.108.67.54:3306",
       "highAvailability": true,
       "id": "test-rdbms-mariadb-alibaba",
       "name": "test-rdbms-mariadb-alibaba",
@@ -3254,21 +2892,21 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tb4himg14kr1h819depl",
+      "uid": "tb26kia2eqnp7rdsts1r",
       "vNetId": "test-rdbms-vnet-mariadb-alibaba"
     },
     {
       "backupRetentionDays": 7,
-      "backupTime": "16:33-17:03",
+      "backupTime": "19:07-19:37",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-08T04:30:11Z",
+          "lastTransitionTime": "2026-10-19T02:05:38Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-08T04:30:11Z",
+          "lastTransitionTime": "2026-10-19T02:05:38Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -3305,15 +2943,15 @@
         "verified": true
       },
       "connectionName": "aws-ap-northeast-2",
-      "cspResourceId": "tbnon77lqh7fau59hm9p",
-      "cspResourceName": "tbnon77lqh7fau59hm9p",
+      "cspResourceId": "tbt2u5olvrjvkdr9ks9h",
+      "cspResourceName": "tbt2u5olvrjvkdr9ks9h",
       "dbEngine": "mariadb",
-      "dbEngineVersion": "10.6.27",
+      "dbEngineVersion": "10.6.28",
       "dbInstanceSpec": "db.t3.medium",
       "dbInstanceType": "Primary",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "tbnon77lqh7fau59hm9p.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com:3306",
+      "endpoint": "tbt2u5olvrjvkdr9ks9h.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com:3306",
       "highAvailability": false,
       "id": "test-rdbms-mariadb-aws",
       "iops": "3000",
@@ -3333,10 +2971,10 @@
       "tagList": [
         {
           "key": "Name",
-          "value": "tbnon77lqh7fau59hm9p"
+          "value": "tbt2u5olvrjvkdr9ks9h"
         }
       ],
-      "uid": "tbnon77lqh7fau59hm9p",
+      "uid": "tbt2u5olvrjvkdr9ks9h",
       "vNetId": "test-rdbms-vnet-mariadb-aws"
     },
     {
@@ -3344,13 +2982,13 @@
       "backupTime": "03:00",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-08T04:29:59Z",
+          "lastTransitionTime": "2026-10-19T02:03:22Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-08T04:29:59Z",
+          "lastTransitionTime": "2026-10-19T02:03:22Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -3385,15 +3023,15 @@
         "verified": true
       },
       "connectionName": "nhn-kr1",
-      "cspResourceId": "50bead64-24da-4103-aa12-e3ec020ecf49",
-      "cspResourceName": "tbfcn32o0g0dc0nn4ge4",
+      "cspResourceId": "a6b93070-8434-4526-b561-6cbbb3df8c3e",
+      "cspResourceName": "tb50vr0addminmu2a8ql",
       "dbEngine": "mariadb",
       "dbEngineVersion": "MARIADB_V101118",
       "dbInstanceSpec": "m2.c2m4",
       "dbInstanceType": "NA",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "7b3e6e5f-6bea-479b-8abd-477eeee374b8.external.kr1.mariadb.rds.nhncloudservice.com:3306",
+      "endpoint": "a7435378-5d66-4a08-bcf8-787ed29cffe1.external.kr1.mariadb.rds.nhncloudservice.com:3306",
       "highAvailability": false,
       "id": "test-rdbms-mariadb-nhn",
       "name": "test-rdbms-mariadb-nhn",
@@ -3409,161 +3047,21 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tbfcn32o0g0dc0nn4ge4",
+      "uid": "tb50vr0addminmu2a8ql",
       "vNetId": "test-rdbms-vnet-mariadb-nhn"
-    },
-    {
-      "backupRetentionDays": 7,
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-10-08T04:21:23Z",
-          "message": "RDBMS creation in progress",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-10-08T04:21:23Z",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "nhn-kr1",
-        "credentialHolder": "admin",
-        "credentialName": "nhn",
-        "driverName": "nhn-driver-v1.0.so",
-        "providerName": "nhn",
-        "regionDetail": {
-          "description": "Pangyo (South Korea)",
-          "location": {
-            "display": "Pangyo (South Korea)",
-            "latitude": 37.390889,
-            "longitude": 127.096792
-          },
-          "regionId": "KR1",
-          "regionName": "kr1",
-          "zones": [
-            "kr-pub-a",
-            "kr-pub-b"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "KR1",
-          "assignedZone": "kr-pub-a"
-        },
-        "regionZoneInfoName": "nhn-kr1",
-        "verified": true
-      },
-      "connectionName": "nhn-kr1",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "MYSQL_V8046",
-      "dbInstanceSpec": "m2.c2m4",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "highAvailability": false,
-      "id": "test-rdbms-nhn",
-      "name": "test-rdbms-nhn",
-      "nhnDBSGToAllowAllInbound": true,
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-nhn"
-      ],
-      "status": "Creating",
-      "storageSize": 100,
-      "storageType": "General SSD",
-      "subnetIds": [
-        "subnet-1"
-      ],
-      "uid": "tbgv5t06psvjaa5r2i0d",
-      "vNetId": "test-rdbms-vnet-nhn"
-    },
-    {
-      "backupRetentionDays": 7,
-      "backupTime": "00:00-12:00",
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-10-08T04:28:54Z",
-          "message": "RDBMS deletion in progress",
-          "reason": "Deleting",
-          "status": "False",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-10-08T04:24:52Z",
-          "reason": "Available",
-          "status": "True",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "tencent-ap-seoul",
-        "credentialHolder": "admin",
-        "credentialName": "tencent",
-        "driverName": "tencent-driver-v1.0.so",
-        "providerName": "tencent",
-        "regionDetail": {
-          "description": "Seoul",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.566536,
-            "longitude": 126.977966
-          },
-          "regionId": "ap-seoul",
-          "regionName": "ap-seoul",
-          "zones": [
-            "ap-seoul-1",
-            "ap-seoul-2"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "ap-seoul",
-          "assignedZone": "ap-seoul-1"
-        },
-        "regionZoneInfoName": "tencent-ap-seoul",
-        "verified": true
-      },
-      "connectionName": "tencent-ap-seoul",
-      "cspResourceId": "cdb-5d1t4gzi",
-      "cspResourceName": "tbgg0091uj25fuq62c78",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "8.0",
-      "dbInstanceSpec": "4000",
-      "dbInstanceType": "NA",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "kr-cdb-5d1t4gzi.sql.tencentcdb.com:29206",
-      "highAvailability": false,
-      "id": "test-rdbms-tencent",
-      "name": "test-rdbms-tencent",
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-tencent"
-      ],
-      "status": "Deleting",
-      "storageSize": 100,
-      "storageType": "CLOUD_HSSD",
-      "subnetIds": [
-        "subnet-1"
-      ],
-      "uid": "tbgg0091uj25fuq62c78",
-      "vNetId": "test-rdbms-vnet-tencent"
     }
   ]
 }
 ```
 
 ### 11. Beetle POST Create Logical Database [✅ SUCCESS]
-- **Duration:** 409ms
+- **Duration:** 1.763s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-aws/database`
 ```json
 // Request Body
 {
+  "charset": "utf8mb4",
+  "collation": "utf8mb4_unicode_ci",
   "databaseName": "sampledb_dyn"
 }
 ```
@@ -3576,7 +3074,7 @@
 ```
 
 ### 12. Beetle GET List Logical Databases [✅ SUCCESS]
-- **Duration:** 505ms
+- **Duration:** 1.899s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-aws/database`
 ```json
 // Response Body
@@ -3594,7 +3092,7 @@
 ```
 
 ### 13. Beetle GET Secure Transport Info [✅ SUCCESS]
-- **Duration:** 461ms
+- **Duration:** 2.271s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-aws/secure-transport`
 ```json
 // Response Body
@@ -3602,9 +3100,9 @@
   "caCertificate": {
     "isSelfSigned": false,
     "issuer": "CN=Amazon RDS ap-northeast-2 Root CA RSA2048 G1,OU=Amazon RDS,O=Amazon Web Services\\, Inc.,L=Seattle,ST=WA,C=US",
-    "notAfter": "2032-12-08T19:03:01Z",
-    "pem": "-----BEGIN CERTIFICATE-----\nMIIENTCCAx2gAwIBAgIQLMt7dou1aaJt3o6TKVs0xjANBgkqhkiG9w0BAQsFADCB\nnDELMAkGA1UEBhMCVVMxIjAgBgNVBAoMGUFtYXpvbiBXZWIgU2VydmljZXMsIElu\nYy4xEzARBgNVBAsMCkFtYXpvbiBSRFMxCzAJBgNVBAgMAldBMTUwMwYDVQQDDCxB\nbWF6b24gUkRTIGFwLW5vcnRoZWFzdC0yIFJvb3QgQ0EgUlNBMjA0OCBHMTEQMA4G\nA1UEBwwHU2VhdHRsZTAeFw0yMjEyMDgxODAzMDFaFw0zMjEyMDgxOTAzMDFaMIGn\nMQswCQYDVQQGEwJVUzEiMCAGA1UECgwZQW1hem9uIFdlYiBTZXJ2aWNlcywgSW5j\nLjETMBEGA1UECwwKQW1hem9uIFJEUzELMAkGA1UECAwCV0ExQDA+BgNVBAMMN0Ft\nYXpvbiBSRFMgYXAtbm9ydGhlYXN0LTIgU3Vib3JkaW5hdGUgQ0EgUlNBMjA0OCBH\nMS5BLjUxEDAOBgNVBAcMB1NlYXR0bGUwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw\nggEKAoIBAQDMxJFt0wsGJm3V4Y0V1cbLXn8idsysk7E8CKzxBRdI2nyDY//IC4oY\n6y7VNnch4guGB78f5KJqrQlqlBqoYhy0oYpmKRmzZbEFqemsg2JqNhktUzXjOvp5\nl/vB8WqfPsjYpLpdTJUguRKuRyOT5+M7mw+0etFXGDpjPEZgFv/ZvdFkzA1GG9MG\nN6QLgoh9obf5Ml9NN0MRmKoS/Cbo9dQqXiIINjNQoZb9PaMYaVzeTYad+XrszPrM\nxIY3NPDJawSQCaXW0yBwvZU4AcSA8S58soy7NUl1s2YfJS4TTQTX6h+37OnlhcB8\nGVwv6GTtyvkVo3u4xp8bO7zmS2IWJs5rAgMBAAGjZjBkMBIGA1UdEwEB/wQIMAYB\nAf8CAQAwHwYDVR0jBBgwFoAUJIE1hbDYOsANx224oQ0OL6bdRNswHQYDVR0OBBYE\nFOZooFko3exXE9wfLKtCvoDLs4VyMA4GA1UdDwEB/wQEAwIBhjANBgkqhkiG9w0B\nAQsFAAOCAQEAmYX7p3wsgIvO/lHbfTrnrALs2yfJasHbQcImtOWBwFOetbGK6Szr\nzMMbJCWb9VxCu9q5J5mWOGtwWS4CZylpDqVf7QX8I0dGvbCkdRr1RdyiP7WVJPwV\nK7YHxn8/NnbXKKysfr4SyU9wxUI/Na/iZMLlt2st1ztnMRZWm7ewDsgpnvzj8A+Y\nw99C/ayXyifBlKmorlbh8485nLhlPYHGBqCvefHeu9uTMT6YooZCwTy9D+bCYMzN\nLeKhb+r6Af49yzbpCg1a/rkr7/lIsq9kOpLQr18bFtNvFnFXDgaF7hqdV5Hb+s83\nkXIAI1hr5FqvKvB5efxSC+Tf2tsGPx/c7g==\n-----END CERTIFICATE-----\n",
-    "subject": "CN=Amazon RDS ap-northeast-2 Subordinate CA RSA2048 G1.A.5,OU=Amazon RDS,O=Amazon Web Services\\, Inc.,L=Seattle,ST=WA,C=US"
+    "notAfter": "2032-12-08T19:01:41Z",
+    "pem": "-----BEGIN CERTIFICATE-----\nMIIENjCCAx6gAwIBAgIRAPc4tQLZJ3/Z1mwyOZ4dFugwDQYJKoZIhvcNAQELBQAw\ngZwxCzAJBgNVBAYTAlVTMSIwIAYDVQQKDBlBbWF6b24gV2ViIFNlcnZpY2VzLCBJ\nbmMuMRMwEQYDVQQLDApBbWF6b24gUkRTMQswCQYDVQQIDAJXQTE1MDMGA1UEAwws\nQW1hem9uIFJEUyBhcC1ub3J0aGVhc3QtMiBSb290IENBIFJTQTIwNDggRzExEDAO\nBgNVBAcMB1NlYXR0bGUwHhcNMjIxMjA4MTgwMTQxWhcNMzIxMjA4MTkwMTQxWjCB\npzELMAkGA1UEBhMCVVMxIjAgBgNVBAoMGUFtYXpvbiBXZWIgU2VydmljZXMsIElu\nYy4xEzARBgNVBAsMCkFtYXpvbiBSRFMxCzAJBgNVBAgMAldBMUAwPgYDVQQDDDdB\nbWF6b24gUkRTIGFwLW5vcnRoZWFzdC0yIFN1Ym9yZGluYXRlIENBIFJTQTIwNDgg\nRzEuQS4zMRAwDgYDVQQHDAdTZWF0dGxlMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A\nMIIBCgKCAQEArsUNPak792H8/ezW3gSqalcS36LVY1TQVPs0u6mMdTCSCpmJIl3p\ni3kMn/RGGDQQ/QufasyOK5nUSdI7omRUMNrIg1iKSDJTNuW2U0N+xijgvP5afZep\n1fEjih5KzwuhkLgyItVLrjJGcAPeyU45d6AZTXoDnGCegNDVbKnBXE7T8+FQZ4mR\nemUjb0GIxsPYaaw2zwgJS7bTAjoIFnaIipbDIzPHi3yIQzpPqZk9Zxz5rrJFOdga\no7dp4pIrYLBpkNn5Eck1LPuPSNzB6eCpoWlNh7FoJeuxeHeLNyO8nMWcm4K4ntoH\n5h2RMbJORRsuN9kREM3IuFLBNPvABv+NfQIDAQABo2YwZDASBgNVHRMBAf8ECDAG\nAQH/AgEAMB8GA1UdIwQYMBaAFCSBNYWw2DrADcdtuKENDi+m3UTbMB0GA1UdDgQW\nBBQlGkhuI6YTIYBD2BQTAnk4+ua2ZDAOBgNVHQ8BAf8EBAMCAYYwDQYJKoZIhvcN\nAQELBQADggEBAIryUz82GMpVILlaw9G5V+15yBO/I8IBAGYviGajWVq+G6Iq6CQF\nV/FJL0sEdYbVy7D713hf5n+sP8qEBctjh6HZz2ag/HhcH3SqhyEkl/8GbfFwJA03\ndVpP+e4h/QNLx1eUnb5c8vkMhvk1XdUS3kwX53cmaHLyVxcmjtSfWQrRSTND7Hhm\nIHfSsiLLSvZ5U46GC9Sa4vIzQHiNuz8w9fs+60HHHNfUtNVT/VLqj3F5t2wPBHY5\n/m2IREejhWhDoCxgaXOZhXN+5vqZ5J7wJlqvXlU6WU1JkYLwy7eUwZSSh4jEG5o1\nYjikt0JEfCxslEdTh399AVJROgxx+vKnw/4=\n-----END CERTIFICATE-----\n",
+    "subject": "CN=Amazon RDS ap-northeast-2 Subordinate CA RSA2048 G1.A.3,OU=Amazon RDS,O=Amazon Web Services\\, Inc.,L=Seattle,ST=WA,C=US"
   },
   "enforced": false,
   "engine": "mariadb",
@@ -3617,7 +3115,7 @@
 ```
 
 ### 14. Data I/O Test (External Remote) [✅ SUCCESS]
-- **Duration:** 7ms
+- **Duration:** 433ms
 ```json
 // Response Body
 {
@@ -3626,7 +3124,7 @@
 ```
 
 ### 15. Data I/O Test (Internal VPC VM) [✅ SUCCESS]
-- **Duration:** 2m54.773s
+- **Duration:** 4m4.252s
 ```json
 // Response Body
 {
@@ -3635,16 +3133,16 @@
 ```
 
 ### 16. Beetle DELETE Logical Database [✅ SUCCESS]
-- **Duration:** 12.833s
+- **Duration:** 9.524s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-aws/database/sampledb`
 
 ### 17. Beetle DELETE RDBMS Instance [✅ SUCCESS]
-- **Duration:** 1m51.009s
+- **Duration:** 2m22.266s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-aws?option=force`
 
 ### 18. Tumblebug DELETE /resources/securityGroup [✅ SUCCESS]
-- **Duration:** 677ms
+- **Duration:** 1.274s
 
 ### 19. Tumblebug DELETE /resources/vNet [✅ SUCCESS]
-- **Duration:** 9.437s
+- **Duration:** 25.48s
 

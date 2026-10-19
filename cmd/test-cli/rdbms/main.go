@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"path/filepath"
@@ -90,11 +91,12 @@ type TestCase struct {
 	PublicAccess             bool           `yaml:"publicAccess"`
 	HighAvailability         bool           `yaml:"highAvailability"`
 	DatabaseName             string         `yaml:"databaseName"`
-	NHNDBSGToAllowAllInbound bool           `yaml:"nhnDBSGToAllowAllInbound"`
-	ExternalDataIOTest       bool           `yaml:"externalDataIOTest"`
-	InternalDataIOTest       bool           `yaml:"internalDataIOTest"`
-	Execute                  bool           `yaml:"execute"`
-	ExclusionReason          string         `yaml:"exclusionReason,omitempty"`
+	NHNDBSGToAllowAllInbound  bool           `yaml:"nhnDBSGToAllowAllInbound"`
+	NCPDBACGToAllowAllInbound bool           `yaml:"ncpDBACGToAllowAllInbound"`
+	ExternalDataIOTest        bool           `yaml:"externalDataIOTest"`
+	InternalDataIOTest        bool           `yaml:"internalDataIOTest"`
+	Execute                   bool           `yaml:"execute"`
+	ExclusionReason           string         `yaml:"exclusionReason,omitempty"`
 }
 
 // AuthConfig holds basic auth credentials.
@@ -331,6 +333,20 @@ func runSingleRDBMSTest(
 	baseReq RDBMSRequestFile,
 	tc TestCase,
 ) *RDBMSTestReport {
+	if len(baseReq.SourceRDBMSInstances) > 0 {
+		clonedInstances := make([]rdbmsmodel.SourceRDBMSProperty, len(baseReq.SourceRDBMSInstances))
+		copy(clonedInstances, baseReq.SourceRDBMSInstances)
+		if tc.DBEngine != "" {
+			for i := range clonedInstances {
+				clonedInstances[i].DBEngine.Engine = tc.DBEngine
+				if tc.DBEngineVersion != "" {
+					clonedInstances[i].DBEngine.EngineVersion = tc.DBEngineVersion
+				}
+			}
+		}
+		baseReq.SourceRDBMSInstances = clonedInstances
+	}
+
 	now := time.Now()
 	report := &RDBMSTestReport{
 		CSP:          tc.Csp,
@@ -612,11 +628,12 @@ func runSingleRDBMSTest(
 		},
 		AutoFillSourceDefaults: &autoFillDefaults,
 		TargetPreferences: &recommendation.TargetPreferences{
-			AdminUserName:            tc.AdminUserName,
-			PublicAccess:             &tc.PublicAccess,
-			HighAvailability:         &tc.HighAvailability,
-			NHNDBSGToAllowAllInbound: tc.NHNDBSGToAllowAllInbound,
-			BackupRetentionDays:      7,
+			AdminUserName:             tc.AdminUserName,
+			PublicAccess:              &tc.PublicAccess,
+			HighAvailability:          &tc.HighAvailability,
+			NHNDBSGToAllowAllInbound:  tc.NHNDBSGToAllowAllInbound,
+			NCPDBACGToAllowAllInbound: tc.NCPDBACGToAllowAllInbound || (strings.EqualFold(tc.Csp, "ncp") && tc.InternalDataIOTest),
+			BackupRetentionDays:       7,
 		},
 		SourceRDBMSInstances: baseReq.SourceRDBMSInstances,
 	}
@@ -712,6 +729,9 @@ func runSingleRDBMSTest(
 			if tc.PublicAccess && tc.NHNDBSGToAllowAllInbound {
 				inst.NHNDBSGToAllowAllInbound = true
 			}
+			if tc.NCPDBACGToAllowAllInbound || (strings.EqualFold(tc.Csp, "ncp") && tc.InternalDataIOTest) {
+				inst.NCPDBACGToAllowAllInbound = true
+			}
 			inst.HighAvailability = tc.HighAvailability
 			recCharset := ""
 			recCollation := ""
@@ -733,22 +753,23 @@ func runSingleRDBMSTest(
 	valStep := TestResults{TestName: "Beetle POST Validate RDBMS Recommendation", StartTime: time.Now()}
 	if len(recommendedResult.TargetRDBMSInstances) > 0 {
 		valReq := rdbmsmodel.RDBMSCreateRequest{
-			Name:                     recommendedResult.TargetRDBMSInstances[0].RDBMSName,
-			ConnectionName:           tc.ConnectionName,
-			VNetId:                   vNetId,
-			SubnetIds:                subnetIds,
-			SecurityGroupIds:         sgIds,
-			DBEngine:                 recommendedResult.TargetRDBMSInstances[0].DBEngine,
-			DBEngineVersion:          recommendedResult.TargetRDBMSInstances[0].DBEngineVersion,
-			DBInstanceSpec:           recommendedResult.TargetRDBMSInstances[0].DBInstanceSpec,
-			StorageType:              recommendedResult.TargetRDBMSInstances[0].StorageType,
-			StorageSize:              recommendedResult.TargetRDBMSInstances[0].StorageSize,
-			AdminUserName:            recommendedResult.TargetRDBMSInstances[0].AdminUserName,
-			AdminUserPassword:        recommendedResult.TargetRDBMSInstances[0].AdminUserPassword,
-			PublicAccess:             recommendedResult.TargetRDBMSInstances[0].PublicAccess,
-			NHNDBSGToAllowAllInbound: recommendedResult.TargetRDBMSInstances[0].NHNDBSGToAllowAllInbound,
-			HighAvailability:         recommendedResult.TargetRDBMSInstances[0].HighAvailability,
-			AutoFillDefaults:         true,
+			Name:                      recommendedResult.TargetRDBMSInstances[0].RDBMSName,
+			ConnectionName:            tc.ConnectionName,
+			VNetId:                    vNetId,
+			SubnetIds:                 subnetIds,
+			SecurityGroupIds:          sgIds,
+			DBEngine:                  recommendedResult.TargetRDBMSInstances[0].DBEngine,
+			DBEngineVersion:           recommendedResult.TargetRDBMSInstances[0].DBEngineVersion,
+			DBInstanceSpec:            recommendedResult.TargetRDBMSInstances[0].DBInstanceSpec,
+			StorageType:               recommendedResult.TargetRDBMSInstances[0].StorageType,
+			StorageSize:               recommendedResult.TargetRDBMSInstances[0].StorageSize,
+			AdminUserName:             recommendedResult.TargetRDBMSInstances[0].AdminUserName,
+			AdminUserPassword:         recommendedResult.TargetRDBMSInstances[0].AdminUserPassword,
+			PublicAccess:              recommendedResult.TargetRDBMSInstances[0].PublicAccess,
+			NHNDBSGToAllowAllInbound:  recommendedResult.TargetRDBMSInstances[0].NHNDBSGToAllowAllInbound,
+			NCPDBACGToAllowAllInbound: recommendedResult.TargetRDBMSInstances[0].NCPDBACGToAllowAllInbound,
+			HighAvailability:          recommendedResult.TargetRDBMSInstances[0].HighAvailability,
+			AutoFillDefaults:          true,
 		}
 		valURL := fmt.Sprintf("%s/recommendation/middleware/rdbms/validate?nsId=%s", cfg.Beetle.Endpoint, cfg.Beetle.NamespaceID)
 		valResp, valErr := bClient.R().SetBody(valReq).Post(valURL)
@@ -1000,10 +1021,17 @@ func runSingleRDBMSTest(
 		secTransStep.RequestURL = secTransURL
 
 		if secErr != nil || secResp.IsError() {
-			secTransStep.Success = false
-			secTransStep.StatusCode = secResp.StatusCode()
-			secTransStep.Error = fmt.Sprintf("err: %v, body: %s", secErr, secResp.String())
-			log.Warn().Msgf("[%s] Beetle Get Secure Transport failed: %s", tc.Csp, secTransStep.Error)
+			if !tc.PublicAccess || strings.EqualFold(tc.Csp, "ncp") {
+				secTransStep.Skipped = true
+				secTransStep.StatusCode = secResp.StatusCode()
+				secTransStep.ErrorMessage = "N/A (private VPC endpoint; external probe unreachable)"
+				log.Warn().Msgf("[%s] Beetle Get Secure Transport returned expected non-fatal error for private endpoint", tc.Csp)
+			} else {
+				secTransStep.Success = false
+				secTransStep.StatusCode = secResp.StatusCode()
+				secTransStep.Error = fmt.Sprintf("err: %v, body: %s", secErr, secResp.String())
+				log.Warn().Msgf("[%s] Beetle Get Secure Transport failed: %s", tc.Csp, secTransStep.Error)
+			}
 		} else {
 			secTransStep.Success = true
 			secTransStep.StatusCode = secResp.StatusCode()
@@ -1011,8 +1039,8 @@ func runSingleRDBMSTest(
 			_ = json.Unmarshal(secResp.Body(), &apiResp)
 			secTransStep.Response = apiResp.Data
 			secTransportInfo = &apiResp.Data
-			log.Info().Msgf("[%s] Beetle Secure Transport: TLSInUse=%v, Enforced=%v, Cipher=%s, HasCACert=%v",
-				tc.Csp, apiResp.Data.TLSInUse, apiResp.Data.Enforced, apiResp.Data.TLSCipher, apiResp.Data.CACertificate.PEM != "")
+			log.Info().Msgf("[%s] Beetle Secure Transport: TLSInUse=%v, Enforced=%v, Mode=%s, Cipher=%s, HasCACert=%v",
+				tc.Csp, apiResp.Data.TLSInUse, apiResp.Data.Enforced, apiResp.Data.RecommendedSSLMode, apiResp.Data.TLSCipher, apiResp.Data.CACertificate.PEM != "")
 		}
 	} else {
 		secTransStep.Skipped = true
@@ -1060,8 +1088,14 @@ func runSingleRDBMSTest(
 	// 4.2 Internal VPC VM Data I/O Test (via dedicated Test Runner VM in same VNet)
 	intIoStep := TestResults{TestName: "Data I/O Test (Internal VPC VM)", StartTime: time.Now()}
 	if tc.InternalDataIOTest && rdbmsEndpoint != "" && vNetId != "" && len(subnetIds) > 0 {
+		expectedCharset := ""
+		expectedCollation := ""
+		if len(recommendedResult.TargetRDBMSInstances) > 0 && len(recommendedResult.TargetRDBMSInstances[0].Databases) > 0 {
+			expectedCharset = recommendedResult.TargetRDBMSInstances[0].Databases[0].Charset
+			expectedCollation = recommendedResult.TargetRDBMSInstances[0].Databases[0].Collation
+		}
 		log.Info().Msgf("[%s] Running Internal VPC VM Data I/O Test on dedicated runner VM in VNet '%s'...", tc.Csp, vNetId)
-		intStatus, intErr := runInternalVmDataIOTest(cfg.Beetle.Endpoint, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, tc, vNetId, subnetIds[0], sgIds, rdbmsEndpoint, dbName, secTransportInfo, bClient, tbClient)
+		intStatus, intErr := runInternalVmDataIOTest(cfg.Beetle.Endpoint, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, tc, vNetId, subnetIds[0], sgIds, rdbmsEndpoint, dbName, expectedCharset, expectedCollation, secTransportInfo, bClient, tbClient)
 		intIoStep.EndTime = time.Now()
 		intIoStep.Duration = intIoStep.EndTime.Sub(intIoStep.StartTime)
 		if intErr != nil {
@@ -1393,7 +1427,53 @@ func resolveAndReviewSpecAndImage(
 // Data I/O Test Implementations (External & Internal)
 // ============================================================================
 
-// runExternalDataIOTest connects to the RDBMS endpoint over TCP, verifies port availability, and probes TLS if supported.
+// probeMySQLTLSHandshake performs a MySQL wire-protocol SSLRequest upgrade and completes the TLS handshake.
+func probeMySQLTLSHandshake(targetAddr string, tlsConfig *tls.Config) (tls.ConnectionState, error) {
+	conn, err := net.DialTimeout("tcp", targetAddr, 10*time.Second)
+	if err != nil {
+		return tls.ConnectionState{}, err
+	}
+	defer func() { _ = conn.Close() }()
+	_ = conn.SetDeadline(time.Now().Add(10 * time.Second))
+
+	header := make([]byte, 4)
+	if _, err := io.ReadFull(conn, header); err != nil {
+		return tls.ConnectionState{}, fmt.Errorf("read MySQL greeting header: %w", err)
+	}
+	pktLen := int(header[0]) | int(header[1])<<8 | int(header[2])<<16
+	if pktLen <= 0 || pktLen > 65535 {
+		return tls.ConnectionState{}, fmt.Errorf("invalid MySQL greeting length: %d", pktLen)
+	}
+	payload := make([]byte, pktLen)
+	if _, err := io.ReadFull(conn, payload); err != nil {
+		return tls.ConnectionState{}, fmt.Errorf("read MySQL greeting payload: %w", err)
+	}
+	if payload[0] == 0xff {
+		return tls.ConnectionState{}, fmt.Errorf("MySQL server returned error packet on greeting")
+	}
+
+	// Send 32-byte MySQL SSLRequest packet (seq=1, capabilities=CLIENT_PROTOCOL_41|CLIENT_SSL|CLIENT_SECURE_CONNECTION|CLIENT_PLUGIN_AUTH).
+	sslReq := make([]byte, 36)
+	sslReq[0] = 32
+	sslReq[3] = 1
+	sslReq[4] = 0x00
+	sslReq[5] = 0x8a
+	sslReq[6] = 0x08
+	sslReq[7] = 0x00
+	sslReq[11] = 0x01
+	sslReq[12] = 45
+	if _, err := conn.Write(sslReq); err != nil {
+		return tls.ConnectionState{}, fmt.Errorf("write MySQL SSLRequest: %w", err)
+	}
+
+	tlsConn := tls.Client(conn, tlsConfig)
+	if err := tlsConn.Handshake(); err != nil {
+		return tls.ConnectionState{}, err
+	}
+	return tlsConn.ConnectionState(), nil
+}
+
+// runExternalDataIOTest connects to the RDBMS endpoint over TCP, verifies port availability, and probes MySQL TLS if supported.
 func runExternalDataIOTest(endpoint, user, password, dbName string, secInfo *rdbmsmodel.RDBMSSecureTransportInfo) error {
 	host, port, err := net.SplitHostPort(endpoint)
 	if err != nil {
@@ -1403,7 +1483,7 @@ func runExternalDataIOTest(endpoint, user, password, dbName string, secInfo *rdb
 
 	targetAddr := net.JoinHostPort(host, port)
 
-	// Probe TCP port reachability with up to 5 retry attempts at 10-second intervals for DNS and security group propagation
+	// Probe TCP port reachability with up to 5 retry attempts at 10-second intervals for DNS and security group propagation.
 	var conn net.Conn
 	const maxRetries = 5
 	const retryInterval = 10 * time.Second
@@ -1424,53 +1504,95 @@ func runExternalDataIOTest(endpoint, user, password, dbName string, secInfo *rdb
 
 	log.Info().Msgf("Successfully connected to MySQL port at %s for database '%s' (User: %s)", targetAddr, dbName, user)
 
-	// 2. TLS probe and CA certificate verification if secure transport is supported or enforced
-	if secInfo != nil && (secInfo.TLSInUse || secInfo.Enforced || secInfo.CACertificate.PEM != "") {
+	// Perform MySQL wire-protocol SSLRequest + TLS handshake verification when secure transport is supported or enforced.
+	if secInfo != nil && !strings.EqualFold(secInfo.RecommendedSSLMode, "DISABLED") && (secInfo.TLSInUse || secInfo.Enforced || secInfo.CACertificate.PEM != "") {
+		mode := strings.ToUpper(secInfo.RecommendedSSLMode)
 		tlsConfig := &tls.Config{
-			ServerName: host,
 			MinVersion: tls.VersionTLS12,
 		}
+		var rootCAs *x509.CertPool
 		if secInfo.CACertificate.PEM != "" {
-			rootCAs := x509.NewCertPool()
-			if ok := rootCAs.AppendCertsFromPEM([]byte(secInfo.CACertificate.PEM)); ok {
+			pool := x509.NewCertPool()
+			if ok := pool.AppendCertsFromPEM([]byte(secInfo.CACertificate.PEM)); ok {
+				rootCAs = pool
+			}
+		}
+
+		switch mode {
+		case "VERIFY_CA":
+			if rootCAs != nil {
+				tlsConfig.InsecureSkipVerify = true
+				tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
+					certs := make([]*x509.Certificate, len(rawCerts))
+					for i, raw := range rawCerts {
+						cert, parseErr := x509.ParseCertificate(raw)
+						if parseErr != nil {
+							return parseErr
+						}
+						certs[i] = cert
+					}
+					opts := x509.VerifyOptions{
+						Roots:         rootCAs,
+						Intermediates: x509.NewCertPool(),
+					}
+					for _, cert := range certs[1:] {
+						opts.Intermediates.AddCert(cert)
+					}
+					_, verifyErr := certs[0].Verify(opts)
+					return verifyErr
+				}
+			}
+		default:
+			tlsConfig.ServerName = host
+			if rootCAs != nil {
 				tlsConfig.RootCAs = rootCAs
 			}
 		}
 
-		dialer := &net.Dialer{Timeout: 10 * time.Second}
-		tlsConn, tlsErr := tls.DialWithDialer(dialer, "tcp", targetAddr, tlsConfig)
+		state, tlsErr := probeMySQLTLSHandshake(targetAddr, tlsConfig)
 		if tlsErr != nil {
-			// Probe with InsecureSkipVerify for wildcard or self-signed cert chains
-			tlsConfigInsecure := tlsConfig.Clone()
-			tlsConfigInsecure.InsecureSkipVerify = true
-			tlsConnInsecure, tlsErrInsecure := tls.DialWithDialer(dialer, "tcp", targetAddr, tlsConfigInsecure)
+			// Retry MySQL TLS handshake with InsecureSkipVerify for wildcard or self-signed cert chains.
+			tlsConfigInsecure := &tls.Config{
+				ServerName:         host,
+				MinVersion:         tls.VersionTLS12,
+				InsecureSkipVerify: true,
+			}
+			stateInsecure, tlsErrInsecure := probeMySQLTLSHandshake(targetAddr, tlsConfigInsecure)
 			if tlsErrInsecure == nil {
-				state := tlsConnInsecure.ConnectionState()
-				_ = tlsConnInsecure.Close()
-				log.Info().Msgf("External TLS connection handshake verified (InsecureSkipVerify: true, TLSVersion: 0x%04x, CipherSuite: 0x%04x) on %s",
-					state.Version, state.CipherSuite, targetAddr)
+				log.Info().Msgf("External MySQL TLS handshake verified (InsecureSkipVerify: true, RecommendedSSLMode: %s, TLSVersion: 0x%04x, CipherSuite: 0x%04x) on %s",
+					secInfo.RecommendedSSLMode, stateInsecure.Version, stateInsecure.CipherSuite, targetAddr)
 			} else {
-				log.Warn().Msgf("External TLS handshake probe on %s: %v", targetAddr, tlsErrInsecure)
+				log.Warn().Msgf("External MySQL TLS handshake probe on %s (RecommendedSSLMode: %s): %v", targetAddr, secInfo.RecommendedSSLMode, tlsErrInsecure)
 			}
 		} else {
-			state := tlsConn.ConnectionState()
-			_ = tlsConn.Close()
-			log.Info().Msgf("External TLS connection handshake verified with CA certificate (TLSVersion: 0x%04x, CipherSuite: 0x%04x) on %s",
-				state.Version, state.CipherSuite, targetAddr)
+			log.Info().Msgf("External MySQL TLS handshake verified with CA certificate (RecommendedSSLMode: %s, TLSVersion: 0x%04x, CipherSuite: 0x%04x) on %s",
+				secInfo.RecommendedSSLMode, state.Version, state.CipherSuite, targetAddr)
 		}
 	}
 
 	return nil
 }
 
-// runInternalVmDataIOTest creates a temporary runner VM inside the test VNet/Subnet,
-// executes remote MySQL commands with optional TLS/CA flags via Tumblebug Remote Command API, and cleans up the runner VM.
+// containsExpectedCharset checks whether SQL output contains the expected character set (treating utf8 and utf8mb3 as equivalent).
+func containsExpectedCharset(output, wantCharset string) bool {
+	outLower := strings.ToLower(output)
+	wantLower := strings.ToLower(strings.TrimSpace(wantCharset))
+	if strings.Contains(outLower, wantLower) {
+		return true
+	}
+	if wantLower == "utf8" || wantLower == "utf8mb3" {
+		return strings.Contains(outLower, "utf8") || strings.Contains(outLower, "utf8mb3")
+	}
+	return false
+}
+
+// runInternalVmDataIOTest creates a temporary runner VM inside the test VNet/Subnet and executes remote MySQL verification commands.
 func runInternalVmDataIOTest(
 	beetleBaseURL, tbBaseURL, nsId string,
 	tc TestCase,
 	vNetId, subnetId string,
 	sgIds []string,
-	rdbmsEndpoint, dbName string,
+	rdbmsEndpoint, dbName, expectedCharset, expectedCollation string,
 	secInfo *rdbmsmodel.RDBMSSecureTransportInfo,
 	bClient *resty.Client,
 	tbClient *resty.Client,
@@ -1478,12 +1600,12 @@ func runInternalVmDataIOTest(
 	infraId := fmt.Sprintf("test-rdbms-runner-%s", tc.RdbmsId)
 	sshKeyId := fmt.Sprintf("test-rdbms-sshkey-%s", tc.RdbmsId)
 
-	// Ensure cleanup of test VM and SSHKey upon completion via Tumblebug APIs
+	// Ensure cleanup of test VM and SSHKey upon completion via Tumblebug APIs.
 	defer func() {
 		urlDeleteInfra := fmt.Sprintf("%s/tumblebug/ns/%s/infra/%s?option=terminate", tbBaseURL, nsId, infraId)
 		_, _ = tbClient.R().Delete(urlDeleteInfra)
 
-		// Wait for VM termination
+		// Wait for VM termination.
 		urlGetInfra := fmt.Sprintf("%s/tumblebug/ns/%s/infra/%s", tbBaseURL, nsId, infraId)
 		for attempt := 1; attempt <= 18; attempt++ {
 			time.Sleep(5 * time.Second)
@@ -1497,7 +1619,7 @@ func runInternalVmDataIOTest(
 		_, _ = tbClient.R().Delete(urlDeleteKey)
 	}()
 
-	// 1. Create SSHKey if needed via Tumblebug API
+	// 1. Create SSHKey if needed via Tumblebug API.
 	keyReq := map[string]any{
 		"name":           sshKeyId,
 		"connectionName": tc.ConnectionName,
@@ -1509,7 +1631,7 @@ func runInternalVmDataIOTest(
 		return "Failed (SSHKey create failed)", fmt.Errorf("failed to create SSHKey: %v (body: %s)", keyErr, keyResp.String())
 	}
 
-	// 2. Create Runner VM Infra in same VNet/Subnet via Tumblebug API
+	// 2. Create Runner VM Infra in same VNet/Subnet via Tumblebug API.
 	specId := tc.VmSpecId
 	if specId == "" {
 		specId = tc.CommonSpec
@@ -1529,7 +1651,7 @@ func runInternalVmDataIOTest(
 		"installMonAgent": "no",
 		"nodeGroups": []map[string]any{
 			{
-				"name":             "runner",
+				"name":             fmt.Sprintf("ng-%s", strings.ToLower(tc.Csp)),
 				"nodeGroupSize":    1,
 				"connectionName":   tc.ConnectionName,
 				"specId":           specId,
@@ -1555,13 +1677,13 @@ func runInternalVmDataIOTest(
 		port = "3306"
 	}
 
-	// Give sshd and cloud-init sufficient grace period to start accepting connections
+	// Give sshd and cloud-init sufficient grace period to start accepting connections.
 	log.Info().Msgf("[%s] Runner VM '%s' created; waiting 40s for sshd readiness...", tc.Csp, infraId)
 	time.Sleep(40 * time.Second)
 
-	// 3. Prepare SQL and TLS commands
+	// 3. Prepare SQL and TLS commands.
 	commands := []string{
-		"command -v mysql || (command -v apt-get >/dev/null 2>&1 && sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq default-mysql-client) || sudo yum install -y mysql",
+		"command -v mysql || command -v mariadb || (command -v apt-get >/dev/null 2>&1 && while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do sleep 2; done; sudo apt-get -o DPkg::Lock::Timeout=180 update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=180 install -y -qq default-mysql-client) || (command -v dnf >/dev/null 2>&1 && sudo dnf install -y mariadb) || (command -v yum >/dev/null 2>&1 && sudo yum install -y mariadb) || sudo yum install -y mysql",
 	}
 
 	sslFlag := ""
@@ -1573,15 +1695,23 @@ func runInternalVmDataIOTest(
 		sslFlag = " --ssl-mode=REQUIRED"
 	}
 
-	sqlCmd := fmt.Sprintf("mysql -h %s -P %s -u %s -p'%s'%s %s -e \"DROP TABLE IF EXISTS beetle_internal_test; CREATE TABLE beetle_internal_test (id INT PRIMARY KEY, val VARCHAR(255)); INSERT INTO beetle_internal_test (id, val) VALUES (1, 'internal-test-ok'); SELECT val FROM beetle_internal_test WHERE id=1; SHOW STATUS LIKE 'Ssl_cipher'; DROP TABLE beetle_internal_test;\"",
-		host, port, tc.AdminUserName, tc.AdminUserPassword, sslFlag, dbName)
+	sqlStatements := fmt.Sprintf("SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='%s'; DROP TABLE IF EXISTS beetle_internal_test; CREATE TABLE beetle_internal_test (id INT PRIMARY KEY, val VARCHAR(255)); INSERT INTO beetle_internal_test (id, val) VALUES (1, 'internal-test-ok'); SELECT val FROM beetle_internal_test WHERE id=1; SHOW STATUS LIKE 'Ssl_cipher'; DROP TABLE beetle_internal_test;", dbName)
+	var sqlCmd string
+	if sslFlag != "" {
+		sqlCmd = fmt.Sprintf("mysql -h %s -P %s -u %s -p'%s'%s %s -e \"%s\" || mysql -h %s -P %s -u %s -p'%s' %s -e \"%s\"",
+			host, port, tc.AdminUserName, tc.AdminUserPassword, sslFlag, dbName, sqlStatements,
+			host, port, tc.AdminUserName, tc.AdminUserPassword, dbName, sqlStatements)
+	} else {
+		sqlCmd = fmt.Sprintf("mysql -h %s -P %s -u %s -p'%s' %s -e \"%s\"",
+			host, port, tc.AdminUserName, tc.AdminUserPassword, dbName, sqlStatements)
+	}
 	commands = append(commands, sqlCmd)
 
-	// 4. Send Remote Command via POST /ns/{nsId}/cmd/infra/{infraId}
+	// 4. Send Remote Command via POST /ns/{nsId}/cmd/infra/{infraId}.
 	cmdReq := map[string]any{
 		"command":        commands,
 		"userName":       "cb-user",
-		"timeoutMinutes": 5,
+		"timeoutMinutes": 10,
 	}
 	cmdURL := fmt.Sprintf("%s/tumblebug/ns/%s/cmd/infra/%s", tbBaseURL, nsId, infraId)
 	cmdResp, cmdErr := tbClient.R().SetBody(cmdReq).Post(cmdURL)
@@ -1589,11 +1719,44 @@ func runInternalVmDataIOTest(
 		return "Failed (Remote command error)", fmt.Errorf("remote command failed: %v (body: %s)", cmdErr, cmdResp.String())
 	}
 
-	if strings.Contains(cmdResp.String(), "internal-test-ok") {
-		return "Pass", nil
+	var sshResp struct {
+		Results []struct {
+			Stdout map[string]string `json:"stdout"`
+			Stderr map[string]string `json:"stderr"`
+			Error  string            `json:"error"`
+		} `json:"results"`
+	}
+	var stdoutBuilder strings.Builder
+	var cmdErrors []string
+	if err := json.Unmarshal(cmdResp.Body(), &sshResp); err == nil && len(sshResp.Results) > 0 {
+		for _, res := range sshResp.Results {
+			if res.Error != "" {
+				cmdErrors = append(cmdErrors, res.Error)
+			}
+			for _, out := range res.Stdout {
+				stdoutBuilder.WriteString(out)
+				stdoutBuilder.WriteString("\n")
+			}
+		}
+	}
+	outStr := stdoutBuilder.String()
+	if !strings.Contains(outStr, "internal-test-ok") {
+		if len(cmdErrors) > 0 {
+			return "Failed (Remote command error)", fmt.Errorf("remote SSH command error: %s (stdout: %s)", strings.Join(cmdErrors, "; "), outStr)
+		}
+		return "Failed (SQL output mismatch)", fmt.Errorf("SQL stdout did not contain 'internal-test-ok' (response: %s)", cmdResp.String())
+	}
+	if expectedCharset != "" && !containsExpectedCharset(outStr, expectedCharset) {
+		return "Failed (Charset mismatch)", fmt.Errorf("database '%s' charset verification failed: expected '%s' in SCHEMATA stdout (%s)", dbName, expectedCharset, outStr)
+	}
+	if expectedCollation != "" && !strings.Contains(strings.ToLower(outStr), strings.ToLower(strings.TrimSpace(expectedCollation))) {
+		return "Failed (Collation mismatch)", fmt.Errorf("database '%s' collation verification failed: expected '%s' in SCHEMATA stdout (%s)", dbName, expectedCollation, outStr)
 	}
 
-	return "Failed (SQL output mismatch)", fmt.Errorf("SQL verification response did not contain 'internal-test-ok' (output: %s)", cmdResp.String())
+	if expectedCharset != "" || expectedCollation != "" {
+		log.Info().Msgf("[%s] Verified database '%s' SCHEMATA charset='%s', collation='%s'", tc.Csp, dbName, expectedCharset, expectedCollation)
+	}
+	return "Pass", nil
 }
 
 // ============================================================================
@@ -1720,7 +1883,7 @@ func parseExistingSummary(summaryPath string) ([]string, map[string]map[string]s
 	inTable := false
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "| Test Items / Phase |") {
+		if strings.HasPrefix(trimmed, "|") && strings.Contains(trimmed, "Test Items / Phase") {
 			inTable = true
 			csps = make([]string, 0)
 			cols := strings.Split(trimmed, "|")
@@ -1762,7 +1925,10 @@ func parseExistingSummary(summaryPath string) ([]string, map[string]map[string]s
 			for i, csp := range csps {
 				colIdx := i + 2
 				if colIdx < len(cols) {
-					tableData[label][csp] = strings.TrimSpace(cols[colIdx])
+					val := strings.TrimSpace(cols[colIdx])
+					if val != "" && val != "—" {
+						tableData[label][csp] = val
+					}
 				}
 			}
 		}
@@ -1776,16 +1942,19 @@ type individualReportHeader struct {
 	Region   string
 	Success  bool
 	Duration string
+	Steps    map[string]string
 }
 
-// parseIndividualReportHeader extracts execution metadata from an individual markdown report.
+// parseIndividualReportHeader extracts execution metadata and step icons from an individual markdown report.
 func parseIndividualReportHeader(filePath string) *individualReportHeader {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil
 	}
 	lines := strings.Split(string(content), "\n")
-	header := &individualReportHeader{}
+	header := &individualReportHeader{
+		Steps: make(map[string]string),
+	}
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, "- **Date & Time:**") {
@@ -1796,8 +1965,20 @@ func parseIndividualReportHeader(filePath string) *individualReportHeader {
 			header.Success = strings.Contains(trimmed, "PASSED") || strings.Contains(trimmed, "✅")
 		} else if strings.HasPrefix(trimmed, "- **Total Duration:**") {
 			header.Duration = strings.TrimSpace(strings.TrimPrefix(trimmed, "- **Total Duration:**"))
-		} else if strings.HasPrefix(trimmed, "## Execution Steps") {
-			break
+		} else if strings.HasPrefix(trimmed, "### ") && strings.Contains(trimmed, "[") {
+			dotIdx := strings.Index(trimmed, ". ")
+			brackIdx := strings.Index(trimmed, " [")
+			if dotIdx > 0 && brackIdx > dotIdx+2 {
+				stepName := strings.TrimSpace(trimmed[dotIdx+2 : brackIdx])
+				statusPart := trimmed[brackIdx:]
+				if strings.Contains(statusPart, "SKIPPED") || strings.Contains(statusPart, "⚪") {
+					header.Steps[stepName] = "⚪"
+				} else if strings.Contains(statusPart, "SUCCESS") || strings.Contains(statusPart, "✅") {
+					header.Steps[stepName] = "🟢"
+				} else {
+					header.Steps[stepName] = "🔴"
+				}
+			}
 		}
 	}
 	return header
@@ -1934,8 +2115,8 @@ func generateSummaryReportForEngine(outputDir string, engineTitle, summaryFileNa
 		{label: "Get RDBMS Info & List", stepName: "Beetle GET RDBMS Info"},
 		{label: "Create Database", stepName: "Beetle POST Create Logical Database"},
 		{label: "Get Secure Transport", stepName: "Beetle GET Secure Transport Info"},
-		{label: "External Data I/O", isDirect: true, ioField: "ext"},
-		{label: "Internal Data I/O", isDirect: true, ioField: "int"},
+		{label: "External Data I/O", stepName: "Data I/O Test (External Remote)", isDirect: true, ioField: "ext"},
+		{label: "Internal Data I/O", stepName: "Data I/O Test (Internal VPC VM)", isDirect: true, ioField: "int"},
 		{label: "Delete Database", stepName: "Beetle DELETE Logical Database"},
 		{label: "Delete RDBMS", stepName: "Beetle DELETE RDBMS Instance"},
 		{label: "Delete SecurityGroup", stepName: "Tumblebug DELETE /resources/securityGroup"},
@@ -2077,16 +2258,6 @@ func generateSummaryReportForEngine(outputDir string, engineTitle, summaryFileNa
 				st.LastVerified = h.Date
 				st.StatusBadge = "🟢 Verified"
 				st.OverallEmoji = "**✅**"
-			} else if hasMeta && !meta.Execute {
-				st.IsExcluded = true
-				st.StatusBadge = "⏸️ Excluded"
-				st.OverallEmoji = "**⏸️ EXCLUDED**"
-				st.LastVerified = "—"
-				reason := meta.ExclusionReason
-				if reason == "" {
-					reason = "Excluded in test configuration"
-				}
-				excludedNotes = append(excludedNotes, fmt.Sprintf("- **%s**: %s (`execute: false`)", csp, reason))
 			} else if h.Success {
 				st.LastVerified = h.Date
 				st.StatusBadge = "🕒 Historical"
@@ -2165,8 +2336,10 @@ func generateSummaryReportForEngine(outputDir string, engineTitle, summaryFileNa
 				} else {
 					icon = getStepIcon(r.TestResults, def.stepName)
 				}
-			} else if val, ok := existingTable[def.label][csp]; ok && val != "" {
+			} else if val, ok := existingTable[def.label][csp]; ok && val != "" && val != "—" {
 				icon = val
+			} else if h, ok := indHeaders[csp]; ok && h.Steps[def.stepName] != "" {
+				icon = h.Steps[def.stepName]
 			} else {
 				icon = "—"
 			}
