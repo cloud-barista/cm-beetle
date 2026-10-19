@@ -26,6 +26,8 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     setCachedMultiPairs,
     recommendationLimit,
     setRecommendationLimit,
+    minMatchRate,
+    setMinMatchRate,
     recommendationCandidates,
     selectedCandidateIndex,
     editedCandidate,
@@ -333,7 +335,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     };
     useMigrationStore.setState({ isRecommending: true, recommendationCandidates: [], editedCandidate: null });
     try {
-      const candidates = await beetleApi.getRecommendations(sourceInfra, csp, region, 5);
+      const candidates = await beetleApi.getRecommendations(sourceInfra, csp, region, 5, minMatchRate);
       useMigrationStore.setState({
         recommendationCandidates: candidates,
         selectedCandidateIndex: 0,
@@ -635,7 +637,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
     // 3. Check if mapped source node has GPU cards attached
     if (ng) {
-      const rawSourceIds = ng.label?.sourceMachineIds || ng.label?.sourceMachineId || ng.label?.sourceMachine || '';
+      const rawSourceIds = ng.label?.['cm-source-machine-ids'] || ng.label?.sourceMachineIds || ng.label?.sourceMachineId || ng.label?.sourceMachine || '';
       const sourceIds = String(rawSourceIds).split(',').map((id: string) => id.trim()).filter(Boolean);
       for (const sId of sourceIds) {
         const sourceNode = findSourceNode(sId);
@@ -716,7 +718,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
   // Human-readable memory: show GiB or MiB with field-standard rounding (max 2 decimal places for fractional GiB)
   const formatMemory = (gib: number) => {
-    if (!gib && gib !== 0) return '—';
+    if (!gib && gib !== 0) return '-';
     if (gib < 1) {
       return `${Math.round(gib * 1024)} MiB`;
     }
@@ -955,6 +957,115 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     updateEditedCandidate(updatedCandidate);
   };
 
+  // Naming Alignment & Validation (CM-Beetle v0.5.12+)
+  const [namingFocusOldName, setNamingFocusOldName] = useState<string>('');
+  const [namingValidation, setNamingValidation] = useState<{
+    loading?: boolean;
+    valid?: boolean;
+    message?: string;
+  }>({});
+
+  const handleAlignResourceNameOnBlur = async (
+    resourceType: 'vNet' | 'subnet' | 'sshKey' | 'securityGroup' | 'infra',
+    oldName: string,
+    newName: string
+  ) => {
+    if (!editedCandidate || !oldName || !newName || oldName === newName) return;
+    setNamingValidation({ loading: true, message: 'Aligning resource references...' });
+    try {
+      const alignRes = await beetleApi.alignResourceName(resourceType, oldName, newName, editedCandidate);
+      const nextModel = alignRes.success && alignRes.data ? alignRes.data : editedCandidate;
+      if (alignRes.success && alignRes.data) {
+        updateEditedCandidate(alignRes.data);
+      }
+      const valRes = await beetleApi.validateNaming(nextModel);
+      setNamingValidation({
+        loading: false,
+        valid: valRes.valid,
+        message: valRes.message || valRes.error || (valRes.valid ? 'Resource naming references aligned' : 'Naming reference mismatch detected')
+      });
+    } catch (err: any) {
+      setNamingValidation({
+        loading: false,
+        valid: false,
+        message: err.message || 'Naming alignment request failed'
+      });
+    }
+  };
+
+  const handleValidateNaming = async () => {
+    if (!editedCandidate) return;
+    setNamingValidation({ loading: true, message: 'Validating resource naming references...' });
+    try {
+      const valRes = await beetleApi.validateNaming(editedCandidate);
+      setNamingValidation({
+        loading: false,
+        valid: valRes.valid,
+        message: valRes.message || valRes.error || (valRes.valid ? 'All resource naming references are valid' : 'Naming reference issue detected')
+      });
+    } catch (err: any) {
+      setNamingValidation({
+        loading: false,
+        valid: false,
+        message: err.message || 'Naming validation failed'
+      });
+    }
+  };
+
+  // Post-Deployment Bootstrap Commands (targetInfra.postCommands & postCommandAsync)
+  const handleTogglePostCommandAsync = (checked: boolean) => {
+    if (!editedCandidate) return;
+    const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
+    if (!updatedCandidate.targetInfra) return;
+    updatedCandidate.targetInfra.postCommandAsync = checked;
+    updateEditedCandidate(updatedCandidate);
+  };
+
+  const handleAddPostCommand = () => {
+    if (!editedCandidate) return;
+    const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
+    if (!updatedCandidate.targetInfra) return;
+    const existing = updatedCandidate.targetInfra.postCommands || [];
+    updatedCandidate.targetInfra.postCommands = [
+      ...existing,
+      {
+        commands: ['sudo apt-get update -y'],
+        nodeGroupName: '',
+        nodeName: ''
+      }
+    ];
+    updateEditedCandidate(updatedCandidate);
+  };
+
+  const handleRemovePostCommand = (cmdIdx: number) => {
+    if (!editedCandidate) return;
+    const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
+    if (!updatedCandidate.targetInfra?.postCommands) return;
+    updatedCandidate.targetInfra.postCommands = updatedCandidate.targetInfra.postCommands.filter(
+      (_: any, idx: number) => idx !== cmdIdx
+    );
+    updateEditedCandidate(updatedCandidate);
+  };
+
+  const handleUpdatePostCommand = (
+    cmdIdx: number,
+    field: 'nodeGroupName' | 'nodeName' | 'commandsText',
+    value: string
+  ) => {
+    if (!editedCandidate) return;
+    const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
+    if (!updatedCandidate.targetInfra?.postCommands?.[cmdIdx]) return;
+    if (field === 'commandsText') {
+      updatedCandidate.targetInfra.postCommands[cmdIdx].commands = value
+        .split('\n')
+        .map((line: string) => line.trim())
+        .filter(Boolean);
+    } else {
+      updatedCandidate.targetInfra.postCommands[cmdIdx][field] = value;
+    }
+    updateEditedCandidate(updatedCandidate);
+  };
+
   const handleSaveToDamselfly = async (result: { name: string; description: string; version: string; overwriteId: string | null }) => {
     if (!editedCandidate) return;
     const targetModelToSave: RecommendedInfra = {
@@ -1152,7 +1263,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                 )}
               </div>
 
-              {/* Mode-specific Toolbar Strip (Presets for Multi-Cloud, Recommendation Count for Single-Cloud) */}
+              {/* Mode-specific Toolbar Strip (Presets for Multi-Cloud, Recommendation Count for Single-Cloud, plus Min Match Rate) */}
               {recommendationMode === 'multi' ? (
                 <div className="flex flex-wrap items-center justify-between gap-2.5 px-4 py-2.5 bg-bg-panel/50 border border-border-main/50 rounded-xl">
                   <div className="flex flex-wrap items-center gap-2">
@@ -1179,15 +1290,32 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                       <span className="text-xs font-normal text-text-muted">(NCP, NHN)</span>
                     </button>
                   </div>
-                  {(targetPairs || []).length > 2 && (
-                    <button
-                      type="button"
-                      onClick={handleResetToDefaultMultiPairs}
-                      className="px-2.5 py-1 text-text-muted hover:text-red-400 rounded-lg text-xs font-normal transition cursor-pointer"
-                    >
-                      Reset to 2 Pairs
-                    </button>
-                  )}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-normal text-text-muted">Min Match Rate (%):</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={minMatchRate}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          setMinMatchRate(isNaN(val) ? 90 : Math.min(100, Math.max(0, val)));
+                        }}
+                        className="w-16 bg-bg-input border border-border-main text-text-main rounded-lg px-2 py-1 text-xs font-extrabold font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        title="Minimum spec match rate threshold (0-100%, default 90%)"
+                      />
+                    </div>
+                    {(targetPairs || []).length > 2 && (
+                      <button
+                        type="button"
+                        onClick={handleResetToDefaultMultiPairs}
+                        className="px-2.5 py-1 text-text-muted hover:text-red-400 rounded-lg text-xs font-normal transition cursor-pointer"
+                      >
+                        Reset to 2 Pairs
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 bg-bg-panel/50 border border-border-main/50 rounded-xl">
@@ -1210,6 +1338,21 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                     <span className="text-xs text-text-muted font-normal hidden sm:inline">
                       Generate {recommendationLimit} architecture candidate options for comparison
                     </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-normal text-text-muted">Min Match Rate (%):</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={minMatchRate}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        setMinMatchRate(isNaN(val) ? 90 : Math.min(100, Math.max(0, val)));
+                      }}
+                      className="w-16 bg-bg-input border border-border-main text-text-main rounded-lg px-2 py-1 text-xs font-extrabold font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      title="Minimum spec match rate threshold (0-100%, default 90%)"
+                    />
                   </div>
                 </div>
               )}
@@ -1959,6 +2102,11 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                             ? <span className="bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-xs font-extrabold px-1.5 py-0.5 rounded inline-block">{osName}</span>
                                             : <span className="text-xs font-mono text-text-muted break-all" title={ng.imageId}>{ng.imageId.split('/').pop() || ng.imageId}</span>
                                           }
+                                          {ng.cspImageName && (
+                                            <span className="block text-xs font-mono text-text-muted mt-1 break-all" title={ng.cspImageName}>
+                                              CSP: {ng.cspImageName}
+                                            </span>
+                                          )}
                                         </div>
 
                                         {/* Root Disk */}
@@ -1975,7 +2123,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                               ? ngSgs.map((sg: any, i: number) => (
                                                   <span key={i} className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 text-xs px-1.5 py-0.5 rounded font-mono">{sg.name}</span>
                                                 ))
-                                              : <span className="text-xs text-text-muted">—</span>
+                                              : <span className="text-xs text-text-muted">-</span>
                                             }
                                           </div>
                                         </div>
@@ -1985,6 +2133,11 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                           <span className="block text-xs font-bold text-text-muted mb-1">Size</span>
                                           <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{nodeCount}</span>
                                           <span className="text-xs text-text-muted ml-1">node{nodeCount > 1 ? 's' : ''}</span>
+                                          {(ng.label?.['cm-source-machine-ids'] || ng.label?.sourceMachineIds) && (
+                                            <span className="block text-xs font-mono text-emerald-600 dark:text-emerald-400 mt-1 break-all">
+                                              Source: {ng.label?.['cm-source-machine-ids'] || ng.label?.sourceMachineIds}
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
 
@@ -2026,6 +2179,33 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                               <span className="text-sm text-text-muted italic block mt-0.5">* Modifying resource values dynamically updates the topology diagram in real-time</span>
                             </div>
                             <div className="flex items-center gap-2 flex-wrap justify-end">
+                              {editedCandidate && (
+                                <button
+                                  type="button"
+                                  onClick={handleValidateNaming}
+                                  disabled={namingValidation.loading}
+                                  className="px-2.5 py-1.5 bg-bg-panel border border-border-main hover:border-emerald-500/40 text-text-main hover:text-emerald-500 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5"
+                                  title="Validate referential integrity of resource names across VNet, Subnets, SSH Key, and Security Groups"
+                                >
+                                  {namingValidation.loading ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />
+                                  ) : (
+                                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                                  )}
+                                  <span>Validate Naming</span>
+                                </button>
+                              )}
+                              {namingValidation.message && (
+                                <span
+                                  className={`px-2.5 py-1 rounded-lg text-xs font-extrabold border flex items-center gap-1 ${
+                                    namingValidation.valid === false
+                                      ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                                      : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                                  }`}
+                                >
+                                  <span>{namingValidation.message}</span>
+                                </span>
+                              )}
                               {editedCandidate && (
                                 <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1 shadow-sm">
                                   <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
@@ -2132,7 +2312,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                     : 'bg-bg-panel/40 border-border-main/30 text-text-muted hover:text-text-main'
                                   }`}
                               >
-                                NLB — Network Load Balancer
+                                NLB - Network Load Balancer
                               </button>
                             )}
                           </div>
@@ -2149,10 +2329,18 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                   const osName   = formatOsName(imgInfo, ng.imageId);
                                   const vcpu     = specInfo?.vCPU;
                                   const memGiB   = specInfo?.memoryGiB;
+                                  const sourceMachineIds = ng.label?.['cm-source-machine-ids'] || ng.label?.sourceMachineIds || '';
                                   return (
                                   <div key={ngIdx} className="bg-bg-panel/40 p-4 rounded-xl border border-border-main/30 space-y-3">
-                                    <div className="flex justify-between items-center text-sm font-bold text-text-main border-b border-border-main/10 pb-1.5 font-mono">
-                                      <span>Node Group #{ngIdx + 1} — {extractInstanceType(ng.specId)}</span>
+                                    <div className="flex flex-wrap justify-between items-center gap-2 text-sm font-bold text-text-main border-b border-border-main/10 pb-1.5 font-mono">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span>Node Group #{ngIdx + 1} - {extractInstanceType(ng.specId)}</span>
+                                        {sourceMachineIds && (
+                                          <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold">
+                                            Source: {sourceMachineIds}
+                                          </span>
+                                        )}
+                                      </div>
                                       <span className="text-emerald-600 dark:text-emerald-400">Spec Match Type: Balanced</span>
                                     </div>
 
@@ -2160,7 +2348,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                     <div className="flex flex-wrap gap-3 p-3 bg-bg-input/20 rounded-lg border border-border-main/10">
                                       {/* Spec badges */}
                                       <div className="flex flex-col gap-1">
-                                        <span className="text-xs font-bold text-text-muted">VM Spec</span>
+                                        <span className="text-xs font-bold text-text-muted">Node Spec</span>
                                         <div className="flex items-center gap-1.5 flex-wrap">
                                           {vcpu   && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-2 py-0.5 rounded">{vcpu} vCPU</span>}
                                           {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-2 py-0.5 rounded">{formatMemory(memGiB)}</span>}
@@ -2173,12 +2361,17 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                         </div>
                                       </div>
                                       <div className="w-px bg-border-main/30 self-stretch mx-1 hidden sm:block" />
-                                      {/* Image badges — flex-1 so it uses remaining width without truncation */}
+                                      {/* Image badges - flex-1 so it uses remaining width without truncation */}
                                       <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
                                         <span className="text-xs font-bold text-text-muted">OS Image</span>
                                         <div className="flex flex-wrap gap-1.5 items-start">
                                           {osName && <span className="bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-xs font-extrabold px-2 py-0.5 rounded break-words">{osName}</span>}
                                           <span className="text-xs text-text-muted font-mono break-all" title={ng.imageId}>{ng.imageId.split('/').pop() || ng.imageId}</span>
+                                          {ng.cspImageName && (
+                                            <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 break-all">
+                                              (CSP Image: {ng.cspImageName})
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                     </div>
@@ -2238,7 +2431,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                           ))}
                                         </select>
                                       </div>
-                                      {/* Node Count — last column */}
+                                      {/* Node Count - last column */}
                                       <div>
                                         <label className="block text-sm font-bold text-text-muted mb-1 font-sans">Node Count</label>
                                         <input
@@ -2286,13 +2479,106 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                           </select>
                                         )}
                                         {(ng.securityGroupIds || []).length === 0 && (editedCandidate.targetSecurityGroupList || []).length === 0 && (
-                                          <span className="text-xs text-text-muted italic">No security groups defined — add one in the Security Groups tab</span>
+                                          <span className="text-xs text-text-muted italic">No security groups defined - add one in the Security Groups tab</span>
                                         )}
                                       </div>
                                     </div>
                                   </div>
                                   );
                                 })}
+
+                                {/* Post-Deployment Bootstrap Commands (targetInfra.postCommands & postCommandAsync) */}
+                                <div className="bg-bg-panel/40 p-4 rounded-xl border border-border-main/30 space-y-3">
+                                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-main/10 pb-2">
+                                    <div>
+                                      <span className="text-sm font-extrabold text-text-main block">Post-Deployment Bootstrap Commands (postCommands)</span>
+                                      <span className="text-xs text-text-muted">Configure remote commands executed on target nodes after provisioning</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <label className="inline-flex items-center gap-2 text-xs text-text-main cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={Boolean(editedCandidate.targetInfra.postCommandAsync)}
+                                          onChange={(e) => handleTogglePostCommandAsync(e.target.checked)}
+                                          className="rounded border-border-main text-emerald-500 focus:ring-emerald-500"
+                                        />
+                                        <span className="font-normal text-text-muted">Async Execution (</span>
+                                        <span className="font-extrabold text-text-main font-mono">postCommandAsync</span>
+                                        <span className="font-normal text-text-muted">)</span>
+                                      </label>
+                                      <button
+                                        type="button"
+                                        onClick={handleAddPostCommand}
+                                        className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-lg text-xs font-extrabold transition cursor-pointer"
+                                      >
+                                        + Add Command Block
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {(editedCandidate.targetInfra.postCommands || []).length === 0 ? (
+                                    <p className="text-xs text-text-muted italic">
+                                      No post-deployment commands configured. Click &quot;+ Add Command Block&quot; to attach bootstrap scripts to all nodes, a specific Node Group, or a specific Node.
+                                    </p>
+                                  ) : (
+                                    <div className="space-y-3">
+                                      {(editedCandidate.targetInfra.postCommands || []).map((cmdBlock, cmdIdx) => (
+                                        <div key={cmdIdx} className="bg-bg-input/20 border border-border-main/20 p-3 rounded-lg space-y-2.5">
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-xs font-extrabold text-text-main font-mono">
+                                              Command Block #{cmdIdx + 1}
+                                            </span>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleRemovePostCommand(cmdIdx)}
+                                              className="px-2 py-1 text-xs font-bold text-red-400 hover:bg-red-500/10 rounded transition cursor-pointer"
+                                            >
+                                              Remove
+                                            </button>
+                                          </div>
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                              <label className="block text-xs font-normal text-text-muted mb-1">
+                                                Target Node Group (optional)
+                                              </label>
+                                              <input
+                                                type="text"
+                                                placeholder="Leave empty for all Node Groups"
+                                                value={cmdBlock.nodeGroupName || ''}
+                                                onChange={(e) => handleUpdatePostCommand(cmdIdx, 'nodeGroupName', e.target.value)}
+                                                className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
+                                              />
+                                            </div>
+                                            <div>
+                                              <label className="block text-xs font-normal text-text-muted mb-1">
+                                                Target Node Name (optional)
+                                              </label>
+                                              <input
+                                                type="text"
+                                                placeholder="Leave empty for all Nodes in group"
+                                                value={cmdBlock.nodeName || ''}
+                                                onChange={(e) => handleUpdatePostCommand(cmdIdx, 'nodeName', e.target.value)}
+                                                className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
+                                              />
+                                            </div>
+                                          </div>
+                                          <div>
+                                            <label className="block text-xs font-normal text-text-muted mb-1">
+                                              Shell Commands (one command per line)
+                                            </label>
+                                            <textarea
+                                              rows={3}
+                                              value={(cmdBlock.commands || []).join('\n')}
+                                              onChange={(e) => handleUpdatePostCommand(cmdIdx, 'commandsText', e.target.value)}
+                                              className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
+                                              placeholder="sudo apt-get update -y"
+                                            />
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )}
 
@@ -2308,7 +2594,9 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                     <input
                                       type="text"
                                       value={editedCandidate.targetVNet.name}
+                                      onFocus={(e) => setNamingFocusOldName(e.target.value)}
                                       onChange={(e) => handleTuneTargetVNetProperty('name', e.target.value)}
+                                      onBlur={(e) => handleAlignResourceNameOnBlur('vNet', namingFocusOldName, e.target.value)}
                                       className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                     />
                                   </div>
@@ -2337,7 +2625,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                   {editedCandidate.targetVNet.subnetInfoList && editedCandidate.targetVNet.subnetInfoList.map((sub, subIdx) => (
                                     <div key={subIdx} className="bg-bg-input/20 border border-border-main/20 p-3 rounded-lg space-y-2.5">
                                       <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs font-bold text-text-muted uppercase">Subnet #{subIdx + 1}</span>
+                                        <span className="text-xs font-bold text-text-muted">Subnet #{subIdx + 1}</span>
                                         <button
                                           onClick={() => handleDeleteSubnet(subIdx)}
                                           disabled={editedCandidate.targetVNet.subnetInfoList.length <= 1}
@@ -2353,7 +2641,9 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                           <input
                                             type="text"
                                             value={sub.name}
+                                            onFocus={(e) => setNamingFocusOldName(e.target.value)}
                                             onChange={(e) => handleTuneTargetSubnetProperty(subIdx, 'name', e.target.value)}
+                                            onBlur={(e) => handleAlignResourceNameOnBlur('subnet', namingFocusOldName, e.target.value)}
                                             className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                           />
                                         </div>
@@ -2395,7 +2685,9 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                     <input
                                       type="text"
                                       value={editedCandidate.targetSshKey.name}
+                                      onFocus={(e) => setNamingFocusOldName(e.target.value)}
                                       onChange={(e) => handleTuneTargetSshKeyProperty('name', e.target.value)}
+                                      onBlur={(e) => handleAlignResourceNameOnBlur('sshKey', namingFocusOldName, e.target.value)}
                                       className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                     />
                                   </div>
@@ -2437,7 +2729,9 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                         <input
                                           type="text"
                                           value={sg.name}
+                                          onFocus={(e) => setNamingFocusOldName(e.target.value)}
                                           onChange={(e) => handleTuneTargetSecurityGroupProperty(sgIdx, 'name', e.target.value)}
+                                          onBlur={(e) => handleAlignResourceNameOnBlur('securityGroup', namingFocusOldName, e.target.value)}
                                           className="bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1 text-sm font-mono w-full max-w-sm focus:outline-none focus:border-emerald-500/40 font-extrabold"
                                         />
                                       </div>

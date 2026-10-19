@@ -115,7 +115,7 @@ export const DataTransferCenter: React.FC = () => {
   >([
     {
       id: 'cred-sample-01',
-      name: 'aws-production-account',
+      name: '[Sample] aws-production-account',
       csp: 'aws',
       region: 'ap-northeast-2',
       accessKey: 'AKIAIOSFODNN7EXAMPLE',

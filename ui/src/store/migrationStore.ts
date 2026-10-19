@@ -200,6 +200,7 @@ interface MigrationState {
   cachedMultiCandidates: RecommendedInfra[] | null;
   cachedMultiPairs: CloudProperty[] | null;
   recommendationLimit: number;
+  minMatchRate: number;
   recommendationCandidates: RecommendedInfra[];
   selectedCandidateIndex: number;
   editedCandidate: RecommendedInfra | null;
@@ -216,6 +217,7 @@ interface MigrationState {
   setCachedMultiCandidates: (candidates: RecommendedInfra[] | null) => void;
   setCachedMultiPairs: (pairs: CloudProperty[] | null) => void;
   setRecommendationLimit: (limit: number) => void;
+  setMinMatchRate: (rate: number) => void;
   addTargetPair: (csp?: string, region?: string) => void;
   removeTargetPair: (index: number) => void;
   updateTargetPair: (index: number, csp: string, region: string) => void;
@@ -577,6 +579,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   cachedMultiCandidates: null,
   cachedMultiPairs: null,
   recommendationLimit: 5,
+  minMatchRate: 90,
   recommendationCandidates: [],
   selectedCandidateIndex: 0,
   editedCandidate: null,
@@ -602,6 +605,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   setCachedMultiCandidates: (candidates) => set({ cachedMultiCandidates: candidates }),
   setCachedMultiPairs: (pairs) => set({ cachedMultiPairs: pairs }),
   setRecommendationLimit: (limit) => set({ recommendationLimit: Math.max(1, Math.min(10, limit)) }),
+  setMinMatchRate: (rate) => set({ minMatchRate: Math.max(0, Math.min(100, rate)) }),
   addTargetPair: (csp = 'aws', region = 'ap-northeast-2') => {
     const current = get().targetPairs;
     if (current.length >= 10) return;
@@ -626,15 +630,16 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     try {
       const pairs = get().targetPairs;
       const limit = get().recommendationLimit || 5;
+      const minMatchRate = get().minMatchRate;
       let candidates: RecommendedInfra[] = [];
       if (pairs.length === 1) {
         // Single target CSP & Region pair -> Call single infra recommendation API
-        candidates = await beetleApi.getRecommendations(sourceInfra, pairs[0].csp, pairs[0].region, limit);
+        candidates = await beetleApi.getRecommendations(sourceInfra, pairs[0].csp, pairs[0].region, limit, minMatchRate);
       } else if (pairs.length >= 2) {
         // Multiple target CSP & Region pairs (2~10) -> Call multiInfra recommendation API
-        candidates = await beetleApi.getMultiRecommendations(sourceInfra, pairs);
+        candidates = await beetleApi.getMultiRecommendations(sourceInfra, pairs, minMatchRate);
       } else {
-        candidates = await beetleApi.getRecommendations(sourceInfra, get().desiredCsp, get().desiredRegion, limit);
+        candidates = await beetleApi.getRecommendations(sourceInfra, get().desiredCsp, get().desiredRegion, limit, minMatchRate);
       }
 
       set({ 

@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from '../design/TopologyMap';
-import { damselflyApi, beetleApi, tumblebugApi } from '../../api/client';
+import { beetleApi } from '../../api/client';
+import { CheckSSHReadyResponse } from '../../types/migration';
 import { ObjectDirectoryTree } from '../storage/ObjectDirectoryTree';
 import { 
   Server, 
@@ -30,7 +31,9 @@ import {
   Radio,
   Database,
   Sliders,
-  Zap
+  Zap,
+  Activity,
+  FileText
 } from 'lucide-react';
 
 const SAMPLE_INFRA_ID = 'sample-aws-infra-01';
@@ -153,6 +156,8 @@ export const MigratedInfraManagement: React.FC = () => {
     objectStorageJobs,
     savedCloudModels,
     selectedCloudModel,
+    selectedSourceModel,
+    refinedSourceInfra,
     fetchSavedCloudModels,
     selectCloudModel,
     namespaceId,
@@ -401,11 +406,88 @@ export const MigratedInfraManagement: React.FC = () => {
   }, [deletingStoragesMap, namespaceId, selectedStorageId]);
 
   const [infraReportHtml, setInfraReportHtml] = useState<string>('');
+  const [reportDocType, setReportDocType] = useState<'migration' | 'target-summary'>('migration');
+  const [reportFormat, setReportFormat] = useState<'html' | 'md' | 'json'>('html');
+  const [reportContent, setReportContent] = useState<string>('');
+  const [isLoadingReport, setIsLoadingReport] = useState<boolean>(false);
+
+  // Official CM-Beetle SSH readiness state (GET /migration/ns/{nsId}/infra/{infraId}/ssh-ready?option=detail)
+  const [sshCooldownSec, setSshCooldownSec] = useState<number>(0);
+  const [sshReadyData, setSshReadyData] = useState<CheckSSHReadyResponse | null>(null);
+  const [isCheckingSsh, setIsCheckingSsh] = useState<boolean>(false);
+  const [sshError, setSshError] = useState<string>('');
+  const [showSshModal, setShowSshModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (sshCooldownSec <= 0) return;
+    const timer = setInterval(() => {
+      setSshCooldownSec((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [sshCooldownSec]);
+
+  const handleCheckInfraSshReady = async () => {
+    if (!selectedInfraId || selectedInfraId === SAMPLE_INFRA_ID) return;
+    const ns = namespaceId || 'mig01';
+    setShowSshModal(true);
+    if (sshCooldownSec > 0) return;
+
+    setIsCheckingSsh(true);
+    setSshError('');
+    try {
+      const res = await beetleApi.checkInfraSshReady(ns, selectedInfraId, 'detail');
+      if (res.retryAfterSeconds && res.retryAfterSeconds > 0) {
+        setSshCooldownSec(res.retryAfterSeconds);
+      }
+      if (res.data) {
+        setSshReadyData(res.data);
+      }
+      if (!res.success && res.error) {
+        setSshError(res.error);
+      }
+    } catch (err: any) {
+      setSshError(err.message || 'Failed to check SSH readiness.');
+    } finally {
+      setIsCheckingSsh(false);
+    }
+  };
+
+  const fetchReportOrSummary = async (
+    targetInfraId: string,
+    docType: 'migration' | 'target-summary' = reportDocType,
+    fmt: 'html' | 'md' | 'json' = reportFormat
+  ) => {
+    if (!targetInfraId || targetInfraId === SAMPLE_INFRA_ID) return;
+    setIsLoadingReport(true);
+    try {
+      const ns = namespaceId || 'mig01';
+      if (docType === 'migration') {
+        const srcPayload = selectedSourceModel?.onpremiseInfraModel || refinedSourceInfra;
+        const content = await beetleApi.getMigrationReport(ns, targetInfraId, srcPayload, fmt);
+        setReportContent(content);
+        if (fmt === 'html') {
+          setInfraReportHtml(content);
+        }
+      } else {
+        const content = await beetleApi.getTargetInfraSummary(ns, targetInfraId, fmt);
+        setReportContent(content);
+        if (fmt === 'html') {
+          setInfraReportHtml(content);
+        }
+      }
+    } catch (rErr) {
+      console.warn('Report or summary fetch notice:', rErr);
+    } finally {
+      setIsLoadingReport(false);
+    }
+  };
 
   const handleLoadInfraDetail = async (targetId?: string) => {
     const infraIdToLoad = targetId || selectedInfraId;
     if (!infraIdToLoad) return;
     setSelectedInfraId(infraIdToLoad);
+    setSshReadyData(null);
+    setSshError('');
     setIsLoadingDetail(true);
     try {
       if (infraIdToLoad === SAMPLE_INFRA_ID) {
@@ -421,13 +503,8 @@ export const MigratedInfraManagement: React.FC = () => {
       }
       setLoadedInfraDetail(detail);
 
-      // Fetch compliance report HTML as well
-      try {
-        const rHtml = await beetleApi.getMigrationReport(ns, infraIdToLoad);
-        setInfraReportHtml(rHtml);
-      } catch (rErr) {
-        console.warn('Report fetch notice:', rErr);
-      }
+      // Fetch compliance report or target summary in active format
+      await fetchReportOrSummary(infraIdToLoad, reportDocType, reportFormat);
 
       // Fetch active NLB list for this infrastructure
       try {
@@ -521,13 +598,21 @@ export const MigratedInfraManagement: React.FC = () => {
   };
 
   const handleDownloadReport = () => {
-    const reportContent = infraReportHtml || liveReportHtml;
-    if (!reportContent) return;
-    const blob = new Blob([reportContent], { type: 'text/html' });
+    const activeText = reportContent || infraReportHtml || liveReportHtml;
+    if (!activeText) return;
+    const mimeType =
+      reportFormat === 'json'
+        ? 'application/json'
+        : reportFormat === 'md'
+        ? 'text/markdown'
+        : 'text/html';
+    const ext = reportFormat;
+    const prefix = reportDocType === 'target-summary' ? 'target_summary' : 'migration_report';
+    const blob = new Blob([activeText], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `migration_report_${selectedInfraId || 'infra'}.html`;
+    a.download = `${prefix}_${selectedInfraId || 'infra'}.${ext}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1159,28 +1244,60 @@ export const MigratedInfraManagement: React.FC = () => {
             {/* Sub-Tab 4: Nodes */}
             {activeSubTab === 'vms' && (
               <div className="space-y-3">
-                <h4 className="text-sm font-extrabold text-text-main flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-teal-400" />
-                  Deployed Nodes & SSH Access
-                </h4>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h4 className="text-sm font-extrabold text-text-main flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-teal-400" />
+                    <span>Deployed Nodes &amp; SSH Readiness</span>
+                  </h4>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {sshReadyData && (
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border ${
+                        sshReadyData.ready
+                          ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+                          : 'bg-amber-500/15 text-amber-500 border-amber-500/30'
+                      }`}>
+                        SSH Ready: {sshReadyData.readyNodes} / {sshReadyData.totalNodes} Nodes
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleCheckInfraSshReady}
+                      disabled={selectedInfraId === SAMPLE_INFRA_ID || isCheckingSsh}
+                      className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-40 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer font-mono"
+                    >
+                      <Activity className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>
+                        {sshCooldownSec > 0
+                          ? `SSH Cooldown (${sshCooldownSec}s)`
+                          : 'Check SSH Readiness (GET /ssh-ready)'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
                 <div className="overflow-x-auto border border-border-main/50 rounded-xl">
                   <table className="w-full text-left border-collapse text-xs font-mono">
                     <thead>
-                      <tr className="border-b border-border-main bg-bg-input/60 text-text-muted font-bold">
-                        <th className="py-2.5 px-4">VM Node Name</th>
-                        <th className="py-2.5 px-4">Instance Spec ID</th>
+                      <tr className="border-b border-border-main bg-bg-input/60 text-text-muted font-normal">
+                        <th className="py-2.5 px-4">Node Name</th>
+                        <th className="py-2.5 px-4">Node Spec</th>
                         <th className="py-2.5 px-4">Public IP Address</th>
                         <th className="py-2.5 px-4">Private IP Address</th>
+                        <th className="py-2.5 px-4">SSH Status</th>
                         <th className="py-2.5 px-4">SSH Command</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-main/40 text-text-main">
                       {activeNodes.map((node, idx) => {
                         const isCopied = copiedIp === node.publicIp;
+                        const matchedSsh = sshReadyData?.nodeStatus?.find(
+                          (ns) => ns.name === node.name || ns.id === node.name || ns.publicIP === node.publicIp
+                        );
                         return (
                           <tr key={idx} className="hover:bg-emerald-500/[0.02] transition">
-                            <td className="py-3 px-4 font-bold text-text-main">{node.name}</td>
-                            <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-bold">
+                            <td className="py-3 px-4 font-extrabold text-text-main">{node.name}</td>
+                            <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-extrabold">
                               <div className="flex items-center gap-1.5">
                                 <span>{node.specId}</span>
                                 {isGpuSpec(node.specId) && (
@@ -1192,6 +1309,19 @@ export const MigratedInfraManagement: React.FC = () => {
                             </td>
                             <td className="py-3 px-4 select-all text-text-main font-extrabold">{node.publicIp}</td>
                             <td className="py-3 px-4 text-text-muted">{node.privateIp}</td>
+                            <td className="py-3 px-4">
+                              {matchedSsh ? (
+                                <span className={`px-2 py-0.5 rounded font-bold border ${
+                                  matchedSsh.sshReady
+                                    ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+                                    : 'bg-red-500/15 text-red-500 border-red-500/30'
+                                }`}>
+                                  {matchedSsh.sshReady ? `READY (${matchedSsh.sshPort || 22})` : 'UNREACHABLE'}
+                                </span>
+                              ) : (
+                                <span className="text-text-muted">Not Checked</span>
+                              )}
+                            </td>
                             <td className="py-3 px-4">
                               <button
                                 onClick={() => handleCopySshCommand(node.publicIp, currentCloudModel.targetSshKey?.name || 'key')}
@@ -1222,7 +1352,7 @@ export const MigratedInfraManagement: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Virtual Network Info */}
                   <div className="glass-panel p-4 rounded-xl border border-border-main/60 space-y-3">
-                    <span className="text-xs font-bold text-text-muted font-mono block uppercase">Virtual Network (VNet)</span>
+                    <span className="text-xs font-bold text-text-muted font-mono block">Virtual Network (VNet)</span>
                     <div className="space-y-1.5 text-xs font-mono">
                       <div className="flex justify-between py-1 border-b border-border-main/20">
                         <span className="text-text-muted">VNet Name:</span>
@@ -1241,7 +1371,7 @@ export const MigratedInfraManagement: React.FC = () => {
 
                   {/* Subnets List */}
                   <div className="glass-panel p-4 rounded-xl border border-border-main/60 space-y-3">
-                    <span className="text-xs font-bold text-text-muted font-mono block uppercase">Subnets Allocation</span>
+                    <span className="text-xs font-bold text-text-muted font-mono block">Subnets Allocation</span>
                     <div className="space-y-2 text-xs font-mono">
                       {(currentCloudModel.targetVNet?.subnetInfoList || [{ name: extractedSubnetName, cidrBlock: '10.0.1.0/24' }]).map((sub: any, idx: number) => (
                         <div key={idx} className="p-2.5 bg-bg-panel/60 rounded-lg border border-border-main/40 flex justify-between items-center">
@@ -1416,32 +1546,121 @@ export const MigratedInfraManagement: React.FC = () => {
             })()}
           </div>
 
-          {/* Compliance HTML Report Viewer with white background and 3x height */}
-          {(infraReportHtml || liveReportHtml) && (
+          {/* Post-Migration Report & Target Summary Viewer (Multi-Format HTML / MD / JSON) */}
+          {(selectedInfraId !== SAMPLE_INFRA_ID || reportContent || infraReportHtml || liveReportHtml) && (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-              <div className="px-6 py-4 bg-white border-b border-slate-200 flex items-center justify-between">
-                <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-emerald-500" />
-                  Post-Migration Compliance & Comparison Report
-                </h3>
-                <button
-                  onClick={handleDownloadReport}
-                  className="px-3.5 py-1.5 bg-slate-100 border border-slate-300 hover:bg-emerald-50 hover:border-emerald-500/30 text-emerald-700 rounded-lg text-xs font-extrabold flex items-center transition cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5 mr-1" />
-                  Download HTML Report
-                </button>
+              <div className="px-6 py-4 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-emerald-500" />
+                    <span>Migration Report &amp; Target Infra Summary</span>
+                  </h3>
+
+                  {/* Document Type Switcher: Migration Report vs Target Summary */}
+                  <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-300 text-xs font-mono">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReportDocType('migration');
+                        fetchReportOrSummary(selectedInfraId, 'migration', reportFormat);
+                      }}
+                      className={`px-2.5 py-1 rounded-md font-bold transition cursor-pointer ${
+                        reportDocType === 'migration'
+                          ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Migration Report (POST /report/migration)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReportDocType('target-summary');
+                        fetchReportOrSummary(selectedInfraId, 'target-summary', reportFormat);
+                      }}
+                      className={`px-2.5 py-1 rounded-md font-bold transition cursor-pointer ${
+                        reportDocType === 'target-summary'
+                          ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Target Summary (GET /summary/target)
+                    </button>
+                  </div>
+
+                  {/* Format Switcher: HTML / MD / JSON */}
+                  <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-300 text-xs font-mono">
+                    {(['html', 'md', 'json'] as const).map((fmt) => (
+                      <button
+                        key={fmt}
+                        type="button"
+                        onClick={() => {
+                          setReportFormat(fmt);
+                          fetchReportOrSummary(selectedInfraId, reportDocType, fmt);
+                        }}
+                        className={`px-2.5 py-1 rounded-md font-extrabold uppercase transition cursor-pointer ${
+                          reportFormat === fmt
+                            ? 'bg-teal-500 text-slate-950 shadow-sm'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        {fmt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fetchReportOrSummary(selectedInfraId, reportDocType, reportFormat)}
+                    disabled={isLoadingReport || selectedInfraId === SAMPLE_INFRA_ID}
+                    className="px-3 py-1.5 bg-slate-100 border border-slate-300 hover:bg-emerald-50 text-slate-700 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer disabled:opacity-40"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingReport ? 'animate-spin' : ''}`} />
+                    <span>Refresh</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownloadReport}
+                    disabled={!(reportContent || infraReportHtml || liveReportHtml)}
+                    className="px-3.5 py-1.5 bg-slate-100 border border-slate-300 hover:bg-emerald-50 hover:border-emerald-500/30 text-emerald-700 rounded-lg text-xs font-extrabold flex items-center transition cursor-pointer disabled:opacity-40"
+                  >
+                    <Download className="w-3.5 h-3.5 mr-1" />
+                    <span>Download ({reportFormat.toUpperCase()})</span>
+                  </button>
+                </div>
               </div>
-              <div className="w-full h-[1650px] bg-white rounded-b-2xl overflow-hidden">
-                <iframe
-                  title="Post-Migration Compliance Report"
-                  srcDoc={(infraReportHtml || liveReportHtml)
-                    .replace(/background-color:\s*#f5f5f5/gi, 'background-color: #ffffff')
-                    .replace(/background:\s*#f5f5f5/gi, 'background: #ffffff')}
-                  className="w-full h-full border-0 bg-white"
-                  sandbox="allow-same-origin"
-                />
-              </div>
+
+              {isLoadingReport ? (
+                <div className="p-12 text-center bg-white space-y-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-emerald-500 mx-auto" />
+                  <p className="text-xs font-mono text-slate-600">Generating {reportDocType === 'migration' ? 'Migration Report' : 'Target Summary'} ({reportFormat.toUpperCase()})...</p>
+                </div>
+              ) : reportFormat === 'html' ? (
+                (reportContent || infraReportHtml || liveReportHtml) ? (
+                  <div className="w-full h-[1650px] bg-white rounded-b-2xl overflow-hidden">
+                    <iframe
+                      title="Post-Migration Compliance Report"
+                      srcDoc={(reportContent || infraReportHtml || liveReportHtml)
+                        .replace(/background-color:\s*#f5f5f5/gi, 'background-color: #ffffff')
+                        .replace(/background:\s*#f5f5f5/gi, 'background: #ffffff')}
+                      className="w-full h-full border-0 bg-white"
+                      sandbox="allow-same-origin"
+                    />
+                  </div>
+                ) : (
+                  <div className="p-8 text-center text-xs font-mono text-slate-600 bg-white">
+                    Click &quot;Load Detail&quot; or &quot;Refresh&quot; on a migrated infrastructure to view the report.
+                  </div>
+                )
+              ) : (
+                <div className="p-6 bg-slate-50 max-h-[850px] overflow-y-auto">
+                  <pre className="text-xs font-mono text-slate-800 whitespace-pre-wrap break-words leading-relaxed">
+                    {reportContent || 'No report content fetched yet. Click Refresh to generate.'}
+                  </pre>
+                </div>
+              )}
             </div>
           )}
 
@@ -2063,6 +2282,129 @@ export const MigratedInfraManagement: React.FC = () => {
                 >
                   {isDeletingStorage && <Loader2 className="w-4 h-4 animate-spin" />}
                   Confirm Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Official CM-Beetle SSH Readiness Modal */}
+      {showSshModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="glass-panel p-6 rounded-2xl w-full max-w-3xl border border-border-main animate-scale-up space-y-4 max-h-[85vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-border-main/20 pb-3">
+              <h3 className="text-base font-extrabold text-text-main flex items-center gap-2">
+                <Activity className="w-5 h-5 text-emerald-500" />
+                <span>CM-Beetle SSH Readiness Verification ({selectedInfraId})</span>
+              </h3>
+              <button
+                onClick={() => setShowSshModal(false)}
+                className="text-text-muted hover:text-text-main transition p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {isCheckingSsh ? (
+              <div className="p-8 text-center space-y-3 bg-bg-input rounded-xl border border-border-main/30">
+                <RefreshCw className="w-6 h-6 animate-spin text-emerald-500 mx-auto" />
+                <p className="text-sm font-mono text-text-muted">Checking SSH readiness across provisioned Nodes...</p>
+              </div>
+            ) : sshError ? (
+              <div className="p-5 rounded-xl border bg-amber-500/10 border-amber-500/30 space-y-2 text-center">
+                <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto" />
+                <h4 className="text-sm font-extrabold font-mono text-amber-500">{sshError}</h4>
+                {sshCooldownSec > 0 && (
+                  <p className="text-xs font-mono text-text-muted">
+                    Cooldown active: {sshCooldownSec}s remaining (30s interval enforced by CM-Beetle).
+                  </p>
+                )}
+              </div>
+            ) : sshReadyData ? (
+              <div className="space-y-4">
+                <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                  sshReadyData.ready
+                    ? 'bg-emerald-500/10 border-emerald-500/30'
+                    : 'bg-amber-500/10 border-amber-500/30'
+                }`}>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+                        sshReadyData.ready
+                          ? 'bg-emerald-500/20 text-emerald-500'
+                          : 'bg-amber-500/20 text-amber-500'
+                      }`}>
+                        {sshReadyData.ready ? 'ALL NODES SSH READY' : 'PARTIAL OR PENDING SSH'}
+                      </span>
+                      <span className="text-sm font-extrabold text-text-main font-mono">
+                        {sshReadyData.readyNodes} / {sshReadyData.totalNodes} Nodes Ready
+                      </span>
+                    </div>
+                    <p className="text-xs font-mono text-text-muted">{sshReadyData.message}</p>
+                  </div>
+                  <div className="text-xs font-mono text-text-muted text-right">
+                    <div>Checked At:</div>
+                    <div className="font-extrabold text-text-main">{sshReadyData.checkedAt}</div>
+                  </div>
+                </div>
+
+                {sshReadyData.nodeStatus && sshReadyData.nodeStatus.length > 0 && (
+                  <div className="overflow-x-auto border border-border-main/50 rounded-xl">
+                    <table className="w-full text-left border-collapse text-sm">
+                      <thead>
+                        <tr className="border-b border-border-main bg-bg-input/60 text-text-muted font-normal">
+                          <th className="py-2.5 px-3">Node Name</th>
+                          <th className="py-2.5 px-3">Public IP</th>
+                          <th className="py-2.5 px-3">Private IP</th>
+                          <th className="py-2.5 px-3">SSH User / Port</th>
+                          <th className="py-2.5 px-3">SSH Status</th>
+                          <th className="py-2.5 px-3">Diagnostic Message</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border-main/40 font-mono text-xs">
+                        {sshReadyData.nodeStatus.map((ns, i) => (
+                          <tr key={i} className="hover:bg-bg-input/40">
+                            <td className="py-2.5 px-3 font-extrabold text-text-main">{ns.name || ns.id}</td>
+                            <td className="py-2.5 px-3 font-extrabold text-emerald-500">{ns.publicIP || '-'}</td>
+                            <td className="py-2.5 px-3 text-text-muted">{ns.privateIP || '-'}</td>
+                            <td className="py-2.5 px-3 text-text-main">{ns.username || 'cb-user'}:{ns.sshPort || 22}</td>
+                            <td className="py-2.5 px-3">
+                              <span className={`px-2 py-0.5 rounded font-bold border ${
+                                ns.sshReady
+                                  ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+                                  : 'bg-red-500/15 text-red-500 border-red-500/30'
+                              }`}>
+                                {ns.sshReady ? 'READY' : 'NOT READY'}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 text-text-muted">{ns.error || 'SSH handshake verified'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            <div className="flex items-center justify-between pt-2 border-t border-border-main/20">
+              <span className="text-xs font-mono text-text-muted">
+                {sshCooldownSec > 0 ? `Next check available in ${sshCooldownSec}s` : 'Ready to re-check'}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCheckInfraSshReady}
+                  disabled={sshCooldownSec > 0 || isCheckingSsh}
+                  className="px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 disabled:opacity-40 border border-emerald-500/30 text-emerald-500 rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  {sshCooldownSec > 0 ? `Wait ${sshCooldownSec}s` : 'Re-Check SSH'}
+                </button>
+                <button
+                  onClick={() => setShowSshModal(false)}
+                  className="px-5 py-2 bg-bg-panel border border-border-main text-text-main hover:bg-bg-input rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  Close
                 </button>
               </div>
             </div>

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useMigrationStore, calculateJobElapsedSeconds } from '../../store/migrationStore';
-import { beetleApi, tumblebugApi } from '../../api/client';
+import { beetleApi } from '../../api/client';
+import { CheckSSHReadyResponse, RecommendedInfra } from '../../types/migration';
 import { 
   Play, 
   CheckCircle2, 
@@ -33,7 +34,8 @@ import {
   Database,
   Shield,
   Lock,
-  Network
+  Network,
+  Eye
 } from 'lucide-react';
 
 interface MigrationJob {
@@ -90,6 +92,12 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     issues?: Array<{ code: string; severity: string; path: string; message: string }>;
     error?: string;
   } | null>(null);
+
+  // NameSeed Dry-Run Preview State (POST /beetle/naming/preview)
+  const [isPreviewingNameSeed, setIsPreviewingNameSeed] = useState(false);
+  const [nameSeedPreviewData, setNameSeedPreviewData] = useState<RecommendedInfra | null>(null);
+  const [nameSeedPreviewError, setNameSeedPreviewError] = useState<string | null>(null);
+
 
   // Launch Modal State (Data Migration with Field Encryption)
   const [showDataLaunchModal, setShowDataLaunchModal] = useState(false);
@@ -572,7 +580,32 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       selectCloudModel(savedCloudModels[0]);
     }
     setValidationResult(null);
+    setNameSeedPreviewData(null);
+    setNameSeedPreviewError(null);
     setShowLaunchModal(true);
+  };
+
+  const handlePreviewNameSeed = async () => {
+    if (!selectedCloudModel) {
+      alert('Please select a Target Cloud Model first.');
+      return;
+    }
+    setIsPreviewingNameSeed(true);
+    setNameSeedPreviewError(null);
+    try {
+      const res = await beetleApi.previewNameSeed(customNameSeed, selectedCloudModel.cloudInfraModel);
+      if (res.success && res.data) {
+        setNameSeedPreviewData(res.data);
+      } else {
+        setNameSeedPreviewData(null);
+        setNameSeedPreviewError(res.error || 'Failed to preview NameSeed.');
+      }
+    } catch (err: any) {
+      setNameSeedPreviewData(null);
+      setNameSeedPreviewError(err.message || 'Failed to preview NameSeed.');
+    } finally {
+      setIsPreviewingNameSeed(false);
+    }
   };
 
   const handleValidateInfra = async () => {
@@ -615,6 +648,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     const cloudModel = selectedCloudModel.cloudInfraModel;
     const reqId = `req-${Date.now().toString().slice(-6)}`;
     const targetInfraId = customInfraId || cloudModel.targetInfra?.name || selectedCloudModel.name;
+    const queryStr = `nameSeed=${customNameSeed}&useExisting=${useExistingValidation}`;
 
     const newJob: MigrationJob = {
       id: reqId,
@@ -633,7 +667,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       targetNlbList: cloudModel.targetNlbList || [],
       nlbStatus: cloudModel.targetNlbList && cloudModel.targetNlbList.length > 0 ? 'Idle' : undefined,
       logs: [
-        `POST /beetle/migration/ns/${customNsId}/infra?nameSeed=${customNameSeed}`,
+        `POST /beetle/migration/ns/${customNsId}/infra?${queryStr}`,
         `HTTP 202 Accepted (ReqID: ${reqId}, Status: Handling)`,
         `GET /beetle/request/${reqId} -> Status: Handling (Elapsed: 0s)`
       ]
@@ -644,7 +678,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     setShowLaunchModal(false);
 
     // Call Beetle API
-    const res = await beetleApi.executeMigration(customNsId, customNameSeed, cloudModel);
+    const res = await beetleApi.executeMigration(customNsId, customNameSeed, cloudModel, useExistingValidation);
     if (!res.success) {
       // Backend returned error (e.g. resource already exists or validation failed)
       setJobs(prev =>
@@ -674,7 +708,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 ...j,
                 reqId: realReqId,
                 logs: [
-                  `POST /beetle/migration/ns/${customNsId}/infra?nameSeed=${customNameSeed}`,
+                  `POST /beetle/migration/ns/${customNsId}/infra?${queryStr}`,
                   `HTTP 202 Accepted (ReqID: ${realReqId}, Status: Handling)`,
                   `GET /beetle/request/${realReqId} -> Status: Handling (Elapsed: 0s)`
                 ]
@@ -685,62 +719,54 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     }
   };
 
-  const [connectivityModal, setConnectivityModal] = useState<{
+  // Official Beetle SSH Readiness State & Cooldown Timer (GET /beetle/migration/ns/{nsId}/infra/{infraId}/ssh-ready?option=detail)
+  const [sshCooldownSec, setSshCooldownSec] = useState<number>(0);
+  const [sshReadyModal, setSshReadyModal] = useState<{
     open: boolean;
-    targetScope: 'Infra (Cluster-wide)' | 'Node (Single VM)';
-    targetName: string;
+    infraId: string;
+    filterNodeName?: string;
     loading: boolean;
-    reachable: boolean;
-    statusText: string;
-  }>({ open: false, targetScope: 'Node (Single VM)', targetName: '', loading: false, reachable: false, statusText: '' });
+    response?: CheckSSHReadyResponse;
+    error?: string;
+  }>({ open: false, infraId: '', loading: false });
 
-  // 1. Infra-wide Connectivity Check (Entire Cluster)
-  const handleCheckInfraConnectivity = async () => {
+  useEffect(() => {
+    if (sshCooldownSec <= 0) return;
+    const timer = setInterval(() => {
+      setSshCooldownSec(prev => (prev > 1 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [sshCooldownSec]);
+
+  const handleCheckSshReady = async (filterNodeName?: string) => {
     if (!activeJob) return;
-    setConnectivityModal({
+    setSshReadyModal(prev => ({
       open: true,
-      targetScope: 'Infra (Cluster-wide)',
-      targetName: activeJob.infraId,
+      infraId: activeJob.infraId,
+      filterNodeName,
       loading: true,
-      reachable: false,
-      statusText: ''
-    });
+      response: prev.infraId === activeJob.infraId ? prev.response : undefined,
+      error: undefined
+    }));
 
-    const res = await tumblebugApi.executeCommandInfra(activeJob.nsId, activeJob.infraId);
+    const res = await beetleApi.checkInfraSshReady(activeJob.nsId, activeJob.infraId, 'detail');
+    if (res.retryAfterSeconds) {
+      setSshCooldownSec(res.retryAfterSeconds);
+    } else if (res.success) {
+      setSshCooldownSec(30);
+    }
 
-    setConnectivityModal({
+    setSshReadyModal(prev => ({
+      ...prev,
       open: true,
-      targetScope: 'Infra (Cluster-wide)',
-      targetName: activeJob.infraId,
+      infraId: activeJob.infraId,
+      filterNodeName,
       loading: false,
-      reachable: res.reachable,
-      statusText: res.statusText
-    });
+      response: res.data || prev.response,
+      error: res.error
+    }));
   };
 
-  // 2. Single Node Connectivity Check (Individual VM)
-  const handleCheckNodeConnectivity = async (vm: { name: string; publicIp: string }) => {
-    if (!activeJob) return;
-    setConnectivityModal({
-      open: true,
-      targetScope: 'Node (Single VM)',
-      targetName: vm.name,
-      loading: true,
-      reachable: false,
-      statusText: ''
-    });
-
-    const res = await tumblebugApi.executeCommandNode(activeJob.nsId, activeJob.infraId, vm.name);
-
-    setConnectivityModal({
-      open: true,
-      targetScope: 'Node (Single VM)',
-      targetName: vm.name,
-      loading: false,
-      reachable: res.reachable,
-      statusText: res.statusText
-    });
-  };
 
   // Delete Job Request Record Modal State
   const [deleteModalJob, setDeleteModalJob] = useState<MigrationJob | null>(null);
@@ -796,7 +822,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
         {/* + Launch New Migration Button (Infra) */}
         <button
           onClick={handleOpenLaunchModal}
-          className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 text-slate-950 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/20"
+          className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/20"
         >
           <Plus className="w-4 h-4" />
           <span>Launch New Infrastructure Migration</span>
@@ -1035,23 +1061,38 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
             </div>
           </div>
 
-          {/* Provisioned VM Access Points Table (Shown if job is Success) */}
+          {/* Provisioned Node Access Points Table (Shown if job is Success) */}
           {activeJob.status === 'Success' && activeJob.vms && (
             <div className="space-y-3 pt-2">
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                 <h4 className="text-sm font-bold text-text-main flex items-center gap-2">
                   <Globe className="w-4 h-4 text-teal-400" />
-                  Provisioned Cloud VM Access Points & Connectivity Verification
+                  Provisioned Cloud Node Access Points &amp; SSH Readiness Verification
                 </h4>
                 
                 <div className="flex items-center gap-2 flex-wrap">
-                  {/* Infra-wide Connectivity Check Button */}
+                  {sshReadyModal.response && (
+                    <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border ${
+                      sshReadyModal.response.ready
+                        ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+                        : 'bg-amber-500/15 text-amber-500 border-amber-500/30'
+                    }`}>
+                      SSH Ready: {sshReadyModal.response.readyNodes} / {sshReadyModal.response.totalNodes} Nodes
+                    </span>
+                  )}
+
+                  {/* Official CM-Beetle SSH Readiness Check Button */}
                   <button
-                    onClick={handleCheckInfraConnectivity}
-                    className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                    onClick={() => handleCheckSshReady()}
+                    disabled={sshCooldownSec > 0 || sshReadyModal.loading}
+                    className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 border border-emerald-500/30 text-emerald-400 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <Activity className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Check Entire Infra Connectivity</span>
+                    <span>
+                      {sshCooldownSec > 0
+                        ? `SSH Cooldown (${sshCooldownSec}s)`
+                        : 'Check Infra SSH Readiness (GET /ssh-ready)'}
+                    </span>
                   </button>
 
                   <button
@@ -1067,32 +1108,49 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
               <div className="overflow-x-auto border border-border-main/50 rounded-xl">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-border-main bg-bg-input/60 text-text-muted font-bold">
-                      <th className="py-3 px-4">Node Group Name</th>
-                      <th className="py-3 px-4">Instance Spec</th>
+                    <tr className="border-b border-border-main bg-bg-input/60 text-text-muted font-normal">
+                      <th className="py-3 px-4">Node Name</th>
+                      <th className="py-3 px-4">Node Spec</th>
                       <th className="py-3 px-4">Public IP</th>
                       <th className="py-3 px-4">Private IP</th>
-                      <th className="py-3 px-4">Node Connectivity Check</th>
+                      <th className="py-3 px-4">SSH Readiness Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-main/40 text-text-main font-mono">
-                    {activeJob.vms.map((vm, idx) => (
-                      <tr key={idx} className="hover:bg-emerald-500/[0.02] transition">
-                        <td className="py-3.5 px-4 font-bold text-text-main font-sans">{vm.name}</td>
-                        <td className="py-3.5 px-4 text-emerald-400 font-bold">{vm.specId}</td>
-                        <td className="py-3.5 px-4 select-all font-extrabold">{vm.publicIp}</td>
-                        <td className="py-3.5 px-4 text-text-muted">{vm.privateIp}</td>
-                        <td className="py-3.5 px-4">
-                          <button
-                            onClick={() => handleCheckNodeConnectivity(vm)}
-                            className="px-3 py-1.5 bg-bg-panel border border-border-main hover:bg-emerald-500/10 hover:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5"
-                          >
-                            <Activity className="w-3.5 h-3.5 text-emerald-500" />
-                            <span>Check Node Connectivity</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {activeJob.vms.map((vm, idx) => {
+                      const matchedStatus = sshReadyModal.response?.nodeStatus?.find(
+                        (n) => n.id === vm.name || n.name === vm.name || n.publicIP === vm.publicIp
+                      );
+                      return (
+                        <tr key={idx} className="hover:bg-emerald-500/[0.02] transition">
+                          <td className="py-3.5 px-4 font-extrabold text-text-main font-sans">{vm.name}</td>
+                          <td className="py-3.5 px-4 text-emerald-400 font-extrabold">{vm.specId}</td>
+                          <td className="py-3.5 px-4 select-all font-extrabold">{vm.publicIp}</td>
+                          <td className="py-3.5 px-4 text-text-muted">{vm.privateIp}</td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2">
+                              {matchedStatus && (
+                                <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
+                                  matchedStatus.sshReady
+                                    ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+                                    : 'bg-red-500/15 text-red-500 border-red-500/30'
+                                }`}>
+                                  {matchedStatus.sshReady ? `Ready (Port ${matchedStatus.sshPort || 22})` : 'Unreachable'}
+                                </span>
+                              )}
+                              <button
+                                onClick={() => handleCheckSshReady(vm.name)}
+                                disabled={sshCooldownSec > 0 || sshReadyModal.loading}
+                                className="px-3 py-1.5 bg-bg-panel border border-border-main hover:bg-emerald-500/10 hover:border-emerald-500/30 disabled:opacity-50 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5"
+                              >
+                                <Activity className="w-3.5 h-3.5 text-emerald-500" />
+                                <span>Inspect SSH Status</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1162,7 +1220,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
 
           {/* Logs Console */}
           <div className="space-y-2">
-            <h4 className="text-xs font-bold text-text-muted font-mono uppercase">REST API Request & Response Log</h4>
+            <h4 className="text-xs font-bold text-text-muted font-mono">REST API Request &amp; Response Log</h4>
             <div className="bg-bg-input p-4 rounded-xl border border-border-main/40 font-mono text-xs text-text-muted space-y-1.5 max-h-48 overflow-y-auto">
               {activeJob.logs.map((log, idx) => (
                 <div key={idx} className="flex items-start gap-2">
@@ -1181,7 +1239,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 className="px-5 py-2.5 bg-bg-input/60 hover:bg-bg-main border border-border-main text-text-main font-bold text-xs rounded-xl transition flex items-center space-x-2 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>Back to 3. Target Cloud Optimizer</span>
+                <span>Back to 2. Target Cloud Optimizer</span>
               </button>
 
               <div className="flex items-center space-x-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-bold font-mono">
@@ -1196,7 +1254,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       {/* Modal for "+ Launch New Migration" */}
       {showLaunchModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="glass-panel p-6 sm:p-8 rounded-2xl w-full max-w-4xl border border-border-main animate-scale-up space-y-6">
+          <div className="glass-panel p-6 sm:p-8 rounded-2xl w-full max-w-4xl border border-border-main animate-scale-up space-y-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-border-main/20 pb-3">
               <h3 className="text-base font-extrabold text-text-main flex items-center gap-2">
                 <Plus className="w-5 h-5 text-emerald-500" />
@@ -1220,6 +1278,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                     const model = savedCloudModels.find(m => m.id === e.target.value) || null;
                     selectCloudModel(model);
                     setValidationResult(null);
+                    setNameSeedPreviewData(null);
                   }}
                   className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
                 >
@@ -1255,7 +1314,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 <span className="block text-sm font-extrabold text-teal-600 dark:text-teal-400 font-sans">2. Configure Deployment Identifiers</span>
 
                 <div>
-                  <label className="block text-xs font-semibold text-text-muted mb-1">Namespace ID (nsId)</label>
+                  <label className="block text-xs font-normal text-text-muted mb-1">Namespace ID (nsId)</label>
                   <input
                     type="text"
                     value={customNsId}
@@ -1268,7 +1327,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-text-muted mb-1">Target Infra ID (infraId)</label>
+                  <label className="block text-xs font-normal text-text-muted mb-1">Target Infra ID (infraId)</label>
                   <input
                     type="text"
                     value={customInfraId}
@@ -1278,15 +1337,110 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-text-muted mb-1">NameSeed Prefix (Late Binding)</label>
-                  <input
-                    type="text"
-                    value={customNameSeed}
-                    onChange={(e) => setCustomNameSeed(e.target.value)}
-                    placeholder="e.g. prod"
-                    className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
-                  />
+                <div className="space-y-2">
+                  <label className="block text-xs font-normal text-text-muted mb-1">NameSeed Prefix (Late Binding via POST /naming/preview)</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={customNameSeed}
+                      onChange={(e) => {
+                        setCustomNameSeed(e.target.value);
+                        setNameSeedPreviewData(null);
+                      }}
+                      placeholder="e.g. prod"
+                      className="flex-1 bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={handlePreviewNameSeed}
+                      disabled={!selectedCloudModel || !customNameSeed.trim() || isPreviewingNameSeed}
+                      className="px-3.5 py-2 bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-600 dark:text-teal-400 disabled:opacity-40 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                    >
+                      {isPreviewingNameSeed ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Previewing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Preview NameSeed</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {nameSeedPreviewError && (
+                    <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-lg text-xs font-mono text-red-500">
+                      {nameSeedPreviewError}
+                    </div>
+                  )}
+
+                  {nameSeedPreviewData && selectedCloudModel?.cloudInfraModel && (
+                    <div className="p-3 bg-bg-panel/70 border border-teal-500/30 rounded-xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-extrabold text-teal-600 dark:text-teal-400">
+                          Late-Bound Resource Name Preview (nameSeed=&quot;{customNameSeed.trim()}&quot;)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setNameSeedPreviewData(null)}
+                          className="text-xs text-text-muted hover:text-text-main cursor-pointer"
+                        >
+                          Hide
+                        </button>
+                      </div>
+                      <div className="overflow-x-auto max-h-40 border border-border-main/40 rounded-lg">
+                        <table className="w-full text-left border-collapse text-xs font-mono">
+                          <thead>
+                            <tr className="bg-bg-input/70 border-b border-border-main/40 text-text-muted font-normal">
+                              <th className="py-1.5 px-3">Resource Type</th>
+                              <th className="py-1.5 px-3">Current Name</th>
+                              <th className="py-1.5 px-3">Previewed Name</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border-main/30">
+                            <tr>
+                              <td className="py-1.5 px-3 text-text-muted">Target Infra</td>
+                              <td className="py-1.5 px-3 text-text-main">{selectedCloudModel.cloudInfraModel.targetInfra.name}</td>
+                              <td className="py-1.5 px-3 font-extrabold text-emerald-500">{nameSeedPreviewData.targetInfra?.name}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1.5 px-3 text-text-muted">VNet</td>
+                              <td className="py-1.5 px-3 text-text-main">{selectedCloudModel.cloudInfraModel.targetVNet.name}</td>
+                              <td className="py-1.5 px-3 font-extrabold text-emerald-500">{nameSeedPreviewData.targetVNet?.name}</td>
+                            </tr>
+                            {(nameSeedPreviewData.targetVNet?.subnetInfoList || []).map((sub, i) => (
+                              <tr key={`sub-${i}`}>
+                                <td className="py-1.5 px-3 text-text-muted">Subnet #{i + 1}</td>
+                                <td className="py-1.5 px-3 text-text-main">{selectedCloudModel.cloudInfraModel.targetVNet?.subnetInfoList?.[i]?.name || '-'}</td>
+                                <td className="py-1.5 px-3 font-extrabold text-emerald-500">{sub.name}</td>
+                              </tr>
+                            ))}
+                            <tr>
+                              <td className="py-1.5 px-3 text-text-muted">SSH Key</td>
+                              <td className="py-1.5 px-3 text-text-main">{selectedCloudModel.cloudInfraModel.targetSshKey.name}</td>
+                              <td className="py-1.5 px-3 font-extrabold text-emerald-500">{nameSeedPreviewData.targetSshKey?.name}</td>
+                            </tr>
+                            {(nameSeedPreviewData.targetSecurityGroupList || []).map((sg, i) => (
+                              <tr key={`sg-${i}`}>
+                                <td className="py-1.5 px-3 text-text-muted">Security Group #{i + 1}</td>
+                                <td className="py-1.5 px-3 text-text-main">{selectedCloudModel.cloudInfraModel.targetSecurityGroupList?.[i]?.name || '-'}</td>
+                                <td className="py-1.5 px-3 font-extrabold text-emerald-500">{sg.name}</td>
+                              </tr>
+                            ))}
+                            {(nameSeedPreviewData.targetInfra?.nodeGroups || []).map((ng, i) => (
+                              <tr key={`ng-${i}`}>
+                                <td className="py-1.5 px-3 text-text-muted">Node Group #{i + 1}</td>
+                                <td className="py-1.5 px-3 text-text-main">{selectedCloudModel.cloudInfraModel.targetInfra.nodeGroups?.[i]?.name || '-'}</td>
+                                <td className="py-1.5 px-3 font-extrabold text-emerald-500">{ng.name}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1771,64 +1925,134 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
         </div>
       )}
 
-      {/* Connectivity Check Status Result Modal */}
-      {connectivityModal.open && (
+      {/* Official CM-Beetle SSH Readiness Verification Modal */}
+      {sshReadyModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="glass-panel p-6 rounded-2xl w-full max-w-md border border-border-main animate-scale-up space-y-4">
+          <div className="glass-panel p-6 rounded-2xl w-full max-w-3xl border border-border-main animate-scale-up space-y-4 max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-border-main/20 pb-3">
               <h3 className="text-base font-extrabold text-text-main flex items-center gap-2">
                 <Activity className="w-5 h-5 text-emerald-500" />
-                <span>CB-Tumblebug Connectivity Verification</span>
+                <span>CM-Beetle SSH Readiness Verification (GET /ssh-ready?option=detail)</span>
               </h3>
               <button
-                onClick={() => setConnectivityModal({ ...connectivityModal, open: false })}
+                onClick={() => setSshReadyModal({ ...sshReadyModal, open: false })}
                 className="text-text-muted hover:text-text-main transition p-1 rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex justify-between items-center text-xs font-mono bg-bg-panel/50 p-3 rounded-xl border border-border-main/30">
-                <span className="text-text-muted">Target Scope: <strong className="text-teal-400">{connectivityModal.targetScope}</strong></span>
-                <span className="text-text-muted">Target Name: <strong className="text-emerald-400">{connectivityModal.targetName}</strong></span>
-              </div>
-
-              {connectivityModal.loading ? (
+            <div className="space-y-4">
+              {sshReadyModal.loading ? (
                 <div className="p-8 text-center space-y-3 bg-bg-input rounded-xl border border-border-main/30">
                   <RefreshCw className="w-6 h-6 animate-spin text-emerald-500 mx-auto" />
-                  <p className="text-xs font-mono text-text-muted">Checking reachability via CB-Tumblebug remote agent...</p>
+                  <p className="text-sm font-mono text-text-muted">Checking SSH readiness across provisioned Nodes via CM-Beetle...</p>
                 </div>
-              ) : (
-                <div className={`p-6 rounded-xl border text-center space-y-2 ${
-                  connectivityModal.reachable 
-                    ? 'bg-emerald-500/10 border-emerald-500/30' 
-                    : 'bg-red-500/10 border-red-500/30'
-                }`}>
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto text-lg font-bold ${
-                    connectivityModal.reachable ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
-                  }`}>
-                    {connectivityModal.reachable ? '✓' : '✕'}
-                  </div>
-                  <h4 className={`text-sm font-extrabold font-mono ${connectivityModal.reachable ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {connectivityModal.statusText}
+              ) : sshReadyModal.error ? (
+                <div className="p-5 rounded-xl border bg-amber-500/10 border-amber-500/30 space-y-2 text-center">
+                  <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto" />
+                  <h4 className="text-sm font-extrabold font-mono text-amber-500">
+                    {sshReadyModal.error}
                   </h4>
-                  <p className="text-xs text-text-muted font-mono">
-                    {connectivityModal.reachable 
-                      ? 'Remote command agent is active and responding to status queries.' 
-                      : 'Remote resource is not ready or Tumblebug agent is unreachable.'}
-                  </p>
+                  {sshCooldownSec > 0 && (
+                    <p className="text-xs font-mono text-text-muted">
+                      Rate-limit cooldown active: {sshCooldownSec}s remaining (30s interval enforced by backend).
+                    </p>
+                  )}
                 </div>
-              )}
+              ) : sshReadyModal.response ? (
+                <div className="space-y-4">
+                  <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    sshReadyModal.response.ready
+                      ? 'bg-emerald-500/10 border-emerald-500/30'
+                      : 'bg-amber-500/10 border-amber-500/30'
+                  }`}>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+                          sshReadyModal.response.ready
+                            ? 'bg-emerald-500/20 text-emerald-500'
+                            : 'bg-amber-500/20 text-amber-500'
+                        }`}>
+                          {sshReadyModal.response.ready ? 'ALL NODES SSH READY' : 'PARTIAL OR PENDING SSH'}
+                        </span>
+                        <span className="text-sm font-extrabold text-text-main font-mono">
+                          {sshReadyModal.response.readyNodes} / {sshReadyModal.response.totalNodes} Nodes Ready
+                        </span>
+                      </div>
+                      <p className="text-xs font-mono text-text-muted">
+                        {sshReadyModal.response.message}
+                      </p>
+                    </div>
+                    <div className="text-xs font-mono text-text-muted text-right">
+                      <div>Checked At:</div>
+                      <div className="font-extrabold text-text-main">{sshReadyModal.response.checkedAt}</div>
+                    </div>
+                  </div>
+
+                  {sshReadyModal.response.nodeStatus && sshReadyModal.response.nodeStatus.length > 0 && (
+                    <div className="overflow-x-auto border border-border-main/50 rounded-xl">
+                      <table className="w-full text-left border-collapse text-sm">
+                        <thead>
+                          <tr className="border-b border-border-main bg-bg-input/60 text-text-muted font-normal">
+                            <th className="py-2.5 px-3">Node Name</th>
+                            <th className="py-2.5 px-3">Public IP</th>
+                            <th className="py-2.5 px-3">Private IP</th>
+                            <th className="py-2.5 px-3">SSH User / Port</th>
+                            <th className="py-2.5 px-3">SSH Status</th>
+                            <th className="py-2.5 px-3">Diagnostic Message</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border-main/40 font-mono text-xs">
+                          {sshReadyModal.response.nodeStatus.map((ns, i) => {
+                            const isHighlighted = sshReadyModal.filterNodeName &&
+                              (ns.name === sshReadyModal.filterNodeName || ns.id === sshReadyModal.filterNodeName);
+                            return (
+                              <tr key={i} className={isHighlighted ? 'bg-emerald-500/10' : 'hover:bg-bg-input/40'}>
+                                <td className="py-2.5 px-3 font-extrabold text-text-main">{ns.name || ns.id}</td>
+                                <td className="py-2.5 px-3 font-extrabold text-emerald-500">{ns.publicIP || '-'}</td>
+                                <td className="py-2.5 px-3 text-text-muted">{ns.privateIP || '-'}</td>
+                                <td className="py-2.5 px-3 text-text-main">{ns.username || 'cb-user'}:{ns.sshPort || 22}</td>
+                                <td className="py-2.5 px-3">
+                                  <span className={`px-2 py-0.5 rounded font-bold border ${
+                                    ns.sshReady
+                                      ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+                                      : 'bg-red-500/15 text-red-500 border-red-500/30'
+                                  }`}>
+                                    {ns.sshReady ? 'READY' : 'NOT READY'}
+                                  </span>
+                                </td>
+                                <td className="py-2.5 px-3 text-text-muted">{ns.error || 'SSH handshake verified'}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
 
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setConnectivityModal({ ...connectivityModal, open: false })}
-                className="px-5 py-2 bg-bg-panel border border-border-main text-text-main hover:bg-bg-input rounded-xl text-xs font-bold transition cursor-pointer"
-              >
-                Close
-              </button>
+            <div className="flex items-center justify-between pt-2 border-t border-border-main/20">
+              <span className="text-xs font-mono text-text-muted">
+                {sshCooldownSec > 0 ? `Next check available in ${sshCooldownSec}s` : 'Ready to re-check'}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleCheckSshReady(sshReadyModal.filterNodeName)}
+                  disabled={sshCooldownSec > 0 || sshReadyModal.loading}
+                  className="px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 disabled:opacity-40 border border-emerald-500/30 text-emerald-500 rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  {sshCooldownSec > 0 ? `Wait ${sshCooldownSec}s` : 'Re-Check SSH'}
+                </button>
+                <button
+                  onClick={() => setSshReadyModal({ ...sshReadyModal, open: false })}
+                  className="px-5 py-2 bg-bg-panel border border-border-main text-text-main hover:bg-bg-input rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

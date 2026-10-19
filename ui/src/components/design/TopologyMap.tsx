@@ -188,6 +188,8 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
                     const rootDiskSize = (ng as any).rootDiskSize || '30';
                     const specId = ng.specId || 'custom-spec';
                     const imageId = ng.imageId || 'ubuntu-22.04';
+                    const cspImageName = ng.cspImageName;
+                    const sourceMachineIds = ng.label?.['cm-source-machine-ids'] || ng.label?.sourceMachineIds;
                     const vcpu = (ng as any).vCPU || (specId.includes('small') ? 2 : specId.includes('xlarge') ? 4 : 2);
                     const memGiB = (ng as any).memoryGiB || (specId.includes('xlarge') ? 16 : 4);
                     const ngHourlyCost = getSpecHourlyCost(specId) * nodeCount;
@@ -217,7 +219,7 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
                             </div>
                           </div>
 
-                          {/* Spec: vCPU · Memory · instance type */}
+                          {/* Spec: vCPU, Memory, instance type */}
                           <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap font-mono">
                             <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">
                               {vcpu} vCPU
@@ -231,8 +233,8 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
                           </div>
 
                           {/* OS Image */}
-                          <span className="bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-xs font-extrabold px-1.5 py-0.5 rounded flex-shrink-0 font-mono truncate max-w-[280px]" title={imageId}>
-                            {imageId}
+                          <span className="bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-xs font-extrabold px-1.5 py-0.5 rounded flex-shrink-0 font-mono truncate max-w-[280px]" title={cspImageName ? `${imageId} (${cspImageName})` : imageId}>
+                            {cspImageName || imageId}
                           </span>
 
                           {/* Root Disk */}
@@ -259,11 +261,11 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
                         {/* Expanded Detail Panel */}
                         {isExpanded && (
                           <div className="border-t border-border-main/20 px-4 py-3 space-y-3 bg-bg-input/5">
-                            {/* Summary Grid: Spec · Image · Root Disk · Security Group · Size · Cost */}
+                            {/* Summary Grid: Spec, Image, Root Disk, Security Group, Size, Cost */}
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                               {/* Spec Card */}
                               <div className="bg-bg-panel border border-border-main/30 rounded-lg px-3 py-2">
-                                <span className="block text-xs font-bold text-text-muted mb-1">Spec</span>
+                                <span className="block text-xs font-normal text-text-muted mb-1">Node Spec</span>
                                 <div className="flex flex-wrap gap-1 font-mono">
                                   <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">
                                     {vcpu} vCPU
@@ -279,21 +281,26 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
 
                               {/* Image Card */}
                               <div className="bg-bg-panel border border-border-main/30 rounded-lg px-3 py-2">
-                                <span className="block text-xs font-bold text-text-muted mb-1">Image</span>
+                                <span className="block text-xs font-normal text-text-muted mb-1">Node Image</span>
                                 <span className="bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-xs font-extrabold px-1.5 py-0.5 rounded font-mono inline-block break-all" title={imageId}>
                                   {imageId}
                                 </span>
+                                {cspImageName && (
+                                  <span className="text-xs font-mono text-text-muted mt-1 block break-all" title={cspImageName}>
+                                    CSP: {cspImageName}
+                                  </span>
+                                )}
                               </div>
 
                               {/* Root Disk Card */}
                               <div className="bg-bg-panel border border-border-main/30 rounded-lg px-3 py-2">
-                                <span className="block text-xs font-bold text-text-muted mb-1">Root Disk</span>
+                                <span className="block text-xs font-normal text-text-muted mb-1">Root Disk</span>
                                 <span className="text-sm font-extrabold text-text-main font-mono">{rootDiskSize} GB</span>
                               </div>
 
                               {/* Security Group Card */}
                               <div className="bg-bg-panel border border-border-main/30 rounded-lg px-3 py-2">
-                                <span className="block text-xs font-bold text-text-muted mb-1">Security Group</span>
+                                <span className="block text-xs font-normal text-text-muted mb-1">Security Group(s)</span>
                                 <div className="flex flex-col gap-1 font-mono">
                                   {ngSgs.length > 0 ? (
                                     ngSgs.map((sg: any, i: number) => (
@@ -302,29 +309,36 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
                                       </span>
                                     ))
                                   ) : (
-                                    <span className="text-xs text-text-muted">—</span>
+                                    <span className="text-xs text-text-muted">-</span>
                                   )}
                                 </div>
                               </div>
 
                               {/* Estimated Cost Card */}
                               <div className="bg-bg-panel border border-border-main/30 rounded-lg px-3 py-2">
-                                <span className="block text-xs font-bold text-text-muted mb-1">Est. Cost</span>
+                                <span className="block text-xs font-normal text-text-muted mb-1">Est. Cost</span>
                                 <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">${ngMonthlyCost}/mo</span>
                                 <span className="text-xs text-text-muted block font-mono">${ngHourlyCost.toFixed(3)}/hr</span>
                               </div>
 
                               {/* Size Card */}
                               <div className="bg-bg-panel border border-border-main/30 rounded-lg px-3 py-2">
-                                <span className="block text-xs font-bold text-text-muted mb-1">Size</span>
+                                <span className="block text-xs font-normal text-text-muted mb-1">Node(s)</span>
                                 <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">{nodeCount}</span>
                                 <span className="text-xs text-text-muted ml-1 font-mono">node{nodeCount > 1 ? 's' : ''}</span>
                               </div>
                             </div>
 
+                            {sourceMachineIds && (
+                              <div className="bg-bg-panel border border-border-main/30 rounded-lg px-3 py-2 text-xs font-mono flex items-center gap-2 flex-wrap">
+                                <span className="text-text-muted font-normal">Mapped Source Machines (cm-source-machine-ids):</span>
+                                <span className="font-extrabold text-teal-600 dark:text-teal-400">{sourceMachineIds}</span>
+                              </div>
+                            )}
+
                             {/* Node Instances Grid */}
                             <div className="space-y-1">
-                              <span className="text-xs text-text-muted font-semibold">Nodes</span>
+                              <span className="text-xs text-text-muted font-normal">Nodes</span>
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 font-mono text-xs">
                                 {nodesArray.map((_, nodeIdx) => {
                                   const suffix = String(nodeIdx + 1).padStart(2, '0');

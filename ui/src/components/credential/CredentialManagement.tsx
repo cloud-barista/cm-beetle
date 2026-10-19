@@ -84,7 +84,7 @@ export const CredentialManagement: React.FC = () => {
   const [credentials, setCredentials] = useState<CredentialProfile[]>([
     {
       id: 'cred-001',
-      profileName: 'aws-production-account',
+      profileName: '[Sample] aws-production-account',
       csp: 'aws',
       region: 'ap-northeast-2',
       accessKeyMasked: 'AKIAIOSFODNN7*******',
@@ -93,7 +93,7 @@ export const CredentialManagement: React.FC = () => {
     },
     {
       id: 'cred-002',
-      profileName: 'gcp-service-account-prod',
+      profileName: '[Sample] gcp-service-account-prod',
       csp: 'gcp',
       region: 'asia-northeast3',
       accessKeyMasked: 'gcp-sa-prod@cloud-barista.iam.gserviceaccount.com',
@@ -102,7 +102,7 @@ export const CredentialManagement: React.FC = () => {
     },
     {
       id: 'cred-003',
-      profileName: 'ncloud-kr-account',
+      profileName: '[Sample] ncloud-kr-account',
       csp: 'ncp',
       region: 'kr-1',
       accessKeyMasked: 'ncloud_access_key_*******',
