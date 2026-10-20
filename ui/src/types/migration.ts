@@ -169,24 +169,39 @@ export interface NodeGroup {
   nodeGroupSize: number;
   label: {
     nlbBackend?: string;
-    sourceMachineIds: string; // Comma separated list of source machine UIDs
+    sourceMachineIds?: string;
+    'cm-source-machine-ids'?: string;
+    [key: string]: string | undefined;
   };
   description: string;
   connectionName: string;
   specId: string;
   imageId: string;
+  cspImageName?: string;
   vNetId: string;
   subnetId: string;
   securityGroupIds: string[];
   sshKeyId: string;
   rootDiskSize: number;
+  rootDiskType?: string;
   dataDiskIds?: string[] | null;
+}
+
+export interface PostCommandReq {
+  commands?: string[];
+  cmd?: string[];
+  nodeGroupName?: string;
+  nodeName?: string;
+  userName?: string;
 }
 
 export interface TargetInfra {
   name: string;
   description: string;
   nodeGroups: NodeGroup[];
+  postCommands?: PostCommandReq[];
+  postCommandAsync?: boolean;
+  label?: Record<string, string>;
 }
 
 export interface SubnetInfo {
@@ -293,3 +308,27 @@ export interface DeploymentStatus {
     status: string;
   };
 }
+
+// SSH Readiness Check types (GET /beetle/migration/ns/{nsId}/infra/{infraId}/ssh-ready)
+export interface NodeSSHStatus {
+  id: string;
+  name: string;
+  publicIP: string;
+  privateIP: string;
+  username: string;
+  status: string;
+  sshReady: boolean;
+  sshPort: number;
+  error?: string;
+}
+
+export interface CheckSSHReadyResponse {
+  ready: boolean;
+  totalNodes: number;
+  readyNodes: number;
+  nodeStatus?: NodeSSHStatus[];
+  message: string;
+  checkedAt: string;
+  nextAllowedTime?: string;
+}
+

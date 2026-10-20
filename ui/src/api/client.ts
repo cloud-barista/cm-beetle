@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty } from '../types/migration';
+import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, CheckSSHReadyResponse } from '../types/migration';
 
 // Shared Axios client with basic authentication pre-configured (standard Cloud-Barista settings)
 const api = axios.create({
@@ -295,22 +295,28 @@ let targetModelCachePromise: Promise<{ success: boolean; targetModel: any; error
 
 export const beetleApi = {
   // Get Cloud Recommendation candidates based on Source model input
-  getRecommendations: async (sourceInfra: OnpremInfra, desiredCsp: string, desiredRegion: string, limit?: number): Promise<RecommendedInfra[]> => {
+  getRecommendations: async (
+    sourceInfra: OnpremInfra,
+    desiredCsp: string,
+    desiredRegion: string,
+    limit?: number,
+    minMatchRate?: number
+  ): Promise<RecommendedInfra[]> => {
     const hasNlbs = sourceInfra.nlbs && sourceInfra.nlbs.length > 0;
     const limitQuery = limit ? `&limit=${limit}` : '';
-    
+    const matchRateQuery = typeof minMatchRate === 'number' && !isNaN(minMatchRate) ? `&minMatchRate=${minMatchRate}` : '';
+
     let response;
     if (hasNlbs) {
       // Call NLB-aware recommendation endpoint
-      response = await api.post(`/beetle/recommendation/infraWithNlb?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}${limitQuery}`, {
-        nameSeed: 'my',
+      response = await api.post(`/beetle/recommendation/infraWithNlb?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}${limitQuery}${matchRateQuery}`, {
         desiredCsp,
         desiredRegion,
         sourceInfra
       });
     } else {
       // Call standard VM recommendation endpoint
-      response = await api.post(`/beetle/recommendation/infra?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}${limitQuery}`, {
+      response = await api.post(`/beetle/recommendation/infra?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}${limitQuery}${matchRateQuery}`, {
         desiredCspAndRegionPair: {
           csp: desiredCsp,
           region: desiredRegion
@@ -318,7 +324,7 @@ export const beetleApi = {
         onpremiseInfraModel: sourceInfra
       });
     }
-    
+
     // Beetle recommendation returns wrapping object: { success: true, data: RecommendedInfra[] }
     if (response.data && Array.isArray(response.data.data)) {
       return response.data.data;
@@ -327,24 +333,29 @@ export const beetleApi = {
   },
 
   // Get Multi-Cloud Recommendation candidates based on Source model input and multiple target CSP/Region pairs (2~10 pairs)
-  getMultiRecommendations: async (sourceInfra: OnpremInfra, targetPairs: CloudProperty[]): Promise<RecommendedInfra[]> => {
+  getMultiRecommendations: async (
+    sourceInfra: OnpremInfra,
+    targetPairs: CloudProperty[],
+    minMatchRate: number = 90
+  ): Promise<RecommendedInfra[]> => {
     const hasNlbs = sourceInfra.nlbs && sourceInfra.nlbs.length > 0;
-    
+    const query = `?minMatchRate=${minMatchRate}`;
+
     let response;
     if (hasNlbs) {
       // Call NLB-aware multi-infra recommendation endpoint
-      response = await api.post('/beetle/recommendation/multiInfraWithNlb', {
+      response = await api.post(`/beetle/recommendation/multiInfraWithNlb${query}`, {
         desiredCspAndRegionPairs: targetPairs,
         sourceInfra
       });
     } else {
       // Call standard multi-infra recommendation endpoint
-      response = await api.post('/beetle/recommendation/multiInfra', {
+      response = await api.post(`/beetle/recommendation/multiInfra${query}`, {
         desiredCspAndRegionPairs: targetPairs,
         sourceInfra
       });
     }
-    
+
     if (response.data && Array.isArray(response.data.data)) {
       return response.data.data;
     }
@@ -381,9 +392,19 @@ export const beetleApi = {
   },
 
   // Execute actual physical cloud migration deployment (with Prefer: respond-async header)
-  executeMigration: async (nsId: string, nameSeed: string, cloudModel: RecommendedInfra): Promise<{ success: boolean; reqId?: string; data?: any; error?: string }> => {
+  executeMigration: async (
+    nsId: string,
+    nameSeed: string,
+    cloudModel: RecommendedInfra,
+    useExisting: boolean = true
+  ): Promise<{ success: boolean; reqId?: string; data?: any; error?: string }> => {
     try {
-      const response = await api.post(`/beetle/migration/ns/${nsId}/infra?nameSeed=${nameSeed}`, cloudModel, {
+      const params = new URLSearchParams();
+      if (nameSeed && nameSeed.trim().length > 0) {
+        params.set('nameSeed', nameSeed.trim());
+      }
+      params.set('useExisting', String(useExisting));
+      const response = await api.post(`/beetle/migration/ns/${nsId}/infra?${params.toString()}`, cloudModel, {
         headers: {
           'Prefer': 'respond-async'
         }
@@ -392,6 +413,111 @@ export const beetleApi = {
       return { success: true, reqId, data: response.data };
     } catch (err: any) {
       return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  // Check SSH readiness for migrated infrastructure nodes (GET /beetle/migration/ns/{nsId}/infra/{infraId}/ssh-ready?option=detail)
+  checkInfraSshReady: async (
+    nsId: string,
+    infraId: string,
+    option: 'detail' | '' = 'detail'
+  ): Promise<{
+    success: boolean;
+    data?: CheckSSHReadyResponse;
+    message?: string;
+    retryAfterSeconds?: number;
+    error?: string;
+  }> => {
+    try {
+      const query = option ? `?option=${option}` : '';
+      const response = await api.get(`/beetle/migration/ns/${nsId}/infra/${infraId}/ssh-ready${query}`);
+      const data: CheckSSHReadyResponse = response.data?.data || response.data;
+      return {
+        success: true,
+        data,
+        message: response.data?.message || data?.message
+      };
+    } catch (err: any) {
+      if (err.response?.status === 429) {
+        const retryHeader = err.response?.headers?.['retry-after'];
+        const retrySec = retryHeader ? parseInt(String(retryHeader), 10) : 30;
+        return {
+          success: false,
+          retryAfterSeconds: isNaN(retrySec) ? 30 : retrySec,
+          error: err.response?.data?.error || err.response?.data?.message || `Rate limited (30s cooldown). Retry after ${isNaN(retrySec) ? 30 : retrySec}s.`
+        };
+      }
+      return {
+        success: false,
+        error: err.response?.data?.error || err.response?.data?.message || err.message
+      };
+    }
+  },
+
+  // Resource Naming Alignment (POST /beetle/naming/alignment)
+  alignResourceName: async (
+    resourceType: 'vNet' | 'subnet' | 'sshKey' | 'securityGroup' | 'infra',
+    oldName: string,
+    newName: string,
+    cloudModel: RecommendedInfra
+  ): Promise<{ success: boolean; data?: RecommendedInfra; message?: string; error?: string }> => {
+    try {
+      const params = new URLSearchParams({
+        resourceType,
+        oldName,
+        newName
+      });
+      const response = await api.post(`/beetle/naming/alignment?${params.toString()}`, cloudModel);
+      return {
+        success: true,
+        data: response.data?.data || response.data,
+        message: response.data?.message || 'Resource name aligned successfully'
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err.response?.data?.error || err.response?.data?.message || err.message
+      };
+    }
+  },
+
+  // Resource Naming & Referential Integrity Validation (POST /beetle/naming/validation)
+  validateNaming: async (
+    cloudModel: RecommendedInfra
+  ): Promise<{ success: boolean; valid: boolean; message?: string; error?: string }> => {
+    try {
+      const response = await api.post('/beetle/naming/validation', cloudModel);
+      return {
+        success: true,
+        valid: true,
+        message: response.data?.data || response.data?.message || 'All resource names and references are valid'
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        valid: false,
+        error: err.response?.data?.error || err.response?.data?.message || err.message
+      };
+    }
+  },
+
+  // NameSeed Dry-Run Preview (POST /beetle/naming/preview?nameSeed=...)
+  previewNameSeed: async (
+    nameSeed: string,
+    cloudModel: RecommendedInfra
+  ): Promise<{ success: boolean; data?: RecommendedInfra; message?: string; error?: string }> => {
+    try {
+      const response = await api.post(`/beetle/naming/preview?nameSeed=${encodeURIComponent(nameSeed.trim())}`, cloudModel);
+      return {
+        success: true,
+        data: response.data?.data || response.data,
+        message: response.data?.message || 'NameSeed applied successfully'
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err.response?.data?.error || err.response?.data?.message || err.message
+      };
     }
   },
 
@@ -481,7 +607,7 @@ export const beetleApi = {
         responseData: details?.responseData
       };
     } catch (err: any) {
-      // 404 Not Found means request is still initializing or in-flight — treat as Handling, NOT Error!
+      // 404 Not Found means request is still initializing or in-flight - treat as Handling, NOT Error!
       if (err.response?.status === 404) {
         return { status: 'Handling' };
       }
@@ -489,22 +615,54 @@ export const beetleApi = {
     }
   },
 
-  // Fetch final migration correlation and comparison report
-  getMigrationReport: async (nsId: string, infraId: string, sourceInfra?: any): Promise<string> => {
+  // Generate comprehensive summary for on-premise source infrastructure (POST /beetle/summary/source?format=...)
+  getSourceInfraSummary: async (
+    sourceInfra: OnpremInfra,
+    format: 'html' | 'md' | 'json' = 'html'
+  ): Promise<any> => {
+    const response = await api.post(`/beetle/summary/source?format=${format}`, {
+      onpremiseInfraModel: sourceInfra
+    });
+    if (format === 'json') {
+      return response.data?.data || response.data;
+    }
+    return typeof response.data === 'string' ? response.data : JSON.stringify(response.data, null, 2);
+  },
+
+  // Generate summary for migrated target infrastructure (GET /beetle/summary/target/ns/{nsId}/infra/{infraId}?format=...)
+  getTargetInfraSummary: async (
+    nsId: string,
+    infraId: string,
+    format: 'html' | 'md' | 'json' = 'html'
+  ): Promise<any> => {
+    const response = await api.get(`/beetle/summary/target/ns/${nsId}/infra/${infraId}?format=${format}`);
+    if (format === 'json') {
+      return response.data?.data || response.data;
+    }
+    return typeof response.data === 'string' ? response.data : JSON.stringify(response.data, null, 2);
+  },
+
+  // Fetch final migration correlation and comparison report (POST /beetle/report/migration/ns/{nsId}/infra/{infraId}?format=...)
+  getMigrationReport: async (
+    nsId: string,
+    infraId: string,
+    sourceInfra?: any,
+    format: 'html' | 'md' | 'json' = 'html'
+  ): Promise<string> => {
     try {
       if (sourceInfra?.nodes && sourceInfra.nodes.length > 0) {
-        const response = await api.post(`/beetle/report/migration/ns/${nsId}/infra/${infraId}?format=html`, {
+        const response = await api.post(`/beetle/report/migration/ns/${nsId}/infra/${infraId}?format=${format}`, {
           onpremiseInfraModel: sourceInfra
         });
-        return response.data;
+        return typeof response.data === 'string' ? response.data : JSON.stringify(response.data, null, 2);
       }
       // Fallback to target summary when sourceInfra is not provided
-      const response = await api.get(`/beetle/summary/target/ns/${nsId}/infra/${infraId}?format=html`);
-      return response.data;
+      const response = await api.get(`/beetle/summary/target/ns/${nsId}/infra/${infraId}?format=${format}`);
+      return typeof response.data === 'string' ? response.data : JSON.stringify(response.data, null, 2);
     } catch (err: any) {
       console.warn('POST migration report failed, falling back to target summary:', err);
-      const response = await api.get(`/beetle/summary/target/ns/${nsId}/infra/${infraId}?format=html`);
-      return response.data;
+      const response = await api.get(`/beetle/summary/target/ns/${nsId}/infra/${infraId}?format=${format}`);
+      return typeof response.data === 'string' ? response.data : JSON.stringify(response.data, null, 2);
     }
   },
 

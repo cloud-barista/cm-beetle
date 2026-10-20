@@ -11,7 +11,7 @@ import {
   RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, Server, Cpu,
   HardDrive, Network, Shield, Save, CheckCircle2, Loader2,
   FileText, Copy, Sparkles, GitBranch, Layers, X, Sliders,
-  ArrowRight, ArrowLeft,
+  ArrowRight, ArrowLeft, Download,
 } from 'lucide-react';
 
 const SAMPLE_INFRA: OnpremInfra = sampleData.sourceInfra as unknown as OnpremInfra;
@@ -63,6 +63,12 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  // Source Infra Summary (POST /beetle/summary/source) state
+  const [showSourceSummaryModal, setShowSourceSummaryModal] = useState(false);
+  const [sourceSummaryFormat, setSourceSummaryFormat] = useState<'html' | 'md' | 'json'>('html');
+  const [sourceSummaryContent, setSourceSummaryContent] = useState<string>('');
+  const [isLoadingSourceSummary, setIsLoadingSourceSummary] = useState(false);
 
   // Node spec editing state
   const [isEditingActiveNode, setIsEditingActiveNode] = useState(false);
@@ -548,6 +554,47 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     setTunedNetwork(updatedNetwork);
   };
 
+  const handleFetchSourceSummary = async (fmt: 'html' | 'md' | 'json' = sourceSummaryFormat) => {
+    if (!selectedSourceModel) return;
+    setSourceSummaryFormat(fmt);
+    setShowSourceSummaryModal(true);
+    setIsLoadingSourceSummary(true);
+    try {
+      const filteredNodes = tunedNodes.filter(n => !excludedNodeIds.includes(n.machineId));
+      const currentInfra = {
+        ...selectedSourceModel.onpremiseInfraModel,
+        nodes: filteredNodes.length > 0 ? filteredNodes : selectedSourceModel.onpremiseInfraModel.nodes,
+        network: tunedNetwork || selectedSourceModel.onpremiseInfraModel.network,
+        nlbs: tunedNlbs
+      };
+      const content = await beetleApi.getSourceInfraSummary(currentInfra, fmt);
+      setSourceSummaryContent(content);
+    } catch (err: any) {
+      setSourceSummaryContent(`Failed to generate source infrastructure summary: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsLoadingSourceSummary(false);
+    }
+  };
+
+  const handleDownloadSourceSummary = () => {
+    if (!sourceSummaryContent) return;
+    const mimeType =
+      sourceSummaryFormat === 'json'
+        ? 'application/json'
+        : sourceSummaryFormat === 'md'
+        ? 'text/markdown'
+        : 'text/html';
+    const blob = new Blob([sourceSummaryContent], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `source_infra_summary_${selectedSourceModel?.name?.replace(/\s+/g, '_') || 'model'}.${sourceSummaryFormat}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6 mx-auto pb-24">
 
@@ -629,6 +676,14 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
           </div>
           {selectedSourceModel && isModelLoaded && (
             <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => handleFetchSourceSummary(sourceSummaryFormat)}
+                className="px-3 py-1.5 bg-teal-500/10 border border-teal-500/40 hover:bg-teal-500/20 rounded-lg text-sm font-bold transition cursor-pointer flex items-center text-teal-600 dark:text-teal-400"
+              >
+                <FileText className="w-3.5 h-3.5 mr-1.5" />
+                Source Summary (POST /summary/source)
+              </button>
               <button
                 onClick={() => setIsJsonOpen(!isJsonOpen)}
                 className="px-3 py-1.5 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-sm font-bold transition cursor-pointer flex items-center text-emerald-600 dark:text-emerald-400"
@@ -1825,6 +1880,81 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                   Confirm Delete
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Source Infrastructure Summary Modal (POST /beetle/summary/source) */}
+      {showSourceSummaryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="glass-panel p-6 rounded-2xl w-full max-w-5xl border border-border-main animate-scale-up space-y-4 max-h-[90vh] flex flex-col">
+            <div className="flex flex-wrap justify-between items-center gap-3 border-b border-border-main/20 pb-3 shrink-0">
+              <div className="flex flex-wrap items-center gap-3">
+                <h3 className="text-base font-extrabold text-text-main flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-emerald-500" />
+                  <span>Source Infrastructure Summary (POST /summary/source)</span>
+                </h3>
+                <div className="flex items-center bg-bg-panel/80 p-0.5 rounded-lg border border-border-main text-xs font-mono">
+                  {(['html', 'md', 'json'] as const).map((fmt) => (
+                    <button
+                      key={fmt}
+                      type="button"
+                      onClick={() => handleFetchSourceSummary(fmt)}
+                      className={`px-2.5 py-1 rounded-md font-extrabold uppercase transition cursor-pointer ${
+                        sourceSummaryFormat === fmt
+                          ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                          : 'text-text-muted hover:text-text-main'
+                      }`}
+                    >
+                      {fmt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleDownloadSourceSummary}
+                  disabled={!sourceSummaryContent || isLoadingSourceSummary}
+                  className="px-3.5 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-40"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download ({sourceSummaryFormat.toUpperCase()})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSourceSummaryModal(false)}
+                  className="text-text-muted hover:text-text-main transition p-1 rounded-lg cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto rounded-xl border border-border-main/40 bg-white min-h-[450px]">
+              {isLoadingSourceSummary ? (
+                <div className="p-12 text-center space-y-2 bg-bg-input h-full flex flex-col items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+                  <p className="text-sm font-mono text-text-muted">Generating Source Infrastructure Summary ({sourceSummaryFormat.toUpperCase()})...</p>
+                </div>
+              ) : sourceSummaryFormat === 'html' ? (
+                <iframe
+                  title="Source Infrastructure Summary"
+                  srcDoc={sourceSummaryContent
+                    .replace(/background-color:\s*#f5f5f5/gi, 'background-color: #ffffff')
+                    .replace(/background:\s*#f5f5f5/gi, 'background: #ffffff')}
+                  className="w-full h-[650px] border-0 bg-white"
+                  sandbox="allow-same-origin"
+                />
+              ) : (
+                <div className="p-5 bg-slate-50 h-full overflow-y-auto">
+                  <pre className="text-xs font-mono text-slate-800 whitespace-pre-wrap break-words leading-relaxed">
+                    {sourceSummaryContent}
+                  </pre>
+                </div>
+              )}
             </div>
           </div>
         </div>
