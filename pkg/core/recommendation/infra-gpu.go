@@ -267,9 +267,15 @@ func RecommendGpuInfraCandidates(
 			}
 
 			selectedPair := pairs[pairIdx]
+			matchRateVec := calculateMatchRateVector(csp, expandedNodes[nodeIdx], selectedPair.Spec, selectedPair.Image)
 			candidateNodeGroups[nodeIdx].SpecId = selectedPair.Spec.Id
 			candidateNodeGroups[nodeIdx].ImageId = selectedPair.Image.Id
 			candidateNodeGroups[nodeIdx].CspImageName = selectedPair.Image.CspImageName
+			candidateNodeGroups[nodeIdx].Description = fmt.Sprintf(
+				"%s | %s",
+				skeletonNodegroupList[nodeIdx].Description,
+				matchRateVec.FormatMatchRateSummary(),
+			)
 
 			// Deduplicate spec list in candidate
 			specFound := false

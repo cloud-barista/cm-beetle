@@ -407,9 +407,9 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 			candidateNodeGroups[ngIdx].SpecId = selectedSpec.Id
 			candidateNodeGroups[ngIdx].ImageId = selectedImage.Id
 			candidateNodeGroups[ngIdx].Description = fmt.Sprintf(
-				"%s | Match Rate: CPU=%.1f%% Memory=%.1f%% Image=%.1f%%",
+				"%s | %s",
 				ngBlueprints[ngIdx].skeleton.Description,
-				matchRateVec.CPU, matchRateVec.Memory, matchRateVec.Image,
+				matchRateVec.FormatMatchRateSummary(),
 			)
 
 			// Deduplicate spec and image across NodeGroups in this candidate
@@ -608,11 +608,11 @@ func buildNodeByMachineIdIndex(nodes []onpremmodel.NodeProperty) map[string]onpr
 	return index
 }
 
-// selectRepresentativeNode picks the node with the highest vCPU count (CPUs × threads).
-// On tie, higher memory wins.
+// selectRepresentativeNode picks the node with the highest vCPU count, breaking ties by memory.
 func selectRepresentativeNode(memberMachineIds []string, nodeByMachineId map[string]onpremmodel.NodeProperty) onpremmodel.NodeProperty {
 	var bestNode onpremmodel.NodeProperty
 	bestVCPU := uint32(0)
+	initialized := false
 	for _, machineId := range memberMachineIds {
 		node, ok := nodeByMachineId[machineId]
 		if !ok {
@@ -623,23 +623,19 @@ func selectRepresentativeNode(memberMachineIds []string, nodeByMachineId map[str
 			threads = 1
 		}
 		vCPU := node.CPU.Cpus * threads
-		if vCPU > bestVCPU || (vCPU == bestVCPU && node.Memory.TotalSize > bestNode.Memory.TotalSize) {
+		if !initialized || vCPU > bestVCPU || (vCPU == bestVCPU && node.Memory.TotalSize > bestNode.Memory.TotalSize) {
 			bestNode = node
 			bestVCPU = vCPU
+			initialized = true
 		}
 	}
 	return bestNode
 }
 
-// synthesizeGroupRepresentativeNode creates a synthetic NodeProperty for spec/image recommendation.
-// CPU is taken from the node with the highest vCPU (which also serves as the OS reference).
-// Memory and root disk are per-dimension maxima across all member nodes, so the recommended
-// spec satisfies every member's resource requirements under the upsizing policy.
+// synthesizeGroupRepresentativeNode creates a synthetic NodeProperty with per-dimension maxima across members.
 func synthesizeGroupRepresentativeNode(memberMachineIds []string, nodeByMachineId map[string]onpremmodel.NodeProperty) onpremmodel.NodeProperty {
-	// Base: node with highest vCPU — provides CPU and OS reference.
 	synthetic := selectRepresentativeNode(memberMachineIds, nodeByMachineId)
 
-	// Override memory and root disk with per-dimension maxima.
 	for _, machineId := range memberMachineIds {
 		node, ok := nodeByMachineId[machineId]
 		if !ok {
@@ -651,10 +647,30 @@ func synthesizeGroupRepresentativeNode(memberMachineIds []string, nodeByMachineI
 		if node.RootDisk.TotalSize > synthetic.RootDisk.TotalSize {
 			synthetic.RootDisk.TotalSize = node.RootDisk.TotalSize
 		}
+		if isHigherGpuCluster(node.GPUCards, synthetic.GPUCards) {
+			synthetic.GPUCards = node.GPUCards
+		}
 	}
 
 	return synthetic
 }
+
+// isHigherGpuCluster returns true when candidate has more GPU cards or higher per-card VRAM than current.
+func isHigherGpuCluster(candidate, current []onpremmodel.GpuCardProperty) bool {
+	candClusters := clusterGpuCards(candidate)
+	if len(candClusters) == 0 {
+		return false
+	}
+	currClusters := clusterGpuCards(current)
+	if len(currClusters) == 0 {
+		return true
+	}
+	if candClusters[0].Count != currClusters[0].Count {
+		return candClusters[0].Count > currClusters[0].Count
+	}
+	return candClusters[0].MemoryTotalGB > currClusters[0].MemoryTotalGB
+}
+
 
 // mergeNodesFirewallRules returns a copy of representativeNode whose FirewallTable is the union
 // of all firewall rules from every member node. Used so the Security Group covers all members.

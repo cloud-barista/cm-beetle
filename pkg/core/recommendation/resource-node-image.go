@@ -42,7 +42,7 @@ func RecommendVmOsImage(csp string, region string, node onpremmodel.NodeProperty
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
 	// Find the best VM OS image
-	bestVmOsImage := FindBestVmOsImage(csp, keywords, kwDelimiters, imageList, imgDelimiters)
+	bestVmOsImage := FindBestVmOsImage(csp, keywords, kwDelimiters, imageList, imgDelimiters, node)
 
 	log.Debug().Msgf("Best VM OS image found: %+v", bestVmOsImage)
 
@@ -62,7 +62,7 @@ func RecommendVmOsImageId(csp string, region string, node onpremmodel.NodeProper
 	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(node)
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
-	vmOsImageId := FindBestVmOsImageNameUsedInCsp(csp, keywords, kwDelimiters, imageList, imgDelimiters)
+	vmOsImageId := FindBestVmOsImageNameUsedInCsp(csp, keywords, kwDelimiters, imageList, imgDelimiters, node)
 
 	log.Debug().Msgf("Best VM OS image ID found: %s", vmOsImageId)
 
@@ -216,7 +216,7 @@ func RecommendVmOsImages(csp string, region string, node onpremmodel.NodePropert
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
 	// Select VM OS image via LevenshteinDistance-based text similarity
-	vmOsImageInfoList = FindAndSortVmOsImageInfoListBySimilarity(csp, keywords, kwDelimiters, imageList, imgDelimiters)
+	vmOsImageInfoList = FindAndSortVmOsImageInfoListBySimilarity(csp, keywords, kwDelimiters, imageList, imgDelimiters, node)
 
 	count := len(vmOsImageInfoList)
 	if count == 0 {
@@ -239,6 +239,7 @@ func RecommendVmOsImages(csp string, region string, node onpremmodel.NodePropert
 	return vmOsImageInfoList, nil
 }
 
+// SetKeywordsAndDelimeters builds OS and CPU architecture search keywords for OS image matching.
 func SetKeywordsAndDelimeters(node onpremmodel.NodeProperty) (string, []string, []string) {
 	keywords := fmt.Sprintf("%s %s %s %s %s",
 		node.OS.ID,
@@ -246,9 +247,6 @@ func SetKeywordsAndDelimeters(node onpremmodel.NodeProperty) (string, []string, 
 		node.OS.VersionCodename,
 		node.CPU.Architecture,
 		node.RootDisk.Type)
-	if len(node.GPUCards) > 0 {
-		keywords = fmt.Sprintf("%s %s %s", keywords, node.GPUCards[0].Vendor, node.GPUCards[0].Model)
-	}
 
 	kwDelimiters := []string{" ", "-", ",", "(", ")", "[", "]", "/", ":", "_"}
 	imgDelimiters := []string{" ", "-", ",", "(", ")", "[", "]", "/", ":", "_"}
@@ -257,8 +255,8 @@ func SetKeywordsAndDelimeters(node onpremmodel.NodeProperty) (string, []string, 
 }
 
 // FindBestVmOsImage finds the best matching image based on the similarity scores
-func FindBestVmOsImage(csp string, keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string) cloudmodel.ImageInfo {
-	sorted := FindAndSortVmOsImageInfoListBySimilarity(csp, keywords, kwDelimiters, vmImages, imgDelimiters)
+func FindBestVmOsImage(csp string, keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string, node ...onpremmodel.NodeProperty) cloudmodel.ImageInfo {
+	sorted := FindAndSortVmOsImageInfoListBySimilarity(csp, keywords, kwDelimiters, vmImages, imgDelimiters, node...)
 	if len(sorted) == 0 {
 		return cloudmodel.ImageInfo{}
 	}
@@ -271,13 +269,18 @@ type VmOsImageInfoWithScore struct {
 }
 
 // FindAndSortVmOsImageInfoListBySimilarity finds VM OS images that match the keywords and sorts them by similarity score
-func FindAndSortVmOsImageInfoListBySimilarity(csp string, keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string) []cloudmodel.ImageInfo {
+func FindAndSortVmOsImageInfoListBySimilarity(csp string, keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string, node ...onpremmodel.NodeProperty) []cloudmodel.ImageInfo {
+	hasNodeGpu := false
+	var targetNode onpremmodel.NodeProperty
+	if len(node) > 0 && hasGpu(node[0]) {
+		hasNodeGpu = true
+		targetNode = node[0]
+	}
 
 	var imageInfoListForSorting []VmOsImageInfoWithScore
 	var imageInfoList []cloudmodel.ImageInfo
 
 	for _, image := range vmImages {
-
 		vmImgKeywords := fmt.Sprintf("%s %s %s %s",
 			image.OSType,
 			image.OSArchitecture,
@@ -293,17 +296,33 @@ func FindAndSortVmOsImageInfoListBySimilarity(csp string, keywords string, kwDel
 			score *= 0.5
 		}
 
+		// Deprioritize non-GPU images when target node is GPU-accelerated.
+		if hasNodeGpu && !isGpuSuitableImage(targetNode, image) {
+			score *= 0.5
+		}
+
 		imageInfo := VmOsImageInfoWithScore{
 			VmOsImageInfo:   image,
 			SimilarityScore: score,
 		}
 		imageInfoListForSorting = append(imageInfoListForSorting, imageInfo)
-
 	}
 
 	// Sort the imageInfoList by highestScore in descending order
 	// If scores are equal, deprioritize images containing "minimal", "k8s", "pro", or "test" in OSDistribution
 	sort.Slice(imageInfoListForSorting, func(i, j int) bool {
+		// Prioritize GPU-suitable images when target node requires GPU.
+		if hasNodeGpu {
+			suitI := isGpuSuitableImage(targetNode, imageInfoListForSorting[i].VmOsImageInfo)
+			suitJ := isGpuSuitableImage(targetNode, imageInfoListForSorting[j].VmOsImageInfo)
+			if suitI && !suitJ {
+				return true
+			}
+			if !suitI && suitJ {
+				return false
+			}
+		}
+
 		scoreI := imageInfoListForSorting[i].SimilarityScore
 		scoreJ := imageInfoListForSorting[j].SimilarityScore
 
@@ -341,7 +360,7 @@ func FindAndSortVmOsImageInfoListBySimilarity(csp string, keywords string, kwDel
 }
 
 // FindBestVmOsImageNameUsedInCsp finds the best matching image based on the similarity scores
-func FindBestVmOsImageNameUsedInCsp(csp string, keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string) string {
-	best := FindBestVmOsImage(csp, keywords, kwDelimiters, vmImages, imgDelimiters)
+func FindBestVmOsImageNameUsedInCsp(csp string, keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string, node ...onpremmodel.NodeProperty) string {
+	best := FindBestVmOsImage(csp, keywords, kwDelimiters, vmImages, imgDelimiters, node...)
 	return best.CspImageName
 }
