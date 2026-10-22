@@ -230,11 +230,11 @@ func TestCalculateImageMatchRateScore_CpuVsGpuNodes(t *testing.T) {
 		IsGPUImage:     true,
 	}
 
-	// GPU node with non-GPU basic image is penalized by 0.5 (50%)
+	// Standard basic OS image scores 100% based on pure OS match (no artificial penalty)
 	scoreNonGpuImg := calculateImageMatchRateScore("aws", gpuNode, nonGpuBasicImage) * 100.0
-	assert.InDelta(t, 50.0, scoreNonGpuImg, 0.01)
+	assert.InDelta(t, 100.0, scoreNonGpuImg, 0.01)
 
-	// GPU node with GPU-enabled image scores 100% without penalty from raw card model string
+	// GPU-enabled image also scores 100% without penalty
 	scoreGpuImg := calculateImageMatchRateScore("aws", gpuNode, gpuEnabledImage) * 100.0
 	assert.InDelta(t, 100.0, scoreGpuImg, 0.01)
 }
@@ -464,12 +464,12 @@ func TestFindAndSortVmOsImageInfoListBySimilarity_GpuSuitabilityPriority(t *test
 
 	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(gpuNode)
 
-	// When evaluating for GPU node, GPU-suitable image must sort before standard image.
+	// Clean canonical base OS image is prioritized over bloated GPU image for GPU nodes.
 	sortedForGpu := FindAndSortVmOsImageInfoListBySimilarity("aws", keywords, kwDelimiters, []cloudmodel.ImageInfo{standardImg, gpuImg}, imgDelimiters, gpuNode)
 	require.Len(t, sortedForGpu, 2)
-	assert.Equal(t, "img-gpu-driver", sortedForGpu[0].Id)
+	assert.Equal(t, "img-standard", sortedForGpu[0].Id)
 
-	// For CPU-only node, canonical shorter standard base image is preferred.
+	// For CPU-only node, canonical shorter standard base image is also preferred.
 	cpuNode := gpuNode
 	cpuNode.GPUCards = nil
 	sortedForCpu := FindAndSortVmOsImageInfoListBySimilarity("aws", keywords, kwDelimiters, []cloudmodel.ImageInfo{standardImg, gpuImg}, imgDelimiters, cpuNode)

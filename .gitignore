@@ -55,6 +55,12 @@ cmd/test-cli/rate-limiting/testconf/test-config.yaml
 cmd/test-cli/multi-infra-recommendation/test-multi-infra-recommendation
 cmd/test-cli/multi-infra-recommendation/testconf/auth-config.json
 cmd/test-cli/multi-infra-recommendation/testconf/test-config.yaml
+cmd/test-cli/gpu-recommendation/test-gpu-recommendation
+cmd/test-cli/gpu-recommendation/testconf/auth-config.json
+cmd/test-cli/gpu-recommendation/testconf/test-config.yaml
+cmd/test-cli/gpu-recommendation/testresult/
+cmd/test-cli/gpu-recommendation/log/
+testresult/
 cmd/test-cli/k8s-infra/test-k8s-infra
 cmd/test-cli/k8s-infra/k8s-infra
 cmd/test-cli/k8s-infra/testconf/auth-config.json

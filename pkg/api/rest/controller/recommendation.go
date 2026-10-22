@@ -166,7 +166,7 @@ type RecommendInfraResponse struct {
 // @Description
 // @Description **[Optional Parameters: `limit`]** Maximum number of recommended infrastructures to return (default: 3)
 // @Description
-// @Description **[Optional Parameters: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)
+// @Description **[Optional Parameters: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 85.0, range: 0-100)
 // @Description
 // @Description **[Response Field: `status`]** Candidate status based on the match rate threshold
 // @Description - **highly-matched**: Candidates meet or exceed the match rate threshold
@@ -187,7 +187,7 @@ type RecommendInfraResponse struct {
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,tencent,ibm,ncp,nhn) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param limit query int false "Limit (default: 3) the number of recommended infrastructures"
-// @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)"
+// @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 85.0, range: 0-100)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Param Prefer header string false "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 200 {object} model.ApiResponse[[]cloudmodel.RecommendedInfra] "Successfully recommended infrastructure candidates"
@@ -208,15 +208,15 @@ func RecommendInfraCandidates(c echo.Context) error {
 		limit = 3 // default value
 	}
 
-	// Parse minMatchRate parameter (default: 90.0)
+	// Parse minMatchRate parameter (default: 85.0)
 	minMatchRateStr := c.QueryParam("minMatchRate")
-	minMatchRate := 90.0 // default value
+	minMatchRate := 85.0 // default value
 	if minMatchRateStr != "" {
 		parsedRate, err := strconv.ParseFloat(minMatchRateStr, 64)
 		if err != nil {
-			log.Warn().Err(err).Msgf("invalid minMatchRate value: %s, using default 90.0", minMatchRateStr)
+			log.Warn().Err(err).Msgf("invalid minMatchRate value: %s, using default 85.0", minMatchRateStr)
 		} else if parsedRate < 0 || parsedRate > 100 {
-			log.Warn().Msgf("minMatchRate out of range [0-100]: %.1f, using default 90.0", parsedRate)
+			log.Warn().Msgf("minMatchRate out of range [0-100]: %.1f, using default 85.0", parsedRate)
 		} else {
 			minMatchRate = parsedRate
 		}
@@ -357,7 +357,7 @@ type RecommendInfraWithNlbRequest struct {
 // @Param desiredCsp query string false "Target CSP (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,tencent,ibm,ncp,nhn) default(aws)
 // @Param desiredRegion query string false "Target region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param limit query int false "Maximum number of candidates to return" default(5)
-// @Param minMatchRate query number false "Minimum match rate (0-100) for highly-matched classification" default(90.0)
+// @Param minMatchRate query number false "Minimum match rate (0-100) for highly-matched classification" default(85.0)
 // @Param request body RecommendInfraWithNlbRequest true "Source infra including NLBs (from cm-honeybee)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided)"
 // @Param Prefer header string false "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)" Enums(respond-async)
@@ -394,7 +394,7 @@ func RecommendInfraWithNlbCandidates(c echo.Context) error {
 		limit = n
 	}
 
-	minMatchRate := 90.0
+	minMatchRate := 85.0
 	if qp := c.QueryParam("minMatchRate"); qp != "" {
 		r, err := strconv.ParseFloat(qp, 64)
 		if err != nil {

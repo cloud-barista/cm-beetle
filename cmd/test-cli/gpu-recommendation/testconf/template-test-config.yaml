@@ -1,0 +1,41 @@
+test:
+  set:
+    mode: sequential # parallel or sequential
+  cases:
+    - csp: aws
+      region: ap-northeast-2
+      name: AWS-Seoul
+      execute: true
+    - csp: azure
+      region: koreasouth
+      name: Azure-Busan
+      execute: true
+    - csp: gcp
+      region: asia-northeast3
+      name: GCP-Seoul
+      execute: true
+    - csp: alibaba
+      region: ap-northeast-2
+      name: Alibaba-Seoul
+      execute: true
+    - csp: tencent
+      region: ap-seoul
+      name: Tencent-Seoul
+      execute: true
+    - csp: ibm
+      region: au-syd
+      name: IBMCloud-Sydney
+      execute: true
+    - csp: ncp
+      region: kr
+      name: NCP-Seoul
+      execute: true
+    - csp: nhn
+      region: kr1
+      name: NHNCloud-Pangyo
+      execute: true
+
+beetle:
+  endpoint: http://localhost:8056
+  requestBodyFile: testconf/source-infra-gpu-t4.json
+  authConfigFile: testconf/auth-config.json

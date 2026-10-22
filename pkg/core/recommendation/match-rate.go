@@ -415,10 +415,6 @@ func calculateImageMatchRateScore(csp string, node onpremmodel.NodeProperty, vmI
 		similarityScore *= 0.5
 	}
 
-	if hasGpu(node) && !isGpuSuitableImage(node, vmImage) {
-		similarityScore *= 0.5
-	}
-
 	return similarityScore
 }
 

@@ -4071,7 +4071,7 @@
         },
         "/recommendation/infra": {
             "post": {
-                "description": "Recommend best-effort infrastructure (Infra) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: `desiredCsp`, `desiredRegion`]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: `limit`]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: `status`]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n\n**[Response Field: `nodeGroups[].cspImageName`]** Set only when the spec-image review resolved a newer image than the DB cache.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses `imageId` for the standard DB lookup path.\n- Pass the recommendation response as-is to the migration API to ensure the resolved image is used.\n",
+                "description": "Recommend best-effort infrastructure (Infra) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: `desiredCsp`, `desiredRegion`]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: `limit`]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 85.0, range: 0-100)\n\n**[Response Field: `status`]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n\n**[Response Field: `nodeGroups[].cspImageName`]** Set only when the spec-image review resolved a newer image than the DB cache.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses `imageId` for the standard DB lookup path.\n- Pass the recommendation response as-is to the migration API to ensure the resolved image is used.\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -4125,7 +4125,7 @@
                     },
                     {
                         "type": "number",
-                        "description": "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)",
+                        "description": "Minimum match rate for highly-matched classification (default: 85.0, range: 0-100)",
                         "name": "minMatchRate",
                         "in": "query"
                     },
@@ -4331,7 +4331,7 @@
                     },
                     {
                         "type": "number",
-                        "default": 90,
+                        "default": 85,
                         "description": "Minimum match rate (0-100) for highly-matched classification",
                         "name": "minMatchRate",
                         "in": "query"
@@ -4807,7 +4807,7 @@
         },
         "/recommendation/multiInfra": {
             "post": {
-                "description": "Recommend a single best-effort infrastructure candidate for each of several target CSP/region pairs.\n\nUse this API to compare candidate clouds before committing to one; once a target is chosen,\nuse `POST /recommendation/infra` against that single CSP/region to explore multiple candidates.\n\n**[Required Parameter: `desiredCspAndRegionPairs`]** 2 to 10 target CSP/region pairs.\nDuplicate pairs are rejected.\n\n**[Response]** Always returns exactly one item per requested target, in request order\n(`len(data) == len(desiredCspAndRegionPairs)`), so items map back to targets via `targetCloud`\nwithout needing to be re-sorted or grouped. A target that fails validation or yields no\ncompatible infrastructure still produces one item, with `status` set to `failed` or\n`nothing-to-recommend` and `targetInfra` left empty.\n\n**[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n[Note] Each target costs roughly as much as one `/recommendation/infra` call; requests with\nseveral targets can take a while. `Prefer: respond-async` is strongly recommended.",
+                "description": "Recommend a single best-effort infrastructure candidate for each of several target CSP/region pairs.\n\nUse this API to compare candidate clouds before committing to one; once a target is chosen,\nuse `POST /recommendation/infra` against that single CSP/region to explore multiple candidates.\n\n**[Required Parameter: `desiredCspAndRegionPairs`]** 2 to 10 target CSP/region pairs.\nDuplicate pairs are rejected.\n\n**[Response]** Always returns exactly one item per requested target, in request order\n(`len(data) == len(desiredCspAndRegionPairs)`), so items map back to targets via `targetCloud`\nwithout needing to be re-sorted or grouped. A target that fails validation or yields no\ncompatible infrastructure still produces one item, with `status` set to `failed` or\n`nothing-to-recommend` and `targetInfra` left empty.\n\n**[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 85.0, range: 0-100)\n\n[Note] Each target costs roughly as much as one `/recommendation/infra` call; requests with\nseveral targets can take a while. `Prefer: respond-async` is strongly recommended.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4831,7 +4831,7 @@
                     },
                     {
                         "type": "number",
-                        "description": "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)",
+                        "description": "Minimum match rate for highly-matched classification (default: 85.0, range: 0-100)",
                         "name": "minMatchRate",
                         "in": "query"
                     },
@@ -4887,7 +4887,7 @@
         },
         "/recommendation/multiInfraWithNlb": {
             "post": {
-                "description": "NLB-aware counterpart of `POST /recommendation/multiInfra`. Recommends a single best-effort\ninfrastructure candidate (including NLB mapping) for each of several target CSP/region pairs.\n\nUse this API to compare candidate clouds before committing to one; once a target is chosen,\nuse `POST /recommendation/infraWithNlb` against that single CSP/region to explore multiple candidates.\n\n**[Required Parameter: `desiredCspAndRegionPairs`]** 2 to 10 target CSP/region pairs.\nDuplicate pairs are rejected.\n\n[Note] `sourceInfra.nlbs` must be populated (HAProxy frontend-backend pairs from cm-honeybee).\n\n**[Response]** Always returns exactly one item per requested target, in request order\n(`len(data) == len(desiredCspAndRegionPairs)`), so items map back to targets via `targetCloud`\nwithout needing to be re-sorted or grouped. A target that fails validation or yields no\ncompatible infrastructure still produces one item, with `status` set to `failed` or\n`nothing-to-recommend` and `targetInfra` left empty.\n\n**[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n[Note] Each target costs roughly as much as one `/recommendation/infraWithNlb` call; requests with\nseveral targets can take a while. `Prefer: respond-async` is strongly recommended.",
+                "description": "NLB-aware counterpart of `POST /recommendation/multiInfra`. Recommends a single best-effort\ninfrastructure candidate (including NLB mapping) for each of several target CSP/region pairs.\n\nUse this API to compare candidate clouds before committing to one; once a target is chosen,\nuse `POST /recommendation/infraWithNlb` against that single CSP/region to explore multiple candidates.\n\n**[Required Parameter: `desiredCspAndRegionPairs`]** 2 to 10 target CSP/region pairs.\nDuplicate pairs are rejected.\n\n[Note] `sourceInfra.nlbs` must be populated (HAProxy frontend-backend pairs from cm-honeybee).\n\n**[Response]** Always returns exactly one item per requested target, in request order\n(`len(data) == len(desiredCspAndRegionPairs)`), so items map back to targets via `targetCloud`\nwithout needing to be re-sorted or grouped. A target that fails validation or yields no\ncompatible infrastructure still produces one item, with `status` set to `failed` or\n`nothing-to-recommend` and `targetInfra` left empty.\n\n**[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 85.0, range: 0-100)\n\n[Note] Each target costs roughly as much as one `/recommendation/infraWithNlb` call; requests with\nseveral targets can take a while. `Prefer: respond-async` is strongly recommended.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4911,7 +4911,7 @@
                     },
                     {
                         "type": "number",
-                        "description": "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)",
+                        "description": "Minimum match rate for highly-matched classification (default: 85.0, range: 0-100)",
                         "name": "minMatchRate",
                         "in": "query"
                     },
