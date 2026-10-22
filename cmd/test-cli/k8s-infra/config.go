@@ -8,6 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 )
 
 // TestConfig holds test configuration for K8s test CLI across all modes.
@@ -22,11 +23,12 @@ type TestConfig struct {
 		Scenarios []Scenario `yaml:"scenarios"`
 	} `yaml:"test"`
 	Beetle struct {
-		Endpoint        string `yaml:"endpoint"`
-		NamespaceID     string `yaml:"namespaceId"`
-		RequestBodyFile string `yaml:"requestBodyFile"`
-		AuthConfigFile  string `yaml:"authConfigFile"`
-		NameSeed        string `yaml:"nameSeed"`
+		Endpoint        string         `yaml:"endpoint"`
+		NamespaceID     string         `yaml:"namespaceId"`
+		RequestBodyFile string         `yaml:"requestBodyFile"`
+		AuthConfigFile  string         `yaml:"authConfigFile"`
+		NameSeed        string         `yaml:"nameSeed"`
+		Lineage         *LineageConfig `yaml:"lineage"` // optional; sent with the migration request and verified on the cluster labels
 	} `yaml:"beetle"`
 	Migration struct {
 		Mode       string `yaml:"mode"`       // async (default) or sync
@@ -57,6 +59,24 @@ type TestConfig struct {
 		LbAccessTimeoutSec   int  `yaml:"lbAccessTimeoutSec"`
 		LbPollSec            int  `yaml:"lbPollSec"`
 	} `yaml:"workload"`
+}
+
+// LineageConfig is the YAML form of lineage.MigrationLineage.
+type LineageConfig struct {
+	SourceGroupId   string `yaml:"sourceGroupId"`
+	SourceModelId   string `yaml:"sourceModelId"`
+	PlanningModelId string `yaml:"planningModelId"`
+	TargetModelId   string `yaml:"targetModelId"`
+}
+
+// toLineage converts the config into the request model.
+func (c LineageConfig) toLineage() lineage.MigrationLineage {
+	return lineage.MigrationLineage{
+		SourceGroupId:   c.SourceGroupId,
+		SourceModelId:   c.SourceModelId,
+		PlanningModelId: c.PlanningModelId,
+		TargetModelId:   c.TargetModelId,
+	}
 }
 
 // TestCase is one target CSP/region pair; only entries with Execute: true are used.
