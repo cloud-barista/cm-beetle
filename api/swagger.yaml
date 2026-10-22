@@ -11531,7 +11531,7 @@ paths:
 
         **[Optional Parameters: `limit`]** Maximum number of recommended infrastructures to return (default: 3)
 
-        **[Optional Parameters: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)
+        **[Optional Parameters: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 85.0, range: 0-100)
 
         **[Response Field: `status`]** Candidate status based on the match rate threshold
         - **highly-matched**: Candidates meet or exceed the match rate threshold
@@ -11576,7 +11576,7 @@ paths:
         name: limit
         type: integer
       - description: 'Minimum match rate for highly-matched classification (default:
-          90.0, range: 0-100)'
+          85.0, range: 0-100)'
         in: query
         name: minMatchRate
         type: number
@@ -11774,7 +11774,7 @@ paths:
         in: query
         name: limit
         type: integer
-      - default: 90
+      - default: 85
         description: Minimum match rate (0-100) for highly-matched classification
         in: query
         name: minMatchRate
@@ -12159,7 +12159,7 @@ paths:
         compatible infrastructure still produces one item, with `status` set to `failed` or
         `nothing-to-recommend` and `targetInfra` left empty.
 
-        **[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)
+        **[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 85.0, range: 0-100)
 
         [Note] Each target costs roughly as much as one `/recommendation/infra` call; requests with
         several targets can take a while. `Prefer: respond-async` is strongly recommended.
@@ -12172,7 +12172,7 @@ paths:
         schema:
           $ref: '#/definitions/controller.RecommendMultiInfraRequest'
       - description: 'Minimum match rate for highly-matched classification (default:
-          90.0, range: 0-100)'
+          85.0, range: 0-100)'
         in: query
         name: minMatchRate
         type: number
@@ -12240,7 +12240,7 @@ paths:
         compatible infrastructure still produces one item, with `status` set to `failed` or
         `nothing-to-recommend` and `targetInfra` left empty.
 
-        **[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)
+        **[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 85.0, range: 0-100)
 
         [Note] Each target costs roughly as much as one `/recommendation/infraWithNlb` call; requests with
         several targets can take a while. `Prefer: respond-async` is strongly recommended.
@@ -12253,7 +12253,7 @@ paths:
         schema:
           $ref: '#/definitions/controller.RecommendMultiInfraWithNlbRequest'
       - description: 'Minimum match rate for highly-matched classification (default:
-          90.0, range: 0-100)'
+          85.0, range: 0-100)'
         in: query
         name: minMatchRate
         type: number

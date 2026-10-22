@@ -9,7 +9,7 @@ GO := $(GOPROXY_OPTION) go
 GOPATH := $(shell go env GOPATH)
 SWAG := ~/go/bin/swag
 
-.PHONY: all dependency tidy lint update swag swagger build arm prod run stop clean help up up-no-cache compose compose-no-cache test-infra test-rdbms test-infra-with-nlb test-os test-data test-async test-rate-limiting test-multi-infra-recommendation test-k8s-infra-recommendation test-k8s-infra-migration test-aimx
+.PHONY: all dependency tidy lint update swag swagger build arm prod run stop clean help up up-no-cache compose compose-no-cache test-infra test-rdbms test-infra-with-nlb test-os test-data test-async test-rate-limiting test-multi-infra-recommendation test-gpu-recommendation test-k8s-infra-recommendation test-k8s-infra-migration test-aimx
 
 all: swag build ## Default target: build the project
 
@@ -105,6 +105,7 @@ clean: ## Remove previous build
 	@cd cmd/test-cli/async && $(GO) clean
 	@cd cmd/test-cli/rate-limiting && $(GO) clean
 	@cd cmd/test-cli/multi-infra-recommendation && $(GO) clean
+	@cd cmd/test-cli/gpu-recommendation && $(GO) clean
 	@cd cmd/test-cli/k8s-infra && $(GO) clean
 	@cd cmd/test-cli/rdbms && $(GO) clean
 	@cd cmd/aimx && $(GO) clean
@@ -173,6 +174,17 @@ test-multi-infra-recommendation: ## Run the multi-target infra recommendation te
 		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
 	fi
 	@cd cmd/test-cli/multi-infra-recommendation && $(GO) run main.go -config testconf/test-config.yaml
+
+test-gpu-recommendation: ## Run the GPU infrastructure recommendation test CLI for target CSPs
+	@echo "Running GPU infrastructure recommendation test CLI..."
+	@if [ ! -f cmd/test-cli/gpu-recommendation/testconf/test-config.yaml ]; then \
+		cp cmd/test-cli/gpu-recommendation/testconf/template-test-config.yaml cmd/test-cli/gpu-recommendation/testconf/test-config.yaml; \
+		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
+	fi
+	@if [ ! -f cmd/test-cli/gpu-recommendation/testconf/auth-config.json ]; then \
+		cp cmd/test-cli/gpu-recommendation/testconf/template-auth-config.json cmd/test-cli/gpu-recommendation/testconf/auth-config.json; \
+	fi
+	@cd cmd/test-cli/gpu-recommendation && $(GO) run main.go -config testconf/test-config.yaml
 
 test-k8s-infra: ## Run the unified K8s infra test CLI (recommendation, validation, or migration mode)
 	@echo "Running K8s infra test CLI..."

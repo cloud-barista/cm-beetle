@@ -65,14 +65,14 @@ func validateMultiInfraTargets(pairs []cloudmodel.CloudProperty) (string, bool) 
 	return "", true
 }
 
-// parseMinMatchRate parses the minMatchRate query param, defaulting to 90.0.
+// parseMinMatchRate parses the minMatchRate query param, defaulting to 85.0.
 func parseMinMatchRate(c echo.Context) float64 {
-	minMatchRate := 90.0
+	minMatchRate := 85.0
 	if qp := c.QueryParam("minMatchRate"); qp != "" {
 		if parsed, err := strconv.ParseFloat(qp, 64); err != nil {
-			log.Warn().Err(err).Msgf("invalid minMatchRate value: %s, using default 90.0", qp)
+			log.Warn().Err(err).Msgf("invalid minMatchRate value: %s, using default 85.0", qp)
 		} else if parsed < 0 || parsed > 100 {
-			log.Warn().Msgf("minMatchRate out of range [0-100]: %.1f, using default 90.0", parsed)
+			log.Warn().Msgf("minMatchRate out of range [0-100]: %.1f, using default 85.0", parsed)
 		} else {
 			minMatchRate = parsed
 		}
@@ -97,7 +97,7 @@ func parseMinMatchRate(c echo.Context) float64 {
 // @Description compatible infrastructure still produces one item, with `status` set to `failed` or
 // @Description `nothing-to-recommend` and `targetInfra` left empty.
 // @Description
-// @Description **[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)
+// @Description **[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 85.0, range: 0-100)
 // @Description
 // @Description [Note] Each target costs roughly as much as one `/recommendation/infra` call; requests with
 // @Description several targets can take a while. `Prefer: respond-async` is strongly recommended.
@@ -105,7 +105,7 @@ func parseMinMatchRate(c echo.Context) float64 {
 // @Accept  json
 // @Produce  json
 // @Param request body RecommendMultiInfraRequest true "Target CSP/region pairs and the source infrastructure to be migrated"
-// @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)"
+// @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 85.0, range: 0-100)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Param Prefer header string false "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 200 {object} model.ApiResponse[[]cloudmodel.RecommendedInfra] "One recommended (or failed/nothing-to-recommend) candidate per target, in request order"
@@ -190,7 +190,7 @@ type RecommendMultiInfraWithNlbRequest struct {
 // @Description compatible infrastructure still produces one item, with `status` set to `failed` or
 // @Description `nothing-to-recommend` and `targetInfra` left empty.
 // @Description
-// @Description **[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)
+// @Description **[Optional Parameter: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 85.0, range: 0-100)
 // @Description
 // @Description [Note] Each target costs roughly as much as one `/recommendation/infraWithNlb` call; requests with
 // @Description several targets can take a while. `Prefer: respond-async` is strongly recommended.
@@ -198,7 +198,7 @@ type RecommendMultiInfraWithNlbRequest struct {
 // @Accept  json
 // @Produce  json
 // @Param request body RecommendMultiInfraWithNlbRequest true "Target CSP/region pairs and the source infra including NLBs"
-// @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)"
+// @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 85.0, range: 0-100)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Param Prefer header string false "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 200 {object} model.ApiResponse[[]cloudmodel.RecommendedInfra] "One recommended (or failed/nothing-to-recommend) candidate per target, in request order"

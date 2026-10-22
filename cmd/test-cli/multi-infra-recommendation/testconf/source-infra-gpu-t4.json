@@ -1,0 +1,136 @@
+{
+  "nameSeed": "gput4",
+  "sourceInfra": {
+    "network": {
+      "ipv4Networks": {
+        "defaultGateways": [
+          {
+            "interfaceName": "ens5",
+            "ip": "10.0.1.1",
+            "machineId": "nvidiat4-1"
+          }
+        ]
+      },
+      "ipv6Networks": {}
+    },
+    "nodes": [
+      {
+        "hostname": "nvidiat4-1",
+        "machineId": "nvidiat4-1",
+        "role": "standalone",
+        "cpu": {
+          "architecture": "x86_64",
+          "cpus": 1,
+          "cores": 2,
+          "threads": 4
+        },
+        "memory": {
+          "type": "DDR4",
+          "totalSize": 16,
+          "available": 14,
+          "used": 2
+        },
+        "rootDisk": {
+          "label": "/",
+          "type": "SSD",
+          "totalSize": 100,
+          "available": 75,
+          "used": 25
+        },
+        "interfaces": [
+          {
+            "name": "lo",
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
+            "mtu": 65536,
+            "state": "up"
+          },
+          {
+            "name": "ens5",
+            "macAddress": "06:91:bc:3c:2a:01",
+            "ipv4CidrBlocks": [
+              "10.0.1.10/24"
+            ],
+            "mtu": 9001,
+            "state": "up"
+          }
+        ],
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "dhcp",
+            "scope": "global",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.0/24",
+            "gateway": "0.0.0.0",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "link",
+            "linkState": "up"
+          }
+        ],
+        "firewallTable": [
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          }
+        ],
+        "os": {
+          "prettyName": "Ubuntu 22.04.4 LTS",
+          "version": "22.04.4 LTS (Jammy Jellyfish)",
+          "name": "Ubuntu",
+          "versionId": "22.04",
+          "versionCodename": "jammy",
+          "id": "ubuntu",
+          "idLike": "debian"
+        },
+        "gpuCards": [
+          {
+            "driverIndex": "0",
+            "uuid": "GPU-00000000-0036-0000-0000-000000000000",
+            "vendor": "NVIDIA",
+            "model": "Tesla T4",
+            "type": "GPU",
+            "driverVersion": "570.195.03",
+            "cudaVersion": "12.8",
+            "pciBusId": "00000000:31:00.0",
+            "memoryTotalGB": 16
+          }
+        ]
+      }
+    ]
+  }
+}

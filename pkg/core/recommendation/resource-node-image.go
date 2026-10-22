@@ -131,17 +131,8 @@ func RecommendVmOsImages(csp string, region string, node onpremmodel.NodePropert
 		RegionName:            region,
 	}
 
-	isGpu := hasGpu(node)
-	if isGpu {
-		// Disable basic image filter because GPU images have isBasicImage=false in Tumblebug.
-		searchImageReq.IncludeBasicImageOnly = &falseValue
-		searchImageReq.IsGPUImage = &trueValue
-		log.Info().
-			Str("machineId", node.MachineId).
-			Msg("Searching for GPU-enabled OS images (isGPUImage=true)")
-	} else {
-		searchImageReq.IsGPUImage = &falseValue
-	}
+	// Prioritize standard basic OS images for all nodes
+	searchImageReq.IsGPUImage = &falseValue
 
 	log.Debug().Msgf("searchImageReq: %+v", searchImageReq)
 
@@ -175,7 +166,7 @@ func RecommendVmOsImages(csp string, region string, node onpremmodel.NodePropert
 		}
 
 		// Filter VM OS images again
-		filteredImages = []tbmodel.ImageInfo{} // Reset filtered images
+		filteredImages = []tbmodel.ImageInfo{}
 		for _, img := range resSearchImage.ImageList {
 			if strings.Contains(strings.ToLower(img.CspImageName), "uefi") {
 				continue
@@ -185,6 +176,41 @@ func RecommendVmOsImages(csp string, region string, node onpremmodel.NodePropert
 
 		if len(filteredImages) > 0 {
 			log.Info().Msgf("Found %d images after retrying with OS ID only: '%s'", len(filteredImages), node.OS.ID)
+		}
+	}
+
+	// Secondary fallback: if no basic images found and node has GPU, search for GPU-enabled images
+	if len(filteredImages) == 0 && hasGpu(node) {
+		log.Info().
+			Str("machineId", node.MachineId).
+			Msg("No basic OS image found; retrying fallback with GPU-enabled OS images (isGPUImage=true)")
+
+		searchImageReq.IncludeBasicImageOnly = &falseValue
+		searchImageReq.IsGPUImage = &trueValue
+		searchImageReq.OSType = osType
+
+		resSearchImage, err = tbclient.NewSession().SearchVmOsImage(nsId, searchImageReq)
+		if err == nil {
+			for _, img := range resSearchImage.ImageList {
+				if strings.Contains(strings.ToLower(img.CspImageName), "uefi") {
+					continue
+				}
+				filteredImages = append(filteredImages, img)
+			}
+		}
+
+		// Fallback retry with OS ID only for GPU images
+		if len(filteredImages) == 0 {
+			searchImageReq.OSType = node.OS.ID
+			resSearchImage, err = tbclient.NewSession().SearchVmOsImage(nsId, searchImageReq)
+			if err == nil {
+				for _, img := range resSearchImage.ImageList {
+					if strings.Contains(strings.ToLower(img.CspImageName), "uefi") {
+						continue
+					}
+					filteredImages = append(filteredImages, img)
+				}
+			}
 		}
 	}
 
@@ -270,13 +296,6 @@ type VmOsImageInfoWithScore struct {
 
 // FindAndSortVmOsImageInfoListBySimilarity finds VM OS images that match the keywords and sorts them by similarity score
 func FindAndSortVmOsImageInfoListBySimilarity(csp string, keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string, node ...onpremmodel.NodeProperty) []cloudmodel.ImageInfo {
-	hasNodeGpu := false
-	var targetNode onpremmodel.NodeProperty
-	if len(node) > 0 && hasGpu(node[0]) {
-		hasNodeGpu = true
-		targetNode = node[0]
-	}
-
 	var imageInfoListForSorting []VmOsImageInfoWithScore
 	var imageInfoList []cloudmodel.ImageInfo
 
@@ -296,11 +315,6 @@ func FindAndSortVmOsImageInfoListBySimilarity(csp string, keywords string, kwDel
 			score *= 0.5
 		}
 
-		// Deprioritize non-GPU images when target node is GPU-accelerated.
-		if hasNodeGpu && !isGpuSuitableImage(targetNode, image) {
-			score *= 0.5
-		}
-
 		imageInfo := VmOsImageInfoWithScore{
 			VmOsImageInfo:   image,
 			SimilarityScore: score,
@@ -311,18 +325,6 @@ func FindAndSortVmOsImageInfoListBySimilarity(csp string, keywords string, kwDel
 	// Sort the imageInfoList by highestScore in descending order
 	// If scores are equal, deprioritize images containing "minimal", "k8s", "pro", or "test" in OSDistribution
 	sort.Slice(imageInfoListForSorting, func(i, j int) bool {
-		// Prioritize GPU-suitable images when target node requires GPU.
-		if hasNodeGpu {
-			suitI := isGpuSuitableImage(targetNode, imageInfoListForSorting[i].VmOsImageInfo)
-			suitJ := isGpuSuitableImage(targetNode, imageInfoListForSorting[j].VmOsImageInfo)
-			if suitI && !suitJ {
-				return true
-			}
-			if !suitI && suitJ {
-				return false
-			}
-		}
-
 		scoreI := imageInfoListForSorting[i].SimilarityScore
 		scoreJ := imageInfoListForSorting[j].SimilarityScore
 
