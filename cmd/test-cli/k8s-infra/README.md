@@ -53,7 +53,7 @@ make test-k8s-infra-migration
 | **2** | **Pre-flight Validation** | `POST /beetle/validation/ns/{nsId}/k8sCluster` |
 | **3** | Migrate | `POST /beetle/migration/ns/{nsId}/k8sCluster` |
 | **4** | List | `GET /beetle/migration/ns/{nsId}/k8sCluster` |
-| **5** | Get & Verify | `GET /beetle/migration/ns/{nsId}/k8sCluster/{id}` (verified against recommendation) |
+| **5** | Get & Verify | `GET /beetle/migration/ns/{nsId}/k8sCluster/{id}` (verified against recommendation and migration labels) |
 | **6** | Workload Verification | CB-Tumblebug kubeconfig & bearer token → Cluster API server (Nginx Deployment & LB) |
 | **7** | Delete | `DELETE /beetle/migration/ns/{nsId}/k8sCluster/{id}` |
 | **8** | Residual Check | Direct CB-Tumblebug inspection (VNet / SecurityGroup / SshKey) |
@@ -93,7 +93,14 @@ beetle:
   authConfigFile: testconf/auth-config.json
   requestBodyFile: testconf/recommendation-request.json
   nameSeed: mig
+  lineage: # optional
+    sourceGroupId: sg-k8s-test
+    sourceModelId: src-mdl-k8s-test
+    planningModelId: plan-mdl-k8s-test
+    targetModelId: tgt-mdl-k8s-test
 ```
+
+When `beetle.lineage` is set, Step 3 sends it as the `lineage` field of the migration request, and Step 5 checks that the cluster labels contain each lineage label (`cm-source-group-id`, `cm-source-model-id`, `cm-planning-model-id`, `cm-target-model-id`). Step 5 always checks `cm-migrated-at` (RFC3339). Labels are compared by inclusion because CB-Tumblebug adds its own system labels.
 
 ---
 

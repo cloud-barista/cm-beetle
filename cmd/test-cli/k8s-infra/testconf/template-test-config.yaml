@@ -198,6 +198,13 @@ beetle:
   authConfigFile: testconf/auth-config.json
   requestBodyFile: testconf/recommendation-request.json
   nameSeed: mig
+  # Optional migration lineage sent with the migration request and verified on the cluster labels.
+  # Omit to test the no-lineage path (only cm-migrated-at is checked).
+  lineage:
+    sourceGroupId: sg-k8s-test
+    sourceModelId: src-mdl-k8s-test
+    planningModelId: plan-mdl-k8s-test
+    targetModelId: tgt-mdl-k8s-test
 
 migration:
   mode: async # async (default) or sync

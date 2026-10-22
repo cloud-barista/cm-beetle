@@ -2560,7 +2560,7 @@
                 }
             },
             "post": {
-                "description": "Migrate an on-premise Kubernetes cluster to a managed K8s service (e.g., AWS EKS).\n\n**Workflow**:\n1. Call POST /recommendation/k8sCluster to get a RecommendK8sInfraResponse.\n2. Pass the recommendation result as-is to this endpoint.\n\n**Internal steps**: VNet → SSH Key → Security Group → K8s Cluster → Node Groups\n\n**Long-running** — This API waits for the cluster to become Active, up to **40 min**\n(typically **~10-20 min** on EKS), then adds the node groups, so it can take longer still.\n\nBy default it runs synchronously, so configure your own HTTP client to wait that long —\nmost client defaults cut the connection first. Send header `Prefer: respond-async` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.\n\nIf a synchronous connection drops the migration keeps running on the server; poll\nGET /migration/ns/{nsId}/k8sCluster/{k8sClusterId} with the cluster name you supplied.",
+                "description": "Migrate an on-premise Kubernetes cluster to a managed K8s service (e.g., AWS EKS).\n\n**Workflow**:\n1. Call POST /recommendation/k8sCluster to get a RecommendK8sInfraResponse.\n2. Pass the recommendation result as-is to this endpoint.\n\nThe optional `lineage` is recorded on the K8s cluster as labels, together with `cm-migrated-at`.\n\n**Internal steps**: VNet → SSH Key → Security Group → K8s Cluster → Node Groups\n\n**Long-running** — This API waits for the cluster to become Active, up to **40 min**\n(typically **~10-20 min** on EKS), then adds the node groups, so it can take longer still.\n\nBy default it runs synchronously, so configure your own HTTP client to wait that long —\nmost client defaults cut the connection first. Send header `Prefer: respond-async` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.\n\nIf a synchronous connection drops the migration keeps running on the server; poll\nGET /migration/ns/{nsId}/k8sCluster/{k8sClusterId} with the cluster name you supplied.",
                 "consumes": [
                     "application/json"
                 ],
@@ -9547,6 +9547,9 @@
             "properties": {
                 "description": {
                     "type": "string"
+                },
+                "lineage": {
+                    "$ref": "#/definitions/lineage.MigrationLineage"
                 },
                 "status": {
                     "type": "string"

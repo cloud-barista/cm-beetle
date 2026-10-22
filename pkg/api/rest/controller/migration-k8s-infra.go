@@ -20,6 +20,7 @@ import (
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
@@ -30,6 +31,7 @@ import (
 // MigrateK8sInfraRequest is the request body for POST /migration/ns/{nsId}/k8sCluster.
 // Use the RecommendedInfra returned by POST /recommendation/k8sCluster as-is.
 type MigrateK8sInfraRequest struct {
+	Lineage lineage.MigrationLineage `json:"lineage,omitempty"`
 	cloudmodel.RecommendedInfra
 }
 
@@ -46,6 +48,8 @@ type MigrateK8sInfraResponse struct {
 // @Description **Workflow**:
 // @Description 1. Call POST /recommendation/k8sCluster to get a RecommendK8sInfraResponse.
 // @Description 2. Pass the recommendation result as-is to this endpoint.
+// @Description
+// @Description The optional `lineage` is recorded on the K8s cluster as labels, together with `cm-migrated-at`.
 // @Description
 // @Description **Internal steps**: VNet → SSH Key → Security Group → K8s Cluster → Node Groups
 // @Description
@@ -100,7 +104,7 @@ func MigrateK8sInfra(c echo.Context) error {
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
 		started := common.RunAsync(reqID, func() (tbmodel.K8sClusterInfo, error) {
-			return migration.CreateK8sInfra(nsId, &infraToMigrate)
+			return migration.CreateK8sInfra(nsId, &infraToMigrate, req.Lineage)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -117,7 +121,7 @@ func MigrateK8sInfra(c echo.Context) error {
 			"K8s infra migration started. Use GET /request/{reqId} to check status."))
 	}
 
-	clusterInfo, err := migration.CreateK8sInfra(nsId, &infraToMigrate)
+	clusterInfo, err := migration.CreateK8sInfra(nsId, &infraToMigrate, req.Lineage)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Msg("failed to migrate K8s infra")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))

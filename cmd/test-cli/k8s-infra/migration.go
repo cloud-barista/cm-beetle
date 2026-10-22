@@ -12,6 +12,7 @@ import (
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 )
@@ -206,11 +207,23 @@ func stepRecommend(client *resty.Client, cfg TestConfig, _ AuthConfig, report *C
 	return res
 }
 
+// migrateK8sInfraBody mirrors the server's MigrateK8sInfraRequest JSON shape.
+type migrateK8sInfraBody struct {
+	Lineage *lineage.MigrationLineage `json:"lineage,omitempty"`
+	*cloudmodel.RecommendedInfra
+}
+
 // stepMigrate provisions the cluster via sync or async API path.
 func stepMigrate(client *resty.Client, cfg TestConfig, _ AuthConfig, report *CSPTestReport, _ []byte) StepResult {
 	res := StepResult{Target: report.DisplayName, Number: 3, Name: "POST /migration/ns/{nsId}/k8sCluster", StartTime: time.Now()}
 
-	body, err := json.Marshal(report.Recommendation)
+	reqBody := migrateK8sInfraBody{RecommendedInfra: report.Recommendation}
+	if cfg.Beetle.Lineage != nil {
+		lin := cfg.Beetle.Lineage.toLineage()
+		reqBody.Lineage = &lin
+		res.Notes = append(res.Notes, fmt.Sprintf("ℹ️  lineage: %+v", lin))
+	}
+	body, err := json.Marshal(reqBody)
 	if err != nil {
 		res.Duration = time.Since(res.StartTime)
 		res.Error = fmt.Sprintf("failed to marshal recommendation: %s", err)
@@ -550,11 +563,47 @@ func stepGetAndVerify(client *resty.Client, cfg TestConfig, auth AuthConfig, rep
 		}
 	}
 
+	labelNotes, labelsOK := verifyMigrationLabels(actual.Label, cfg.Beetle.Lineage)
+	res.Notes = append(res.Notes, labelNotes...)
+	if !labelsOK {
+		ok = false
+	}
+
 	res.Success = ok
 	if !ok {
 		res.Error = "created cluster does not match the recommendation"
 	}
 	return res
+}
+
+// verifyMigrationLabels checks that the cluster labels contain cm-migrated-at and every configured lineage label.
+// Labels are compared by inclusion because Tumblebug adds its own system labels.
+func verifyMigrationLabels(got map[string]string, cfgLineage *LineageConfig) (notes []string, ok bool) {
+	ok = true
+
+	if v, exists := got[lineage.LabelMigratedAt]; !exists {
+		ok = false
+		notes = append(notes, fmt.Sprintf("❌ label %s missing", lineage.LabelMigratedAt))
+	} else if _, err := time.Parse(time.RFC3339, v); err != nil {
+		ok = false
+		notes = append(notes, fmt.Sprintf("❌ label %s=%q is not RFC3339", lineage.LabelMigratedAt, v))
+	} else {
+		notes = append(notes, fmt.Sprintf("✅ label %s=%s", lineage.LabelMigratedAt, v))
+	}
+
+	if cfgLineage == nil {
+		notes = append(notes, "ℹ️  lineage not configured; lineage labels not checked")
+		return notes, ok
+	}
+	for key, want := range cfgLineage.toLineage().ToLabelMap() {
+		if v := got[key]; v != want {
+			ok = false
+			notes = append(notes, fmt.Sprintf("❌ label %s=%q, want %q", key, v, want))
+		} else {
+			notes = append(notes, fmt.Sprintf("✅ label %s=%s", key, v))
+		}
+	}
+	return notes, ok
 }
 
 // specMatch checks if actual spec ID matches recommended spec name.

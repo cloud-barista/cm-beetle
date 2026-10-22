@@ -16,11 +16,13 @@ package migration
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/core/validation"
 	"github.com/cloud-barista/cm-beetle/pkg/csp"
@@ -219,6 +221,17 @@ func validateNodeGroupSpecs(nodeGroups []cloudmodel.K8sNodeGroupReq) error {
 	return nil
 }
 
+// buildK8sClusterLabels returns a copy of base with the migration timestamp and lineage labels added.
+func buildK8sClusterLabels(base map[string]string, migratedAt time.Time, lin ...lineage.MigrationLineage) map[string]string {
+	labels := make(map[string]string, len(base)+5)
+	maps.Copy(labels, base)
+	labels[lineage.LabelMigratedAt] = migratedAt.UTC().Format(time.RFC3339)
+	if len(lin) > 0 {
+		maps.Copy(labels, lin[0].ToLabelMap())
+	}
+	return labels
+}
+
 // CreateK8sInfra provisions a K8s infra on the target CSP from a recommendation result:
 // the prerequisite resources (VNet, SshKey, SecurityGroups) plus the cluster and its node groups.
 // It follows the same pattern as CreateInfra for VM migration:
@@ -232,7 +245,8 @@ func validateNodeGroupSpecs(nodeGroups []cloudmodel.K8sNodeGroupReq) error {
 //     Create cluster first, poll for Active, then add NodeGroups separately.
 //
 // Both paths poll until the cluster is Active before returning, ensuring a consistent response.
-func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra) (tbmodel.K8sClusterInfo, error) {
+// The cluster is labeled with the migration timestamp and, when given, the migration lineage.
+func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra, lin ...lineage.MigrationLineage) (tbmodel.K8sClusterInfo, error) {
 	log.Info().Str("nsId", nsId).Msg("Creating K8s infra")
 
 	emptyRet := tbmodel.K8sClusterInfo{}
@@ -396,6 +410,7 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra) (tbmodel.K8sC
 	clusterReq.VNetId = vNetInfo.Id
 	clusterReq.SubnetIds = subnetIds
 	clusterReq.SecurityGroupIds = sgIds
+	clusterReq.Label = buildK8sClusterLabels(req.TargetK8sCluster.Label, time.Now(), lin...)
 
 	if nodeGroupsOnCreation {
 		// 6a. Include NodeGroups in the creation request (Azure/GCP/NHN/NCP/IBM).
