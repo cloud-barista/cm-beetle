@@ -4,6 +4,7 @@ import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope,
 import { honeybeeApi, artifactApi, SaveArtifactOptions, beetleApi, tumblebugApi } from '../api/client';
 import recommendedInfraSample from '../data/sampleTargetInfra.json';
 import sampleGpuData from '../data/sampleSourceGpuInfra.json';
+import { SAMPLE_15_NODE_MODEL } from '../data/sample15NodeInfra';
 
 // ----------------------------------------------------------------------------
 // HIGH QUALITY DEMO / SOURCE INFRA MODEL DATA
@@ -409,7 +410,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   connections: [],
   isLoadingSource: false,
   refinedSourceInfra: DEMO_SOURCE_INFRA,
-  savedSourceModels: [DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL],
+  savedSourceModels: [SAMPLE_15_NODE_MODEL, DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL],
   selectedSourceModel: DEFAULT_FALLBACK_SOURCE_MODEL,
   tumblebugProviders: [
     'aws', 'azure', 'gcp', 'alibaba', 'tencent',
@@ -526,7 +527,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   fetchSavedSourceModels: async () => {
-    const builtInSamples = [DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL];
+    const builtInSamples = [SAMPLE_15_NODE_MODEL, DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL];
     const builtInIds = new Set(builtInSamples.map(s => s.id));
     let allModels: OnpremModelEnvelope[] = [];
     try {
@@ -665,7 +666,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   cachedMultiCandidates: null,
   cachedMultiPairs: null,
   recommendationLimit: 5,
-  minMatchRate: 90,
+  minMatchRate: 85,
   recommendationCandidates: [],
   selectedCandidateIndex: 0,
   editedCandidate: null,
@@ -1170,7 +1171,12 @@ export const useMigrationStore = create<MigrationState>()(
       if (state) {
         const cleanGpuIfNonGpu = (m: OnpremModelEnvelope | null) => {
           if (!m) return;
-          const isGpu = m.id?.toLowerCase().includes('gpu') || m.name?.toLowerCase().includes('gpu');
+          const isGpu =
+            m.id === 'sample-source-15node-dc-1' ||
+            m.id?.toLowerCase().includes('gpu') ||
+            m.name?.toLowerCase().includes('gpu') ||
+            m.name?.toLowerCase().includes('ai') ||
+            m.onpremiseInfraModel?.nodes?.some(n => n.clusterGroup === 'ai-inference' || (n.gpuCards && n.gpuCards.length > 0 && m.id !== 'sample-source-infra-1'));
           if (!isGpu && m.onpremiseInfraModel?.nodes) {
             m.onpremiseInfraModel.nodes.forEach(n => {
               delete (n as any).gpuCards;
@@ -1181,6 +1187,9 @@ export const useMigrationStore = create<MigrationState>()(
         if (state.selectedSourceModel?.id === 'sample-source-infra-1') {
           state.selectedSourceModel = DEFAULT_FALLBACK_SOURCE_MODEL;
           state.refinedSourceInfra = DEMO_SOURCE_INFRA;
+        } else if (state.selectedSourceModel?.id === 'sample-source-15node-dc-1') {
+          state.selectedSourceModel = SAMPLE_15_NODE_MODEL;
+          state.refinedSourceInfra = SAMPLE_15_NODE_MODEL.onpremiseInfraModel;
         } else if (state.selectedSourceModel) {
           cleanGpuIfNonGpu(state.selectedSourceModel);
         }
@@ -1194,11 +1203,14 @@ export const useMigrationStore = create<MigrationState>()(
         }
 
         if (Array.isArray(state.savedSourceModels)) {
-          state.savedSourceModels = state.savedSourceModels.map(m => {
+          const has15NodeSample = state.savedSourceModels.some(m => m.id === 'sample-source-15node-dc-1');
+          const mappedModels = state.savedSourceModels.map(m => {
             if (m.id === 'sample-source-infra-1') return DEFAULT_FALLBACK_SOURCE_MODEL;
+            if (m.id === 'sample-source-15node-dc-1') return SAMPLE_15_NODE_MODEL;
             cleanGpuIfNonGpu(m);
             return m;
           });
+          state.savedSourceModels = has15NodeSample ? mappedModels : [SAMPLE_15_NODE_MODEL, ...mappedModels];
         }
       }
     }

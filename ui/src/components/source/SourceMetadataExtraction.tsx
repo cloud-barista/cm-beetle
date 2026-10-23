@@ -798,7 +798,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
               onClick={onNext}
               className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
             >
-              <span>Next: Proceed to 2. Source Infra Refinement</span>
+              <span>Next: Proceed to 2. Migration Planning</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -963,7 +963,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                 onClick={onNext}
                 className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
               >
-                <span>Next: Proceed to 2. Source Infra Refinement</span>
+                <span>Next: Proceed to 2. Migration Planning</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -1221,7 +1221,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
         defaultDescription=""
         defaultVersion="1.0.0"
         existingRevisions={savedSourceModels
-          .filter(m => m.id !== 'sample-source-infra-1' && m.id !== 'sample-source-gpu-infra-1' && (m.stage || 'source') === 'source')
+          .filter(m => m.id !== 'sample-source-15node-dc-1' && m.id !== 'sample-source-infra-1' && m.id !== 'sample-source-gpu-infra-1' && (m.stage || 'source') === 'source')
           .map(m => ({ id: m.id, name: m.name, version: m.version }))}
         onSave={handleSaveArtifact}
       />

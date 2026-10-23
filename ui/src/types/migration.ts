@@ -96,6 +96,9 @@ export interface OnpremNode {
   firewallTable: FirewallRule[];
   os: OsProperty;
   gpuCards?: GpuCardProperty[] | null;
+  workloadTag?: string;
+  clusterGroup?: 'ai-inference' | 'analytics-compute' | 'backend-db';
+  serviceUrl?: string;
 }
 
 export interface GatewayProperty {

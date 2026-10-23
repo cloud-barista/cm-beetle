@@ -1,0 +1,347 @@
+import { OnpremInfra, OnpremModelEnvelope, OnpremNode } from '../types/migration';
+
+// Helper to build standard network interfaces and routing for 10.0.1.0/24 nodes
+function buildNodeNetwork(ipOctet: number, macSuffix: string) {
+  const ip = `10.0.1.${ipOctet}`;
+  return {
+    interfaces: [
+      {
+        name: 'lo',
+        state: 'up',
+        mtu: 65536,
+        ipv4CidrBlocks: ['127.0.0.1/8'],
+        ipv6CidrBlocks: ['::1/128'],
+      },
+      {
+        name: 'ens5',
+        state: 'up',
+        macAddress: `02:42:ac:11:01:${macSuffix}`,
+        mtu: 9001,
+        ipv4CidrBlocks: [`${ip}/24`],
+        ipv6CidrBlocks: [`fe80::42:acff:fe11:${macSuffix}/64`],
+      },
+    ],
+    routingTable: [
+      {
+        destination: '0.0.0.0/0',
+        gateway: '10.0.1.1',
+        interface: 'ens5',
+        linkState: 'up',
+        metric: 100,
+        protocol: 'kernel',
+        scope: 'universe',
+      },
+      {
+        destination: '10.0.1.0/24',
+        gateway: '10.0.1.1',
+        interface: 'ens5',
+        linkState: 'up',
+        metric: 100,
+        protocol: 'kernel',
+        scope: 'universe',
+      },
+    ],
+  };
+}
+
+// Helper to build standard inbound TCP firewall rules plus VPC traffic
+function buildFirewallRules(inboundPorts: string[]) {
+  return [
+    ...inboundPorts.map((port) => ({
+      action: 'allow',
+      direction: 'inbound',
+      dstCIDR: '0.0.0.0/0',
+      dstPorts: port,
+      protocol: 'tcp',
+      srcCIDR: '0.0.0.0/0',
+      srcPorts: '*',
+    })),
+    {
+      action: 'allow',
+      direction: 'inbound',
+      dstCIDR: '0.0.0.0/0',
+      dstPorts: '*',
+      protocol: '*',
+      srcCIDR: '10.0.0.0/16',
+      srcPorts: '*',
+    },
+    {
+      action: 'allow',
+      direction: 'outbound',
+      dstCIDR: '0.0.0.0/0',
+      dstPorts: '*',
+      protocol: '*',
+      srcCIDR: '0.0.0.0/0',
+      srcPorts: '*',
+    },
+  ];
+}
+
+const STANDARD_UBUNTU_OS = {
+  id: 'ubuntu',
+  idLike: 'debian',
+  name: 'Ubuntu',
+  prettyName: 'Ubuntu 22.04.3 LTS',
+  version: '22.04.3 LTS (Jammy Jellyfish)',
+  versionCodename: 'jammy',
+  versionId: '22.04',
+};
+
+const CPU_4_VCPU = {
+  architecture: 'x86_64',
+  cpus: 1,
+  cores: 2,
+  threads: 4,
+  maxSpeed: 2.5,
+  model: 'Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz',
+  vendor: 'GenuineIntel',
+};
+
+const CPU_8_VCPU = {
+  architecture: 'x86_64',
+  cpus: 1,
+  cores: 4,
+  threads: 8,
+  maxSpeed: 2.9,
+  model: 'Intel(R) Xeon(R) Platinum 8124M CPU @ 3.00GHz',
+  vendor: 'GenuineIntel',
+};
+
+const TESLA_T4_GPU = [
+  {
+    driverIndex: '0',
+    uuid: 'GPU-4b9f8d12-3c7a-4e89-9a1b-112233445566',
+    vendor: 'NVIDIA',
+    model: 'Tesla T4',
+    type: 'Discrete',
+    architecture: 'Turing',
+    driverVersion: '535.183.01',
+    cudaVersion: '12.2',
+    memoryTotalGB: 16,
+    memoryFreeGB: 14,
+    memoryUsedGB: 2,
+  },
+];
+
+const NODES_15: OnpremNode[] = [
+  // 1. AI Inference Cluster (3 Nodes: 4 vCPU, 16 GiB Memory, Tesla T4 16GB)
+  {
+    machineId: 'dc15-ai-gpu-01',
+    hostname: 'ai-gpu-01',
+    cpu: CPU_4_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 100, type: 'SSD' },
+    ...buildNodeNetwork(11, '11'),
+    firewallTable: buildFirewallRules(['22', '3000', '11434']),
+    os: STANDARD_UBUNTU_OS,
+    gpuCards: TESLA_T4_GPU,
+    clusterGroup: 'ai-inference',
+    workloadTag: 'OpenWebUI (Port 3000) + Gemma',
+    serviceUrl: 'http://3.36.85.152:3000',
+  },
+  {
+    machineId: 'dc15-ai-gpu-02',
+    hostname: 'ai-gpu-02',
+    cpu: CPU_4_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 100, type: 'SSD' },
+    ...buildNodeNetwork(12, '12'),
+    firewallTable: buildFirewallRules(['22', '11434']),
+    os: STANDARD_UBUNTU_OS,
+    gpuCards: TESLA_T4_GPU,
+    clusterGroup: 'ai-inference',
+    workloadTag: 'Ollama Runtime (Port 11434)',
+  },
+  {
+    machineId: 'dc15-ai-gpu-03',
+    hostname: 'ai-gpu-03',
+    cpu: CPU_4_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 100, type: 'SSD' },
+    ...buildNodeNetwork(13, '13'),
+    firewallTable: buildFirewallRules(['22', '8000']),
+    os: STANDARD_UBUNTU_OS,
+    gpuCards: TESLA_T4_GPU,
+    clusterGroup: 'ai-inference',
+    workloadTag: 'vLLM / Vector Worker',
+  },
+
+  // 2. Analytics Compute Cluster (6 Nodes: 8 vCPU, 16 GiB Memory, 100 GB SSD)
+  {
+    machineId: 'dc15-data-master-01',
+    hostname: 'data-master-01',
+    cpu: CPU_8_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 100, type: 'SSD' },
+    ...buildNodeNetwork(21, '21'),
+    firewallTable: buildFirewallRules(['22', '8080']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'analytics-compute',
+    workloadTag: 'Airflow Coordinator',
+  },
+  {
+    machineId: 'dc15-data-worker-01',
+    hostname: 'data-worker-01',
+    cpu: CPU_8_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 100, type: 'SSD' },
+    ...buildNodeNetwork(22, '22'),
+    firewallTable: buildFirewallRules(['22', '7077']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'analytics-compute',
+    workloadTag: 'PySpark Worker 1',
+  },
+  {
+    machineId: 'dc15-data-worker-02',
+    hostname: 'data-worker-02',
+    cpu: CPU_8_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 100, type: 'SSD' },
+    ...buildNodeNetwork(23, '23'),
+    firewallTable: buildFirewallRules(['22', '7077']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'analytics-compute',
+    workloadTag: 'PySpark Worker 2',
+  },
+  {
+    machineId: 'dc15-data-worker-03',
+    hostname: 'data-worker-03',
+    cpu: CPU_8_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 100, type: 'SSD' },
+    ...buildNodeNetwork(24, '24'),
+    firewallTable: buildFirewallRules(['22', '7077']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'analytics-compute',
+    workloadTag: 'PySpark Worker 3',
+  },
+  {
+    machineId: 'dc15-data-worker-04',
+    hostname: 'data-worker-04',
+    cpu: CPU_8_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 100, type: 'SSD' },
+    ...buildNodeNetwork(25, '25'),
+    firewallTable: buildFirewallRules(['22', '7077']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'analytics-compute',
+    workloadTag: 'PySpark Worker 4',
+  },
+  {
+    machineId: 'dc15-data-etl-01',
+    hostname: 'data-etl-01',
+    cpu: CPU_8_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 100, type: 'SSD' },
+    ...buildNodeNetwork(26, '26'),
+    firewallTable: buildFirewallRules(['22', '9092']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'analytics-compute',
+    workloadTag: 'Batch ETL Preprocessing',
+  },
+
+  // 3. Backend & DB Cluster (6 Nodes: 2x 32 GiB DB + 4x 16 GiB Service/Storage/Cache)
+  {
+    machineId: 'dc15-db-primary-01',
+    hostname: 'db-primary-01',
+    cpu: CPU_4_VCPU,
+    memory: { available: 28, totalSize: 32, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 300, type: 'SSD' },
+    ...buildNodeNetwork(31, '31'),
+    firewallTable: buildFirewallRules(['22', '5432']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'backend-db',
+    workloadTag: 'PostgreSQL Primary (5432)',
+  },
+  {
+    machineId: 'dc15-db-replica-02',
+    hostname: 'db-replica-02',
+    cpu: CPU_4_VCPU,
+    memory: { available: 28, totalSize: 32, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 300, type: 'SSD' },
+    ...buildNodeNetwork(32, '32'),
+    firewallTable: buildFirewallRules(['22', '5432']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'backend-db',
+    workloadTag: 'PostgreSQL Replica (5432)',
+  },
+  {
+    machineId: 'dc15-backend-api-01',
+    hostname: 'backend-api-01',
+    cpu: CPU_4_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 100, type: 'SSD' },
+    ...buildNodeNetwork(33, '33'),
+    firewallTable: buildFirewallRules(['22', '8000']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'backend-db',
+    workloadTag: 'FastAPI Service 1 (8000)',
+  },
+  {
+    machineId: 'dc15-backend-api-02',
+    hostname: 'backend-api-02',
+    cpu: CPU_4_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 100, type: 'SSD' },
+    ...buildNodeNetwork(34, '34'),
+    firewallTable: buildFirewallRules(['22', '8000']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'backend-db',
+    workloadTag: 'FastAPI Service 2 (8000)',
+  },
+  {
+    machineId: 'dc15-storage-gateway-01',
+    hostname: 'storage-gateway-01',
+    cpu: CPU_4_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 500, type: 'SSD' },
+    ...buildNodeNetwork(35, '35'),
+    firewallTable: buildFirewallRules(['22', '9000', '9001']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'backend-db',
+    workloadTag: 'MinIO / Storage Gateway',
+  },
+  {
+    machineId: 'dc15-cache-redis-01',
+    hostname: 'cache-redis-01',
+    cpu: CPU_4_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 100, type: 'SSD' },
+    ...buildNodeNetwork(36, '36'),
+    firewallTable: buildFirewallRules(['22', '6379']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'backend-db',
+    workloadTag: 'Redis Cache (6379)',
+  },
+];
+
+export const SAMPLE_15_NODE_INFRA: OnpremInfra = {
+  network: {
+    ipv4Networks: {
+      defaultGateways: NODES_15.map((n) => ({
+        interfaceName: 'ens5',
+        ip: '10.0.1.1',
+        machineId: n.machineId,
+      })),
+      cidrBlocks: ['10.0.1.0/24'],
+    },
+    ipv6Networks: {},
+  },
+  nodes: NODES_15,
+};
+
+export const SAMPLE_15_NODE_MODEL: OnpremModelEnvelope = {
+  id: 'sample-source-15node-dc-1',
+  name: '[Sample] enterprise-dc-15node-ai-hybrid',
+  description: '15-Node Enterprise Data Center (3 AI GPU Inference, 6 Analytics Compute, 6 Service & DB)',
+  onpremiseInfraModel: SAMPLE_15_NODE_INFRA,
+  version: '1.0',
+  stage: 'source',
+  category: 'infra',
+  schemaType: 'OnpremInfra',
+  lineage: {
+    sourceGroupId: 'sg-enterprise-15node',
+    sourceModelId: 'sample-source-15node-dc-1',
+  },
+  updatedTime: new Date().toISOString(),
+};
