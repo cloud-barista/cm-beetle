@@ -97,7 +97,6 @@ Server-side API proxy routes forward requests to backend services:
 - `/beetle/[[...path]]` → CM-Beetle API (`BEETLE_ENDPOINT`)
 - `/tumblebug/[[...path]]` → CB-Tumblebug API (`TUMBLEBUG_ENDPOINT`)
 - `/honeybee/[[...path]]` → CM-Honeybee API (`HONEYBEE_ENDPOINT`)
-- `/damselfly/[[...path]]` → CM-Damselfly API (`DAMSELFLY_ENDPOINT`)
 
 Environment variables are resolved server-side in Next.js API routes, not exposed to browser.
 
@@ -191,8 +190,7 @@ ui/
 │   │   ├── globals.css             # Tailwind theme & custom styles
 │   │   ├── beetle/[[...path]]/     # API proxy routes
 │   │   ├── tumblebug/[[...path]]/
-│   │   ├── honeybee/[[...path]]/
-│   │   └── damselfly/[[...path]]/
+│   │   └── honeybee/[[...path]]/
 │   ├── components/
 │   │   ├── layout/
 │   │   │   └── AppLayout.tsx       # Header, navigation, theme toggle
@@ -317,7 +315,6 @@ CMD ["node", "server.js"]
 BEETLE_ENDPOINT=http://cm-beetle:8056
 TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323
 HONEYBEE_ENDPOINT=http://cm-honeybee:8081
-DAMSELFLY_ENDPOINT=http://cm-damselfly:8088
 ```
 
 ### Docker Compose
@@ -328,7 +325,7 @@ Use overlay pattern for optional UI services:
 # Base services only
 docker compose up
 
-# With UI + Honeybee + Damselfly
+# With UI + Honeybee
 COMPOSE_FILE=docker-compose.yaml:docker-compose.ui.yaml docker compose up
 ```
 

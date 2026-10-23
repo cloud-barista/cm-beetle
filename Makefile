@@ -231,9 +231,8 @@ prepare-volumes: ## Create bind-mount directories with correct ownership
 		deployments/docker-compose/data/openbao-honeybee-data \
 		deployments/docker-compose/data/cm-honeybee-container/data \
 		deployments/docker-compose/data/cm-honeybee-container/db \
-		deployments/docker-compose/data/cm-damselfly-container/db \
 		deployments/docker-compose/data/mc-terrarium-container/.terrarium \
-		deployments/docker-compose/data/cm-beetle-container/db \
+		deployments/docker-compose/data/cm-beetle-container/db/artifacts \
 		deployments/docker-compose/data/cm-beetle-container/log \
 		2>/dev/null || \
 	sudo mkdir -p \
@@ -246,9 +245,8 @@ prepare-volumes: ## Create bind-mount directories with correct ownership
 		deployments/docker-compose/data/openbao-honeybee-data \
 		deployments/docker-compose/data/cm-honeybee-container/data \
 		deployments/docker-compose/data/cm-honeybee-container/db \
-		deployments/docker-compose/data/cm-damselfly-container/db \
 		deployments/docker-compose/data/mc-terrarium-container/.terrarium \
-		deployments/docker-compose/data/cm-beetle-container/db \
+		deployments/docker-compose/data/cm-beetle-container/db/artifacts \
 		deployments/docker-compose/data/cm-beetle-container/log
 	@# Fix ownership for mc-terrarium volume (container runs as appuser, uid 1000)
 	@if [ "$$(stat -c '%u' deployments/docker-compose/data/mc-terrarium-container/.terrarium 2>/dev/null)" != "$$(id -u)" ]; then \

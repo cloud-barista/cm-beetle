@@ -89,7 +89,8 @@ ENV BEETLE_API_ALLOW_ORIGINS=* \
 ENV BEETLE_UI_ENABLED=false
 
 ## Set internal DB config (lkvstore: local key-value store, default file path: ./db/beetle.db)
-ENV BEETLE_LKVSTORE_PATH=/app/db/beetle.db
+ENV BEETLE_LKVSTORE_PATH=/app/db/beetle.db \
+  BEETLE_ARTIFACT_PATH=/app/db/artifacts
 
 ## Logger configuration
 # Set log file path (default logfile path: ./beetle.log) 

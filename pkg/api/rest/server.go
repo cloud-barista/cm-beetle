@@ -302,6 +302,15 @@ func RunServer(port string) {
 	gBeetle.DELETE("/request/:reqId", controller.RestDeleteRequest)
 	gBeetle.DELETE("/requests", controller.RestDeleteAllRequests)
 
+	// Migration Artifact Management APIs
+	gArtifacts := gBeetle.Group("/artifacts")
+	gArtifacts.POST("", controller.CreateArtifact)
+	gArtifacts.GET("", controller.ListArtifacts)
+	gArtifacts.GET("/:id", controller.GetArtifact)
+	gArtifacts.PUT("/:id", controller.UpdateArtifact)
+	gArtifacts.DELETE("/:id", controller.DeleteArtifact)
+	gArtifacts.GET("/:id/lineage", controller.GetArtifactLineage)
+
 	/*
 	 * API group for computing infra recommendation
 	 */

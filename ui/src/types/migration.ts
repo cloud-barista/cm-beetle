@@ -146,13 +146,24 @@ export interface OnpremInfra {
   nlbs?: OnpremNlb[];
 }
 
-// Damselfly model envelopes
+// Migration artifact envelopes
+export interface ArtifactLineage {
+  sourceGroupId?: string;
+  sourceModelId?: string;
+  planningModelId?: string;
+  targetModelId?: string;
+}
+
 export interface OnpremModelEnvelope {
   id: string;
   name: string;
   description?: string;
   onpremiseInfraModel: OnpremInfra;
   version?: string;
+  stage?: 'source' | 'planning' | 'target';
+  category?: 'infra' | 'software' | 'data';
+  schemaType?: string;
+  lineage?: ArtifactLineage;
   updatedTime?: string;
 }
 
@@ -269,13 +280,17 @@ export interface RecommendedInfra {
   targetOsImageList?: any[];
 }
 
-// Damselfly cloud model envelop
+// Target cloud artifact envelope
 export interface CloudModelEnvelope {
   id: string;
   name: string;
   description?: string;
   cloudInfraModel: RecommendedInfra;
   version?: string;
+  stage?: 'source' | 'planning' | 'target';
+  category?: 'infra' | 'software' | 'data';
+  schemaType?: string;
+  lineage?: ArtifactLineage;
   updatedTime?: string;
 }
 

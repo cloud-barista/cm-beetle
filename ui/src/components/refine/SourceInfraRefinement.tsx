@@ -466,7 +466,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     setNewRulePort('');
   };
 
-  const handleSaveToDamselfly = async (result: { name: string; description: string; version: string; overwriteId: string | null }) => {
+  const handleSaveArtifact = async (result: { name: string; description: string; version: string; overwriteId: string | null }) => {
     if (!selectedSourceModel) return;
     const filteredNodes = tunedNodes.filter(n => !excludedNodeIds.includes(n.machineId));
     const updatedInfra = {
@@ -477,9 +477,17 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     };
 
     if (result.overwriteId) {
-      await updateSourceModel(result.overwriteId, result.name, result.description, result.version, updatedInfra);
+      await updateSourceModel(result.overwriteId, result.name, result.description, result.version, updatedInfra, {
+        stage: 'planning',
+        parentId: selectedSourceModel.id,
+        sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
+      });
     } else {
-      await saveSourceModel(result.name, result.description, result.version, updatedInfra);
+      await saveSourceModel(result.name, result.description, result.version, updatedInfra, {
+        stage: 'planning',
+        parentId: selectedSourceModel.id,
+        sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
+      });
     }
 
     try {
@@ -1738,7 +1746,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                       <button
                         onClick={() => setShowSaveModal(true)}
                         className="px-3.5 py-2.5 bg-bg-panel border border-border-main hover:bg-bg-input text-text-muted hover:text-text-main rounded-xl text-xs font-bold transition cursor-pointer"
-                        title="Save as a new named catalog revision in Damselfly"
+                        title="Save as a new named planning artifact revision"
                       >
                         Save Revision As...
                       </button>
@@ -1799,7 +1807,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
         existingRevisions={savedSourceModels
           .filter(m => !BUILTIN_SAMPLE_IDS.has(m.id))
           .map(m => ({ id: m.id, name: m.name, version: m.version }))}
-        onSave={handleSaveToDamselfly}
+        onSave={handleSaveArtifact}
       />
 
       {/* Delete Confirmation Modal */}

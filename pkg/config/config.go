@@ -27,6 +27,7 @@ type BeetleConfig struct {
 	API               ApiConfig         `mapstructure:"api"`
 	UI                UiConfig          `mapstructure:"ui"`
 	LKVStore          LkvStoreConfig    `mapstructure:"lkvstore"`
+	Artifact          ArtifactConfig    `mapstructure:"artifact"`
 	LogFile           LogfileConfig     `mapstructure:"logfile"`
 	LogLevel          string            `mapstructure:"loglevel"`
 	LogWriter         string            `mapstructure:"logwriter"`
@@ -61,6 +62,10 @@ type AuthConfig struct {
 }
 
 type LkvStoreConfig struct {
+	Path string `mapstructure:"path"`
+}
+
+type ArtifactConfig struct {
 	Path string `mapstructure:"path"`
 }
 
@@ -210,6 +215,7 @@ func bindEnvironmentVariables() {
 	viper.BindEnv("beetle.ui.enabled", "BEETLE_UI_ENABLED")
 	viper.BindEnv("beetle.ui.path", "BEETLE_UI_PATH")
 	viper.BindEnv("beetle.lkvstore.path", "BEETLE_LKVSTORE_PATH")
+	viper.BindEnv("beetle.artifact.path", "BEETLE_ARTIFACT_PATH")
 	viper.BindEnv("beetle.logfile.path", "BEETLE_LOGFILE_PATH")
 	viper.BindEnv("beetle.logfile.maxsize", "BEETLE_LOGFILE_MAXSIZE")
 	viper.BindEnv("beetle.logfile.maxbackups", "BEETLE_LOGFILE_MAXBACKUPS")

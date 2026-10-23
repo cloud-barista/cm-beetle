@@ -32,6 +32,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 
+	"github.com/cloud-barista/cm-beetle/pkg/core/artifact"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 
 	restServer "github.com/cloud-barista/cm-beetle/pkg/api/rest"
@@ -72,6 +73,14 @@ func init() {
 	lkvstore.Init(lkvstore.Config{
 		DbFilePath: dbFilePath,
 	})
+
+	// Initialize the local atomic JSON artifact store
+	artifactDirPath := config.Beetle.Artifact.Path
+	if _, err := artifact.InitStore(artifactDirPath); err != nil {
+		log.Warn().Err(err).Str("path", artifactDirPath).Msg("Failed to initialize artifact store at startup")
+	} else {
+		log.Info().Str("path", artifactDirPath).Msg("Initialized artifact store")
+	}
 
 	// Check Tumblebug readiness
 	apiUrl := config.Tumblebug.RestUrl + "/readyz"
@@ -162,6 +171,9 @@ func checkReadiness(url string) (bool, error) {
 
 // @tag.name [Admin] API Request Management
 // @tag.description APIs for managing API requests (list, cancel, etc.)
+
+// @tag.name [Artifact] Migration Artifact Management
+// @tag.description APIs for storing, normalizing, and tracking lineage of migration artifacts across source, planning, and target stages
 
 // 2. Computing Infrastructure & NLB (Recommendation -> Validation -> Migration)
 // @tag.name [Recommendation] Infrastructure

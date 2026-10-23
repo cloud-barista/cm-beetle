@@ -21,7 +21,6 @@ Browser → Next.js (port 3000)
              ├── /beetle/*    → BEETLE_ENDPOINT (cm-beetle:8056)
              ├── /tumblebug/* → TUMBLEBUG_ENDPOINT (cb-tumblebug:1323)
              ├── /honeybee/*  → HONEYBEE_ENDPOINT (cm-honeybee:8081)
-             ├── /damselfly/* → DAMSELFLY_ENDPOINT (cm-damselfly:8088)
              └── /spider/*    → SPIDER_ENDPOINT (cb-spider:1024)
 ```
 
@@ -60,7 +59,6 @@ docker run -p 3000:3000 \
   -e BEETLE_ENDPOINT=http://cm-beetle:8056 \
   -e TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323 \
   -e HONEYBEE_ENDPOINT=http://cm-honeybee:8081 \
-  -e DAMSELFLY_ENDPOINT=http://cm-damselfly:8088 \
   -e SPIDER_ENDPOINT=http://cb-spider:1024 \
   -e MAPUI_ENDPOINT=http://cb-mapui:1324 \
   cm-beetle-ui
@@ -73,7 +71,6 @@ docker run -p 3000:3000 \
 | `BEETLE_ENDPOINT`    | `http://localhost:8056` | CM-Beetle API server (v0.6.0)        |
 | `TUMBLEBUG_ENDPOINT` | `http://localhost:1323` | CB-Tumblebug API server (v0.12.30)   |
 | `HONEYBEE_ENDPOINT`  | `http://localhost:8081` | CM-Honeybee API server (v0.6.0)      |
-| `DAMSELFLY_ENDPOINT` | `http://localhost:8088` | CM-Damselfly API server (v0.6.2)     |
 | `SPIDER_ENDPOINT`    | `http://localhost:1024` | CB-Spider API server (v0.12.42)      |
 | `MAPUI_ENDPOINT`     | `http://localhost:1324` | CB-MapUI Web Interface (v0.12.56)    |
 

@@ -841,7 +841,7 @@ export const ObjectStorageMigration: React.FC = () => {
       setLoadedModelName(result.name);
       setLoadedModelVersion(result.version);
       setLoadedModelTime(new Date().toLocaleString());
-      setModelLog((prev) => [...prev, `[Damselfly/Beetle] Source Storage Revision Saved (ID: ${modelId}, Name: ${result.name})`]);
+      setModelLog((prev) => [...prev, `[Beetle] Source Storage Artifact Saved (ID: ${modelId}, Name: ${result.name})`]);
     }
   };
 
@@ -927,7 +927,7 @@ export const ObjectStorageMigration: React.FC = () => {
       };
       setSavedTargetModels((prev) => [newModel, ...prev.filter((m) => m.id !== modelId)]);
       setSelectedTargetModelId(modelId);
-      setModelLog((prev) => [...prev, `[Damselfly/Beetle] Target Storage Model Revision Saved (ID: ${modelId}, Name: ${result.name})`]);
+      setModelLog((prev) => [...prev, `[Beetle] Target Storage Artifact Saved (ID: ${modelId}, Name: ${result.name})`]);
     }
   };
 
@@ -1316,7 +1316,7 @@ export const ObjectStorageMigration: React.FC = () => {
                   <span>Save Source Storage Revision</span>
                 </button>
                 <p className="text-xs text-text-muted text-center font-mono">
-                  Opens a popup to version and save this collected model to Damselfly / file system.
+                  Opens a popup to version and save this collected storage artifact.
                 </p>
               </div>
             </div>
@@ -2917,7 +2917,7 @@ export const ObjectStorageMigration: React.FC = () => {
         defaultVersion="1.0.0"
         existingRevisions={savedSourceModels}
         onSave={handleSaveSourceModelRevision}
-        successMessage="Source storage model revision saved to Damselfly successfully."
+        successMessage="Source storage artifact revision saved successfully."
       />
 
       {/* Save Target Model Revision Modal */}
@@ -2930,7 +2930,7 @@ export const ObjectStorageMigration: React.FC = () => {
         defaultVersion="1.0.0"
         existingRevisions={[]}
         onSave={handleSaveTargetModelRevision}
-        successMessage="Target storage model revision saved to Damselfly successfully."
+        successMessage="Target storage artifact revision saved successfully."
       />
 
       {/* CORS Specification & Configuration Rules Guide Modal Popup */}

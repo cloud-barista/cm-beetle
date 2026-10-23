@@ -645,12 +645,18 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     }
   };
 
-  const handleSaveToDamselfly = async (result: { name: string; description: string; version: string; overwriteId: string | null }) => {
+  const handleSaveArtifact = async (result: { name: string; description: string; version: string; overwriteId: string | null }) => {
     if (!refinedSourceInfra) return;
     if (result.overwriteId) {
-      await updateSourceModel(result.overwriteId, result.name, result.description, result.version, refinedSourceInfra);
+      await updateSourceModel(result.overwriteId, result.name, result.description, result.version, refinedSourceInfra, {
+        stage: 'source',
+        sourceGroupId: activeSgId || undefined
+      });
     } else {
-      await saveSourceModel(result.name, result.description, result.version, refinedSourceInfra);
+      await saveSourceModel(result.name, result.description, result.version, refinedSourceInfra, {
+        stage: 'source',
+        sourceGroupId: activeSgId || undefined
+      });
     }
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
@@ -934,7 +940,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                 <Save className="w-4 h-4 text-slate-950" /> Save Source Infra Revision
               </button>
               <p className="text-xs text-text-muted text-center leading-relaxed">
-                Opens a popup to name, version, and save this collected model to Damselfly.
+                Opens a popup to name, version, and save this collected source artifact.
               </p>
             </div>
           </div>
@@ -1217,14 +1223,14 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
         existingRevisions={savedSourceModels
           .filter(m => m.id !== 'sample-source-infra-1')
           .map(m => ({ id: m.id, name: m.name, version: m.version }))}
-        onSave={handleSaveToDamselfly}
+        onSave={handleSaveArtifact}
       />
 
       {/* Toast Notification */}
       {saveSuccess && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-950/95 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 px-5 py-4.5 rounded-2xl shadow-2xl shadow-emerald-500/10 animate-fade-in font-bold text-sm backdrop-blur-md">
           <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-          <span>Model saved to Damselfly successfully.</span>
+          <span>Artifact revision saved successfully.</span>
         </div>
       )}
     </div>
