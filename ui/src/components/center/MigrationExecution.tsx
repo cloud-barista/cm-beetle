@@ -678,7 +678,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     setShowLaunchModal(false);
 
     // Call Beetle API
-    const res = await beetleApi.executeMigration(customNsId, customNameSeed, cloudModel, useExistingValidation);
+    const res = await beetleApi.executeMigration(customNsId, customNameSeed, cloudModel, useExistingValidation, selectedCloudModel.lineage);
     if (!res.success) {
       // Backend returned error (e.g. resource already exists or validation failed)
       setJobs(prev =>

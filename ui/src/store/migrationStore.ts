@@ -150,6 +150,10 @@ export const DEFAULT_GPU_SOURCE_MODEL: OnpremModelEnvelope = {
   description: 'AI/LLM cluster with heterogeneous GPUs (2x A100 80GB, 1x T4, 1x MI350, 1x L4)',
   onpremiseInfraModel: sampleGpuData.sourceInfra as unknown as OnpremInfra,
   version: '1.0',
+  stage: 'source',
+  category: 'infra',
+  schemaType: 'OnpremInfra',
+  lineage: { sourceModelId: 'sample-source-gpu-infra-1' },
   updatedTime: new Date().toISOString()
 };
 
@@ -159,6 +163,10 @@ export const DEFAULT_FALLBACK_SOURCE_MODEL: OnpremModelEnvelope = {
   description: '1 HAProxy/App node + 2 InfluxDB nodes with NLB (sample)',
   onpremiseInfraModel: DEMO_SOURCE_INFRA,
   version: '1.0',
+  stage: 'source',
+  category: 'infra',
+  schemaType: 'OnpremInfra',
+  lineage: { sourceModelId: 'sample-source-infra-1' },
   updatedTime: new Date().toISOString()
 };
 
@@ -543,23 +551,96 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
 
   saveSourceModel: async (name, description, version, infra, options) => {
     const activeSgId = get().activeSgId;
-    const saved = await artifactApi.saveSourceModel(name, description, infra, version, {
-      stage: options?.stage || 'source',
-      parentId: options?.parentId,
-      sourceGroupId: options?.sourceGroupId || activeSgId || undefined
-    });
-    set({
-      savedSourceModels: [...get().savedSourceModels, saved],
-      selectedSourceModel: saved
-    });
-    return saved;
+    const stage = options?.stage || 'source';
+    const parentModel = get().selectedSourceModel;
+    const sourceGroupId = options?.sourceGroupId || parentModel?.lineage?.sourceGroupId || activeSgId || undefined;
+    const parentId = options?.parentId || (stage === 'planning' ? (parentModel?.lineage?.sourceModelId || parentModel?.id) : undefined);
+
+    try {
+      const saved = await artifactApi.saveSourceModel(name, description, infra, version, {
+        stage,
+        parentId,
+        sourceGroupId
+      });
+      set({
+        savedSourceModels: [...get().savedSourceModels.filter(m => m.id !== saved.id), saved],
+        selectedSourceModel: saved,
+        refinedSourceInfra: infra
+      });
+      return saved;
+    } catch (err) {
+      console.warn('Artifact save error, saving source/planning model to local state:', err);
+      const localId = `art-${stage === 'planning' ? 'plan' : 'src'}-${Date.now()}`;
+      const localSaved: OnpremModelEnvelope = {
+        id: localId,
+        name,
+        description,
+        version: version || '1.0.0',
+        stage,
+        category: 'infra',
+        schemaType: 'OnpremInfra',
+        lineage: {
+          sourceGroupId,
+          sourceModelId: stage === 'source' ? localId : (parentId || parentModel?.id),
+          planningModelId: stage === 'planning' ? localId : undefined
+        },
+        onpremiseInfraModel: infra,
+        updatedTime: new Date().toISOString()
+      };
+      set({
+        savedSourceModels: [...get().savedSourceModels.filter(m => m.name !== name), localSaved],
+        selectedSourceModel: localSaved,
+        refinedSourceInfra: infra
+      });
+      return localSaved;
+    }
   },
 
   updateSourceModel: async (id, name, description, version, updatedInfra, options) => {
-    const saved = await artifactApi.updateSourceModel(id, name, description, updatedInfra, version, options);
-    const updatedList = get().savedSourceModels.map(m => m.id === id ? saved : m);
-    set({ savedSourceModels: updatedList, selectedSourceModel: saved });
-    return saved;
+    const parentModel = get().selectedSourceModel;
+    const stage = options?.stage || parentModel?.stage || 'source';
+    const sourceGroupId = options?.sourceGroupId || parentModel?.lineage?.sourceGroupId || get().activeSgId || undefined;
+    const parentId = options?.parentId || (stage === 'planning' ? parentModel?.lineage?.sourceModelId : undefined);
+
+    try {
+      const saved = await artifactApi.updateSourceModel(id, name, description, updatedInfra, version, {
+        stage,
+        parentId,
+        sourceGroupId
+      });
+      const updatedList = get().savedSourceModels.map(m => m.id === id ? saved : m);
+      set({
+        savedSourceModels: updatedList,
+        selectedSourceModel: saved,
+        refinedSourceInfra: updatedInfra
+      });
+      return saved;
+    } catch (err) {
+      console.warn('Artifact update error, updating source/planning model in local state:', err);
+      const localSaved: OnpremModelEnvelope = {
+        id,
+        name,
+        description,
+        version: version || '1.0.0',
+        stage,
+        category: 'infra',
+        schemaType: 'OnpremInfra',
+        lineage: {
+          sourceGroupId,
+          sourceModelId: stage === 'source' ? id : (parentId || parentModel?.lineage?.sourceModelId),
+          planningModelId: stage === 'planning' ? id : parentModel?.lineage?.planningModelId
+        },
+        onpremiseInfraModel: updatedInfra,
+        updatedTime: new Date().toISOString()
+      };
+      const updatedList = get().savedSourceModels.map(m => m.id === id ? localSaved : m);
+      set({
+        savedSourceModels: updatedList,
+        selectedSourceModel: localSaved,
+        refinedSourceInfra: updatedInfra
+      });
+      return localSaved;
+    }
   },
 
   deleteSourceModel: async (id) => {
@@ -736,12 +817,22 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
       return saved;
     } catch (err) {
       console.warn('Artifact save error, saving to local state:', err);
+      const localId = `cloud-model-${Date.now()}`;
       const localSaved: CloudModelEnvelope = {
-        id: `cloud-model-${Date.now()}`,
+        id: localId,
         name,
         description,
         cloudInfraModel: cloudInfra,
         version: version || '1.0.0',
+        stage: 'target',
+        category: 'infra',
+        schemaType: 'RecommendedInfra',
+        lineage: {
+          sourceGroupId,
+          sourceModelId: parentModel?.lineage?.sourceModelId || (parentModel?.stage !== 'planning' ? parentModel?.id : undefined),
+          planningModelId: parentModel?.lineage?.planningModelId || (parentModel?.stage === 'planning' ? parentModel?.id : undefined),
+          targetModelId: localId
+        },
         updatedTime: new Date().toISOString()
       };
       set({
@@ -753,8 +844,14 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   updateCloudModel: async (id, name, description, version, cloudInfra) => {
+    const parentModel = get().selectedSourceModel;
+    const existingCloud = get().selectedCloudModel;
+    const sourceGroupId = parentModel?.lineage?.sourceGroupId || existingCloud?.lineage?.sourceGroupId || get().activeSgId || undefined;
     try {
-      const saved = await artifactApi.updateCloudModel(id, name, description, cloudInfra, version);
+      const saved = await artifactApi.updateCloudModel(id, name, description, cloudInfra, version, {
+        parentId: parentModel?.id,
+        sourceGroupId
+      });
       const updatedList = get().savedCloudModels.map(m => m.id === id ? saved : m);
       set({ savedCloudModels: updatedList, selectedCloudModel: saved });
       return saved;
@@ -766,6 +863,15 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
         description,
         cloudInfraModel: cloudInfra,
         version: version || '1.0.0',
+        stage: 'target',
+        category: 'infra',
+        schemaType: 'RecommendedInfra',
+        lineage: {
+          sourceGroupId,
+          sourceModelId: parentModel?.lineage?.sourceModelId || existingCloud?.lineage?.sourceModelId || (parentModel?.stage !== 'planning' ? parentModel?.id : undefined),
+          planningModelId: parentModel?.lineage?.planningModelId || existingCloud?.lineage?.planningModelId || (parentModel?.stage === 'planning' ? parentModel?.id : undefined),
+          targetModelId: id
+        },
         updatedTime: new Date().toISOString()
       };
       const updatedList = get().savedCloudModels.map(m => m.id === id ? localSaved : m);
@@ -849,7 +955,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     
     try {
       // Direct live REST API request to Beetle for physical provisioning
-      const res = await beetleApi.executeMigration(nsId, nameSeed, cloudModel);
+      const lineage = get().selectedCloudModel?.lineage;
+      const res = await beetleApi.executeMigration(nsId, nameSeed, cloudModel, true, lineage);
       if (res.success && res.data) {
         const infraId = res.data.name || cloudModel.targetInfra.name;
         set({ activeDeploymentId: infraId });

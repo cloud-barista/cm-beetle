@@ -458,6 +458,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
       const updatedModel: OnpremModelEnvelope = {
         ...selectedSourceModel,
+        stage: selectedSourceModel.stage || 'planning',
         onpremiseInfraModel: updatedInfra,
         version: nextVer.toString(),
         updatedTime: new Date().toISOString()
@@ -1177,9 +1178,12 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                   className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
                 >
                   <option value="">-- Choose Source Model --</option>
-                  {savedSourceModels.map((m: any) => (
-                    <option key={m.id} value={m.id}>{m.name} (v{m.version || '1.0'})</option>
-                  ))}
+                  {savedSourceModels.map((m: any) => {
+                    const stageLabel = m.stage === 'planning' ? '[Planning] ' : '[Source] ';
+                    return (
+                      <option key={m.id} value={m.id}>{stageLabel}{m.name} (v{m.version || '1.0'})</option>
+                    );
+                  })}
                 </select>
                 <button
                   onClick={handleLoadModel}
@@ -1193,9 +1197,20 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                 </button>
               </div>
               {isModelLoaded && tunedNodes.length > 0 && (
-                <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-                  {tunedNodes.length} node(s) ready for recommendation
-                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                    {tunedNodes.length} node(s) ready for recommendation
+                  </span>
+                  {selectedSourceModel && (
+                    <span className={`px-2 py-0.5 rounded font-extrabold border ${
+                      selectedSourceModel.stage === 'planning'
+                        ? 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30'
+                        : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                    }`}>
+                      Stage: {selectedSourceModel.stage || 'source'}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 

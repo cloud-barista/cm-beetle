@@ -2711,6 +2711,8 @@ definitions:
     properties:
       description:
         type: string
+      lineage:
+        $ref: '#/definitions/lineage.MigrationLineage'
       status:
         type: string
       targetCloud:
@@ -10925,6 +10927,8 @@ paths:
         **Workflow**:
         1. Call POST /recommendation/k8sCluster to get a RecommendK8sInfraResponse.
         2. Pass the recommendation result as-is to this endpoint.
+
+        The optional `lineage` is recorded on the K8s cluster as labels, together with `cm-migrated-at`.
 
         **Internal steps**: VNet → SSH Key → Security Group → K8s Cluster → Node Groups
 

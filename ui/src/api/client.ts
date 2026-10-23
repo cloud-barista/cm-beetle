@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, CheckSSHReadyResponse } from '../types/migration';
+import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, CheckSSHReadyResponse, ArtifactLineage } from '../types/migration';
 
 // Shared Axios client with basic authentication pre-configured (standard Cloud-Barista settings)
 const api = axios.create({
@@ -272,7 +272,8 @@ export const artifactApi = {
     name: string,
     description: string,
     cloudInfraModel: RecommendedInfra,
-    version?: string
+    version?: string,
+    options?: SaveArtifactOptions
   ): Promise<CloudModelEnvelope> => {
     const response = await api.put(`/beetle/artifacts/${id}`, {
       name,
@@ -281,6 +282,8 @@ export const artifactApi = {
       category: 'infra',
       stage: 'target',
       schemaType: 'RecommendedInfra',
+      parentId: options?.parentId,
+      sourceGroupId: options?.sourceGroupId,
       payload: cloudInfraModel
     });
     return mapArtifactToCloudEnvelope(response.data, cloudInfraModel);
@@ -419,7 +422,8 @@ export const beetleApi = {
     nsId: string,
     nameSeed: string,
     cloudModel: RecommendedInfra,
-    useExisting: boolean = true
+    useExisting: boolean = true,
+    lineage?: ArtifactLineage
   ): Promise<{ success: boolean; reqId?: string; data?: any; error?: string }> => {
     try {
       const params = new URLSearchParams();
@@ -427,7 +431,8 @@ export const beetleApi = {
         params.set('nameSeed', nameSeed.trim());
       }
       params.set('useExisting', String(useExisting));
-      const response = await api.post(`/beetle/migration/ns/${nsId}/infra?${params.toString()}`, cloudModel, {
+      const requestBody = lineage ? { ...cloudModel, lineage } : cloudModel;
+      const response = await api.post(`/beetle/migration/ns/${nsId}/infra?${params.toString()}`, requestBody, {
         headers: {
           'Prefer': 'respond-async'
         }
@@ -980,29 +985,50 @@ export const beetleApi = {
     }
   },
 
-  // Step 7~12: Source Object Storage Artifact Save & Load
-  saveSourceObjectStorageModel: async (sourceModel: any): Promise<{ success: boolean; modelId: string; error?: string }> => {
+  // Step 7~12: Source & Planning Object Storage Artifact Save & Load
+  saveSourceObjectStorageModel: async (
+    sourceModel: any,
+    options?: {
+      name?: string;
+      description?: string;
+      version?: string;
+      stage?: 'source' | 'planning';
+      parentId?: string;
+      overwriteId?: string | null;
+    }
+  ): Promise<{ success: boolean; modelId: string; stage?: 'source' | 'planning'; lineage?: ArtifactLineage; error?: string }> => {
     sourceModelCachePromise = null;
     const payload = sourceModel?.sourceModel || sourceModel;
+    const targetStage = options?.stage || 'source';
+    const reqBody = {
+      name: options?.name || (targetStage === 'planning' ? 'planning-object-storage-model' : 'source-object-storage-model'),
+      description: options?.description || payload?.description || `${targetStage === 'planning' ? 'Refined planning' : 'Source'} object storage artifact`,
+      version: options?.version || '1.0.0',
+      category: 'infra',
+      stage: targetStage,
+      schemaType: 'SourceObjectStorage',
+      parentId: options?.parentId,
+      payload
+    };
     try {
-      const response = await api.post('/beetle/artifacts', {
-        name: 'source-object-storage-model',
-        description: payload?.description || 'Source object storage artifact',
-        category: 'infra',
-        stage: 'source',
-        schemaType: 'SourceObjectStorage',
-        payload
-      });
+      const response = options?.overwriteId
+        ? await api.put(`/beetle/artifacts/${options.overwriteId}`, reqBody)
+        : await api.post('/beetle/artifacts', reqBody);
       const art = response.data?.data || response.data;
       try { await axios.post('/api/models/source', sourceModel); } catch {}
-      return { success: true, modelId: art?.id || `src-model-${Date.now()}` };
+      return {
+        success: true,
+        modelId: art?.id || options?.overwriteId || `src-model-${Date.now()}`,
+        stage: art?.stage || targetStage,
+        lineage: art?.lineage
+      };
     } catch {
       try {
         const response = await axios.post('/api/models/source', sourceModel);
-        return { success: true, modelId: response.data?.modelId || `src-model-${Date.now()}` };
+        return { success: true, modelId: response.data?.modelId || `src-model-${Date.now()}`, stage: targetStage };
       } catch (err: any) {
         console.warn('File persistence fallback: saving to local storage', err);
-        return { success: true, modelId: `src-model-${Date.now().toString().slice(-4)}` };
+        return { success: true, modelId: `src-model-${Date.now().toString().slice(-4)}`, stage: targetStage };
       }
     }
   },
@@ -1013,7 +1039,7 @@ export const beetleApi = {
     }
     sourceModelCachePromise = (async () => {
       try {
-        const response = await api.get('/beetle/artifacts?category=infra&stage=source&schemaType=SourceObjectStorage');
+        const response = await api.get('/beetle/artifacts?category=infra&schemaType=SourceObjectStorage');
         const list = response.data?.data || response.data;
         if (Array.isArray(list) && list.length > 0 && list[0]?.payload) {
           return { success: true, sourceModel: list[0].payload };
@@ -1032,21 +1058,39 @@ export const beetleApi = {
   },
 
   // Step 15~20: Target Object Storage Artifact Save & Load
-  saveTargetObjectStorageModel: async (targetModel: any): Promise<{ success: boolean; modelId: string; error?: string }> => {
+  saveTargetObjectStorageModel: async (
+    targetModel: any,
+    options?: {
+      name?: string;
+      description?: string;
+      version?: string;
+      parentId?: string;
+      overwriteId?: string | null;
+    }
+  ): Promise<{ success: boolean; modelId: string; lineage?: ArtifactLineage; error?: string }> => {
     targetModelCachePromise = null;
     const payload = targetModel?.targetModel || targetModel?.recommendation || targetModel;
+    const reqBody = {
+      name: options?.name || 'target-object-storage-model',
+      description: options?.description || payload?.description || 'Target object storage artifact',
+      version: options?.version || '1.0.0',
+      category: 'infra',
+      stage: 'target',
+      schemaType: 'RecommendedObjectStorage',
+      parentId: options?.parentId,
+      payload
+    };
     try {
-      const response = await api.post('/beetle/artifacts', {
-        name: 'target-object-storage-model',
-        description: payload?.description || 'Target object storage artifact',
-        category: 'infra',
-        stage: 'target',
-        schemaType: 'RecommendedObjectStorage',
-        payload
-      });
+      const response = options?.overwriteId
+        ? await api.put(`/beetle/artifacts/${options.overwriteId}`, reqBody)
+        : await api.post('/beetle/artifacts', reqBody);
       const art = response.data?.data || response.data;
       try { await axios.post('/api/models/target', targetModel); } catch {}
-      return { success: true, modelId: art?.id || `tgt-model-${Date.now()}` };
+      return {
+        success: true,
+        modelId: art?.id || options?.overwriteId || `tgt-model-${Date.now()}`,
+        lineage: art?.lineage
+      };
     } catch {
       try {
         const response = await axios.post('/api/models/target', targetModel);
