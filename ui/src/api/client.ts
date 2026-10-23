@@ -131,158 +131,181 @@ export const honeybeeApi = {
 };
 
 // ============================================================================
-// 2. CM-Damselfly Server API Client (Model Repository)
+// 2. CM-Beetle Artifact Repository API Client (/beetle/artifacts)
 // ============================================================================
-export const damselflyApi = {
-  // Save source infra model as a catalog template
-  saveSourceModel: async (name: string, description: string, onpremiseInfraModel: OnpremInfra, version?: string): Promise<OnpremModelEnvelope> => {
-    const response = await api.post('/damselfly/infra-model?modelType=onprem&isTargetModel=false', {
-      userModelName: name,
-      userModelVersion: version,
+export interface SaveArtifactOptions {
+  stage?: 'source' | 'planning' | 'target';
+  parentId?: string;
+  sourceGroupId?: string;
+}
+
+const mapArtifactToSourceEnvelope = (raw: any, fallbackInfra?: OnpremInfra): OnpremModelEnvelope => {
+  const m = raw?.data || raw || {};
+  let payload = m.payload || m.onpremiseInfraModel || fallbackInfra;
+  if (typeof payload === 'string') {
+    try { payload = JSON.parse(payload); } catch {}
+  }
+  return {
+    id: m.id || m.uid || `art-src-${Date.now()}`,
+    name: m.name || m.userModelName || 'Unnamed Artifact',
+    description: m.description || '',
+    version: m.version || m.userModelVersion || '1.0.0',
+    stage: m.stage || 'source',
+    category: m.category || 'infra',
+    schemaType: m.schemaType || 'OnpremInfra',
+    lineage: m.lineage,
+    onpremiseInfraModel: payload as OnpremInfra,
+    updatedTime: m.updateTime || m.createTime || m.updatedTime || new Date().toISOString()
+  };
+};
+
+const mapArtifactToCloudEnvelope = (raw: any, fallbackInfra?: RecommendedInfra): CloudModelEnvelope => {
+  const m = raw?.data || raw || {};
+  let payload = m.payload || m.cloudInfraModel || m.cloud_infra_model || m.recommendedInfra || fallbackInfra;
+  if (typeof payload === 'string') {
+    try { payload = JSON.parse(payload); } catch {}
+  }
+  return {
+    id: m.id || m.uid || `art-tgt-${Date.now()}`,
+    name: m.name || m.userModelName || 'Unnamed Design',
+    description: m.description || '',
+    version: m.version || m.userModelVersion || '1.0.0',
+    stage: m.stage || 'target',
+    category: m.category || 'infra',
+    schemaType: m.schemaType || 'RecommendedInfra',
+    lineage: m.lineage,
+    cloudInfraModel: payload as RecommendedInfra,
+    updatedTime: m.updateTime || m.createTime || m.updatedTime || new Date().toISOString()
+  };
+};
+
+export const artifactApi = {
+  // Save source or planning infra artifact
+  saveSourceModel: async (
+    name: string,
+    description: string,
+    onpremiseInfraModel: OnpremInfra,
+    version?: string,
+    options?: SaveArtifactOptions
+  ): Promise<OnpremModelEnvelope> => {
+    const response = await api.post('/beetle/artifacts', {
+      name,
       description,
-      onpremiseInfraModel
+      version: version || '1.0.0',
+      category: 'infra',
+      stage: options?.stage || 'source',
+      schemaType: 'OnpremInfra',
+      parentId: options?.parentId,
+      sourceGroupId: options?.sourceGroupId,
+      payload: onpremiseInfraModel
     });
-    const m = response.data;
-    return { ...m, id: m.id || m.uid || 'model-demo-1', name: m.name || m.userModelName || name, version: m.version || m.userModelVersion || version };
+    return mapArtifactToSourceEnvelope(response.data, onpremiseInfraModel);
   },
 
-  // Update existing source model
-  updateSourceModel: async (id: string, name: string, description: string, onpremiseInfraModel: OnpremInfra, version?: string): Promise<OnpremModelEnvelope> => {
-    const response = await api.put(`/damselfly/infra-model/${id}?modelType=onprem&isTargetModel=false`, {
-      userModelName: name,
-      userModelVersion: version,
+  // Update existing source or planning infra artifact
+  updateSourceModel: async (
+    id: string,
+    name: string,
+    description: string,
+    onpremiseInfraModel: OnpremInfra,
+    version?: string,
+    options?: SaveArtifactOptions
+  ): Promise<OnpremModelEnvelope> => {
+    const response = await api.put(`/beetle/artifacts/${id}`, {
+      name,
       description,
-      onpremiseInfraModel
+      version: version || '1.0.0',
+      category: 'infra',
+      stage: options?.stage,
+      schemaType: 'OnpremInfra',
+      parentId: options?.parentId,
+      sourceGroupId: options?.sourceGroupId,
+      payload: onpremiseInfraModel
     });
-    const m = response.data;
-    return { ...m, id: m.id || m.uid || id, name: m.name || m.userModelName || name, version: m.version || m.userModelVersion || version };
+    return mapArtifactToSourceEnvelope(response.data, onpremiseInfraModel);
   },
 
-  // Delete existing source model
+  // Delete existing source or planning artifact
   deleteSourceModel: async (id: string): Promise<void> => {
-    await api.delete(`/damselfly/infra-model/${id}`);
+    await api.delete(`/beetle/artifacts/${id}`);
   },
 
-  // Get all source models list
+  // Get all source and planning OnpremInfra artifacts
   getSourceModels: async (): Promise<OnpremModelEnvelope[]> => {
-    const response = await api.get('/damselfly/infra-model?modelType=onprem&isTargetModel=false');
-    const dataList = Array.isArray(response.data) ? response.data : (response.data ? [response.data] : []);
-    return dataList.map((m: any) => ({
-      ...m,
-      id: m.id || m.uid,
-      name: m.name || m.userModelName || 'Unnamed Model',
-      description: m.description,
-      onpremiseInfraModel: m.onpremiseInfraModel,
-      version: m.version || m.userModelVersion || '1.0.0'
-    }));
+    const response = await api.get('/beetle/artifacts?category=infra&schemaType=OnpremInfra');
+    const rawList = response.data?.data ?? response.data;
+    const dataList = Array.isArray(rawList) ? rawList : (rawList ? [rawList] : []);
+    return dataList.map((m: any) => mapArtifactToSourceEnvelope(m));
   },
 
-  // Get single source model spec
+  // Get single source or planning artifact by ID
   getSourceModel: async (id: string): Promise<OnpremModelEnvelope> => {
-    const response = await api.get(`/damselfly/infra-model/${id}?modelType=onprem&isTargetModel=false`);
-    const m = response.data;
-    return {
-      ...m,
-      id: m.id || m.uid || id,
-      name: m.name || m.userModelName,
-      version: m.version || m.userModelVersion || '1.0.0'
-    };
+    const response = await api.get(`/beetle/artifacts/${id}`);
+    return mapArtifactToSourceEnvelope(response.data);
   },
 
-  // Save recommended target cloud spec as design template
-  saveCloudModel: async (name: string, description: string, cloudInfraModel: RecommendedInfra, version?: string): Promise<CloudModelEnvelope> => {
-    const csp = cloudInfraModel?.targetCloud?.csp || '';
-    const region = cloudInfraModel?.targetCloud?.region || '';
-    const response = await api.post('/damselfly/infra-model?modelType=cloud&isTargetModel=true', {
-      userModelName: name,
-      userModelVersion: version,
+  // Save recommended target cloud spec as a target stage artifact
+  saveCloudModel: async (
+    name: string,
+    description: string,
+    cloudInfraModel: RecommendedInfra,
+    version?: string,
+    options?: SaveArtifactOptions
+  ): Promise<CloudModelEnvelope> => {
+    const response = await api.post('/beetle/artifacts', {
+      name,
       description,
-      csp,
-      region,
-      cloudInfraModel
+      version: version || '1.0.0',
+      category: 'infra',
+      stage: 'target',
+      schemaType: 'RecommendedInfra',
+      parentId: options?.parentId,
+      sourceGroupId: options?.sourceGroupId,
+      payload: cloudInfraModel
     });
-    const m = response.data;
-    let infra = m.cloudInfraModel || m.cloud_infra_model || m.recommendedInfra || cloudInfraModel;
-    if (typeof infra === 'string') {
-      try { infra = JSON.parse(infra); } catch (e) {}
-    }
-    return {
-      ...m,
-      id: m.id || m.uid || `cloud-model-${Date.now()}`,
-      name: m.name || m.userModelName || name,
-      description: m.description || description,
-      version: m.version || m.userModelVersion || version || '1.0.0',
-      cloudInfraModel: infra,
-      updatedTime: m.updatedTime || new Date().toISOString()
-    };
+    return mapArtifactToCloudEnvelope(response.data, cloudInfraModel);
   },
 
-  // Update existing target cloud design
-  updateCloudModel: async (id: string, name: string, description: string, cloudInfraModel: RecommendedInfra, version?: string): Promise<CloudModelEnvelope> => {
-    const csp = cloudInfraModel?.targetCloud?.csp || '';
-    const region = cloudInfraModel?.targetCloud?.region || '';
-    const response = await api.put(`/damselfly/infra-model/${id}?modelType=cloud&isTargetModel=true`, {
-      userModelName: name,
-      userModelVersion: version,
+  // Update existing target cloud design artifact
+  updateCloudModel: async (
+    id: string,
+    name: string,
+    description: string,
+    cloudInfraModel: RecommendedInfra,
+    version?: string
+  ): Promise<CloudModelEnvelope> => {
+    const response = await api.put(`/beetle/artifacts/${id}`, {
+      name,
       description,
-      csp,
-      region,
-      cloudInfraModel
+      version: version || '1.0.0',
+      category: 'infra',
+      stage: 'target',
+      schemaType: 'RecommendedInfra',
+      payload: cloudInfraModel
     });
-    const m = response.data;
-    let infra = m.cloudInfraModel || m.cloud_infra_model || m.recommendedInfra || cloudInfraModel;
-    if (typeof infra === 'string') {
-      try { infra = JSON.parse(infra); } catch (e) {}
-    }
-    return {
-      ...m,
-      id: m.id || m.uid || id,
-      name: m.name || m.userModelName || name,
-      description: m.description || description,
-      version: m.version || m.userModelVersion || version || '1.0.0',
-      cloudInfraModel: infra,
-      updatedTime: m.updatedTime || new Date().toISOString()
-    };
+    return mapArtifactToCloudEnvelope(response.data, cloudInfraModel);
   },
 
-  // Get target cloud design templates
+  // Get target cloud design artifacts
   getCloudModels: async (): Promise<CloudModelEnvelope[]> => {
-    const response = await api.get('/damselfly/infra-model?modelType=cloud&isTargetModel=true');
-    const dataList = Array.isArray(response.data) ? response.data : (response.data ? [response.data] : []);
-    return dataList.map((m: any) => {
-      let infra = m.cloudInfraModel || m.cloud_infra_model || m.recommendedInfra;
-      if (typeof infra === 'string') {
-        try { infra = JSON.parse(infra); } catch (e) {}
-      }
-      return {
-        ...m,
-        id: m.id || m.uid,
-        name: m.name || m.userModelName || 'Unnamed Design',
-        description: m.description,
-        cloudInfraModel: infra,
-        version: m.version || m.userModelVersion || '1.0.0'
-      };
-    });
+    const response = await api.get('/beetle/artifacts?category=infra&stage=target&schemaType=RecommendedInfra');
+    const rawList = response.data?.data ?? response.data;
+    const dataList = Array.isArray(rawList) ? rawList : (rawList ? [rawList] : []);
+    return dataList.map((m: any) => mapArtifactToCloudEnvelope(m));
   },
 
   getCloudModel: async (id: string): Promise<CloudModelEnvelope> => {
-    const response = await api.get(`/damselfly/infra-model/${id}?modelType=cloud&isTargetModel=true`);
-    const m = response.data;
-    let infra = m.cloudInfraModel || m.cloud_infra_model || m.recommendedInfra;
-    if (typeof infra === 'string') {
-      try { infra = JSON.parse(infra); } catch (e) {}
-    }
-    return {
-      ...m,
-      id: m.id || m.uid || id,
-      name: m.name || m.userModelName,
-      cloudInfraModel: infra,
-      version: m.version || m.userModelVersion || '1.0.0'
-    };
+    const response = await api.get(`/beetle/artifacts/${id}`);
+    return mapArtifactToCloudEnvelope(response.data);
   },
 
   deleteCloudModel: async (id: string): Promise<void> => {
-    await api.delete(`/damselfly/infra-model/${id}`);
+    await api.delete(`/beetle/artifacts/${id}`);
+  },
+
+  getArtifactLineage: async (id: string) => {
+    const response = await api.get(`/beetle/artifacts/${id}/lineage`);
+    return response.data?.data ?? response.data;
   }
 };
 
@@ -957,15 +980,30 @@ export const beetleApi = {
     }
   },
 
-  // Step 7~12: Source Object Storage User Model Save & Load (Webserver File-Based Persistence)
+  // Step 7~12: Source Object Storage Artifact Save & Load
   saveSourceObjectStorageModel: async (sourceModel: any): Promise<{ success: boolean; modelId: string; error?: string }> => {
     sourceModelCachePromise = null;
+    const payload = sourceModel?.sourceModel || sourceModel;
     try {
-      const response = await axios.post('/api/models/source', sourceModel);
-      return { success: true, modelId: response.data?.modelId || `src-model-${Date.now()}` };
-    } catch (err: any) {
-      console.warn('File persistence fallback: saving to local storage', err);
-      return { success: true, modelId: `src-model-${Date.now().toString().slice(-4)}` };
+      const response = await api.post('/beetle/artifacts', {
+        name: 'source-object-storage-model',
+        description: payload?.description || 'Source object storage artifact',
+        category: 'infra',
+        stage: 'source',
+        schemaType: 'SourceObjectStorage',
+        payload
+      });
+      const art = response.data?.data || response.data;
+      try { await axios.post('/api/models/source', sourceModel); } catch {}
+      return { success: true, modelId: art?.id || `src-model-${Date.now()}` };
+    } catch {
+      try {
+        const response = await axios.post('/api/models/source', sourceModel);
+        return { success: true, modelId: response.data?.modelId || `src-model-${Date.now()}` };
+      } catch (err: any) {
+        console.warn('File persistence fallback: saving to local storage', err);
+        return { success: true, modelId: `src-model-${Date.now().toString().slice(-4)}` };
+      }
     }
   },
 
@@ -974,6 +1012,13 @@ export const beetleApi = {
       return sourceModelCachePromise;
     }
     sourceModelCachePromise = (async () => {
+      try {
+        const response = await api.get('/beetle/artifacts?category=infra&stage=source&schemaType=SourceObjectStorage');
+        const list = response.data?.data || response.data;
+        if (Array.isArray(list) && list.length > 0 && list[0]?.payload) {
+          return { success: true, sourceModel: list[0].payload };
+        }
+      } catch {}
       try {
         const response = await axios.get('/api/models/source');
         return { success: true, sourceModel: response.data?.sourceModel };
@@ -986,15 +1031,30 @@ export const beetleApi = {
     return sourceModelCachePromise;
   },
 
-  // Step 15~20: Target Object Storage User Model Save & Load (Webserver File-Based Persistence)
+  // Step 15~20: Target Object Storage Artifact Save & Load
   saveTargetObjectStorageModel: async (targetModel: any): Promise<{ success: boolean; modelId: string; error?: string }> => {
     targetModelCachePromise = null;
+    const payload = targetModel?.targetModel || targetModel?.recommendation || targetModel;
     try {
-      const response = await axios.post('/api/models/target', targetModel);
-      return { success: true, modelId: response.data?.modelId || `tgt-model-${Date.now()}` };
-    } catch (err: any) {
-      console.warn('File persistence fallback: saving target model', err);
-      return { success: true, modelId: `tgt-model-${Date.now().toString().slice(-4)}` };
+      const response = await api.post('/beetle/artifacts', {
+        name: 'target-object-storage-model',
+        description: payload?.description || 'Target object storage artifact',
+        category: 'infra',
+        stage: 'target',
+        schemaType: 'RecommendedObjectStorage',
+        payload
+      });
+      const art = response.data?.data || response.data;
+      try { await axios.post('/api/models/target', targetModel); } catch {}
+      return { success: true, modelId: art?.id || `tgt-model-${Date.now()}` };
+    } catch {
+      try {
+        const response = await axios.post('/api/models/target', targetModel);
+        return { success: true, modelId: response.data?.modelId || `tgt-model-${Date.now()}` };
+      } catch (err: any) {
+        console.warn('File persistence fallback: saving target model', err);
+        return { success: true, modelId: `tgt-model-${Date.now().toString().slice(-4)}` };
+      }
     }
   },
 
@@ -1003,6 +1063,13 @@ export const beetleApi = {
       return targetModelCachePromise;
     }
     targetModelCachePromise = (async () => {
+      try {
+        const response = await api.get('/beetle/artifacts?category=infra&stage=target&schemaType=RecommendedObjectStorage');
+        const list = response.data?.data || response.data;
+        if (Array.isArray(list) && list.length > 0 && list[0]?.payload) {
+          return { success: true, targetModel: list[0].payload };
+        }
+      } catch {}
       try {
         const response = await axios.get('/api/models/target');
         return { success: true, targetModel: response.data?.targetModel };

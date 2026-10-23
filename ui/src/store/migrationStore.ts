@@ -1,7 +1,7 @@
 import { create, StateCreator } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty } from '../types/migration';
-import { honeybeeApi, damselflyApi, beetleApi, tumblebugApi } from '../api/client';
+import { honeybeeApi, artifactApi, SaveArtifactOptions, beetleApi, tumblebugApi } from '../api/client';
 import recommendedInfraSample from '../data/sampleTargetInfra.json';
 import sampleGpuData from '../data/sampleSourceGpuInfra.json';
 
@@ -188,8 +188,8 @@ interface MigrationState {
   fetchRefinedInfraByGroup: (sgId: string) => Promise<void>;
   fetchSavedSourceModels: () => Promise<void>;
   selectSourceModel: (model: OnpremModelEnvelope | null) => void;
-  saveSourceModel: (name: string, description: string, version: string, infra: OnpremInfra) => Promise<OnpremModelEnvelope>;
-  updateSourceModel: (id: string, name: string, description: string, version: string, infra: OnpremInfra) => Promise<OnpremModelEnvelope>;
+  saveSourceModel: (name: string, description: string, version: string, infra: OnpremInfra, options?: SaveArtifactOptions) => Promise<OnpremModelEnvelope>;
+  updateSourceModel: (id: string, name: string, description: string, version: string, infra: OnpremInfra, options?: SaveArtifactOptions) => Promise<OnpremModelEnvelope>;
   deleteSourceModel: (id: string) => Promise<void>;
 
   // Page 2: Target Cloud Optimizer State
@@ -522,11 +522,11 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     const builtInIds = new Set(builtInSamples.map(s => s.id));
     let allModels: OnpremModelEnvelope[] = [];
     try {
-      const models = await damselflyApi.getSourceModels();
+      const models = await artifactApi.getSourceModels();
       const withoutSamples = models.filter((m: OnpremModelEnvelope) => !builtInIds.has(m.id));
       allModels = [...builtInSamples, ...withoutSamples];
     } catch {
-      // Damselfly unreachable — show sample models only
+      // Artifact repository unreachable: show sample models only
       allModels = builtInSamples;
     }
     const curSelected = get().selectedSourceModel;
@@ -541,8 +541,13 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     });
   },
 
-  saveSourceModel: async (name, description, version, infra) => {
-    const saved = await damselflyApi.saveSourceModel(name, description, infra, version);
+  saveSourceModel: async (name, description, version, infra, options) => {
+    const activeSgId = get().activeSgId;
+    const saved = await artifactApi.saveSourceModel(name, description, infra, version, {
+      stage: options?.stage || 'source',
+      parentId: options?.parentId,
+      sourceGroupId: options?.sourceGroupId || activeSgId || undefined
+    });
     set({
       savedSourceModels: [...get().savedSourceModels, saved],
       selectedSourceModel: saved
@@ -550,15 +555,15 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     return saved;
   },
 
-  updateSourceModel: async (id, name, description, version, updatedInfra) => {
-    const saved = await damselflyApi.updateSourceModel(id, name, description, updatedInfra, version);
+  updateSourceModel: async (id, name, description, version, updatedInfra, options) => {
+    const saved = await artifactApi.updateSourceModel(id, name, description, updatedInfra, version, options);
     const updatedList = get().savedSourceModels.map(m => m.id === id ? saved : m);
     set({ savedSourceModels: updatedList, selectedSourceModel: saved });
     return saved;
   },
 
   deleteSourceModel: async (id) => {
-    await damselflyApi.deleteSourceModel(id);
+    await artifactApi.deleteSourceModel(id);
     const updatedList = get().savedSourceModels.filter(m => m.id !== id);
     set({
       savedSourceModels: updatedList,
@@ -677,7 +682,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   fetchSavedCloudModels: async () => {
-    // Fallback demo model shown when Damselfly is unreachable, to prevent an empty select box.
+    // Fallback demo model shown when artifact repository is unreachable, to prevent an empty select box.
     const fallbackCloudModels: CloudModelEnvelope[] = [
       {
         id: 'cloud-demo-1',
@@ -689,13 +694,13 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
       }
     ];
     try {
-      const models = await damselflyApi.getCloudModels();
+      const models = await artifactApi.getCloudModels();
       const existingLocal = get().savedCloudModels.filter(
         m => m.id !== 'cloud-demo-1' && !models.some(remote => remote.id === m.id)
       );
       set({ savedCloudModels: [fallbackCloudModels[0], ...models, ...existingLocal] });
     } catch {
-      // Damselfly unreachable — keep local models
+      // Artifact repository unreachable: keep local models
       const current = get().savedCloudModels;
       if (current.length === 0) {
         set({ savedCloudModels: fallbackCloudModels });
@@ -717,15 +722,20 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   saveCloudModel: async (name, description, version, cloudInfra) => {
+    const parentModel = get().selectedSourceModel;
+    const sourceGroupId = parentModel?.lineage?.sourceGroupId || get().activeSgId || undefined;
     try {
-      const saved = await damselflyApi.saveCloudModel(name, description, cloudInfra, version);
+      const saved = await artifactApi.saveCloudModel(name, description, cloudInfra, version, {
+        parentId: parentModel?.id,
+        sourceGroupId
+      });
       set({
         savedCloudModels: [...get().savedCloudModels.filter(m => m.id !== saved.id), saved],
         selectedCloudModel: saved
       });
       return saved;
     } catch (err) {
-      console.warn('Damselfly save error, saving to local state:', err);
+      console.warn('Artifact save error, saving to local state:', err);
       const localSaved: CloudModelEnvelope = {
         id: `cloud-model-${Date.now()}`,
         name,
@@ -744,12 +754,12 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
 
   updateCloudModel: async (id, name, description, version, cloudInfra) => {
     try {
-      const saved = await damselflyApi.updateCloudModel(id, name, description, cloudInfra, version);
+      const saved = await artifactApi.updateCloudModel(id, name, description, cloudInfra, version);
       const updatedList = get().savedCloudModels.map(m => m.id === id ? saved : m);
       set({ savedCloudModels: updatedList, selectedCloudModel: saved });
       return saved;
     } catch (err) {
-      console.warn('Damselfly update error, updating in local state:', err);
+      console.warn('Artifact update error, updating in local state:', err);
       const localSaved: CloudModelEnvelope = {
         id,
         name,
@@ -766,7 +776,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
 
   deleteCloudModel: async (id) => {
     try {
-      await damselflyApi.deleteCloudModel(id);
+      await artifactApi.deleteCloudModel(id);
       const updated = get().savedCloudModels.filter(m => m.id !== id);
       set({
         savedCloudModels: updated,

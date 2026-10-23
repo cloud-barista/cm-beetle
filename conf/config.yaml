@@ -23,6 +23,10 @@ beetle:
   lkvstore:
     path: ./db/beetle.db
 
+  ## Set artifact repository directory (atomic JSON file store)
+  artifact:
+    path: ./db/artifacts
+
   ## Logger configuration
   logfile:
     # Set log file path (default logfile path: ./log/beetle.log)

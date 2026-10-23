@@ -22,6 +22,302 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/artifacts": {
+            "get": {
+                "description": "Lists stored migration artifacts filtered by ` + "`" + `category` + "`" + ` (` + "`" + `infra` + "`" + `, ` + "`" + `software` + "`" + `, ` + "`" + `data` + "`" + `),\n` + "`" + `stage` + "`" + ` (` + "`" + `source` + "`" + `, ` + "`" + `planning` + "`" + `, ` + "`" + `target` + "`" + `), ` + "`" + `schemaType` + "`" + ` (e.g., ` + "`" + `OnpremInfra` + "`" + `, ` + "`" + `RecommendedInfra` + "`" + `),\nor ` + "`" + `sourceGroupId` + "`" + `.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Artifact] Migration Artifact Management"
+                ],
+                "summary": "List migration artifacts with optional filtering",
+                "operationId": "ListArtifacts",
+                "parameters": [
+                    {
+                        "enum": [
+                            "infra",
+                            "software",
+                            "data"
+                        ],
+                        "type": "string",
+                        "description": "Artifact domain category",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "source",
+                            "planning",
+                            "target"
+                        ],
+                        "type": "string",
+                        "description": "Artifact lifecycle stage",
+                        "name": "stage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target Go struct schema type (e.g., OnpremInfra, RecommendedInfra, SourceObjectStorage)",
+                        "name": "schemaType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Source group ID for lineage filtering",
+                        "name": "sourceGroupId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Filtered migration artifacts",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-array_artifact_RawArtifact"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid filter query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates and persists a migration artifact (` + "`" + `source` + "`" + `, ` + "`" + `planning` + "`" + `, or ` + "`" + `target` + "`" + `) across\n` + "`" + `infra` + "`" + `, ` + "`" + `software` + "`" + `, or ` + "`" + `data` + "`" + ` categories. When ` + "`" + `parentId` + "`" + ` is provided, lineage fields\n(` + "`" + `sourceGroupId` + "`" + `, ` + "`" + `sourceModelId` + "`" + `, ` + "`" + `planningModelId` + "`" + `, ` + "`" + `targetModelId` + "`" + `) are inherited automatically.\nLegacy JSON payloads are automatically normalized to the latest schema using reflect upcasting.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Artifact] Migration Artifact Management"
+                ],
+                "summary": "Create a migration artifact with automatic schema upcasting and lineage tracking",
+                "operationId": "CreateArtifact",
+                "parameters": [
+                    {
+                        "description": "Artifact creation request",
+                        "name": "Artifact",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/artifact.CreateReq"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created migration artifact",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-artifact_RawArtifact"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid artifact payload or metadata",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/artifacts/{id}": {
+            "get": {
+                "description": "Retrieves a single migration artifact by its unique ID and ensures its payload is normalized to the latest schema.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Artifact] Migration Artifact Management"
+                ],
+                "summary": "Get a migration artifact by ID",
+                "operationId": "GetArtifact",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Artifact ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Migration artifact",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-artifact_RawArtifact"
+                        }
+                    },
+                    "404": {
+                        "description": "Artifact not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Overwrites an existing migration artifact's metadata or payload by ID and normalizes the payload to the latest schema.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Artifact] Migration Artifact Management"
+                ],
+                "summary": "Update an existing migration artifact in-place",
+                "operationId": "UpdateArtifact",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Artifact ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Artifact update request",
+                        "name": "Artifact",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/artifact.UpdateReq"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated migration artifact",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-artifact_RawArtifact"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid update payload",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Artifact not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Removes a migration artifact file and its index entry by ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Artifact] Migration Artifact Management"
+                ],
+                "summary": "Delete a migration artifact by ID",
+                "operationId": "DeleteArtifact",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Artifact ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Artifact deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Artifact not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/artifacts/{id}/lineage": {
+            "get": {
+                "description": "Returns the connected ` + "`" + `source` + "`" + `, ` + "`" + `planning` + "`" + `, and ` + "`" + `target` + "`" + ` artifacts in the derivation chain\nalong with all artifacts sharing the same ` + "`" + `sourceGroupId` + "`" + `.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Artifact] Migration Artifact Management"
+                ],
+                "summary": "Get the derivation lineage chain and group artifacts for an artifact ID",
+                "operationId": "GetArtifactLineage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Artifact ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Artifact lineage graph",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-artifact_LineageGraph"
+                        }
+                    },
+                    "404": {
+                        "description": "Artifact not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
         "/httpVersion": {
             "get": {
                 "description": "Checks and returns the HTTP protocol version of the incoming request.\n\n[Note]\n- The X-Request-Id header value (auto-generated if not provided) is propagated to Tumblebug when Beetle calls its APIs for distributed tracing.",
@@ -6357,6 +6653,278 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "artifact.Category": {
+            "type": "string",
+            "enum": [
+                "infra",
+                "software",
+                "data"
+            ],
+            "x-enum-varnames": [
+                "CategoryInfra",
+                "CategorySoftware",
+                "CategoryData"
+            ]
+        },
+        "artifact.CreateReq": {
+            "type": "object",
+            "required": [
+                "category",
+                "name",
+                "payload",
+                "stage"
+            ],
+            "properties": {
+                "category": {
+                    "enum": [
+                        "infra",
+                        "software",
+                        "data"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/artifact.Category"
+                        }
+                    ],
+                    "example": "infra"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Extracted source infrastructure"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "art-custom-01"
+                },
+                "lineage": {
+                    "$ref": "#/definitions/lineage.MigrationLineage"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "ecommerce-source-infra"
+                },
+                "parentId": {
+                    "type": "string",
+                    "example": "art-src-01"
+                },
+                "payload": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "schemaType": {
+                    "type": "string",
+                    "example": "OnpremInfra"
+                },
+                "sourceGroupId": {
+                    "type": "string",
+                    "example": "sg-ecommerce-prod"
+                },
+                "stage": {
+                    "enum": [
+                        "source",
+                        "planning",
+                        "target"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/artifact.Stage"
+                        }
+                    ],
+                    "example": "source"
+                },
+                "version": {
+                    "type": "string",
+                    "example": "1.0.0"
+                }
+            }
+        },
+        "artifact.LineageGraph": {
+            "type": "object",
+            "properties": {
+                "artifactId": {
+                    "type": "string"
+                },
+                "groupArtifacts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.RawArtifact"
+                    }
+                },
+                "lineage": {
+                    "$ref": "#/definitions/lineage.MigrationLineage"
+                },
+                "planningArtifact": {
+                    "$ref": "#/definitions/artifact.RawArtifact"
+                },
+                "sourceArtifact": {
+                    "$ref": "#/definitions/artifact.RawArtifact"
+                },
+                "sourceGroupId": {
+                    "type": "string"
+                },
+                "targetArtifact": {
+                    "$ref": "#/definitions/artifact.RawArtifact"
+                }
+            }
+        },
+        "artifact.RawArtifact": {
+            "type": "object",
+            "required": [
+                "category",
+                "name",
+                "payload",
+                "stage"
+            ],
+            "properties": {
+                "category": {
+                    "enum": [
+                        "infra",
+                        "software",
+                        "data"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/artifact.Category"
+                        }
+                    ],
+                    "example": "infra"
+                },
+                "conversionReport": {
+                    "$ref": "#/definitions/modelconv.ConversionReport"
+                },
+                "createTime": {
+                    "type": "string",
+                    "example": "2026-10-23T12:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Refined migration artifact"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "art-d0g535l40272926020g0"
+                },
+                "lineage": {
+                    "$ref": "#/definitions/lineage.MigrationLineage"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "ecommerce-prod-plan"
+                },
+                "payload": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "schemaType": {
+                    "type": "string",
+                    "example": "OnpremInfra"
+                },
+                "schemaVersion": {
+                    "type": "string",
+                    "example": "v0.1.18"
+                },
+                "stage": {
+                    "enum": [
+                        "source",
+                        "planning",
+                        "target"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/artifact.Stage"
+                        }
+                    ],
+                    "example": "planning"
+                },
+                "updateTime": {
+                    "type": "string",
+                    "example": "2026-10-23T12:05:00Z"
+                },
+                "version": {
+                    "type": "string",
+                    "example": "1.0.0"
+                }
+            }
+        },
+        "artifact.Stage": {
+            "type": "string",
+            "enum": [
+                "source",
+                "planning",
+                "target"
+            ],
+            "x-enum-varnames": [
+                "StageSource",
+                "StagePlanning",
+                "StageTarget"
+            ]
+        },
+        "artifact.UpdateReq": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "enum": [
+                        "infra",
+                        "software",
+                        "data"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/artifact.Category"
+                        }
+                    ],
+                    "example": "infra"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Updated node spec"
+                },
+                "lineage": {
+                    "$ref": "#/definitions/lineage.MigrationLineage"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "ecommerce-plan-v2"
+                },
+                "parentId": {
+                    "type": "string"
+                },
+                "payload": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "schemaType": {
+                    "type": "string",
+                    "example": "OnpremInfra"
+                },
+                "sourceGroupId": {
+                    "type": "string"
+                },
+                "stage": {
+                    "enum": [
+                        "source",
+                        "planning",
+                        "target"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/artifact.Stage"
+                        }
+                    ],
+                    "example": "planning"
+                },
+                "version": {
+                    "type": "string",
+                    "example": "1.1.0"
+                }
+            }
+        },
         "cloudmodel.CloudProperty": {
             "type": "object",
             "properties": {
@@ -10343,6 +10911,33 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-array_artifact_RawArtifact": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/artifact.RawArtifact"
+                    }
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-array_cloudmodel_NLBInfo": {
             "type": "object",
             "properties": {
@@ -10433,6 +11028,62 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.K8sClusterInfo"
                     }
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-artifact_LineageGraph": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/artifact.LineageGraph"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-artifact_RawArtifact": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/artifact.RawArtifact"
+                        }
+                    ]
                 },
                 "error": {
                     "description": "Error message for failed responses",
@@ -13020,6 +13671,48 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.SubnetReq"
                     }
+                }
+            }
+        },
+        "modelconv.ConversionReport": {
+            "type": "object",
+            "properties": {
+                "droppedFields": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "migratedFields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/modelconv.FieldMigration"
+                    }
+                },
+                "targetSchemaType": {
+                    "type": "string",
+                    "example": "RecommendedInfra"
+                },
+                "upcasted": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "modelconv.FieldMigration": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "string",
+                    "example": "targetVmInfra"
+                },
+                "path": {
+                    "type": "string",
+                    "example": "targetVmInfra"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "targetInfra"
                 }
             }
         },
@@ -17818,6 +18511,10 @@ const docTemplate = `{
         {
             "description": "APIs for managing API requests (list, cancel, etc.)",
             "name": "[Admin] API Request Management"
+        },
+        {
+            "description": "APIs for storing, normalizing, and tracking lineage of migration artifacts across source, planning, and target stages",
+            "name": "[Artifact] Migration Artifact Management"
         },
         {
             "description": "APIs for recommending optimal cloud infrastructure (node specs, OS images, etc.) and NLBs (Managed Network Load Balancers)",

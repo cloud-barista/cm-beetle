@@ -1066,7 +1066,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     updateEditedCandidate(updatedCandidate);
   };
 
-  const handleSaveToDamselfly = async (result: { name: string; description: string; version: string; overwriteId: string | null }) => {
+  const handleSaveArtifact = async (result: { name: string; description: string; version: string; overwriteId: string | null }) => {
     if (!editedCandidate) return;
     const targetModelToSave: RecommendedInfra = {
       ...editedCandidate,
@@ -3166,7 +3166,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         defaultDescription={selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1' ? (selectedCloudModel.description || '') : (editedCandidate?.description || `Optimized target cloud model for ${editedCandidate?.targetCloud?.csp?.toUpperCase() || 'Cloud'} (${editedCandidate?.targetCloud?.region || ''})`)}
         defaultVersion={selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1' ? (selectedCloudModel.version || '1.0.0') : '1.0.0'}
         existingRevisions={savedCloudModels.filter(m => m.id !== 'cloud-demo-1').map(m => ({ id: m.id, name: m.name, version: m.version }))}
-        onSave={handleSaveToDamselfly}
+        onSave={handleSaveArtifact}
         successMessage="Target Cloud Infrastructure Model saved to repository successfully."
       />
 

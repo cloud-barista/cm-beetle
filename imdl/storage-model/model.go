@@ -1,11 +1,11 @@
 package storagemodel
 
-// RecommendedObjectStorageModel is the top-level wrapper for external systems (e.g., cm-damselfly).
+// RecommendedObjectStorageModel is the top-level wrapper for external systems.
 type RecommendedObjectStorageModel struct {
 	RecommendedObjectStorageModel RecommendedObjectStorage `json:"recommendedObjectStorageModel" validate:"required"`
 }
 
-// SourceObjectStorageModel is the top-level wrapper for external systems (e.g., cm-damselfly).
+// SourceObjectStorageModel is the top-level wrapper for external systems.
 type SourceObjectStorageModel struct {
 	SourceObjectStorageModel SourceObjectStorage `json:"sourceObjectStorageModel" validate:"required"`
 }

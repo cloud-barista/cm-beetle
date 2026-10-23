@@ -28,7 +28,7 @@ interface SaveRevisionModalProps {
   successMessage?: string;
 }
 
-// Shared Damselfly "save revision" popup used by Source Infra Metadata Extraction,
+// Shared "save revision" popup used by Source Infra Metadata Extraction,
 // Source Infra Metadata Refinement, and Target Cloud Infra Optimization pages.
 export const SaveRevisionModal: React.FC<SaveRevisionModalProps> = ({
   isOpen,
@@ -39,7 +39,7 @@ export const SaveRevisionModal: React.FC<SaveRevisionModalProps> = ({
   defaultVersion = '1.0.0',
   existingRevisions,
   onSave,
-  successMessage = 'Revision saved to Damselfly successfully.',
+  successMessage = 'Artifact revision saved successfully.',
 }) => {
   const [name, setName] = useState(defaultName);
   const [description, setDescription] = useState(defaultDescription);

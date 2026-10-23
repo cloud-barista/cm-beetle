@@ -6,6 +6,19 @@ import (
 	"reflect"
 )
 
+// ConvertWithUpcast converts source value T into target struct U with reflect-based legacy field migration.
+func ConvertWithUpcast[T any, U any](source T) (U, *ConversionReport, error) {
+	var target U
+	if isNil(source) {
+		return target, nil, nil
+	}
+	sourceJSON, err := json.Marshal(source)
+	if err != nil {
+		return target, nil, fmt.Errorf("failed to marshal source: %w", err)
+	}
+	return UpcastTo[U](sourceJSON)
+}
+
 // ConvertWithValidation combines type validation and conversion
 func ConvertWithValidation[T any, U any](source T) (U, error) {
 	var target U

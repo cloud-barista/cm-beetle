@@ -37,6 +37,7 @@ services:
       - BEETLE_API_USERNAME=${BEETLE_API_USERNAME:?Please set BEETLE_API_USERNAME}
       - BEETLE_API_PASSWORD=${BEETLE_API_PASSWORD:?Please set BEETLE_API_PASSWORD}
       # - BEETLE_LKVSTORE_PATH=/app/db/beetle.db
+      # - BEETLE_ARTIFACT_PATH=/app/db/artifacts
       # - BEETLE_LOGFILE_PATH=/app/log/beetle.log
       # - BEETLE_LOGFILE_MAXSIZE=1000
       # - BEETLE_LOGFILE_MAXBACKUPS=3

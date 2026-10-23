@@ -1,5 +1,192 @@
 basePath: /beetle
 definitions:
+  artifact.Category:
+    enum:
+    - infra
+    - software
+    - data
+    type: string
+    x-enum-varnames:
+    - CategoryInfra
+    - CategorySoftware
+    - CategoryData
+  artifact.CreateReq:
+    properties:
+      category:
+        allOf:
+        - $ref: '#/definitions/artifact.Category'
+        enum:
+        - infra
+        - software
+        - data
+        example: infra
+      description:
+        example: Extracted source infrastructure
+        type: string
+      id:
+        example: art-custom-01
+        type: string
+      lineage:
+        $ref: '#/definitions/lineage.MigrationLineage'
+      name:
+        example: ecommerce-source-infra
+        type: string
+      parentId:
+        example: art-src-01
+        type: string
+      payload:
+        items:
+          type: integer
+        type: array
+      schemaType:
+        example: OnpremInfra
+        type: string
+      sourceGroupId:
+        example: sg-ecommerce-prod
+        type: string
+      stage:
+        allOf:
+        - $ref: '#/definitions/artifact.Stage'
+        enum:
+        - source
+        - planning
+        - target
+        example: source
+      version:
+        example: 1.0.0
+        type: string
+    required:
+    - category
+    - name
+    - payload
+    - stage
+    type: object
+  artifact.LineageGraph:
+    properties:
+      artifactId:
+        type: string
+      groupArtifacts:
+        items:
+          $ref: '#/definitions/artifact.RawArtifact'
+        type: array
+      lineage:
+        $ref: '#/definitions/lineage.MigrationLineage'
+      planningArtifact:
+        $ref: '#/definitions/artifact.RawArtifact'
+      sourceArtifact:
+        $ref: '#/definitions/artifact.RawArtifact'
+      sourceGroupId:
+        type: string
+      targetArtifact:
+        $ref: '#/definitions/artifact.RawArtifact'
+    type: object
+  artifact.RawArtifact:
+    properties:
+      category:
+        allOf:
+        - $ref: '#/definitions/artifact.Category'
+        enum:
+        - infra
+        - software
+        - data
+        example: infra
+      conversionReport:
+        $ref: '#/definitions/modelconv.ConversionReport'
+      createTime:
+        example: "2026-10-23T12:00:00Z"
+        type: string
+      description:
+        example: Refined migration artifact
+        type: string
+      id:
+        example: art-d0g535l40272926020g0
+        type: string
+      lineage:
+        $ref: '#/definitions/lineage.MigrationLineage'
+      name:
+        example: ecommerce-prod-plan
+        type: string
+      payload:
+        items:
+          type: integer
+        type: array
+      schemaType:
+        example: OnpremInfra
+        type: string
+      schemaVersion:
+        example: v0.1.18
+        type: string
+      stage:
+        allOf:
+        - $ref: '#/definitions/artifact.Stage'
+        enum:
+        - source
+        - planning
+        - target
+        example: planning
+      updateTime:
+        example: "2026-10-23T12:05:00Z"
+        type: string
+      version:
+        example: 1.0.0
+        type: string
+    required:
+    - category
+    - name
+    - payload
+    - stage
+    type: object
+  artifact.Stage:
+    enum:
+    - source
+    - planning
+    - target
+    type: string
+    x-enum-varnames:
+    - StageSource
+    - StagePlanning
+    - StageTarget
+  artifact.UpdateReq:
+    properties:
+      category:
+        allOf:
+        - $ref: '#/definitions/artifact.Category'
+        enum:
+        - infra
+        - software
+        - data
+        example: infra
+      description:
+        example: Updated node spec
+        type: string
+      lineage:
+        $ref: '#/definitions/lineage.MigrationLineage'
+      name:
+        example: ecommerce-plan-v2
+        type: string
+      parentId:
+        type: string
+      payload:
+        items:
+          type: integer
+        type: array
+      schemaType:
+        example: OnpremInfra
+        type: string
+      sourceGroupId:
+        type: string
+      stage:
+        allOf:
+        - $ref: '#/definitions/artifact.Stage'
+        enum:
+        - source
+        - planning
+        - target
+        example: planning
+      version:
+        example: 1.1.0
+        type: string
+    type: object
   cloudmodel.CloudProperty:
     properties:
       csp:
@@ -3071,6 +3258,26 @@ definitions:
         example: true
         type: boolean
     type: object
+  model.ApiResponse-array_artifact_RawArtifact:
+    properties:
+      data:
+        description: Contains the actual response data (single object, list, or page)
+        items:
+          $ref: '#/definitions/artifact.RawArtifact'
+        type: array
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
   model.ApiResponse-array_cloudmodel_NLBInfo:
     properties:
       data:
@@ -3138,6 +3345,44 @@ definitions:
         items:
           $ref: '#/definitions/model.K8sClusterInfo'
         type: array
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-artifact_LineageGraph:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/artifact.LineageGraph'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-artifact_RawArtifact:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/artifact.RawArtifact'
+        description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
         example: Error message if failure
@@ -4996,6 +5241,35 @@ definitions:
     required:
     - connectionName
     - name
+    type: object
+  modelconv.ConversionReport:
+    properties:
+      droppedFields:
+        items:
+          type: string
+        type: array
+      migratedFields:
+        items:
+          $ref: '#/definitions/modelconv.FieldMigration'
+        type: array
+      targetSchemaType:
+        example: RecommendedInfra
+        type: string
+      upcasted:
+        example: true
+        type: boolean
+    type: object
+  modelconv.FieldMigration:
+    properties:
+      from:
+        example: targetVmInfra
+        type: string
+      path:
+        example: targetVmInfra
+        type: string
+      to:
+        example: targetInfra
+        type: string
     type: object
   onpremisemodel.CpuProperty:
     properties:
@@ -8413,6 +8687,219 @@ info:
   title: CM-Beetle API
   version: latest
 paths:
+  /artifacts:
+    get:
+      description: |-
+        Lists stored migration artifacts filtered by `category` (`infra`, `software`, `data`),
+        `stage` (`source`, `planning`, `target`), `schemaType` (e.g., `OnpremInfra`, `RecommendedInfra`),
+        or `sourceGroupId`.
+      operationId: ListArtifacts
+      parameters:
+      - description: Artifact domain category
+        enum:
+        - infra
+        - software
+        - data
+        in: query
+        name: category
+        type: string
+      - description: Artifact lifecycle stage
+        enum:
+        - source
+        - planning
+        - target
+        in: query
+        name: stage
+        type: string
+      - description: Target Go struct schema type (e.g., OnpremInfra, RecommendedInfra,
+          SourceObjectStorage)
+        in: query
+        name: schemaType
+        type: string
+      - description: Source group ID for lineage filtering
+        in: query
+        name: sourceGroupId
+        type: string
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Filtered migration artifacts
+          schema:
+            $ref: '#/definitions/model.ApiResponse-array_artifact_RawArtifact'
+        "400":
+          description: Invalid filter query parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: List migration artifacts with optional filtering
+      tags:
+      - '[Artifact] Migration Artifact Management'
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Creates and persists a migration artifact (`source`, `planning`, or `target`) across
+        `infra`, `software`, or `data` categories. When `parentId` is provided, lineage fields
+        (`sourceGroupId`, `sourceModelId`, `planningModelId`, `targetModelId`) are inherited automatically.
+        Legacy JSON payloads are automatically normalized to the latest schema using reflect upcasting.
+      operationId: CreateArtifact
+      parameters:
+      - description: Artifact creation request
+        in: body
+        name: Artifact
+        required: true
+        schema:
+          $ref: '#/definitions/artifact.CreateReq'
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created migration artifact
+          schema:
+            $ref: '#/definitions/model.ApiResponse-artifact_RawArtifact'
+        "400":
+          description: Invalid artifact payload or metadata
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Create a migration artifact with automatic schema upcasting and lineage
+        tracking
+      tags:
+      - '[Artifact] Migration Artifact Management'
+  /artifacts/{id}:
+    delete:
+      description: Removes a migration artifact file and its index entry by ID.
+      operationId: DeleteArtifact
+      parameters:
+      - description: Artifact ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Artifact deleted successfully
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: Artifact not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Delete a migration artifact by ID
+      tags:
+      - '[Artifact] Migration Artifact Management'
+    get:
+      description: Retrieves a single migration artifact by its unique ID and ensures
+        its payload is normalized to the latest schema.
+      operationId: GetArtifact
+      parameters:
+      - description: Artifact ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Migration artifact
+          schema:
+            $ref: '#/definitions/model.ApiResponse-artifact_RawArtifact'
+        "404":
+          description: Artifact not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Get a migration artifact by ID
+      tags:
+      - '[Artifact] Migration Artifact Management'
+    put:
+      consumes:
+      - application/json
+      description: Overwrites an existing migration artifact's metadata or payload
+        by ID and normalizes the payload to the latest schema.
+      operationId: UpdateArtifact
+      parameters:
+      - description: Artifact ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Artifact update request
+        in: body
+        name: Artifact
+        required: true
+        schema:
+          $ref: '#/definitions/artifact.UpdateReq'
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated migration artifact
+          schema:
+            $ref: '#/definitions/model.ApiResponse-artifact_RawArtifact'
+        "400":
+          description: Invalid update payload
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: Artifact not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Update an existing migration artifact in-place
+      tags:
+      - '[Artifact] Migration Artifact Management'
+  /artifacts/{id}/lineage:
+    get:
+      description: |-
+        Returns the connected `source`, `planning`, and `target` artifacts in the derivation chain
+        along with all artifacts sharing the same `sourceGroupId`.
+      operationId: GetArtifactLineage
+      parameters:
+      - description: Artifact ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Artifact lineage graph
+          schema:
+            $ref: '#/definitions/model.ApiResponse-artifact_LineageGraph'
+        "404":
+          description: Artifact not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Get the derivation lineage chain and group artifacts for an artifact
+        ID
+      tags:
+      - '[Artifact] Migration Artifact Management'
   /httpVersion:
     get:
       consumes:
@@ -13485,6 +13972,9 @@ tags:
   name: '[Admin] System management'
 - description: APIs for managing API requests (list, cancel, etc.)
   name: '[Admin] API Request Management'
+- description: APIs for storing, normalizing, and tracking lineage of migration artifacts
+    across source, planning, and target stages
+  name: '[Artifact] Migration Artifact Management'
 - description: APIs for recommending optimal cloud infrastructure (node specs, OS
     images, etc.) and NLBs (Managed Network Load Balancers)
   name: '[Recommendation] Infrastructure'
