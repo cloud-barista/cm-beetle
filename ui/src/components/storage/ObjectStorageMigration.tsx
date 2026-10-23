@@ -822,9 +822,16 @@ export const ObjectStorageMigration: React.FC = () => {
       };
     });
 
+    const targetStage = subTab === 'refine' ? 'planning' : 'source';
     const res = await beetleApi.saveSourceObjectStorageModel({
       namespaceId,
-      sourceObjectStorages: formattedBuckets
+      sourceObjectStorages: formattedBuckets,
+      name: result.name,
+      description: result.description,
+      version: result.version,
+      stage: targetStage,
+      parentId: subTab === 'refine' ? selectedSourceModelId : undefined,
+      overwriteId: result.overwriteId
     });
     if (res.success) {
       const modelId = res.modelId || `source-storage-model-${Date.now()}`;
@@ -833,15 +840,16 @@ export const ObjectStorageMigration: React.FC = () => {
         name: result.name,
         description: result.description,
         version: result.version,
+        stage: targetStage,
         updatedTime: new Date().toISOString(),
         buckets: formattedBuckets
       };
-      setSavedSourceModels([newModel]);
+      setSavedSourceModels((prev) => [newModel, ...prev.filter((m) => m.id !== modelId)]);
       setSelectedSourceModelId(modelId);
       setLoadedModelName(result.name);
       setLoadedModelVersion(result.version);
       setLoadedModelTime(new Date().toLocaleString());
-      setModelLog((prev) => [...prev, `[Beetle] Source Storage Artifact Saved (ID: ${modelId}, Name: ${result.name})`]);
+      setModelLog((prev) => [...prev, `[Beetle] ${targetStage === 'planning' ? 'Planning' : 'Source'} Storage Artifact Saved (ID: ${modelId}, Name: ${result.name})`]);
     }
   };
 
@@ -910,7 +918,12 @@ export const ObjectStorageMigration: React.FC = () => {
     const res = await beetleApi.saveTargetObjectStorageModel({
       namespaceId,
       recommendation: payloadRecommendation,
-      nameSeed
+      nameSeed,
+      name: result.name,
+      description: result.description,
+      version: result.version,
+      parentId: selectedSourceModelId || undefined,
+      overwriteId: result.overwriteId
     });
     if (res.success) {
       const modelId = res.modelId || `target-storage-model-${Date.now()}`;

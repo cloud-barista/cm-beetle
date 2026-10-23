@@ -1221,7 +1221,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
         defaultDescription=""
         defaultVersion="1.0.0"
         existingRevisions={savedSourceModels
-          .filter(m => m.id !== 'sample-source-infra-1')
+          .filter(m => m.id !== 'sample-source-infra-1' && m.id !== 'sample-source-gpu-infra-1' && (m.stage || 'source') === 'source')
           .map(m => ({ id: m.id, name: m.name, version: m.version }))}
         onSave={handleSaveArtifact}
       />

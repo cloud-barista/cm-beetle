@@ -21,6 +21,13 @@ export const SAMPLE_GPU_MODEL: OnpremModelEnvelope = {
   id: 'sample-source-gpu-infra-1',
   name: '[Sample] ai-gpu-cluster-multi-vendor',
   description: 'AI/LLM cluster with heterogeneous GPUs (2x A100 80GB, 1x T4, 1x MI350, 1x L4)',
+  stage: 'source',
+  category: 'infra',
+  schemaType: 'OnpremInfra',
+  lineage: {
+    sourceGroupId: 'sg-sample-gpu',
+    sourceModelId: 'sample-source-gpu-infra-1',
+  },
   onpremiseInfraModel: SAMPLE_GPU_INFRA,
   version: '1.0',
   updatedTime: new Date().toISOString(),
@@ -30,6 +37,13 @@ export const SAMPLE_MODEL: OnpremModelEnvelope = {
   id: 'sample-source-infra-1',
   name: '[Sample] web-haproxy-influxdb',
   description: '1 HAProxy/App node + 2 InfluxDB nodes with NLB (sample)',
+  stage: 'source',
+  category: 'infra',
+  schemaType: 'OnpremInfra',
+  lineage: {
+    sourceGroupId: 'sg-sample-infra',
+    sourceModelId: 'sample-source-infra-1',
+  },
   onpremiseInfraModel: SAMPLE_INFRA,
   version: '1.0',
   updatedTime: new Date().toISOString(),
@@ -476,16 +490,20 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
       nlbs: tunedNlbs
     };
 
+    const resolvedSourceParentId = selectedSourceModel.stage === 'planning'
+      ? (selectedSourceModel.lineage?.sourceModelId || selectedSourceModel.id)
+      : selectedSourceModel.id;
+
     if (result.overwriteId) {
       await updateSourceModel(result.overwriteId, result.name, result.description, result.version, updatedInfra, {
         stage: 'planning',
-        parentId: selectedSourceModel.id,
+        parentId: resolvedSourceParentId,
         sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
       });
     } else {
       await saveSourceModel(result.name, result.description, result.version, updatedInfra, {
         stage: 'planning',
-        parentId: selectedSourceModel.id,
+        parentId: resolvedSourceParentId,
         sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
       });
     }
@@ -517,19 +535,53 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     setIsSavingSource(true);
     setSourceSaveSuccessMsg('');
     try {
-      const isGpu = selectedSourceModel.id === 'sample-source-gpu-infra-1';
-      const res = await beetleApi.saveSourceInfraModelToFile(updatedInfra, isGpu);
-      const targetFileName = res.fileName || (isGpu ? 'sampleSourceGpuInfra.json' : 'sampleSourceInfra.json');
-      if (res.success) {
-        setSourceSaveSuccessMsg(`Source model saved and overwritten to ${targetFileName} successfully!`);
-        setTunedNodes(filteredNodes);
-        setExcludedNodeIds([]);
-        setTimeout(() => setSourceSaveSuccessMsg(''), 4000);
+      const isExistingPlanningArtifact = selectedSourceModel.stage === 'planning' && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id);
+      const resolvedSourceParentId = selectedSourceModel.stage === 'planning'
+        ? (selectedSourceModel.lineage?.sourceModelId || selectedSourceModel.id)
+        : selectedSourceModel.id;
+
+      if (isExistingPlanningArtifact) {
+        const currentVer = parseFloat(selectedSourceModel.version || '1.0');
+        const nextVer = isNaN(currentVer) ? '1.1' : (currentVer + 0.1).toFixed(1);
+        await updateSourceModel(
+          selectedSourceModel.id,
+          selectedSourceModel.name,
+          selectedSourceModel.description || 'Refined planning infrastructure model',
+          nextVer,
+          updatedInfra,
+          {
+            stage: 'planning',
+            parentId: resolvedSourceParentId,
+            sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
+          }
+        );
       } else {
-        alert(res.error || 'Failed to overwrite source model to file.');
+        const baseName = selectedSourceModel.name.replace(/^\[Sample\]\s*/i, '');
+        const planningName = baseName.endsWith('-planning') ? baseName : `${baseName}-planning`;
+        await saveSourceModel(
+          planningName,
+          `Refined planning infrastructure model derived from ${selectedSourceModel.name}`,
+          '1.0.0',
+          updatedInfra,
+          {
+            stage: 'planning',
+            parentId: resolvedSourceParentId,
+            sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
+          }
+        );
       }
+
+      const isGpu = selectedSourceModel.id === 'sample-source-gpu-infra-1';
+      await beetleApi.saveSourceInfraModelToFile(updatedInfra, isGpu).catch((e) => {
+        console.warn('Local file sync skipped:', e);
+      });
+
+      setSourceSaveSuccessMsg('Planning infrastructure artifact saved successfully (stage: planning).');
+      setTunedNodes(filteredNodes);
+      setExcludedNodeIds([]);
+      setTimeout(() => setSourceSaveSuccessMsg(''), 4000);
     } catch (err: any) {
-      console.error('Failed to save source model to file:', err);
+      console.error('Failed to save planning infra model:', err);
     } finally {
       setIsSavingSource(false);
     }
@@ -642,9 +694,12 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
               className="w-full max-w-md bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer mb-3"
             >
               <option value="">-- Choose Source Model --</option>
-              {allModels.map(m => (
-                <option key={m.id} value={m.id}>{m.name} (v{m.version || '1.0'})</option>
-              ))}
+              {allModels.map(m => {
+                const stageLabel = m.stage === 'planning' ? '[Planning] ' : '[Source] ';
+                return (
+                  <option key={m.id} value={m.id}>{stageLabel}{m.name} (v{m.version || '1.0'})</option>
+                );
+              })}
             </select>
             <div className="flex items-center gap-3">
               <button
@@ -707,12 +762,24 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
 
         {selectedSourceModel && isModelLoaded && (
           <div className="bg-bg-panel/40 border border-border-main/30 rounded-xl p-3.5 flex flex-col md:flex-row md:items-center justify-between text-sm space-y-2 md:space-y-0 mb-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-text-muted font-bold">Loaded Model:</span>
-              <span className="text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 font-extrabold text-sm">{selectedSourceModel.name}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-text-muted font-normal">Loaded Model:</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-sm">{selectedSourceModel.name}</span>
               <span className="text-sm text-text-muted font-mono bg-bg-panel px-2 py-0.5 rounded border border-border-main/40">
                 v{selectedSourceModel.version || '1.0'}
               </span>
+              <span className={`px-2.5 py-0.5 rounded-md text-xs font-extrabold border ${
+                selectedSourceModel.stage === 'planning'
+                  ? 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30'
+                  : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+              }`}>
+                Stage: {selectedSourceModel.stage || 'source'}
+              </span>
+              {selectedSourceModel.lineage?.sourceModelId && selectedSourceModel.stage === 'planning' && (
+                <span className="text-xs font-mono text-text-muted bg-bg-panel px-2 py-0.5 rounded border border-border-main/40">
+                  Source Parent: {selectedSourceModel.lineage.sourceModelId}
+                </span>
+              )}
             </div>
             {selectedSourceModel.updatedTime && (
               <div className="text-sm text-text-muted">
@@ -1741,7 +1808,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                         ) : (
                           <Save className="w-3.5 h-3.5 mr-1.5" />
                         )}
-                        <span>{isSavingSource ? 'Saving to File...' : 'Save Source Infra Model'}</span>
+                        <span>{isSavingSource ? 'Saving Planning Model...' : 'Save Planning Infra Model'}</span>
                       </button>
                       <button
                         onClick={() => setShowSaveModal(true)}
@@ -1760,10 +1827,13 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                     )}
 
                     <div className="flex items-center space-x-2 text-xs text-text-muted">
-                      <span className="font-bold">Model:</span>
+                      <span className="font-normal">Model:</span>
                       <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{selectedSourceModel.name}</span>
                       <span className="font-mono bg-bg-panel px-1.5 py-0.5 rounded border border-border-main/40">
                         v{selectedSourceModel.version || '1.0'}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 font-extrabold">
+                        {selectedSourceModel.stage || 'source'}
                       </span>
                     </div>
                   </div>
@@ -1800,14 +1870,15 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
       <SaveRevisionModal
         isOpen={showSaveModal}
         onClose={() => setShowSaveModal(false)}
-        title="Save Source Infra Revision"
+        title="Save Planning Infra Revision"
         defaultName={selectedSourceModel && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id) ? selectedSourceModel.name : ''}
         defaultDescription={selectedSourceModel && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id) ? (selectedSourceModel.description || '') : ''}
         defaultVersion={selectedSourceModel && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id) ? (selectedSourceModel.version || '1.0.0') : '1.0.0'}
         existingRevisions={savedSourceModels
-          .filter(m => !BUILTIN_SAMPLE_IDS.has(m.id))
+          .filter(m => !BUILTIN_SAMPLE_IDS.has(m.id) && m.stage === 'planning')
           .map(m => ({ id: m.id, name: m.name, version: m.version }))}
         onSave={handleSaveArtifact}
+        successMessage="Planning infrastructure artifact saved successfully."
       />
 
       {/* Delete Confirmation Modal */}
