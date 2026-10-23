@@ -5,6 +5,7 @@ import { useMigrationStore } from '../../store/migrationStore';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope } from '../../types/migration';
 import sampleData from '../../data/sampleSourceInfra.json';
 import sampleGpuData from '../../data/sampleSourceGpuInfra.json';
+import { SAMPLE_15_NODE_MODEL } from '../../data/sample15NodeInfra';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
 import { beetleApi } from '../../api/client';
 import {
@@ -49,7 +50,25 @@ export const SAMPLE_MODEL: OnpremModelEnvelope = {
   updatedTime: new Date().toISOString(),
 };
 
-const BUILTIN_SAMPLE_IDS = new Set(['sample-source-gpu-infra-1', 'sample-source-infra-1']);
+const BUILTIN_SAMPLE_IDS = new Set(['sample-source-15node-dc-1', 'sample-source-gpu-infra-1', 'sample-source-infra-1']);
+
+type ClusterGroupFilter = 'all' | 'ai-inference' | 'analytics-compute' | 'backend-db';
+
+// Infer cluster group from explicit field or node hostname/GPU characteristics
+const inferNodeClusterGroup = (n: OnpremNode): 'ai-inference' | 'analytics-compute' | 'backend-db' | null => {
+  if (n.clusterGroup) return n.clusterGroup;
+  const host = (n.hostname || '').toLowerCase();
+  if ((n.gpuCards && n.gpuCards.length > 0) || /^(ai|gpu|llm|ollama|vllm)/.test(host)) {
+    return 'ai-inference';
+  }
+  if (/^(data|analytics|spark|etl|airflow|worker)/.test(host)) {
+    return 'analytics-compute';
+  }
+  if (/^(db|postgres|mysql|maria|backend|api|storage|minio|nfs|cache|redis|haproxy|nginx|tomcat)/.test(host)) {
+    return 'backend-db';
+  }
+  return null;
+};
 
 export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () => void }> = ({ onNext, onBack }) => {
   const {
@@ -59,6 +78,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
 
   const [activeTunedNodeId, setActiveTunedNodeId] = useState<string>('');
   const [tunedNodes, setTunedNodes] = useState<OnpremNode[]>([]);
+  const [selectedClusterGroup, setSelectedClusterGroup] = useState<ClusterGroupFilter>('all');
   const [isJsonOpen, setIsJsonOpen] = useState(false);
   const [tunedNetwork, setTunedNetwork] = useState<any>(null);
   const [newCidr, setNewCidr] = useState('');
@@ -408,6 +428,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
 
   // Ensure built-in sample models are always at the top of the list
   const allModels: OnpremModelEnvelope[] = [
+    SAMPLE_15_NODE_MODEL,
     SAMPLE_MODEL,
     SAMPLE_GPU_MODEL,
     ...savedSourceModels.filter(m => !BUILTIN_SAMPLE_IDS.has(m.id)),
@@ -420,6 +441,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     setTunedNodes(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.nodes || [])));
     setTunedNetwork(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
     setExcludedNodeIds([]);
+    setSelectedClusterGroup('all');
     setIsModelLoaded(true);
     setActiveStep(2); // Unlock Step 2: Review and Editing
     if (selectedSourceModel.onpremiseInfraModel.nodes && selectedSourceModel.onpremiseInfraModel.nodes.length > 0) {
@@ -663,21 +685,21 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
         <div className="flex items-center gap-2 shrink-0">
           <Sliders className="w-5 h-5 text-emerald-500" />
           <h2 className="text-base font-extrabold text-text-main tracking-tight">
-            Source Infra Refinement
+            Migration Planning
           </h2>
         </div>
         <span className="text-sm text-text-muted">
-          Review & refine extracted source metadata, adjust node specifications, configure network settings, and set migration parameters.
+          Plan and refine extracted infrastructure models, adjust node and network specifications, and save planning artifact revisions.
         </span>
       </div>
 
-      {/* ═══ STEP 1: Source Infrastructure Model Selection ═══ */}
+      {/* ═══ STEP 1: Source / Planning Infrastructure Model Selection ═══ */}
       <div className={`glass-panel p-6 rounded-2xl transition-all duration-300 ${activeStep >= 1 ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
         <div className="flex items-center space-x-3 mb-4 border-b border-border-main/40 pb-3">
           <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold ${isModelLoaded ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-emerald-500 text-slate-950'}`}>
             {isModelLoaded ? '✓' : '1'}
           </span>
-          <h3 className="text-base font-extrabold text-text-main">Step 1: Source Infrastructure Model Selection</h3>
+          <h3 className="text-base font-extrabold text-text-main">Step 1: Source / Planning Infrastructure Model Selection</h3>
         </div>
         <div className="space-y-4">
           <div>
@@ -695,7 +717,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
             >
               <option value="">-- Choose Source Model --</option>
               {allModels.map(m => {
-                const stageLabel = m.stage === 'planning' ? '[Planning] ' : '[Source] ';
+                const stageLabel = m.stage === 'planning' ? '[Planning] ' : '';
                 return (
                   <option key={m.id} value={m.id}>{stageLabel}{m.name} (v{m.version || '1.0'})</option>
                 );
@@ -725,7 +747,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
       </div>
 
       {/* -------------------------------------------------------------
-          STEP 2: Source Infrastructure Review & Editing
+          STEP 2: Planning Infrastructure Specification & Refinement
          ------------------------------------------------------------- */}
       <div className={`glass-panel p-6 rounded-2xl transition-all duration-300 ${isModelLoaded ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
         <div className="flex items-center justify-between mb-4 border-b border-border-main/40 pb-3">
@@ -734,7 +756,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
               {activeStep > 2 ? '✓' : '2'}
             </span>
             <h3 className="text-base font-extrabold text-text-main">
-              Step 2: Source Infrastructure Review & Editing
+              Step 2: Planning Infrastructure Specification & Refinement
             </h3>
           </div>
           {selectedSourceModel && isModelLoaded && (
@@ -944,50 +966,97 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
 
                   {/* Row 2: Server List */}
                   <div className="space-y-3 p-5 bg-bg-input/40 border border-border-main/50 rounded-xl">
-                    <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center">
-                      <Sliders className="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
-                      2. Server List ({tunedNodes.length} Servers)
-                    </h4>
-                    <div className="flex flex-wrap gap-2.5 max-h-36 overflow-y-auto p-2 bg-bg-panel/20 rounded-xl border border-border-main/20">
-                      {tunedNodes.map((n) => {
-                        const isExcluded = excludedNodeIds.includes(n.machineId);
-                        const isActive = n.machineId === activeTunedNodeId;
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center">
+                        <Sliders className="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
+                        2. Node List ({tunedNodes.length} Nodes)
+                      </h4>
+
+                      {/* Cluster Group Filter Pills */}
+                      {tunedNodes.some((n) => inferNodeClusterGroup(n) !== null) && (() => {
+                        const aiNodes = tunedNodes.filter((n) => inferNodeClusterGroup(n) === 'ai-inference');
+                        const analyticsNodes = tunedNodes.filter((n) => inferNodeClusterGroup(n) === 'analytics-compute');
+                        const backendNodes = tunedNodes.filter((n) => inferNodeClusterGroup(n) === 'backend-db');
+                        const pills: { id: ClusterGroupFilter; label: string; count: number; nodes: OnpremNode[] }[] = [
+                          { id: 'all', label: 'All Nodes', count: tunedNodes.length, nodes: tunedNodes },
+                          { id: 'ai-inference', label: 'AI Inference', count: aiNodes.length, nodes: aiNodes },
+                          { id: 'analytics-compute', label: 'Analytics Compute', count: analyticsNodes.length, nodes: analyticsNodes },
+                          { id: 'backend-db', label: 'Backend & DB', count: backendNodes.length, nodes: backendNodes },
+                        ];
                         return (
-                          <div
-                            key={n.machineId}
-                            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-bold transition border ${isActive
-                                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 shadow-md shadow-emerald-500/10'
-                                : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main'
-                              } ${isExcluded ? 'opacity-40' : ''}`}
-                          >
-                            <button
-                              onClick={() => setActiveTunedNodeId(n.machineId)}
-                              className="flex items-center space-x-1.5 cursor-pointer focus:outline-none"
-                            >
-                              <HardDrive className="w-4 h-4" />
-                              <span className={isExcluded ? 'line-through' : ''}>{n.hostname}</span>
-                              {n.gpuCards && n.gpuCards.length > 0 && (
-                                <span className="ml-1 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs rounded font-extrabold border border-emerald-500/30">
-                                  GPU
-                                </span>
-                              )}
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleToggleNodeExclude(n.machineId);
-                              }}
-                              className={`ml-1 px-1.5 py-0.5 rounded text-sm cursor-pointer transition ${isExcluded
-                                  ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30'
-                                  : 'bg-red-500/15 text-red-400 hover:bg-red-500/25'
-                                }`}
-                              title={isExcluded ? 'Include server in recommendation' : 'Exclude server from recommendation'}
-                            >
-                              {isExcluded ? 'Include' : 'Exclude'}
-                            </button>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {pills.filter((p) => p.id === 'all' || p.count > 0).map((pill) => {
+                              const isSelected = selectedClusterGroup === pill.id;
+                              return (
+                                <button
+                                  key={pill.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedClusterGroup(pill.id);
+                                    if (pill.nodes.length > 0 && !pill.nodes.some((n) => n.machineId === activeTunedNodeId)) {
+                                      setActiveTunedNodeId(pill.nodes[0].machineId);
+                                    }
+                                  }}
+                                  className={`px-3 py-1.5 rounded-lg text-sm font-bold transition cursor-pointer border ${
+                                    isSelected
+                                      ? 'bg-emerald-500 text-slate-950 border-emerald-500 shadow-sm shadow-emerald-500/20'
+                                      : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main hover:border-emerald-500/40'
+                                  }`}
+                                >
+                                  {pill.label} ({pill.count})
+                                </button>
+                              );
+                            })}
                           </div>
                         );
-                      })}
+                      })()}
+                    </div>
+                    <div className="flex flex-wrap gap-2.5 max-h-44 overflow-y-auto p-2 bg-bg-panel/20 rounded-xl border border-border-main/20">
+                      {tunedNodes
+                        .filter((n) => selectedClusterGroup === 'all' || inferNodeClusterGroup(n) === selectedClusterGroup)
+                        .map((n) => {
+                          const isExcluded = excludedNodeIds.includes(n.machineId);
+                          const isActive = n.machineId === activeTunedNodeId;
+                          const vcpus = (n.cpu?.cpus || 1) * (n.cpu?.threads || n.cpu?.cores || 1);
+                          return (
+                            <div
+                              key={n.machineId}
+                              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-bold transition border ${isActive
+                                  ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 shadow-md shadow-emerald-500/10'
+                                  : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main'
+                                } ${isExcluded ? 'opacity-40' : ''}`}
+                            >
+                              <button
+                                onClick={() => setActiveTunedNodeId(n.machineId)}
+                                className="flex items-center space-x-1.5 cursor-pointer focus:outline-none"
+                              >
+                                <HardDrive className="w-4 h-4" />
+                                <span className={isExcluded ? 'line-through' : ''}>{n.hostname}</span>
+                                <span className="text-xs font-mono text-text-muted">
+                                  ({vcpus}vCPU/{toGiB(n.memory?.totalSize || 0)}GiB)
+                                </span>
+                                {n.gpuCards && n.gpuCards.length > 0 && (
+                                  <span className="ml-1 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs rounded font-extrabold border border-emerald-500/30">
+                                    GPU
+                                  </span>
+                                )}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleNodeExclude(n.machineId);
+                                }}
+                                className={`ml-1 px-1.5 py-0.5 rounded text-sm cursor-pointer transition ${isExcluded
+                                    ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30'
+                                    : 'bg-red-500/15 text-red-400 hover:bg-red-500/25'
+                                  }`}
+                                title={isExcluded ? 'Include node in recommendation' : 'Exclude node from recommendation'}
+                              >
+                                {isExcluded ? 'Include' : 'Exclude'}
+                              </button>
+                            </div>
+                          );
+                        })}
                     </div>
                   </div>
 
@@ -2043,7 +2112,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
       {tuningSourceSaveSuccess && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-950/95 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 px-5 py-4.5 rounded-2xl shadow-2xl shadow-emerald-500/10 animate-fade-in font-bold text-sm backdrop-blur-md">
           <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-          <span>Source specification updated and saved. Ready to define target Cloud settings.</span>
+          <span>Planning infrastructure model saved. Ready to optimize target cloud architecture.</span>
         </div>
       )}
 

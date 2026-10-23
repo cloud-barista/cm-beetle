@@ -362,7 +362,7 @@ export const beetleApi = {
   getMultiRecommendations: async (
     sourceInfra: OnpremInfra,
     targetPairs: CloudProperty[],
-    minMatchRate: number = 90
+    minMatchRate: number = 85
   ): Promise<RecommendedInfra[]> => {
     const hasNlbs = sourceInfra.nlbs && sourceInfra.nlbs.length > 0;
     const query = `?minMatchRate=${minMatchRate}`;
@@ -1312,6 +1312,17 @@ export const tumblebugApi = {
       return response.data?.output || response.data;
     } catch (err: any) {
       console.warn(`getInfra failed for ${infraId}:`, err);
+      return null;
+    }
+  },
+
+  // Get SSH Key resource (including privateKey) from CB-Tumblebug
+  getSshKey: async (nsId: string, sshKeyId: string): Promise<any> => {
+    try {
+      const response = await api.get(`/tumblebug/ns/${nsId}/resources/sshKey/${sshKeyId}`);
+      return response.data?.output || response.data;
+    } catch (err: any) {
+      console.warn(`getSshKey failed for ${sshKeyId}:`, err);
       return null;
     }
   },

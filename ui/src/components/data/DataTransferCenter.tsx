@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore, calculateJobElapsedSeconds } from '@/store/migrationStore';
-import { beetleApi, tumblebugApi } from '@/api/client';
+import { beetleApi, tumblebugApi, honeybeeApi } from '@/api/client';
 import { CspCredentialForm } from '../common/CspCredentialForm';
+import { DirectoryTreeExplorer } from './DirectoryTreeExplorer';
 import { 
   Database, 
   Key, 
@@ -27,7 +28,10 @@ import {
   ArrowRight,
   Folder,
   Globe,
-  Clock
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  Upload
 } from 'lucide-react';
 
 interface DataMigrationJob {
@@ -153,10 +157,16 @@ export const DataTransferCenter: React.FC = () => {
   const [customTumblebugUser, setCustomTumblebugUser] = useState('');
   const [customTumblebugPassword, setCustomTumblebugPassword] = useState('');
 
-  // Source SSH Fields
+  // Source SSH Fields & Mode (Honeybee Source Group vs Direct SSH)
+  const [sourceSshMode, setSourceSshMode] = useState<'honeybee' | 'direct'>('honeybee');
+  const [hbGroups, setHbGroups] = useState<any[]>([]);
+  const [selectedHbGroupId, setSelectedHbGroupId] = useState('');
+  const [hbConnections, setHbConnections] = useState<any[]>([]);
+  const [selectedHbConnId, setSelectedHbConnId] = useState('');
+  const [isLoadingHb, setIsLoadingHb] = useState(false);
   const [sourceSshHost, setSourceSshHost] = useState('');
-  const [sourceSshPort, setSourceSshPort] = useState('');
-  const [sourceSshUser, setSourceSshUser] = useState('');
+  const [sourceSshPort, setSourceSshPort] = useState('22');
+  const [sourceSshUser, setSourceSshUser] = useState('ubuntu');
   const [sourceSshPrivateKey, setSourceSshPrivateKey] = useState('');
   const [sourceSshPath, setSourceSshPath] = useState('');
 
@@ -174,12 +184,21 @@ export const DataTransferCenter: React.FC = () => {
   const [targetSubPath, setTargetSubPath] = useState('');
   const [isFetchingTargets, setIsFetchingTargets] = useState(false);
 
-  // Target SSH Fields
+  // Target SSH Fields & Mode (Tumblebug Infra vs Direct SSH)
+  const [targetSshMode, setTargetSshMode] = useState<'tumblebug' | 'direct'>('tumblebug');
+  const [tbInfraList, setTbInfraList] = useState<any[]>([]);
+  const [selectedTbInfraId, setSelectedTbInfraId] = useState('');
+  const [tbNodeList, setTbNodeList] = useState<any[]>([]);
+  const [selectedTbNodeId, setSelectedTbNodeId] = useState('');
+  const [isLoadingTbInfra, setIsLoadingTbInfra] = useState(false);
   const [targetSshHost, setTargetSshHost] = useState('');
-  const [targetSshPort, setTargetSshPort] = useState('');
-  const [targetSshUser, setTargetSshUser] = useState('');
+  const [targetSshPort, setTargetSshPort] = useState('22');
+  const [targetSshUser, setTargetSshUser] = useState('ubuntu');
   const [targetSshPrivateKey, setTargetSshPrivateKey] = useState('');
   const [targetSshPath, setTargetSshPath] = useState('');
+
+  // Directory Tree Explorer Toggle State
+  const [showDirectoryTree, setShowDirectoryTree] = useState(false);
 
   // Migration Transfer Parameters
   const [dataStrategy, setDataStrategy] = useState('auto');
@@ -221,6 +240,193 @@ export const DataTransferCenter: React.FC = () => {
   const handleRemoveExcludeTag = (patternToRemove: string) => {
     const existing = excludeFilter.split(',').map(s => s.trim()).filter(Boolean);
     setExcludeFilter(existing.filter(p => p !== patternToRemove).join(', '));
+  };
+
+  // Two-way toggle helpers for DirectoryTreeExplorer
+  const handleToggleIncludePattern = (pattern: string) => {
+    const existing = includeFilter.split(',').map(s => s.trim()).filter(Boolean);
+    if (existing.includes(pattern)) {
+      setIncludeFilter(existing.filter(p => p !== pattern).join(', '));
+    } else {
+      setIncludeFilter([...existing, pattern].join(', '));
+      handleRemoveExcludeTag(pattern);
+    }
+  };
+
+  const handleToggleExcludePattern = (pattern: string) => {
+    const existing = excludeFilter.split(',').map(s => s.trim()).filter(Boolean);
+    if (existing.includes(pattern)) {
+      setExcludeFilter(existing.filter(p => p !== pattern).join(', '));
+    } else {
+      setExcludeFilter([...existing, pattern].join(', '));
+      handleRemoveIncludeTag(pattern);
+    }
+  };
+
+  // Apply AIMX (Ollama + OpenWebUI) filter preset
+  const handleApplyAimxPreset = () => {
+    setIncludeFilter('~/.ollama/models/blobs/**, ~/.ollama/models/manifests/**, /app/backend/data/webui.db');
+    setExcludeFilter('*.log, *.tmp, __pycache__/**');
+    setShowDirectoryTree(true);
+  };
+
+  // Decode or sanitize Honeybee SSH username (Honeybee RSA-encrypts stored user strings)
+  const resolveHoneybeeUsername = (raw?: string): string => {
+    if (!raw) return 'ubuntu';
+    if (raw.length > 32 && /^[A-Za-z0-9+/=]+$/.test(raw)) {
+      try {
+        const decoded = atob(raw);
+        if (decoded && decoded.length <= 64 && /^[\x20-\x7E]+$/.test(decoded)) {
+          return decoded;
+        }
+      } catch {
+        // Encrypted ciphertext cannot be decoded in browser
+      }
+      return 'ubuntu';
+    }
+    return raw;
+  };
+
+  // Apply selected Honeybee connection info to Source SSH fields
+  const applyHbConnection = (conn: any) => {
+    if (!conn) return;
+    setSelectedHbConnId(conn.id || conn.name || '');
+    setSourceSshHost(conn.ip_address || conn.ip || '');
+    setSourceSshPort(String(conn.ssh_port || conn.port || '22'));
+    setSourceSshUser(resolveHoneybeeUsername(conn.user));
+  };
+
+  // Fetch Connections for a selected Honeybee Source Group
+  const handleSelectHbGroup = async (sgId: string) => {
+    setSelectedHbGroupId(sgId);
+    if (!sgId) {
+      setHbConnections([]);
+      setSelectedHbConnId('');
+      return;
+    }
+    setIsLoadingHb(true);
+    try {
+      const res = await honeybeeApi.getConnectionInfoList(sgId);
+      const list = res?.connection_info || (Array.isArray(res) ? res : []);
+      setHbConnections(list);
+      if (list.length > 0) {
+        applyHbConnection(list[0]);
+      } else {
+        setSelectedHbConnId('');
+      }
+    } catch {
+      setHbConnections([]);
+      setSelectedHbConnId('');
+    } finally {
+      setIsLoadingHb(false);
+    }
+  };
+
+  // Fetch Honeybee Source Groups for Source SSH selection
+  const handleFetchHoneybeeGroups = async () => {
+    setIsLoadingHb(true);
+    try {
+      const res = await honeybeeApi.getSourceGroups();
+      const list = res?.source_group || (Array.isArray(res) ? res : []);
+      setHbGroups(list);
+      if (list.length > 0) {
+        const targetGroupId = selectedHbGroupId && list.some((g: any) => g.id === selectedHbGroupId)
+          ? selectedHbGroupId
+          : list[0].id;
+        await handleSelectHbGroup(targetGroupId);
+      } else {
+        setSelectedHbGroupId('');
+        setHbConnections([]);
+      }
+    } catch {
+      setHbGroups([]);
+      setHbConnections([]);
+    } finally {
+      setIsLoadingHb(false);
+    }
+  };
+
+  // Apply selected Tumblebug Target Node to Destination SSH fields (including SSH Private Key lookup)
+  const applyTbNode = async (nsId: string, node: any) => {
+    if (!node) return;
+    const nodeId = node.id || node.name || '';
+    setSelectedTbNodeId(nodeId);
+    setTargetSshHost(node.publicIP || node.publicIp || node.privateIP || node.privateIp || '');
+    setTargetSshPort(String(node.sshPort || '22'));
+    setTargetSshUser(node.vmUserName || node.nodeUserName || node.userName || 'ubuntu');
+    if (node.sshKeyId) {
+      const sshKeyObj = await tumblebugApi.getSshKey(nsId || 'mig01', node.sshKeyId);
+      if (sshKeyObj?.privateKey) {
+        setTargetSshPrivateKey(sshKeyObj.privateKey);
+      }
+    }
+  };
+
+  // Select a Tumblebug Migrated Infra and load its VM nodes
+  const handleSelectTbInfra = async (nsId: string, infraId: string, infraListFallback?: any[]) => {
+    setSelectedTbInfraId(infraId);
+    if (!infraId) {
+      setTbNodeList([]);
+      setSelectedTbNodeId('');
+      return;
+    }
+    setIsLoadingTbInfra(true);
+    try {
+      const detail = await tumblebugApi.getInfra(nsId || 'mig01', infraId);
+      const fallbackObj = (infraListFallback || tbInfraList).find((item: any) => (item.id || item.name) === infraId);
+      const nodes = detail?.vm || detail?.nodes || fallbackObj?.vm || fallbackObj?.nodes || [];
+      setTbNodeList(nodes);
+      if (nodes.length > 0) {
+        await applyTbNode(nsId || 'mig01', nodes[0]);
+      } else {
+        setSelectedTbNodeId('');
+      }
+    } catch {
+      setTbNodeList([]);
+      setSelectedTbNodeId('');
+    } finally {
+      setIsLoadingTbInfra(false);
+    }
+  };
+
+  // Fetch Tumblebug Migrated Infras for Destination SSH selection
+  const handleFetchTargetInfras = async (nsIdToFetch: string) => {
+    setIsLoadingTbInfra(true);
+    try {
+      const infras = await beetleApi.getMigratedInfraList(nsIdToFetch || 'mig01');
+      const list = Array.isArray(infras) ? infras : [];
+      setTbInfraList(list);
+      if (list.length > 0) {
+        const firstId = list[0].id || list[0].name || '';
+        await handleSelectTbInfra(nsIdToFetch || 'mig01', firstId, list);
+      } else {
+        setSelectedTbInfraId('');
+        setTbNodeList([]);
+        setSelectedTbNodeId('');
+      }
+    } catch {
+      setTbInfraList([]);
+      setTbNodeList([]);
+    } finally {
+      setIsLoadingTbInfra(false);
+    }
+  };
+
+  // Drag-and-drop PEM key file reader
+  const handlePemFileDrop = (
+    e: React.DragEvent<HTMLTextAreaElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    e.preventDefault();
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (typeof ev.target?.result === 'string') {
+        setter(ev.target.result);
+      }
+    };
+    reader.readAsText(file);
   };
 
   // Load CSP Providers and Regions dynamically via CB-Tumblebug REST API on initial mount
@@ -378,6 +584,8 @@ export const DataTransferCenter: React.FC = () => {
   const handleOpenLaunchModal = () => {
     setShowLaunchModal(true);
     handleFetchTargetStorages(dataNsId);
+    handleFetchHoneybeeGroups();
+    handleFetchTargetInfras(dataNsId);
   };
 
   // Execute Data Migration with Credential Field Encryption & Full Object Storage Path Construction
@@ -394,7 +602,7 @@ export const DataTransferCenter: React.FC = () => {
       const cleanSourceSubPath = (sourceScopeMode === 'all') ? '' : sourceSubPath.trim().replace(/^\/+/, '');
       const fullSourcePath = sourceAccessType === 'object-storage' 
         ? (cleanSourceSubPath ? `${rawSourceBucket}/${cleanSourceSubPath}` : rawSourceBucket) 
-        : `${sourceSshHost}:${sourceSshPath}`;
+        : (sourceSshPath.trim() || '/');
 
       const rawTargetStorage = targetAccessEngine === 'tumblebug'
         ? (selectedTargetStorage || 'target-storage-01')
@@ -402,7 +610,14 @@ export const DataTransferCenter: React.FC = () => {
       const cleanTargetSubPath = targetSubPath.trim().replace(/^\/+/, '');
       const fullTargetPath = targetAccessType === 'object-storage' 
         ? (cleanTargetSubPath ? `${rawTargetStorage}/${cleanTargetSubPath}` : rawTargetStorage) 
-        : `${targetSshHost}:${targetSshPath}`;
+        : (targetSshPath.trim() || '/');
+
+      const displaySourceLabel = sourceAccessType === 'object-storage'
+        ? fullSourcePath
+        : `${sourceSshHost}:${fullSourcePath}`;
+      const displayTargetLabel = targetAccessType === 'object-storage'
+        ? fullTargetPath
+        : `${targetSshHost}:${fullTargetPath}`;
 
       // Build filter configuration for source location
       const includePatterns = includeFilter.split(',').map(s => s.trim()).filter(Boolean);
@@ -434,9 +649,9 @@ export const DataTransferCenter: React.FC = () => {
             filesystem: {
               accessType: 'ssh',
               ssh: {
-                host: sourceSshHost,
-                port: parseInt(sourceSshPort, 10),
-                user: sourceSshUser,
+                host: sourceSshHost.trim(),
+                port: parseInt(sourceSshPort, 10) || 22,
+                username: sourceSshUser.trim() || 'ubuntu',
                 privateKey: sourceSshPrivateKey
               }
             }
@@ -478,9 +693,9 @@ export const DataTransferCenter: React.FC = () => {
             filesystem: {
               accessType: 'ssh',
               ssh: {
-                host: targetSshHost,
-                port: parseInt(targetSshPort, 10),
-                user: targetSshUser,
+                host: targetSshHost.trim(),
+                port: parseInt(targetSshPort, 10) || 22,
+                username: targetSshUser.trim() || 'ubuntu',
                 privateKey: targetSshPrivateKey
               }
             }
@@ -516,8 +731,8 @@ export const DataTransferCenter: React.FC = () => {
       const newJob: DataMigrationJob = {
         id: reqId,
         reqId,
-        sourceBucket: fullSourcePath,
-        targetStorage: fullTargetPath,
+        sourceBucket: displaySourceLabel,
+        targetStorage: displayTargetLabel,
         nsId: dataNsId,
         csp: dataCsp.toUpperCase(),
         region: dataRegion,
@@ -529,7 +744,7 @@ export const DataTransferCenter: React.FC = () => {
         encryptionKeyId: usedKeyId,
         logs: [
           `GET /beetle/migration/data/encryptionKey -> Issued KeyID: ${usedKeyId}`,
-          `Constructed Beetle DataLocation.Path -> Source: "${fullSourcePath}" | Target: "${fullTargetPath}"`,
+          `Constructed Beetle DataLocation.Path -> Source: "${displaySourceLabel}" | Target: "${displayTargetLabel}"`,
           `Encrypting sensitive credentials (${sourceAccessType === 'object-storage' ? 'AccessKeyId, SecretAccessKey' : 'SSH Private Key'}) via RSA-OAEP-256...`,
           `POST /beetle/migration/data -> 202 Accepted (ReqID: ${reqId}, Status: Handling)`
         ]
@@ -538,7 +753,7 @@ export const DataTransferCenter: React.FC = () => {
       setDataJobs(prev => [newJob, ...prev]);
       setActiveJobId(newJob.id);
       setShowLaunchModal(false);
-      setToastMsg(`🔒 Data Migration launched with path: ${fullSourcePath} ➔ ${fullTargetPath}!`);
+      setToastMsg(`🔒 Data Migration launched with path: ${displaySourceLabel} ➔ ${displayTargetLabel}!`);
       setTimeout(() => setToastMsg(null), 6000);
     } catch (err: any) {
       setModalError(err.message || 'Failed to launch data migration.');
@@ -658,7 +873,7 @@ export const DataTransferCenter: React.FC = () => {
       <div className="glass-panel p-4 rounded-2xl border border-border-main flex flex-wrap items-center gap-3">
         <button
           onClick={handleOpenLaunchModal}
-          className="px-5 py-2.5 bg-gradient-to-r from-teal-400 via-emerald-400 to-blue-600 hover:from-teal-500 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-teal-500/20"
+          className="px-5 py-2.5 bg-gradient-to-r from-teal-400 via-emerald-400 to-emerald-500 hover:from-teal-500 hover:to-emerald-600 text-slate-950 rounded-xl text-sm font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-teal-500/20"
         >
           <Plus className="w-4 h-4 text-slate-950" />
           <Shield className="w-4 h-4 text-slate-950" />
@@ -927,10 +1142,42 @@ export const DataTransferCenter: React.FC = () => {
 
                     {/* Source Authentication & Credentials */}
                     <div className="p-4 bg-bg-panel/60 border border-border-main/40 rounded-xl space-y-3.5">
-                      <span className="text-sm font-bold text-text-main font-mono block border-b border-border-main/20 pb-2 flex items-center gap-1.5">
-                        <Key className="w-4 h-4 text-emerald-400" />
-                        Source Authentication &amp; Credentials
-                      </span>
+                      <div className="flex flex-wrap items-center justify-between border-b border-border-main/20 pb-2 gap-2">
+                        <span className="text-sm font-bold text-text-main font-mono flex items-center gap-1.5">
+                          <Key className="w-4 h-4 text-emerald-400" />
+                          Source Authentication &amp; Credentials
+                        </span>
+
+                        {sourceAccessType === 'remote-ssh' && (
+                          <div className="flex items-center gap-1 bg-bg-panel p-0.5 border border-border-main rounded-lg text-xs">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSourceSshMode('honeybee');
+                                if (hbGroups.length === 0) handleFetchHoneybeeGroups();
+                              }}
+                              className={`px-2 py-0.5 rounded-md font-extrabold transition cursor-pointer ${
+                                sourceSshMode === 'honeybee'
+                                  ? 'bg-emerald-500 text-slate-950 shadow-xs'
+                                  : 'text-text-muted hover:text-text-main'
+                              }`}
+                            >
+                              Honeybee Source Group
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSourceSshMode('direct')}
+                              className={`px-2 py-0.5 rounded-md font-extrabold transition cursor-pointer ${
+                                sourceSshMode === 'direct'
+                                  ? 'bg-emerald-500 text-slate-950 shadow-xs'
+                                  : 'text-text-muted hover:text-text-main'
+                              }`}
+                            >
+                              Direct SSH
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
                       {sourceAccessType === 'object-storage' ? (
                         <div className="space-y-3">
@@ -967,6 +1214,69 @@ export const DataTransferCenter: React.FC = () => {
                         </div>
                       ) : (
                         <div className="space-y-3">
+                          {sourceSshMode === 'honeybee' && (
+                            <div className="p-3 bg-bg-input/60 border border-emerald-500/30 rounded-xl space-y-2.5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+                                  Select Registered Honeybee Source Node
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={handleFetchHoneybeeGroups}
+                                  disabled={isLoadingHb}
+                                  className="px-2.5 py-1 bg-bg-panel hover:bg-bg-main border border-border-main rounded-lg text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
+                                >
+                                  <RefreshCw className={`w-3 h-3 ${isLoadingHb ? 'animate-spin' : ''}`} />
+                                  <span>Refresh</span>
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <div>
+                                  <label className="block text-text-muted font-normal text-xs mb-1">Source Group</label>
+                                  <select
+                                    value={selectedHbGroupId}
+                                    onChange={(e) => handleSelectHbGroup(e.target.value)}
+                                    className="w-full px-3 py-1.5 bg-bg-panel border border-border-main rounded-lg text-text-main font-bold text-sm focus:outline-none focus:border-emerald-500 cursor-pointer"
+                                  >
+                                    {hbGroups.length > 0 ? (
+                                      hbGroups.map((g: any) => (
+                                        <option key={g.id} value={g.id}>{g.name || g.id}</option>
+                                      ))
+                                    ) : (
+                                      <option value="">No source groups found</option>
+                                    )}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-text-muted font-normal text-xs mb-1">Source Node</label>
+                                  <select
+                                    value={selectedHbConnId}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      const conn = hbConnections.find((c: any) => (c.id || c.name) === val);
+                                      if (conn) applyHbConnection(conn);
+                                    }}
+                                    className="w-full px-3 py-1.5 bg-bg-panel border border-border-main rounded-lg text-text-main font-bold font-mono text-sm focus:outline-none focus:border-emerald-500 cursor-pointer"
+                                  >
+                                    {hbConnections.length > 0 ? (
+                                      hbConnections.map((c: any) => {
+                                        const cid = c.id || c.name;
+                                        const ip = c.ip_address || c.ip || '';
+                                        return (
+                                          <option key={cid} value={cid}>
+                                            {c.name || cid} ({ip})
+                                          </option>
+                                        );
+                                      })
+                                    ) : (
+                                      <option value="">Select source group first</option>
+                                    )}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                             <div className="sm:col-span-2">
                               <label className="block text-text-muted font-normal text-sm mb-1">SSH Host IP / Hostname</label>
@@ -974,7 +1284,7 @@ export const DataTransferCenter: React.FC = () => {
                                 type="text"
                                 value={sourceSshHost}
                                 onChange={(e) => setSourceSshHost(e.target.value)}
-                                placeholder="192.168.1.50"
+                                placeholder="10.0.1.11"
                                 className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 font-bold text-sm"
                               />
                             </div>
@@ -1002,11 +1312,19 @@ export const DataTransferCenter: React.FC = () => {
                           </div>
 
                           <div>
-                            <label className="block text-text-muted font-normal text-sm mb-1">SSH Private Key (Encrypted PEM Format)</label>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-text-muted font-normal text-sm">SSH Private Key (Encrypted PEM Format)</label>
+                              <span className="text-xs text-text-muted flex items-center gap-1">
+                                <Upload className="w-3 h-3 text-emerald-500" />
+                                Drop .pem file or paste
+                              </span>
+                            </div>
                             <textarea
                               rows={2}
                               value={sourceSshPrivateKey}
                               onChange={(e) => setSourceSshPrivateKey(e.target.value)}
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => handlePemFileDrop(e, setSourceSshPrivateKey)}
                               placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;..."
                               className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 font-bold text-sm"
                             />
@@ -1096,12 +1414,12 @@ export const DataTransferCenter: React.FC = () => {
 
                     {/* Destination Authentication & Namespace */}
                     <div className="p-4 bg-bg-panel/60 border border-border-main/40 rounded-xl space-y-3.5">
-                      <div className="flex items-center justify-between border-b border-border-main/20 pb-2">
+                      <div className="flex flex-wrap items-center justify-between border-b border-border-main/20 pb-2 gap-2">
                         <span className="text-sm font-bold text-text-main font-mono">
                           Destination Credentials &amp; Mode
                         </span>
 
-                        {targetAccessType === 'object-storage' && (
+                        {targetAccessType === 'object-storage' ? (
                           <div className="flex items-center gap-1 bg-bg-panel p-0.5 border border-border-main rounded-lg text-xs">
                             <button
                               type="button"
@@ -1124,6 +1442,34 @@ export const DataTransferCenter: React.FC = () => {
                               }`}
                             >
                               MinIO (Direct S3)
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 bg-bg-panel p-0.5 border border-border-main rounded-lg text-xs">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTargetSshMode('tumblebug');
+                                if (tbInfraList.length === 0) handleFetchTargetInfras(dataNsId);
+                              }}
+                              className={`px-2 py-0.5 rounded-md font-extrabold transition cursor-pointer ${
+                                targetSshMode === 'tumblebug'
+                                  ? 'bg-teal-400 text-slate-950 shadow-xs'
+                                  : 'text-text-muted hover:text-text-main'
+                              }`}
+                            >
+                              Tumblebug Infra
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setTargetSshMode('direct')}
+                              className={`px-2 py-0.5 rounded-md font-extrabold transition cursor-pointer ${
+                                targetSshMode === 'direct'
+                                  ? 'bg-teal-400 text-slate-950 shadow-xs'
+                                  : 'text-text-muted hover:text-text-main'
+                              }`}
+                            >
+                              Direct SSH
                             </button>
                           </div>
                         )}
@@ -1182,6 +1528,83 @@ export const DataTransferCenter: React.FC = () => {
                         )
                       ) : (
                         <div className="space-y-3">
+                          {targetSshMode === 'tumblebug' && (
+                            <div className="p-3 bg-bg-input/60 border border-teal-500/30 rounded-xl space-y-2.5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-extrabold text-teal-600 dark:text-teal-400">
+                                  Select Provisioned Tumblebug Target Node
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleFetchTargetInfras(dataNsId)}
+                                  disabled={isLoadingTbInfra}
+                                  className="px-2.5 py-1 bg-bg-panel hover:bg-bg-main border border-border-main rounded-lg text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
+                                >
+                                  <RefreshCw className={`w-3 h-3 ${isLoadingTbInfra ? 'animate-spin' : ''}`} />
+                                  <span>Refresh</span>
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                <div>
+                                  <label className="block text-text-muted font-normal text-xs mb-1">Namespace (nsId)</label>
+                                  <input
+                                    type="text"
+                                    value={dataNsId}
+                                    onChange={(e) => {
+                                      setDataNsId(e.target.value);
+                                      handleFetchTargetInfras(e.target.value);
+                                    }}
+                                    placeholder="mig01"
+                                    className="w-full px-3 py-1.5 bg-bg-panel border border-border-main rounded-lg text-text-main font-bold font-mono text-sm focus:outline-none focus:border-teal-400"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-text-muted font-normal text-xs mb-1">Migrated Infra</label>
+                                  <select
+                                    value={selectedTbInfraId}
+                                    onChange={(e) => handleSelectTbInfra(dataNsId, e.target.value)}
+                                    className="w-full px-3 py-1.5 bg-bg-panel border border-border-main rounded-lg text-text-main font-bold text-sm focus:outline-none focus:border-teal-400 cursor-pointer"
+                                  >
+                                    {tbInfraList.length > 0 ? (
+                                      tbInfraList.map((inf: any) => {
+                                        const iid = inf.id || inf.name || '';
+                                        return <option key={iid} value={iid}>{iid}</option>;
+                                      })
+                                    ) : (
+                                      <option value="">No migrated infra found</option>
+                                    )}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-text-muted font-normal text-xs mb-1">Target Node</label>
+                                  <select
+                                    value={selectedTbNodeId}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      const node = tbNodeList.find((n: any) => (n.id || n.name) === val);
+                                      if (node) applyTbNode(dataNsId, node);
+                                    }}
+                                    className="w-full px-3 py-1.5 bg-bg-panel border border-border-main rounded-lg text-text-main font-bold font-mono text-sm focus:outline-none focus:border-teal-400 cursor-pointer"
+                                  >
+                                    {tbNodeList.length > 0 ? (
+                                      tbNodeList.map((n: any) => {
+                                        const nid = n.id || n.name || '';
+                                        const ip = n.publicIP || n.publicIp || n.privateIP || n.privateIp || '';
+                                        return (
+                                          <option key={nid} value={nid}>
+                                            {n.name || nid} ({ip || 'IP pending'})
+                                          </option>
+                                        );
+                                      })
+                                    ) : (
+                                      <option value="">Select infra first</option>
+                                    )}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                             <div className="sm:col-span-2">
                               <label className="block text-text-muted font-normal text-sm mb-1">Target SSH Host IP</label>
@@ -1189,7 +1612,7 @@ export const DataTransferCenter: React.FC = () => {
                                 type="text"
                                 value={targetSshHost}
                                 onChange={(e) => setTargetSshHost(e.target.value)}
-                                placeholder="10.0.1.100"
+                                placeholder="43.200.254.107"
                                 className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-teal-400 font-bold text-sm"
                               />
                             </div>
@@ -1215,11 +1638,19 @@ export const DataTransferCenter: React.FC = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-text-muted font-normal text-sm mb-1">SSH Private Key (Encrypted PEM Format)</label>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-text-muted font-normal text-sm">SSH Private Key (Encrypted PEM Format)</label>
+                              <span className="text-xs text-text-muted flex items-center gap-1">
+                                <Upload className="w-3 h-3 text-teal-500" />
+                                Auto-filled from Tumblebug or drop .pem
+                              </span>
+                            </div>
                             <textarea
                               rows={2}
                               value={targetSshPrivateKey}
                               onChange={(e) => setTargetSshPrivateKey(e.target.value)}
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => handlePemFileDrop(e, setTargetSshPrivateKey)}
                               placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;..."
                               className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-teal-400 font-bold text-sm"
                             />
@@ -1495,11 +1926,30 @@ export const DataTransferCenter: React.FC = () => {
 
               {/* 5. Filter Section */}
               <div className="p-5 bg-bg-input/60 border border-border-main/40 rounded-2xl space-y-4">
-                <div className="flex justify-between items-center border-b border-border-main/30 pb-2.5">
+                <div className="flex flex-wrap justify-between items-center border-b border-border-main/30 pb-2.5 gap-2">
                   <span className="text-sm font-extrabold text-text-main font-mono flex items-center gap-1.5">
                     <Filter className="w-4 h-4 text-emerald-500" />
                     Data Filter Settings
                   </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleApplyAimxPreset}
+                      className="px-3 py-1 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>+ Preset: AIMX (Ollama + OpenWebUI)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDirectoryTree(!showDirectoryTree)}
+                      className="px-3 py-1 bg-bg-panel hover:bg-bg-main border border-border-main text-text-main rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Folder className="w-3.5 h-3.5 text-teal-500" />
+                      <span>Browse Source Directory Tree</span>
+                      {showDirectoryTree ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -1601,6 +2051,15 @@ export const DataTransferCenter: React.FC = () => {
                     )}
                   </div>
                 </div>
+
+                {showDirectoryTree && (
+                  <DirectoryTreeExplorer
+                    includeFilter={includeFilter}
+                    excludeFilter={excludeFilter}
+                    onToggleInclude={handleToggleIncludePattern}
+                    onToggleExclude={handleToggleExcludePattern}
+                  />
+                )}
               </div>
 
               {/* Field Encryption Status Warning Box */}
@@ -1644,7 +2103,7 @@ export const DataTransferCenter: React.FC = () => {
                 <button
                   onClick={handleConfirmLaunchDataMigration}
                   disabled={isEncryptingAndLaunching}
-                  className="px-6 py-2.5 bg-gradient-to-r from-teal-400 via-emerald-400 to-blue-600 hover:from-teal-500 hover:to-blue-700 disabled:opacity-40 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
+                  className="px-6 py-2.5 bg-gradient-to-r from-teal-400 via-emerald-400 to-emerald-500 hover:from-teal-500 hover:to-emerald-600 disabled:opacity-40 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
                 >
                   {isEncryptingAndLaunching ? (
                     <>

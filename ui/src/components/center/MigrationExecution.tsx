@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useMigrationStore, calculateJobElapsedSeconds } from '../../store/migrationStore';
 import { beetleApi } from '../../api/client';
 import { CheckSSHReadyResponse, RecommendedInfra } from '../../types/migration';
+import { MigrationSplitScreen } from './MigrationSplitScreen';
 import { 
   Play, 
   CheckCircle2, 
@@ -69,6 +70,8 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     setJobs,
     setActiveJobId,
     removeJob,
+    refinedSourceInfra,
+    selectedSourceModel,
     savedCloudModels,
     selectedCloudModel,
     namespaceId,
@@ -77,6 +80,9 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     selectCloudModel,
     setActiveTab
   } = useMigrationStore();
+
+  // View Mode Toggle: 'standard' (Default Editor/Detail View) vs 'split' (16:9 Live Topology Split View)
+  const [viewMode, setViewMode] = useState<'standard' | 'split'>('standard');
 
   // Launch Modal State (Infra)
   const [showLaunchModal, setShowLaunchModal] = useState(false);
@@ -813,27 +819,55 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
           </h2>
         </div>
         <span className="text-sm text-text-muted">
-          Execute target cloud infrastructure migrations, monitor real-time migration status, and inspect provisioned VM access points.
+          Execute target cloud infrastructure migrations, monitor real-time migration status, and inspect provisioned Node access points.
         </span>
       </div>
 
       {/* 2. Dedicated Action Control Box */}
-      <div className="glass-panel p-4 rounded-2xl border border-border-main flex flex-wrap items-center gap-3">
-        {/* + Launch New Migration Button (Infra) */}
-        <button
-          onClick={handleOpenLaunchModal}
-          className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/20"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Launch New Infrastructure Migration</span>
-        </button>
+      <div className="glass-panel p-4 rounded-2xl border border-border-main flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* + Launch New Migration Button (Infra) */}
+          <button
+            onClick={handleOpenLaunchModal}
+            className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/20"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Launch New Infrastructure Migration</span>
+          </button>
 
+          {/* Active Jobs Summary Badge */}
+          <div className="px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-xs font-bold font-mono text-text-main flex items-center gap-2">
+            <Zap className="w-4 h-4 text-emerald-500" />
+            <span>Active Migration Jobs ({runningJobsCount} Running / {completedJobsCount} Completed)</span>
+          </div>
+        </div>
 
-
-        {/* Active Jobs Summary Badge */}
-        <div className="px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-xs font-bold font-mono text-text-main flex items-center gap-2">
-          <Zap className="w-4 h-4 text-emerald-500" />
-          <span>Active Migration Jobs ({runningJobsCount} Running / {completedJobsCount} Completed)</span>
+        {/* View Mode Toggle: Standard View vs 16:9 Split View */}
+        <div className="inline-flex rounded-xl border border-border-main bg-bg-panel p-1 text-xs font-extrabold">
+          <button
+            type="button"
+            onClick={() => setViewMode('standard')}
+            className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
+              viewMode === 'standard'
+                ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/40'
+                : 'text-text-muted hover:text-text-main'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Standard View</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('split')}
+            className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
+              viewMode === 'split'
+                ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/40'
+                : 'text-text-muted hover:text-text-main'
+            }`}
+          >
+            <Server className="w-3.5 h-3.5" />
+            <span>16:9 Split View</span>
+          </button>
         </div>
       </div>
 
@@ -871,7 +905,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 >
                   {/* Top Glowing indicator for active card */}
                   {isSelected && (
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-emerald-500 to-blue-500" />
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-emerald-500 to-teal-500" />
                   )}
 
                   <div className="flex justify-between items-center">
@@ -956,6 +990,20 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
           </div>
         )}
       </div>
+
+      {/* 16:9 Live Topology Split View (When toggled on) */}
+      {viewMode === 'split' && (
+        <MigrationSplitScreen
+          sourceNodes={refinedSourceInfra?.nodes || []}
+          sourceModelName={selectedSourceModel?.name || 'Active Source Infra'}
+          selectedCloudModel={selectedCloudModel}
+          activeJob={activeJob}
+          sshReadyResponse={sshReadyModal.response}
+          sshCooldownSec={sshCooldownSec}
+          sshLoading={sshReadyModal.loading}
+          onCheckSshReady={handleCheckSshReady}
+        />
+      )}
 
       {/* SECTION 2: Selected Job Detail Panel */}
       {activeJob && (
@@ -1239,7 +1287,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 className="px-5 py-2.5 bg-bg-input/60 hover:bg-bg-main border border-border-main text-text-main font-bold text-xs rounded-xl transition flex items-center space-x-2 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>Back to 2. Target Cloud Optimizer</span>
+                <span>Back to 3. Target Cloud Optimizer</span>
               </button>
 
               <div className="flex items-center space-x-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-bold font-mono">
@@ -1572,7 +1620,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 <button
                   onClick={handleConfirmLaunch}
                   disabled={!selectedCloudModel}
-                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 disabled:opacity-40 text-slate-950 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 transition cursor-pointer shadow-lg shadow-emerald-500/20 whitespace-nowrap shrink-0"
+                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-40 text-slate-950 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 transition cursor-pointer shadow-lg shadow-emerald-500/20 whitespace-nowrap shrink-0"
                 >
                   <Play className="w-4 h-4" />
                   <span>Launch Migration</span>
@@ -1905,7 +1953,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
               <button
                 onClick={handleConfirmDataLaunch}
                 disabled={isEncryptingAndLaunching}
-                className="px-6 py-2.5 bg-gradient-to-r from-teal-400 via-emerald-400 to-blue-600 hover:from-teal-500 hover:to-blue-700 disabled:opacity-40 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
+                className="px-6 py-2.5 bg-gradient-to-r from-teal-400 via-emerald-400 to-teal-600 hover:from-teal-500 hover:to-teal-700 disabled:opacity-40 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
               >
                 {isEncryptingAndLaunching ? (
                   <>

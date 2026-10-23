@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from './TopologyMap';
+import { MatchRateRadarChart } from './MatchRateRadarChart';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope } from '../../types/migration';
 import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2, Compass, ArrowRight, ArrowLeft, Plus, AlertTriangle, ShieldCheck, CheckCircle2, Globe, Target, Zap, Undo2 } from 'lucide-react';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
@@ -617,23 +618,32 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
   const getGpuInfo = (specInfo: any, specId?: string, ng?: any): { hasGpu: boolean; label: string } | null => {
     // 1. Authoritative: CB-Tumblebug SpecInfo metadata
     if (specInfo) {
-      const count = specInfo.acceleratorCount ?? specInfo.AcceleratorCount ?? specInfo.gpuCount ?? specInfo.GpuCount;
-      if (count && Number(count) > 0) return { hasGpu: true, label: 'TBD' };
+      const count = Number(specInfo.acceleratorCount ?? specInfo.AcceleratorCount ?? specInfo.gpuCount ?? specInfo.GpuCount ?? 0);
+      const model = String(specInfo.acceleratorModel ?? specInfo.AcceleratorModel ?? specInfo.gpuModel ?? specInfo.GpuModel ?? '').trim();
+      const memGb = Number(specInfo.acceleratorMemoryGB ?? specInfo.AcceleratorMemoryGB ?? specInfo.gpuMemoryGiB ?? 0);
+      if (count > 0 || model) {
+        const prefix = count > 1 ? `${count}x ` : '';
+        const memSuffix = memGb > 0 ? ` (${memGb}GB)` : '';
+        const label = model ? `${prefix}${model}${memSuffix}` : `${count || 1}x GPU${memSuffix}`;
+        return { hasGpu: true, label };
+      }
       if (Array.isArray(specInfo.details)) {
         const gpuDetail = specInfo.details.find((d: any) =>
           d.key === 'GpuInfo' || d.key === 'AcceleratorInfo' || d.key === 'InferenceAcceleratorInfo'
         );
-        if (gpuDetail) return { hasGpu: true, label: 'TBD' };
+        if (gpuDetail) return { hasGpu: true, label: String(gpuDetail.value || 'GPU') };
       }
     }
 
     // 2. CSP Instance Spec naming pattern
     if (specId) {
       const s = specId.toLowerCase();
-      if (s.includes('g4dn.') || s.includes('g5.') || s.includes('g5g.') || s.includes('g6.') ||
-          s.includes('p3.') || s.includes('p4d') || s.includes('p5.') || s.includes('a2-') || s.includes('g2-')) {
-        return { hasGpu: true, label: 'TBD' };
-      }
+      if (s.includes('g4dn.')) return { hasGpu: true, label: 'Tesla T4' };
+      if (s.includes('g5.') || s.includes('g5g.')) return { hasGpu: true, label: 'A10G' };
+      if (s.includes('g6.') || s.includes('g2-')) return { hasGpu: true, label: 'L4' };
+      if (s.includes('p3.')) return { hasGpu: true, label: 'V100' };
+      if (s.includes('p4d') || s.includes('a2-')) return { hasGpu: true, label: 'A100' };
+      if (s.includes('p5.')) return { hasGpu: true, label: 'H100' };
     }
 
     // 3. Check if mapped source node has GPU cards attached
@@ -643,18 +653,24 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
       for (const sId of sourceIds) {
         const sourceNode = findSourceNode(sId);
         if (sourceNode?.gpuCards && sourceNode.gpuCards.length > 0) {
-          return { hasGpu: true, label: 'TBD' };
+          const firstCard = sourceNode.gpuCards[0];
+          const cardModel = firstCard?.model?.trim();
+          const cardMem = firstCard?.memoryTotalGB ? ` (${firstCard.memoryTotalGB}GB)` : '';
+          return {
+            hasGpu: true,
+            label: cardModel ? `${cardModel}${cardMem}` : 'GPU'
+          };
         }
       }
       if ((ng.name || '').toLowerCase().includes('gpu')) {
-        return { hasGpu: true, label: 'TBD' };
+        return { hasGpu: true, label: 'GPU' };
       }
     }
 
     return null;
   };
 
-  // Candidate-level GPU accelerators summary (Marked TBD for target cloud models)
+  // Candidate-level GPU accelerators summary
   const candidateGpuSummary = React.useMemo(() => {
     if (!editedCandidate?.targetInfra?.nodeGroups) {
       return { hasGpu: false, gpuNgCount: 0, gpuNodeCount: 0 };
@@ -1179,7 +1195,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                 >
                   <option value="">-- Choose Source Model --</option>
                   {savedSourceModels.map((m: any) => {
-                    const stageLabel = m.stage === 'planning' ? '[Planning] ' : '[Source] ';
+                    const stageLabel = m.stage === 'planning' ? '[Planning] ' : '';
                     return (
                       <option key={m.id} value={m.id}>{stageLabel}{m.name} (v{m.version || '1.0'})</option>
                     );
@@ -1315,10 +1331,10 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                         value={minMatchRate}
                         onChange={(e) => {
                           const val = parseInt(e.target.value, 10);
-                          setMinMatchRate(isNaN(val) ? 90 : Math.min(100, Math.max(0, val)));
+                          setMinMatchRate(isNaN(val) ? 85 : Math.min(100, Math.max(0, val)));
                         }}
                         className="w-16 bg-bg-input border border-border-main text-text-main rounded-lg px-2 py-1 text-xs font-extrabold font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                        title="Minimum spec match rate threshold (0-100%, default 90%)"
+                        title="Minimum spec match rate threshold (0-100%, default 85%)"
                       />
                     </div>
                     {(targetPairs || []).length > 2 && (
@@ -1363,10 +1379,10 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                       value={minMatchRate}
                       onChange={(e) => {
                         const val = parseInt(e.target.value, 10);
-                        setMinMatchRate(isNaN(val) ? 90 : Math.min(100, Math.max(0, val)));
+                        setMinMatchRate(isNaN(val) ? 85 : Math.min(100, Math.max(0, val)));
                       }}
                       className="w-16 bg-bg-input border border-border-main text-text-main rounded-lg px-2 py-1 text-xs font-extrabold font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                      title="Minimum spec match rate threshold (0-100%, default 90%)"
+                      title="Minimum spec match rate threshold (0-100%, default 85%)"
                     />
                   </div>
                 </div>
@@ -1797,7 +1813,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
                     <div className="h-px w-full bg-border-main/20" />
 
-                    {/* Line 2: Network, Overall Compute, Accelerator (TBD), Security, SSH Key, NLB */}
+                    {/* Line 2: Network, Overall Compute, Accelerator, Security, SSH Key, NLB */}
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                       {/* Network */}
                       <div className="inline-flex items-baseline gap-1.5 shrink-0">
@@ -1819,21 +1835,16 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
                       <div className="h-4 w-px bg-border-main/30 shrink-0 hidden sm:block self-center" />
 
-                      {/* Accelerator (TBD) */}
+                      {/* Accelerator */}
                       <div className="inline-flex items-baseline gap-1.5 shrink-0">
                         <span className="text-sm font-normal text-text-muted">Accelerator</span>
                         {candidateGpuSummary.hasGpu && candidateGpuSummary.gpuNgCount > 0 ? (
-                          <>
-                            <span className="text-sm font-extrabold text-text-main tabular-nums">
-                              {candidateGpuSummary.gpuNgCount} Node Group(s), {candidateGpuSummary.gpuNodeCount} Node(s)
-                            </span>
-                            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded leading-tight self-center">
-                              TBD
-                            </span>
-                          </>
+                          <span className="text-sm font-extrabold text-text-main tabular-nums">
+                            {candidateGpuSummary.gpuNgCount} Node Group(s), {candidateGpuSummary.gpuNodeCount} Node(s)
+                          </span>
                         ) : (
-                          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded leading-tight self-center">
-                            TBD
+                          <span className="text-sm font-extrabold text-text-muted tabular-nums">
+                            0 Node(s)
                           </span>
                         )}
                       </div>
@@ -2060,13 +2071,13 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                       </div>
                                     </div>
 
-                                    {/* Spec: vCPU · Memory · GPU · instance type */}
+                                    {/* Spec: vCPU / Memory / GPU / instance type */}
                                     <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
                                       {vcpu   && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">{vcpu} vCPU</span>}
                                       {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">{formatMemory(memGiB)}</span>}
                                       {gpuInfo && (
-                                        <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-1.5 py-0.5 rounded font-mono flex items-center gap-1" title="Target Cloud GPU Specification is TBD">
-                                          <span>GPU: TBD</span>
+                                        <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-1.5 py-0.5 rounded font-mono flex items-center gap-1" title={`Target Cloud GPU: ${gpuInfo.label}`}>
+                                          <span>{gpuInfo.label !== 'GPU' ? `GPU: ${gpuInfo.label}` : 'GPU'}</span>
                                         </span>
                                       )}
                                       <span className="text-xs font-mono text-text-muted">{extractInstanceType(ng.specId)}</span>
@@ -2085,7 +2096,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                       </span>
                                     ))}
 
-                                    {/* Node count — push to right */}
+                                    {/* Node count - push to right */}
                                     <span className="ml-auto flex-shrink-0 text-xs font-bold bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded">×{nodeCount}</span>
                                   </button>
 
@@ -2093,7 +2104,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                   {isExpanded && (
                                     <div className="border-t border-border-main/20 px-4 py-3 space-y-3 bg-bg-input/5">
 
-                                      {/* Top summary: Spec · Image · Root Disk · SG · Size */}
+                                      {/* Top summary: Spec / Image / Root Disk / SG / Size */}
                                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                                         {/* Spec */}
                                         <div className="bg-bg-panel border border-border-main/30 rounded-lg px-3 py-2">
@@ -2102,8 +2113,8 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                             {vcpu   && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">{vcpu} vCPU</span>}
                                             {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">{formatMemory(memGiB)}</span>}
                                             {gpuInfo && (
-                                              <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-1.5 py-0.5 rounded font-mono" title="Target Cloud GPU Specification is TBD">
-                                                GPU: TBD
+                                              <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-1.5 py-0.5 rounded font-mono" title={`Target Cloud GPU: ${gpuInfo.label}`}>
+                                                {gpuInfo.label !== 'GPU' ? `GPU: ${gpuInfo.label}` : 'GPU'}
                                               </span>
                                             )}
                                           </div>
@@ -2367,11 +2378,14 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                         <div className="flex items-center gap-1.5 flex-wrap">
                                           {vcpu   && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-2 py-0.5 rounded">{vcpu} vCPU</span>}
                                           {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-2 py-0.5 rounded">{formatMemory(memGiB)}</span>}
-                                          {getGpuInfo(specInfo, ng.specId, ng) && (
-                                            <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-2 py-0.5 rounded font-mono" title="Target Cloud GPU Specification is TBD">
-                                              GPU: TBD
-                                            </span>
-                                          )}
+                                          {(() => {
+                                            const step3Gpu = getGpuInfo(specInfo, ng.specId, ng);
+                                            return step3Gpu ? (
+                                              <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-2 py-0.5 rounded font-mono" title={`Target Cloud GPU: ${step3Gpu.label}`}>
+                                                {step3Gpu.label !== 'GPU' ? `GPU: ${step3Gpu.label}` : 'GPU'}
+                                              </span>
+                                            ) : null;
+                                          })()}
                                           <span className="text-xs text-text-muted font-mono" title={ng.specId}>{extractInstanceType(ng.specId)}</span>
                                         </div>
                                       </div>
@@ -3011,7 +3025,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                 className="w-full sm:w-auto px-4 py-2.5 bg-bg-input border border-border-main hover:bg-bg-main text-text-main font-bold text-xs rounded-xl transition cursor-pointer flex items-center justify-center space-x-1.5"
                               >
                                 <ArrowLeft className="w-3.5 h-3.5" />
-                                <span>Back to 2. Source Infra Refinement</span>
+                                <span>Back to 2. Migration Planning</span>
                               </button>
                             ) : <div />}
 
@@ -3081,6 +3095,10 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
             {/* Scrollable Content Area */}
             <div className="overflow-y-auto pr-1 flex-1 space-y-4">
+              <MatchRateRadarChart
+                candidates={recommendationCandidates}
+                sourceInfra={selectedSourceModel?.onpremiseInfraModel}
+              />
               <div className="overflow-x-auto border border-border-main/50 rounded-xl bg-bg-panel/40">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
@@ -3124,11 +3142,14 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                               <span className="text-text-muted">{ng.name}:</span>
                               <div className="flex items-center gap-1.5">
                                 <span className="font-bold text-emerald-600 dark:text-emerald-400">{ng.specId} (x{ng.nodeGroupSize})</span>
-                                {getGpuInfo(getSpecInfo(c, ng.specId), ng.specId, ng) && (
-                                  <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-1.5 py-0.5 rounded font-mono" title="Target Cloud GPU Specification is TBD">
-                                    GPU: TBD
-                                  </span>
-                                )}
+                                {(() => {
+                                  const matrixGpu = getGpuInfo(getSpecInfo(c, ng.specId), ng.specId, ng);
+                                  return matrixGpu ? (
+                                    <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-1.5 py-0.5 rounded font-mono" title={`Target Cloud GPU: ${matrixGpu.label}`}>
+                                      {matrixGpu.label !== 'GPU' ? `GPU: ${matrixGpu.label}` : 'GPU'}
+                                    </span>
+                                  ) : null;
+                                })()}
                               </div>
                             </div>
                           ))}
