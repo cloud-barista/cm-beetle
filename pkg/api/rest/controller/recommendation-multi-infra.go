@@ -172,7 +172,7 @@ type RecommendMultiInfraWithNlbRequest struct {
 
 // RecommendMultiInfraWithNlbCandidates godoc
 // @ID RecommendMultiInfraWithNlbCandidates
-// @Summary (Preview) Recommend the best-match NLB-aware infrastructure per target cloud, for cross-CSP comparison
+// @Summary Recommend the best-match NLB-aware infrastructure per target cloud, for cross-CSP comparison
 // @Description NLB-aware counterpart of `POST /recommendation/multiInfra`. Recommends a single best-effort
 // @Description infrastructure candidate (including NLB mapping) for each of several target CSP/region pairs.
 // @Description

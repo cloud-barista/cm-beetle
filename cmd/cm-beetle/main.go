@@ -194,7 +194,7 @@ func checkReadiness(url string) (bool, error) {
 // @tag.name [Migration] Resources for infrastructure
 // @tag.description APIs for migrating resources for infrastructure (VNet, Security Group, etc.)
 
-// @tag.name [Migration] Managed Network Load Balancer (NLB) - preview
+// @tag.name [Migration] Managed Network Load Balancer (NLB)
 // @tag.description APIs for migrating managed network load balancers (NLB)
 
 // 3. Kubernetes (K8s) Infrastructure (Recommendation -> Migration)

@@ -7,7 +7,7 @@ This document covers support for managed middleware resources (NLB, DBMS / Manag
 | Resource                | AWS | Azure | GCP | Alibaba | Tencent | IBM | OpenStack | NCP | NHN | KT  |
 | ----------------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :-------: | :-: | :-: | :-: |
 | Object Storage          | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     | ✅  | ✅  | ✅  |
-| NLB                     | ✅  |  🚧   | 🚧  |   🚧    |   📅    | 🚧  |    📅     | 🚧  | 📅  | 📅  |
+| NLB                     | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    📅     | ✅  | ✅  | 📅  |
 | Managed RDBMS (MySQL)   | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     | ✅  | ✅  | ❌  |
 | Managed RDBMS (MariaDB) | ✅  |  ❌   | ❌  |   ✅    |   ❌    | ❌  |    ✅     | ❌  | ✅  | ❌  |
 
@@ -53,16 +53,15 @@ See also: [Managed RDBMS Feature Guide](middleware-rdbms.md)
 > - **Supported CSPs**: MariaDB managed services are natively supported by **AWS** (RDS), **Alibaba** (ApsaraDB), **NHN** (RDS), and **OpenStack** (Trove v10.4).
 > - **Automatic Compatibility Fallback**: For other CSPs (Azure, GCP, Tencent, IBM, NCP, KT) that do not offer native MariaDB services, CM-Beetle automatically recommends MySQL as a binary-compatible fallback with actionable warnings.
 
-## NLB (Preview)
+## Network Load Balancer (NLB)
 
 See also: [NLB Feature Guide](middleware-nlb.md)
 
-> NLB recommendation and migration are available as a **preview** feature. Tested on AWS, Azure, GCP, and IBM.
 
-| Feature        | AWS | Azure | GCP | Alibaba | Tencent | IBM | (OpenStack) | NCP | (NHN) | (KT) |
-| -------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :---------: | :-: | :---: | :--: |
-| Recommendation | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |  📅   |  📅  |
-| Migration      | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |  📅   |  📅  |
+| Feature        | AWS | Azure | GCP | Alibaba | Tencent | IBM | (OpenStack) | NCP | NHN | (KT) |
+| -------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :---------: | :-: | :-: | :--: |
+| Recommendation | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |     📅      | ✅  | ✅  |  📅  |
+| Migration      | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |     📅      | ✅  | ✅  |  📅  |
 
 > - Recommendation groups source nodes by NLB backend topology (N:1) and returns Pareto-frontier spec candidates.
 > - Migration provisions NLBs on the target cloud after infrastructure is deployed.
@@ -90,5 +89,4 @@ See also: [NLB Feature Guide](middleware-nlb.md)
 
 ## Roadmap
 
-- 🚧 **In progress**: NLB — Azure, GCP, Alibaba, IBM, NCP
-- 📅 **Planned**: NLB — Tencent, OpenStack, NHN, KT
+- 📅 **Planned**: NLB (OpenStack, KT)
