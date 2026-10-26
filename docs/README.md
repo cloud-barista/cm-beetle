@@ -9,7 +9,7 @@ Documentation site for CM-Beetle, computing infrastructure migration.
   - [NameSeed: Late Binding for Resource Names](feature-guide/core-naming-rule.md) – Concept, rules, and workflow for deterministic resource naming.
   - [Validation Guide](feature-guide/core-validation.md) – Pre-flight dry-run validation rules for target infrastructure.
 - **Infrastructure**
-  - [Computing Infrastructure](feature-guide/infra-computing.md) – VM, VNet, Subnet, and Security Group migration support.
+  - [Computing Infrastructure](feature-guide/infra-computing.md) - VM, VNet, Subnet, and Security Group migration support and pipeline architecture.
   - [GPU Infrastructure Recommendation & Migration API Guide](feature-guide/gpu-infra-migration-api-guide.md) - End-to-end guide for recommending and migrating GPU infrastructure (`Tesla T4`, etc.) via CM-Beetle REST APIs.
   - [Kubernetes Infrastructure](feature-guide/infra-kubernetes.md) – Managed Kubernetes cluster recommendation and migration.
 - **Managed Middleware**
