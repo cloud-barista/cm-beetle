@@ -9199,7 +9199,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: List NLBs in a cloud infra
       tags:
-      - '[Migration] Managed Network Load Balancer (NLB) - preview'
+      - '[Migration] Managed Network Load Balancer (NLB)'
     post:
       consumes:
       - application/json
@@ -9282,9 +9282,9 @@ paths:
               type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: (Preview) Migrate NLBs to a cloud infra
+      summary: Migrate NLBs to a cloud infra
       tags:
-      - '[Migration] Managed Network Load Balancer (NLB) - preview'
+      - '[Migration] Managed Network Load Balancer (NLB)'
   /migration/middleware/ns/{nsId}/infra/{infraId}/nlb/{nlbId}:
     delete:
       consumes:
@@ -9356,7 +9356,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Delete an NLB
       tags:
-      - '[Migration] Managed Network Load Balancer (NLB) - preview'
+      - '[Migration] Managed Network Load Balancer (NLB)'
     get:
       consumes:
       - application/json
@@ -9412,7 +9412,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Get NLB details
       tags:
-      - '[Migration] Managed Network Load Balancer (NLB) - preview'
+      - '[Migration] Managed Network Load Balancer (NLB)'
   /migration/middleware/ns/{nsId}/infra/{infraId}/nlb/{nlbId}/healthz:
     get:
       consumes:
@@ -9472,7 +9472,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Get NLB health status (live CSP check)
       tags:
-      - '[Migration] Managed Network Load Balancer (NLB) - preview'
+      - '[Migration] Managed Network Load Balancer (NLB)'
   /migration/middleware/ns/{nsId}/objectStorage:
     get:
       consumes:
@@ -12315,7 +12315,7 @@ paths:
               type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: (Preview) Recommend infrastructure candidates with NLB for cloud migration
+      summary: Recommend infrastructure candidates with NLB for cloud migration
       tags:
       - '[Recommendation] Infrastructure'
   /recommendation/k8sCluster:
@@ -12786,8 +12786,8 @@ paths:
             respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: (Preview) Recommend the best-match NLB-aware infrastructure per target
-        cloud, for cross-CSP comparison
+      summary: Recommend the best-match NLB-aware infrastructure per target cloud,
+        for cross-CSP comparison
       tags:
       - '[Recommendation] Infrastructure'
   /recommendation/resources/k8sNodeGroupImages:
@@ -13993,7 +13993,7 @@ tags:
     etc.)
   name: '[Migration] Resources for infrastructure'
 - description: APIs for migrating managed network load balancers (NLB)
-  name: '[Migration] Managed Network Load Balancer (NLB) - preview'
+  name: '[Migration] Managed Network Load Balancer (NLB)'
 - description: APIs for recommending optimal Kubernetes cluster configuration for
     cloud migration
   name: '[Recommendation] K8s Infrastructure'

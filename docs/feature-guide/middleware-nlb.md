@@ -1,6 +1,5 @@
 # Network Load Balancer (NLB) Feature Guide
 
-> **Status:** Preview — endpoints are tagged `(Preview)` in Swagger and may change.
 
 ## Overview
 
@@ -29,9 +28,9 @@ NLB migration attaches load balancers to them by NodeGroup ID.
 | Alibaba   |   ✅    | —                                                                            |
 | IBM       |   ✅    | Port translation supported. Listener address assigned asynchronously — re-query if empty after migration. |
 | NCP       |   ✅    | —                                                                            |
-| Tencent   |   📅    | Planned                                                                      |
+| Tencent   |   ✅    | DNS endpoint.                                                               |
 | OpenStack |   📅    | Planned                                                                      |
-| NHN       |   📅    | Planned                                                                      |
+| NHN       |   ✅    | Static VIP endpoint.                                                        |
 | KT        |   📅    | Planned                                                                      |
 
 ## Source Model: On-Premise NLB (HAProxy)
@@ -307,7 +306,7 @@ sequenceDiagram
 
 ### API Documentation
 
-- **Swagger UI:** `http://localhost:8056/api/v1/swagger/index.html` (tag: `[Recommendation] Infrastructure`, `[Migration] Managed Network Load Balancer (NLB) - preview`)
+- **Swagger UI:** `http://localhost:8056/api/v1/swagger/index.html` (tag: `[Recommendation] Infrastructure`, `[Migration] Managed Network Load Balancer (NLB)`)
 - **Swagger YAML:** `api/swagger.yaml`
 
 ### Source Code

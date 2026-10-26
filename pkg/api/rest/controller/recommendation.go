@@ -313,7 +313,7 @@ type RecommendInfraWithNlbRequest struct {
 
 // RecommendInfraWithNlbCandidates godoc
 // @ID RecommendInfraWithNlbCandidates
-// @Summary (Preview) Recommend infrastructure candidates with NLB for cloud migration
+// @Summary Recommend infrastructure candidates with NLB for cloud migration
 // @Description Perform NLB-aware infrastructure recommendation and return multiple Pareto-optimal candidates.
 // @Description
 // @Description The recommendation engine:

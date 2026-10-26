@@ -34,7 +34,7 @@ import (
 
 // MigrateNlbs godoc
 // @ID MigrateNlbs
-// @Summary (Preview) Migrate NLBs to a cloud infra
+// @Summary Migrate NLBs to a cloud infra
 // @Description Migrate NLBs to the target cloud infra based on recommendation results.
 // @Description
 // @Description [Prerequisites]
@@ -50,7 +50,7 @@ import (
 // @Description By default this API runs synchronously. Send header `Prefer: respond-async` to run it
 // @Description asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
 // @Description (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
-// @Tags [Migration] Managed Network Load Balancer (NLB) - preview
+// @Tags [Migration] Managed Network Load Balancer (NLB)
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -144,7 +144,7 @@ func MigrateNlbs(c echo.Context) error {
 // @ID ListNlbs
 // @Summary List NLBs in a cloud infra
 // @Description Get the list of all NLBs in the specified namespace and infra
-// @Tags [Migration] Managed Network Load Balancer (NLB) - preview
+// @Tags [Migration] Managed Network Load Balancer (NLB)
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -186,7 +186,7 @@ func ListNlbs(c echo.Context) error {
 // @ID GetNlb
 // @Summary Get NLB details
 // @Description Get details of a specific NLB
-// @Tags [Migration] Managed Network Load Balancer (NLB) - preview
+// @Tags [Migration] Managed Network Load Balancer (NLB)
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -240,7 +240,7 @@ func GetNlb(c echo.Context) error {
 // @Description Perform a live health check on NLB backend targets via the CSP.
 // @Description Unlike GET /nlb/{nlbId} (which returns cached state), this endpoint queries the CSP directly
 // @Description to retrieve the current health status of VM targets in the NLB target group.
-// @Tags [Migration] Managed Network Load Balancer (NLB) - preview
+// @Tags [Migration] Managed Network Load Balancer (NLB)
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -300,7 +300,7 @@ func GetNlbHealth(c echo.Context) error {
 // @Description By default this API runs synchronously (always includes the 15s settle wait). Send header
 // @Description `Prefer: respond-async` to run it asynchronously instead: receive 202 Accepted with a reqId,
 // @Description then poll GET /request/{reqId} (status flow: Handling → Success / Error).
-// @Tags [Migration] Managed Network Load Balancer (NLB) - preview
+// @Tags [Migration] Managed Network Load Balancer (NLB)
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)

@@ -584,7 +584,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Managed Network Load Balancer (NLB) - preview"
+                    "[Migration] Managed Network Load Balancer (NLB)"
                 ],
                 "summary": "List NLBs in a cloud infra",
                 "operationId": "ListNlbs",
@@ -653,9 +653,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Managed Network Load Balancer (NLB) - preview"
+                    "[Migration] Managed Network Load Balancer (NLB)"
                 ],
-                "summary": "(Preview) Migrate NLBs to a cloud infra",
+                "summary": "Migrate NLBs to a cloud infra",
                 "operationId": "MigrateNlbs",
                 "parameters": [
                     {
@@ -754,7 +754,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Managed Network Load Balancer (NLB) - preview"
+                    "[Migration] Managed Network Load Balancer (NLB)"
                 ],
                 "summary": "Get NLB details",
                 "operationId": "GetNlb",
@@ -836,7 +836,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Managed Network Load Balancer (NLB) - preview"
+                    "[Migration] Managed Network Load Balancer (NLB)"
                 ],
                 "summary": "Delete an NLB",
                 "operationId": "DeleteNlb",
@@ -926,7 +926,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Managed Network Load Balancer (NLB) - preview"
+                    "[Migration] Managed Network Load Balancer (NLB)"
                 ],
                 "summary": "Get NLB health status (live CSP check)",
                 "operationId": "GetNlbHealth",
@@ -4597,7 +4597,7 @@ const docTemplate = `{
                 "tags": [
                     "[Recommendation] Infrastructure"
                 ],
-                "summary": "(Preview) Recommend infrastructure candidates with NLB for cloud migration",
+                "summary": "Recommend infrastructure candidates with NLB for cloud migration",
                 "operationId": "RecommendInfraWithNlbCandidates",
                 "parameters": [
                     {
@@ -5199,7 +5199,7 @@ const docTemplate = `{
                 "tags": [
                     "[Recommendation] Infrastructure"
                 ],
-                "summary": "(Preview) Recommend the best-match NLB-aware infrastructure per target cloud, for cross-CSP comparison",
+                "summary": "Recommend the best-match NLB-aware infrastructure per target cloud, for cross-CSP comparison",
                 "operationId": "RecommendMultiInfraWithNlbCandidates",
                 "parameters": [
                     {
@@ -18542,7 +18542,7 @@ const docTemplate = `{
         },
         {
             "description": "APIs for migrating managed network load balancers (NLB)",
-            "name": "[Migration] Managed Network Load Balancer (NLB) - preview"
+            "name": "[Migration] Managed Network Load Balancer (NLB)"
         },
         {
             "description": "APIs for recommending optimal Kubernetes cluster configuration for cloud migration",
