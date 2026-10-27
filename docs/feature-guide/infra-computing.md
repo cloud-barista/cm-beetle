@@ -1,6 +1,6 @@
 # Infrastructure
 
-This document covers recommendation and migration support for computing infrastructure resources (VM, VNet, Subnet, Security Group, SSH Key) across supported Cloud Service Providers (CSPs), along with the architecture and execution control model of the CM-Beetle computing infrastructure migration pipeline.
+This document covers recommendation and migration support for computing infrastructure resources (VM, VNet, Subnet, Security Group, SSH Key) across supported Cloud Service Providers (CSPs), along with the execution flow and control mechanisms of computing infrastructure migration.
 
 ## Support Status
 
@@ -21,90 +21,116 @@ This document covers recommendation and migration support for computing infrastr
 | Recommendation | VNet, Subnet, Security Group, VM Spec, OS Image, Virtual Machine |
 | Migration      | VNet, Subnet, Security Group, SSH Key, Virtual Machine           |
 
-## Migration Pipeline Architecture & Execution Flow
+## Migration Execution Flow
 
-The CM-Beetle computing infrastructure migration pipeline automates provisioning, non-blocking execution control, outbound rate limiting, and end-to-end verification across target CSPs:
+CM-Beetle manages computing infrastructure migration through non-blocking asynchronous execution, idempotent resource migration, outbound rate limiting, and remote connectivity verification across target Cloud Service Providers (CSPs).
+
+The execution lifecycle consists of two primary flows:
+1. **Asynchronous Migration Execution Flow**: Handles asynchronous request acceptance, background idempotent resource migration, traffic shaping, and completion polling.
+2. **Post-Migration Verification and Readiness Flow**: Verifies remote SSH accessibility of migrated virtual machines while protecting target instances from probe overload.
+
+### 1. Asynchronous Migration Execution Flow
+
+The following sequence diagram illustrates the end-to-end migration execution process, from initial asynchronous request acceptance to target virtual machine deployment:
 
 ```mermaid
-flowchart TD
-    subgraph ClientLayer["[Client / Portal Layer]"]
-        Req["1. Migration Request\nPOST /migration/ns/{nsId}/infra\n(Prefer: respond-async, useExisting=true)"]
-        Poll["2. Async Status Polling\nGET /request/{reqId}"]
-        VerifyReq["4. SSH Readiness Check\nGET .../infra/{infraId}/ssh-ready"]
+sequenceDiagram
+    autonumber
+    actor Client as Client / Portal
+    participant Beetle as CM-Beetle
+    participant Tumblebug as CB-Tumblebug
+
+    %% Phase 1: Asynchronous Request and Acceptance
+    Note over Client, Beetle: 1. Asynchronous Request and Acceptance (RFC 7240)
+    Client->>+Beetle: POST /migration/ns/{nsId}/infra<br/>(Prefer: respond-async, useExisting=true)
+    Beetle-->>Client: 202 Accepted (reqId, status: Handling)
+    Note over Beetle: Executes migration asynchronously (RunAsync: max 20 concurrent jobs)
+
+    %% Phase 2: Idempotent Execution & Pacing
+    Note over Beetle, Tumblebug: 2. Idempotent Provisioning and Outbound Rate Control
+    Note over Beetle: [Pacer] Shapes outbound calls (4.0 req/s token bucket)
+    Beetle->>Tumblebug: GET /ns/{nsId}/resources (Check existing vNet/SG/SSH Key)
+    Tumblebug-->>Beetle: Return existing resource metadata
+
+    alt Resource exists on matching CSP connection (useExisting=true)
+        Note over Beetle: [Idempotent Reuse] Rebinds existing resource IDs
+    else Resource not found
+        Note over Beetle: [NameSeed] Generates unique deterministic resource names
+        Beetle->>Tumblebug: POST /ns/{nsId}/resources (vNet, SG, SSH Key)
+        Tumblebug-->>Beetle: 201 Created
     end
 
-    subgraph PipelineEngine["[CM-Beetle Computing Infra Migration Pipeline]"]
-        direction TB
-        
-        subgraph ExecControl["1) Execution Control (Non-blocking Async)"]
-            AsyncHandler["HTTP 202 Accepted (Immediate Return)\nWorker Pool: Max 20 Concurrent Jobs"]
-            StatusStore["Request State Store (LKVStore)\nHandling -> Success / Error"]
-        end
-
-        subgraph IdempotentEngine["2) Idempotent Resource Provisioning"]
-            DetectExisting{"Detect Existing Resources\n(vNet / Subnet / SG / SSH Key)"}
-            ReuseResource["Reuse Existing Resources on Matching Connection\n(Avoid Creation Collisions)"]
-            CreateNew["Provision New Resources with NameSeed"]
-            DetectExisting -->|Found| ReuseResource
-            DetectExisting -->|Not Found| CreateNew
-        end
-
-        subgraph OutboundPacer["3) Outbound Rate Limiting & Retry Control"]
-            Pacer["Outbound Call Pacer\n(4.0 req/s Token Bucket Shaping)"]
-            RetryLimit["HTTP 429 Bounded Retry with Exponential Backoff\n(Retry-After Header Compliance)"]
-            Pacer --> RetryLimit
-        end
-
-        subgraph ValidationEngine["4) Result Verification & Inbound Protection"]
-            SSHCooldown["SSH Check Cooldown Middleware\n(1 Check per 30s per Infrastructure)"]
-            SSHProbe["Per-Node SSH Handshake & Command Probing\n(10s Probe Interval, 30s Max Timeout)"]
-            SSHCooldown --> SSHProbe
-        end
+    Beetle->>+Tumblebug: POST /ns/{nsId}/infra (Provision Target VMs)
+    opt HTTP 429 Rate Limit Exceeded
+        Tumblebug-->>Beetle: 429 Too Many Requests (Retry-After)
+        Note over Beetle: [Retry Control] Exponential backoff and retry (up to 3 times)
+        Beetle->>Tumblebug: POST /ns/{nsId}/infra (Retry)
     end
+    Tumblebug-->>-Beetle: 201 Created (Target VM Infra metadata)
+    Note over Beetle: Request state finalized to "Success"
 
-    subgraph Downstream["[Downstream Subsystems & CSPs]"]
-        Tumblebug["CB-Tumblebug & CSP APIs\n(Infra Provisioning & Remote Cmd)"]
-        TargetVMs["Target Cloud VMs\n(Cloud-init & SSH Access Ready)"]
-    end
-
-    %% Flow Connections
-    Req --> AsyncHandler
-    AsyncHandler --> StatusStore
-    Poll -.-> StatusStore
-    
-    AsyncHandler --> DetectExisting
-    ReuseResource --> Pacer
-    CreateNew --> Pacer
-    
-    RetryLimit --> Tumblebug
-    Tumblebug --> TargetVMs
-    
-    VerifyReq --> SSHCooldown
-    SSHProbe --> TargetVMs
+    %% Phase 3: Status Polling
+    Note over Client, Beetle: 3. Status Polling and Completion
+    Client->>+Beetle: GET /request/{reqId}
+    Beetle-->>-Client: 200 OK (status: Success, infraId)
 ```
 
-### Core Pipeline Capabilities
+#### Core Migration Mechanisms
 
-1. **Idempotent Resource Provisioning (`useExisting`)**:
-   - By default (`useExisting=true`), the pipeline detects pre-existing network and security primitives (`vNet`, `subnet`, `securityGroup`, `sshKey`) in the target namespace under the requested CSP connection.
-   - Reuses matching resources instead of recreating them, preventing name collisions and enabling safe repeated executions.
-   - For details, see [Target Infrastructure Validation](core-validation.md) and [NameSeed: Late Binding for Resource Names](core-naming-rule.md).
-
-2. **Non-blocking Async Execution & State Tracking (`Prefer: respond-async`)**:
-   - Supports RFC 7240 `Prefer: respond-async` headers for long-running infrastructure provisioning.
-   - Immediately returns `HTTP 202 Accepted` along with a unique request ID (`reqId`), executing the provisioning pipeline in a bounded background worker pool (maximum 20 concurrent jobs).
+1. **Non-blocking Async Execution and State Tracking (`Prefer: respond-async`)**:
+   - Supports RFC 7240 `Prefer: respond-async` headers for long-running infrastructure migration.
+   - Immediately returns `HTTP 202 Accepted` with a unique request identifier (`reqId`), executing migration logic asynchronously in the background (maximum 20 concurrent jobs via `RunAsync`).
    - Callers track execution progress via `GET /beetle/request/{reqId}` until status transitions from `Handling` to `Success` or `Error`.
    - For details, see [Async Responses](core-async-response.md).
 
-3. **Outbound Rate Limiting & Retry Control (Pacer & Bounded Retry)**:
+2. **Idempotent Resource Migration (`useExisting`)**:
+   - By default (`useExisting=true`), CM-Beetle detects pre-existing network and security primitives (`vNet`, `subnet`, `securityGroup`, `sshKey`) in the target namespace under the requested CSP connection.
+   - Reuses matching resources instead of recreating them, preventing name collisions and enabling safe repeated executions.
+   - For details, see [Target Infrastructure Validation](core-validation.md) and [NameSeed: Late Binding for Resource Names](core-naming-rule.md).
+
+3. **Outbound Rate Limiting and Retry Control (Pacer and Bounded Retry)**:
    - Enforces proactive traffic shaping via a token bucket `Pacer` targeting 4.0 req/s (burst 1), keeping CM-Beetle safely under downstream CB-Tumblebug rate limits (5.0 req/s on infra endpoints).
    - Recovers from unexpected HTTP 429 responses using exponential backoff and bounded retries adhering to `Retry-After` headers.
    - For details, see [Tumblebug Call Pacer](../tumblebug-call-pacer.md) and [pkg/ratelimit/README.md](../../pkg/ratelimit/README.md).
 
-4. **Target VM Remote Accessibility Verification (`ssh-ready` API)**:
-   - Provides `GET /migration/ns/{nsId}/infra/{infraId}/ssh-ready?option=detail` to confirm that all provisioned VMs have completed cloud-init and are actively accepting remote SSH commands.
-   - Protected by `SSHCheckCooldown` middleware (maximum 1 check per 30 seconds per infrastructure) to prevent SSH server overload.
+---
+
+### 2. Post-Migration Verification and Readiness Flow
+
+After virtual machines are migrated to target CSPs, guest operating systems perform initialization tasks (cloud-init, user setup, SSH daemon startup). CM-Beetle provides a dedicated readiness check to ensure all target nodes are fully accessible before application workloads are transferred:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Client / Portal
+    participant Beetle as CM-Beetle
+    participant Tumblebug as CB-Tumblebug
+    participant TargetVM as Target Cloud VMs
+
+    Client->>+Beetle: GET /migration/ns/{nsId}/infra/{infraId}/ssh-ready?option=detail
+    Note over Beetle: [SSHCheckCooldown] Restricts to 1 check per 30s per infra
+    
+    loop Probe every 10s (up to 30s timeout)
+        Beetle->>Tumblebug: Execute remote SSH test command
+        Tumblebug->>TargetVM: Probe SSH daemon and cloud-init completion
+        TargetVM-->>Tumblebug: SSH command response
+        Tumblebug-->>Beetle: Command output
+    end
+
+    Beetle-->>-Client: 200 OK (ready: true, readyNodes: N, totalNodes: N, nodeStatus: [...])
+```
+
+#### Core Verification Mechanisms
+
+1. **Target VM Remote Accessibility Verification (`ssh-ready` API)**:
+   - Provides `GET /migration/ns/{nsId}/infra/{infraId}/ssh-ready?option=detail` to confirm that all migrated VMs have completed cloud-init and are actively accepting remote SSH commands.
+   - Automatically probes target nodes every 10 seconds for up to a 30-second bounded window, returning early as soon as all nodes respond.
    - For details, see [GPU Infrastructure Migration API Guide (Section 6.1)](../gpu-infra-migration-api-guide.md#61-타겟-인프라-ssh-접속-준비-상태-확인-api-get-ssh-ready).
+
+2. **Inbound Rate Limiting Protection (`SSHCheckCooldown`)**:
+   - Protects migrated virtual machines and CB-Tumblebug bastion channels from probe storms via `SSHCheckCooldown` middleware.
+   - Restricts readiness checks to at most one check per 30 seconds per target infrastructure (`nsId:infraId`). Early repeat requests are refused with `HTTP 429` and a `Retry-After` header without executing remote commands.
+   - For details, see [pkg/ratelimit/README.md (Users in this repository)](../../pkg/ratelimit/README.md#users-in-this-repository).
 
 ## Roadmap
 
