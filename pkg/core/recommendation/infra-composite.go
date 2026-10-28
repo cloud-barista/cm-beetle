@@ -301,13 +301,10 @@ func RecommendCompositeInfraCandidates(
 
 		pairs, pairErr := FindCompatibleVmSpecAndImagePairs(specList, imageList, csp)
 		if pairErr != nil {
-			log.Warn().Err(pairErr).Str("machineId", bp.representativeNode.MachineId).Msg("failed to find compatible pairs; using first available")
-			if len(specList) > 0 && len(imageList) > 0 {
-				pairsByGroup[ngIdx] = []CompatibleSpecImagePair{{Spec: specList[0], Image: imageList[0]}}
-			}
-		} else {
-			pairsByGroup[ngIdx] = pairs
+			log.Warn().Err(pairErr).Str("machineId", bp.representativeNode.MachineId).Msg("failed to find compatible spec-image pairs for NodeGroup")
+			continue
 		}
+		pairsByGroup[ngIdx] = pairs
 	}
 
 	// Phase 6: assemble Pareto-ranked composite candidates
@@ -320,6 +317,14 @@ func RecommendCompositeInfraCandidates(
 	}
 	if maxCandidates > limit {
 		maxCandidates = limit
+	}
+
+	if maxCandidates == 0 {
+		log.Warn().Msg("no valid compatible pairs across any NodeGroups; returning skeleton composite infrastructure")
+		skeleton.Status = "nothing-to-recommend"
+		skeleton.Description = "No compatible VM spec and OS image pairs found for composite infrastructure."
+		skeleton.TargetNlbList = targetNlbList
+		return []cloudmodel.RecommendedInfra{skeleton}, nil
 	}
 
 	var candidates []cloudmodel.RecommendedInfra

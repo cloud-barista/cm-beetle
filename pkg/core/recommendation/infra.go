@@ -773,6 +773,14 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 		Int("maxAvailablePairs", actualLimit).
 		Msg("Determined actual candidate limit")
 
+	if actualLimit == 0 {
+		log.Warn().Msg("no valid compatible pairs across any nodes; returning skeleton infrastructure")
+		skeletonVmInfra.Status = "nothing-to-recommend"
+		skeletonVmInfra.Description = "No compatible VM spec and OS image pairs found for infrastructure."
+		skeletonVmInfra.TargetSecurityGroupList = deduplicatedSecurityGroupList
+		return []cloudmodel.RecommendedInfra{skeletonVmInfra}, nil
+	}
+
 	// Generate multiple infrastructure candidates based on Pareto efficiency principles.
 	// For each source node, compatible spec-image pairs are ranked by match rate
 	// (CPU, Memory, Image similarity to the original node).

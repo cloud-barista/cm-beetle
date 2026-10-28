@@ -27,6 +27,24 @@ func GetDefaultSpecsLimit() int {
 // defaultArchitecture is the fallback CPU architecture when not specified.
 const defaultArchitecture = "x86_64"
 
+// filterNcpKvmTbSpecs filters Tumblebug NCP specs to KVM hypervisor and zone-available specs only.
+func filterNcpKvmTbSpecs(region string, specs []tbmodel.SpecInfo) []tbmodel.SpecInfo {
+	kvmSpecs := make([]tbmodel.SpecInfo, 0, len(specs))
+	for _, spec := range specs {
+		if !compat.IsNcpSpecAvailableInZone(region, spec.CspSpecName) {
+			log.Debug().Msgf("NCP: excluded unavailable spec %s for zone/region %s", spec.CspSpecName, region)
+			continue
+		}
+		for _, detail := range spec.Details {
+			if strings.EqualFold(detail.Key, "HypervisorType") && strings.Contains(strings.ToLower(detail.Value), "kvm") {
+				kvmSpecs = append(kvmSpecs, spec)
+				break
+			}
+		}
+	}
+	return kvmSpecs
+}
+
 // RecommendNodeSpecs recommends appropriate node specs (VM specs) for the given node.
 // It delegates to specialized recommendation pipelines based on GPU presence:
 // - recommendGpuNodeSpec for nodes with GPU accelerators
@@ -111,55 +129,24 @@ func recommendCpuNodeSpec(csp string, region string, node onpremmodel.NodeProper
 			return emptyResp, -1, fmt.Errorf("failed to get node spec recommendations for machine %s: %w", node.MachineId, err)
 		}
 
-		// Filter specs with valid cost
-		validNodeSpecs := make([]tbmodel.SpecInfo, 0, len(nodeSpecInfoList))
-		for _, spec := range nodeSpecInfoList {
-			if spec.CostPerHour >= 0 {
-				validNodeSpecs = append(validNodeSpecs, spec)
-			} else {
-				log.Debug().Msgf("Filtered node spec with negative cost: %s (CostPerHour: %.4f)",
-					spec.CspSpecName, spec.CostPerHour)
-			}
-		}
-		nodeSpecInfoList = validNodeSpecs
-
-		// NCP-specific filtering for KVM hypervisor and zone availability (issue #497)
-		if strings.Contains(strings.ToLower(csp), "ncp") {
+		// Filter NCP specs to KVM hypervisor and zone availability before cost filtering
+		if strings.Contains(providerName, "ncp") {
 			log.Debug().
 				Str("machineId", node.MachineId).
 				Int("rangeWeight", rangeWeight).
 				Msg("Filtering node specs for KVM hypervisor and zone availability (NCP)")
 
-			kvmNodeSpecs := make([]tbmodel.SpecInfo, 0, len(nodeSpecInfoList))
-			for _, nodeSpec := range nodeSpecInfoList {
-				// Exclude specs unavailable in the target zone (e.g., mi1-g3 in KR-1)
-				if !compat.IsNcpSpecAvailableInZone(region, nodeSpec.CspSpecName) {
-					log.Debug().Msgf("NCP: excluded unavailable spec %s for zone/region %s", nodeSpec.CspSpecName, region)
-					continue
-				}
-
-				for _, detail := range nodeSpec.Details {
-					if strings.EqualFold(detail.Key, "HypervisorType") && strings.Contains(strings.ToLower(detail.Value), "kvm") {
-						kvmNodeSpecs = append(kvmNodeSpecs, nodeSpec)
-						break
-					}
-				}
-			}
-
-			if len(kvmNodeSpecs) > 0 {
-				nodeSpecInfoList = kvmNodeSpecs
-				log.Debug().
-					Str("machineId", node.MachineId).
-					Int("kvmSpecs", len(kvmNodeSpecs)).
-					Int("rangeWeight", rangeWeight).
-					Msg("Filtered to KVM-compatible specs for NCP")
-			} else {
+			nodeSpecInfoList = filterNcpKvmTbSpecs(region, nodeSpecInfoList)
+			if len(nodeSpecInfoList) == 0 {
 				log.Warn().
 					Str("machineId", node.MachineId).
 					Int("rangeWeight", rangeWeight).
 					Msg("No KVM-compatible specs found for NCP in this attempt")
 			}
 		}
+
+		// Filter specs with valid cost, relaxing only if all remaining candidates have unknown pricing (-1)
+		nodeSpecInfoList = filterPricedSpecs(nodeSpecInfoList)
 
 		// If specs are found, break the retry loop
 		if len(nodeSpecInfoList) > 0 {

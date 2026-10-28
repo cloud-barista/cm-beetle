@@ -12,14 +12,29 @@ import (
 func CheckNcp(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	log.Trace().Msgf("Starting NCP compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
+	// Ensure NCP spec uses KVM hypervisor when hypervisor metadata is present
+	if !isNcpKvmHypervisor(spec) {
+		log.Trace().Msgf("NCP hypervisor compatibility failed (non-KVM) - Spec: %s", spec.CspSpecName)
+		return false
+	}
+
 	// NCP Image ID compatibility check using CorrespondingImageIds
 	if !isNcpImageCompatible(spec, image) {
 		log.Trace().Msgf("NCP image compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 		return false
 	}
 
-	// Add other NCP-specific compatibility checks here if needed
 	log.Trace().Msgf("NCP compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	return true
+}
+
+// isNcpKvmHypervisor checks that the spec uses KVM when HypervisorType is specified in Details.
+func isNcpKvmHypervisor(spec cloudmodel.SpecInfo) bool {
+	for _, detail := range spec.Details {
+		if strings.EqualFold(detail.Key, "hypervisortype") {
+			return strings.Contains(strings.ToUpper(detail.Value), "KVM")
+		}
+	}
 	return true
 }
 
@@ -101,10 +116,8 @@ func FilterNcpVmSpecsByHypervisor(vmSpecs []cloudmodel.SpecInfo) []cloudmodel.Sp
 
 	log.Trace().Msgf("NCP filtering: %d VM specs filtered to %d KVM specs", len(vmSpecs), len(filteredSpecs))
 
-	// If no KVM specs found, return original list with warning
 	if len(filteredSpecs) == 0 {
-		log.Warn().Msg("No KVM hypervisor specs found for NCP, returning all specs")
-		return vmSpecs
+		log.Warn().Msg("No KVM hypervisor specs found for NCP")
 	}
 
 	return filteredSpecs

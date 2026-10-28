@@ -221,10 +221,8 @@ func RecommendGpuInfraCandidates(
 
 		pairs, pairErr := FindCompatibleVmSpecAndImagePairs(specList, imageList, csp)
 		if pairErr != nil {
-			log.Warn().Err(pairErr).Msgf("failed to find compatible pairs for node %s; using fallback", node.MachineId)
-			if len(specList) > 0 && len(imageList) > 0 {
-				pairs = []CompatibleSpecImagePair{{Spec: specList[0], Image: imageList[0]}}
-			}
+			log.Warn().Err(pairErr).Msgf("failed to find compatible spec-image pairs for GPU node %s", node.MachineId)
+			continue
 		}
 		compatiblePairsForEachNode[i] = pairs
 	}

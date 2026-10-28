@@ -87,3 +87,63 @@ func TestFilterNcpUnavailableSpecs(t *testing.T) {
 		t.Errorf("FilterNcpUnavailableSpecs(KR-2) got %+v, want all 3 specs", filteredKR2)
 	}
 }
+
+func TestFilterNcpVmSpecsByHypervisor_ExcludesXenWithoutFallback(t *testing.T) {
+	xenOnlySpecs := []cloudmodel.SpecInfo{
+		{
+			CspSpecName: "gp1t4-g1-h50",
+			Details:     []cloudmodel.KeyValue{{Key: "HypervisorType", Value: "XEN"}},
+		},
+	}
+
+	filtered := FilterNcpVmSpecsByHypervisor(xenOnlySpecs)
+	if len(filtered) != 0 {
+		t.Errorf("FilterNcpVmSpecsByHypervisor(xenOnlySpecs) got %d specs, want 0", len(filtered))
+	}
+
+	mixedSpecs := []cloudmodel.SpecInfo{
+		{
+			CspSpecName: "gp1t4-g1-h50",
+			Details:     []cloudmodel.KeyValue{{Key: "HypervisorType", Value: "XEN"}},
+		},
+		{
+			CspSpecName: "gp1l4-g3",
+			Details:     []cloudmodel.KeyValue{{Key: "HypervisorType", Value: "KVM"}},
+		},
+	}
+
+	filteredMixed := FilterNcpVmSpecsByHypervisor(mixedSpecs)
+	if len(filteredMixed) != 1 || filteredMixed[0].CspSpecName != "gp1l4-g3" {
+		t.Errorf("FilterNcpVmSpecsByHypervisor(mixedSpecs) got %+v, want [gp1l4-g3]", filteredMixed)
+	}
+}
+
+func TestCheckNcp_HypervisorAndCorrespondingImageIds(t *testing.T) {
+	ubuntuKvmImg := cloudmodel.ImageInfo{CspImageName: "23214590"}
+	rockyXenImg := cloudmodel.ImageInfo{CspImageName: "25624115"}
+
+	kvmSpec := cloudmodel.SpecInfo{
+		CspSpecName: "gp1l4-g3",
+		Details: []cloudmodel.KeyValue{
+			{Key: "HypervisorType", Value: "KVM"},
+			{Key: "CorrespondingImageIds", Value: "23214590, 23789321"},
+		},
+	}
+	xenSpec := cloudmodel.SpecInfo{
+		CspSpecName: "gp1t4-g1-h50",
+		Details: []cloudmodel.KeyValue{
+			{Key: "HypervisorType", Value: "XEN"},
+			{Key: "CorrespondingImageIds", Value: "25624115, 19124014"},
+		},
+	}
+
+	if !CheckNcp(kvmSpec, ubuntuKvmImg) {
+		t.Errorf("CheckNcp(kvmSpec, ubuntuKvmImg) = false, want true")
+	}
+	if CheckNcp(kvmSpec, rockyXenImg) {
+		t.Errorf("CheckNcp(kvmSpec, rockyXenImg) = true, want false")
+	}
+	if CheckNcp(xenSpec, rockyXenImg) {
+		t.Errorf("CheckNcp(xenSpec, rockyXenImg) = true, want false (non-KVM rejected)")
+	}
+}

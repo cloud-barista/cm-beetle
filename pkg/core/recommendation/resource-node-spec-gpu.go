@@ -231,6 +231,46 @@ func detectGpuModel(raw string) string {
 	return ""
 }
 
+// sanitizeGpuSpecsMetadata recovers missing or "NA" GPU model names from spec details.
+func sanitizeGpuSpecsMetadata(specs []cloudmodel.SpecInfo) {
+	for i := range specs {
+		specs[i].AcceleratorModel = resolveGpuAcceleratorModel(specs[i])
+	}
+}
+
+// resolveGpuAcceleratorModel extracts the GPU model from spec details when AcceleratorModel is missing or ends with "NA".
+func resolveGpuAcceleratorModel(spec cloudmodel.SpecInfo) string {
+	trimmed := strings.TrimSpace(spec.AcceleratorModel)
+	upper := strings.ToUpper(trimmed)
+	if trimmed != "" && upper != "NA" && !strings.HasSuffix(upper, " NA") {
+		return spec.AcceleratorModel
+	}
+
+	for _, detail := range spec.Details {
+		if !strings.EqualFold(detail.Key, "ServerSpecDescription") && !strings.EqualFold(detail.Key, "Description") {
+			continue
+		}
+		if idx := strings.Index(strings.ToUpper(detail.Value), " GPU"); idx > 0 {
+			candidate := strings.TrimSpace(detail.Value[:idx])
+			if detectGpuModel(candidate) != "" {
+				return candidate
+			}
+		}
+		if token := detectGpuModel(detail.Value); token != "" {
+			vendor := detectGpuVendor(detail.Value)
+			if vendor == GpuVendorOther {
+				vendor = detectGpuVendor(trimmed)
+			}
+			if vendor != GpuVendorOther {
+				return fmt.Sprintf("%s %s", vendor, strings.ToUpper(token))
+			}
+			return strings.ToUpper(token)
+		}
+	}
+
+	return spec.AcceleratorModel
+}
+
 // gpuRankingContext carries the evaluation metrics for multi-dimensional GPU ranking.
 type gpuRankingContext struct {
 	targetCount  uint8
@@ -405,6 +445,17 @@ func sortGpuByProximityWithCost(vmSpecs []cloudmodel.SpecInfo, node onpremmodel.
 			gpuModelMatch,
 			gpuHostResourceProximity,
 			func(ctx gpuRankingContext, a, b cloudmodel.SpecInfo) int {
+				validA := a.CostPerHour >= 0
+				validB := b.CostPerHour >= 0
+				if validA && !validB {
+					return -1
+				}
+				if !validA && validB {
+					return 1
+				}
+				if !validA && !validB {
+					return 0
+				}
 				switch {
 				case a.CostPerHour < b.CostPerHour:
 					return -1
@@ -551,13 +602,13 @@ func recommendGpuNodeSpec(
 		return emptyResp, -1, fmt.Errorf("failed to get GPU node spec recommendations for machine %s: %w", node.MachineId, err)
 	}
 
-	// Filter specs with valid cost
-	validSpecs := make([]tbmodel.SpecInfo, 0, len(rawSpecs))
-	for _, spec := range rawSpecs {
-		if spec.CostPerHour >= 0 {
-			validSpecs = append(validSpecs, spec)
-		}
+	// Filter NCP specs to KVM hypervisor and zone availability before cost filtering
+	if strings.Contains(providerName, "ncp") {
+		rawSpecs = filterNcpKvmTbSpecs(region, rawSpecs)
 	}
+
+	// Filter specs with valid cost, relaxing only if all remaining candidates have unknown pricing (-1)
+	validSpecs := filterPricedSpecs(rawSpecs)
 
 	if len(validSpecs) == 0 {
 		log.Warn().
@@ -576,6 +627,9 @@ func recommendGpuNodeSpec(
 			Msg("Failed to convert GPU node spec list model")
 		return emptyResp, -1, fmt.Errorf("failed to convert GPU node spec list model for machine %s: %w", node.MachineId, err)
 	}
+
+	// Recover missing or "NA" GPU model names from spec details
+	sanitizeGpuSpecsMetadata(convertedSpecs)
 
 	// Rank GPU specs (Vendor Match > Count > VRAM > Host L1 > Cost)
 	sortGpuByProximityWithCost(convertedSpecs, node, csp)

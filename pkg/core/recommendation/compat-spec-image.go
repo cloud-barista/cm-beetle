@@ -196,43 +196,7 @@ func findCompatiblePairs(csp string, specs []cloudmodel.SpecInfo, images []cloud
 
 // filterNcpVmSpecsByHypervisor filters NCP VM specs to include only KVM hypervisor specs
 func filterNcpVmSpecsByHypervisor(vmSpecs []cloudmodel.SpecInfo) []cloudmodel.SpecInfo {
-	if len(vmSpecs) == 0 {
-		return vmSpecs
-	}
-
-	log.Debug().Msgf("NCP filtering: checking %d VM specs for KVM hypervisor", len(vmSpecs))
-
-	var filteredSpecs []cloudmodel.SpecInfo
-
-	for _, spec := range vmSpecs {
-		hasKvmHypervisor := false
-
-		// Check if this spec has KVM hypervisor
-		for _, detail := range spec.Details {
-			if strings.EqualFold(detail.Key, "hypervisortype") &&
-				strings.Contains(strings.ToUpper(detail.Value), "KVM") {
-				hasKvmHypervisor = true
-				break
-			}
-		}
-
-		if hasKvmHypervisor {
-			filteredSpecs = append(filteredSpecs, spec)
-			log.Debug().Msgf("NCP: included VM spec %s (KVM hypervisor found)", spec.CspSpecName)
-		} else {
-			log.Debug().Msgf("NCP: filtered out VM spec %s (no KVM hypervisor)", spec.CspSpecName)
-		}
-	}
-
-	log.Debug().Msgf("NCP filtering: %d VM specs filtered to %d KVM specs", len(vmSpecs), len(filteredSpecs))
-
-	// If no KVM specs found, return original list with warning
-	if len(filteredSpecs) == 0 {
-		log.Warn().Msg("No KVM hypervisor specs found for NCP, returning all specs")
-		return vmSpecs
-	}
-
-	return filteredSpecs
+	return compat.FilterNcpVmSpecsByHypervisor(vmSpecs)
 }
 
 // legacyTencentSpecPattern matches previous-generation Tencent instance types.
