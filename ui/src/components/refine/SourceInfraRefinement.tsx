@@ -5,7 +5,7 @@ import { useMigrationStore } from '../../store/migrationStore';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope } from '../../types/migration';
 import sampleData from '../../data/sampleSourceInfra.json';
 import sampleGpuData from '../../data/sampleSourceGpuInfra.json';
-import { SAMPLE_15_NODE_MODEL } from '../../data/sample15NodeInfra';
+import { SAMPLE_15_NODE_MODEL, SAMPLE_9_NODE_TESTBED_MODEL } from '../../data/sample15NodeInfra';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
 import { beetleApi } from '../../api/client';
 import {
@@ -50,7 +50,12 @@ export const SAMPLE_MODEL: OnpremModelEnvelope = {
   updatedTime: new Date().toISOString(),
 };
 
-const BUILTIN_SAMPLE_IDS = new Set(['sample-source-15node-dc-1', 'sample-source-gpu-infra-1', 'sample-source-infra-1']);
+const BUILTIN_SAMPLE_IDS = new Set([
+  'sample-source-9node-testbed-1',
+  'sample-source-15node-dc-1',
+  'sample-source-gpu-infra-1',
+  'sample-source-infra-1',
+]);
 
 type ClusterGroupFilter = 'all' | 'ai-inference' | 'analytics-compute' | 'backend-db';
 
@@ -428,6 +433,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
 
   // Ensure built-in sample models are always at the top of the list
   const allModels: OnpremModelEnvelope[] = [
+    SAMPLE_9_NODE_TESTBED_MODEL,
     SAMPLE_15_NODE_MODEL,
     SAMPLE_MODEL,
     SAMPLE_GPU_MODEL,
@@ -967,49 +973,67 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                   {/* Row 2: Server List */}
                   <div className="space-y-3 p-5 bg-bg-input/40 border border-border-main/50 rounded-xl">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center">
-                        <Sliders className="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
-                        2. Node List ({tunedNodes.length} Nodes)
-                      </h4>
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center">
+                          <Sliders className="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
+                          2. Node List ({tunedNodes.length} Nodes)
+                        </h4>
+                        <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-xs font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
+                          Included: {tunedNodes.length - excludedNodeIds.length} / {tunedNodes.length}
+                        </span>
+                      </div>
 
                       {/* Cluster Group Filter Pills */}
-                      {tunedNodes.some((n) => inferNodeClusterGroup(n) !== null) && (() => {
-                        const aiNodes = tunedNodes.filter((n) => inferNodeClusterGroup(n) === 'ai-inference');
-                        const analyticsNodes = tunedNodes.filter((n) => inferNodeClusterGroup(n) === 'analytics-compute');
-                        const backendNodes = tunedNodes.filter((n) => inferNodeClusterGroup(n) === 'backend-db');
-                        const pills: { id: ClusterGroupFilter; label: string; count: number; nodes: OnpremNode[] }[] = [
-                          { id: 'all', label: 'All Nodes', count: tunedNodes.length, nodes: tunedNodes },
-                          { id: 'ai-inference', label: 'AI Inference', count: aiNodes.length, nodes: aiNodes },
-                          { id: 'analytics-compute', label: 'Analytics Compute', count: analyticsNodes.length, nodes: analyticsNodes },
-                          { id: 'backend-db', label: 'Backend & DB', count: backendNodes.length, nodes: backendNodes },
-                        ];
-                        return (
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            {pills.filter((p) => p.id === 'all' || p.count > 0).map((pill) => {
-                              const isSelected = selectedClusterGroup === pill.id;
-                              return (
-                                <button
-                                  key={pill.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedClusterGroup(pill.id);
-                                    if (pill.nodes.length > 0 && !pill.nodes.some((n) => n.machineId === activeTunedNodeId)) {
-                                      setActiveTunedNodeId(pill.nodes[0].machineId);
-                                    }
-                                  }}
-                                  className={`px-3 py-1.5 rounded-lg text-sm font-bold transition cursor-pointer border ${
-                                    isSelected
-                                      ? 'bg-emerald-500 text-slate-950 border-emerald-500 shadow-sm shadow-emerald-500/20'
-                                      : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main hover:border-emerald-500/40'
-                                  }`}
-                                >
-                                  {pill.label} ({pill.count})
-                                </button>
-                              );
-                            })}
-                          </div>
-                        );
-                      })()}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {tunedNodes.some((n) => inferNodeClusterGroup(n) !== null) && (() => {
+                          const aiNodes = tunedNodes.filter((n) => inferNodeClusterGroup(n) === 'ai-inference');
+                          const analyticsNodes = tunedNodes.filter((n) => inferNodeClusterGroup(n) === 'analytics-compute');
+                          const backendNodes = tunedNodes.filter((n) => inferNodeClusterGroup(n) === 'backend-db');
+                          const pills: { id: ClusterGroupFilter; label: string; count: number; nodes: OnpremNode[] }[] = [
+                            { id: 'all', label: 'All Nodes', count: tunedNodes.length, nodes: tunedNodes },
+                            { id: 'ai-inference', label: 'AI Inference', count: aiNodes.length, nodes: aiNodes },
+                            { id: 'analytics-compute', label: 'Analytics Compute', count: analyticsNodes.length, nodes: analyticsNodes },
+                            { id: 'backend-db', label: 'Backend & DB', count: backendNodes.length, nodes: backendNodes },
+                          ];
+                          return (
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {pills.filter((p) => p.id === 'all' || p.count > 0).map((pill) => {
+                                const isSelected = selectedClusterGroup === pill.id;
+                                return (
+                                  <button
+                                    key={pill.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedClusterGroup(pill.id);
+                                      if (pill.nodes.length > 0 && !pill.nodes.some((n) => n.machineId === activeTunedNodeId)) {
+                                        setActiveTunedNodeId(pill.nodes[0].machineId);
+                                      }
+                                    }}
+                                    className={`px-3 py-1.5 rounded-lg text-sm font-bold transition cursor-pointer border ${
+                                      isSelected
+                                        ? 'bg-emerald-500 text-slate-950 border-emerald-500 shadow-sm shadow-emerald-500/20'
+                                        : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main hover:border-emerald-500/40'
+                                    }`}
+                                  >
+                                    {pill.label} ({pill.count})
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
+
+                        {excludedNodeIds.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setExcludedNodeIds([])}
+                            className="px-3 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer border bg-bg-panel hover:bg-bg-input border-border-main text-text-muted hover:text-text-main"
+                            title="Restore all excluded nodes"
+                          >
+                            Include All ({tunedNodes.length})
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-2.5 max-h-44 overflow-y-auto p-2 bg-bg-panel/20 rounded-xl border border-border-main/20">
                       {tunedNodes

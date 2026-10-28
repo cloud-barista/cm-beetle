@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore, DEMO_SOURCE_INFRA } from '../../store/migrationStore';
+import { SAMPLE_9_NODE_TESTBED_INFRA } from '../../data/sample15NodeInfra';
 import { honeybeeApi } from '../../api/client';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
 import {
@@ -10,6 +11,16 @@ import {
   AlertCircle, Loader2, ChevronDown, ChevronUp, Play, X, Save,
   Database, ArrowRight
 } from 'lucide-react';
+
+// Normalize PEM private key (handles both multiline .pem and _oneline.pem with literal \n)
+const normalizePemKey = (raw: string): string =>
+  String(raw || '').trim().replace(/\\n/g, '\n');
+
+// Calculate UTF-8 byte length of a PEM key string for badge display
+const getPemByteSize = (pem: string): string => {
+  if (!pem) return '0';
+  return new Blob([pem]).size.toLocaleString();
+};
 
 // A plain SSH username never looks like this — treat long base64-like
 // strings as leaked secret material (e.g. a private key) rather than a
@@ -40,6 +51,7 @@ interface ServerRow {
   localId: string;
   connId: string;         // empty = not yet registered
   name: string;
+  description: string;
   ip: string;
   port: string;
   user: string;
@@ -63,7 +75,7 @@ const hasAuth = (row: ServerRow, useCommonCred: boolean, commonKey: string, comm
 const StatusPill = ({
   status, failedMsg, successLabel = 'OK', failLabel = 'Failed',
 }: { status: string; failedMsg?: string; successLabel?: string; failLabel?: string }) => {
-  if (!status) return <span className="text-text-muted text-xs">—</span>;
+  if (!status) return <span className="text-text-muted text-xs">-</span>;
   if (status === 'success')
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/40 rounded-full text-xs font-semibold">
@@ -88,12 +100,13 @@ interface SharedCredsProps {
   port: number; onPort: (v: number) => void;
   pemKey: string; onPemKey: (v: string) => void;
   password: string; onPassword: (v: string) => void;
-  onKeyDrop: (e: React.DragEvent<HTMLTextAreaElement>) => void;
+  onKeyDrop: (e: React.DragEvent<HTMLElement>) => void;
+  onKeyFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   locked?: boolean;
 }
 
 const SharedCredsPanel: React.FC<SharedCredsProps> = ({
-  show, onToggle, enabled, onToggleEnabled, user, onUser, port, onPort, pemKey, onPemKey, password, onPassword, onKeyDrop, locked = false,
+  show, onToggle, enabled, onToggleEnabled, user, onUser, port, onPort, pemKey, onPemKey, password, onPassword, onKeyDrop, onKeyFileSelect, locked = false,
 }) => (
   <div className="border border-border-main rounded-xl overflow-hidden">
     <button
@@ -103,7 +116,7 @@ const SharedCredsPanel: React.FC<SharedCredsProps> = ({
       <span className="flex items-center gap-2">
         <Key className="w-4 h-4 text-teal-400" />
         Shared SSH Credentials
-        {enabled && <span className="text-xs text-teal-500 font-normal">(enabled — blank fields inherit these values)</span>}
+        {enabled && <span className="text-xs text-teal-500 font-normal">(enabled - blank fields inherit these values)</span>}
       </span>
       {show ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
     </button>
@@ -111,7 +124,7 @@ const SharedCredsPanel: React.FC<SharedCredsProps> = ({
       <div className="px-4 py-4 bg-bg-input/5 border-t border-border-main">
         {locked && (
           <p className="text-xs text-text-muted mb-3 flex items-center gap-1.5">
-            <Key className="w-3.5 h-3.5" /> Locked — this group already has registered connections, so shared credentials can no longer be edited.
+            <Key className="w-3.5 h-3.5" /> Locked: this group already has registered connections, so shared credentials can no longer be edited.
           </p>
         )}
         <label className={`inline-flex items-center gap-2 mb-3 ${locked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
@@ -121,20 +134,56 @@ const SharedCredsPanel: React.FC<SharedCredsProps> = ({
         </label>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-text-muted mb-1">SSH Username</label>
-            <input type="text" disabled={!enabled || locked} value={user} onChange={e => onUser(e.target.value)} className="w-full bg-bg-input border border-border-main disabled:opacity-40 text-text-main rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" />
+            <label className="block text-xs font-normal text-text-muted mb-1">SSH Username</label>
+            <input type="text" disabled={!enabled || locked} value={user} onChange={e => onUser(e.target.value)} className="w-full bg-bg-input border border-border-main disabled:opacity-40 text-text-main rounded-lg px-3 py-2 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-teal-500" />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-text-muted mb-1">SSH Port</label>
-            <input type="number" disabled={!enabled || locked} value={port} onChange={e => onPort(Number(e.target.value))} className="w-full bg-bg-input border border-border-main disabled:opacity-40 text-text-main rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" />
+            <label className="block text-xs font-normal text-text-muted mb-1">SSH Port</label>
+            <input type="number" disabled={!enabled || locked} value={port} onChange={e => onPort(Number(e.target.value))} className="w-full bg-bg-input border border-border-main disabled:opacity-40 text-text-main rounded-lg px-3 py-2 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-teal-500" />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-text-muted mb-1">Password</label>
-            <input type="password" disabled={!enabled || locked} placeholder="Optional if using key" value={password} onChange={e => onPassword(e.target.value)} className="w-full bg-bg-input border border-border-main disabled:opacity-40 text-text-main rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" />
+            <label className="block text-xs font-normal text-text-muted mb-1">Password</label>
+            <input type="password" disabled={!enabled || locked} placeholder="Optional if using key" value={password} onChange={e => onPassword(e.target.value)} className="w-full bg-bg-input border border-border-main disabled:opacity-40 text-text-main rounded-lg px-3 py-2 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-teal-500" />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-text-muted mb-1">Private Key (PEM)</label>
-            <textarea disabled={!enabled || locked} onDragOver={e => e.preventDefault()} onDrop={onKeyDrop} placeholder="Paste PEM key or drop file" value={pemKey} onChange={e => onPemKey(e.target.value)} rows={1} className="w-full bg-bg-input border border-border-main disabled:opacity-40 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-teal-500 resize-none" />
+            <label className="block text-xs font-normal text-text-muted mb-1">Private Key (PEM)</label>
+            {pemKey ? (
+              <div
+                onDragOver={e => e.preventDefault()}
+                onDrop={!locked && enabled ? onKeyDrop : undefined}
+                className={`w-full bg-teal-500/10 border border-teal-500/40 rounded-lg px-3 py-2 flex items-center justify-between gap-2 ${(!enabled || locked) ? 'opacity-40 pointer-events-none' : ''}`}
+              >
+                <span className="text-xs font-extrabold text-teal-600 dark:text-teal-400 truncate">
+                  ✓ SSH Private Key Loaded ({getPemByteSize(pemKey)} bytes)
+                </span>
+                {!locked && enabled && (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <label className="p-1 rounded hover:bg-bg-panel text-teal-600 dark:text-teal-400 cursor-pointer" title="Replace .pem file">
+                      <Upload className="w-3.5 h-3.5" />
+                      <input type="file" accept=".pem,.key,.txt" onChange={onKeyFileSelect} className="hidden" />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => onPemKey('')}
+                      className="p-1 rounded hover:bg-red-500/15 text-text-muted hover:text-red-400 cursor-pointer"
+                      title="Clear Private Key"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <label
+                onDragOver={e => e.preventDefault()}
+                onDrop={!locked && enabled ? onKeyDrop : undefined}
+                className={`w-full bg-bg-input hover:bg-bg-panel border border-dashed border-border-main hover:border-teal-500/50 rounded-lg px-3 py-2 text-xs font-extrabold text-text-muted hover:text-text-main flex items-center justify-center gap-1.5 transition ${(!enabled || locked) ? 'opacity-40 pointer-events-none cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <Upload className="w-3.5 h-3.5 text-teal-500 shrink-0" />
+                <span>Drop .pem file here</span>
+                <input type="file" disabled={!enabled || locked} accept=".pem,.key,.txt" onChange={onKeyFileSelect} className="hidden" />
+              </label>
+            )}
           </div>
         </div>
         {!locked && enabled && !password && !pemKey && (
@@ -156,10 +205,11 @@ interface RowProps {
   onDelete: (id: string) => void;
   onReset?: (id: string) => void;
   onKeyDrop: (id: string, e: React.DragEvent) => void;
+  onKeyFileSelect: (id: string, e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const ServerTableRow: React.FC<RowProps> = ({
-  row, idx, useCommonCred, commonUser, commonPort, commonKey, commonPassword, onUpdate, onDelete, onReset, onKeyDrop,
+  row, idx, useCommonCred, commonUser, commonPort, commonKey, commonPassword, onUpdate, onDelete, onReset, onKeyDrop, onKeyFileSelect,
 }) => {
   const isRegistered = !!row.connId;
   const isDraft = !isRegistered && !!(row.name || row.ip);
@@ -168,42 +218,54 @@ const ServerTableRow: React.FC<RowProps> = ({
     <tr className={`transition ${isRegistered ? 'bg-emerald-500/[0.015]' : 'hover:bg-bg-input/20'}`}>
       <td className="py-2.5 px-3 text-center text-text-muted text-xs">
         {idx + 1}
-        {isDraft && <div className="mt-1 text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide">Draft</div>}
+        {isDraft && <div className="mt-1 text-xs font-extrabold text-amber-600 dark:text-amber-400">Draft</div>}
+      </td>
+
+      <td className="py-2.5 px-3">
+        {isRegistered ? (
+          <div className="px-2">
+            <span className="text-sm text-text-main font-extrabold block">{row.name || '-'}</span>
+            {row.description && <span className="text-xs text-text-muted block truncate max-w-[260px]" title={row.description}>{row.description}</span>}
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <input type="text" value={row.name} onChange={e => onUpdate(row.localId, 'name', e.target.value)} placeholder="Server name"
+              className="w-full bg-bg-input border border-border-main rounded-lg px-2 py-1.5 text-sm font-extrabold text-text-main focus:outline-none focus:border-emerald-500/50" />
+            {row.description && (
+              <div className="text-xs text-text-muted px-1 truncate max-w-[260px]" title={row.description}>
+                {row.description}
+              </div>
+            )}
+          </div>
+        )}
       </td>
 
       <td className="py-2.5 px-3">
         {isRegistered
-          ? <span className="text-sm text-text-main font-semibold px-2">{row.name || '—'}</span>
-          : <input type="text" value={row.name} onChange={e => onUpdate(row.localId, 'name', e.target.value)} placeholder="Server name"
-              className="w-full bg-bg-input border border-border-main rounded-lg px-2 py-1.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50" />}
-      </td>
-
-      <td className="py-2.5 px-3">
-        {isRegistered
-          ? <span className="text-sm text-text-main font-mono px-2">{row.ip}</span>
+          ? <span className="text-sm text-text-main font-extrabold font-mono px-2">{row.ip}</span>
           : <input type="text" placeholder="10.0.1.x" value={row.ip} onChange={e => onUpdate(row.localId, 'ip', e.target.value)}
-              className="w-full bg-bg-input border border-border-main rounded-lg px-2 py-1.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50" />}
+              className="w-full bg-bg-input border border-border-main rounded-lg px-2 py-1.5 text-sm font-extrabold font-mono text-text-main focus:outline-none focus:border-emerald-500/50" />}
       </td>
 
       <td className="py-2.5 px-3">
         {isRegistered
-          ? <span className="text-sm text-text-main px-2">{row.port || commonPort}</span>
+          ? <span className="text-sm text-text-main font-extrabold px-2">{row.port || commonPort}</span>
           : <input type="number" placeholder={useCommonCred ? String(commonPort) : '22'} value={row.port} onChange={e => onUpdate(row.localId, 'port', e.target.value)}
-              className="w-full bg-bg-input border border-border-main rounded-lg px-2 py-1.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 placeholder-teal-500/40" />}
+              className="w-full bg-bg-input border border-border-main rounded-lg px-2 py-1.5 text-sm font-extrabold text-text-main focus:outline-none focus:border-emerald-500/50 placeholder-teal-500/40" />}
       </td>
 
       <td className="py-2.5 px-3">
         {isRegistered ? (() => {
           const raw = row.user || commonUser;
-          if (!looksLikeSecret(raw)) return <span className="text-sm text-text-main px-2">{raw}</span>;
+          if (!looksLikeSecret(raw)) return <span className="text-sm text-text-main font-extrabold px-2">{raw}</span>;
           const decoded = tryDecodeBase64Username(raw);
-          if (decoded) return <span className="text-sm text-text-main px-2">{decoded}</span>;
+          if (decoded) return <span className="text-sm text-text-main font-extrabold px-2">{decoded}</span>;
           // Honeybee encrypts the username with its own server-held RSA key before
           // returning it via the API, so it can never be decrypted by this UI.
-          return <span className="text-xs text-text-muted px-2 italic whitespace-nowrap" title="Encrypted by Honeybee — cannot be decrypted by this UI">Stored in Honeybee</span>;
+          return <span className="text-xs text-text-muted px-2 italic whitespace-nowrap" title="Encrypted by Honeybee - cannot be decrypted by this UI">Stored in Honeybee</span>;
         })()
           : <input type="text" placeholder={useCommonCred ? commonUser : 'ubuntu'} value={row.user} onChange={e => onUpdate(row.localId, 'user', e.target.value)}
-              className="w-full bg-bg-input border border-border-main rounded-lg px-2 py-1.5 text-sm text-text-main focus:outline-none focus:border-emerald-500/50 placeholder-teal-500/40" />}
+              className="w-full bg-bg-input border border-border-main rounded-lg px-2 py-1.5 text-sm font-extrabold text-text-main focus:outline-none focus:border-emerald-500/50 placeholder-teal-500/40" />}
       </td>
 
       <td className="py-2.5 px-3">
@@ -223,18 +285,47 @@ const ServerTableRow: React.FC<RowProps> = ({
               </div>
               {row.authMode === 'password' ? (
                 <input type="password"
-                  placeholder={useCommonCred && commonPassword ? '↗ Inheriting shared password' : 'Enter password'}
+                  placeholder={useCommonCred && commonPassword ? 'Inheriting shared password' : 'Enter password'}
                   value={row.password} onChange={e => onUpdate(row.localId, 'password', e.target.value)}
                   className={`w-full bg-bg-input border rounded-lg px-2 py-1.5 text-sm text-text-main focus:outline-none ${!authOk ? 'border-red-400/60' : 'border-border-main focus:border-emerald-500/50'}`} />
-              ) : (
-                <div onDragOver={e => e.preventDefault()} onDrop={e => onKeyDrop(row.localId, e)}
-                  className={`border border-dashed rounded-lg p-1.5 flex items-center gap-2 bg-bg-input ${!authOk ? 'border-red-400/60' : 'border-border-main'}`}>
-                  <input type="password"
-                    placeholder={row.privateKey ? 'Key loaded' : useCommonCred && commonKey ? '↗ Inheriting shared key' : 'Drop PEM or paste key'}
-                    value={row.privateKey} onChange={e => onUpdate(row.localId, 'privateKey', e.target.value)}
-                    className={`flex-1 bg-transparent border-0 outline-none text-sm min-w-0 ${!row.privateKey && useCommonCred && commonKey ? 'text-teal-400/70 placeholder-teal-400/60' : 'text-text-main'}`} />
-                  <span className="text-xs text-text-muted bg-bg-panel px-1.5 py-0.5 rounded flex-shrink-0"><Upload className="w-3 h-3 inline" /></span>
+              ) : row.privateKey ? (
+                <div
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => onKeyDrop(row.localId, e)}
+                  className="border border-emerald-500/40 bg-emerald-500/10 rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2"
+                >
+                  <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 truncate">
+                    ✓ SSH Private Key Loaded ({getPemByteSize(row.privateKey)} bytes)
+                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <label className="p-0.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 cursor-pointer" title="Replace .pem key file">
+                      <Upload className="w-3 h-3" />
+                      <input type="file" accept=".pem,.key,.txt" onChange={e => onKeyFileSelect(row.localId, e)} className="hidden" />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => onUpdate(row.localId, 'privateKey', '')}
+                      className="p-0.5 text-text-muted hover:text-red-400 cursor-pointer"
+                      title="Clear Private Key"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
+              ) : (
+                <label
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => onKeyDrop(row.localId, e)}
+                  className={`border border-dashed rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2 bg-bg-input hover:bg-bg-panel cursor-pointer transition ${!authOk ? 'border-red-400/60' : useCommonCred && commonKey ? 'border-teal-500/40 bg-teal-500/5' : 'border-border-main hover:border-emerald-500/50'}`}
+                >
+                  <span className={`text-xs font-bold truncate ${useCommonCred && commonKey ? 'text-teal-600 dark:text-teal-400' : 'text-text-muted'}`}>
+                    {useCommonCred && commonKey
+                      ? `✓ Shared Key (${getPemByteSize(commonKey)} bytes)`
+                      : 'Drop .pem file here'}
+                  </span>
+                  <Upload className="w-3 h-3 text-emerald-500 shrink-0" />
+                  <input type="file" accept=".pem,.key,.txt" onChange={e => onKeyFileSelect(row.localId, e)} className="hidden" />
+                </label>
               )}
               {!authOk && <p className="text-xs text-red-500 dark:text-red-400">Password or Private Key required</p>}
             </div>
@@ -287,7 +378,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     sourceGroups, activeSgId, connections, refinedSourceInfra, isLoadingSource,
     fetchSourceGroups, createSourceGroup, deleteSourceGroup, refreshSourceGroup,
     registerConnection, fetchRefinedInfraByGroup, fetchSavedSourceModels, savedSourceModels,
-    saveSourceModel, updateSourceModel,
+    saveSourceModel, updateSourceModel, setLastImportedSourceSshKey,
   } = useMigrationStore();
 
   // ── Shared credentials (used in both modal & inline section) ────
@@ -340,6 +431,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
         localId: `api-${c.id || i}`,
         connId: c.id || '',
         name: c.name || '',
+        description: c.description || '',
         ip:   c.ip_address || c.ip || '',
         port: c.ssh_port ? String(c.ssh_port) : (c.port ? String(c.port) : ''),
         user: c.user || '',
@@ -361,7 +453,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
 
   // ─── Helpers ──────────────────────────────────────────────────
   function emptyRow(): ServerRow {
-    return { localId: `r-${Date.now()}-${Math.random()}`, connId: '', name: '', ip: '', port: '', user: '', privateKey: '', password: '', authMode: 'key', connectionStatus: '', agentStatus: '', connectionFailedMsg: '', agentFailedMsg: '' };
+    return { localId: `r-${Date.now()}-${Math.random()}`, connId: '', name: '', description: '', ip: '', port: '', user: '', privateKey: '', password: '', authMode: 'key', connectionStatus: '', agentStatus: '', connectionFailedMsg: '', agentFailedMsg: '' };
   }
 
   const resolveCredentials = (row: ServerRow) => ({
@@ -384,19 +476,113 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       const file = e.dataTransfer.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = ev => makeUpdater(setter)(localId, 'privateKey', ev.target?.result as string);
+        reader.onload = ev => {
+          const normalized = normalizePemKey(String(ev.target?.result ?? ''));
+          makeUpdater(setter)(localId, 'privateKey', normalized);
+          if (normalized) setLastImportedSourceSshKey(normalized);
+        };
         reader.readAsText(file);
       }
     };
 
-  const handleCommonKeyDrop = (e: React.DragEvent<HTMLTextAreaElement>) => {
+  const makeKeyFileSelect = (setter: React.Dispatch<React.SetStateAction<ServerRow[]>>) =>
+    (localId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const normalized = normalizePemKey(String(ev.target?.result ?? ''));
+        makeUpdater(setter)(localId, 'privateKey', normalized);
+        if (normalized) setLastImportedSourceSshKey(normalized);
+        e.target.value = '';
+      };
+      reader.readAsText(file);
+    };
+
+  const handleCommonKeyDrop = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = ev => setCommonKey(ev.target?.result as string);
+      reader.onload = ev => {
+        const normalized = normalizePemKey(String(ev.target?.result ?? ''));
+        setCommonKey(normalized);
+        if (normalized) setLastImportedSourceSshKey(normalized);
+      };
       reader.readAsText(file);
     }
+  };
+
+  const handleCommonKeyFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const normalized = normalizePemKey(String(ev.target?.result ?? ''));
+      setCommonKey(normalized);
+      if (normalized) setLastImportedSourceSshKey(normalized);
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  };
+
+  // Parse RFC-4180 CSV text (supports UTF-8 BOM, quoted commas, and multiline private_key fields)
+  const parseCsvToObjects = (rawText: string): Record<string, string>[] => {
+    const text = rawText.replace(/^\uFEFF/, '');
+    const rows: string[][] = [];
+    let currentRow: string[] = [];
+    let currentField = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const next = text[i + 1];
+      if (inQuotes) {
+        if (ch === '"' && next === '"') {
+          currentField += '"';
+          i++;
+        } else if (ch === '"') {
+          inQuotes = false;
+        } else {
+          currentField += ch;
+        }
+      } else {
+        if (ch === '"') {
+          inQuotes = true;
+        } else if (ch === ',') {
+          currentRow.push(currentField);
+          currentField = '';
+        } else if (ch === '\r' && next === '\n') {
+          currentRow.push(currentField);
+          rows.push(currentRow);
+          currentRow = [];
+          currentField = '';
+          i++;
+        } else if (ch === '\n' || ch === '\r') {
+          currentRow.push(currentField);
+          rows.push(currentRow);
+          currentRow = [];
+          currentField = '';
+        } else {
+          currentField += ch;
+        }
+      }
+    }
+    if (currentField.length > 0 || currentRow.length > 0) {
+      currentRow.push(currentField);
+      rows.push(currentRow);
+    }
+
+    const nonEmptyRows = rows.filter(r => r.some(cell => cell.trim() !== ''));
+    if (nonEmptyRows.length < 2) return [];
+    const headers = nonEmptyRows[0].map(h => h.trim().toLowerCase());
+    return nonEmptyRows.slice(1).map(cells => {
+      const obj: Record<string, string> = {};
+      headers.forEach((h, idx) => {
+        obj[h] = (cells[idx] ?? '').trim();
+      });
+      return obj;
+    });
   };
 
   const handleJsonImport = (setter: React.Dispatch<React.SetStateAction<ServerRow[]>>) =>
@@ -406,67 +592,123 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       const reader = new FileReader();
       reader.onload = ev => {
         try {
-          const parsed = JSON.parse(ev.target?.result as string);
-          if (Array.isArray(parsed)) {
-            setter(parsed.map((item: any, idx: number) => ({
-              localId: `import-${idx}-${Date.now()}`, connId: '',
-              name: item.name || `Host ${idx + 1}`,
-              ip:   item.ip || item.ip_address || '',
-              port: item.port ? String(item.port) : '',
-              user: item.user || '',
-              privateKey: item.private_key || item.privateKey || '',
-              password: item.password || '',
-              authMode: (item.password && !item.private_key && !item.privateKey) ? 'password' : 'key',
-              connectionStatus: '', agentStatus: '', connectionFailedMsg: '', agentFailedMsg: '',
-            })));
-          } else { alert('JSON must be an array of server objects.'); }
-        } catch { alert('Invalid JSON format.'); }
+          const content = String(ev.target?.result ?? '');
+          const isCsv = file.name.toLowerCase().endsWith('.csv') || !content.trim().startsWith('[');
+          const parsed = isCsv ? parseCsvToObjects(content) : JSON.parse(content);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const importedRows: ServerRow[] = parsed.map((item: any, idx: number) => {
+              const rawKey = normalizePemKey(String(item.private_key || item.privateKey || ''));
+              const rawPort = item.ssh_port ?? item.port;
+              return {
+                localId: `import-${idx}-${Date.now()}`,
+                connId: '',
+                name: item.name || `Host ${idx + 1}`,
+                description: String(item.description || ''),
+                ip: item.ip_address || item.ip || '',
+                port: rawPort ? String(rawPort) : '22',
+                user: item.user || 'ubuntu',
+                privateKey: rawKey,
+                password: item.password || '',
+                authMode: (item.password && !rawKey) ? 'password' : 'key',
+                connectionStatus: '',
+                agentStatus: '',
+                connectionFailedMsg: '',
+                agentFailedMsg: '',
+              };
+            });
+
+            // Auto-sync imported SSH Private Key to Shared Credentials & Store for Step 4 Data Migration
+            const firstImportedKey = importedRows.find(r => r.privateKey)?.privateKey || '';
+            if (firstImportedKey) {
+              if (!commonKey) setCommonKey(firstImportedKey);
+              setLastImportedSourceSshKey(firstImportedKey);
+            }
+
+            // Auto-suggest group name & description in New Source Group modal if blank
+            if (showModal && !newGroupName.trim()) {
+              const fname = file.name.toLowerCase();
+              const isPublic = fname.includes('public');
+              setNewGroupName('ai-stack-testbed');
+              if (!newGroupDesc.trim()) {
+                setNewGroupDesc(
+                  `9-Node AWS AI Stack Testbed (${isPublic ? 'Public IP' : 'Private IP'} - 3 AI Inference, 3 Analytics Compute, 3 Backend & DB)`
+                );
+              }
+            }
+
+            setter(prev => {
+              const existingRegistered = prev.filter(r => r.connId);
+              return existingRegistered.length > 0
+                ? [...existingRegistered, ...importedRows, emptyRow()]
+                : importedRows;
+            });
+          } else {
+            alert('File must contain at least one server row (CSV or JSON array).');
+          }
+        } catch {
+          alert('Invalid CSV or JSON format.');
+        } finally {
+          e.target.value = '';
+        }
       };
       reader.readAsText(file);
     };
 
   const handleDownloadTemplate = () => {
-    const tpl = [
-      { name: 'Web Server 1', ip: '10.0.1.30',  port: 22, user: 'ubuntu', private_key: '' },
-      { name: 'Database 1',   ip: '10.0.1.221', port: 22, user: 'root',   private_key: '' },
+    // Matches cm-butterfly & mc-terrarium source_connections_*.csv specification
+    const headers = ['name', 'description', 'ip_address', 'ssh_port', 'user', 'password', 'private_key'];
+    const sampleRows = [
+      'ai-gpu-01,"AI Inference Primary - Ollama (:11434) + gemma4:e2b + Open WebUI (:3000)",10.0.1.11,22,ubuntu,,',
+      'data-master-01,"Analytics Compute Master - Spark / Airflow (:8080, :7077)",10.0.1.21,22,ubuntu,,',
+      'db-primary-01,"Backend & DB - PostgreSQL Primary (:5432)",10.0.1.31,22,ubuntu,,',
     ];
-    const blob = new Blob([JSON.stringify(tpl, null, 2)], { type: 'application/json' });
+    const csvContent = '\uFEFF' + [headers.join(','), ...sampleRows].join('\n') + '\n';
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href = url; a.download = 'source_servers_template.json';
+    a.href = url; a.download = 'source_connection_template.csv';
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(url);
   };
 
   // ─── Inline Section 2 actions ─────────────────────────────────
 
-  // Load built-in sample infrastructure (no API call required)
+  // Load built-in 9-node AI Stack Testbed sample infrastructure (no API call required)
   const handleLoadSampleInfra = () => {
     const SAMPLE_ID = 'sg-sample';
     const sampleGroup = {
       id: SAMPLE_ID,
-      name: '[Sample] web-db-cluster',
-      description: '1 Web Server (HAProxy/App) + 2 InfluxDB nodes on 10.0.1.x',
+      name: '[Sample] ai-stack-testbed',
+      description: '9-Node AWS AI Stack Testbed (3 AI Inference, 3 Analytics Compute, 3 Backend & DB on 10.0.1.x)',
       connection_info_status_count: {
-        connection_info_total: 3,
-        count_connection_success: 3,
+        connection_info_total: 9,
+        count_connection_success: 9,
         count_connection_failed: 0,
-        count_agent_success: 3,
+        count_agent_success: 9,
         count_agent_failed: 0,
       },
     };
     const sampleConnections = [
-      { id: 'sample-c1', name: 'Web Server 1',  ip_address: '10.0.1.30',  ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
-      { id: 'sample-c2', name: 'Database 1',   ip_address: '10.0.1.221', ssh_port: '22', user: 'root',   connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
-      { id: 'sample-c3', name: 'Database 2',   ip_address: '10.0.1.138', ssh_port: '22', user: 'root',   connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+      { id: 'sample-c1', name: 'ai-gpu-01',          description: 'AI Inference Primary - Ollama (:11434) + gemma4:e2b + Open WebUI (:3000)', ip_address: '10.0.1.11', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+      { id: 'sample-c2', name: 'ai-gpu-02',          description: 'AI Inference Worker 1 - Ollama Runtime (:11434)',                          ip_address: '10.0.1.12', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+      { id: 'sample-c3', name: 'ai-gpu-03',          description: 'AI Inference Worker 2 - vLLM / Vector Worker (:8000, :11434)',             ip_address: '10.0.1.13', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+      { id: 'sample-c4', name: 'data-master-01',     description: 'Analytics Compute Master - Spark / Airflow Coordinator (:8080, :7077)',    ip_address: '10.0.1.21', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+      { id: 'sample-c5', name: 'data-worker-01',     description: 'Analytics Compute Worker - PySpark Worker (:8081, :7077)',                 ip_address: '10.0.1.22', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+      { id: 'sample-c6', name: 'data-etl-01',        description: 'Analytics Compute ETL - Kafka / Batch ETL Preprocessing (:9092, :5044)',   ip_address: '10.0.1.23', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+      { id: 'sample-c7', name: 'db-primary-01',      description: 'Backend & DB - PostgreSQL Primary Database (:5432)',                       ip_address: '10.0.1.31', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+      { id: 'sample-c8', name: 'backend-api-01',     description: 'Backend & DB - FastAPI / Nginx Application Server (:80, :443, :8000)',     ip_address: '10.0.1.32', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+      { id: 'sample-c9', name: 'storage-gateway-01', description: 'Backend & DB - MinIO / NFS Storage Gateway (:9000, :9001, :2049)',         ip_address: '10.0.1.33', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
     ];
     const current = useMigrationStore.getState().sourceGroups;
-    if (!current.some((g: any) => g.id === SAMPLE_ID)) {
-      useMigrationStore.setState({ sourceGroups: [sampleGroup, ...current] });
-    }
-    useMigrationStore.setState({ activeSgId: SAMPLE_ID, connections: sampleConnections });
+    const withoutSample = current.filter((g: any) => g.id !== SAMPLE_ID);
+    useMigrationStore.setState({
+      sourceGroups: [sampleGroup, ...withoutSample],
+      activeSgId: SAMPLE_ID,
+      connections: sampleConnections,
+      refinedSourceInfra: SAMPLE_9_NODE_TESTBED_INFRA,
+    });
     setRegisterStatus('done');
-    setImportStatus('idle');
+    setImportStatus('done');
     setRefreshStatus('idle');
   };
 
@@ -475,9 +717,9 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     setRegisterStatus('idle');
     setImportStatus('idle');
     setRefreshStatus('idle');
-    // Skip API call for the built-in sample group — connections are already in store
+    // Skip API call for the built-in sample group - connections are already in store
     if (sgId === 'sg-sample') {
-      useMigrationStore.setState({ refinedSourceInfra: DEMO_SOURCE_INFRA });
+      useMigrationStore.setState({ refinedSourceInfra: SAMPLE_9_NODE_TESTBED_INFRA });
       return;
     }
     // Set refinedSourceInfra to null first when switching groups so we don't show stale preview
@@ -525,7 +767,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     }
   };
 
-  // Draft rows aren't "deleted" — their fields are just cleared back to blank
+  // Draft rows aren't "deleted" - their fields are just cleared back to blank
   const handleResetInlineRow = (localId: string) => {
     setServerRows(prev => prev.map(r => r.localId === localId ? { ...emptyRow(), localId } : r));
   };
@@ -544,7 +786,8 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     try {
       for (const row of newRows) {
         const creds = resolveCredentials(row);
-        await registerConnection({ name: row.name, ip: row.ip, port: creds.port, user: creds.user, privateKey: creds.privateKey, password: creds.password, description: '' });
+        if (creds.privateKey) setLastImportedSourceSshKey(creds.privateKey);
+        await registerConnection({ name: row.name, ip: row.ip, port: creds.port, user: creds.user, privateKey: creds.privateKey, password: creds.password, description: row.description || '' });
       }
       const data = await honeybeeApi.getConnectionInfoList(activeSgId);
       const list: any[] = data?.connection_info || (Array.isArray(data) ? data : []);
@@ -590,7 +833,8 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       const connList = rowsWithIp
          .map(r => {
            const creds = resolveCredentials(r);
-           return { name: r.name || 'Server', ip_address: r.ip.trim(), ssh_port: String(creds.port), user: creds.user, private_key: creds.privateKey, password: creds.password, description: '' };
+           if (creds.privateKey) setLastImportedSourceSshKey(creds.privateKey);
+           return { name: r.name || 'Server', ip_address: r.ip.trim(), ssh_port: String(creds.port), user: creds.user, private_key: creds.privateKey, password: creds.password, description: r.description || '' };
          });
 
       if (connList.length > 0) {
@@ -633,6 +877,11 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
   // ─── Collect & Save ──────────────────────────────────────────────
   const handleImportInfra = async () => {
     if (!activeSgId) return;
+    if (activeSgId === 'sg-sample') {
+      useMigrationStore.setState({ refinedSourceInfra: SAMPLE_9_NODE_TESTBED_INFRA });
+      setImportStatus('done');
+      return;
+    }
     setImportStatus('importing');
     try {
       await honeybeeApi.importInfraByGroup(activeSgId);
@@ -669,11 +918,13 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
   // Row operation factories for inline section
   const updateInlineRow = makeUpdater(setServerRows);
   const keyDropInline   = makeKeyDrop(setServerRows);
+  const keySelectInline = makeKeyFileSelect(setServerRows);
 
   // Row operation factories for modal
-  const updateModalRow = makeUpdater(setModalRows);
-  const addModalRow    = makeAdder(setModalRows);
-  const keyDropModal   = makeKeyDrop(setModalRows);
+  const updateModalRow  = makeUpdater(setModalRows);
+  const addModalRow     = makeAdder(setModalRows);
+  const keyDropModal    = makeKeyDrop(setModalRows);
+  const keySelectModal  = makeKeyFileSelect(setModalRows);
 
   // ─── Render ──────────────────────────────────────────────────────
   return (
@@ -693,7 +944,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       </div>
 
       {/* ══════════════════════════════════════════════════
-          SECTION 1 — Source Infrastructure Groups
+          SECTION 1 - Source Infrastructure Groups
       ══════════════════════════════════════════════════ */}
       <div className="glass-panel p-6 rounded-2xl">
         <div className="flex items-center justify-between mb-5">
@@ -710,7 +961,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
             <button
               onClick={handleLoadSampleInfra}
               className="px-4 py-2.5 bg-bg-panel border border-teal-500/40 hover:bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl text-sm font-bold flex items-center gap-2 transition cursor-pointer"
-              title="Load built-in sample infrastructure data (no API call required)"
+              title="Load built-in 9-node AI Stack Testbed sample infrastructure data (no API call required)"
             >
               <FileText className="w-4 h-4" /> Load Sample Infra
             </button>
@@ -769,10 +1020,10 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                         {allOk && <CheckCircle2 className="w-3 h-3" />}
                         {anyFailed && <XCircle className="w-3 h-3" />}
                         {success}/{total} Connected
-                        {failed > 0 && <span className="opacity-70">· {failed} failed</span>}
+                        {failed > 0 && <span className="opacity-70">/ {failed} failed</span>}
                       </span>
                     ) : (
-                      <span className="text-xs text-text-muted">No connections — click to add</span>
+                      <span className="text-xs text-text-muted">No connections - click to add</span>
                     )}
                   </div>
 
@@ -806,7 +1057,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       </div>
 
       {/* ══════════════════════════════════════════════════
-          SECTION 2 — Server Connections (inline)
+          SECTION 2 - Server Connections (inline)
       ══════════════════════════════════════════════════ */}
       {activeSgId && (
         <div className="glass-panel rounded-2xl overflow-hidden">
@@ -815,22 +1066,22 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
             <div>
               <h2 className="text-base font-bold text-text-main flex items-center gap-2">
                 Server Connections
-                {activeGroup && <span className="font-normal text-text-muted text-sm">— {activeGroup.name}</span>}
+                {activeGroup && <span className="font-normal text-text-muted text-sm">({activeGroup.name})</span>}
               </h2>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button onClick={handleRefreshAll} disabled={refreshStatus === 'refreshing'}
                 className="px-3 py-2 bg-bg-panel border border-border-main hover:bg-bg-input rounded-lg text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer text-text-muted hover:text-text-main disabled:opacity-50">
                 <RefreshCw className={`w-3.5 h-3.5 ${refreshStatus === 'refreshing' ? 'animate-spin' : ''}`} />
-                {refreshStatus === 'refreshing' ? 'Refreshing…' : refreshStatus === 'done' ? 'Refreshed ✓' : 'Refresh Status'}
+                {refreshStatus === 'refreshing' ? 'Refreshing...' : refreshStatus === 'done' ? 'Refreshed' : 'Refresh Status'}
               </button>
               <button onClick={handleDownloadTemplate}
                 className="px-3 py-2 bg-bg-panel border border-border-main hover:bg-bg-input rounded-lg text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer text-text-muted hover:text-text-main">
-                <Download className="w-3.5 h-3.5" /> Template
+                <Download className="w-3.5 h-3.5" /> Template (CSV)
               </button>
               <label className="px-3 py-2 bg-bg-panel border border-border-main hover:bg-bg-input rounded-lg text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer text-text-muted hover:text-text-main">
-                <Upload className="w-3.5 h-3.5" /> Import JSON
-                <input type="file" accept=".json" onChange={handleJsonImport(setServerRows)} className="hidden" />
+                <Upload className="w-3.5 h-3.5" /> Import CSV / JSON
+                <input type="file" accept=".csv,.json" onChange={handleJsonImport(setServerRows)} className="hidden" />
               </label>
             </div>
           </div>
@@ -841,9 +1092,10 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
             enabled={useCommonCred} onToggleEnabled={setUseCommonCred}
             user={commonUser} onUser={setCommonUser}
             port={commonPort} onPort={setCommonPort}
-            pemKey={commonKey} onPemKey={setCommonKey}
+            pemKey={commonKey} onPemKey={(k) => { setCommonKey(k); if (k) setLastImportedSourceSshKey(k); }}
             password={commonPassword} onPassword={setCommonPassword}
             onKeyDrop={handleCommonKeyDrop}
+            onKeyFileSelect={handleCommonKeyFileSelect}
             locked={connections && connections.length > 0}
           />
 
@@ -860,6 +1112,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                     onDelete={handleDeleteInlineRow}
                     onReset={handleResetInlineRow}
                     onKeyDrop={keyDropInline}
+                    onKeyFileSelect={keySelectInline}
                   />
                 ))}
               </tbody>
@@ -873,11 +1126,11 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
           )}
 
           <div className="px-6 pt-4 border-t border-border-main/60">
-            <p className="text-sm text-text-muted mb-3">Fill in the row above with server details, then click <span className="font-semibold text-text-main">“Add Server”</span> to register it to this group. A new blank row appears automatically for the next server. Blank SSH fields inherit from Shared Credentials.</p>
+            <p className="text-sm text-text-muted mb-3">Fill in the row above with server details, then click <span className="font-semibold text-text-main">&quot;Add Server&quot;</span> to register it to this group. A new blank row appears automatically for the next server. Blank SSH fields inherit from Shared Credentials.</p>
             <div className="flex items-center gap-3 pb-4">
               <button onClick={handleRegisterConnections} disabled={!hasNewRows || registerStatus === 'registering'}
                 className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 rounded-lg text-sm font-extrabold flex items-center gap-2 transition cursor-pointer disabled:opacity-40 shadow-sm">
-                {registerStatus === 'registering' ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Adding…</>
+                {registerStatus === 'registering' ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Adding...</>
                   : <><Plus className="w-3.5 h-3.5" /> Add Server</>}
               </button>
               {registerStatus === 'done' && !hasNewRows && (
@@ -889,14 +1142,14 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       )}
 
       {/* ══════════════════════════════════════════════════
-          SECTION 3 — Collect & Save Source Model
+          SECTION 3 - Collect & Save Source Model
       ══════════════════════════════════════════════════ */}
       {activeSgId && (
         <div className="glass-panel p-6 rounded-2xl">
           <h2 className="text-base font-bold text-text-main flex items-center gap-2 mb-5">
             <FileText className="w-5 h-5 text-emerald-400" />
             Collect &amp; Save Source Model
-            {activeGroup && <span className="text-sm font-normal text-text-muted">— {activeGroup.name}</span>}
+            {activeGroup && <span className="text-sm font-normal text-text-muted">({activeGroup.name})</span>}
           </h2>
 
           {/* Step progress */}
@@ -926,9 +1179,9 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
             <div className="flex-1 min-w-[220px]">
               <button onClick={handleImportInfra} disabled={importStatus === 'importing'}
                 className="w-full py-3 bg-bg-panel border-2 border-emerald-500/40 hover:border-emerald-500/70 hover:bg-emerald-500/5 rounded-xl text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50">
-                {importStatus === 'importing' ? <><Loader2 className="w-4 h-4 animate-spin" /> Collecting…</>
-                  : importStatus === 'done'   ? <><CheckCircle2 className="w-4 h-4" /> Collected — Re-Import</>
-                  : importStatus === 'failed' ? <><AlertCircle className="w-4 h-4 text-red-400" /> Failed — Retry</>
+                {importStatus === 'importing' ? <><Loader2 className="w-4 h-4 animate-spin" /> Collecting...</>
+                  : importStatus === 'done'   ? <><CheckCircle2 className="w-4 h-4" /> Collected - Re-Import</>
+                  : importStatus === 'failed' ? <><AlertCircle className="w-4 h-4 text-red-400" /> Failed - Retry</>
                   : <><Play className="w-4 h-4" /> Collect Infra from All Servers</>}
               </button>
               <p className="text-xs text-text-muted mt-2 text-center leading-relaxed">
@@ -936,7 +1189,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
               </p>
             </div>
             <div className="flex-1 min-w-[280px] flex flex-col justify-center space-y-3">
-              <button onClick={() => setShowSaveModal(true)} disabled={!refinedSourceInfra} className="w-full py-3 bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-600 hover:from-emerald-500 hover:to-blue-700 text-slate-950 font-extrabold rounded-xl text-sm transition shadow-md shadow-emerald-500/20 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
+              <button onClick={() => setShowSaveModal(true)} disabled={!refinedSourceInfra} className="w-full py-3 bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 font-extrabold rounded-xl text-sm transition shadow-md shadow-emerald-500/20 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
                 <Save className="w-4 h-4 text-slate-950" /> Save Source Infra Revision
               </button>
               <p className="text-xs text-text-muted text-center leading-relaxed">
@@ -990,13 +1243,13 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-text-muted mb-1.5">Group Name <span className="text-red-400">*</span></label>
-                  <input type="text" placeholder="e.g. production-dc" value={newGroupName} onChange={e => setNewGroupName(e.target.value)}
-                    className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+                  <input type="text" placeholder="e.g. ai-stack-testbed" value={newGroupName} onChange={e => setNewGroupName(e.target.value)}
+                    className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-text-muted mb-1.5">Description</label>
                   <input type="text" placeholder="Optional description" value={newGroupDesc} onChange={e => setNewGroupDesc(e.target.value)}
-                    className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+                    className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500" />
                 </div>
               </div>
 
@@ -1006,22 +1259,23 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                 enabled={useCommonCred} onToggleEnabled={setUseCommonCred}
                 user={commonUser} onUser={setCommonUser}
                 port={commonPort} onPort={setCommonPort}
-                pemKey={commonKey} onPemKey={setCommonKey}
+                pemKey={commonKey} onPemKey={(k) => { setCommonKey(k); if (k) setLastImportedSourceSshKey(k); }}
                 password={commonPassword} onPassword={setCommonPassword}
                 onKeyDrop={handleCommonKeyDrop}
+                onKeyFileSelect={handleCommonKeyFileSelect}
               />
 
               {/* Server table in modal */}
               <div className="border border-border-main rounded-xl overflow-hidden">
                 <div className="px-4 py-3 bg-bg-input/20 border-b border-border-main flex flex-wrap items-center gap-2 justify-between">
-                  <span className="text-sm font-semibold text-text-main">Server Connections <span className="text-xs font-normal text-text-muted">(optional — can be added later)</span></span>
+                  <span className="text-sm font-semibold text-text-main">Server Connections <span className="text-xs font-normal text-text-muted">(optional - can be added later)</span></span>
                   <div className="flex flex-wrap items-center gap-2">
                     <button onClick={handleDownloadTemplate} className="px-3 py-1.5 bg-bg-panel border border-border-main hover:bg-bg-input rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer text-text-muted">
-                      <Download className="w-3.5 h-3.5" /> Template
+                      <Download className="w-3.5 h-3.5" /> Template (CSV)
                     </button>
                     <label className="px-3 py-1.5 bg-bg-panel border border-border-main hover:bg-bg-input rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer text-text-muted">
-                      <Upload className="w-3.5 h-3.5" /> Import JSON
-                      <input type="file" accept=".json" onChange={handleJsonImport(setModalRows)} className="hidden" />
+                      <Upload className="w-3.5 h-3.5" /> Import CSV / JSON
+                      <input type="file" accept=".csv,.json" onChange={handleJsonImport(setModalRows)} className="hidden" />
                     </label>
                     <button onClick={addModalRow} className="px-3 py-1.5 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer text-emerald-600 dark:text-emerald-400">
                       <Plus className="w-3.5 h-3.5" /> Add Server
@@ -1039,6 +1293,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                           onUpdate={updateModalRow}
                           onDelete={handleDeleteModalRow}
                           onKeyDrop={keyDropModal}
+                          onKeyFileSelect={keySelectModal}
                         />
                       ))}
                     </tbody>
@@ -1221,7 +1476,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
         defaultDescription=""
         defaultVersion="1.0.0"
         existingRevisions={savedSourceModels
-          .filter(m => m.id !== 'sample-source-15node-dc-1' && m.id !== 'sample-source-infra-1' && m.id !== 'sample-source-gpu-infra-1' && (m.stage || 'source') === 'source')
+          .filter(m => m.id !== 'sample-source-9node-testbed-1' && m.id !== 'sample-source-15node-dc-1' && m.id !== 'sample-source-infra-1' && m.id !== 'sample-source-gpu-infra-1' && (m.stage || 'source') === 'source')
           .map(m => ({ id: m.id, name: m.name, version: m.version }))}
         onSave={handleSaveArtifact}
       />

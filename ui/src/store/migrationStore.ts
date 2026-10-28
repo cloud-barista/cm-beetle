@@ -4,7 +4,7 @@ import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope,
 import { honeybeeApi, artifactApi, SaveArtifactOptions, beetleApi, tumblebugApi } from '../api/client';
 import recommendedInfraSample from '../data/sampleTargetInfra.json';
 import sampleGpuData from '../data/sampleSourceGpuInfra.json';
-import { SAMPLE_15_NODE_MODEL } from '../data/sample15NodeInfra';
+import { SAMPLE_15_NODE_MODEL, SAMPLE_9_NODE_TESTBED_MODEL } from '../data/sample15NodeInfra';
 
 // ----------------------------------------------------------------------------
 // HIGH QUALITY DEMO / SOURCE INFRA MODEL DATA
@@ -187,6 +187,8 @@ interface MigrationState {
   refinedSourceInfra: OnpremInfra | null;
   savedSourceModels: OnpremModelEnvelope[];
   selectedSourceModel: OnpremModelEnvelope | null;
+  lastImportedSourceSshKey: string;
+  setLastImportedSourceSshKey: (key: string) => void;
   
   fetchSourceGroups: () => Promise<void>;
   createSourceGroup: (name: string, description: string) => Promise<string>;
@@ -410,8 +412,10 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   connections: [],
   isLoadingSource: false,
   refinedSourceInfra: DEMO_SOURCE_INFRA,
-  savedSourceModels: [SAMPLE_15_NODE_MODEL, DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL],
+  savedSourceModels: [SAMPLE_9_NODE_TESTBED_MODEL, SAMPLE_15_NODE_MODEL, DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL],
   selectedSourceModel: DEFAULT_FALLBACK_SOURCE_MODEL,
+  lastImportedSourceSshKey: '',
+  setLastImportedSourceSshKey: (key) => set({ lastImportedSourceSshKey: key }),
   tumblebugProviders: [
     'aws', 'azure', 'gcp', 'alibaba', 'tencent',
     'ibm', 'ncp', 'nhn', 'kt', 'openstack'
@@ -527,7 +531,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   fetchSavedSourceModels: async () => {
-    const builtInSamples = [SAMPLE_15_NODE_MODEL, DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL];
+    const builtInSamples = [SAMPLE_9_NODE_TESTBED_MODEL, SAMPLE_15_NODE_MODEL, DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL];
     const builtInIds = new Set(builtInSamples.map(s => s.id));
     let allModels: OnpremModelEnvelope[] = [];
     try {
@@ -1172,6 +1176,7 @@ export const useMigrationStore = create<MigrationState>()(
         const cleanGpuIfNonGpu = (m: OnpremModelEnvelope | null) => {
           if (!m) return;
           const isGpu =
+            m.id === 'sample-source-9node-testbed-1' ||
             m.id === 'sample-source-15node-dc-1' ||
             m.id?.toLowerCase().includes('gpu') ||
             m.name?.toLowerCase().includes('gpu') ||
@@ -1187,6 +1192,9 @@ export const useMigrationStore = create<MigrationState>()(
         if (state.selectedSourceModel?.id === 'sample-source-infra-1') {
           state.selectedSourceModel = DEFAULT_FALLBACK_SOURCE_MODEL;
           state.refinedSourceInfra = DEMO_SOURCE_INFRA;
+        } else if (state.selectedSourceModel?.id === 'sample-source-9node-testbed-1') {
+          state.selectedSourceModel = SAMPLE_9_NODE_TESTBED_MODEL;
+          state.refinedSourceInfra = SAMPLE_9_NODE_TESTBED_MODEL.onpremiseInfraModel;
         } else if (state.selectedSourceModel?.id === 'sample-source-15node-dc-1') {
           state.selectedSourceModel = SAMPLE_15_NODE_MODEL;
           state.refinedSourceInfra = SAMPLE_15_NODE_MODEL.onpremiseInfraModel;
@@ -1203,14 +1211,19 @@ export const useMigrationStore = create<MigrationState>()(
         }
 
         if (Array.isArray(state.savedSourceModels)) {
-          const has15NodeSample = state.savedSourceModels.some(m => m.id === 'sample-source-15node-dc-1');
           const mappedModels = state.savedSourceModels.map(m => {
             if (m.id === 'sample-source-infra-1') return DEFAULT_FALLBACK_SOURCE_MODEL;
+            if (m.id === 'sample-source-9node-testbed-1') return SAMPLE_9_NODE_TESTBED_MODEL;
             if (m.id === 'sample-source-15node-dc-1') return SAMPLE_15_NODE_MODEL;
             cleanGpuIfNonGpu(m);
             return m;
           });
-          state.savedSourceModels = has15NodeSample ? mappedModels : [SAMPLE_15_NODE_MODEL, ...mappedModels];
+          const has9NodeSample = mappedModels.some(m => m.id === 'sample-source-9node-testbed-1');
+          const has15NodeSample = mappedModels.some(m => m.id === 'sample-source-15node-dc-1');
+          const prefix: OnpremModelEnvelope[] = [];
+          if (!has9NodeSample) prefix.push(SAMPLE_9_NODE_TESTBED_MODEL);
+          if (!has15NodeSample) prefix.push(SAMPLE_15_NODE_MODEL);
+          state.savedSourceModels = [...prefix, ...mappedModels];
         }
       }
     }

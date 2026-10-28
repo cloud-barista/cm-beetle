@@ -87,6 +87,16 @@ const STANDARD_UBUNTU_OS = {
   versionId: '22.04',
 };
 
+const CPU_2_VCPU = {
+  architecture: 'x86_64',
+  cpus: 1,
+  cores: 1,
+  threads: 2,
+  maxSpeed: 2.5,
+  model: 'Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz',
+  vendor: 'GenuineIntel',
+};
+
 const CPU_4_VCPU = {
   architecture: 'x86_64',
   cpus: 1,
@@ -342,6 +352,156 @@ export const SAMPLE_15_NODE_MODEL: OnpremModelEnvelope = {
   lineage: {
     sourceGroupId: 'sg-enterprise-15node',
     sourceModelId: 'sample-source-15node-dc-1',
+  },
+  updatedTime: new Date().toISOString(),
+};
+
+// 9-Node AI Stack Testbed (3x3 Symmetric Clusters matching mc-terrarium/examples/aws/ai-stack-testbed)
+const NODES_9_TESTBED: OnpremNode[] = [
+  // 1. AI Inference Cluster (3 Source Nodes)
+  {
+    machineId: 'testbed-ai-gpu-01',
+    hostname: 'ai-gpu-01',
+    cpu: CPU_4_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 100, type: 'SSD' },
+    ...buildNodeNetwork(11, '11'),
+    firewallTable: buildFirewallRules(['22', '3000', '11434']),
+    os: STANDARD_UBUNTU_OS,
+    gpuCards: TESLA_T4_GPU,
+    clusterGroup: 'ai-inference',
+    workloadTag: 'Ollama (:11434) + gemma4:e2b + Open WebUI (:3000)',
+    serviceUrl: 'http://3.36.85.152:3000',
+  },
+  {
+    machineId: 'testbed-ai-gpu-02',
+    hostname: 'ai-gpu-02',
+    cpu: CPU_4_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 80, type: 'SSD' },
+    ...buildNodeNetwork(12, '12'),
+    firewallTable: buildFirewallRules(['22', '11434']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'ai-inference',
+    workloadTag: 'AI Inference Worker 1 - Ollama Runtime (:11434)',
+  },
+  {
+    machineId: 'testbed-ai-gpu-03',
+    hostname: 'ai-gpu-03',
+    cpu: CPU_4_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 80, type: 'SSD' },
+    ...buildNodeNetwork(13, '13'),
+    firewallTable: buildFirewallRules(['22', '8000', '11434']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'ai-inference',
+    workloadTag: 'AI Inference Worker 2 - vLLM / Vector Worker (:8000, :11434)',
+  },
+
+  // 2. Analytics Compute Cluster (3 Source Nodes)
+  {
+    machineId: 'testbed-data-master-01',
+    hostname: 'data-master-01',
+    cpu: CPU_4_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 50, type: 'SSD' },
+    ...buildNodeNetwork(21, '21'),
+    firewallTable: buildFirewallRules(['22', '8080', '7077']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'analytics-compute',
+    workloadTag: 'Spark / Airflow Coordinator (:8080, :7077)',
+  },
+  {
+    machineId: 'testbed-data-worker-01',
+    hostname: 'data-worker-01',
+    cpu: CPU_2_VCPU,
+    memory: { available: 7, totalSize: 8, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 50, type: 'SSD' },
+    ...buildNodeNetwork(22, '22'),
+    firewallTable: buildFirewallRules(['22', '8081', '7077']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'analytics-compute',
+    workloadTag: 'PySpark Worker (:8081, :7077)',
+  },
+  {
+    machineId: 'testbed-data-etl-01',
+    hostname: 'data-etl-01',
+    cpu: CPU_2_VCPU,
+    memory: { available: 7, totalSize: 8, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 50, type: 'SSD' },
+    ...buildNodeNetwork(23, '23'),
+    firewallTable: buildFirewallRules(['22', '9092', '5044']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'analytics-compute',
+    workloadTag: 'Kafka / Batch ETL Preprocessing (:9092, :5044)',
+  },
+
+  // 3. Backend & DB Cluster (3 Source Nodes)
+  {
+    machineId: 'testbed-db-primary-01',
+    hostname: 'db-primary-01',
+    cpu: CPU_2_VCPU,
+    memory: { available: 7, totalSize: 8, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 50, type: 'SSD' },
+    ...buildNodeNetwork(31, '31'),
+    firewallTable: buildFirewallRules(['22', '5432']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'backend-db',
+    workloadTag: 'PostgreSQL Primary Database (:5432)',
+  },
+  {
+    machineId: 'testbed-backend-api-01',
+    hostname: 'backend-api-01',
+    cpu: CPU_2_VCPU,
+    memory: { available: 3.5, totalSize: 4, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 50, type: 'SSD' },
+    ...buildNodeNetwork(32, '32'),
+    firewallTable: buildFirewallRules(['22', '80', '443', '8000']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'backend-db',
+    workloadTag: 'FastAPI / Nginx Application Server (:80, :443, :8000)',
+  },
+  {
+    machineId: 'testbed-storage-gateway-01',
+    hostname: 'storage-gateway-01',
+    cpu: CPU_2_VCPU,
+    memory: { available: 3.5, totalSize: 4, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 50, type: 'SSD' },
+    ...buildNodeNetwork(33, '33'),
+    firewallTable: buildFirewallRules(['22', '9000', '9001', '2049']),
+    os: STANDARD_UBUNTU_OS,
+    clusterGroup: 'backend-db',
+    workloadTag: 'MinIO / NFS Storage Gateway (:9000, :9001, :2049)',
+  },
+];
+
+export const SAMPLE_9_NODE_TESTBED_INFRA: OnpremInfra = {
+  network: {
+    ipv4Networks: {
+      defaultGateways: NODES_9_TESTBED.map((n) => ({
+        interfaceName: 'ens5',
+        ip: '10.0.1.1',
+        machineId: n.machineId,
+      })),
+      cidrBlocks: ['10.0.1.0/24'],
+    },
+    ipv6Networks: {},
+  },
+  nodes: NODES_9_TESTBED,
+};
+
+export const SAMPLE_9_NODE_TESTBED_MODEL: OnpremModelEnvelope = {
+  id: 'sample-source-9node-testbed-1',
+  name: '[Sample] ai-stack-testbed-9node',
+  description: '9-Node AWS AI Stack Testbed (3 AI Inference, 3 Analytics Compute, 3 Backend & DB)',
+  onpremiseInfraModel: SAMPLE_9_NODE_TESTBED_INFRA,
+  version: '1.0',
+  stage: 'source',
+  category: 'infra',
+  schemaType: 'OnpremInfra',
+  lineage: {
+    sourceGroupId: 'sg-ai-stack-testbed',
+    sourceModelId: 'sample-source-9node-testbed-1',
   },
   updatedTime: new Date().toISOString(),
 };
