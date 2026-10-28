@@ -168,6 +168,8 @@ export const DataTransferCenter: React.FC = () => {
   const [sourceSshPort, setSourceSshPort] = useState('22');
   const [sourceSshUser, setSourceSshUser] = useState('ubuntu');
   const [sourceSshPrivateKey, setSourceSshPrivateKey] = useState('');
+  const [sourceSshKeyLabel, setSourceSshKeyLabel] = useState('');
+  const [isDraggingSourcePem, setIsDraggingSourcePem] = useState(false);
   const [sourceSshPath, setSourceSshPath] = useState('');
 
   // Step 2 & 3: Source Storage Selection & Sub-Path / Prefix
@@ -195,6 +197,8 @@ export const DataTransferCenter: React.FC = () => {
   const [targetSshPort, setTargetSshPort] = useState('22');
   const [targetSshUser, setTargetSshUser] = useState('ubuntu');
   const [targetSshPrivateKey, setTargetSshPrivateKey] = useState('');
+  const [targetSshKeyLabel, setTargetSshKeyLabel] = useState('');
+  const [isDraggingTargetPem, setIsDraggingTargetPem] = useState(false);
   const [targetSshPath, setTargetSshPath] = useState('');
 
   // Directory Tree Explorer Toggle State
@@ -263,10 +267,59 @@ export const DataTransferCenter: React.FC = () => {
     }
   };
 
-  // Apply AIMX (Ollama + OpenWebUI) filter preset
-  const handleApplyAimxPreset = () => {
-    setIncludeFilter('~/.ollama/models/blobs/**, ~/.ollama/models/manifests/**, /app/backend/data/webui.db');
-    setExcludeFilter('*.log, *.tmp, __pycache__/**');
+  // Find AI GPU node in Honeybee Source Group connections (e.g., ai-gpu-01 among 9 source nodes)
+  const findAiSourceConn = (conns: any[]) => {
+    if (!Array.isArray(conns) || conns.length === 0) return null;
+    return (
+      conns.find((c: any) => /^ai-gpu-01$/i.test(String(c.name || c.id || ''))) ||
+      conns.find((c: any) => /^(ai-|gpu-|ollama)/i.test(String(c.name || c.id || ''))) ||
+      conns[0]
+    );
+  };
+
+  // Find AI GPU node in Tumblebug migrated infra nodes (e.g., GPU node among 9 migrated target nodes)
+  const findAiTargetNode = (nodes: any[]) => {
+    if (!Array.isArray(nodes) || nodes.length === 0) return null;
+    return (
+      nodes.find((n: any) =>
+        /(ai-gpu-01|ai-gpu|nvidiat4|nvidial4|gpu|g4dn|g5|p3|p4|t4|l4|a10|a100|nc\d)/i.test(
+          `${n.name || ''} ${n.id || ''} ${n.subGroupId || ''} ${n.specId || ''} ${n.cspResourceName || ''}`
+        )
+      ) || nodes[0]
+    );
+  };
+
+  // Apply AIMX (Ollama + OpenWebUI) filter preset & auto-select AI GPU server + /opt/aimx/ai-service path
+  const handleApplyAimxPreset = async () => {
+    setSourceAccessType('remote-ssh');
+    setTargetAccessType('remote-ssh');
+    if (!sourceSshPath.trim()) {
+      setSourceSshPath('/opt/aimx/ai-service');
+    }
+    if (!targetSshPath.trim()) {
+      setTargetSshPath('/opt/aimx/ai-service');
+    }
+    if (hbConnections.length > 0) {
+      const aiConn = findAiSourceConn(hbConnections);
+      if (aiConn) applyHbConnection(aiConn);
+    } else {
+      if (!sourceSshHost.trim()) {
+        setSourceSshHost('10.0.1.11');
+        setSourceSshPort('22');
+        setSourceSshUser('ubuntu');
+      }
+      if (sourceSshMode === 'honeybee') {
+        handleFetchHoneybeeGroups(true);
+      }
+    }
+    if (tbNodeList.length > 0) {
+      const aiTarget = findAiTargetNode(tbNodeList);
+      if (aiTarget) await applyTbNode(dataNsId, aiTarget);
+    } else if (targetSshMode === 'tumblebug') {
+      handleFetchTargetInfras(dataNsId, true);
+    }
+    setIncludeFilter('ollama/models/blobs/**, ollama/models/manifests/**, open-webui/webui.db, docker-compose.yml');
+    setExcludeFilter('open-webui/cache/**, *.log, *.tmp, __pycache__/**');
     setShowDirectoryTree(true);
   };
 
@@ -297,7 +350,7 @@ export const DataTransferCenter: React.FC = () => {
   };
 
   // Fetch Connections for a selected Honeybee Source Group
-  const handleSelectHbGroup = async (sgId: string) => {
+  const handleSelectHbGroup = async (sgId: string, preferAiNode = false) => {
     setSelectedHbGroupId(sgId);
     if (!sgId) {
       setHbConnections([]);
@@ -310,7 +363,8 @@ export const DataTransferCenter: React.FC = () => {
       const list = res?.connection_info || (Array.isArray(res) ? res : []);
       setHbConnections(list);
       if (list.length > 0) {
-        applyHbConnection(list[0]);
+        const targetConn = preferAiNode ? findAiSourceConn(list) : list[0];
+        applyHbConnection(targetConn || list[0]);
       } else {
         setSelectedHbConnId('');
       }
@@ -323,7 +377,7 @@ export const DataTransferCenter: React.FC = () => {
   };
 
   // Fetch Honeybee Source Groups for Source SSH selection
-  const handleFetchHoneybeeGroups = async () => {
+  const handleFetchHoneybeeGroups = async (preferAiNode = false) => {
     setIsLoadingHb(true);
     try {
       const res = await honeybeeApi.getSourceGroups();
@@ -333,7 +387,7 @@ export const DataTransferCenter: React.FC = () => {
         const targetGroupId = selectedHbGroupId && list.some((g: any) => g.id === selectedHbGroupId)
           ? selectedHbGroupId
           : list[0].id;
-        await handleSelectHbGroup(targetGroupId);
+        await handleSelectHbGroup(targetGroupId, preferAiNode);
       } else {
         setSelectedHbGroupId('');
         setHbConnections([]);
@@ -354,16 +408,18 @@ export const DataTransferCenter: React.FC = () => {
     setTargetSshHost(node.publicIP || node.publicIp || node.privateIP || node.privateIp || '');
     setTargetSshPort(String(node.sshPort || '22'));
     setTargetSshUser(node.vmUserName || node.nodeUserName || node.userName || 'ubuntu');
-    if (node.sshKeyId) {
-      const sshKeyObj = await tumblebugApi.getSshKey(nsId || 'mig01', node.sshKeyId);
+    const sshKeyId = node.sshKeyId || node.cspSshKeyId || '';
+    if (sshKeyId) {
+      const sshKeyObj = await tumblebugApi.getSshKey(nsId || 'mig01', sshKeyId);
       if (sshKeyObj?.privateKey) {
-        setTargetSshPrivateKey(sshKeyObj.privateKey);
+        setTargetSshPrivateKey(normalizePemKey(sshKeyObj.privateKey));
+        setTargetSshKeyLabel(`Tumblebug (${sshKeyId})`);
       }
     }
   };
 
   // Select a Tumblebug Migrated Infra and load its VM nodes
-  const handleSelectTbInfra = async (nsId: string, infraId: string, infraListFallback?: any[]) => {
+  const handleSelectTbInfra = async (nsId: string, infraId: string, infraListFallback?: any[], preferAiNode = false) => {
     setSelectedTbInfraId(infraId);
     if (!infraId) {
       setTbNodeList([]);
@@ -372,12 +428,14 @@ export const DataTransferCenter: React.FC = () => {
     }
     setIsLoadingTbInfra(true);
     try {
-      const detail = await tumblebugApi.getInfra(nsId || 'mig01', infraId);
+      const detail = (await tumblebugApi.getInfra(nsId || 'mig01', infraId)) ||
+        (await beetleApi.getMigratedInfraDetail(nsId || 'mig01', infraId));
       const fallbackObj = (infraListFallback || tbInfraList).find((item: any) => (item.id || item.name) === infraId);
       const nodes = detail?.vm || detail?.nodes || fallbackObj?.vm || fallbackObj?.nodes || [];
       setTbNodeList(nodes);
       if (nodes.length > 0) {
-        await applyTbNode(nsId || 'mig01', nodes[0]);
+        const targetNode = preferAiNode ? findAiTargetNode(nodes) : nodes[0];
+        await applyTbNode(nsId || 'mig01', targetNode || nodes[0]);
       } else {
         setSelectedTbNodeId('');
       }
@@ -390,7 +448,7 @@ export const DataTransferCenter: React.FC = () => {
   };
 
   // Fetch Tumblebug Migrated Infras for Destination SSH selection
-  const handleFetchTargetInfras = async (nsIdToFetch: string) => {
+  const handleFetchTargetInfras = async (nsIdToFetch: string, preferAiNode = false) => {
     setIsLoadingTbInfra(true);
     try {
       const infras = await beetleApi.getMigratedInfraList(nsIdToFetch || 'mig01');
@@ -398,7 +456,7 @@ export const DataTransferCenter: React.FC = () => {
       setTbInfraList(list);
       if (list.length > 0) {
         const firstId = list[0].id || list[0].name || '';
-        await handleSelectTbInfra(nsIdToFetch || 'mig01', firstId, list);
+        await handleSelectTbInfra(nsIdToFetch || 'mig01', firstId, list, preferAiNode);
       } else {
         setSelectedTbInfraId('');
         setTbNodeList([]);
@@ -412,21 +470,56 @@ export const DataTransferCenter: React.FC = () => {
     }
   };
 
+  // Normalize PEM private key (supports both multiline .pem and _oneline.pem with escaped \n)
+  const normalizePemKey = (raw: string): string => {
+    if (!raw) return '';
+    return raw.trim().replace(/\\n/g, '\n');
+  };
+
+  // Calculate UTF-8 byte length of a PEM key string for badge display
+  const getPemByteSize = (pem: string): string => {
+    if (!pem) return '0';
+    return new Blob([pem]).size.toLocaleString();
+  };
+
   // Drag-and-drop PEM key file reader
   const handlePemFileDrop = (
-    e: React.DragEvent<HTMLTextAreaElement>,
-    setter: React.Dispatch<React.SetStateAction<string>>
+    e: React.DragEvent<HTMLElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
+    labelSetter?: React.Dispatch<React.SetStateAction<string>>,
+    dragSetter?: React.Dispatch<React.SetStateAction<boolean>>
   ) => {
     e.preventDefault();
+    dragSetter?.(false);
     const file = e.dataTransfer?.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       if (typeof ev.target?.result === 'string') {
-        setter(ev.target.result);
+        setter(normalizePemKey(ev.target.result));
+        labelSetter?.(file.name);
       }
     };
     reader.readAsText(file);
+  };
+
+  // Click-to-upload PEM key file reader
+  const handlePemFileSelect = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
+    labelSetter?: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (typeof ev.target?.result === 'string') {
+        setter(normalizePemKey(ev.target.result));
+        labelSetter?.(file.name);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   // Load CSP Providers and Regions dynamically via CB-Tumblebug REST API on initial mount
@@ -1127,7 +1220,12 @@ export const DataTransferCenter: React.FC = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setSourceAccessType('remote-ssh')}
+                          onClick={() => {
+                            setSourceAccessType('remote-ssh');
+                            if (sourceSshMode === 'honeybee' && hbGroups.length === 0) {
+                              handleFetchHoneybeeGroups(false);
+                            }
+                          }}
                           className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer flex items-center gap-1.5 ${
                             sourceAccessType === 'remote-ssh'
                               ? 'bg-emerald-500 text-slate-950 font-extrabold shadow-sm'
@@ -1222,7 +1320,7 @@ export const DataTransferCenter: React.FC = () => {
                                 </span>
                                 <button
                                   type="button"
-                                  onClick={handleFetchHoneybeeGroups}
+                                  onClick={() => handleFetchHoneybeeGroups(false)}
                                   disabled={isLoadingHb}
                                   className="px-2.5 py-1 bg-bg-panel hover:bg-bg-main border border-border-main rounded-lg text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 cursor-pointer transition disabled:opacity-50"
                                 >
@@ -1314,20 +1412,93 @@ export const DataTransferCenter: React.FC = () => {
                           <div>
                             <div className="flex items-center justify-between mb-1">
                               <label className="block text-text-muted font-normal text-sm">SSH Private Key (Encrypted PEM Format)</label>
-                              <span className="text-xs text-text-muted flex items-center gap-1">
-                                <Upload className="w-3 h-3 text-emerald-500" />
-                                Drop .pem file or paste
-                              </span>
+                              {sourceSshPrivateKey && (
+                                <span className="text-xs text-emerald-500 font-bold flex items-center gap-1">
+                                  <Lock className="w-3 h-3" />
+                                  Ready for RSA-OAEP Encryption
+                                </span>
+                              )}
                             </div>
-                            <textarea
-                              rows={2}
-                              value={sourceSshPrivateKey}
-                              onChange={(e) => setSourceSshPrivateKey(e.target.value)}
-                              onDragOver={(e) => e.preventDefault()}
-                              onDrop={(e) => handlePemFileDrop(e, setSourceSshPrivateKey)}
-                              placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;..."
-                              className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 font-bold text-sm"
-                            />
+                            {sourceSshPrivateKey ? (
+                              <div
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  setIsDraggingSourcePem(true);
+                                }}
+                                onDragLeave={() => setIsDraggingSourcePem(false)}
+                                onDrop={(e) => handlePemFileDrop(e, setSourceSshPrivateKey, setSourceSshKeyLabel, setIsDraggingSourcePem)}
+                                className={`w-full px-4 py-3 rounded-xl border transition flex flex-wrap items-center justify-between gap-2 ${
+                                  isDraggingSourcePem
+                                    ? 'bg-emerald-500/20 border-emerald-400'
+                                    : 'bg-emerald-500/10 border-emerald-500/40'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                  <div className="min-w-0">
+                                    <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 block truncate">
+                                      ✓ SSH Private Key Loaded ({getPemByteSize(sourceSshPrivateKey)} bytes)
+                                    </span>
+                                    {sourceSshKeyLabel && (
+                                      <span className="text-xs font-mono text-text-muted block truncate">
+                                        File: {sourceSshKeyLabel}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <label className="px-2.5 py-1 bg-bg-panel hover:bg-bg-main border border-border-main rounded-lg text-xs font-bold text-emerald-600 dark:text-emerald-400 cursor-pointer transition flex items-center gap-1">
+                                    <Upload className="w-3 h-3" />
+                                    <span>Replace</span>
+                                    <input
+                                      type="file"
+                                      accept=".pem,.key,.txt"
+                                      onChange={(e) => handlePemFileSelect(e, setSourceSshPrivateKey, setSourceSshKeyLabel)}
+                                      className="hidden"
+                                    />
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSourceSshPrivateKey('');
+                                      setSourceSshKeyLabel('');
+                                    }}
+                                    title="Clear SSH Private Key"
+                                    className="p-1.5 bg-bg-panel hover:bg-red-500/15 border border-border-main hover:border-red-500/40 rounded-lg text-text-muted hover:text-red-400 cursor-pointer transition"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <label
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  setIsDraggingSourcePem(true);
+                                }}
+                                onDragLeave={() => setIsDraggingSourcePem(false)}
+                                onDrop={(e) => handlePemFileDrop(e, setSourceSshPrivateKey, setSourceSshKeyLabel, setIsDraggingSourcePem)}
+                                className={`w-full px-4 py-4 rounded-xl border-2 border-dashed transition cursor-pointer flex flex-col items-center justify-center gap-1.5 text-center ${
+                                  isDraggingSourcePem
+                                    ? 'bg-emerald-500/15 border-emerald-400 text-emerald-400'
+                                    : 'bg-bg-panel/80 hover:bg-bg-panel border-border-main hover:border-emerald-500/50 text-text-muted hover:text-text-main'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 text-sm font-extrabold text-text-main">
+                                  <Upload className="w-4 h-4 text-emerald-500" />
+                                  <span>Drop .pem file here</span>
+                                </div>
+                                <span className="text-xs text-text-muted">
+                                  or click to browse (.pem, .key)
+                                </span>
+                                <input
+                                  type="file"
+                                  accept=".pem,.key,.txt"
+                                  onChange={(e) => handlePemFileSelect(e, setSourceSshPrivateKey, setSourceSshKeyLabel)}
+                                  className="hidden"
+                                />
+                              </label>
+                            )}
                           </div>
                         </div>
                       )}
@@ -1399,7 +1570,12 @@ export const DataTransferCenter: React.FC = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setTargetAccessType('remote-ssh')}
+                          onClick={() => {
+                            setTargetAccessType('remote-ssh');
+                            if (targetSshMode === 'tumblebug' && tbInfraList.length === 0) {
+                              handleFetchTargetInfras(dataNsId, false);
+                            }
+                          }}
                           className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer flex items-center gap-1.5 ${
                             targetAccessType === 'remote-ssh'
                               ? 'bg-teal-400 text-slate-950 font-extrabold shadow-sm'
@@ -1640,20 +1816,93 @@ export const DataTransferCenter: React.FC = () => {
                           <div>
                             <div className="flex items-center justify-between mb-1">
                               <label className="block text-text-muted font-normal text-sm">SSH Private Key (Encrypted PEM Format)</label>
-                              <span className="text-xs text-text-muted flex items-center gap-1">
-                                <Upload className="w-3 h-3 text-teal-500" />
-                                Auto-filled from Tumblebug or drop .pem
-                              </span>
+                              {targetSshPrivateKey && (
+                                <span className="text-xs text-teal-500 font-bold flex items-center gap-1">
+                                  <Lock className="w-3 h-3" />
+                                  Ready for RSA-OAEP Encryption
+                                </span>
+                              )}
                             </div>
-                            <textarea
-                              rows={2}
-                              value={targetSshPrivateKey}
-                              onChange={(e) => setTargetSshPrivateKey(e.target.value)}
-                              onDragOver={(e) => e.preventDefault()}
-                              onDrop={(e) => handlePemFileDrop(e, setTargetSshPrivateKey)}
-                              placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;..."
-                              className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-teal-400 font-bold text-sm"
-                            />
+                            {targetSshPrivateKey ? (
+                              <div
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  setIsDraggingTargetPem(true);
+                                }}
+                                onDragLeave={() => setIsDraggingTargetPem(false)}
+                                onDrop={(e) => handlePemFileDrop(e, setTargetSshPrivateKey, setTargetSshKeyLabel, setIsDraggingTargetPem)}
+                                className={`w-full px-4 py-3 rounded-xl border transition flex flex-wrap items-center justify-between gap-2 ${
+                                  isDraggingTargetPem
+                                    ? 'bg-teal-500/20 border-teal-400'
+                                    : 'bg-teal-500/10 border-teal-500/40'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <CheckCircle2 className="w-4 h-4 text-teal-500 shrink-0" />
+                                  <div className="min-w-0">
+                                    <span className="text-sm font-extrabold text-teal-600 dark:text-teal-400 block truncate">
+                                      ✓ SSH Private Key Loaded ({getPemByteSize(targetSshPrivateKey)} bytes)
+                                    </span>
+                                    {targetSshKeyLabel && (
+                                      <span className="text-xs font-mono text-text-muted block truncate">
+                                        Source: {targetSshKeyLabel}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <label className="px-2.5 py-1 bg-bg-panel hover:bg-bg-main border border-border-main rounded-lg text-xs font-bold text-teal-600 dark:text-teal-400 cursor-pointer transition flex items-center gap-1">
+                                    <Upload className="w-3 h-3" />
+                                    <span>Replace</span>
+                                    <input
+                                      type="file"
+                                      accept=".pem,.key,.txt"
+                                      onChange={(e) => handlePemFileSelect(e, setTargetSshPrivateKey, setTargetSshKeyLabel)}
+                                      className="hidden"
+                                    />
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setTargetSshPrivateKey('');
+                                      setTargetSshKeyLabel('');
+                                    }}
+                                    title="Clear SSH Private Key"
+                                    className="p-1.5 bg-bg-panel hover:bg-red-500/15 border border-border-main hover:border-red-500/40 rounded-lg text-text-muted hover:text-red-400 cursor-pointer transition"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <label
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  setIsDraggingTargetPem(true);
+                                }}
+                                onDragLeave={() => setIsDraggingTargetPem(false)}
+                                onDrop={(e) => handlePemFileDrop(e, setTargetSshPrivateKey, setTargetSshKeyLabel, setIsDraggingTargetPem)}
+                                className={`w-full px-4 py-4 rounded-xl border-2 border-dashed transition cursor-pointer flex flex-col items-center justify-center gap-1.5 text-center ${
+                                  isDraggingTargetPem
+                                    ? 'bg-teal-500/15 border-teal-400 text-teal-400'
+                                    : 'bg-bg-panel/80 hover:bg-bg-panel border-border-main hover:border-teal-500/50 text-text-muted hover:text-text-main'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 text-sm font-extrabold text-text-main">
+                                  <Upload className="w-4 h-4 text-teal-500" />
+                                  <span>Drop .pem file here</span>
+                                </div>
+                                <span className="text-xs text-text-muted">
+                                  Auto-filled from Tumblebug or click to browse (.pem, .key)
+                                </span>
+                                <input
+                                  type="file"
+                                  accept=".pem,.key,.txt"
+                                  onChange={(e) => handlePemFileSelect(e, setTargetSshPrivateKey, setTargetSshKeyLabel)}
+                                  className="hidden"
+                                />
+                              </label>
+                            )}
                           </div>
                         </div>
                       )}
