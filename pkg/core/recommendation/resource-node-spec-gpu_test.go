@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/stretchr/testify/assert"
@@ -508,6 +509,70 @@ func TestSortGpuByProximityWithCost_VramSufficiency(t *testing.T) {
 
 	// 32GB (sufficient VRAM) must beat 16GB (insufficient VRAM) despite equal 8GB absolute difference.
 	assert.Equal(t, "spec-32gb-sufficient", specs[0].CspSpecName)
+}
+
+func TestResolveGpuAcceleratorModel(t *testing.T) {
+	ncpL4Spec := cloudmodel.SpecInfo{
+		CspSpecName:      "gp1l4-g3",
+		AcceleratorModel: "NVIDIA NA",
+		Details: []cloudmodel.KeyValue{
+			{Key: "ServerSpecDescription", Value: "NVIDIA L4 GPU 1EA, GPUMemory 24GB, vCPU 4EA, Memory 48GB"},
+		},
+	}
+	ncpV100Spec := cloudmodel.SpecInfo{
+		CspSpecName:      "gp1v8-g1-h50",
+		AcceleratorModel: "NVIDIA NA",
+		Details: []cloudmodel.KeyValue{
+			{Key: "ServerSpecDescription", Value: "Tesla V100 GPU 1EA, GPUMemory 32GB, vCPU 8EA, Memory 90GB, Disk 50GB"},
+		},
+	}
+	normalSpec := cloudmodel.SpecInfo{
+		CspSpecName:      "g4dn.xlarge",
+		AcceleratorModel: "NVIDIA T4",
+	}
+
+	specs := []cloudmodel.SpecInfo{ncpL4Spec, ncpV100Spec, normalSpec}
+	sanitizeGpuSpecsMetadata(specs)
+
+	assert.Equal(t, "NVIDIA L4", specs[0].AcceleratorModel)
+	assert.Equal(t, "Tesla V100", specs[1].AcceleratorModel)
+	assert.Equal(t, "NVIDIA T4", specs[2].AcceleratorModel)
+}
+
+func TestNcpKvmAndPricedSpecsRelaxation(t *testing.T) {
+	rawSpecs := []tbmodel.SpecInfo{
+		{
+			CspSpecName: "gp1t4-g1-h50",
+			CostPerHour: 1.1567,
+			Details:     []tbmodel.KeyValue{{Key: "HypervisorType", Value: "XEN"}},
+		},
+		{
+			CspSpecName: "gp1l4-g3",
+			CostPerHour: -1,
+			Details:     []tbmodel.KeyValue{{Key: "HypervisorType", Value: "KVM"}},
+		},
+		{
+			CspSpecName: "gp1l8-g3",
+			CostPerHour: -1,
+			Details:     []tbmodel.KeyValue{{Key: "HypervisorType", Value: "KVM"}},
+		},
+	}
+
+	// Step 1: NCP KVM filter drops XEN T4 specs, leaving KVM L4 specs.
+	kvmSpecs := filterNcpKvmTbSpecs("kr", rawSpecs)
+	require.Len(t, kvmSpecs, 2)
+	assert.Equal(t, "gp1l4-g3", kvmSpecs[0].CspSpecName)
+
+	// Step 2: Because all remaining KVM specs have CostPerHour == -1, filterPricedSpecs retains them.
+	validSpecs := filterPricedSpecs(kvmSpecs)
+	require.Len(t, validSpecs, 2)
+	assert.Equal(t, "gp1l4-g3", validSpecs[0].CspSpecName)
+
+	// Once Tumblebug populates pricing for gp1l4-g3, strict cost filtering applies automatically.
+	kvmSpecs[0].CostPerHour = 1.85
+	strictSpecs := filterPricedSpecs(kvmSpecs)
+	require.Len(t, strictSpecs, 1)
+	assert.Equal(t, "gp1l4-g3", strictSpecs[0].CspSpecName)
 }
 
 func TestRecommendGpuNodeSpec_LiveTumblebug(t *testing.T) {
