@@ -4,8 +4,8 @@ import "time"
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.13.7 (commit: 09a796e61ef128e9ac0dbddc7911e8a86e55b2f7)
-// * Synchronized: 2026-10-16
+// * Version: CB-Tumblebug v0.13.8 (commit: 19e8e8fdc1a0668ddb8f4abf3f66c44eb25d782a)
+// * Synchronized: 2026-10-30
 
 // IID is a struct to handle Identifier Information of CSP resources from CB-Spider.
 type IID struct {
@@ -82,6 +82,10 @@ type K8sClusterReq struct {
 
 	// SystemLabel is for describing the k8scluster in a keyword (any string can be used) for special System purpose
 	SystemLabel string `json:"systemLabel" example:"" default:""`
+
+	// Storage (optional) prepares abstract storage types after the cluster becomes Active.
+	// A storage preparation failure does not fail the cluster creation.
+	Storage *K8sClusterStorageReq `json:"storage,omitempty"`
 }
 
 // K8sNodeGroupReq is a struct to handle requests related to K8sNodeGroup toward CB-Tumblebug.
@@ -138,6 +142,10 @@ type K8sClusterDynamicReq struct {
 	// if ConnectionName is given, the VM tries to use associated credential.
 	// if not, it will use predefined ConnectionName in Spec objects
 	ConnectionName string `json:"connectionName,omitempty" default:"tencent-ap-seoul"`
+
+	// Storage (optional) prepares abstract storage types after the cluster becomes Active.
+	// A storage preparation failure does not fail the cluster creation.
+	Storage *K8sClusterStorageReq `json:"storage,omitempty"`
 }
 
 // K8sNodeGroupDynamicReq is struct for requirements to create K8sNodeGroup dynamically (with default resource option)
@@ -264,6 +272,9 @@ type K8sClusterInfo struct {
 	CspResourceId string `json:"cspResourceId,omitempty" example:"csp-06eb41e14121c550a"`
 
 	SpiderViewK8sClusterDetail SpiderClusterInfo `json:"spiderViewK8sClusterDetail"`
+
+	// Storage is the CSP-side storage preparation state (abstract storage types). Set by the storage APIs.
+	Storage *K8sClusterStorageInfo `json:"storage,omitempty"`
 }
 
 // K8sClusterNetworkInfo is a struct to handle K8sCluster Network information from the CB-Tumblebug's REST API response
@@ -426,4 +437,54 @@ type K8sClusterTokenResponse struct {
 // K8sClusterKubeconfigResponse is the response struct for the K8sCluster kubeconfig API.
 type K8sClusterKubeconfigResponse struct {
 	Kubeconfig string `json:"kubeconfig" example:"apiVersion: v1\nkind: Config\n..."`
+}
+
+// K8sStorageStatus is the CSP-side readiness of an abstract storage type on a K8sCluster
+type K8sStorageStatus string
+
+const (
+	K8sStorageReady     K8sStorageStatus = "Ready"
+	K8sStorageNotReady  K8sStorageStatus = "NotReady"
+	K8sStoragePreparing K8sStorageStatus = "Preparing"
+)
+
+// K8sClusterStorageReq is the storage option of K8sCluster creation requests
+// and the request of 'PUT /ns/{nsId}/k8sCluster/{k8sClusterId}/storage'
+type K8sClusterStorageReq struct {
+	// StorageTypes to prepare. Empty means ["ssd-general"].
+	StorageTypes []string `json:"storageTypes,omitempty" example:"ssd-general"`
+}
+
+// K8sStorageDriverRef is the storage driver summary recorded for an abstract storage type
+type K8sStorageDriverRef struct {
+	Kind           string `json:"kind" example:"Block"`
+	CsiDriverName  string `json:"csiDriverName,omitempty" example:"ebs.csi.aws.com"`
+	Status         string `json:"status,omitempty" example:"Enabled"`
+	ManagementMode string `json:"managementMode,omitempty" example:"Addon"`
+}
+
+// K8sStorageTypeState is the preparation state of one abstract storage type on a K8sCluster
+type K8sStorageTypeState struct {
+	StorageType string               `json:"storageType" example:"ssd-general"`
+	Status      K8sStorageStatus     `json:"status" example:"Ready"`
+	Reason      string               `json:"reason,omitempty" example:""`
+	Driver      *K8sStorageDriverRef `json:"driver,omitempty"`
+}
+
+// K8sStorageAction is a CSP-side change made by CB-Tumblebug while preparing storage
+type K8sStorageAction struct {
+	Step   string    `json:"step" example:"enableStorageDriver"`
+	Kind   string    `json:"kind,omitempty" example:"Block"`
+	Target string    `json:"target,omitempty" example:""`
+	From   string    `json:"from,omitempty" example:"Disabled"`
+	To     string    `json:"to,omitempty" example:"Enabled"`
+	Time   time.Time `json:"time,omitempty"`
+}
+
+// K8sClusterStorageInfo is the storage state recorded in the K8sCluster object (K8sClusterInfo.Storage)
+type K8sClusterStorageInfo struct {
+	Status       K8sStorageStatus      `json:"status" example:"Ready"`
+	StorageTypes []K8sStorageTypeState `json:"storageTypes"`
+	Actions      []K8sStorageAction    `json:"actions,omitempty"`
+	UpdatedAt    time.Time             `json:"updatedAt"`
 }
