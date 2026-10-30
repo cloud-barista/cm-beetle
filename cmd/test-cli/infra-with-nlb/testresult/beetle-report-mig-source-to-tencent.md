@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-10-12 12:23:17*
+*Report generated: 2026-10-30 12:51:50*
 
 ---
 
@@ -32,7 +32,7 @@ Summary of key infrastructure resources created or configured in the target clou
 |---|---------------|-------|--------|----------|
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
 | 2 | **VM Spec** | 2 | ✅ Selected | SA5.MEDIUM2, S6.LARGE16 |
-| 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
+| 3 | **VM OS Image** | 2 | ✅ Selected | Ubuntu 22.04 |
 | 4 | **VNet (VPC)** | 1 | ✅ Created | my05-mig-vnet-01, CIDR: 10.0.0.0/21 |
 | 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my05-mig-vnet-01) |
 | 6 | **Security Group** | 2 security groups | ✅ Created | Total 10 rules in 2 sgs |
@@ -46,9 +46,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** ins-rn0jiohn<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
-| 2 | **VM Name:** my05-ng-influxdb-back-1<br>**VM ID:** ins-fgook4wl<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
-| 3 | **VM Name:** my05-ng-influxdb-back-2<br>**VM ID:** ins-flev5l93<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
+| 1 | **VM Name:** my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** ins-mhkac4j9<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
+| 2 | **VM Name:** my05-ng-influxdb-back-1<br>**VM ID:** ins-4ap62gvz<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| 3 | **VM Name:** my05-ng-influxdb-back-2<br>**VM ID:** ins-q40emar7<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
 
 ---
 
@@ -66,11 +66,11 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ## 💿 VM OS Images
 
-**Summary:** 1 OS image(s) have been selected and used for the migrated VMs.
+**Summary:** 2 OS image(s) have been selected and used for the migrated VMs.
 
 | No. | Migrated VM | VM OS Image Info | Source Server | Source OS |
 |-----|-------------|------------------|---------------|-----------|
-| 1 | my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** img-7rotv4ux<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Server 22.04 LTS 64bit UEFI | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 1 | my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** img-487zeit5<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Server 22.04 LTS 64bit | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
 | 2 | my05-ng-influxdb-back-1 | **Image ID:** img-7rotv4ux<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Server 22.04 LTS 64bit UEFI | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
 | 3 | my05-ng-influxdb-back-2 | **Image ID:** img-7rotv4ux<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Server 22.04 LTS 64bit UEFI | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
 
@@ -82,7 +82,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my05-mig-sg-01
 
-**CSP ID:** sg-jcefansv | **VNet:** my05-mig-vnet-01 | **Rules:** 6
+**CSP ID:** sg-d2jm3yvx | **VNet:** my05-mig-vnet-01 | **Rules:** 6
 
 **Assigned VMs:**
 
@@ -95,16 +95,16 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
 |-----|-----------|----------|------|------|----------------------|------|
-| 1 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
-| 2 | inbound | TCP | 8086 | 10.0.0.0/16 | inbound tcp 8086 from 10.0.0.0/16 | Migrated from source |
-| 3 | inbound | ALL |  | 10.0.0.0/16 | inbound * * from 10.0.0.0/16 | Migrated from source |
+| 1 | inbound | ALL |  | 10.0.0.0/16 | inbound * * from 10.0.0.0/16 | Migrated from source |
+| 2 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 3 | inbound | TCP | 8086 | 10.0.0.0/16 | inbound tcp 8086 from 10.0.0.0/16 | Migrated from source |
 | 4 | inbound | TCP | 9999 | 0.0.0.0/0 | inbound tcp 9999 | Migrated from source |
 | 5 | inbound | TCP | 8086 | 0.0.0.0/0 | - | Created by system |
 | 6 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
 
 ### Security Group: my05-mig-sg-02
 
-**CSP ID:** sg-op1dxapn | **VNet:** my05-mig-vnet-01 | **Rules:** 4
+**CSP ID:** sg-hgf81iwn | **VNet:** my05-mig-vnet-01 | **Rules:** 4
 
 **Assigned VMs:**
 
@@ -130,13 +130,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my05-mig-vnet-01<br>**ID:** vpc-38jxtmcs | 10.0.0.0/21 |
+| 1 | **Name:** my05-mig-vnet-01<br>**ID:** vpc-rtznlhxm | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my05-mig-subnet-01<br>**ID:** subnet-chmtrzmn | 10.0.1.0/24 | my05-mig-vnet-01 |
+| 1 | **Name:** my05-mig-subnet-01<br>**ID:** subnet-19h6xb1b | 10.0.1.0/24 | my05-mig-vnet-01 |
 
 ### Source Network Information
 
@@ -202,7 +202,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my05-mig-sshkey-01 | skey-jab0kioj |  | Used by all 3 VMs |
+| 1 | my05-mig-sshkey-01 | skey-7ic7ibdp |  | Used by all 3 VMs |
 
 ---
 

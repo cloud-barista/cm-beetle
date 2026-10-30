@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-10-12 10:59:36
+**Generated At:** 2026-10-30 12:51:03
 
 **Namespace:** mig01
 
@@ -41,9 +41,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my01-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | i-01e11280c6d560912 | Running | 2 vCPU, 2.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731) | **VNet:** my01-mig-vnet-01<br>**Subnet:** my01-mig-subnet-01<br>**Public IP:** 43.202.65.168<br>**Private IP:** 10.0.1.45<br>**SGs:** my01-mig-sg-02<br>**SSH:** my01-mig-sshkey-01 |
-| my01-ng-influxdb-back-1 | i-0ccffb9271ef8b826 | Running | 4 vCPU, 16.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731) | **VNet:** my01-mig-vnet-01<br>**Subnet:** my01-mig-subnet-01<br>**Public IP:** 3.35.0.184<br>**Private IP:** 10.0.1.252<br>**SGs:** my01-mig-sg-01<br>**SSH:** my01-mig-sshkey-01 |
-| my01-ng-influxdb-back-2 | i-0fe239de8057ad524 | Running | 4 vCPU, 16.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731) | **VNet:** my01-mig-vnet-01<br>**Subnet:** my01-mig-subnet-01<br>**Public IP:** 13.124.59.129<br>**Private IP:** 10.0.1.157<br>**SGs:** my01-mig-sg-01<br>**SSH:** my01-mig-sshkey-01 |
+| my01-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | i-0e9a8dff79587097e | Running | 2 vCPU, 2.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731) | **VNet:** my01-mig-vnet-01<br>**Subnet:** my01-mig-subnet-01<br>**Public IP:** 54.180.141.244<br>**Private IP:** 10.0.1.201<br>**SGs:** my01-mig-sg-02<br>**SSH:** my01-mig-sshkey-01 |
+| my01-ng-influxdb-back-1 | i-0dee049fb9412465b | Running | 4 vCPU, 16.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731) | **VNet:** my01-mig-vnet-01<br>**Subnet:** my01-mig-subnet-01<br>**Public IP:** 13.125.79.237<br>**Private IP:** 10.0.1.221<br>**SGs:** my01-mig-sg-01<br>**SSH:** my01-mig-sshkey-01 |
+| my01-ng-influxdb-back-2 | i-0cf1d4327934156dd | Running | 4 vCPU, 16.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731) | **VNet:** my01-mig-vnet-01<br>**Subnet:** my01-mig-subnet-01<br>**Public IP:** 3.35.54.160<br>**Private IP:** 10.0.1.253<br>**SGs:** my01-mig-sg-01<br>**SSH:** my01-mig-sshkey-01 |
 
 
 ## Network Resources
@@ -55,7 +55,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my01-mig-vnet-01 |
-| **CSP VNet ID** | vpc-08afb74d5d25b8401 |
+| **CSP VNet ID** | vpc-02e0dfd3cb3ff1fcb |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | aws-ap-northeast-2 |
 | **Subnet Count** | 1 |
@@ -64,7 +64,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my01-mig-subnet-01 | subnet-07356212594969c9e | 10.0.1.0/24 | ap-northeast-2a |
+| my01-mig-subnet-01 | subnet-09bb75a1817ae8dbb | 10.0.1.0/24 | ap-northeast-2a |
 
 
 ## Security Resources
@@ -73,7 +73,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my01-mig-sshkey-01 | tblqeie98atc8phigbn8 |  | 59:e5:4e:39:fc:57:8b:15:08:04:e6:b5:76:3a:61:e2:c0:aa:a5:eb |
+| my01-mig-sshkey-01 | tbq5thtqubnf05ts4une |  | ef:95:1c:cc:1d:6c:3f:1a:f5:c7:87:5e:bf:4d:8e:0d:fd:75:16:d5 |
 
 ### Security Groups
 
@@ -82,7 +82,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my01-mig-sg-01 |
-| **CSP Security Group ID** | sg-0ffa7def89483c262 |
+| **CSP Security Group ID** | sg-0704eaa2a1108babc |
 | **VNet** | my01-mig-vnet-01 |
 | **Rule Count** | 6 rules |
 
@@ -102,7 +102,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my01-mig-sg-02 |
-| **CSP Security Group ID** | sg-0f12b50413f6cf356 |
+| **CSP Security Group ID** | sg-082244dd31713d22a |
 | **VNet** | my01-mig-vnet-01 |
 | **Rule Count** | 4 rules |
 
