@@ -4,9 +4,9 @@ import "time"
 
 // * To avoid circular/version dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.13.7 (commit: 09a796e61ef128e9ac0dbddc7911e8a86e55b2f7)
+// * Version: CB-Tumblebug v0.13.8 (commit: 19e8e8fdc1a0668ddb8f4abf3f66c44eb25d782a)
 // * Source: CB-Tumblebug (src/core/model/rdbms.go, src/core/model/common.go, src/core/model/net.go)
-// * Synchronized: 2026-10-16 (RDBMSInfo, RDBMSListResponse, RDBMSCreateRequest, RDBMSCapabilityResponse, RDBMSSupportResponse, RDBMSDatabaseCreateReq, RDBMSSecureTransportInfo, etc.)
+// * Synchronized: 2026-10-30 (RDBMSInfo, RDBMSListResponse, RDBMSCreateRequest, RDBMSCapabilityResponse, RDBMSSupportResponse, RDBMSDatabaseCreateReq, RDBMSSecureTransportInfo, etc.)
 
 // StorageSizeRange defines the minimum and maximum storage capacity in Tumblebug format.
 type StorageSizeRange struct {
@@ -230,6 +230,7 @@ type RDBMSInfo struct {
 	Encryption                bool       `json:"encryption,omitempty"`
 	Endpoint                  string     `json:"endpoint,omitempty" example:"rdbms-01.xxxx.rds.amazonaws.com:3306"`
 	TagList                   []KeyValue `json:"tagList,omitempty"`
+	KeyValueList              []KeyValue `json:"keyValueList,omitempty"`
 }
 
 // RDBMSListResponse is the response structure for listing RDBMS instances.

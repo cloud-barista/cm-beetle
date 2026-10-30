@@ -4,8 +4,8 @@ import "time"
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.13.7 (commit: 09a796e61ef128e9ac0dbddc7911e8a86e55b2f7)
-// * Synchronized: 2026-10-16
+// * Version: CB-Tumblebug v0.13.8 (commit: 19e8e8fdc1a0668ddb8f4abf3f66c44eb25d782a)
+// * Synchronized: 2026-10-30
 
 // InfraReq is struct for requirements to create Infra
 type InfraReq struct {
@@ -986,6 +986,25 @@ type SshKeyReq struct {
 	PrivateKey       string `json:"privateKey"`
 }
 
+// AvailabilityStatus represents the concise, standardized runtime availability state
+// of a VM spec in a given region/credential context.
+// Designed as single-token PascalCase values for clean UI (e.g., cb-mapui) classification.
+type AvailabilityStatus string
+
+const (
+	// AvailabilityAvailable means the spec has passed pre-flight capacity/quota checks.
+	AvailabilityAvailable AvailabilityStatus = "Available"
+	// AvailabilitySoldOut means the spec is temporarily out of stock in the region/zone.
+	AvailabilitySoldOut AvailabilityStatus = "SoldOut"
+	// AvailabilityQuotaExceeded means the credential holder's account quota is insufficient
+	// or the subscription requires opt-in/quota increase for this spec family.
+	AvailabilityQuotaExceeded AvailabilityStatus = "QuotaExceeded"
+	// AvailabilityUnsupported means the spec is not offered in the target region/zone.
+	AvailabilityUnsupported AvailabilityStatus = "Unsupported"
+	// AvailabilityUnverified means real-time availability was not checked or no checker exists for the CSP.
+	AvailabilityUnverified AvailabilityStatus = "Unverified"
+)
+
 // SpecInfo is a struct that represents TB spec object.
 type SpecInfo struct { // Tumblebug
 	// Id is unique identifier for the object
@@ -1039,6 +1058,14 @@ type SpecInfo struct { // Tumblebug
 	// SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose
 	SystemLabel string     `json:"systemLabel,omitempty" example:"Managed by CB-Tumblebug" default:""`
 	Details     []KeyValue `json:"details" gorm:"type:text;serializer:json"`
+
+	// Runtime-only availability fields (never persisted to PostgreSQL; populated from cache or live CSP check).
+	AvailabilityStatus       AvailabilityStatus `json:"availabilityStatus,omitempty" gorm:"-" example:"Available"`
+	AvailabilityReason       string             `json:"availabilityReason,omitempty" gorm:"-"`
+	AvailableZones           []string           `json:"availableZones,omitempty" gorm:"-"`
+	UnavailableZones         []string           `json:"unavailableZones,omitempty" gorm:"-"`
+	AvailabilityCheckedAt    *time.Time         `json:"availabilityCheckedAt,omitempty" gorm:"-"`
+	AvailabilityRefreshAfter *time.Time         `json:"availabilityRefreshAfter,omitempty" gorm:"-"`
 }
 
 // SpecSummary is a lightweight struct containing essential spec information for VmInfo
