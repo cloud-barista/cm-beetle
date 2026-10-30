@@ -139,7 +139,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
   const handleProbeNlbHealth = async (job: MigrationJob) => {
     if (!job) return;
     setProbingNlb(true);
-    const nlbId = job.targetNlbList?.[0]?.name || `${job.infraId}-nlb`;
+    const nlbId = job.targetNlbList?.[0]?.targetGroup?.nodeGroupId || job.targetNlbList?.[0]?.name || `${job.infraId}-nlb`;
     try {
       const res = await beetleApi.getNlbHealth(job.nsId, job.infraId, nlbId);
       setJobs(prev => prev.map(j => j.id === job.id ? {
@@ -591,6 +591,29 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     setShowLaunchModal(true);
   };
 
+  const composeSeededName = (baseName: string, seed: string): string => {
+    const trimmedBase = (baseName || '').trim();
+    const trimmedSeed = (seed || '').trim();
+    if (!trimmedBase || !trimmedSeed) {
+      return trimmedBase;
+    }
+    return `${trimmedSeed}-${trimmedBase}`;
+  };
+
+  const buildEffectiveCloudModel = (baseModel: RecommendedInfra): RecommendedInfra => {
+    const trimmedInfraName = customInfraId.trim();
+    if (!trimmedInfraName) {
+      return baseModel;
+    }
+    return {
+      ...baseModel,
+      targetInfra: {
+        ...baseModel.targetInfra,
+        name: trimmedInfraName
+      }
+    };
+  };
+
   const handlePreviewNameSeed = async () => {
     if (!selectedCloudModel) {
       alert('Please select a Target Cloud Model first.');
@@ -599,7 +622,8 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     setIsPreviewingNameSeed(true);
     setNameSeedPreviewError(null);
     try {
-      const res = await beetleApi.previewNameSeed(customNameSeed, selectedCloudModel.cloudInfraModel);
+      const effectiveModel = buildEffectiveCloudModel(selectedCloudModel.cloudInfraModel);
+      const res = await beetleApi.previewNameSeed(customNameSeed, effectiveModel);
       if (res.success && res.data) {
         setNameSeedPreviewData(res.data);
       } else {
@@ -622,9 +646,25 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     setIsValidating(true);
     setValidationResult(null);
     try {
+      let modelToValidate = buildEffectiveCloudModel(selectedCloudModel.cloudInfraModel);
+      const trimmedSeed = customNameSeed.trim();
+      if (trimmedSeed.length > 0) {
+        const previewRes = await beetleApi.previewNameSeed(trimmedSeed, modelToValidate);
+        if (!previewRes.success || !previewRes.data) {
+          setValidationResult({
+            checked: true,
+            valid: false,
+            issues: [],
+            error: previewRes.error || 'Invalid NameSeed.'
+          });
+          return;
+        }
+        modelToValidate = previewRes.data;
+      }
+
       const res = await beetleApi.validateInfra(
         customNsId || 'mig01',
-        selectedCloudModel.cloudInfraModel,
+        modelToValidate,
         useExistingValidation
       );
       setValidationResult({
@@ -651,27 +691,43 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       return;
     }
 
-    const cloudModel = selectedCloudModel.cloudInfraModel;
+    const effectiveModel = buildEffectiveCloudModel(selectedCloudModel.cloudInfraModel);
+    const trimmedSeed = customNameSeed.trim();
     const reqId = `req-${Date.now().toString().slice(-6)}`;
-    const targetInfraId = customInfraId || cloudModel.targetInfra?.name || selectedCloudModel.name;
-    const queryStr = `nameSeed=${customNameSeed}&useExisting=${useExistingValidation}`;
+    const baseInfraName = effectiveModel.targetInfra?.name || selectedCloudModel.name;
+    const targetInfraId = composeSeededName(baseInfraName, trimmedSeed);
+    const seededTargetNlbList = (effectiveModel.targetNlbList || []).map((nlb: any) => ({
+      ...nlb,
+      targetGroup: nlb.targetGroup
+        ? {
+            ...nlb.targetGroup,
+            nodeGroupId: composeSeededName(nlb.targetGroup.nodeGroupId || '', trimmedSeed)
+          }
+        : nlb.targetGroup
+    }));
+    const params = new URLSearchParams();
+    if (trimmedSeed.length > 0) {
+      params.set('nameSeed', trimmedSeed);
+    }
+    params.set('useExisting', String(useExistingValidation));
+    const queryStr = params.toString();
 
     const newJob: MigrationJob = {
       id: reqId,
       reqId,
       infraId: targetInfraId,
       nsId: customNsId,
-      nameSeed: customNameSeed,
-      csp: cloudModel.targetCloud.csp.toUpperCase(),
-      region: cloudModel.targetCloud.region,
+      nameSeed: trimmedSeed,
+      csp: effectiveModel.targetCloud.csp.toUpperCase(),
+      region: effectiveModel.targetCloud.region,
       status: 'Handling',
       startTime: new Date().toISOString(),
       createdAtMs: Date.now(),
       elapsedSeconds: 0,
-      nodeGroupsCount: cloudModel?.targetInfra?.nodeGroups?.length || 0,
-      totalVms: (cloudModel?.targetInfra?.nodeGroups || []).reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0),
-      targetNlbList: cloudModel.targetNlbList || [],
-      nlbStatus: cloudModel.targetNlbList && cloudModel.targetNlbList.length > 0 ? 'Idle' : undefined,
+      nodeGroupsCount: effectiveModel?.targetInfra?.nodeGroups?.length || 0,
+      totalVms: (effectiveModel?.targetInfra?.nodeGroups || []).reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0),
+      targetNlbList: seededTargetNlbList,
+      nlbStatus: seededTargetNlbList.length > 0 ? 'Idle' : undefined,
       logs: [
         `POST /beetle/migration/ns/${customNsId}/infra?${queryStr}`,
         `HTTP 202 Accepted (ReqID: ${reqId}, Status: Handling)`,
@@ -684,7 +740,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     setShowLaunchModal(false);
 
     // Call Beetle API
-    const res = await beetleApi.executeMigration(customNsId, customNameSeed, cloudModel, useExistingValidation, selectedCloudModel.lineage);
+    const res = await beetleApi.executeMigration(customNsId, trimmedSeed, effectiveModel, useExistingValidation, selectedCloudModel.lineage);
     if (!res.success) {
       // Backend returned error (e.g. resource already exists or validation failed)
       setJobs(prev =>
@@ -1379,7 +1435,11 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                   <input
                     type="text"
                     value={customInfraId}
-                    onChange={(e) => setCustomInfraId(e.target.value)}
+                    onChange={(e) => {
+                      setCustomInfraId(e.target.value);
+                      setNameSeedPreviewData(null);
+                      setValidationResult(null);
+                    }}
                     placeholder="e.g. mig01-aws-infra"
                     className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                   />
@@ -1394,6 +1454,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                       onChange={(e) => {
                         setCustomNameSeed(e.target.value);
                         setNameSeedPreviewData(null);
+                        setValidationResult(null);
                       }}
                       placeholder="e.g. prod"
                       className="flex-1 bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500/40"

@@ -963,7 +963,10 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
       const lineage = get().selectedCloudModel?.lineage;
       const res = await beetleApi.executeMigration(nsId, nameSeed, cloudModel, true, lineage);
       if (res.success && res.data) {
-        const infraId = res.data.name || cloudModel.targetInfra.name;
+        const trimmedSeed = (nameSeed || '').trim();
+        const baseName = cloudModel.targetInfra?.name || '';
+        const composedName = trimmedSeed && baseName ? `${trimmedSeed}-${baseName}` : baseName;
+        const infraId = res.data.name || composedName;
         set({ activeDeploymentId: infraId });
         await get().fetchDeploymentStatus();
       } else {
