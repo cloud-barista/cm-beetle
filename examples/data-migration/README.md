@@ -2,7 +2,7 @@
 
 This example demonstrates how to transfer data from a **Source KT Cloud Object Storage (`kt`, `kr1` region)** to a target cloud Object Storage bucket managed by **CB-Tumblebug (NCP `kr` region)** using the CM-Beetle Data Migration REST API (`POST /beetle/migration/data`).
 
-- **API Documentation:** [Data Migration API (incubating) Spec](<https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.2/api/swagger.yaml#/%5BMigration%5D%20Data%20(incubating)>)
+- **API Documentation:** [Data Migration API (incubating) Spec](<https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.3/api/swagger.yaml#/%5BMigration%5D%20Data%20(incubating)>)
 
 ---
 
