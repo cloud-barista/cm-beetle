@@ -16,6 +16,7 @@ package migration
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	rdbmsmodel "github.com/cloud-barista/cm-beetle/imdl/rdbms-model"
@@ -45,8 +46,9 @@ func CreateRDBMS(nsId string, req rdbmsmodel.RecommendedRDBMS, seed string) erro
 		return fmt.Errorf("invalid cloud configuration (%s %s): %w", req.TargetCloud.Csp, req.TargetCloud.Region, err)
 	}
 
-	// Apply NameSeed (Late Binding) from migration query param
+	// Apply NameSeed (Late Binding) on a cloned slice to avoid mutating caller input
 	if seed != "" {
+		req.TargetRDBMSInstances = slices.Clone(req.TargetRDBMSInstances)
 		for i := range req.TargetRDBMSInstances {
 			req.TargetRDBMSInstances[i].RDBMSName = common.ComposeName(req.TargetRDBMSInstances[i].RDBMSName, seed)
 		}
