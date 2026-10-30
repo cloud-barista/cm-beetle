@@ -6925,6 +6925,23 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.AvailabilityStatus": {
+            "type": "string",
+            "enum": [
+                "Available",
+                "SoldOut",
+                "QuotaExceeded",
+                "Unsupported",
+                "Unverified"
+            ],
+            "x-enum-varnames": [
+                "AvailabilityAvailable",
+                "AvailabilitySoldOut",
+                "AvailabilityQuotaExceeded",
+                "AvailabilityUnsupported",
+                "AvailabilityUnverified"
+            ]
+        },
         "cloudmodel.CloudProperty": {
             "type": "object",
             "properties": {
@@ -8002,6 +8019,14 @@ const docTemplate = `{
                         "sg-01"
                     ]
                 },
+                "storage": {
+                    "description": "Storage (optional) prepares abstract storage types after the cluster becomes Active.\nA storage preparation failure does not fail the cluster creation.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.K8sClusterStorageReq"
+                        }
+                    ]
+                },
                 "subnetIds": {
                     "type": "array",
                     "items": {
@@ -8024,6 +8049,21 @@ const docTemplate = `{
                 "version": {
                     "type": "string",
                     "example": "1.30.1-aliyun.1"
+                }
+            }
+        },
+        "cloudmodel.K8sClusterStorageReq": {
+            "type": "object",
+            "properties": {
+                "storageTypes": {
+                    "description": "StorageTypes to prepare. Empty means [\"ssd-general\"].",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "ssd-general"
+                    ]
                 }
             }
         },
@@ -9139,6 +9179,30 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "availabilityCheckedAt": {
+                    "type": "string"
+                },
+                "availabilityReason": {
+                    "type": "string"
+                },
+                "availabilityRefreshAfter": {
+                    "type": "string"
+                },
+                "availabilityStatus": {
+                    "description": "Runtime-only availability fields (never persisted to PostgreSQL; populated from cache or live CSP check).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.AvailabilityStatus"
+                        }
+                    ],
+                    "example": "Available"
+                },
+                "availableZones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "connectionName": {
                     "type": "string"
                 },
@@ -9258,6 +9322,12 @@ const docTemplate = `{
                     "description": "Uid is universally unique identifier for the object, used for labelSelector",
                     "type": "string",
                     "example": "wef12awefadf1221edcf"
+                },
+                "unavailableZones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "vCPU": {
                     "type": "integer"
@@ -10261,6 +10331,14 @@ const docTemplate = `{
                         }
                     ],
                     "example": "Active"
+                },
+                "storage": {
+                    "description": "Storage is the CSP-side storage preparation state (abstract storage types). Set by the storage APIs.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.K8sClusterStorageInfo"
+                        }
+                    ]
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
@@ -12210,6 +12288,23 @@ const docTemplate = `{
                 }
             }
         },
+        "model.AvailabilityStatus": {
+            "type": "string",
+            "enum": [
+                "Available",
+                "SoldOut",
+                "QuotaExceeded",
+                "Unsupported",
+                "Unverified"
+            ],
+            "x-enum-varnames": [
+                "AvailabilityAvailable",
+                "AvailabilitySoldOut",
+                "AvailabilityQuotaExceeded",
+                "AvailabilityUnsupported",
+                "AvailabilityUnverified"
+            ]
+        },
         "model.BastionNode": {
             "type": "object",
             "properties": {
@@ -12597,6 +12692,14 @@ const docTemplate = `{
                     ],
                     "example": "Active"
                 },
+                "storage": {
+                    "description": "Storage is the CSP-side storage preparation state (abstract storage types). Set by the storage APIs.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.K8sClusterStorageInfo"
+                        }
+                    ]
+                },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
                     "type": "string",
@@ -12668,6 +12771,34 @@ const docTemplate = `{
                 "K8sClusterUpdating",
                 "K8sClusterDeleting"
             ]
+        },
+        "model.K8sClusterStorageInfo": {
+            "type": "object",
+            "properties": {
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.K8sStorageAction"
+                    }
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.K8sStorageStatus"
+                        }
+                    ],
+                    "example": "Ready"
+                },
+                "storageTypes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.K8sStorageTypeState"
+                    }
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
         },
         "model.K8sNodeGroupInfo": {
             "type": "object",
@@ -12778,6 +12909,92 @@ const docTemplate = `{
                     "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
                     "type": "string",
                     "example": "we12fawefadf1221edcf"
+                }
+            }
+        },
+        "model.K8sStorageAction": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "string",
+                    "example": "Disabled"
+                },
+                "kind": {
+                    "type": "string",
+                    "example": "Block"
+                },
+                "step": {
+                    "type": "string",
+                    "example": "enableStorageDriver"
+                },
+                "target": {
+                    "type": "string",
+                    "example": ""
+                },
+                "time": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "Enabled"
+                }
+            }
+        },
+        "model.K8sStorageDriverRef": {
+            "type": "object",
+            "properties": {
+                "csiDriverName": {
+                    "type": "string",
+                    "example": "ebs.csi.aws.com"
+                },
+                "kind": {
+                    "type": "string",
+                    "example": "Block"
+                },
+                "managementMode": {
+                    "type": "string",
+                    "example": "Addon"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "Enabled"
+                }
+            }
+        },
+        "model.K8sStorageStatus": {
+            "type": "string",
+            "enum": [
+                "Ready",
+                "NotReady",
+                "Preparing"
+            ],
+            "x-enum-varnames": [
+                "K8sStorageReady",
+                "K8sStorageNotReady",
+                "K8sStoragePreparing"
+            ]
+        },
+        "model.K8sStorageTypeState": {
+            "type": "object",
+            "properties": {
+                "driver": {
+                    "$ref": "#/definitions/model.K8sStorageDriverRef"
+                },
+                "reason": {
+                    "type": "string",
+                    "example": ""
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.K8sStorageStatus"
+                        }
+                    ],
+                    "example": "Ready"
+                },
+                "storageType": {
+                    "type": "string",
+                    "example": "ssd-general"
                 }
             }
         },
@@ -15039,6 +15256,12 @@ const docTemplate = `{
                 "iops": {
                     "type": "string",
                     "example": "3000"
+                },
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.KeyValue"
+                    }
                 },
                 "name": {
                     "type": "string",
@@ -17515,6 +17738,30 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "availabilityCheckedAt": {
+                    "type": "string"
+                },
+                "availabilityReason": {
+                    "type": "string"
+                },
+                "availabilityRefreshAfter": {
+                    "type": "string"
+                },
+                "availabilityStatus": {
+                    "description": "Runtime-only availability fields (never persisted to PostgreSQL; populated from cache or live CSP check).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.AvailabilityStatus"
+                        }
+                    ],
+                    "example": "Available"
+                },
+                "availableZones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "connectionName": {
                     "type": "string"
                 },
@@ -17634,6 +17881,12 @@ const docTemplate = `{
                     "description": "Uid is universally unique identifier for the object, used for labelSelector",
                     "type": "string",
                     "example": "wef12awefadf1221edcf"
+                },
+                "unavailableZones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "usageCount": {
                     "description": "Number of VMs using this spec",
