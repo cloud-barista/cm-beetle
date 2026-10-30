@@ -272,9 +272,9 @@ func main() {
 
 	log.Info().Msgf("Using NameSeed from request file: %s", baseNameSeed)
 
-	// Initialize HTTP client
+	// Initialize HTTP client with 60m timeout (exceeds Beetle's internal 50m Tumblebug timeout)
 	client := resty.New()
-	client.SetTimeout(45 * time.Minute) // Increased timeout to 45 minutes for all operations
+	client.SetTimeout(60 * time.Minute)
 
 	// Set Beetle base URL
 	client.SetBaseURL(config.Beetle.Endpoint)
@@ -376,9 +376,9 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, sourceInfraModel on
 	log.Info().Msgf("[%d/%d] Running test for %s (%s, %s) with NameSeed: %s",
 		i+1, len(config.Test.Cases), displayName, cspPair.Csp, cspPair.Region, nameSeed)
 
-	// Create a dedicated client for this goroutine
+	// Create a dedicated client for this goroutine (60m exceeds Beetle's 50m Tumblebug timeout)
 	client := resty.New()
-	client.SetTimeout(45 * time.Minute)
+	client.SetTimeout(60 * time.Minute)
 	client.SetBaseURL(config.Beetle.Endpoint)
 	if authConfig.BeetleApiUsername != "" && authConfig.BeetleApiPassword != "" {
 		client.SetBasicAuth(authConfig.BeetleApiUsername, authConfig.BeetleApiPassword)
@@ -1646,18 +1646,45 @@ func runDeleteNlbTest(client *resty.Client, config TestConfig, infraId, nlbId st
 	url := fmt.Sprintf("%s/beetle/migration/middleware/ns/%s/infra/%s/nlb/%s", config.Beetle.Endpoint, config.Beetle.NamespaceID, infraId, nlbId)
 	log.Debug().Msgf("API Request URL: %s", url)
 
+	// Retry NLB deletion to handle transient 409 Conflict responses from Tumblebug/Spider.
+	const maxRetries = 5
+	const retryInterval = 15 * time.Second
+
 	var emptyBody interface{} = common.NoBody
 	var responseMap map[string]interface{}
-	err := common.ExecuteHttpRequest(
-		client,
-		"DELETE",
-		url,
-		nil,
-		common.SetUseBody(emptyBody),
-		&emptyBody,
-		&responseMap,
-		0,
-	)
+	var err error
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		log.Info().Msgf("Attempting NLB deletion (%d/%d)...", attempt, maxRetries)
+
+		err = common.ExecuteHttpRequest(
+			client,
+			"DELETE",
+			url,
+			nil,
+			common.SetUseBody(emptyBody),
+			&emptyBody,
+			&responseMap,
+			0,
+		)
+
+		if err == nil {
+			log.Info().Msg("NLB deletion completed successfully")
+			break
+		}
+
+		// Treat 404 Not Found as already deleted without further retries.
+		if strings.Contains(err.Error(), "404") {
+			log.Info().Msgf("NLB not found (404) on attempt %d, treating as already deleted", attempt)
+			err = nil
+			break
+		}
+
+		log.Warn().Err(err).Msgf("NLB deletion attempt %d failed", attempt)
+		if attempt < maxRetries {
+			animatedSleep(retryInterval, fmt.Sprintf("Waiting before next NLB deletion attempt (%d/%d)", attempt+1, maxRetries))
+		}
+	}
 
 	result.EndTime = time.Now()
 	result.Duration = result.EndTime.Sub(result.StartTime)
@@ -1688,10 +1715,9 @@ func runDeleteInfraTest(client *resty.Client, config TestConfig, infraId, displa
 	log.Debug().Msgf("API Request URL: %s", url)
 	log.Debug().Msg("API Request Body: none")
 
-	// Tumblebug resource deletion might take a long time and occasionally fail due to dependency violations or CSP issues.
-	// We implement a retry mechanism: 10 attempts at 10-second intervals (total ~1.5 minutes).
+	// Retry infra deletion up to 10 times at 15-second intervals to handle CSP dependency delays.
 	const maxRetries = 10
-	const retryInterval = 10 * time.Second
+	const retryInterval = 15 * time.Second
 
 	var apiResponse model.ApiResponse[interface{}]
 	var emptyBody interface{} = common.NoBody
@@ -2904,7 +2930,7 @@ server.serve_forever()
 			User:            userName,
 			Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-			Timeout:         30 * time.Second,
+			Timeout:         45 * time.Second,
 		}
 
 		address := net.JoinHostPort(publicIP, "22")
@@ -2937,7 +2963,7 @@ server.serve_forever()
 	//    depending on the recommendation), so a direct external HTTP probe may be blocked.
 	//    SSH port 22 is always open, so we SSH in and run `nc -z localhost targetPort`.
 	const vmReadyPollIntervalSec = 10
-	const vmReadyMaxWaitSec = 120 // 2 minutes
+	const vmReadyMaxWaitSec = 180 // 3 minutes
 
 	vmReadyPassed := false
 	for elapsed := vmReadyPollIntervalSec; elapsed <= vmReadyMaxWaitSec; elapsed += vmReadyPollIntervalSec {
@@ -2959,7 +2985,7 @@ server.serve_forever()
 				User:            userName,
 				Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
 				HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-				Timeout:         10 * time.Second,
+				Timeout:         15 * time.Second,
 			}
 			conn, dialErr := ssh.Dial("tcp", net.JoinHostPort(vm.PublicIP, "22"), sshCfg)
 			if dialErr != nil {
@@ -2997,7 +3023,7 @@ server.serve_forever()
 	// 4. Wait for NLB DNS to become resolvable (AWS NLBs can take 1-5 min for DNS propagation)
 	//    Poll until DNS resolves successfully or timeout is reached.
 	//    Extra margin accounts for the 3-consecutive-success stability requirement.
-	nlbDnsMaxWaitSec := 300 // 5 minutes maximum
+	nlbDnsMaxWaitSec := 420 // 7 minutes maximum
 	nlbDnsPollIntervalSec := 10
 	animatedSleep(time.Duration(nlbDnsPollIntervalSec)*time.Second, "Initial wait before NLB DNS check...")
 
@@ -3139,7 +3165,7 @@ server.serve_forever()
 	for q := 1; q <= totalRequests; q++ {
 		// Fresh client per request: new TCP connection → new ephemeral srcPort → different 5-tuple hash.
 		qClient := resty.New().
-			SetTimeout(5 * time.Second).
+			SetTimeout(10 * time.Second).
 			SetTransport(nlbTransport).
 			SetLogger(restyNoopLogger{}) // suppress "Basic Auth over HTTP" and other resty warnings
 		if client.UserInfo != nil {
@@ -3558,10 +3584,10 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, infraId, disp
 
 			sshUserName := userName
 
-			// Perform SSH connectivity test with retry logic.
-			log.Info().Str("nodeId", nodeId).Str("ip", publicIP).Str("user", sshUserName).Msg("🔍 Testing SSH connectivity (up to 3 min)...")
+			// Perform SSH connectivity test with retry logic (up to 5 minutes for cloud-init startup).
+			log.Info().Str("nodeId", nodeId).Str("ip", publicIP).Str("user", sshUserName).Msg("🔍 Testing SSH connectivity (up to 5 min)...")
 
-			const maxRetries = 19 // 1 immediate + 18 retries × 10s = 3 minutes total
+			const maxRetries = 31 // 1 immediate + 30 retries x 10s = 5 minutes total
 			const retryDelay = 10 * time.Second
 			const logProgressEvery = 6
 			var sshResult string

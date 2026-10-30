@@ -1,6 +1,7 @@
 test:
   set:
     mode: parallel # parallel or sequential
+    startDelaySeconds: 30 # stagger delay in seconds between parallel test cases
   cases:
     - csp: aws
       region: ap-northeast-2
