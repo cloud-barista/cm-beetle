@@ -102,7 +102,7 @@ You can also use the Beetle UX Lab GUI (`http://localhost:8056/beetle/ui/`) unde
 Analyze source bucket configurations (versioning, CORS, encryption, capacity) and recommend compatible bucket configurations for the target cloud.
 
 - **API Endpoint:** `POST /beetle/recommendation/middleware/objectStorage`
-- **API Documentation:** [Managed Object Storage Recommendation API Spec](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.2/api/swagger.yaml#/%5BRecommendation%5D%20Managed%20Object%20Storage)
+- **API Documentation:** [Managed Object Storage Recommendation API Spec](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.3/api/swagger.yaml#/%5BRecommendation%5D%20Managed%20Object%20Storage)
 - **Payload File:** `object-storage-recommendation-request.json`
 
 ### curl Command
@@ -163,7 +163,7 @@ curl -s -X POST "http://localhost:8056/beetle/recommendation/middleware/objectSt
 Create the recommended buckets in the target cloud provider.
 
 - **API Endpoint:** `POST /beetle/migration/middleware/ns/{nsId}/objectStorage`
-- **API Documentation:** [Managed Object Storage Migration API Spec](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.2/api/swagger.yaml#/%5BMigration%5D%20Managed%20Object%20Storage)
+- **API Documentation:** [Managed Object Storage Migration API Spec](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.3/api/swagger.yaml#/%5BMigration%5D%20Managed%20Object%20Storage)
 - **Payload File:** `object-storage-migration-request.json`
 
 > [!NOTE]

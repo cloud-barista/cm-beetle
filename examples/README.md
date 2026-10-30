@@ -68,8 +68,8 @@ Follow the tutorials in order using the step-by-step curl commands documented in
 
 | Directory | Description | Key APIs Demonstrated | API Documentation |
 | :--- | :--- | :--- | :--- |
-| **[`object-storage-migration/`](./object-storage-migration/)** | Target bucket recommendation & infrastructure provisioning *(Requires source bucket info)* | `POST /beetle/recommendation/middleware/objectStorage`<br>`POST /beetle/migration/middleware/ns/:nsId/objectStorage` | [Recommendation API](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.2/api/swagger.yaml#/%5BRecommendation%5D%20Managed%20Object%20Storage)<br>[Migration API](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.2/api/swagger.yaml#/%5BMigration%5D%20Managed%20Object%20Storage) |
-| **[`data-migration/`](./data-migration/)** | Data transfer from Source KT Cloud kr1 (via MinIO SDK) to Destination NCP kr bucket (sync/async) | `POST /beetle/migration/data`<br>`GET /beetle/request/:reqId` | [Data Migration API](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.2/api/swagger.yaml#/%5BMigration%5D%20Data%20(incubating)) |
+| **[`object-storage-migration/`](./object-storage-migration/)** | Target bucket recommendation & infrastructure provisioning *(Requires source bucket info)* | `POST /beetle/recommendation/middleware/objectStorage`<br>`POST /beetle/migration/middleware/ns/:nsId/objectStorage` | [Recommendation API](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.3/api/swagger.yaml#/%5BRecommendation%5D%20Managed%20Object%20Storage)<br>[Migration API](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.3/api/swagger.yaml#/%5BMigration%5D%20Managed%20Object%20Storage) |
+| **[`data-migration/`](./data-migration/)** | Data transfer from Source KT Cloud kr1 (via MinIO SDK) to Destination NCP kr bucket (sync/async) | `POST /beetle/migration/data`<br>`GET /beetle/request/:reqId` | [Data Migration API](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.3/api/swagger.yaml#/%5BMigration%5D%20Data%20(incubating)) |
 
 > [!NOTE]
 > **Prerequisites and Preparation**:
@@ -81,11 +81,11 @@ Follow the tutorials in order using the step-by-step curl commands documented in
 ## Official API Documentation Links
 
 - **Object Storage Recommendation API:**  
-  [https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.2/api/swagger.yaml#/%5BRecommendation%5D%20Managed%20Object%20Storage](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.2/api/swagger.yaml#/%5BRecommendation%5D%20Managed%20Object%20Storage)
+  [https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.3/api/swagger.yaml#/%5BRecommendation%5D%20Managed%20Object%20Storage](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.3/api/swagger.yaml#/%5BRecommendation%5D%20Managed%20Object%20Storage)
 - **Object Storage Migration API:**  
-  [https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.2/api/swagger.yaml#/%5BMigration%5D%20Managed%20Object%20Storage](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.2/api/swagger.yaml#/%5BMigration%5D%20Managed%20Object%20Storage)
+  [https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.3/api/swagger.yaml#/%5BMigration%5D%20Managed%20Object%20Storage](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.3/api/swagger.yaml#/%5BMigration%5D%20Managed%20Object%20Storage)
 - **Data Migration API (incubating):**  
-  [https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.2/api/swagger.yaml#/%5BMigration%5D%20Data%20(incubating)](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.2/api/swagger.yaml#/%5BMigration%5D%20Data%20(incubating))
+  [https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.3/api/swagger.yaml#/%5BMigration%5D%20Data%20(incubating)](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.3/api/swagger.yaml#/%5BMigration%5D%20Data%20(incubating))
 
 ---
 
