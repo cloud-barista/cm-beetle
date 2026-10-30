@@ -191,18 +191,18 @@ On subsequent restarts (`make up`), only the unseal step runs — no re-initiali
 
 ### OpenBao Credential Paths
 
-| CSP       | Path                   | Key Names                                                                                                                                                                                                                       |
-| --------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AWS       | `secret/csp/aws`       | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`                                                                                                                                                                                    |
-| GCP       | `secret/csp/gcp`       | `project_id`, `client_email`, `private_key`, `private_key_id`, `client_id`                                                                                                                                                      |
-| Azure     | `secret/csp/azure`     | `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`                                                                                                                                                    |
-| Alibaba   | `secret/csp/alibaba`   | `ALIBABA_CLOUD_ACCESS_KEY_ID`, `ALIBABA_CLOUD_ACCESS_KEY_SECRET`                                                                                                                                                                |
-| IBM       | `secret/csp/ibm`       | `IC_API_KEY`                                                                                                                                                                                                                    |
-| NCP       | `secret/csp/ncp`       | `NCLOUD_ACCESS_KEY`, `NCLOUD_SECRET_KEY`                                                                                                                                                                                        |
-| Tencent   | `secret/csp/tencent`   | `TENCENTCLOUD_SECRET_ID`, `TENCENTCLOUD_SECRET_KEY`                                                                                                                                                                             |
-| KT        | `secret/csp/kt`        | `KT_IDENTITY_ENDPOINT`, `KT_USERNAME`, `KT_PASSWORD`, `KT_DOMAIN_NAME`, `KT_PROJECT_ID`, `KT_S3_ACCESS_KEY`, `KT_S3_SECRET_KEY`                                                                                                 |
+| CSP       | Path                   | Key Names                                                                      |
+| --------- | ---------------------- | ------------------------------------------------------------------------------ |
+| AWS       | `secret/csp/aws`       | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`                                   |
+| GCP       | `secret/csp/gcp`       | `project_id`, `client_email`, `private_key`, `private_key_id`, `client_id`     |
+| Azure     | `secret/csp/azure`     | `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`   |
+| Alibaba   | `secret/csp/alibaba`   | `ALIBABA_CLOUD_ACCESS_KEY_ID`, `ALIBABA_CLOUD_ACCESS_KEY_SECRET`               |
+| IBM       | `secret/csp/ibm`       | `IC_API_KEY`                                                                   |
+| NCP       | `secret/csp/ncp`       | `NCLOUD_ACCESS_KEY`, `NCLOUD_SECRET_KEY`                                       |
+| Tencent   | `secret/csp/tencent`   | `TENCENTCLOUD_SECRET_ID`, `TENCENTCLOUD_SECRET_KEY`                            |
+| KT        | `secret/csp/kt`        | `KT_IDENTITY_ENDPOINT`, `KT_USERNAME`, `KT_PASSWORD`, `KT_DOMAIN_NAME`, `KT_PROJECT_ID`, `KT_S3_ACCESS_KEY`, `KT_S3_SECRET_KEY`       |
 | NHN       | `secret/csp/nhn`       | `NHN_IDENTITY_ENDPOINT`, `NHN_USERNAME`, `NHN_PASSWORD`, `NHN_DOMAIN_NAME`, `NHN_TENANT_ID`, `NHN_S3_ACCESS_KEY`, `NHN_S3_SECRET_KEY`, `NHN_USER_ACCESS_KEY`, `NHN_SECRET_ACCESS_KEY`, `NHN_MYSQL_APPKEY`, `NHN_MARIADB_APPKEY` |
-| OpenStack | `secret/csp/openstack` | `OS_AUTH_URL`, `OS_USERNAME`, `OS_PASSWORD`, `OS_DOMAIN_NAME`, `OS_PROJECT_ID`                                                                                                                                                  |
+| OpenStack | `secret/csp/openstack` | `OS_AUTH_URL`, `OS_USERNAME`, `OS_PASSWORD`, `OS_DOMAIN_NAME`, `OS_PROJECT_ID` |
 
 ### Makefile Targets (OpenBao)
 

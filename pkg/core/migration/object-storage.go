@@ -16,6 +16,7 @@ package migration
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -134,8 +135,9 @@ func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage,
 		return fmt.Errorf("invalid cloud configuration (%s %s): %w", req.TargetCloud.Csp, req.TargetCloud.Region, err)
 	}
 
-	// Apply NameSeed (Late Binding) from migration query param
+	// Apply NameSeed (Late Binding) on a cloned slice to avoid mutating caller input
 	if seed != "" {
+		req.TargetObjectStorages = slices.Clone(req.TargetObjectStorages)
 		for i := range req.TargetObjectStorages {
 			req.TargetObjectStorages[i].BucketName = common.ComposeName(req.TargetObjectStorages[i].BucketName, seed)
 		}

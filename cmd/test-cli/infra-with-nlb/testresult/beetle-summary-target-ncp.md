@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-10-12 11:02:10
+**Generated At:** 2026-10-30 12:56:06
 
 **Namespace:** mig01
 
@@ -28,8 +28,8 @@
 
 | Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
-| ci2-g3 | 2 | 4.0 | - | x86_64 | default | $0.0730 | 1 |
 | s4-g3 | 4 | 16.0 | - | x86_64 | default | $0.1747 | 2 |
+| ci2-g3 | 2 | 4.0 | - | x86_64 | default | $0.0730 | 1 |
 
 ### VM Images
 
@@ -41,9 +41,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my08-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | 146264585 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-mig-vnet-01<br>**Subnet:** my08-mig-subnet-01<br>**Public IP:** 211.233.199.16<br>**Private IP:** 10.0.1.6<br>**SGs:** my08-mig-sg-02<br>**SSH:** my08-mig-sshkey-01 |
-| my08-ng-influxdb-back-1 | 146264588 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-mig-vnet-01<br>**Subnet:** my08-mig-subnet-01<br>**Public IP:** 211.233.204.234<br>**Private IP:** 10.0.1.8<br>**SGs:** my08-mig-sg-01<br>**SSH:** my08-mig-sshkey-01 |
-| my08-ng-influxdb-back-2 | 146264582 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-mig-vnet-01<br>**Subnet:** my08-mig-subnet-01<br>**Public IP:** 211.233.199.17<br>**Private IP:** 10.0.1.7<br>**SGs:** my08-mig-sg-01<br>**SSH:** my08-mig-sshkey-01 |
+| my08-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | 146612733 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-mig-vnet-01<br>**Subnet:** my08-mig-subnet-01<br>**Public IP:** 211.233.221.207<br>**Private IP:** 10.0.1.8<br>**SGs:** my08-mig-sg-02<br>**SSH:** my08-mig-sshkey-01 |
+| my08-ng-influxdb-back-1 | 146612727 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-mig-vnet-01<br>**Subnet:** my08-mig-subnet-01<br>**Public IP:** 211.233.221.202<br>**Private IP:** 10.0.1.6<br>**SGs:** my08-mig-sg-01<br>**SSH:** my08-mig-sshkey-01 |
+| my08-ng-influxdb-back-2 | 146612730 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-mig-vnet-01<br>**Subnet:** my08-mig-subnet-01<br>**Public IP:** 211.233.221.206<br>**Private IP:** 10.0.1.7<br>**SGs:** my08-mig-sg-01<br>**SSH:** my08-mig-sshkey-01 |
 
 
 ## Network Resources
@@ -55,7 +55,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-mig-vnet-01 |
-| **CSP VNet ID** | 150301 |
+| **CSP VNet ID** | 151836 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | ncp-kr |
 | **Subnet Count** | 1 |
@@ -64,7 +64,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my08-mig-subnet-01 | 329426 | 10.0.1.0/24 | KR-1 |
+| my08-mig-subnet-01 | 332997 | 10.0.1.0/24 | KR-1 |
 
 
 ## Security Resources
@@ -73,7 +73,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my08-mig-sshkey-01 | tbbrmposh4nl13mhejhr | cb-user | a6:34:d8:d8:ae:41:ef:2d:44:d6:5d:e8:df:2a:9a:4e |
+| my08-mig-sshkey-01 | tblv95nnkjn34ni5rsgb | cb-user | da:5f:e5:5f:50:de:5c:ff:8f:2d:86:c0:a2:da:85:e5 |
 
 ### Security Groups
 
@@ -82,7 +82,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-mig-sg-01 |
-| **CSP Security Group ID** | 406332 |
+| **CSP Security Group ID** | 413150 |
 | **VNet** | my08-mig-vnet-01 |
 | **Rule Count** | 10 rules |
 
@@ -92,11 +92,11 @@
 |-----------|----------|------------|------|
 | inbound | TCP | 8086 | 0.0.0.0/0 |
 | inbound | TCP | 9999 | 0.0.0.0/0 |
+| inbound | TCP | 8086 | 10.0.0.0/16 |
+| inbound | TCP | 22 | 0.0.0.0/0 |
 | inbound | ICMP |  | 0.0.0.0/0 |
 | inbound | UDP | 1-65535 | 0.0.0.0/0 |
 | inbound | TCP | 1-65535 | 0.0.0.0/0 |
-| inbound | TCP | 8086 | 10.0.0.0/16 |
-| inbound | TCP | 22 | 0.0.0.0/0 |
 | outbound | ICMP |  | 0.0.0.0/0 |
 | outbound | UDP | 1-65535 | 0.0.0.0/0 |
 | outbound | TCP | 1-65535 | 0.0.0.0/0 |
@@ -106,7 +106,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-mig-sg-02 |
-| **CSP Security Group ID** | 406333 |
+| **CSP Security Group ID** | 413151 |
 | **VNet** | my08-mig-vnet-01 |
 | **Rule Count** | 8 rules |
 

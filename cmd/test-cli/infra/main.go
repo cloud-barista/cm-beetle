@@ -261,9 +261,9 @@ func main() {
 
 	log.Info().Msgf("Using NameSeed from request file: %s", baseNameSeed)
 
-	// Initialize HTTP client
+	// Initialize HTTP client with 60m timeout (exceeds Beetle's internal 50m Tumblebug timeout)
 	client := resty.New()
-	client.SetTimeout(45 * time.Minute) // Increased timeout to 45 minutes for all operations
+	client.SetTimeout(60 * time.Minute)
 
 	// Set Beetle base URL
 	client.SetBaseURL(config.Beetle.Endpoint)
@@ -365,9 +365,9 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	log.Info().Msgf("[%d/%d] Running test for %s (%s, %s) with NameSeed: %s",
 		i+1, len(config.Test.Cases), displayName, cspPair.Csp, cspPair.Region, nameSeed)
 
-	// Create a dedicated client for this goroutine
+	// Create a dedicated client for this goroutine (60m exceeds Beetle's 50m Tumblebug timeout)
 	client := resty.New()
-	client.SetTimeout(45 * time.Minute)
+	client.SetTimeout(60 * time.Minute)
 	client.SetBaseURL(config.Beetle.Endpoint)
 	if authConfig.BeetleApiUsername != "" && authConfig.BeetleApiPassword != "" {
 		client.SetBasicAuth(authConfig.BeetleApiUsername, authConfig.BeetleApiPassword)
@@ -1343,8 +1343,8 @@ func runDeleteInfraTest(client *resty.Client, config TestConfig, infraId, displa
 	var resp *resty.Response
 	var err error
 
-	// Retry logic: Try deletion up to 3 times
-	const maxRetries = 3
+	// Retry infra deletion up to 6 times at 30-second intervals.
+	const maxRetries = 6
 	const retryDelay = 30 * time.Second
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
@@ -3025,12 +3025,10 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, infraId, disp
 			// Determine username (priority: vmInfo.VmUserName > default "cb-user")
 			sshUserName := userName
 
-			// Perform SSH connectivity test with retry logic.
-			// Retries every 10s for up to 3 minutes to handle cloud-init startup
-			// (e.g., IBM Cloud VPC takes 1-3 minutes to set up the SSH user after VM creation).
-			log.Info().Str("nodeId", nodeId).Str("ip", publicIP).Str("user", sshUserName).Msg("🔍 Testing SSH connectivity (up to 3 min)...")
+			// Perform SSH connectivity test with retry logic (up to 5 minutes for cloud-init startup).
+			log.Info().Str("nodeId", nodeId).Str("ip", publicIP).Str("user", sshUserName).Msg("🔍 Testing SSH connectivity (up to 5 min)...")
 
-			const maxRetries = 19 // 1 immediate + 18 retries × 10s = 3 minutes total
+			const maxRetries = 31 // 1 immediate + 30 retries x 10s = 5 minutes total
 			const retryDelay = 10 * time.Second
 			const logProgressEvery = 6 // surface progress at Info every ~1 minute (6 × 10s)
 			var sshResult string

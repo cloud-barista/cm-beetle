@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-10-12 10:59:41*
+*Report generated: 2026-10-30 12:51:08*
 
 ---
 
@@ -46,9 +46,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my01-ng-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-01e11280c6d560912<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
-| 2 | **VM Name:** my01-ng-influxdb-back-1<br>**VM ID:** i-0ccffb9271ef8b826<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
-| 3 | **VM Name:** my01-ng-influxdb-back-2<br>**VM ID:** i-0fe239de8057ad524<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
+| 1 | **VM Name:** my01-ng-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-0e9a8dff79587097e<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
+| 2 | **VM Name:** my01-ng-influxdb-back-1<br>**VM ID:** i-0dee049fb9412465b<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| 3 | **VM Name:** my01-ng-influxdb-back-2<br>**VM ID:** i-0cf1d4327934156dd<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
 
 ---
 
@@ -82,7 +82,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my01-mig-sg-01
 
-**CSP ID:** sg-0ffa7def89483c262 | **VNet:** my01-mig-vnet-01 | **Rules:** 6
+**CSP ID:** sg-0704eaa2a1108babc | **VNet:** my01-mig-vnet-01 | **Rules:** 6
 
 **Assigned VMs:**
 
@@ -104,7 +104,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my01-mig-sg-02
 
-**CSP ID:** sg-0f12b50413f6cf356 | **VNet:** my01-mig-vnet-01 | **Rules:** 4
+**CSP ID:** sg-082244dd31713d22a | **VNet:** my01-mig-vnet-01 | **Rules:** 4
 
 **Assigned VMs:**
 
@@ -130,13 +130,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my01-mig-vnet-01<br>**ID:** vpc-08afb74d5d25b8401 | 10.0.0.0/21 |
+| 1 | **Name:** my01-mig-vnet-01<br>**ID:** vpc-02e0dfd3cb3ff1fcb | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my01-mig-subnet-01<br>**ID:** subnet-07356212594969c9e | 10.0.1.0/24 | my01-mig-vnet-01 |
+| 1 | **Name:** my01-mig-subnet-01<br>**ID:** subnet-09bb75a1817ae8dbb | 10.0.1.0/24 | my01-mig-vnet-01 |
 
 ### Source Network Information
 
@@ -202,7 +202,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my01-mig-sshkey-01 | tblqeie98atc8phigbn8 | 59:e5:4e:39:fc:57:8b:15:08:04:e6:b5:76:3a:61:e2:c0:aa:a5:eb | Used by all 3 VMs |
+| 1 | my01-mig-sshkey-01 | tbq5thtqubnf05ts4une | ef:95:1c:cc:1d:6c:3f:1a:f5:c7:87:5e:bf:4d:8e:0d:fd:75:16:d5 | Used by all 3 VMs |
 
 ---
 
