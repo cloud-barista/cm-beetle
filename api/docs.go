@@ -17038,6 +17038,118 @@ const docTemplate = `{
                 }
             }
         },
+        "summary.SourceNlbBackendServerInfo": {
+            "type": "object",
+            "properties": {
+                "hostname": {
+                    "type": "string",
+                    "example": "ip-10-0-1-221"
+                },
+                "ip": {
+                    "type": "string",
+                    "example": "10.0.1.221"
+                },
+                "machineId": {
+                    "type": "string",
+                    "example": "ec2d32b5-98fb-5a96-7913-d3db1ec18932"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "influx1"
+                },
+                "port": {
+                    "type": "integer",
+                    "example": 8086
+                },
+                "weight": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "summary.SourceNlbHealthCheckInfo": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "interval": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "port": {
+                    "type": "integer",
+                    "example": 8086
+                },
+                "protocol": {
+                    "type": "string",
+                    "example": "tcp"
+                },
+                "threshold": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "timeout": {
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "summary.SourceNlbInfo": {
+            "type": "object",
+            "properties": {
+                "backendName": {
+                    "type": "string",
+                    "example": "influxdb_back"
+                },
+                "backendPort": {
+                    "type": "integer",
+                    "example": 8086
+                },
+                "backendProtocol": {
+                    "type": "string",
+                    "example": "tcp"
+                },
+                "backendServers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/summary.SourceNlbBackendServerInfo"
+                    }
+                },
+                "balance": {
+                    "type": "string",
+                    "example": "roundrobin"
+                },
+                "bindAddress": {
+                    "type": "string",
+                    "example": "*"
+                },
+                "healthCheck": {
+                    "$ref": "#/definitions/summary.SourceNlbHealthCheckInfo"
+                },
+                "hostHostname": {
+                    "type": "string",
+                    "example": "ip-10-0-1-30"
+                },
+                "hostMachineId": {
+                    "type": "string",
+                    "example": "ec268ed7-821e-9d73-e79f-961262161624"
+                },
+                "listenerPort": {
+                    "type": "integer",
+                    "example": 9999
+                },
+                "listenerProtocol": {
+                    "type": "string",
+                    "example": "tcp"
+                },
+                "software": {
+                    "type": "string",
+                    "example": "haproxy"
+                }
+            }
+        },
         "summary.SourceOSInfo": {
             "type": "object",
             "properties": {
@@ -17219,6 +17331,10 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 3
                 },
+                "totalNlbs": {
+                    "type": "integer",
+                    "example": 1
+                },
                 "totalServerCount": {
                     "type": "integer",
                     "example": 5
@@ -17249,6 +17365,12 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/summary.SourceNetworkInfo"
+                    }
+                },
+                "nlbs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/summary.SourceNlbInfo"
                     }
                 }
             }
@@ -17598,11 +17720,144 @@ const docTemplate = `{
         "summary.SummaryNetworkResources": {
             "type": "object",
             "properties": {
+                "nlbs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/summary.SummaryNlbInfo"
+                    }
+                },
                 "vnets": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/summary.SummaryVNetInfo"
                     }
+                }
+            }
+        },
+        "summary.SummaryNlbHealthCheckerInfo": {
+            "type": "object",
+            "properties": {
+                "interval": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "port": {
+                    "type": "string",
+                    "example": "8086"
+                },
+                "protocol": {
+                    "type": "string",
+                    "example": "TCP"
+                },
+                "threshold": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "timeout": {
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "summary.SummaryNlbInfo": {
+            "type": "object",
+            "properties": {
+                "connectionName": {
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
+                },
+                "createdTime": {
+                    "type": "string",
+                    "example": "2026-10-30T12:46:34.188Z"
+                },
+                "cspResourceId": {
+                    "type": "string",
+                    "example": "arn:aws:elasticloadbalancing:..."
+                },
+                "cspResourceName": {
+                    "type": "string",
+                    "example": "tbsd5l543sjssm4r416n"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Migrated from HAProxy backend: influxdb_back"
+                },
+                "healthChecker": {
+                    "$ref": "#/definitions/summary.SummaryNlbHealthCheckerInfo"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "my01-ng-influxdb-back"
+                },
+                "listener": {
+                    "$ref": "#/definitions/summary.SummaryNlbListenerInfo"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "my01-ng-influxdb-back"
+                },
+                "scope": {
+                    "type": "string",
+                    "example": "REGION"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "Active"
+                },
+                "targetGroup": {
+                    "$ref": "#/definitions/summary.SummaryNlbTargetGroupInfo"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "PUBLIC"
+                }
+            }
+        },
+        "summary.SummaryNlbListenerInfo": {
+            "type": "object",
+            "properties": {
+                "dnsName": {
+                    "type": "string",
+                    "example": "tbsd5l543sjssm4r416n-ef4968adbbe89e0e.elb.ap-northeast-2.amazonaws.com"
+                },
+                "ip": {
+                    "type": "string",
+                    "example": "34.64.100.10"
+                },
+                "port": {
+                    "type": "string",
+                    "example": "9999"
+                },
+                "protocol": {
+                    "type": "string",
+                    "example": "TCP"
+                }
+            }
+        },
+        "summary.SummaryNlbTargetGroupInfo": {
+            "type": "object",
+            "properties": {
+                "nodeGroupId": {
+                    "type": "string",
+                    "example": "my01-ng-influxdb-back"
+                },
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "my01-ng-influxdb-back-1",
+                        "my01-ng-influxdb-back-2"
+                    ]
+                },
+                "port": {
+                    "type": "string",
+                    "example": "8086"
+                },
+                "protocol": {
+                    "type": "string",
+                    "example": "TCP"
                 }
             }
         },
@@ -18011,6 +18266,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "i-0a1b2c3d4e5f6g7h8"
                 },
+                "id": {
+                    "type": "string",
+                    "example": "my01-ng-influxdb-back-1"
+                },
                 "image": {
                     "$ref": "#/definitions/summary.SummaryVmImageInfo"
                 },
@@ -18030,6 +18289,10 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "migrated-server-1"
+                },
+                "nodeGroupId": {
+                    "type": "string",
+                    "example": "my01-ng-influxdb-back"
                 },
                 "region": {
                     "type": "string",
@@ -18147,6 +18410,10 @@ const docTemplate = `{
                 "targetRegion": {
                     "type": "string",
                     "example": "ap-northeast-2"
+                },
+                "totalNlbCount": {
+                    "type": "integer",
+                    "example": 1
                 },
                 "totalVmCount": {
                     "type": "integer",
