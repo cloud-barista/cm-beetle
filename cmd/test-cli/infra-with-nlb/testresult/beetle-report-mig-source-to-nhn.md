@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-10-12 11:01:17*
+*Report generated: 2026-11-03 07:48:50*
 
 ---
 
@@ -20,6 +20,12 @@ This report provides a comprehensive summary of the infrastructure migration fro
 
 **Migrated Servers:** 3
 
+**NLB Migration Status:** Completed
+
+**Total Load Balancers:** 1
+
+**Migrated Load Balancers:** 1
+
 **💰 Estimated Monthly Cost:** $311.69 USD
 
 ---
@@ -31,12 +37,13 @@ Summary of key infrastructure resources created or configured in the target clou
 | # | Resource Type | Count | Status | Details |
 |---|---------------|-------|--------|----------|
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
-| 2 | **VM Spec** | 2 | ✅ Selected | c2.c2m2, r2.c4m16 |
+| 2 | **VM Spec** | 2 | ✅ Selected | r2.c4m16, c2.c2m2 |
 | 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
 | 4 | **VNet (VPC)** | 1 | ✅ Created | my09-mig-vnet-01, CIDR: 10.0.0.0/21 |
 | 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my09-mig-vnet-01) |
 | 6 | **Security Group** | 2 security groups | ✅ Created | Total 12 rules in 2 sgs |
 | 7 | **SSH Key** | 1 keys | ✅ Created | For VM access control |
+| 8 | **Network Load Balancer** | 1 | ✅ Created | my09-ng-influxdb-back (TCP:9999 -> TCP:8086) |
 
 ---
 
@@ -46,9 +53,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my09-ng-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** c54494b3-165c-4fe0-a924-32b4a0fec1fc<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
-| 2 | **VM Name:** my09-ng-influxdb-back-1<br>**VM ID:** 246fe00a-bfd2-402b-b140-22545a2f1c6c<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
-| 3 | **VM Name:** my09-ng-influxdb-back-2<br>**VM ID:** b0993afa-0c7a-44c7-809b-236ca241113f<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
+| 1 | **VM Name:** my09-ng-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 538b3c77-3777-4e37-be29-1004fcda8048<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
+| 2 | **VM Name:** my09-ng-influxdb-back-1<br>**VM ID:** cb04341b-8725-47fd-b5e4-804c24dd8bba<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| 3 | **VM Name:** my09-ng-influxdb-back-2<br>**VM ID:** f3c5c55a-727c-450f-92c9-e1f6263e3ef7<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
 
 ---
 
@@ -82,7 +89,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my09-mig-sg-01
 
-**CSP ID:** ed3c8491-1514-4bce-8e7d-e982e62f49cf | **VNet:** my09-mig-vnet-01 | **Rules:** 8
+**CSP ID:** 9deb893f-653e-4aa8-8309-aaf905bc683c | **VNet:** my09-mig-vnet-01 | **Rules:** 8
 
 **Assigned VMs:**
 
@@ -95,18 +102,18 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
 |-----|-----------|----------|------|------|----------------------|------|
-| 1 | inbound | TCP | 9999 | 0.0.0.0/0 | inbound tcp 9999 | Migrated from source |
+| 1 | inbound | ALL |  | 10.0.0.0/16 | inbound tcp 8086 from 10.0.0.0/16 | Migrated from source |
 | 2 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
-| 3 | inbound | TCP | 8086 | 10.0.1.0/24 | - | Created by system |
+| 3 | inbound | TCP | 8086 | 0.0.0.0/0 | - | Created by system |
 | 4 | inbound | TCP | 8086 | 10.0.0.0/21 | - | Created by system |
 | 5 | inbound | TCP | 8086 | 10.0.0.0/16 | inbound tcp 8086 from 10.0.0.0/16 | Migrated from source |
-| 6 | inbound | TCP | 8086 | 0.0.0.0/0 | - | Created by system |
-| 7 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
-| 8 | inbound | ALL |  | 10.0.0.0/16 | inbound * * from 10.0.0.0/16 | Migrated from source |
+| 6 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 7 | inbound | TCP | 9999 | 0.0.0.0/0 | - | Created by system |
+| 8 | inbound | TCP | 8086 | 10.0.1.0/24 | - | Created by system |
 
 ### Security Group: my09-mig-sg-02
 
-**CSP ID:** 8b50179f-bdbc-4e39-aff3-1848ec9913c9 | **VNet:** my09-mig-vnet-01 | **Rules:** 4
+**CSP ID:** b7e42c3f-6ce0-4a99-adb3-8c43a9add9a7 | **VNet:** my09-mig-vnet-01 | **Rules:** 4
 
 **Assigned VMs:**
 
@@ -117,10 +124,10 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
 |-----|-----------|----------|------|------|----------------------|------|
-| 1 | inbound | TCP | 9999 | 0.0.0.0/0 | inbound tcp 9999 | Migrated from source |
-| 2 | inbound | ALL |  | 10.0.0.0/16 | inbound * * from 10.0.0.0/16 | Migrated from source |
-| 3 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
-| 4 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
+| 1 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 2 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
+| 3 | inbound | ALL |  | 10.0.0.0/16 | inbound * * from 10.0.0.0/16 | Migrated from source |
+| 4 | inbound | TCP | 9999 | 0.0.0.0/0 | inbound tcp 9999 | Migrated from source |
 
 ---
 
@@ -132,13 +139,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my09-mig-vnet-01<br>**ID:** 63f62c96-b2f4-4602-8385-62d049b22434 | 10.0.0.0/21 |
+| 1 | **Name:** my09-mig-vnet-01<br>**ID:** 5607e2b9-d31d-445b-8235-826821764519 | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my09-mig-subnet-01<br>**ID:** b31a5d3f-d214-4469-92ca-c8588598023d | 10.0.1.0/24 | my09-mig-vnet-01 |
+| 1 | **Name:** my09-mig-subnet-01<br>**ID:** e9cf711b-2444-44d6-9963-14630f58b051 | 10.0.1.0/24 | my09-mig-vnet-01 |
 
 ### Source Network Information
 
@@ -196,6 +203,34 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ---
 
+## ⚖️ Network Load Balancers (NLBs)
+
+**Summary:** 1 of 1 load balancer(s) migrated from on-premise software load balancers to cloud-managed NLBs.
+
+### 1. influxdb_back (haproxy) → my09-ng-influxdb-back
+
+**Configuration Comparison:**
+
+| Property | Source (On-Premise) | Target (Cloud NLB) | Note |
+|----------|---------------------|--------------------|------|
+| **Load Balancer / Name** | haproxy (Host: ip-10-0-1-30) | my09-ng-influxdb-back (CSP ID: tbsc944nleu70b5070vb) | Replaced by managed NLB |
+| **Type / Scope** | Software LB | PUBLIC / REGION | Cloud-native NLB |
+| **Frontend Listener** | *:9999 (TCP) | TCP:9999 | IP: 133.186.251.215 |
+| **Backend / Target Group** | influxdb_back (TCP:8086, roundrobin) | my09-ng-influxdb-back (TCP:8086, 2 nodes) | Target Group attached to NodeGroup |
+| **Health Check** | Enabled (Interval: 10s, Timeout: 10s, Threshold: 3) | TCP:8086 (Interval: 10s, Timeout: 10s, Threshold: 3) | Preserved |
+
+**Backend Node Mappings:**
+
+| No. | Source Backend Server | Source Endpoint | Target Node | Target CSP VM ID | Target Private IP | Target Public IP | Target Port | Status |
+|-----|-----------------------|-----------------|-------------|------------------|-------------------|------------------|-------------|--------|
+| 1 | influx1 (ip-10-0-1-221) | 10.0.1.221:8086 | my09-ng-influxdb-back-1 | cb04341b-8725-47fd-b5e4-804c24dd8bba | 10.0.1.101 | 133.186.222.44 | 8086 | Running |
+| 2 | influx2 (ip-10-0-1-138) | 10.0.1.138:8086 | my09-ng-influxdb-back-2 | f3c5c55a-727c-450f-92c9-e1f6263e3ef7 | 10.0.1.100 | 133.186.213.214 | 8086 | Running |
+
+**Migration Notes:**
+- On-premise haproxy on ip-10-0-1-30 (migrated to my09-ng-ec268ed7-821e-9d73-e79f-961262161624-1) is replaced by cloud-managed NLB.
+
+---
+
 ## 🔑 SSH Keys
 
 **Summary:** 1 SSH key(s) have been created for secure access to the migrated VMs.
@@ -204,7 +239,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my09-mig-sshkey-01 | tbhjbjpobn3enr3num8l | 31:03:28:01:29:5a:fd:4d:b6:4f:08:58:97:1b:0c:ad | Used by all 3 VMs |
+| 1 | my09-mig-sshkey-01 | tbm9mtmk1plihtn1bjvn | 10:b5:7d:7b:dd:65:52:32:69:6c:b8:d3:3d:d0:f9:a0 | Used by all 3 VMs |
 
 ---
 

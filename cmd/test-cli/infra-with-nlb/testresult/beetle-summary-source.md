@@ -1,6 +1,6 @@
 # Source Infrastructure Summary
 
-**Generated At:** 2026-10-30 12:45:24
+**Generated At:** 2026-11-03 08:55:07
 
 **Infrastructure Name:** infra-3-nodes
 
@@ -16,6 +16,7 @@
 | Total Memory (GB) | 26 |
 | Total Disk (GB) | 68 |
 | Total Networks | 3 |
+| Total Load Balancers | 1 |
 
 ## Compute Resources
 
@@ -82,6 +83,25 @@
 | Gateway | 10.0.1.1 |
 | Connected Servers | 3 |
 | Description | Network with gateway 10.0.1.1 |
+
+### Network Load Balancers (1)
+
+#### 1. influxdb_back (haproxy on ip-10-0-1-30)
+
+| Property | Value |
+|----------|-------|
+| Software | haproxy |
+| Host Server | ip-10-0-1-30 (Machine ID: ec268ed7-821e-9d73-e79f-961262161624) |
+| Frontend Listener | *:9999 (TCP) |
+| Backend Pool | influxdb_back (Protocol: TCP, Port: 8086, Balance: roundrobin) |
+| Health Check | Enabled (Interval: 10s, Timeout: 10s, Threshold: 3) |
+
+**Backend Servers:**
+
+| Server Name | Endpoint | Weight | Mapped Source Server | Machine ID |
+|-------------|----------|--------|----------------------|------------|
+| influx1 | 10.0.1.221:8086 | - | ip-10-0-1-221 | ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| influx2 | 10.0.1.138:8086 | - | ip-10-0-1-138 | ec288dd0-c6fa-8a49-2f60-bc898311febf |
 
 ### Network Details by Server (3 servers)
 

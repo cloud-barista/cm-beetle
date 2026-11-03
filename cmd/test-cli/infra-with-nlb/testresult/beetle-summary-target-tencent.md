@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-10-30 12:51:45
+**Generated At:** 2026-11-03 08:59:13
 
 **Namespace:** mig01
 
@@ -20,6 +20,7 @@
 | **Total VMs** | 3 |
 | **Running VMs** | 3 |
 | **Stopped VMs** | 0 |
+| **Total NLBs** | 1 |
 | **Monitoring Agent** |  |
 
 ## Compute Resources
@@ -28,23 +29,22 @@
 
 | Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
-| S6.LARGE16 | 4 | 16.0 | - | x86_64 |  | $0.2300 | 2 |
+| SA5.LARGE16 | 4 | 16.0 | - | x86_64 |  | $0.2200 | 2 |
 | SA5.MEDIUM2 | 2 | 2.0 | - | x86_64 |  | $0.0600 | 1 |
 
 ### VM Images
 
 | Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 |------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
-| img-487zeit5 | Ubuntu Server 22.04 LTS 64bit | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 20 GB | 1 |
-| img-7rotv4ux | Ubuntu Server 22.04 LTS 64bit UEFI | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 20 GB | 2 |
+| img-7rotv4ux | Ubuntu Server 22.04 LTS 64bit UEFI | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 20 GB | 3 |
 
 ### Virtual Machines
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | ins-mhkac4j9 | Running | 2 vCPU, 2.0 GiB | Ubuntu Server 22.04 LTS 64bit (Ubuntu Server 22.04 LTS 64bit) | **VNet:** my05-mig-vnet-01<br>**Subnet:** my05-mig-subnet-01<br>**Public IP:** 43.166.11.218<br>**Private IP:** 10.0.1.8<br>**SGs:** my05-mig-sg-02<br>**SSH:** my05-mig-sshkey-01 |
-| my05-ng-influxdb-back-1 | ins-4ap62gvz | Running | 4 vCPU, 16.0 GiB | Ubuntu Server 22.04 LTS 64bit UEFI (Ubuntu Server 22.04 LTS 64bit UEFI) | **VNet:** my05-mig-vnet-01<br>**Subnet:** my05-mig-subnet-01<br>**Public IP:** 43.131.254.242<br>**Private IP:** 10.0.1.10<br>**SGs:** my05-mig-sg-01<br>**SSH:** my05-mig-sshkey-01 |
-| my05-ng-influxdb-back-2 | ins-q40emar7 | Running | 4 vCPU, 16.0 GiB | Ubuntu Server 22.04 LTS 64bit UEFI (Ubuntu Server 22.04 LTS 64bit UEFI) | **VNet:** my05-mig-vnet-01<br>**Subnet:** my05-mig-subnet-01<br>**Public IP:** 43.166.9.19<br>**Private IP:** 10.0.1.2<br>**SGs:** my05-mig-sg-01<br>**SSH:** my05-mig-sshkey-01 |
+| my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | ins-7h4dbejf | Running | 2 vCPU, 2.0 GiB | Ubuntu Server 22.04 LTS 64bit UEFI (Ubuntu Server 22.04 LTS 64bit UEFI) | **VNet:** my05-mig-vnet-01<br>**Subnet:** my05-mig-subnet-01<br>**Public IP:** 101.33.73.9<br>**Private IP:** 10.0.1.13<br>**SGs:** my05-mig-sg-02<br>**SSH:** my05-mig-sshkey-01 |
+| my05-ng-influxdb-back-1 | ins-ncurja61 | Running | 4 vCPU, 16.0 GiB | Ubuntu Server 22.04 LTS 64bit UEFI (Ubuntu Server 22.04 LTS 64bit UEFI) | **VNet:** my05-mig-vnet-01<br>**Subnet:** my05-mig-subnet-01<br>**Public IP:** 43.133.92.116<br>**Private IP:** 10.0.1.12<br>**SGs:** my05-mig-sg-01<br>**SSH:** my05-mig-sshkey-01 |
+| my05-ng-influxdb-back-2 | ins-2uveewfz | Running | 4 vCPU, 16.0 GiB | Ubuntu Server 22.04 LTS 64bit UEFI (Ubuntu Server 22.04 LTS 64bit UEFI) | **VNet:** my05-mig-vnet-01<br>**Subnet:** my05-mig-subnet-01<br>**Public IP:** 43.166.14.150<br>**Private IP:** 10.0.1.2<br>**SGs:** my05-mig-sg-01<br>**SSH:** my05-mig-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my05-mig-vnet-01 |
-| **CSP VNet ID** | vpc-rtznlhxm |
+| **CSP VNet ID** | vpc-6sjytz4a |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | tencent-ap-seoul |
 | **Subnet Count** | 1 |
@@ -65,7 +65,29 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my05-mig-subnet-01 | subnet-19h6xb1b | 10.0.1.0/24 |  |
+| my05-mig-subnet-01 | subnet-1poy0xlj | 10.0.1.0/24 |  |
+
+### Network Load Balancers (NLB)
+
+#### NLB: my05-ng-influxdb-back
+
+| Property | Value |
+|----------|-------|
+| **Name** | my05-ng-influxdb-back |
+| **CSP NLB Name** | tbv73dv4ckbrlo6pn8t2 |
+| **CSP NLB ID** | lb-o8lkwd2z |
+| **Type / Scope** | PUBLIC / REGION |
+| **Connection** | tencent-ap-seoul |
+| **Listener** | TCP:9999 (DNS: lb-o8lkwd2z-9xmsd0r2j3vfnl5i.clb.kr-tencentclb.com) |
+| **Target Group** | TCP:8086 (Node Group: my05-ng-influxdb-back, 2 nodes) |
+| **Health Checker** | TCP:8086 (Interval: 10s, Timeout: 10s, Threshold: 3) |
+
+**Target Group Nodes:**
+
+| Node Name | CSP VM ID | Private IP | Public IP | Status |
+|-----------|-----------|------------|-----------|--------|
+| my05-ng-influxdb-back-1 | ins-ncurja61 | 10.0.1.12 | 43.133.92.116 | Running |
+| my05-ng-influxdb-back-2 | ins-2uveewfz | 10.0.1.2 | 43.166.14.150 | Running |
 
 
 ## Security Resources
@@ -74,7 +96,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my05-mig-sshkey-01 | skey-7ic7ibdp |  |  |
+| my05-mig-sshkey-01 | skey-ofv7yi59 |  |  |
 
 ### Security Groups
 
@@ -83,7 +105,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my05-mig-sg-01 |
-| **CSP Security Group ID** | sg-d2jm3yvx |
+| **CSP Security Group ID** | sg-b31fuorh |
 | **VNet** | my05-mig-vnet-01 |
 | **Rule Count** | 6 rules |
 
@@ -91,9 +113,9 @@
 
 | Direction | Protocol | Port Range | CIDR |
 |-----------|----------|------------|------|
+| inbound | TCP | 8086 | 10.0.0.0/16 |
 | inbound | ALL |  | 10.0.0.0/16 |
 | inbound | TCP | 22 | 0.0.0.0/0 |
-| inbound | TCP | 8086 | 10.0.0.0/16 |
 | inbound | TCP | 9999 | 0.0.0.0/0 |
 | inbound | TCP | 8086 | 0.0.0.0/0 |
 | outbound | ALL |  | 0.0.0.0/0 |
@@ -103,7 +125,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my05-mig-sg-02 |
-| **CSP Security Group ID** | sg-hgf81iwn |
+| **CSP Security Group ID** | sg-dmpck3qp |
 | **VNet** | my05-mig-vnet-01 |
 | **Rule Count** | 4 rules |
 
@@ -123,22 +145,22 @@
 
 | Period | Cost (USD) |
 |--------|------------|
-| **Per Hour** | $0.5200 |
-| **Per Day** | $12.48 |
-| **Per Month (30 days)** | $374.40 |
+| **Per Hour** | $0.5000 |
+| **Per Day** | $12.00 |
+| **Per Month (30 days)** | $360.00 |
 
 ### Cost by Region
 
 | CSP | Region | VM Count | Cost/Hour (USD) | Cost/Month (USD) |
 |-----|--------|----------|-----------------|------------------|
-| TENCENT | ap-seoul | 3 | $0.5200 | $374.40 |
+| TENCENT | ap-seoul | 3 | $0.5000 | $360.00 |
 
 ### Cost by Virtual Machine
 
 | VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
 |---------|------|-----------------|------------------|
 | my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | SA5.MEDIUM2 | $0.0600 | $43.20 |
-| my05-ng-influxdb-back-1 | S6.LARGE16 | $0.2300 | $165.60 |
-| my05-ng-influxdb-back-2 | S6.LARGE16 | $0.2300 | $165.60 |
+| my05-ng-influxdb-back-1 | SA5.LARGE16 | $0.2200 | $158.40 |
+| my05-ng-influxdb-back-2 | SA5.LARGE16 | $0.2200 | $158.40 |
 
 

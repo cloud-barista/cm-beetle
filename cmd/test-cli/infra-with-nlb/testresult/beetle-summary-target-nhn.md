@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-10-12 11:01:11
+**Generated At:** 2026-11-03 07:48:45
 
 **Namespace:** mig01
 
@@ -20,6 +20,7 @@
 | **Total VMs** | 3 |
 | **Running VMs** | 3 |
 | **Stopped VMs** | 0 |
+| **Total NLBs** | 1 |
 | **Monitoring Agent** |  |
 
 ## Compute Resources
@@ -41,9 +42,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my09-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | c54494b3-165c-4fe0-a924-32b4a0fec1fc | Running | 2 vCPU, 2.0 GiB | Ubuntu Server 22.04.5 LTS (2026.03.10) (Ubuntu Server 22.04.5 LTS (2026.03.10)) | **VNet:** my09-mig-vnet-01<br>**Subnet:** my09-mig-subnet-01<br>**Public IP:** 133.186.223.136<br>**Private IP:** 10.0.1.11<br>**SGs:** my09-mig-sg-02<br>**SSH:** my09-mig-sshkey-01 |
-| my09-ng-influxdb-back-1 | 246fe00a-bfd2-402b-b140-22545a2f1c6c | Running | 4 vCPU, 16.0 GiB | Ubuntu Server 22.04.5 LTS (2026.03.10) (Ubuntu Server 22.04.5 LTS (2026.03.10)) | **VNet:** my09-mig-vnet-01<br>**Subnet:** my09-mig-subnet-01<br>**Public IP:** 133.186.209.144<br>**Private IP:** 10.0.1.87<br>**SGs:** my09-mig-sg-01<br>**SSH:** my09-mig-sshkey-01 |
-| my09-ng-influxdb-back-2 | b0993afa-0c7a-44c7-809b-236ca241113f | Running | 4 vCPU, 16.0 GiB | Ubuntu Server 22.04.5 LTS (2026.03.10) (Ubuntu Server 22.04.5 LTS (2026.03.10)) | **VNet:** my09-mig-vnet-01<br>**Subnet:** my09-mig-subnet-01<br>**Public IP:** 133.186.209.114<br>**Private IP:** 10.0.1.100<br>**SGs:** my09-mig-sg-01<br>**SSH:** my09-mig-sshkey-01 |
+| my09-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | 538b3c77-3777-4e37-be29-1004fcda8048 | Running | 2 vCPU, 2.0 GiB | Ubuntu Server 22.04.5 LTS (2026.03.10) (Ubuntu Server 22.04.5 LTS (2026.03.10)) | **VNet:** my09-mig-vnet-01<br>**Subnet:** my09-mig-subnet-01<br>**Public IP:** 103.218.158.79<br>**Private IP:** 10.0.1.4<br>**SGs:** my09-mig-sg-02<br>**SSH:** my09-mig-sshkey-01 |
+| my09-ng-influxdb-back-1 | cb04341b-8725-47fd-b5e4-804c24dd8bba | Running | 4 vCPU, 16.0 GiB | Ubuntu Server 22.04.5 LTS (2026.03.10) (Ubuntu Server 22.04.5 LTS (2026.03.10)) | **VNet:** my09-mig-vnet-01<br>**Subnet:** my09-mig-subnet-01<br>**Public IP:** 133.186.222.44<br>**Private IP:** 10.0.1.101<br>**SGs:** my09-mig-sg-01<br>**SSH:** my09-mig-sshkey-01 |
+| my09-ng-influxdb-back-2 | f3c5c55a-727c-450f-92c9-e1f6263e3ef7 | Running | 4 vCPU, 16.0 GiB | Ubuntu Server 22.04.5 LTS (2026.03.10) (Ubuntu Server 22.04.5 LTS (2026.03.10)) | **VNet:** my09-mig-vnet-01<br>**Subnet:** my09-mig-subnet-01<br>**Public IP:** 133.186.213.214<br>**Private IP:** 10.0.1.100<br>**SGs:** my09-mig-sg-01<br>**SSH:** my09-mig-sshkey-01 |
 
 
 ## Network Resources
@@ -55,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my09-mig-vnet-01 |
-| **CSP VNet ID** | 63f62c96-b2f4-4602-8385-62d049b22434 |
+| **CSP VNet ID** | 5607e2b9-d31d-445b-8235-826821764519 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | nhn-kr1 |
 | **Subnet Count** | 1 |
@@ -64,7 +65,29 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my09-mig-subnet-01 | b31a5d3f-d214-4469-92ca-c8588598023d | 10.0.1.0/24 |  |
+| my09-mig-subnet-01 | e9cf711b-2444-44d6-9963-14630f58b051 | 10.0.1.0/24 |  |
+
+### Network Load Balancers (NLB)
+
+#### NLB: my09-ng-influxdb-back
+
+| Property | Value |
+|----------|-------|
+| **Name** | my09-ng-influxdb-back |
+| **CSP NLB Name** | tbsc944nleu70b5070vb |
+| **CSP NLB ID** | 52664d9e-3fbe-4d84-8d33-a76fc970d5f8 |
+| **Type / Scope** | PUBLIC / REGION |
+| **Connection** | nhn-kr1 |
+| **Listener** | TCP:9999 (IP: 133.186.251.215) |
+| **Target Group** | TCP:8086 (Node Group: my09-ng-influxdb-back, 2 nodes) |
+| **Health Checker** | TCP:8086 (Interval: 10s, Timeout: 10s, Threshold: 3) |
+
+**Target Group Nodes:**
+
+| Node Name | CSP VM ID | Private IP | Public IP | Status |
+|-----------|-----------|------------|-----------|--------|
+| my09-ng-influxdb-back-1 | cb04341b-8725-47fd-b5e4-804c24dd8bba | 10.0.1.101 | 133.186.222.44 | Running |
+| my09-ng-influxdb-back-2 | f3c5c55a-727c-450f-92c9-e1f6263e3ef7 | 10.0.1.100 | 133.186.213.214 | Running |
 
 
 ## Security Resources
@@ -73,7 +96,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my09-mig-sshkey-01 | tbhjbjpobn3enr3num8l | cb-user | 31:03:28:01:29:5a:fd:4d:b6:4f:08:58:97:1b:0c:ad |
+| my09-mig-sshkey-01 | tbm9mtmk1plihtn1bjvn | cb-user | 10:b5:7d:7b:dd:65:52:32:69:6c:b8:d3:3d:d0:f9:a0 |
 
 ### Security Groups
 
@@ -82,7 +105,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my09-mig-sg-01 |
-| **CSP Security Group ID** | ed3c8491-1514-4bce-8e7d-e982e62f49cf |
+| **CSP Security Group ID** | 9deb893f-653e-4aa8-8309-aaf905bc683c |
 | **VNet** | my09-mig-vnet-01 |
 | **Rule Count** | 8 rules |
 
@@ -90,21 +113,21 @@
 
 | Direction | Protocol | Port Range | CIDR |
 |-----------|----------|------------|------|
-| inbound | TCP | 9999 | 0.0.0.0/0 |
+| inbound | ALL |  | 10.0.0.0/16 |
 | outbound | ALL |  | 0.0.0.0/0 |
-| inbound | TCP | 8086 | 10.0.1.0/24 |
+| inbound | TCP | 8086 | 0.0.0.0/0 |
 | inbound | TCP | 8086 | 10.0.0.0/21 |
 | inbound | TCP | 8086 | 10.0.0.0/16 |
-| inbound | TCP | 8086 | 0.0.0.0/0 |
 | inbound | TCP | 22 | 0.0.0.0/0 |
-| inbound | ALL |  | 10.0.0.0/16 |
+| inbound | TCP | 9999 | 0.0.0.0/0 |
+| inbound | TCP | 8086 | 10.0.1.0/24 |
 
 #### Security Group: my09-mig-sg-02
 
 | Property | Value |
 |----------|-------|
 | **Name** | my09-mig-sg-02 |
-| **CSP Security Group ID** | 8b50179f-bdbc-4e39-aff3-1848ec9913c9 |
+| **CSP Security Group ID** | b7e42c3f-6ce0-4a99-adb3-8c43a9add9a7 |
 | **VNet** | my09-mig-vnet-01 |
 | **Rule Count** | 4 rules |
 
@@ -112,10 +135,10 @@
 
 | Direction | Protocol | Port Range | CIDR |
 |-----------|----------|------------|------|
-| inbound | TCP | 9999 | 0.0.0.0/0 |
-| inbound | ALL |  | 10.0.0.0/16 |
 | inbound | TCP | 22 | 0.0.0.0/0 |
 | outbound | ALL |  | 0.0.0.0/0 |
+| inbound | ALL |  | 10.0.0.0/16 |
+| inbound | TCP | 9999 | 0.0.0.0/0 |
 
 
 ## Cost Estimation
