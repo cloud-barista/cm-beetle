@@ -147,6 +147,8 @@ func (e *RsyncExecutor) executePush(source, destination DataLocation) error {
 	// Cleanup temporary key file after execution
 	defer e.cleanupTempKeyFile()
 
+	e.ensureRemoteDirectory(destination)
+
 	args := e.buildLocalRsyncArgs(source, destination)
 
 	cmd := exec.Command("rsync", args...)
@@ -248,6 +250,8 @@ func (e *RsyncExecutor) executeAgentForward(source, destination DataLocation) er
 		return fmt.Errorf("failed to request agent forwarding: %w", err)
 	}
 
+	e.ensureRemoteDirectory(destination)
+
 	// Build rsync command to run on source server
 	rsyncCmd := e.buildRemoteRsyncCommand(source, destination, dstSSH)
 
@@ -258,6 +262,23 @@ func (e *RsyncExecutor) executeAgentForward(source, destination DataLocation) er
 	}
 
 	return nil
+}
+
+// ensureRemoteDirectory creates the destination directory via SSH if it does not exist yet.
+func (e *RsyncExecutor) ensureRemoteDirectory(destination DataLocation) {
+	if e.DryRun || destination.Filesystem == nil || destination.Filesystem.SSH == nil {
+		return
+	}
+	targetDir := strings.TrimSpace(destination.Path)
+	if targetDir == "" {
+		return
+	}
+	if !isDirectoryPath(targetDir) {
+		targetDir = filepath.Dir(targetDir)
+	}
+	escaped := strings.ReplaceAll(targetDir, "'", "'\\''")
+	cmd := fmt.Sprintf("mkdir -p '%s' 2>/dev/null || (sudo -n mkdir -p '%s' && sudo -n chown $(id -un):$(id -gn) '%s') || true", escaped, escaped, escaped)
+	_, _ = executeSSHCommand(cmd, destination.Filesystem.SSH)
 }
 
 // loadPrivateKeyData returns private key bytes from PrivateKey content or PrivateKeyPath file.

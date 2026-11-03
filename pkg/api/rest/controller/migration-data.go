@@ -234,10 +234,10 @@ func preferRespondAsync(c echo.Context) bool {
 	return false
 }
 
-// runDataMigration performs the data migration and returns a summary of the result.
+// runDataMigration performs the data migration workflow (PreCmd, Transfer, PostCmd) and returns a summary.
 func runDataMigration(req transx.DataMigrationModel) (map[string]any, error) {
 	start := time.Now()
-	if err := transx.Transfer(req); err != nil {
+	if err := transx.MigrateData(req); err != nil {
 		return nil, fmt.Errorf("data migration failed: %w (%s)", err, time.Since(start).Round(time.Millisecond))
 	}
 	elapsed := time.Since(start).Round(time.Millisecond)

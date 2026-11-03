@@ -364,6 +364,66 @@ Apply glob patterns to control which files are transferred. Filtering is support
 
 ---
 
+## Source & Destination Commands (`preCmd` / `postCmd`)
+
+`POST /beetle/migration/data` executes `transx.MigrateData(dmm)`, which runs optional remote shell commands sequentially around the data transfer:
+
+1. **Source Command (Before Transfer) - `source.preCmd`**: Executed on the source server via SSH before `rsync` or Object Storage transfer begins. Ideal for stopping stateful containers (`docker compose stop && sync`), flushing databases (`mysqldump`), or adjusting file permissions.
+2. **Data Transfer (`Transfer`)**: Transfers filtered files between Source and Destination (`rsync` over SSH or MinIO S3 SDK). When pushing to a remote SSH filesystem path that does not yet exist (for example, `/opt/aimx/ai-service` on a newly provisioned VM), `transx` automatically creates the target directory and sets user ownership via SSH prior to `rsync`.
+3. **Destination Command (After Transfer) - `destination.postCmd`**: Executed on the destination server via SSH immediately after transfer completes. Ideal for starting containers (`docker compose up -d`), restoring database dumps (`mysql < dump.sql`), or warming up GPU models.
+
+### Example: AI Service Stack (`Ollama` + `Open WebUI`) Migration with `preCmd` and `postCmd`
+
+```json
+{
+  "source": {
+    "storageType": "filesystem",
+    "path": "/opt/aimx/ai-service",
+    "preCmd": "cd /opt/aimx/ai-service && sudo docker compose stop && sync && sudo chown -R $USER:$USER /opt/aimx/ai-service && sudo chmod -R u+rwX /opt/aimx/ai-service",
+    "filter": {
+      "include": [
+        "ollama/models/blobs/**",
+        "ollama/models/manifests/**",
+        "open-webui/webui.db",
+        "docker-compose.yml"
+      ],
+      "exclude": [
+        "open-webui/cache/**",
+        "*.log",
+        "*.tmp",
+        "__pycache__/**"
+      ]
+    },
+    "filesystem": {
+      "accessType": "ssh",
+      "ssh": {
+        "host": "source-ai-gpu.example.com",
+        "port": 22,
+        "username": "ubuntu",
+        "privateKey": "<encrypted>"
+      }
+    }
+  },
+  "destination": {
+    "storageType": "filesystem",
+    "path": "/opt/aimx/ai-service",
+    "postCmd": "cd /opt/aimx/ai-service && sudo docker compose up -d && sleep 5 && sudo docker exec aimx-ollama ollama run gemma4:e2b \"Hello\" >/dev/null 2>&1 || true",
+    "filesystem": {
+      "accessType": "ssh",
+      "ssh": {
+        "host": "target-ai-gpu.example.com",
+        "port": 22,
+        "username": "ubuntu",
+        "privateKey": "<encrypted>"
+      }
+    }
+  },
+  "strategy": "auto"
+}
+```
+
+---
+
 ## DataMigrationModel Field Reference
 
 ### `DataLocation`
