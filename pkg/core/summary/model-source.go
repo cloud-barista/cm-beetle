@@ -43,6 +43,7 @@ type SourceSummaryInfraOverview struct {
 	TotalMemoryGB    int    `json:"totalMemoryGb" example:"160"`
 	TotalDiskGB      int    `json:"totalDiskGb" example:"2000"`
 	TotalNetworks    int    `json:"totalNetworks" example:"3"`
+	TotalNLBs        int    `json:"totalNlbs,omitempty" example:"1"`
 }
 
 // SourceSummaryComputeResources contains source server information
@@ -116,6 +117,43 @@ type SourceNetworkBrief struct {
 // SourceSummaryNetworkResources contains source network information
 type SourceSummaryNetworkResources struct {
 	Networks []SourceNetworkInfo `json:"networks"`
+	NLBs     []SourceNlbInfo     `json:"nlbs,omitempty"`
+}
+
+// SourceNlbInfo represents on-premise load balancer configuration and server mapping
+type SourceNlbInfo struct {
+	Software       string                       `json:"software" example:"haproxy"`
+	HostMachineId  string                       `json:"hostMachineId" example:"ec268ed7-821e-9d73-e79f-961262161624"`
+	HostHostname   string                       `json:"hostHostname,omitempty" example:"ip-10-0-1-30"`
+	BindAddress    string                       `json:"bindAddress" example:"*"`
+	ListenerPort   int                          `json:"listenerPort" example:"9999"`
+	ListenerProto  string                       `json:"listenerProtocol" example:"tcp"`
+	BackendName    string                       `json:"backendName" example:"influxdb_back"`
+	BackendProto   string                       `json:"backendProtocol" example:"tcp"`
+	BackendPort    int                          `json:"backendPort" example:"8086"`
+	Balance        string                       `json:"balance" example:"roundrobin"`
+	BackendServers []SourceNlbBackendServerInfo `json:"backendServers"`
+	HealthCheck    SourceNlbHealthCheckInfo     `json:"healthCheck"`
+}
+
+// SourceNlbBackendServerInfo represents a backend server in an on-premise load balancer
+type SourceNlbBackendServerInfo struct {
+	Name      string `json:"name" example:"influx1"`
+	IP        string `json:"ip" example:"10.0.1.221"`
+	Port      int    `json:"port" example:"8086"`
+	Weight    int    `json:"weight,omitempty" example:"1"`
+	MachineId string `json:"machineId,omitempty" example:"ec2d32b5-98fb-5a96-7913-d3db1ec18932"`
+	Hostname  string `json:"hostname,omitempty" example:"ip-10-0-1-221"`
+}
+
+// SourceNlbHealthCheckInfo represents health check configuration of an on-premise load balancer
+type SourceNlbHealthCheckInfo struct {
+	Enabled   bool   `json:"enabled" example:"true"`
+	Protocol  string `json:"protocol,omitempty" example:"tcp"`
+	Port      int    `json:"port,omitempty" example:"8086"`
+	Interval  int    `json:"interval" example:"10"`
+	Timeout   int    `json:"timeout" example:"10"`
+	Threshold int    `json:"threshold" example:"3"`
 }
 
 // SourceNetworkInfo represents source network information

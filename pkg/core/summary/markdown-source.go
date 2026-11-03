@@ -82,6 +82,9 @@ func generateSourceOverviewMarkdown(overview *SourceSummaryInfraOverview) string
 	md.WriteString(fmt.Sprintf("| Total Memory (GB) | %d |\n", overview.TotalMemoryGB))
 	md.WriteString(fmt.Sprintf("| Total Disk (GB) | %d |\n", overview.TotalDiskGB))
 	md.WriteString(fmt.Sprintf("| Total Networks | %d |\n", overview.TotalNetworks))
+	if overview.TotalNLBs > 0 {
+		md.WriteString(fmt.Sprintf("| Total Load Balancers | %d |\n", overview.TotalNLBs))
+	}
 
 	return md.String()
 }
@@ -148,31 +151,105 @@ func generateSourceNetworkResourcesMarkdown(resources *SourceSummaryNetworkResou
 
 	if len(resources.Networks) == 0 {
 		md.WriteString("*No networks defined*\n\n")
-		return md.String()
+	} else {
+		for i, network := range resources.Networks {
+			md.WriteString(fmt.Sprintf("#### %d. %s\n\n", i+1, network.NetworkName))
+
+			md.WriteString("| Property | Value |\n")
+			md.WriteString("|----------|-------|\n")
+			md.WriteString(fmt.Sprintf("| Network CIDR | %s |\n", network.NetworkCIDR))
+
+			if network.Gateway != "" {
+				md.WriteString(fmt.Sprintf("| Gateway | %s |\n", network.Gateway))
+			}
+
+			if len(network.DNSServers) > 0 {
+				md.WriteString(fmt.Sprintf("| DNS Servers | %s |\n", strings.Join(network.DNSServers, ", ")))
+			}
+
+			md.WriteString(fmt.Sprintf("| Connected Servers | %d |\n", network.ServerCount))
+
+			if network.Description != "" {
+				md.WriteString(fmt.Sprintf("| Description | %s |\n", network.Description))
+			}
+
+			md.WriteString("\n")
+		}
 	}
 
-	for i, network := range resources.Networks {
-		md.WriteString(fmt.Sprintf("#### %d. %s\n\n", i+1, network.NetworkName))
+	if len(resources.NLBs) > 0 {
+		md.WriteString(generateSourceNlbResourcesMarkdown(resources.NLBs))
+	}
+
+	return md.String()
+}
+
+// generateSourceNlbResourcesMarkdown generates markdown for on-premise load balancers
+func generateSourceNlbResourcesMarkdown(nlbs []SourceNlbInfo) string {
+	var md strings.Builder
+
+	md.WriteString(fmt.Sprintf("### Network Load Balancers (%d)\n\n", len(nlbs)))
+
+	for i, nlb := range nlbs {
+		hostLabel := nlb.HostHostname
+		if hostLabel == "" {
+			hostLabel = nlb.HostMachineId
+		}
+		headerSuffix := nlb.Software
+		if hostLabel != "" {
+			headerSuffix = fmt.Sprintf("%s on %s", nlb.Software, hostLabel)
+		}
+		md.WriteString(fmt.Sprintf("#### %d. %s (%s)\n\n", i+1, nlb.BackendName, headerSuffix))
+
+		hostServerVal := nlb.HostMachineId
+		if nlb.HostHostname != "" && nlb.HostMachineId != "" {
+			hostServerVal = fmt.Sprintf("%s (Machine ID: %s)", nlb.HostHostname, nlb.HostMachineId)
+		} else if nlb.HostHostname != "" {
+			hostServerVal = nlb.HostHostname
+		}
+
+		bindAddr := nlb.BindAddress
+		if bindAddr == "" {
+			bindAddr = "*"
+		}
+
+		hcVal := "Disabled"
+		if nlb.HealthCheck.Enabled {
+			hcVal = fmt.Sprintf("Enabled (Interval: %ds, Timeout: %ds, Threshold: %d)",
+				nlb.HealthCheck.Interval, nlb.HealthCheck.Timeout, nlb.HealthCheck.Threshold)
+		}
 
 		md.WriteString("| Property | Value |\n")
 		md.WriteString("|----------|-------|\n")
-		md.WriteString(fmt.Sprintf("| Network CIDR | %s |\n", network.NetworkCIDR))
+		md.WriteString(fmt.Sprintf("| Software | %s |\n", nlb.Software))
+		md.WriteString(fmt.Sprintf("| Host Server | %s |\n", hostServerVal))
+		md.WriteString(fmt.Sprintf("| Frontend Listener | %s:%d (%s) |\n", bindAddr, nlb.ListenerPort, strings.ToUpper(nlb.ListenerProto)))
+		md.WriteString(fmt.Sprintf("| Backend Pool | %s (Protocol: %s, Port: %d, Balance: %s) |\n",
+			nlb.BackendName, strings.ToUpper(nlb.BackendProto), nlb.BackendPort, nlb.Balance))
+		md.WriteString(fmt.Sprintf("| Health Check | %s |\n\n", hcVal))
 
-		if network.Gateway != "" {
-			md.WriteString(fmt.Sprintf("| Gateway | %s |\n", network.Gateway))
+		if len(nlb.BackendServers) > 0 {
+			md.WriteString("**Backend Servers:**\n\n")
+			md.WriteString("| Server Name | Endpoint | Weight | Mapped Source Server | Machine ID |\n")
+			md.WriteString("|-------------|----------|--------|----------------------|------------|\n")
+			for _, srv := range nlb.BackendServers {
+				weightStr := "-"
+				if srv.Weight > 0 {
+					weightStr = fmt.Sprintf("%d", srv.Weight)
+				}
+				mappedHost := srv.Hostname
+				if mappedHost == "" {
+					mappedHost = "-"
+				}
+				mappedMachineID := srv.MachineId
+				if mappedMachineID == "" {
+					mappedMachineID = "-"
+				}
+				md.WriteString(fmt.Sprintf("| %s | %s:%d | %s | %s | %s |\n",
+					srv.Name, srv.IP, srv.Port, weightStr, mappedHost, mappedMachineID))
+			}
+			md.WriteString("\n")
 		}
-
-		if len(network.DNSServers) > 0 {
-			md.WriteString(fmt.Sprintf("| DNS Servers | %s |\n", strings.Join(network.DNSServers, ", ")))
-		}
-
-		md.WriteString(fmt.Sprintf("| Connected Servers | %d |\n", network.ServerCount))
-
-		if network.Description != "" {
-			md.WriteString(fmt.Sprintf("| Description | %s |\n", network.Description))
-		}
-
-		md.WriteString("\n")
 	}
 
 	return md.String()

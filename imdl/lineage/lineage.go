@@ -7,6 +7,7 @@ const (
 	LabelPlanningModelId  = "cm-planning-model-id"
 	LabelTargetModelId    = "cm-target-model-id"
 	LabelSourceMachineIds = "cm-source-machine-ids"
+	LabelNlbBackend       = "nlbBackend"
 	LabelMigratedAt       = "cm-migrated-at"
 )
 

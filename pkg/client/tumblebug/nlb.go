@@ -62,32 +62,48 @@ type NLBListResponse struct {
 	NLB []tbmodel.NLBInfo `json:"nlb"`
 }
 
-// ListNlbs retrieves all NLBs in the specified namespace and infra.
+// ListNlbs retrieves all NLBs in the specified namespace and infra with defensive retries.
 func (s *Session) ListNlbs(nsId, infraId string) (NLBListResponse, error) {
 	log.Debug().Str("nsId", nsId).Str("infraId", infraId).Msg("Listing NLBs")
 
-	var resBody NLBListResponse
-	resp, err := s.
-		SetResult(&resBody).
-		Get(fmt.Sprintf("/ns/%s/infra/%s/nlb", nsId, infraId))
+	// Retry up to 3 times at 5-second intervals if the NLB list is temporarily empty or fails.
+	const maxAttempts = 3
+	const retryInterval = 5 * time.Second
 
-	if err != nil {
-		log.Error().Err(err).Str("nsId", nsId).Str("infraId", infraId).Msg("Failed to list NLBs")
-		return NLBListResponse{}, err
-	}
-	if resp.IsError() {
-		if resp.StatusCode() == http.StatusTooManyRequests {
-			return NLBListResponse{}, &ratelimit.ErrLimited{
-				RetryAfter: 2 * time.Second,
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		var resBody NLBListResponse
+		resp, err := s.
+			SetResult(&resBody).
+			Get(fmt.Sprintf("/ns/%s/infra/%s/nlb", nsId, infraId))
+
+		if err != nil {
+			lastErr = err
+			log.Warn().Err(err).Str("nsId", nsId).Str("infraId", infraId).Int("attempt", attempt).Msg("Failed to list NLBs")
+		} else if resp.IsError() {
+			if resp.StatusCode() == http.StatusTooManyRequests {
+				return NLBListResponse{}, &ratelimit.ErrLimited{
+					RetryAfter: 2 * time.Second,
+				}
 			}
+			lastErr = fmt.Errorf("API error %s: %s", resp.Status(), resp.Body())
+			log.Warn().Err(lastErr).Str("nsId", nsId).Str("infraId", infraId).Int("attempt", attempt).Msg("Failed to list NLBs")
+		} else {
+			lastErr = nil
+			if len(resBody.NLB) > 0 || attempt == maxAttempts {
+				log.Debug().Str("nsId", nsId).Str("infraId", infraId).Int("count", len(resBody.NLB)).Msg("NLBs listed successfully")
+				return resBody, nil
+			}
+			log.Debug().Str("nsId", nsId).Str("infraId", infraId).Int("attempt", attempt).Msg("NLB list is empty, waiting before retry")
 		}
-		err := fmt.Errorf("API error %s: %s", resp.Status(), resp.Body())
-		log.Error().Err(err).Msg("Failed to list NLBs")
-		return NLBListResponse{}, err
+
+		if attempt < maxAttempts {
+			time.Sleep(retryInterval)
+		}
 	}
 
-	log.Debug().Str("nsId", nsId).Str("infraId", infraId).Msg("NLBs listed successfully")
-	return resBody, nil
+	log.Error().Err(lastErr).Str("nsId", nsId).Str("infraId", infraId).Msg("Failed to list NLBs after retries")
+	return NLBListResponse{}, lastErr
 }
 
 // GetNlb retrieves a specific NLB.

@@ -101,6 +101,7 @@ func buildSourceInfraOverview(infraName string, infraData *onpremmodel.OnpremInf
 		TotalMemoryGB:    totalMemoryGB,
 		TotalDiskGB:      totalDiskGB,
 		TotalNetworks:    networkCount,
+		TotalNLBs:        len(infraData.NLBs),
 	}
 }
 
@@ -310,6 +311,7 @@ func collectSourceNetworkResources(infraData *onpremmodel.OnpremInfra) SourceSum
 
 	return SourceSummaryNetworkResources{
 		Networks: networks,
+		NLBs:     collectSourceNlbResources(infraData),
 	}
 }
 
