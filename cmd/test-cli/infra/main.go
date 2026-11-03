@@ -1959,8 +1959,8 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("- **Status**: ❌ **FAILED**\n")
 		sb.WriteString("- **Error**: Migration failed\n\n")
 		// Add detailed error information if available
-		if len(report.TestResults) > 1 {
-			result := report.TestResults[1] // Second test is migration
+		if len(report.TestResults) > 2 {
+			result := report.TestResults[2]
 			if result.ErrorMessage != "" {
 				sb.WriteString("**Error Message**:\n\n```\n")
 				sb.WriteString(result.ErrorMessage)
@@ -1975,7 +1975,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		}
 	}
 
-	// Test Case 3: List Infras
+	// Test Case 4: List Infras
 	sb.WriteString("### Test Case 4: Get a list of infras\n\n")
 
 	// API request information
@@ -1999,8 +1999,8 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("- **Status**: ❌ **FAILED**\n")
 		sb.WriteString("- **Error**: No response received\n\n")
 		// Add detailed error information if available
-		if len(report.TestResults) > 2 {
-			result := report.TestResults[2] // Third test is list infras
+		if len(report.TestResults) > 3 {
+			result := report.TestResults[3]
 			if result.ErrorMessage != "" {
 				sb.WriteString("**Error Message**:\n\n```\n")
 				sb.WriteString(result.ErrorMessage)
@@ -2012,7 +2012,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		}
 	}
 
-	// Test Case 4: List Infra IDs
+	// Test Case 5: List Infra IDs
 	sb.WriteString("### Test Case 5: Get a list of infra IDs\n\n")
 
 	// API request information
@@ -2037,8 +2037,8 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("- **Status**: ❌ **FAILED**\n")
 		sb.WriteString("- **Error**: No response received\n\n")
 		// Add detailed error information if available
-		if len(report.TestResults) > 3 {
-			result := report.TestResults[3] // Fourth test is list infra IDs
+		if len(report.TestResults) > 4 {
+			result := report.TestResults[4]
 			if result.ErrorMessage != "" {
 				sb.WriteString("**Error Message**:\n\n```\n")
 				sb.WriteString(result.ErrorMessage)
@@ -2076,8 +2076,8 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("</details>\n\n")
 	}
 
-	// Test Case 6: Remote Command Accessibility Check
-	if len(report.TestResults) > 5 && report.TestResults[5].TestName != "" {
+	// Test Case 7: Remote Command Accessibility Check
+	if len(report.TestResults) > 6 && report.TestResults[6].TestName != "" {
 		sb.WriteString("### Test Case 7: Remote Command Accessibility Check\n\n")
 
 		// API request information
@@ -2091,7 +2091,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 		// Test result information
 		sb.WriteString("#### 7.2 Test Result Information\n\n")
-		remoteResult := report.TestResults[5] // 6th test is remote command
+		remoteResult := report.TestResults[6]
 		if remoteResult.Success {
 			// Success case - show detailed results for all VMs
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
@@ -2291,8 +2291,8 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		}
 	}
 
-	// Test Case 7: Target Infrastructure Summary
-	if len(report.TestResults) > 6 && report.TestResults[6].TestName != "" {
+	// Test Case 8: Target Infrastructure Summary
+	if len(report.TestResults) > 7 && report.TestResults[7].TestName != "" {
 		sb.WriteString("### Test Case 8: Target Infrastructure Summary\n\n")
 
 		// API request information
@@ -2305,7 +2305,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 		// API response information
 		sb.WriteString("#### 8.2 API Response Information\n\n")
-		targetSummaryResult := report.TestResults[6]
+		targetSummaryResult := report.TestResults[7]
 		if targetSummaryResult.Success {
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n\n")
 			if respMap, ok := targetSummaryResult.Response.(map[string]interface{}); ok {
@@ -2326,8 +2326,8 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		}
 	}
 
-	// Test Case 8: Migration Report
-	if len(report.TestResults) > 7 && report.TestResults[7].TestName != "" {
+	// Test Case 9: Migration Report
+	if len(report.TestResults) > 8 && report.TestResults[8].TestName != "" {
 		sb.WriteString("### Test Case 9: Migration Report\n\n")
 
 		// API request information
@@ -2339,7 +2339,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 		// API response information
 		sb.WriteString("#### 9.2 API Response Information\n\n")
-		migrationReportResult := report.TestResults[7]
+		migrationReportResult := report.TestResults[8]
 		if migrationReportResult.Success {
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n\n")
 			if respMap, ok := migrationReportResult.Response.(map[string]interface{}); ok {
@@ -2360,8 +2360,8 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		}
 	}
 
-	// Test Case 9: Delete MCI (always show if test was attempted)
-	if len(report.TestResults) > 8 && report.TestResults[8].TestName != "" {
+	// Test Case 10: Delete MCI (always show if test was attempted)
+	if len(report.TestResults) > 9 && report.TestResults[9].TestName != "" {
 		sb.WriteString("### Test Case 10: Delete the migrated computing infra\n\n")
 
 		// API request information
@@ -2375,7 +2375,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 		// API response information
 		sb.WriteString("#### 10.2 API Response Information\n\n")
-		deleteResult := report.TestResults[8] // 9th test is delete
+		deleteResult := report.TestResults[9]
 		if deleteResult.Success && report.DeleteMCIResponse != nil {
 			// Success case - show response
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n")

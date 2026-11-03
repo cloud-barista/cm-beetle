@@ -2297,8 +2297,8 @@ func generateMarkdownContent(report *CSPTestReport) string {
 	} else {
 		sb.WriteString("- **Status**: ❌ **FAILED**\n")
 		sb.WriteString("- **Error**: Migration failed or skipped\n\n")
-		if len(report.TestResults) > 1 {
-			result := report.TestResults[1]
+		if len(report.TestResults) > 2 {
+			result := report.TestResults[2]
 			if result.ErrorMessage != "" {
 				sb.WriteString("**Error Message**:\n\n```\n")
 				sb.WriteString(result.ErrorMessage)
@@ -2364,15 +2364,15 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("</details>\n\n")
 	}
 
-	// Test Case 6: Remote Command Check
-	if len(report.TestResults) > 5 && report.TestResults[5].TestName != "" {
+	// Test Case 7: Remote Command Check
+	if len(report.TestResults) > 6 && report.TestResults[6].TestName != "" {
 		sb.WriteString("### Test Case 7: Remote Command Accessibility Check\n\n")
 		sb.WriteString("#### 7.1 Test Information\n\n")
 		sb.WriteString("- **Test Type**: SSH Connectivity Test for All VMs\n")
 		sb.WriteString("- **Command Executed**: `uname -a` (to verify system information)\n\n")
 
 		sb.WriteString("#### 7.2 Test Result Information\n\n")
-		remoteResult := report.TestResults[5]
+		remoteResult := report.TestResults[6]
 		if remoteResult.Success {
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
 			if respMap, ok := remoteResult.Response.(map[string]interface{}); ok {
@@ -2451,8 +2451,8 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("</details>\n\n")
 	}
 
-	// Test Case 10: NLB Load Balancing Verification
-	if len(report.TestResults) > 9 && report.TestResults[9].TestName != "" {
+	// Test Case 11: NLB Load Balancing Verification
+	if len(report.TestResults) > 10 && report.TestResults[10].TestName != "" {
 		sb.WriteString("### Test Case 11: NLB Load Balancing Verification\n\n")
 		sb.WriteString("#### 11.1 Test Information\n\n")
 		sb.WriteString("- **Test Type**: Active Traffic Distribution Verification via NLB Endpoint\n")
@@ -2461,7 +2461,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("- **Requests Sent**: 15 HTTP GET requests\n\n")
 
 		sb.WriteString("#### 11.2 Test Result Information\n\n")
-		lbResult := report.TestResults[9]
+		lbResult := report.TestResults[10]
 		if lbResult.Success {
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n\n")
 			if respMap, ok := lbResult.Response.(map[string]interface{}); ok {
@@ -2513,14 +2513,14 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		}
 	}
 
-	// Test Case 11: Target Infrastructure Summary
-	if len(report.TestResults) > 10 && report.TestResults[10].TestName != "" {
+	// Test Case 12: Target Infrastructure Summary
+	if len(report.TestResults) > 11 && report.TestResults[11].TestName != "" {
 		sb.WriteString("### Test Case 12: Target Infrastructure Summary\n\n")
 		sb.WriteString("#### 12.1 API Request Information\n\n")
 		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/summary/target/ns/%s/infra/{{infraId}}?format=md`\n\n", report.NamespaceID))
 
 		sb.WriteString("#### 12.2 API Response Information\n\n")
-		targetSummaryResult := report.TestResults[10]
+		targetSummaryResult := report.TestResults[11]
 		if targetSummaryResult.Success {
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n\n")
 			if respMap, ok := targetSummaryResult.Response.(map[string]interface{}); ok {
@@ -2535,14 +2535,14 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		}
 	}
 
-	// Test Case 12: Migration Report
-	if len(report.TestResults) > 11 && report.TestResults[11].TestName != "" {
+	// Test Case 13: Migration Report
+	if len(report.TestResults) > 12 && report.TestResults[12].TestName != "" {
 		sb.WriteString("### Test Case 13: Migration Report\n\n")
 		sb.WriteString("#### 13.1 API Request Information\n\n")
 		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `POST /beetle/report/migration/ns/%s/infra/{{infraId}}`\n\n", report.NamespaceID))
 
 		sb.WriteString("#### 13.2 API Response Information\n\n")
-		migrationReportResult := report.TestResults[11]
+		migrationReportResult := report.TestResults[12]
 		if migrationReportResult.Success {
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n\n")
 			if respMap, ok := migrationReportResult.Response.(map[string]interface{}); ok {
@@ -2557,14 +2557,14 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		}
 	}
 
-	// Test Case 13: Delete NLBs
-	if len(report.TestResults) > 12 && report.TestResults[12].TestName != "" {
+	// Test Case 14: Delete NLBs
+	if len(report.TestResults) > 13 && report.TestResults[13].TestName != "" {
 		sb.WriteString("### Test Case 14: Delete the migrated NLBs\n\n")
 		sb.WriteString("#### 14.1 API Request Information\n\n")
 		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `DELETE /beetle/migration/middleware/ns/%s/infra/{{infraId}}/nlb/{{nlbId}}`\n\n", report.NamespaceID))
 
 		sb.WriteString("#### 14.2 API Response Information\n\n")
-		deleteNlbResult := report.TestResults[12]
+		deleteNlbResult := report.TestResults[13]
 		if deleteNlbResult.Success {
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
 		} else if deleteNlbResult.Skipped {
@@ -2574,14 +2574,14 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		}
 	}
 
-	// Test Case 14: Delete MCI
-	if len(report.TestResults) > 13 && report.TestResults[13].TestName != "" {
+	// Test Case 15: Delete MCI
+	if len(report.TestResults) > 14 && report.TestResults[14].TestName != "" {
 		sb.WriteString("### Test Case 15: Delete the migrated computing infra\n\n")
 		sb.WriteString("#### 15.1 API Request Information\n\n")
 		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `DELETE /beetle/migration/ns/%s/infra/{{infraId}}?option=terminate`\n\n", report.NamespaceID))
 
 		sb.WriteString("#### 15.2 API Response Information\n\n")
-		deleteResult := report.TestResults[13]
+		deleteResult := report.TestResults[14]
 		if deleteResult.Success && report.DeleteMCIResponse != nil {
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
 			sb.WriteString("**Response Body**:\n\n")

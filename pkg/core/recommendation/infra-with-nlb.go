@@ -235,7 +235,7 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 				Description:      fmt.Sprintf("Recommended VM for NLB backend %s (%d nodes)", backendName, nodeGroupSize),
 				Label: map[string]string{
 					lineage.LabelSourceMachineIds: strings.Join(rnlb.memberMachineIds, ","),
-					"nlbBackend":                  backendName,
+					lineage.LabelNlbBackend:       backendName,
 				},
 			},
 		})

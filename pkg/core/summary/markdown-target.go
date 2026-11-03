@@ -43,6 +43,9 @@ func GenerateMarkdownSummary(summary *TargetInfraSummary) string {
 	// Network Resources Section
 	md.WriteString("## Network Resources\n\n")
 	md.WriteString(generateNetworkResourcesMarkdown(&summary.NetworkResources))
+	if len(summary.NetworkResources.NLBs) > 0 {
+		md.WriteString(generateNlbResourcesMarkdown(summary.NetworkResources.NLBs, summary.ComputeResources.Vms))
+	}
 	md.WriteString("\n")
 
 	// Security Resources Section
@@ -72,6 +75,9 @@ func generateOverviewMarkdown(overview *TargetInfraOverview) string {
 	md.WriteString(fmt.Sprintf("| **Total VMs** | %d |\n", overview.TotalVmCount))
 	md.WriteString(fmt.Sprintf("| **Running VMs** | %d |\n", overview.RunningVmCount))
 	md.WriteString(fmt.Sprintf("| **Stopped VMs** | %d |\n", overview.StoppedVmCount))
+	if overview.TotalNlbCount > 0 {
+		md.WriteString(fmt.Sprintf("| **Total NLBs** | %d |\n", overview.TotalNlbCount))
+	}
 	md.WriteString(fmt.Sprintf("| **Monitoring Agent** | %s |\n", overview.InstallMonAgent))
 
 	return md.String()
@@ -106,6 +112,98 @@ func generateNetworkResourcesMarkdown(resources *SummaryNetworkResources) string
 			for _, subnet := range vnet.Subnets {
 				md.WriteString(fmt.Sprintf("| %s | %s | %s | %s |\n",
 					subnet.Name, subnet.CspSubnetId, subnet.CidrBlock, subnet.Zone))
+			}
+			md.WriteString("\n")
+		}
+	}
+
+	return md.String()
+}
+
+// generateNlbResourcesMarkdown generates markdown for target cloud NLBs and their target group nodes
+func generateNlbResourcesMarkdown(nlbs []SummaryNlbInfo, vms []SummaryVmInfo) string {
+	var md strings.Builder
+
+	vmByKey := make(map[string]SummaryVmInfo, len(vms)*2)
+	for _, vm := range vms {
+		if vm.Id != "" {
+			vmByKey[vm.Id] = vm
+		}
+		if vm.Name != "" {
+			vmByKey[vm.Name] = vm
+		}
+	}
+
+	md.WriteString("### Network Load Balancers (NLB)\n\n")
+
+	for _, nlb := range nlbs {
+		md.WriteString(fmt.Sprintf("#### NLB: %s\n\n", nlb.Name))
+
+		listenerVal := fmt.Sprintf("%s:%s", strings.ToUpper(nlb.Listener.Protocol), nlb.Listener.Port)
+		if nlb.Listener.DnsName != "" && nlb.Listener.IP != "" {
+			listenerVal = fmt.Sprintf("%s (DNS: %s, IP: %s)", listenerVal, nlb.Listener.DnsName, nlb.Listener.IP)
+		} else if nlb.Listener.DnsName != "" {
+			listenerVal = fmt.Sprintf("%s (DNS: %s)", listenerVal, nlb.Listener.DnsName)
+		} else if nlb.Listener.IP != "" {
+			listenerVal = fmt.Sprintf("%s (IP: %s)", listenerVal, nlb.Listener.IP)
+		}
+
+		tgVal := fmt.Sprintf("%s:%s (Node Group: %s, %d nodes)",
+			strings.ToUpper(nlb.TargetGroup.Protocol), nlb.TargetGroup.Port, nlb.TargetGroup.NodeGroupId, len(nlb.TargetGroup.Nodes))
+
+		timeoutStr := fmt.Sprintf("%ds", nlb.HealthChecker.Timeout)
+		if nlb.HealthChecker.Timeout < 0 {
+			timeoutStr = "CSP Default"
+		}
+		hcProto := strings.ToUpper(nlb.HealthChecker.Protocol)
+		if hcProto == "" {
+			hcProto = strings.ToUpper(nlb.TargetGroup.Protocol)
+		}
+		hcPort := nlb.HealthChecker.Port
+		if hcPort == "" {
+			hcPort = nlb.TargetGroup.Port
+		}
+		hcVal := fmt.Sprintf("%s:%s (Interval: %ds, Timeout: %s, Threshold: %d)",
+			hcProto, hcPort, nlb.HealthChecker.Interval, timeoutStr, nlb.HealthChecker.Threshold)
+
+		md.WriteString("| Property | Value |\n")
+		md.WriteString("|----------|-------|\n")
+		md.WriteString(fmt.Sprintf("| **Name** | %s |\n", nlb.Name))
+		md.WriteString(fmt.Sprintf("| **CSP NLB Name** | %s |\n", nlb.CspResourceName))
+		md.WriteString(fmt.Sprintf("| **CSP NLB ID** | %s |\n", nlb.CspResourceId))
+		md.WriteString(fmt.Sprintf("| **Type / Scope** | %s / %s |\n", nlb.Type, nlb.Scope))
+		md.WriteString(fmt.Sprintf("| **Connection** | %s |\n", nlb.ConnectionName))
+		md.WriteString(fmt.Sprintf("| **Listener** | %s |\n", listenerVal))
+		md.WriteString(fmt.Sprintf("| **Target Group** | %s |\n", tgVal))
+		md.WriteString(fmt.Sprintf("| **Health Checker** | %s |\n\n", hcVal))
+
+		if len(nlb.TargetGroup.Nodes) > 0 {
+			md.WriteString("**Target Group Nodes:**\n\n")
+			md.WriteString("| Node Name | CSP VM ID | Private IP | Public IP | Status |\n")
+			md.WriteString("|-----------|-----------|------------|-----------|--------|\n")
+			for _, nodeId := range nlb.TargetGroup.Nodes {
+				if vm, ok := vmByKey[nodeId]; ok {
+					cspVmId := vm.CspVmId
+					if cspVmId == "" {
+						cspVmId = "-"
+					}
+					privIP := vm.Misc.PrivateIp
+					if privIP == "" {
+						privIP = "-"
+					}
+					pubIP := vm.Misc.PublicIp
+					if pubIP == "" {
+						pubIP = "-"
+					}
+					status := vm.Status
+					if status == "" {
+						status = "-"
+					}
+					md.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s |\n",
+						vm.Name, cspVmId, privIP, pubIP, status))
+				} else {
+					md.WriteString(fmt.Sprintf("| %s | - | - | - | - |\n", nodeId))
+				}
 			}
 			md.WriteString("\n")
 		}

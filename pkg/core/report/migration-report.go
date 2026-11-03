@@ -58,6 +58,14 @@ func GenerateMigrationReport(nsId, infraId string, sourceInfra onpremmodel.Onpre
 	// Step 5: Build migration mappings (match source servers to target VMs)
 	migrationMappings := buildMigrationMappings(sourceSummary, targetSummary)
 
+	// Step 5.1: Build NLB migration mappings
+	nlbMappings := buildNlbMigrationMappings(sourceSummary, targetSummary)
+	nlbStatus, totalNLBs, migratedNLBs, failedNLBs := computeNlbMigrationStatus(nlbMappings)
+	executiveSummary.NlbMigrationStatus = nlbStatus
+	executiveSummary.TotalNLBs = totalNLBs
+	executiveSummary.MigratedNLBs = migratedNLBs
+	executiveSummary.FailedNLBs = failedNLBs
+
 	// Step 6: Build network analysis
 	networkAnalysis := buildNetworkAnalysis(sourceSummary, targetSummary)
 
@@ -75,6 +83,7 @@ func GenerateMigrationReport(nsId, infraId string, sourceInfra onpremmodel.Onpre
 		Metadata:          metadata,
 		ExecutiveSummary:  executiveSummary,
 		MigrationMappings: migrationMappings,
+		NlbMappings:       nlbMappings,
 		NetworkAnalysis:   networkAnalysis,
 		SecurityAnalysis:  securityAnalysis,
 		CostSummary:       costSummary,
@@ -321,21 +330,36 @@ func buildNetworkAnalysis(sourceSummary *summary.SourceInfraSummary, targetSumma
 		}
 	}
 
-	// Build IP mappings
+	// Build IP mappings using lineage label resolution with VM name substring fallback.
+	vmByMachineID := make(map[string]summary.SummaryVmInfo)
+	for _, vm := range targetSummary.ComputeResources.Vms {
+		if mid := resolveSourceMachineID(vm); mid != "" {
+			vmByMachineID[mid] = vm
+		}
+	}
+
 	var ipMappings []IPMapping
 	for _, node := range sourceSummary.ComputeResources.Servers {
 		machineID := node.MachineId
 
-		// Find matching target VM
+		if vm, ok := vmByMachineID[machineID]; ok {
+			ipMappings = append(ipMappings, IPMapping{
+				SourceIP:        node.Network.IPAddress,
+				SourceHostname:  node.Hostname,
+				TargetPrivateIP: vm.Misc.PrivateIp,
+				TargetPublicIP:  vm.Misc.PublicIp,
+			})
+			continue
+		}
+
 		for _, vm := range targetSummary.ComputeResources.Vms {
-			if strings.Contains(vm.Name, machineID) {
-				mapping := IPMapping{
+			if machineID != "" && strings.Contains(vm.Name, machineID) {
+				ipMappings = append(ipMappings, IPMapping{
 					SourceIP:        node.Network.IPAddress,
 					SourceHostname:  node.Hostname,
 					TargetPrivateIP: vm.Misc.PrivateIp,
 					TargetPublicIP:  vm.Misc.PublicIp,
-				}
-				ipMappings = append(ipMappings, mapping)
+				})
 				break
 			}
 		}

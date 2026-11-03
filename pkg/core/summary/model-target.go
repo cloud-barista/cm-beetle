@@ -50,13 +50,57 @@ type TargetInfraOverview struct {
 	TotalVmCount     int               `json:"totalVmCount" example:"3"`
 	RunningVmCount   int               `json:"runningVmCount" example:"3"`
 	StoppedVmCount   int               `json:"stoppedVmCount" example:"0"`
+	TotalNlbCount    int               `json:"totalNlbCount,omitempty" example:"1"`
 	Label            map[string]string `json:"label,omitempty"`
 	InstallMonAgent  string            `json:"installMonAgent" example:"no"`
 }
 
-// SummaryNetworkResources contains VNet and Subnet information
+// SummaryNetworkResources contains VNet, Subnet, and NLB information
 type SummaryNetworkResources struct {
 	VNets []SummaryVNetInfo `json:"vnets"`
+	NLBs  []SummaryNlbInfo  `json:"nlbs,omitempty"`
+}
+
+// SummaryNlbInfo represents NLB information for target cloud summary
+type SummaryNlbInfo struct {
+	Id              string                      `json:"id" example:"my01-ng-influxdb-back"`
+	Name            string                      `json:"name" example:"my01-ng-influxdb-back"`
+	CspResourceName string                      `json:"cspResourceName" example:"tbsd5l543sjssm4r416n"`
+	CspResourceId   string                      `json:"cspResourceId" example:"arn:aws:elasticloadbalancing:..."`
+	ConnectionName  string                      `json:"connectionName" example:"aws-ap-northeast-2"`
+	Type            string                      `json:"type" example:"PUBLIC"`
+	Scope           string                      `json:"scope" example:"REGION"`
+	Status          string                      `json:"status,omitempty" example:"Active"`
+	Description     string                      `json:"description,omitempty" example:"Migrated from HAProxy backend: influxdb_back"`
+	Listener        SummaryNlbListenerInfo      `json:"listener"`
+	TargetGroup     SummaryNlbTargetGroupInfo   `json:"targetGroup"`
+	HealthChecker   SummaryNlbHealthCheckerInfo `json:"healthChecker"`
+	CreatedTime     string                      `json:"createdTime,omitempty" example:"2026-10-30T12:46:34.188Z"`
+}
+
+// SummaryNlbListenerInfo represents NLB front-end listener details
+type SummaryNlbListenerInfo struct {
+	Protocol string `json:"protocol" example:"TCP"`
+	Port     string `json:"port" example:"9999"`
+	IP       string `json:"ip,omitempty" example:"34.64.100.10"`
+	DnsName  string `json:"dnsName,omitempty" example:"tbsd5l543sjssm4r416n-ef4968adbbe89e0e.elb.ap-northeast-2.amazonaws.com"`
+}
+
+// SummaryNlbTargetGroupInfo represents NLB back-end target group details
+type SummaryNlbTargetGroupInfo struct {
+	Protocol    string   `json:"protocol" example:"TCP"`
+	Port        string   `json:"port" example:"8086"`
+	NodeGroupId string   `json:"nodeGroupId" example:"my01-ng-influxdb-back"`
+	Nodes       []string `json:"nodes,omitempty" example:"my01-ng-influxdb-back-1,my01-ng-influxdb-back-2"`
+}
+
+// SummaryNlbHealthCheckerInfo represents NLB health check configuration
+type SummaryNlbHealthCheckerInfo struct {
+	Protocol  string `json:"protocol" example:"TCP"`
+	Port      string `json:"port" example:"8086"`
+	Interval  int    `json:"interval" example:"10"`
+	Timeout   int    `json:"timeout" example:"10"`
+	Threshold int    `json:"threshold" example:"3"`
 }
 
 // SummaryVNetInfo represents VNet information for summary (Name only, no ID duplication)
@@ -132,8 +176,10 @@ type SummaryImageInfoWithUsage struct {
 
 // SummaryVmInfo represents VM information for summary with restructured format
 type SummaryVmInfo struct {
-	Name    string             `json:"name" example:"migrated-server-1"`
-	CspVmId string             `json:"cspVmId" example:"i-0a1b2c3d4e5f6g7h8"`
+	Id          string             `json:"id,omitempty" example:"my01-ng-influxdb-back-1"`
+	Name        string             `json:"name" example:"migrated-server-1"`
+	NodeGroupId string             `json:"nodeGroupId,omitempty" example:"my01-ng-influxdb-back"`
+	CspVmId     string             `json:"cspVmId" example:"i-0a1b2c3d4e5f6g7h8"`
 	Status  string             `json:"status" example:"Running"`
 	Spec    SummaryVmSpecInfo  `json:"spec"`
 	Image   SummaryVmImageInfo `json:"image"`

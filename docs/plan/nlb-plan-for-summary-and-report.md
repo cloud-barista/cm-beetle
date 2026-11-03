@@ -1,7 +1,7 @@
 # NLB 연계 인프라 Summary 및 Migration Report 개선 계획
 
-> **Status**: Draft / Aligned  
-> **Target Subsystems**: CM-Beetle (`imdl/lineage`, `pkg/core/summary`, `pkg/core/report`, `cmd/test-cli/infra-with-nlb`)  
+> **Status**: Implemented / Verified  
+> **Target Subsystems**: CM-Beetle (`imdl/lineage`, `pkg/client/tumblebug`, `pkg/core/recommendation`, `pkg/core/summary`, `pkg/core/report`, `cmd/test-cli/infra-with-nlb`, `cmd/test-cli/infra`)  
 > **Related Documents**:  
 > - [`docs/plan/nlb-plan-for-recommendation-and-migration.md`](./nlb-plan-for-recommendation-and-migration.md)  
 > - [`docs/plan/plan-test-cli-for-infra-with-nlb.md`](./plan-test-cli-for-infra-with-nlb.md)  
@@ -110,20 +110,41 @@ flowchart TD
 | **Listener Endpoint** | - **AWS, Tencent**: `listener.dnsName`만 존재 (`ip` 빈 문자열)<br>- **Azure, GCP, NCP, Alibaba**: `listener.ip`만 존재 (`dnsName` 빈 문자열)<br>- **IBM**: `ip`와 `dnsName` 모두 존재 | `DNSName`과 `IP` 중 존재하는 값을 표시하고, 둘 다 있으면 모두 표시 (`DNS: ...` / `IP: ...`) |
 | **Listener Port (GCP)** | **GCP**: 외부 패스스루 NLB 제약으로 [`sanitizeNlbListByCsp`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/recommendation/infra-with-nlb.go#L558)가 리스너 포트를 백엔드 포트와 동일하게 조정 (`9999 -> 8086`) | `nlbBackend` 라벨로 정상 매칭 후, 비교표 Note 열에 `Adjusted to backend port (8086) due to CSP passthrough NLB constraint` 명시 |
 | **HealthCheck Timeout (Azure)** | **Azure**: 커스텀 헬스체크 타임아웃 미지원으로 `healthChecker.timeout = -1` 설정 | `-1s` 대신 `CSP Default`로 포맷팅하고 Note 열에 안내 표시 |
+| **HealthCheck Timeout (IBM)** | **IBM**: `timeout < interval` 제약으로 인해 타임아웃이 인터벌보다 작게 조정 (`10s -> 9s`) | 비교표 Note 열에 `Health check timeout adjusted (10s -> 9s) to satisfy CSP constraint (timeout < interval)` 명시 |
 | **NLB Type 빈 값 (GCP)** | **GCP**: Tumblebug 응답에서 `type` 필드가 `""`로 반환되는 경우 존재 | 빈 문자열일 경우 `PUBLIC (Default)` 또는 `-`로 안전하게 표기 |
 | **삭제 중 툼스톤** | [`NLBInfo.DeletionRequestedAt`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/imdl/cloud-model/copied-tb-model.go#L1317)이 비어 있지 않은 경우 삭제 진행 중 레코드임 | `DeletionRequestedAt != ""`인 레코드는 활성 마이그레이션 완료 카운트에서 제외 |
+
+### 4.3 Tumblebug NLB 목록 조회 방어적 재시도(`ListNlbs`) 및 Fail-Fast 에러 처리
+
+1. **`tbclient.Session.ListNlbs` 중앙 집중형 방어적 재시도 (`pkg/client/tumblebug/nlb.go`)**:
+   - NLB 마이그레이션 직후 Tumblebug/CSP 메타데이터 동기화 지연이나 일시적 조회 누락에 대비하여, `ListNlbs(nsId, infraId)` 내부에서 `GET /ns/{nsId}/infra/{infraId}/nlb` 호출 시 NLB 목록이 비어 있거나(`len(resBody.NLB) == 0`) 일시적 오류가 발생하면 **5초 간격으로 최대 3회(`maxAttempts = 3`, `retryDelay = 5 * time.Second`)** 재시도합니다.
+   - 조회 결과에 NLB가 1개 이상 존재하면 대기 없이 즉시 반환합니다.
+2. **`collectNlbResources`의 정상 빈 목록과 실제 장애 구분 (`pkg/core/summary/summary-target-nlb.go`)**:
+   - 3회 확인 후에도 NLB가 없거나 `404 Not Found`(`does not exist`, `not found`)인 경우는 NLB가 없는 정상 상태로 간주하여 `[]SummaryNlbInfo{}, nil`을 반환합니다.
+   - 반면 3회 재시도 후에도 Tumblebug 연결 실패, 타임아웃, `5xx` 등 실제 서버/네트워크 에러가 지속되면 에러를 그대로 상위로 반환(Fail-Fast)하여 `GenerateMigrationReport`가 API 장애를 `"Not Migrated"`로 오판하지 않도록 보장합니다.
+
+### 4.4 3종 문서 대칭형 2단(2-Tier) 레이아웃 및 Security Group 규칙 귀속 정밀화
+
+1. **3종 문서 대칭형 2단(2-Tier) 마크다운 구조**:
+   - 소스 요약(`beetle-summary-source.md`), 타겟 요약(`beetle-summary-target-<csp>.md`), 마이그레이션 리포트(`beetle-report-mig-source-to-<csp>.md`) 모두 각 NLB 항목을 동일한 2단 구조로 출력하여 1:1 시각적 대조가 가능하도록 구성합니다.
+   - **(A) 상단 설정 요약 표 (`| Property | Value |` -> 리포트 `Configuration Comparison`)**: Host / Architecture, Exposure / Type & Scope, Frontend Listener, Backend Target, Health Check.
+   - **(B) 하단 백엔드/타겟 그룹 노드 상세 표 (`Backend Servers` + `Target Group Nodes` -> 리포트 `Backend Node Mappings`)**: 개별 백엔드 서버(`influx1`, `influx2`)와 타겟 클라우드 VM(`my01-ng-influxdb-back-1`, `my01-ng-influxdb-back-2`)의 매핑 상세.
+2. **Security Group 방화벽 규칙 귀속 범위 정밀화 (`pkg/core/report/markdown.go`)**:
+   - `writeSecurityGroupStatus`의 `matchSourceFirewallRuleForSG`가 인프라 전체 서버가 아닌 **해당 Security Group이 할당된 타겟 VM들의 원본 소스 서버(`assignedVMsList`)** 의 방화벽 규칙에서만 일치 여부를 탐색하도록 범위를 좁힙니다.
+   - 이를 통해 HAProxy 호스트(`ip-10-0-1-30`)에만 있던 `9999` 포트 규칙이나 추천 엔진이 NLB 헬스체크/트래픽 전달을 위해 백엔드 SG에 보강한 `8086`/`9999` 규칙이 백엔드 SG 표에서 `- | Created by system`으로 정확히 표시됩니다.
 
 ---
 
 ## 5. 패키지별 상세 구현 계획
 
-### 5.1 Lineage 라벨 상수화 (`imdl/lineage` 및 `pkg/core/recommendation`)
+### 5.1 Lineage 라벨 상수화 및 Tumblebug 클라이언트 방어적 재시도 (`imdl/lineage`, `pkg/core/recommendation`, `pkg/client/tumblebug`)
 
-추천 패키지와 리포트 패키지가 순환 참조 없이 동일한 라벨 키를 참조하도록 [`imdl/lineage/lineage.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/imdl/lineage/lineage.go)에 `LabelNlbBackend` 상수를 추가합니다.
+추천 패키지와 리포트 패키지가 순환 참조 없이 동일한 라벨 키를 참조하도록 [`imdl/lineage/lineage.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/imdl/lineage/lineage.go)에 `LabelNlbBackend` 상수를 추가하고, [`pkg/client/tumblebug/nlb.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/client/tumblebug/nlb.go)의 `ListNlbs`에 방어적 재시도 로직을 구성합니다.
 
 - **수정 파일**:
   - [`imdl/lineage/lineage.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/imdl/lineage/lineage.go): `LabelNlbBackend = "nlbBackend"` 상수 추가
   - [`pkg/core/recommendation/infra-with-nlb.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/recommendation/infra-with-nlb.go): 238행의 `"nlbBackend"` 문자열 리터럴을 `lineage.LabelNlbBackend`로 교체
+  - [`pkg/client/tumblebug/nlb.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/client/tumblebug/nlb.go): `ListNlbs`에서 NLB 목록이 일시적으로 비어 있거나 오류가 발생할 경우 5초 간격으로 최대 3회 재시도 (`len(resBody.NLB) > 0`이면 즉시 반환)
 
 ```go
 const (
@@ -219,12 +240,12 @@ type SummaryNlbInfo struct {
 - **[NEW] `pkg/core/summary/summary-target-nlb.go`**:
   - `collectNlbResources(nsId, infraId string) ([]SummaryNlbInfo, error)`:
     - `tbclient.NewSession().ListNlbs(nsId, infraId)`를 호출하여 `DeletionRequestedAt == ""`인 활성 NLB 목록을 `SummaryNlbInfo`로 변환하고 `Name` 기준 오름차순 정렬합니다.
-    - 만약 Tumblebug에서 NLB 목록 조회 중 오류가 발생하면 경고를 로깅하고 빈 슬라이스를 반환하여 전체 Summary 생성이 중단되지 않도록 처리합니다.
+    - 3회 확인 후에도 빈 목록이거나 `404 Not Found`(`isNlbNotFoundError`)인 경우에는 `[]SummaryNlbInfo{}, nil`을 반환하고, 실제 서버/네트워크 오류(`5xx`, 타임아웃 등)는 상위로 반환(Fail-Fast)합니다.
 - **[MODIFY] [`pkg/core/summary/summary-target.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/summary/summary-target.go)**:
   - `collectComputeResources`에서 `SummaryVmInfo.Id = node.Id`, `SummaryVmInfo.NodeGroupId = node.NodeGroupId` 저장.
   - `GenerateInfraSummary`에서 `collectNlbResources(nsId, infraId)`를 호출하여 `networkResources.NLBs`와 `overview.TotalNlbCount`에 반영.
 - **[MODIFY] [`pkg/core/summary/markdown-target.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/summary/markdown-target.go)**:
-  - `len(summary.NetworkResources.NLBs) > 0`일 때 `Overview` 테이블에 `| **Total NLBs** | <N> |`을 추가하고 `## Network Resources` 하단에 `### Network Load Balancers (NLB)` 섹션을 렌더링합니다.
+  - `len(summary.NetworkResources.NLBs) > 0`일 때 `Overview` 테이블에 `| **Total NLBs** | <N> |`을 추가하고 `## Network Resources` 하단에 `### Network Load Balancers (NLB)` 섹션(2단 구조: `| Property | Value |` 표 + `**Target Group Nodes:**` 서브 표)을 렌더링합니다.
 
 ---
 
@@ -293,7 +314,8 @@ type NlbBackendNodeMapping struct {
 #### 3) 마크다운 렌더러 구현 (`[NEW] pkg/core/report/markdown-nlb.go` 및 `[MODIFY] pkg/core/report/markdown.go`)
 - `markdown.go` 수정 사항:
   - `writeExecutiveSummary`: `TotalNLBs > 0 || MigratedNLBs > 0`일 때 `**NLB Migration Status:**`, `**Total NLBs:**`, `**Migrated NLBs:**` (및 미이관 건이 있을 때 `**Unmigrated NLBs:**`) 출력.
-  - `writeMigratedResourcesOverview`: `len(report.NlbMappings) > 0`일 때 `#8 | **Network Load Balancer** | <Target NLBs> | <Source NLBs> |` 행 추가.
+  - `writeMigratedResourcesOverview`: `len(report.NlbMappings) > 0`일 때 5컬럼 형식에 맞춰 `| 8 | **Network Load Balancer** | <Target NLBs> | <Status> | **Source:** <Source NLBs> |` 행 추가.
+  - `writeSecurityGroupStatus` (`matchSourceFirewallRuleForSG`): 해당 Security Group이 할당된 타겟 VM들의 원본 소스 서버(`assignedVMsList`) 방화벽 규칙에서만 매칭을 수행하여, NLB용으로 자동 보강된 규칙(`9999`, `8086`)이 백엔드 SG에서 `- | Created by system`으로 표시되도록 개선.
   - `GenerateMigrationReportMarkdown`: `writeNetworkStatus(&md, report)` 직후에 `writeNlbMigrationStatus(&md, report)` 호출.
 - `markdown-nlb.go` 예상 출력 예시 (`beetle-report-mig-source-to-aws.md`):
 
@@ -328,19 +350,32 @@ type NlbBackendNodeMapping struct {
 
 ---
 
-## 6. 관련 버그 수정 계획 (`cmd/test-cli/infra-with-nlb/main.go`)
+## 6. 관련 버그 수정 계획 (`cmd/test-cli/infra-with-nlb/main.go` 및 `cmd/test-cli/infra/main.go`)
 
-[`cmd/test-cli/infra-with-nlb/main.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/cmd/test-cli/infra-with-nlb/main.go#L2295-L2590)의 `generateMarkdownReport` 함수를 점검한 결과, 과거 `Test Case 2: Validate Target Infrastructure` 단계가 추가되면서 `report.TestResults[...]` 배열 인덱스가 1칸씩 밀린(off-by-one) 버그가 확인되었습니다. 이로 인해 현재 `beetle-test-results-<csp>.md`의 **Test Case 13 (Migration Report) 섹션에 Migration Report가 아닌 Test Case 12 (Target Summary) 내용이 중복 출력**되고 있습니다.
+[`cmd/test-cli/infra-with-nlb/main.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/cmd/test-cli/infra-with-nlb/main.go#L2295-L2590) 및 [`cmd/test-cli/infra/main.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/cmd/test-cli/infra/main.go#L1860-L2020)의 `generateMarkdownContent` 함수를 점검한 결과, 과거 `Test Case 2: Validate Target Infrastructure` 단계가 추가되면서 `report.TestResults[...]` 배열 인덱스가 1칸씩 밀린(off-by-one) 버그가 확인되었습니다. 이로 인해 `beetle-test-results-<csp>.md`의 **Migration Report 섹션에 Migration Report가 아닌 Target Summary 내용이 중복 출력**되는 문제를 함께 수정합니다.
 
-| 테스트 케이스 | 실제 `TestResults` 인덱스 | 현재 `main.go` 코드의 잘못된 참조 | 증상 및 수정 내용 |
+### 6.1 `cmd/test-cli/infra-with-nlb/main.go` 수정 내역
+
+| 테스트 케이스 | 실제 `TestResults` 인덱스 | 기존 `main.go`의 잘못된 참조 | 증상 및 수정 내용 |
 | :--- | :--- | :--- | :--- |
-| **Test Case 3** (Migrate Infra 실패 폴백) | `[2]` | `report.TestResults[1]` (2301행) | `[2]`로 수정 |
-| **Test Case 7** (Remote Command) | `[6]` | `report.TestResults[5]` (2368, 2375행) | `[6]`으로 수정 |
-| **Test Case 11** (NLB Load Balancing Verification) | `[10]` | `report.TestResults[9]` (2455, 2464행) | `hitsDistribution` 표가 누락되던 문제를 `[10]`으로 수정하여 복구 |
-| **Test Case 12** (Target Infra Summary) | `[11]` | `report.TestResults[10]` (2517, 2523행) | `[11]`로 수정하여 Target Summary 마크다운 정상 출력 |
-| **Test Case 13** (Migration Report) | `[12]` | `report.TestResults[11]` (2539, 2545행) | `[12]`로 수정하여 Migration Report 마크다운 정상 출력 |
-| **Test Case 14** (Delete NLBs) | `[13]` | `report.TestResults[12]` (2561, 2567행) | `[13]`으로 수정 |
-| **Test Case 15** (Delete MCI) | `[14]` | `report.TestResults[13]` (2578, 2584행) | `[14]`로 수정 |
+| **Test Case 3** (Migrate Infra 실패 폴백) | `[2]` | `report.TestResults[1]` | `[2]`로 수정 |
+| **Test Case 7** (Remote Command) | `[6]` | `report.TestResults[5]` | `[6]`으로 수정 |
+| **Test Case 11** (NLB Load Balancing Verification) | `[10]` | `report.TestResults[9]` | `hitsDistribution` 표가 누락되던 문제를 `[10]`으로 수정하여 복구 |
+| **Test Case 12** (Target Infra Summary) | `[11]` | `report.TestResults[10]` | `[11]`로 수정하여 Target Summary 마크다운 정상 출력 |
+| **Test Case 13** (Migration Report) | `[12]` | `report.TestResults[11]` | `[12]`로 수정하여 Migration Report 마크다운 정상 출력 |
+| **Test Case 14** (Delete NLBs) | `[13]` | `report.TestResults[12]` | `[13]`으로 수정 |
+| **Test Case 15** (Delete MCI) | `[14]` | `report.TestResults[13]` | `[14]`로 수정 |
+
+### 6.2 `cmd/test-cli/infra/main.go` 수정 내역
+
+| 테스트 케이스 | 실제 `TestResults` 인덱스 | 기존 `main.go`의 잘못된 참조 | 증상 및 수정 내용 |
+| :--- | :--- | :--- | :--- |
+| **Test Case 3** (Migrate Infra 실패 폴백) | `[2]` | `report.TestResults[1]` | `[2]`로 수정 |
+| **Test Case 7** (Remote Command) | `[6]` | `report.TestResults[5]` | `[6]`으로 수정 |
+| **Test Case 8** (Source Infra Summary) | `[7]` | `report.TestResults[6]` | `[7]`로 수정하여 Source Summary 마크다운 정상 출력 |
+| **Test Case 9** (Target Infra Summary) | `[8]` | `report.TestResults[7]` | `[8]`로 수정하여 Target Summary 마크다운 정상 출력 |
+| **Test Case 10** (Migration Report) | `[9]` | `report.TestResults[8]` | `[9]`로 수정하여 Migration Report 마크다운 정상 출력 |
+| **Test Case 11** (Delete MCI) | `[10]` | `report.TestResults[9]` | `[10]`으로 수정 |
 
 ---
 
@@ -352,22 +387,24 @@ type NlbBackendNodeMapping struct {
 | :--- | :--- | :--- |
 | **MODIFY** | [`imdl/lineage/lineage.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/imdl/lineage/lineage.go) | `LabelNlbBackend = "nlbBackend"` 상수 추가 |
 | **MODIFY** | [`pkg/core/recommendation/infra-with-nlb.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/recommendation/infra-with-nlb.go) | `"nlbBackend"` 리터럴을 `lineage.LabelNlbBackend`로 교체 |
+| **MODIFY** | [`pkg/client/tumblebug/nlb.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/client/tumblebug/nlb.go) | `ListNlbs`에 5초 대기 x 최대 3회 방어적 재시도 로직 추가 |
 | **MODIFY** | [`pkg/core/summary/model-source.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/summary/model-source.go) | `TotalNLBs`, `SourceNlbInfo` 등 소스 NLB 요약 구조체 추가 |
 | **NEW** | `pkg/core/summary/summary-source-nlb.go` | `collectSourceNlbResources` (호스트명 및 백엔드 서버 IP -> Node 매핑) 구현 |
 | **MODIFY** | [`pkg/core/summary/summary-source.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/summary/summary-source.go) | 소스 요약 생성 시 NLB 수집 연동 |
-| **MODIFY** | [`pkg/core/summary/markdown-source.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/summary/markdown-source.go) | 소스 NLB 존재 시 Overview 및 Network Resources 하단 NLB 표 렌더링 |
+| **MODIFY** | [`pkg/core/summary/markdown-source.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/summary/markdown-source.go) | 소스 NLB 존재 시 Overview 및 Network Resources 하단 2단 NLB 표 렌더링 |
 | **MODIFY** | [`pkg/core/summary/model-target.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/summary/model-target.go) | `TotalNlbCount`, `SummaryNlbInfo` 및 `SummaryVmInfo.{Id, NodeGroupId}` 추가 |
-| **NEW** | `pkg/core/summary/summary-target-nlb.go` | `collectNlbResources` (`tbclient.ListNlbs` 조회 및 정렬) 구현 |
+| **NEW** | `pkg/core/summary/summary-target-nlb.go` | `collectNlbResources` (`tbclient.ListNlbs` 조회, 404/실제 장애 구분 및 정렬) 구현 |
 | **MODIFY** | [`pkg/core/summary/summary-target.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/summary/summary-target.go) | 타겟 요약 생성 시 NLB 수집 연동 |
-| **MODIFY** | [`pkg/core/summary/markdown-target.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/summary/markdown-target.go) | 타겟 NLB 존재 시 Overview 및 Network Resources 하단 NLB 섹션 렌더링 |
+| **MODIFY** | [`pkg/core/summary/markdown-target.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/summary/markdown-target.go) | 타겟 NLB 존재 시 Overview 및 Network Resources 하단 2단 NLB 섹션 렌더링 |
 | **MODIFY** | [`pkg/core/report/model.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/report/model.go) | `ExecutiveSummary` NLB 상태/카운트 필드 및 `NlbMigrationMapping` 구조체 추가 |
 | **NEW** | `pkg/core/report/migration-report-nlb.go` | 2단계 결정론적 NLB 매칭 및 백엔드 서버-VM 매핑 로직 구현 |
 | **MODIFY** | [`pkg/core/report/migration-report.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/report/migration-report.go) | `buildNlbMigrationMappings` 호출 및 `ExecutiveSummary` NLB 상태 연동 |
 | **NEW** | `pkg/core/report/markdown-nlb.go` | `writeNlbMigrationStatus` (NLB 매칭 요약 표, 설정 비교 표, 백엔드 노드 매핑 표) 구현 |
-| **MODIFY** | [`pkg/core/report/markdown.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/report/markdown.go) | Executive Summary, Migrated Resources Overview(`#8 NLB`), NLB 섹션 호출 연동 |
-| **NEW** | `pkg/core/report/migration-report-nlb_test.go` | AWS/GCP/Azure NLB 매칭, 미이관 상태(`Not Migrated`), 일반 Infra(NLB 없음) 단위 테스트 |
+| **MODIFY** | [`pkg/core/report/markdown.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/report/markdown.go) | Executive Summary, Migrated Resources Overview(`#8 NLB`), SG 규칙 귀속 범위 정밀화, NLB 섹션 호출 연동 |
+| **NEW** | `pkg/core/report/migration-report-nlb_test.go` | AWS/GCP/Azure/IBM NLB 매칭, 미이관 상태(`Not Migrated`), 일반 Infra(NLB 없음) 단위 테스트 |
 | **MODIFY** | [`pkg/core/summary/summary-source_test.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/pkg/core/summary/summary-source_test.go) | `collectSourceNlbResources` 단위 테스트 추가 |
-| **MODIFY** | [`cmd/test-cli/infra-with-nlb/main.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/cmd/test-cli/infra-with-nlb/main.go) | `generateMarkdownReport` 내 `TestResults` 인덱스 오프셋 버그 수정 |
+| **MODIFY** | [`cmd/test-cli/infra-with-nlb/main.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/cmd/test-cli/infra-with-nlb/main.go) | `generateMarkdownContent` 내 `TestResults` 인덱스 오프셋 버그 수정 |
+| **MODIFY** | [`cmd/test-cli/infra/main.go`](file:///home/ubuntu/dev/cloud-barista/cm-beetle/cmd/test-cli/infra/main.go) | `generateMarkdownContent` 내 `TestResults` 인덱스 오프셋 버그 수정 |
 
 ### 7.2 테스트 및 검증 절차
 

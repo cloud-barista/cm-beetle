@@ -25,6 +25,7 @@ type MigrationReport struct {
 	Metadata          ReportMetadata              `json:"metadata"`
 	ExecutiveSummary  ExecutiveSummary            `json:"executiveSummary"`
 	MigrationMappings []SourceTargetMapping       `json:"migrationMappings"`
+	NlbMappings       []NlbMigrationMapping       `json:"nlbMappings,omitempty"`
 	NetworkAnalysis   NetworkMigrationAnalysis    `json:"networkAnalysis"`
 	SecurityAnalysis  SecurityMigrationAnalysis   `json:"securityAnalysis"`
 	CostSummary       CostSummary                 `json:"costSummary"`
@@ -44,13 +45,43 @@ type ReportMetadata struct {
 
 // ExecutiveSummary provides high-level migration overview
 type ExecutiveSummary struct {
-	MigrationStatus string  `json:"migrationStatus" example:"Completed"`
-	TotalServers    int     `json:"totalServers" example:"2"`
-	MigratedServers int     `json:"migratedServers" example:"2"`
-	FailedServers   int     `json:"failedServers" example:"0"`
-	TargetCloud     string  `json:"targetCloud" example:"AWS"`
-	TargetRegion    string  `json:"targetRegion" example:"ap-northeast-2"`
-	MonthlyCostUSD  float64 `json:"monthlyCostUsd" example:"382.46"`
+	MigrationStatus    string  `json:"migrationStatus" example:"Completed"`
+	TotalServers       int     `json:"totalServers" example:"2"`
+	MigratedServers    int     `json:"migratedServers" example:"2"`
+	FailedServers      int     `json:"failedServers" example:"0"`
+	NlbMigrationStatus string  `json:"nlbMigrationStatus,omitempty" example:"Completed"`
+	TotalNLBs          int     `json:"totalNlbs,omitempty" example:"1"`
+	MigratedNLBs       int     `json:"migratedNlbs,omitempty" example:"1"`
+	FailedNLBs         int     `json:"failedNlbs,omitempty" example:"0"`
+	TargetCloud        string  `json:"targetCloud" example:"AWS"`
+	TargetRegion       string  `json:"targetRegion" example:"ap-northeast-2"`
+	MonthlyCostUSD     float64 `json:"monthlyCostUsd" example:"382.46"`
+}
+
+// NlbMigrationMapping represents a correlation between an on-premise load balancer and a target cloud NLB
+type NlbMigrationMapping struct {
+	MappingID            int                     `json:"mappingId" example:"1"`
+	SourceNlb            summary.SourceNlbInfo   `json:"sourceNlb"`
+	TargetNlb            *summary.SummaryNlbInfo `json:"targetNlb,omitempty"`
+	HostNodeTargetVmName string                  `json:"hostNodeTargetVmName,omitempty" example:"my01-ng-ec268ed7-821e-9d73-e79f-961262161624-1"`
+	BackendNodeMappings  []NlbBackendNodeMapping `json:"backendNodeMappings,omitempty"`
+	MigrationStatus      string                  `json:"migrationStatus" example:"Migrated"`
+	Notes                []string                `json:"notes,omitempty"`
+}
+
+// NlbBackendNodeMapping represents a mapping between an on-premise backend server and a target NLB node
+type NlbBackendNodeMapping struct {
+	SourceServerName string `json:"sourceServerName" example:"influx1"`
+	SourceIP         string `json:"sourceIp" example:"10.0.1.221"`
+	SourcePort       int    `json:"sourcePort" example:"8086"`
+	SourceHostname   string `json:"sourceHostname" example:"ip-10-0-1-221"`
+	SourceMachineID  string `json:"sourceMachineId" example:"ec2d32b5-98fb-5a96-7913-d3db1ec18932"`
+	TargetVmName     string `json:"targetVmName" example:"my01-ng-influxdb-back-1"`
+	TargetCspVmID    string `json:"targetCspVmId" example:"i-0dee049fb9412465b"`
+	TargetPrivateIP  string `json:"targetPrivateIp" example:"10.0.1.221"`
+	TargetPublicIP   string `json:"targetPublicIp,omitempty" example:"13.125.79.237"`
+	TargetPort       string `json:"targetPort" example:"8086"`
+	Status           string `json:"status" example:"Running"`
 }
 
 // SourceTargetMapping represents a mapping between source server and target VM

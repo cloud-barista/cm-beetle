@@ -54,6 +54,9 @@ func GenerateMigrationReportMarkdown(report *MigrationReport) string {
 	// VPC(VNet) and Subnet Status
 	writeNetworkStatus(&md, report)
 
+	// Network Load Balancer Status
+	writeNlbMigrationStatus(&md, report)
+
 	// SSH Key Status
 	writeSshKeyStatus(&md, report)
 
@@ -85,6 +88,17 @@ func writeExecutiveSummary(md *strings.Builder, summary *ExecutiveSummary, metad
 
 	if summary.FailedServers > 0 {
 		md.WriteString(fmt.Sprintf("⚠️ **Failed Servers:** %d\n\n", summary.FailedServers))
+	}
+
+	if summary.TotalNLBs > 0 || summary.MigratedNLBs > 0 {
+		if summary.NlbMigrationStatus != "" {
+			md.WriteString(fmt.Sprintf("**NLB Migration Status:** %s\n\n", summary.NlbMigrationStatus))
+		}
+		md.WriteString(fmt.Sprintf("**Total Load Balancers:** %d\n\n", summary.TotalNLBs))
+		md.WriteString(fmt.Sprintf("**Migrated Load Balancers:** %d\n\n", summary.MigratedNLBs))
+		if summary.FailedNLBs > 0 {
+			md.WriteString(fmt.Sprintf("⚠️ **Unmigrated Load Balancers:** %d\n\n", summary.FailedNLBs))
+		}
 	}
 
 	// Cost Estimate
@@ -248,6 +262,35 @@ func writeMigratedResourcesOverview(md *strings.Builder, report *MigrationReport
 		sshKeyDetails = "No SSH key created"
 	}
 	md.WriteString(fmt.Sprintf("| 7 | **SSH Key** | %s | %s | %s |\n", sshKeyName, sshKeyStatus, sshKeyDetails))
+
+	// 8. Network Load Balancer (only rendered when source or target has NLBs)
+	totalNlbs := report.ExecutiveSummary.TotalNLBs
+	migratedNlbs := report.ExecutiveSummary.MigratedNLBs
+	if report.TargetDetails != nil && len(report.TargetDetails.NetworkResources.NLBs) > migratedNlbs {
+		migratedNlbs = len(report.TargetDetails.NetworkResources.NLBs)
+	}
+	if totalNlbs > 0 || migratedNlbs > 0 {
+		nlbStatus := "✅ Created"
+		nlbCountStr := fmt.Sprintf("%d", migratedNlbs)
+		nlbDetails := fmt.Sprintf("%d of %d migrated", migratedNlbs, totalNlbs)
+		if migratedNlbs == 0 {
+			nlbStatus = "⚠️ Not created"
+			nlbCountStr = "0"
+			nlbDetails = fmt.Sprintf("0 of %d migrated", totalNlbs)
+		} else if totalNlbs > 0 && migratedNlbs < totalNlbs {
+			nlbStatus = "⚠️ Partially created"
+		} else if report.TargetDetails != nil && len(report.TargetDetails.NetworkResources.NLBs) > 0 {
+			firstNlb := report.TargetDetails.NetworkResources.NLBs[0]
+			nlbDetails = fmt.Sprintf("%s (%s:%s -> %s:%s)",
+				firstNlb.Name,
+				strings.ToUpper(firstNlb.Listener.Protocol), firstNlb.Listener.Port,
+				strings.ToUpper(firstNlb.TargetGroup.Protocol), firstNlb.TargetGroup.Port)
+			if len(report.TargetDetails.NetworkResources.NLBs) > 1 {
+				nlbDetails = fmt.Sprintf("%s, ... (+%d more)", nlbDetails, len(report.TargetDetails.NetworkResources.NLBs)-1)
+			}
+		}
+		md.WriteString(fmt.Sprintf("| 8 | **Network Load Balancer** | %s | %s | %s |\n", nlbCountStr, nlbStatus, nlbDetails))
+	}
 
 	md.WriteString("\n---\n\n")
 }
@@ -425,9 +468,13 @@ func writeSecurityGroupStatus(md *strings.Builder, report *MigrationReport) {
 
 			// Display Assigned VMs
 			assignedVMsList := getVMsUsingSecurityGroupList(sg.Name, report.TargetDetails)
+			assignedHostnames := make(map[string]bool)
 			if len(assignedVMsList) > 0 {
 				md.WriteString("**Assigned VMs:**\n\n")
 				for _, vm := range assignedVMsList {
+					if srcNode := findSourceServer(vm, report.SourceDetails); srcNode != nil && srcNode.Hostname != "" {
+						assignedHostnames[srcNode.Hostname] = true
+					}
 					sourceInfo := extractSourceServerInfoDetailed(vm, report.SourceDetails)
 					md.WriteString(fmt.Sprintf("- **VM:** %s\n", vm.Name))
 					md.WriteString(fmt.Sprintf("  - **Source Server:** %s\n", strings.ReplaceAll(sourceInfo, "<br>", ", ")))
@@ -441,7 +488,7 @@ func writeSecurityGroupStatus(md *strings.Builder, report *MigrationReport) {
 			md.WriteString("|-----|-----------|----------|------|------|----------------------|------|\n")
 
 			for i, rule := range sg.Rules {
-				sourceRule := matchSourceFirewallRule(rule, report.SourceDetails)
+				sourceRule := matchSourceFirewallRuleForSG(rule, report.SourceDetails, assignedHostnames)
 				note := ""
 				if sourceRule != "-" && sourceRule != "" {
 					note = "Migrated from source"
@@ -777,12 +824,19 @@ func getVMsUsingSecurityGroupList(sgName string, targetDetails *summary.TargetIn
 }
 
 func matchSourceFirewallRule(rule summary.SummaryFirewallRule, sourceDetails *summary.SourceInfraSummary) string {
+	return matchSourceFirewallRuleForSG(rule, sourceDetails, nil)
+}
+
+func matchSourceFirewallRuleForSG(rule summary.SummaryFirewallRule, sourceDetails *summary.SourceInfraSummary, assignedHostnames map[string]bool) string {
 	if sourceDetails == nil || sourceDetails.SecurityResources.ServerFirewalls == nil {
 		return "-"
 	}
 
-	// Enhanced matching logic
+	// Enhanced matching logic scoped to assigned source servers when available.
 	for _, serverFw := range sourceDetails.SecurityResources.ServerFirewalls {
+		if len(assignedHostnames) > 0 && !assignedHostnames[serverFw.Hostname] {
+			continue
+		}
 		for _, sourceRule := range serverFw.FirewallRules {
 			// Match by direction first
 			directionMatch := strings.EqualFold(sourceRule.Direction, rule.Direction)

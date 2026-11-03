@@ -54,6 +54,13 @@ func GenerateInfraSummary(nsId, infraId string) (*TargetInfraSummary, error) {
 		log.Warn().Err(err).Msg("Failed to collect some network resources")
 	}
 
+	nlbResources, err := collectNlbResources(nsId, infraId)
+	if err != nil {
+		log.Error().Err(err).Str("nsId", nsId).Str("infraId", infraId).Msg("Failed to collect NLB resources")
+		return nil, err
+	}
+	networkResources.NLBs = nlbResources
+
 	// Step 4: Collect security resources
 	securityResources, err := collectSecurityResources(nsId, uniqueSshKeyIds, uniqueSecurityGroupIds)
 	if err != nil {
@@ -80,6 +87,7 @@ func GenerateInfraSummary(nsId, infraId string) (*TargetInfraSummary, error) {
 
 	// Step 8: Build infrastructure overview
 	overview := buildInfraOverview(&infraInfo)
+	overview.TotalNlbCount = len(nlbResources)
 
 	// Step 9: Assemble final summary
 	infraSummary := &TargetInfraSummary{
@@ -348,8 +356,10 @@ func collectComputeResources(nsId string, infraInfo *tbmodel.InfraInfo, specIds,
 		image := imageMap[node.ImageId]
 
 		reportVm := SummaryVmInfo{
-			Name:    node.Name,
-			CspVmId: node.CspResourceId,
+			Id:          node.Id,
+			Name:        node.Name,
+			NodeGroupId: node.NodeGroupId,
+			CspVmId:     node.CspResourceId,
 			Status:  node.Status,
 			Spec: SummaryVmSpecInfo{
 				Name:         extractShortSpecName(node.CspSpecName),
