@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-10-30 12:50:37
+**Generated At:** 2026-11-03 07:45:19
 
 **Namespace:** mig01
 
@@ -20,6 +20,7 @@
 | **Total VMs** | 3 |
 | **Running VMs** | 3 |
 | **Stopped VMs** | 0 |
+| **Total NLBs** | 1 |
 | **Monitoring Agent** |  |
 
 ## Compute Resources
@@ -35,15 +36,15 @@
 
 | Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 |------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
-| ubuntu_22_04_x64_20G_alibase_20260810.vhd | Ubuntu  22.04 64 bit | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 20 GB | 3 |
+| ubuntu_22_04_x64_20G_alibase_20260916.vhd | Ubuntu  22.04 64 bit | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 20 GB | 3 |
 
 ### Virtual Machines
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my04-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | i-mj7c2uilk7pplm0pa0qo | Running | 2 vCPU, 2.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-mig-vnet-01<br>**Subnet:** my04-mig-subnet-01<br>**Public IP:** 8.220.204.23<br>**Private IP:** 10.0.1.142<br>**SGs:** my04-mig-sg-02<br>**SSH:** my04-mig-sshkey-01 |
-| my04-ng-influxdb-back-1 | i-mj7hb03d1frhdo6k7utt | Running | 4 vCPU, 16.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-mig-vnet-01<br>**Subnet:** my04-mig-subnet-01<br>**Public IP:** 8.213.158.198<br>**Private IP:** 10.0.1.141<br>**SGs:** my04-mig-sg-01<br>**SSH:** my04-mig-sshkey-01 |
-| my04-ng-influxdb-back-2 | i-mj7hb03d1frhdo6k7utu | Running | 4 vCPU, 16.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-mig-vnet-01<br>**Subnet:** my04-mig-subnet-01<br>**Public IP:** 47.80.21.196<br>**Private IP:** 10.0.1.140<br>**SGs:** my04-mig-sg-01<br>**SSH:** my04-mig-sshkey-01 |
+| my04-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | i-mj790whlh09172gksc6j | Running | 2 vCPU, 2.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-mig-vnet-01<br>**Subnet:** my04-mig-subnet-01<br>**Public IP:** 47.80.21.218<br>**Private IP:** 10.0.1.156<br>**SGs:** my04-mig-sg-02<br>**SSH:** my04-mig-sshkey-01 |
+| my04-ng-influxdb-back-1 | i-mj77n1weuvwcexohf6el | Running | 4 vCPU, 16.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-mig-vnet-01<br>**Subnet:** my04-mig-subnet-01<br>**Public IP:** 8.220.218.246<br>**Private IP:** 10.0.1.155<br>**SGs:** my04-mig-sg-01<br>**SSH:** my04-mig-sshkey-01 |
+| my04-ng-influxdb-back-2 | i-mj7dsa5h7m8wb4pps4zi | Running | 4 vCPU, 16.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-mig-vnet-01<br>**Subnet:** my04-mig-subnet-01<br>**Public IP:** 47.80.242.245<br>**Private IP:** 10.0.1.157<br>**SGs:** my04-mig-sg-01<br>**SSH:** my04-mig-sshkey-01 |
 
 
 ## Network Resources
@@ -55,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my04-mig-vnet-01 |
-| **CSP VNet ID** | vpc-mj7xwzw3fbv61c7bto7le |
+| **CSP VNet ID** | vpc-mj78pzxngiup1pnbkpzv4 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | alibaba-ap-northeast-2 |
 | **Subnet Count** | 1 |
@@ -64,7 +65,29 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my04-mig-subnet-01 | vsw-mj77bwqspdjcxy9d4i88j | 10.0.1.0/24 | ap-northeast-2a |
+| my04-mig-subnet-01 | vsw-mj7s723jt4vciy9b9o292 | 10.0.1.0/24 | ap-northeast-2a |
+
+### Network Load Balancers (NLB)
+
+#### NLB: my04-ng-influxdb-back
+
+| Property | Value |
+|----------|-------|
+| **Name** | my04-ng-influxdb-back |
+| **CSP NLB Name** | tb945gefv0jskoq2r0kg |
+| **CSP NLB ID** | lb-mj7an954ncw2w8shzw6pm |
+| **Type / Scope** | PUBLIC / REGION |
+| **Connection** | alibaba-ap-northeast-2 |
+| **Listener** | TCP:9999 (IP: 8.220.212.40) |
+| **Target Group** | TCP:8086 (Node Group: my04-ng-influxdb-back, 2 nodes) |
+| **Health Checker** | TCP:8086 (Interval: 10s, Timeout: 10s, Threshold: 3) |
+
+**Target Group Nodes:**
+
+| Node Name | CSP VM ID | Private IP | Public IP | Status |
+|-----------|-----------|------------|-----------|--------|
+| my04-ng-influxdb-back-1 | i-mj77n1weuvwcexohf6el | 10.0.1.155 | 8.220.218.246 | Running |
+| my04-ng-influxdb-back-2 | i-mj7dsa5h7m8wb4pps4zi | 10.0.1.157 | 47.80.242.245 | Running |
 
 
 ## Security Resources
@@ -73,7 +96,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my04-mig-sshkey-01 | tb5aoempt96t422gdonc |  | d467b5e0b43d2054cf8965e2708fbea3 |
+| my04-mig-sshkey-01 | tbu1bs96pr1jmeiofrnc |  | 47a0ef4338e917834102ede925af9a03 |
 
 ### Security Groups
 
@@ -82,7 +105,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my04-mig-sg-01 |
-| **CSP Security Group ID** | sg-mj7gjbh1a4atjhkrj8wt |
+| **CSP Security Group ID** | sg-mj7iiiafgic4u6qf7v9f |
 | **VNet** | my04-mig-vnet-01 |
 | **Rule Count** | 6 rules |
 
@@ -102,7 +125,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my04-mig-sg-02 |
-| **CSP Security Group ID** | sg-mj7c2uilk7pplm0lr4kp |
+| **CSP Security Group ID** | sg-mj70bij6qxagngjsbmd6 |
 | **VNet** | my04-mig-vnet-01 |
 | **Rule Count** | 4 rules |
 

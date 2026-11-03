@@ -3025,23 +3025,28 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, infraId, disp
 			// Determine username (priority: vmInfo.VmUserName > default "cb-user")
 			sshUserName := userName
 
-			// Perform SSH connectivity test with retry logic (up to 5 minutes for cloud-init startup).
+			// Perform SSH connectivity test with a 5-minute wall-clock deadline for cloud-init startup.
 			log.Info().Str("nodeId", nodeId).Str("ip", publicIP).Str("user", sshUserName).Msg("🔍 Testing SSH connectivity (up to 5 min)...")
 
-			const maxRetries = 31 // 1 immediate + 30 retries x 10s = 5 minutes total
+			const maxWaitTime = 5 * time.Minute
 			const retryDelay = 10 * time.Second
-			const logProgressEvery = 6 // surface progress at Info every ~1 minute (6 × 10s)
+			const logProgressEvery = 6
 			var sshResult string
 			var lastErr error
 
-			for attempt := 1; attempt <= maxRetries; attempt++ {
+			startTime := time.Now()
+			deadline := startTime.Add(maxWaitTime)
+			attempt := 0
+
+			for {
+				attempt++
 				if attempt > 1 {
 					time.Sleep(retryDelay)
 				}
 
 				sshResult, lastErr = testSSHConnectivity(publicIP, privateKey, sshUserName)
 				if lastErr == nil {
-					// Success
+					// Record successful SSH command result.
 					vmResult["status"] = "success"
 					vmResult["sshTest"] = "successful"
 					vmResult["command"] = "uname -a"
@@ -3056,39 +3061,42 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, infraId, disp
 					break
 				}
 
-				// Authentication failures are not transient - retrying won't help.
-				// Only connectivity failures (connection refused, timeout) benefit from retrying.
+				// Stop retrying immediately on permanent authentication failures.
 				errMsg := lastErr.Error()
 				if strings.Contains(errMsg, "unable to authenticate") ||
 					strings.Contains(errMsg, "no supported methods remain") ||
 					strings.Contains(errMsg, "permission denied") {
 					log.Warn().Err(lastErr).Str("nodeId", nodeId).Str("ip", publicIP).
 						Int("attempt", attempt).
-						Msg("SSH authentication failed (key mismatch or user not set up) — skipping retries")
+						Msg("SSH authentication failed (key mismatch or user not set up), skipping retries")
 					break
 				}
 
-				// Transient connectivity failure — keep retrying.
-				// Log at Info every ~1 minute; suppress intermediate attempts to reduce noise.
-				elapsed := time.Duration(attempt-1) * retryDelay
+				if !time.Now().Add(retryDelay).Before(deadline) {
+					break
+				}
+
+				// Log progress periodically while retrying transient connectivity failures.
+				elapsed := time.Since(startTime).Round(time.Second)
 				if (attempt-1)%logProgressEvery == 0 {
 					log.Info().Err(lastErr).Str("nodeId", nodeId).Str("ip", publicIP).
-						Str("elapsed", elapsed.String()).Int("attempt", attempt).Int("maxRetries", maxRetries).
+						Str("elapsed", elapsed.String()).Str("maxWaitTime", maxWaitTime.String()).Int("attempt", attempt).
 						Msg("🔄 SSH not ready, retrying...")
 				} else {
 					log.Debug().Err(lastErr).Str("nodeId", nodeId).Str("ip", publicIP).
-						Int("attempt", attempt).Int("maxRetries", maxRetries).
+						Str("elapsed", elapsed.String()).Int("attempt", attempt).
 						Msg("SSH attempt failed")
 				}
 			}
 
 			if lastErr != nil {
+				elapsed := time.Since(startTime).Round(time.Second)
 				vmResult["status"] = "failed"
 				vmResult["error"] = lastErr.Error()
 				vmResult["sshTest"] = "failed"
-				vmResult["attempts"] = maxRetries
+				vmResult["attempts"] = attempt
 				failedTests++
-				log.Error().Err(lastErr).Str("nodeId", nodeId).Str("ip", publicIP).Int("maxRetries", maxRetries).Msg("❌ SSH connectivity test failed after all retries")
+				log.Error().Err(lastErr).Str("nodeId", nodeId).Str("ip", publicIP).Int("attempts", attempt).Str("elapsed", elapsed.String()).Msg("❌ SSH connectivity test failed after timeout")
 			}
 		}
 
