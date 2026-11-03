@@ -252,6 +252,8 @@ interface MigrationState {
   activeDeploymentId: string;
   deploymentStatus: any | null;
   liveReportHtml: string;
+  targetOverviewInfraId: string;
+  setTargetOverviewInfraId: (id: string) => void;
   
   // Page 5: Infrastructure Deletion Request Tracking (Persisted across tab navigation)
   deletingInfrasMap: Record<string, { reqId: string; status: string }>;
@@ -353,6 +355,10 @@ export interface DataMigrationJob {
   elapsedSeconds: number;
   logs: string[];
   isSample?: boolean;
+  sourcePreCmd?: string;
+  destinationPostCmd?: string;
+  includeFilter?: string;
+  excludeFilter?: string;
 }
 
 export function calculateJobElapsedSeconds(job: { startTime?: string; elapsedSeconds: number; createdAtMs?: number }): number {
@@ -941,6 +947,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   activeDeploymentId: '',
   deploymentStatus: null,
   liveReportHtml: '',
+  targetOverviewInfraId: '',
+  setTargetOverviewInfraId: (id) => set({ targetOverviewInfraId: id }),
 
   setJobs: (fn) => set((state) => ({ jobs: typeof fn === 'function' ? fn(state.jobs) : fn })),
   setActiveJobId: (id) => set({ activeJobId: id }),

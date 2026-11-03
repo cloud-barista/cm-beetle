@@ -171,7 +171,9 @@ export const MigratedInfraManagement: React.FC = () => {
     startStorageTeardown,
     removeStorageTeardown,
     pollStorageTeardownStatus,
-    removeJob
+    removeJob,
+    targetOverviewInfraId,
+    setTargetOverviewInfraId
   } = useMigrationStore();
 
   const [copiedIp, setCopiedIp] = useState<string | null>(null);
@@ -585,6 +587,16 @@ export const MigratedInfraManagement: React.FC = () => {
     fetchMigratedInfraIds();
     loadMigratedStorages();
   }, [namespaceId, completedJobsCount, completedStoragesCount, activeJobsCount, jobs.length]);
+
+  // Automatically focus and load the target infra when navigated from 4. Migration Execution
+  useEffect(() => {
+    if (targetOverviewInfraId) {
+      setOverviewCategory('infra');
+      setSelectedInfraId(targetOverviewInfraId);
+      handleLoadInfraDetail(targetOverviewInfraId);
+      setTargetOverviewInfraId('');
+    }
+  }, [targetOverviewInfraId]);
 
   // Combine backend migrated infras, completed migration jobs from store, and saved models
   const completedJobs = jobs.filter(j => j.status === 'Success');

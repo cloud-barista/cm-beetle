@@ -78,7 +78,8 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     nameSeed,
     fetchSavedCloudModels,
     selectCloudModel,
-    setActiveTab
+    setActiveTab,
+    setTargetOverviewInfraId
   } = useMigrationStore();
 
   // View Mode Toggle: 'standard' (Default Editor/Detail View) vs 'split' (16:9 Live Topology Split View)
@@ -1200,10 +1201,15 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                   </button>
 
                   <button
-                    onClick={() => setActiveTab('operations')}
+                    onClick={() => {
+                      if (activeJob?.infraId) {
+                        setTargetOverviewInfraId(activeJob.infraId);
+                      }
+                      setActiveTab('overview');
+                    }}
                     className="px-3 py-1.5 bg-bg-panel hover:bg-bg-input border border-border-main text-text-muted hover:text-text-main rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
                   >
-                    <span>View Topology Map (Tab 5)</span>
+                    <span>View in Overview (Topology &amp; Report)</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>

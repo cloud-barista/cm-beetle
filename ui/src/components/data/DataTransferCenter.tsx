@@ -50,6 +50,10 @@ interface DataMigrationJob {
   encryptionKeyId: string;
   isSample?: boolean;
   logs: string[];
+  sourcePreCmd?: string;
+  destinationPostCmd?: string;
+  includeFilter?: string;
+  excludeFilter?: string;
 }
 
 export const DataTransferCenter: React.FC = () => {
@@ -208,6 +212,9 @@ export const DataTransferCenter: React.FC = () => {
   const [dataStrategy, setDataStrategy] = useState('auto');
   const [includeFilter, setIncludeFilter] = useState('');
   const [excludeFilter, setExcludeFilter] = useState('');
+  const [showCommandsSection, setShowCommandsSection] = useState(false);
+  const [sourcePreCmd, setSourcePreCmd] = useState('');
+  const [destinationPostCmd, setDestinationPostCmd] = useState('');
   const [isEncryptingAndLaunching, setIsEncryptingAndLaunching] = useState(false);
   const [preferAsync, setPreferAsync] = useState(true);
   const [modalError, setModalError] = useState<string | null>(null);
@@ -320,7 +327,17 @@ export const DataTransferCenter: React.FC = () => {
     }
     setIncludeFilter('ollama/models/blobs/**, ollama/models/manifests/**, open-webui/webui.db, docker-compose.yml');
     setExcludeFilter('open-webui/cache/**, *.log, *.tmp, __pycache__/**');
+    setSourcePreCmd('cd /opt/aimx/ai-service && sudo docker compose stop && sync && sudo chown -R $USER:$USER /opt/aimx/ai-service && sudo chmod -R u+rwX /opt/aimx/ai-service');
+    setDestinationPostCmd('cd /opt/aimx/ai-service && sudo docker compose up -d && sleep 5 && sudo docker exec aimx-ollama ollama run gemma4:e2b "Hello" >/dev/null 2>&1 || true');
     setShowDirectoryTree(true);
+    setShowCommandsSection(true);
+  };
+
+  // Apply MySQL / MariaDB Dump & Restore command preset
+  const handleApplyMysqlCmdPreset = () => {
+    setSourcePreCmd('mkdir -p /tmp/db_backup && mysqldump -u root --all-databases --single-transaction > /tmp/db_backup/dump.sql');
+    setDestinationPostCmd('mysql -u root < /tmp/db_backup/dump.sql');
+    setShowCommandsSection(true);
   };
 
   // Decode or sanitize Honeybee SSH username (Honeybee RSA-encrypts stored user strings)
@@ -722,11 +739,14 @@ export const DataTransferCenter: React.FC = () => {
       } : undefined;
 
       // Step 2: Build Plaintext DataMigrationModel matching pkg/api/rest/controller/migration-data.go & transx specification
+      const trimmedSourcePreCmd = sourcePreCmd.trim();
+      const trimmedDestinationPostCmd = destinationPostCmd.trim();
       const plainModel = {
         source: {
           storageType: sourceAccessType === 'object-storage' ? 'objectstorage' : 'filesystem',
           path: fullSourcePath,
           ...(filterConfig ? { filter: filterConfig } : {}),
+          ...(trimmedSourcePreCmd ? { preCmd: trimmedSourcePreCmd } : {}),
           ...(sourceAccessType === 'object-storage' ? {
             objectStorage: {
               accessType: 'minio',
@@ -753,6 +773,7 @@ export const DataTransferCenter: React.FC = () => {
         destination: {
           storageType: targetAccessType === 'object-storage' ? 'objectstorage' : 'filesystem',
           path: fullTargetPath,
+          ...(trimmedDestinationPostCmd ? { postCmd: trimmedDestinationPostCmd } : {}),
           ...(targetAccessType === 'object-storage' ? {
             objectStorage: {
               accessType: targetAccessEngine,
@@ -835,9 +856,15 @@ export const DataTransferCenter: React.FC = () => {
         createdAtMs: nowMs,
         elapsedSeconds: 0,
         encryptionKeyId: usedKeyId,
+        sourcePreCmd: trimmedSourcePreCmd || undefined,
+        destinationPostCmd: trimmedDestinationPostCmd || undefined,
+        includeFilter: includeFilter.trim() || undefined,
+        excludeFilter: excludeFilter.trim() || undefined,
         logs: [
           `GET /beetle/migration/data/encryptionKey -> Issued KeyID: ${usedKeyId}`,
           `Constructed Beetle DataLocation.Path -> Source: "${displaySourceLabel}" | Target: "${displayTargetLabel}"`,
+          ...(trimmedSourcePreCmd ? [`Configured Source Command (preCmd): ${trimmedSourcePreCmd}`] : []),
+          ...(trimmedDestinationPostCmd ? [`Configured Destination Command (postCmd): ${trimmedDestinationPostCmd}`] : []),
           `Encrypting sensitive credentials (${sourceAccessType === 'object-storage' ? 'AccessKeyId, SecretAccessKey' : 'SSH Private Key'}) via RSA-OAEP-256...`,
           `POST /beetle/migration/data -> 202 Accepted (ReqID: ${reqId}, Status: Handling)`
         ]
@@ -1139,6 +1166,27 @@ export const DataTransferCenter: React.FC = () => {
               </span>
             </div>
           </div>
+
+          {(activeJob.sourcePreCmd || activeJob.destinationPostCmd) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="p-3.5 bg-bg-input/60 border border-border-main/50 rounded-xl space-y-1.5">
+                <span className="block font-normal text-text-muted text-sm">
+                  Source Command (Before Transfer) - <code className="font-mono text-xs text-emerald-500">source.preCmd</code>
+                </span>
+                <pre className="text-xs font-mono font-extrabold text-text-main whitespace-pre-wrap break-all bg-bg-panel/80 p-2.5 rounded-lg border border-border-main/40">
+                  {activeJob.sourcePreCmd || '(None)'}
+                </pre>
+              </div>
+              <div className="p-3.5 bg-bg-input/60 border border-border-main/50 rounded-xl space-y-1.5">
+                <span className="block font-normal text-text-muted text-sm">
+                  Destination Command (After Transfer) - <code className="font-mono text-xs text-teal-500">destination.postCmd</code>
+                </span>
+                <pre className="text-xs font-mono font-extrabold text-text-main whitespace-pre-wrap break-all bg-bg-panel/80 p-2.5 rounded-lg border border-border-main/40">
+                  {activeJob.destinationPostCmd || '(None)'}
+                </pre>
+              </div>
+            </div>
+          )}
 
           {/* REST API REQUEST & RESPONSE LOG */}
           <div className="space-y-2">
@@ -2308,6 +2356,106 @@ export const DataTransferCenter: React.FC = () => {
                     onToggleInclude={handleToggleIncludePattern}
                     onToggleExclude={handleToggleExcludePattern}
                   />
+                )}
+              </div>
+
+              {/* 6. Source & Destination Commands (Optional) - transx preCmd / postCmd */}
+              <div className="p-4 sm:p-5 bg-bg-input/50 border border-border-main rounded-xl space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCommandsSection(prev => !prev)}
+                    className="flex items-center gap-2 text-left cursor-pointer group"
+                  >
+                    <Terminal className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span className="text-sm font-extrabold text-text-main group-hover:text-emerald-500 transition">
+                      Source &amp; Destination Commands (Optional)
+                    </span>
+                    <span className="text-xs font-normal text-text-muted">
+                      (Executes preCmd on Source before transfer and postCmd on Destination after transfer)
+                    </span>
+                    {showCommandsSection ? (
+                      <ChevronUp className="w-4 h-4 text-text-muted" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-text-muted" />
+                    )}
+                  </button>
+
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleApplyAimxPreset}
+                      className="px-2.5 py-1 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold rounded-lg transition cursor-pointer flex items-center gap-1"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>+ Preset: AIMX (Ollama + OpenWebUI)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleApplyMysqlCmdPreset}
+                      className="px-2.5 py-1 bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/40 text-teal-600 dark:text-teal-400 text-xs font-extrabold rounded-lg transition cursor-pointer"
+                    >
+                      + Preset: MySQL Dump &amp; Restore
+                    </button>
+                    {(sourcePreCmd || destinationPostCmd) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSourcePreCmd('');
+                          setDestinationPostCmd('');
+                        }}
+                        className="px-2 py-1 bg-bg-panel hover:bg-red-500/10 border border-border-main text-text-muted hover:text-red-400 text-xs font-bold rounded-lg transition cursor-pointer"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {showCommandsSection && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2 border-t border-border-main/40">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-normal text-text-muted">
+                          Source Command (Before Transfer)
+                        </label>
+                        <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                          source.preCmd
+                        </span>
+                      </div>
+                      <textarea
+                        rows={3}
+                        value={sourcePreCmd}
+                        onChange={(e) => setSourcePreCmd(e.target.value)}
+                        placeholder="e.g., cd /opt/aimx/ai-service && sudo docker compose stop && sync"
+                        className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono text-xs font-extrabold focus:outline-none focus:border-emerald-500 resize-y"
+                      />
+                      <p className="text-xs text-text-muted">
+                        Runs on the Source server via SSH before rsync / S3 transfer begins (e.g., stop containers, flush DB, fix file ownership).
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-normal text-text-muted">
+                          Destination Command (After Transfer)
+                        </label>
+                        <span className="text-xs font-mono font-bold text-teal-600 dark:text-teal-400">
+                          destination.postCmd
+                        </span>
+                      </div>
+                      <textarea
+                        rows={3}
+                        value={destinationPostCmd}
+                        onChange={(e) => setDestinationPostCmd(e.target.value)}
+                        placeholder="e.g., cd /opt/aimx/ai-service && sudo docker compose up -d"
+                        className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono text-xs font-extrabold focus:outline-none focus:border-teal-500 resize-y"
+                      />
+                      <p className="text-xs text-text-muted">
+                        Runs on the Destination server via SSH immediately after data transfer completes (e.g., docker compose up -d, GPU model pre-warmup).
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
 

@@ -628,6 +628,10 @@ AI 워크로드 이관 시 발생할 수 있는 **GPU VRAM 부족(Out-Of-Memory)
 3. **SQLite WAL(`Write-Ahead Logging`) 체크포인트 일관성 제어**:
    - Open WebUI의 `webui.db`는 SQLite WAL 모드로 운영되므로, 컨테이너 기동 중에는 최신 트랜잭션이 `webui.db-wal` 파일에 분리되어 존재합니다.
    - `AIMX`는 Stage 3-3에서 컨테이너를 정상 종료(`docker compose stop && sync`)하여 트랜잭션을 완결한 뒤 이관하며, Stage 3-6 및 Stage 4에서 소스와 타겟의 `webui.db` SHA-256 다이제스트를 동일한 체크포인트 시점 기준으로 대조하여 **데이터 무결성(`MATCH 100%`)**을 검증합니다.
+4. **Beetle UX Lab (`Data` 탭) 및 REST API에서의 `preCmd` / `postCmd` 일괄 실행 연동**:
+   - `POST /beetle/migration/data` 컨트롤러는 내부적으로 `transx.MigrateData(req)`를 호출하여 **`source.preCmd` (전송 전 소스 명령) -> `Transfer` (`rsync` 데이터 전송) -> `destination.postCmd` (전송 후 타겟 명령)** 파이프라인을 단일 요청으로 순차 실행합니다.
+   - 또한 신규 프로비저닝된 타겟 VM에 `/opt/aimx/ai-service`와 같은 상위 경로가 존재하지 않더라도, `transx`의 `ensureRemoteDirectory`가 SSH를 통해 디렉터리 생성(`sudo mkdir -p`) 및 소유권 부여(`sudo chown`)를 자동으로 선행 처리합니다.
+   - 따라서 **Beetle UX Lab**의 `Data` 탭(`Launch New Data Migration` 모달)에서 `+ Preset: AIMX (Ollama + OpenWebUI)` 버튼을 선택하면 데이터 필터(`include`/`exclude`)뿐만 아니라 **Source Command (`source.preCmd`: 컨테이너 정지, `sync`, 권한 정리)** 와 **Destination Command (`destination.postCmd`: `docker compose up -d` 및 `gemma4:e2b` GPU Pre-Warmup)** 가 자동으로 채워져 웹 UI에서도 무결성 데이터 이관과 서비스 기동을 원클릭으로 시연할 수 있습니다.
 
 ---
 

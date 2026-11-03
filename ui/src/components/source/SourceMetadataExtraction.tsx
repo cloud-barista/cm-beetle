@@ -9,7 +9,7 @@ import {
   Plus, Server, Key, Upload, CheckCircle2, XCircle,
   RefreshCw, FileText, ChevronRight, Download, Trash2,
   AlertCircle, Loader2, ChevronDown, ChevronUp, Play, X, Save,
-  Database, ArrowRight
+  Database, ArrowRight, Cpu, HardDrive, Network
 } from 'lucide-react';
 
 // Normalize PEM private key (handles both multiline .pem and _oneline.pem with literal \n)
@@ -419,6 +419,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
   const [importStatus, setImportStatus] = useState<'idle'|'importing'|'done'|'failed'>('idle');
   const [saveSuccess,  setSaveSuccess]  = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [previewMode, setPreviewMode] = useState<'summary' | 'json'>('summary');
 
   // ─── Init ──────────────────────────────────────────────────────
   useEffect(() => { fetchSourceGroups(); fetchSavedSourceModels(); }, []);
@@ -1198,17 +1199,177 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
             </div>
           </div>
 
-          {refinedSourceInfra && (
-            <div className="mt-5 pt-5 border-t border-border-main">
-              <h3 className="text-sm font-bold text-text-main mb-3 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-emerald-400" />
-                Collected Infrastructure Model Preview
-              </h3>
-              <div className="bg-bg-input border border-border-main rounded-xl p-4 text-xs font-mono text-slate-800 dark:text-emerald-400 max-h-[60vh] overflow-y-auto">
-                <pre>{JSON.stringify(refinedSourceInfra, null, 2)}</pre>
+          {refinedSourceInfra && (() => {
+            const nodes = Array.isArray(refinedSourceInfra.nodes) ? refinedSourceInfra.nodes : [];
+            const totalVcpu = nodes.reduce((sum, n) => sum + ((n.cpu?.threads || n.cpu?.cores || 1) * (n.cpu?.cpus || 1)), 0);
+            const totalRam = nodes.reduce((sum, n) => sum + (n.memory?.totalSize || 0), 0);
+            const totalDisk = nodes.reduce((sum, n) => sum + (n.rootDisk?.totalSize || 0), 0);
+            const gpuNodes = nodes.filter((n: any) => Array.isArray(n.gpuCards || n.gpus) && (n.gpuCards || n.gpus).length > 0);
+            const gpuSummaryBadges = gpuNodes.flatMap((n: any) => {
+              const cards = n.gpuCards || n.gpus || [];
+              return cards.map((g: any) => `${g.vendor || 'GPU'} ${g.model || ''} ${g.memoryTotalGB ? `${g.memoryTotalGB}GB` : ''}`.trim());
+            });
+            const primaryOs = nodes[0]?.os?.prettyName || nodes[0]?.os?.name || 'Ubuntu 22.04 LTS';
+            const cidrList = refinedSourceInfra.network?.ipv4Networks?.cidrBlocks || [];
+            const defaultGw = refinedSourceInfra.network?.ipv4Networks?.defaultGateways?.[0]?.ip || '10.0.1.1';
+
+            return (
+              <div className="mt-5 pt-5 border-t border-border-main space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-sm font-bold text-text-main flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-emerald-500" />
+                    Collected Infrastructure Model Preview (onpremiseInfraModel)
+                  </h3>
+                  <div className="inline-flex rounded-xl border border-border-main bg-bg-input p-1">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode('summary')}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        previewMode === 'summary'
+                          ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                          : 'text-text-muted hover:text-text-main'
+                      }`}
+                    >
+                      Summary View
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode('json')}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        previewMode === 'json'
+                          ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                          : 'text-text-muted hover:text-text-main'
+                      }`}
+                    >
+                      Raw JSON
+                    </button>
+                  </div>
+                </div>
+
+                {previewMode === 'summary' ? (
+                  <div className="space-y-4">
+                    {/* 4 Summary Metric Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="p-3.5 rounded-xl bg-bg-input/60 border border-border-main">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-normal text-text-muted">Collected Nodes</span>
+                          <Server className="w-4 h-4 text-emerald-500" />
+                        </div>
+                        <div className="text-base font-extrabold text-text-main">{nodes.length} Nodes</div>
+                        <div className="text-xs text-text-muted mt-0.5">
+                          {refinedSourceInfra.nlbs?.length ? `${refinedSourceInfra.nlbs.length} Load Balancer(s) detected` : 'Honeybee SSH collection verified'}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-bg-input/60 border border-border-main">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-normal text-text-muted">Aggregate Compute</span>
+                          <Cpu className="w-4 h-4 text-teal-500" />
+                        </div>
+                        <div className="text-base font-extrabold text-text-main">
+                          {totalVcpu} vCPU / {totalRam} GiB RAM
+                        </div>
+                        <div className="text-xs text-text-muted mt-0.5">
+                          Total Root Disk: {totalDisk} GB
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-bg-input/60 border border-border-main">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-normal text-text-muted">GPU Accelerators</span>
+                          <HardDrive className="w-4 h-4 text-emerald-500" />
+                        </div>
+                        <div className="text-base font-extrabold text-text-main">
+                          {gpuNodes.length > 0 ? `${gpuSummaryBadges.length} GPU (${gpuNodes.length} Node)` : 'None (CPU Only)'}
+                        </div>
+                        <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 truncate">
+                          {gpuSummaryBadges.length > 0 ? gpuSummaryBadges.join(', ') : 'Standard x86_64 Compute'}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-bg-input/60 border border-border-main">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-normal text-text-muted">OS &amp; Network</span>
+                          <Network className="w-4 h-4 text-teal-500" />
+                        </div>
+                        <div className="text-base font-extrabold text-text-main truncate" title={primaryOs}>
+                          {primaryOs}
+                        </div>
+                        <div className="text-xs text-text-muted mt-0.5 font-mono truncate">
+                          {cidrList.length > 0 ? cidrList.join(', ') : `GW ${defaultGw}`}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Per-Node Summary Table */}
+                    <div className="overflow-x-auto border border-border-main rounded-xl">
+                      <table className="w-full text-left border-collapse text-sm">
+                        <thead>
+                          <tr className="border-b border-border-main bg-bg-input/70">
+                            <th className="py-2.5 px-3 font-normal text-text-muted">#</th>
+                            <th className="py-2.5 px-3 font-normal text-text-muted">Hostname</th>
+                            <th className="py-2.5 px-3 font-normal text-text-muted">Private IP</th>
+                            <th className="py-2.5 px-3 font-normal text-text-muted">Node Spec (CPU / RAM / Disk)</th>
+                            <th className="py-2.5 px-3 font-normal text-text-muted">GPU Accelerator</th>
+                            <th className="py-2.5 px-3 font-normal text-text-muted">Open Inbound Ports</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border-main/50">
+                          {nodes.map((node: any, idx: number) => {
+                            const vcpu = (node.cpu?.threads || node.cpu?.cores || 1) * (node.cpu?.cpus || 1);
+                            const ram = node.memory?.totalSize || 0;
+                            const disk = node.rootDisk?.totalSize || 0;
+                            const primaryIface = (node.interfaces || []).find((iface: any) => iface.name !== 'lo' && Array.isArray(iface.ipv4CidrBlocks) && iface.ipv4CidrBlocks.length > 0);
+                            const privateIp = primaryIface?.ipv4CidrBlocks?.[0]?.split('/')[0] || '-';
+                            const gpus = node.gpuCards || node.gpus || [];
+                            const openPorts = Array.from(
+                              new Set(
+                                (node.firewallTable || [])
+                                  .filter((r: any) => r.direction === 'inbound' && r.action === 'allow' && r.dstPorts && r.dstPorts !== '*')
+                                  .map((r: any) => String(r.dstPorts))
+                              )
+                            );
+
+                            return (
+                              <tr key={node.machineId || idx} className="hover:bg-emerald-500/5 transition">
+                                <td className="py-2.5 px-3 text-xs text-text-muted font-mono">{idx + 1}</td>
+                                <td className="py-2.5 px-3">
+                                  <span className="font-extrabold text-text-main">{node.hostname || node.machineId}</span>
+                                  {node.workloadTag && (
+                                    <span className="block text-xs text-text-muted truncate max-w-[260px]">{node.workloadTag}</span>
+                                  )}
+                                </td>
+                                <td className="py-2.5 px-3 font-mono font-extrabold text-text-main">{privateIp}</td>
+                                <td className="py-2.5 px-3 font-extrabold text-text-main">
+                                  {vcpu} vCPU / {ram} GiB / {disk} GB {node.rootDisk?.type || 'SSD'}
+                                </td>
+                                <td className="py-2.5 px-3">
+                                  {gpus.length > 0 ? (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                                      {gpus.map((g: any) => `${g.vendor || 'NVIDIA'} ${g.model || 'GPU'} (${g.memoryTotalGB || 16}GB)`).join(', ')}
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs text-text-muted">-</span>
+                                  )}
+                                </td>
+                                <td className="py-2.5 px-3 font-mono text-xs font-extrabold text-teal-600 dark:text-teal-400">
+                                  {openPorts.length > 0 ? openPorts.join(', ') : '22'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-bg-input border border-border-main rounded-xl p-4 text-xs font-mono text-slate-800 dark:text-emerald-400 max-h-[60vh] overflow-y-auto">
+                    <pre>{JSON.stringify(refinedSourceInfra, null, 2)}</pre>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {onNext && (
             <div className="mt-5 pt-4 border-t border-border-main flex justify-end">
