@@ -1,6 +1,7 @@
 package transx
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,26 +12,28 @@ import (
 // Pipeline Definition
 // ============================================================================
 
-// Pipeline represents a planned transfer with multiple steps.
+// Pipeline represents a planned transfer with one or more steps.
 type Pipeline struct {
-	Name     string
-	Strategy string
-	Steps    []Step
+	Name              string
+	Strategy          string
+	EffectiveStrategy string
+	Steps             []Step
+	Fallback          *Pipeline
 }
 
 // Step represents a single transfer step in the pipeline.
 type Step struct {
 	Name        string
+	Mode        TransferMode
 	Source      DataLocation
 	Destination DataLocation
 	Executor    Executor
 }
 
-// Execute runs all steps in the pipeline sequentially.
+// Execute runs all steps in the pipeline sequentially and cleans up staging directories on success.
 func (p *Pipeline) Execute() error {
-	// Clean up and prepare local staging paths if any step uses local filesystem staging
 	for _, step := range p.Steps {
-		if step.Destination.IsLocal() && strings.HasPrefix(step.Destination.Path, DefaultStagingPath) {
+		if step.Destination.IsLocal() && strings.HasPrefix(step.Destination.Path, DefaultStagingPath+"/") {
 			_ = os.RemoveAll(step.Destination.Path)
 			if err := os.MkdirAll(step.Destination.Path, 0755); err != nil {
 				return fmt.Errorf("failed to prepare staging directory %s: %w", step.Destination.Path, err)
@@ -40,9 +43,34 @@ func (p *Pipeline) Execute() error {
 
 	for i, step := range p.Steps {
 		if err := step.Executor.Execute(step.Source, step.Destination); err != nil {
+			var preFlightErr *PreFlightError
+			if errors.As(err, &preFlightErr) && p.Fallback != nil {
+				if fallbackErr := p.Fallback.Execute(); fallbackErr != nil {
+					return fmt.Errorf("auto-probing pre-flight failed (%v) and relay fallback also failed: %w", err, fallbackErr)
+				}
+				p.EffectiveStrategy = p.Fallback.EffectiveStrategy
+				if p.EffectiveStrategy == "" {
+					p.EffectiveStrategy = StrategyRelay
+				}
+				return nil
+			}
 			return fmt.Errorf("step %d (%s) failed: %w", i+1, step.Name, err)
 		}
+
+		if rsyncExec, ok := step.Executor.(*RsyncExecutor); ok && rsyncExec.ResolvedMode != "" {
+			p.Steps[i].Mode = rsyncExec.ResolvedMode
+			if len(p.Steps) == 1 && (rsyncExec.ResolvedMode == TransferModeSSHAgentFwdPush || rsyncExec.ResolvedMode == TransferModeSSHAgentFwdPull) {
+				p.EffectiveStrategy = string(rsyncExec.ResolvedMode)
+			}
+		}
 	}
+
+	for _, step := range p.Steps {
+		if step.Destination.IsLocal() && strings.HasPrefix(step.Destination.Path, DefaultStagingPath+"/") {
+			_ = os.RemoveAll(step.Destination.Path)
+		}
+	}
+
 	return nil
 }
 
@@ -51,25 +79,25 @@ func (p *Pipeline) Execute() error {
 // ============================================================================
 
 // Plan analyzes the DataMigrationModel and returns the optimal transfer Pipeline.
-// The routing is based on StorageType combinations (3 cases only).
 func Plan(model DataMigrationModel) (*Pipeline, error) {
 	if err := Validate(model); err != nil {
 		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	if strings.TrimSpace(model.Strategy) == "" {
+		model.Strategy = StrategyAuto
 	}
 
 	srcStorage := model.Source.StorageType
 	dstStorage := model.Destination.StorageType
 
 	switch {
-	// Case 1: filesystem ↔ filesystem
 	case srcStorage == StorageTypeFilesystem && dstStorage == StorageTypeFilesystem:
 		return planFilesystemTransfer(model)
 
-	// Case 2: objectstorage ↔ objectstorage
 	case srcStorage == StorageTypeObjectStorage && dstStorage == StorageTypeObjectStorage:
 		return planObjectStorageTransfer(model)
 
-	// Case 3: Cross-storage (filesystem ↔ objectstorage)
 	default:
 		return planCrossStorageTransfer(model)
 	}
@@ -79,35 +107,117 @@ func Plan(model DataMigrationModel) (*Pipeline, error) {
 // Filesystem Transfer (rsync-based)
 // ============================================================================
 
-// planFilesystemTransfer handles all filesystem ↔ filesystem transfers.
-// Supported scenarios:
-//   - local→ssh (Push): rsync from local to remote
-//   - ssh→local (Pull): rsync from remote to local
-//   - ssh→ssh with strategy "relay": Pull to local staging, then Push to destination
-//   - ssh→ssh with strategy "agent-forward" or "auto": AgentForward mode
-//
-// Note: local-to-local is not supported (use standard file copy utilities).
+// planFilesystemTransfer handles all filesystem-to-filesystem transfers.
 func planFilesystemTransfer(model DataMigrationModel) (*Pipeline, error) {
 	srcIsRemote := model.Source.Filesystem != nil && model.Source.Filesystem.SSH != nil
 	dstIsRemote := model.Destination.Filesystem != nil && model.Destination.Filesystem.SSH != nil
+	strategy := model.Strategy
 
-	// SSH → SSH with relay strategy: use local staging
-	if srcIsRemote && dstIsRemote && model.Strategy == StrategyRelay {
-		return planRelayFilesystemTransfer(model)
+	if srcIsRemote && dstIsRemote {
+		switch strategy {
+		case StrategyRelay:
+			return planRelayFilesystemTransfer(model)
+
+		case StrategySSHAgentFwdPush:
+			rsyncExec, err := NewRsyncExecutorWithMode(model.Source, model.Destination, TransferModeSSHAgentFwdPush)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create rsync executor: %w", err)
+			}
+			return &Pipeline{
+				Name:              PipelineFilesystemTransfer,
+				Strategy:          strategy,
+				EffectiveStrategy: StrategySSHAgentFwdPush,
+				Steps: []Step{
+					{
+						Name:        StepRsyncTransfer,
+						Mode:        TransferModeSSHAgentFwdPush,
+						Source:      model.Source,
+						Destination: model.Destination,
+						Executor:    rsyncExec,
+					},
+				},
+			}, nil
+
+		case StrategySSHAgentFwdPull:
+			rsyncExec, err := NewRsyncExecutorWithMode(model.Source, model.Destination, TransferModeSSHAgentFwdPull)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create rsync executor: %w", err)
+			}
+			return &Pipeline{
+				Name:              PipelineFilesystemTransfer,
+				Strategy:          strategy,
+				EffectiveStrategy: StrategySSHAgentFwdPull,
+				Steps: []Step{
+					{
+						Name:        StepRsyncTransfer,
+						Mode:        TransferModeSSHAgentFwdPull,
+						Source:      model.Source,
+						Destination: model.Destination,
+						Executor:    rsyncExec,
+					},
+				},
+			}, nil
+
+		case StrategyDirect:
+			rsyncExec, err := NewRsyncExecutorWithMode(model.Source, model.Destination, TransferModeSSHAgentFwdAuto)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create rsync executor: %w", err)
+			}
+			return &Pipeline{
+				Name:              PipelineFilesystemTransfer,
+				Strategy:          strategy,
+				EffectiveStrategy: StrategyDirect,
+				Steps: []Step{
+					{
+						Name:        StepRsyncTransfer,
+						Mode:        TransferModeSSHAgentFwdAuto,
+						Source:      model.Source,
+						Destination: model.Destination,
+						Executor:    rsyncExec,
+					},
+				},
+			}, nil
+
+		default:
+			rsyncExec, err := NewRsyncExecutorWithMode(model.Source, model.Destination, TransferModeSSHAgentFwdAuto)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create rsync executor: %w", err)
+			}
+			relayFallback, err := planRelayFilesystemTransfer(model)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create relay fallback pipeline: %w", err)
+			}
+			return &Pipeline{
+				Name:              PipelineFilesystemTransfer,
+				Strategy:          strategy,
+				EffectiveStrategy: StrategyAuto,
+				Steps: []Step{
+					{
+						Name:        StepRsyncTransfer,
+						Mode:        TransferModeSSHAgentFwdAuto,
+						Source:      model.Source,
+						Destination: model.Destination,
+						Executor:    rsyncExec,
+					},
+				},
+				Fallback: relayFallback,
+			}, nil
+		}
 	}
 
-	// Default: direct transfer (Pull, Push, or AgentForward)
 	rsyncExec, err := NewRsyncExecutor(model.Source, model.Destination)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rsync executor: %w", err)
 	}
 
 	return &Pipeline{
-		Name:     PipelineFilesystemTransfer,
-		Strategy: model.Strategy,
+		Name:              PipelineFilesystemTransfer,
+		Strategy:          strategy,
+		EffectiveStrategy: StrategyDirect,
 		Steps: []Step{
 			{
 				Name:        StepRsyncTransfer,
+				Mode:        rsyncExec.Mode,
 				Source:      model.Source,
 				Destination: model.Destination,
 				Executor:    rsyncExec,
@@ -116,37 +226,35 @@ func planFilesystemTransfer(model DataMigrationModel) (*Pipeline, error) {
 	}, nil
 }
 
-// planRelayFilesystemTransfer creates a two-step transfer via local staging.
-// Step 1: Pull from remote source to local staging
-// Step 2: Push from local staging to remote destination
+// planRelayFilesystemTransfer creates a two-step transfer via local staging (pull -> push).
 func planRelayFilesystemTransfer(model DataMigrationModel) (*Pipeline, error) {
-	// Create local staging location
 	stagingLoc := createLocalStagingLocation(model.Source.Path)
 
-	// Step 1: Pull (SSH source → local staging)
-	pullExec, err := NewRsyncExecutor(model.Source, stagingLoc)
+	pullExec, err := NewRsyncExecutorWithMode(model.Source, stagingLoc, TransferModePull)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pull executor: %w", err)
 	}
 
-	// Step 2: Push (local staging → SSH destination)
-	pushExec, err := NewRsyncExecutor(stagingLoc, model.Destination)
+	pushExec, err := NewRsyncExecutorWithMode(stagingLoc, model.Destination, TransferModePush)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create push executor: %w", err)
 	}
 
 	return &Pipeline{
-		Name:     PipelineFilesystemTransfer,
-		Strategy: model.Strategy,
+		Name:              PipelineFilesystemTransfer,
+		Strategy:          StrategyRelay,
+		EffectiveStrategy: StrategyRelay,
 		Steps: []Step{
 			{
-				Name:        "pull-to-staging",
+				Name:        StepPullToStaging,
+				Mode:        TransferModePull,
 				Source:      model.Source,
 				Destination: stagingLoc,
 				Executor:    pullExec,
 			},
 			{
-				Name:        "push-from-staging",
+				Name:        StepPushFromStaging,
+				Mode:        TransferModePush,
 				Source:      stagingLoc,
 				Destination: model.Destination,
 				Executor:    pushExec,
@@ -159,13 +267,10 @@ func planRelayFilesystemTransfer(model DataMigrationModel) (*Pipeline, error) {
 // Object Storage Transfer (relay-based)
 // ============================================================================
 
-// planObjectStorageTransfer handles objectstorage ↔ objectstorage transfers.
-// Always uses relay via local staging: S3 → local → S3
+// planObjectStorageTransfer handles objectstorage-to-objectstorage transfers via local staging.
 func planObjectStorageTransfer(model DataMigrationModel) (*Pipeline, error) {
-	// Create staging location
 	stagingLoc := createLocalStagingLocation(model.Source.Path)
 
-	// Create providers for source and destination
 	srcProvider, err := NewS3Provider(model.Source)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create source S3 provider: %w", err)
@@ -175,21 +280,24 @@ func planObjectStorageTransfer(model DataMigrationModel) (*Pipeline, error) {
 		return nil, fmt.Errorf("failed to create destination S3 provider: %w", err)
 	}
 
-	srcS3Exec := NewS3Executor(srcProvider)
-	dstS3Exec := NewS3Executor(dstProvider)
+	srcS3Exec := NewS3Executor(srcProvider, TransferModePull)
+	dstS3Exec := NewS3Executor(dstProvider, TransferModePush)
 
 	return &Pipeline{
-		Name:     PipelineObjectStorageTransfer,
-		Strategy: model.Strategy,
+		Name:              PipelineObjectStorageTransfer,
+		Strategy:          model.Strategy,
+		EffectiveStrategy: StrategyRelay,
 		Steps: []Step{
 			{
 				Name:        StepDownloadFromS3,
+				Mode:        TransferModePull,
 				Source:      model.Source,
 				Destination: stagingLoc,
 				Executor:    srcS3Exec,
 			},
 			{
 				Name:        StepUploadToS3,
+				Mode:        TransferModePush,
 				Source:      stagingLoc,
 				Destination: model.Destination,
 				Executor:    dstS3Exec,
@@ -202,37 +310,31 @@ func planObjectStorageTransfer(model DataMigrationModel) (*Pipeline, error) {
 // Cross-Storage Transfer
 // ============================================================================
 
-// planCrossStorageTransfer handles filesystem ↔ objectstorage transfers.
-// Determines direction and whether relay is needed.
+// planCrossStorageTransfer handles filesystem-to-objectstorage and objectstorage-to-filesystem transfers.
 func planCrossStorageTransfer(model DataMigrationModel) (*Pipeline, error) {
-	srcIsFS := model.Source.IsFilesystem()
-
-	if srcIsFS {
-		// filesystem → objectstorage
+	if model.Source.IsFilesystem() {
 		return planFilesystemToObjectStorage(model)
 	}
-	// objectstorage → filesystem
 	return planObjectStorageToFilesystem(model)
 }
 
-// planFilesystemToObjectStorage handles filesystem → objectstorage.
-// If source is SSH, uses relay: ssh → local → s3
-// If source is local, direct: local → s3
+// planFilesystemToObjectStorage handles filesystem-to-objectstorage transfers.
 func planFilesystemToObjectStorage(model DataMigrationModel) (*Pipeline, error) {
 	s3Provider, err := NewS3Provider(model.Destination)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create S3 provider: %w", err)
 	}
-	s3Exec := NewS3Executor(s3Provider)
+	s3Exec := NewS3Executor(s3Provider, TransferModePush)
 
-	// Direct transfer if source is local filesystem
 	if model.Source.IsLocal() {
 		return &Pipeline{
-			Name:     PipelineCrossStorageTransfer,
-			Strategy: model.Strategy,
+			Name:              PipelineCrossStorageTransfer,
+			Strategy:          model.Strategy,
+			EffectiveStrategy: StrategyDirect,
 			Steps: []Step{
 				{
 					Name:        StepUploadToS3,
+					Mode:        TransferModePush,
 					Source:      model.Source,
 					Destination: model.Destination,
 					Executor:    s3Exec,
@@ -241,25 +343,27 @@ func planFilesystemToObjectStorage(model DataMigrationModel) (*Pipeline, error) 
 		}, nil
 	}
 
-	// Relay transfer: ssh → local → s3
 	stagingLoc := createLocalStagingLocation(model.Source.Path)
-	rsyncExec, err := NewRsyncExecutor(model.Source, stagingLoc)
+	rsyncExec, err := NewRsyncExecutorWithMode(model.Source, stagingLoc, TransferModePull)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rsync executor: %w", err)
 	}
 
 	return &Pipeline{
-		Name:     PipelineCrossStorageTransfer,
-		Strategy: model.Strategy,
+		Name:              PipelineCrossStorageTransfer,
+		Strategy:          model.Strategy,
+		EffectiveStrategy: StrategyRelay,
 		Steps: []Step{
 			{
 				Name:        StepRsyncFromServer,
+				Mode:        TransferModePull,
 				Source:      model.Source,
 				Destination: stagingLoc,
 				Executor:    rsyncExec,
 			},
 			{
 				Name:        StepUploadToS3,
+				Mode:        TransferModePush,
 				Source:      stagingLoc,
 				Destination: model.Destination,
 				Executor:    s3Exec,
@@ -268,24 +372,23 @@ func planFilesystemToObjectStorage(model DataMigrationModel) (*Pipeline, error) 
 	}, nil
 }
 
-// planObjectStorageToFilesystem handles objectstorage → filesystem.
-// If destination is SSH, uses relay: s3 → local → ssh
-// If destination is local, direct: s3 → local
+// planObjectStorageToFilesystem handles objectstorage-to-filesystem transfers.
 func planObjectStorageToFilesystem(model DataMigrationModel) (*Pipeline, error) {
 	s3Provider, err := NewS3Provider(model.Source)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create S3 provider: %w", err)
 	}
-	s3Exec := NewS3Executor(s3Provider)
+	s3Exec := NewS3Executor(s3Provider, TransferModePull)
 
-	// Direct transfer if destination is local filesystem
 	if model.Destination.IsLocal() {
 		return &Pipeline{
-			Name:     PipelineCrossStorageTransfer,
-			Strategy: model.Strategy,
+			Name:              PipelineCrossStorageTransfer,
+			Strategy:          model.Strategy,
+			EffectiveStrategy: StrategyDirect,
 			Steps: []Step{
 				{
 					Name:        StepDownloadFromS3,
+					Mode:        TransferModePull,
 					Source:      model.Source,
 					Destination: model.Destination,
 					Executor:    s3Exec,
@@ -294,25 +397,27 @@ func planObjectStorageToFilesystem(model DataMigrationModel) (*Pipeline, error) 
 		}, nil
 	}
 
-	// Relay transfer: s3 → local → ssh
 	stagingLoc := createLocalStagingLocation(model.Source.Path)
-	rsyncExec, err := NewRsyncExecutor(stagingLoc, model.Destination)
+	rsyncExec, err := NewRsyncExecutorWithMode(stagingLoc, model.Destination, TransferModePush)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rsync executor: %w", err)
 	}
 
 	return &Pipeline{
-		Name:     PipelineCrossStorageTransfer,
-		Strategy: model.Strategy,
+		Name:              PipelineCrossStorageTransfer,
+		Strategy:          model.Strategy,
+		EffectiveStrategy: StrategyRelay,
 		Steps: []Step{
 			{
 				Name:        StepDownloadFromS3,
+				Mode:        TransferModePull,
 				Source:      model.Source,
 				Destination: stagingLoc,
 				Executor:    s3Exec,
 			},
 			{
 				Name:        StepRsyncToServer,
+				Mode:        TransferModePush,
 				Source:      stagingLoc,
 				Destination: model.Destination,
 				Executor:    rsyncExec,
@@ -325,20 +430,21 @@ func planObjectStorageToFilesystem(model DataMigrationModel) (*Pipeline, error) 
 // Helper Functions
 // ============================================================================
 
-// createLocalStagingLocation creates a local filesystem location for staging, isolated by source bucket or path.
+// createLocalStagingLocation creates an isolated local filesystem staging subdirectory under DefaultStagingPath.
 func createLocalStagingLocation(sourcePath string) DataLocation {
-	stagingPath := DefaultStagingPath
+	subDir := "root"
 	if bucket, _ := ParseBucketAndKey(sourcePath); bucket != "" {
 		cleanBucket := filepath.Base(bucket)
-		if cleanBucket != "." && cleanBucket != "/" {
-			stagingPath = filepath.Join(DefaultStagingPath, cleanBucket)
+		if cleanBucket != "" && cleanBucket != "." && cleanBucket != "/" {
+			subDir = cleanBucket
 		}
 	} else if sourcePath != "" {
 		cleanPath := filepath.Base(sourcePath)
-		if cleanPath != "." && cleanPath != "/" {
-			stagingPath = filepath.Join(DefaultStagingPath, cleanPath)
+		if cleanPath != "" && cleanPath != "." && cleanPath != "/" {
+			subDir = cleanPath
 		}
 	}
+	stagingPath := filepath.Join(DefaultStagingPath, subDir)
 	return DataLocation{
 		StorageType: StorageTypeFilesystem,
 		Path:        stagingPath,

@@ -102,7 +102,7 @@ func GetDataMigrationEncryptionKey(c echo.Context) error {
 // @Description * Local filesystem access is not allowed for security reasons
 // @Description
 // @Description [Transfer Options]
-// @Description * Strategy: auto (default), direct, relay
+// @Description * Strategy: auto (default), direct, relay, ssh-agent-fwd-push, ssh-agent-fwd-pull
 // @Description * SSH: Supports PrivateKey content or PrivateKeyPath
 // @Description
 // @Description [Encryption Support]
@@ -237,13 +237,24 @@ func preferRespondAsync(c echo.Context) bool {
 // runDataMigration performs the data migration workflow (PreCmd, Transfer, PostCmd) and returns a summary.
 func runDataMigration(req transx.DataMigrationModel) (map[string]any, error) {
 	start := time.Now()
-	if err := transx.MigrateData(req); err != nil {
+	pipeline, err := transx.MigrateDataWithPipeline(req)
+	if err != nil {
 		return nil, fmt.Errorf("data migration failed: %w (%s)", err, time.Since(start).Round(time.Millisecond))
 	}
 	elapsed := time.Since(start).Round(time.Millisecond)
+	effectiveStrategy := req.Strategy
+	if pipeline != nil && pipeline.EffectiveStrategy != "" {
+		effectiveStrategy = pipeline.EffectiveStrategy
+	}
+	log.Info().
+		Str("requestedStrategy", req.Strategy).
+		Str("effectiveStrategy", effectiveStrategy).
+		Str("elapsedTime", elapsed.String()).
+		Msg("Data migration completed")
 	return map[string]any{
-		"message":     fmt.Sprintf("Data migrated successfully (%s)", elapsed),
-		"elapsedTime": elapsed.String(),
+		"message":           fmt.Sprintf("Data migrated successfully (%s)", elapsed),
+		"elapsedTime":       elapsed.String(),
+		"effectiveStrategy": effectiveStrategy,
 	}, nil
 }
 

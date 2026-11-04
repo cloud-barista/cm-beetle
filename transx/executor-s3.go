@@ -9,16 +9,21 @@ import (
 	"strings"
 )
 
-// S3Executor implements Executor for S3 object storage transfers.
-// Uses presigned URLs for authentication-free upload/download.
+// S3Executor implements Executor for S3 object storage transfers using presigned URLs.
 type S3Executor struct {
-	Provider S3Provider // S3 provider for generating presigned URLs
+	Provider S3Provider
+	Mode     TransferMode
 }
 
-// NewS3Executor creates a new S3Executor with the given provider.
-func NewS3Executor(provider S3Provider) *S3Executor {
+// NewS3Executor creates a new S3Executor with the given provider and optional TransferMode.
+func NewS3Executor(provider S3Provider, mode ...TransferMode) *S3Executor {
+	var m TransferMode
+	if len(mode) > 0 {
+		m = mode[0]
+	}
 	return &S3Executor{
 		Provider: provider,
+		Mode:     m,
 	}
 }
 

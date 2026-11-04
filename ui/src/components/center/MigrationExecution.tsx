@@ -1901,8 +1901,10 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                       className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-bold focus:outline-none focus:border-emerald-500 text-sm"
                     >
                       <option value="auto">Auto (Optimal Path Selection)</option>
-                      <option value="direct">Direct (Direct Agent Sync)</option>
-                      <option value="relay">Relay (Relay Node Sync)</option>
+                      <option value="relay">Relay (2-Step Staging via Beetle)</option>
+                      <option value="direct" disabled>Direct (Push -&gt; Pull, Remote SSH Only)</option>
+                      <option value="ssh-agent-fwd-push" disabled>SSH Agent Fwd Push (Src -&gt; Dst, Remote SSH Only)</option>
+                      <option value="ssh-agent-fwd-pull" disabled>SSH Agent Fwd Pull (Dst &lt;- Src, Remote SSH Only)</option>
                     </select>
                   </div>
 

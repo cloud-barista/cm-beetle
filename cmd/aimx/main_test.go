@@ -30,8 +30,8 @@ func TestLoadTemplateConfigAndDefaults(t *testing.T) {
 	if cfg.AIService.ModelName != "gemma4:e2b" {
 		t.Errorf("expected modelName 'gemma4:e2b', got %q", cfg.AIService.ModelName)
 	}
-	if cfg.AIService.TransxStrategy != "relay" {
-		t.Errorf("expected default transxStrategy 'relay', got %q", cfg.AIService.TransxStrategy)
+	if cfg.AIService.TransxStrategy != "auto" {
+		t.Errorf("expected default transxStrategy 'auto', got %q", cfg.AIService.TransxStrategy)
 	}
 	if !cfg.AIService.UseDataEncryption {
 		t.Errorf("expected useDataEncryption=true in template config")
@@ -137,6 +137,9 @@ func TestBuildTransxMigrationModelAndEphemeralKeys(t *testing.T) {
 	}
 	if dmFull.Destination.Filesystem.SSH.Username != "ubuntu" {
 		t.Errorf("expected target username 'ubuntu' from ephemeral key pair, got %q", dmFull.Destination.Filesystem.SSH.Username)
+	}
+	if !dmFull.Source.Filesystem.SSH.Partial || dmFull.Source.Filesystem.SSH.MaxRetries != 3 {
+		t.Errorf("expected Partial=true and MaxRetries=3 on source SSHConfig, got %+v", dmFull.Source.Filesystem.SSH)
 	}
 	if dmFull.Source.Filter == nil || len(dmFull.Source.Filter.Include) != 1 {
 		t.Fatalf("expected 1 include pattern, got %+v", dmFull.Source.Filter)

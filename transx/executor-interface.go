@@ -4,49 +4,32 @@
 //   - S3: Object Storage transfers using presigned URLs
 package transx
 
-import (
-	"strings"
-)
-
 // Executor defines the interface for transfer operations.
 type Executor interface {
 	// Execute performs the transfer from source to destination.
-	// Returns an error if the transfer fails.
 	Execute(source, destination DataLocation) error
 }
 
-// Transfer method constants
+// ============================================================================
+// Transfer Mode (Generalized Execution Direction)
+// ============================================================================
+
+// TransferMode defines the execution direction of a transfer step across Rsync and S3 executors.
+type TransferMode string
+
 const (
-	MethodLocal = "local" // Local filesystem transfer
-	MethodSSH   = "ssh"   // Remote transfer via SSH/rsync
-	MethodS3    = "s3"    // S3-compatible object storage
+	// TransferModePull pulls data from a remote endpoint to local filesystem (remote-ssh -> local, or object-storage -> local).
+	TransferModePull TransferMode = "pull"
+
+	// TransferModePush pushes data from local filesystem to a destination (local -> remote-ssh, local -> object-storage, or local -> local).
+	TransferModePush TransferMode = "push"
+
+	// TransferModeSSHAgentFwdAuto tries ssh-agent-fwd-push first and falls back to ssh-agent-fwd-pull on pre-flight failure.
+	TransferModeSSHAgentFwdAuto TransferMode = "ssh-agent-fwd-auto"
+
+	// TransferModeSSHAgentFwdPush connects to source with SSH agent forwarding and pushes directly to destination (src -> dst).
+	TransferModeSSHAgentFwdPush TransferMode = "ssh-agent-fwd-push"
+
+	// TransferModeSSHAgentFwdPull connects to destination with SSH agent forwarding and pulls directly from source (dst <- src).
+	TransferModeSSHAgentFwdPull TransferMode = "ssh-agent-fwd-pull"
 )
-
-// Transfer category constants
-const (
-	CategoryRsync         = "rsync"          // rsync-based transfers (local/ssh)
-	CategoryObjectStorage = "object-storage" // Object storage transfers (S3, etc.)
-)
-
-// IsRsyncMethod returns true if the method uses rsync for transfer.
-func IsRsyncMethod(method string) bool {
-	method = strings.ToLower(method)
-	return method == MethodLocal || method == MethodSSH
-}
-
-// IsObjectStorageMethod returns true if the method uses object storage.
-func IsObjectStorageMethod(method string) bool {
-	method = strings.ToLower(method)
-	return method == MethodS3 || strings.HasPrefix(method, "s3")
-}
-
-// GetCategory returns the transfer category for the given method.
-func GetCategory(method string) string {
-	if IsRsyncMethod(method) {
-		return CategoryRsync
-	}
-	if IsObjectStorageMethod(method) {
-		return CategoryObjectStorage
-	}
-	return ""
-}

@@ -210,6 +210,10 @@ export const DataTransferCenter: React.FC = () => {
 
   // Migration Transfer Parameters
   const [dataStrategy, setDataStrategy] = useState('auto');
+  const [rsyncCompress, setRsyncCompress] = useState(true);
+  const [rsyncPartial, setRsyncPartial] = useState(true);
+  const [rsyncMaxRetries, setRsyncMaxRetries] = useState(3);
+  const [rsyncArchive, setRsyncArchive] = useState(true);
   const [includeFilter, setIncludeFilter] = useState('');
   const [excludeFilter, setExcludeFilter] = useState('');
   const [showCommandsSection, setShowCommandsSection] = useState(false);
@@ -219,6 +223,23 @@ export const DataTransferCenter: React.FC = () => {
   const [preferAsync, setPreferAsync] = useState(true);
   const [modalError, setModalError] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const isBothRemoteSsh = sourceAccessType === 'remote-ssh' && targetAccessType === 'remote-ssh';
+  const hasAnyRemoteSsh = sourceAccessType === 'remote-ssh' || targetAccessType === 'remote-ssh';
+  const isSourceRemoteSsh = sourceAccessType === 'remote-ssh';
+  const isTargetRemoteSsh = targetAccessType === 'remote-ssh';
+
+  useEffect(() => {
+    if (!isBothRemoteSsh && ['direct', 'ssh-agent-fwd-push', 'ssh-agent-fwd-pull'].includes(dataStrategy)) {
+      setDataStrategy('auto');
+    }
+  }, [isBothRemoteSsh, dataStrategy]);
+
+  useEffect(() => {
+    if (!hasAnyRemoteSsh) {
+      setShowCommandsSection(false);
+    }
+  }, [hasAnyRemoteSsh]);
 
   // Item 3: Filter Presets & Tag Pill Helpers
   const handleAddIncludePreset = (pattern: string) => {
@@ -335,8 +356,13 @@ export const DataTransferCenter: React.FC = () => {
 
   // Apply MySQL / MariaDB Dump & Restore command preset
   const handleApplyMysqlCmdPreset = () => {
-    setSourcePreCmd('mkdir -p /tmp/db_backup && mysqldump -u root --all-databases --single-transaction > /tmp/db_backup/dump.sql');
-    setDestinationPostCmd('mysql -u root < /tmp/db_backup/dump.sql');
+    if (!hasAnyRemoteSsh) return;
+    if (isSourceRemoteSsh) {
+      setSourcePreCmd('mkdir -p /tmp/db_backup && mysqldump -u root --all-databases --single-transaction > /tmp/db_backup/dump.sql');
+    }
+    if (isTargetRemoteSsh) {
+      setDestinationPostCmd('mysql -u root < /tmp/db_backup/dump.sql');
+    }
     setShowCommandsSection(true);
   };
 
@@ -739,8 +765,11 @@ export const DataTransferCenter: React.FC = () => {
       } : undefined;
 
       // Step 2: Build Plaintext DataMigrationModel matching pkg/api/rest/controller/migration-data.go & transx specification
-      const trimmedSourcePreCmd = sourcePreCmd.trim();
-      const trimmedDestinationPostCmd = destinationPostCmd.trim();
+      const trimmedSourcePreCmd = isSourceRemoteSsh ? sourcePreCmd.trim() : '';
+      const trimmedDestinationPostCmd = isTargetRemoteSsh ? destinationPostCmd.trim() : '';
+      const effectiveStrategy = !isBothRemoteSsh && ['direct', 'ssh-agent-fwd-push', 'ssh-agent-fwd-pull'].includes(dataStrategy)
+        ? 'auto'
+        : (dataStrategy || 'auto');
       const plainModel = {
         source: {
           storageType: sourceAccessType === 'object-storage' ? 'objectstorage' : 'filesystem',
@@ -765,7 +794,11 @@ export const DataTransferCenter: React.FC = () => {
                 host: sourceSshHost.trim(),
                 port: parseInt(sourceSshPort, 10) || 22,
                 username: sourceSshUser.trim() || 'ubuntu',
-                privateKey: sourceSshPrivateKey
+                privateKey: sourceSshPrivateKey,
+                archive: rsyncArchive,
+                compress: rsyncCompress,
+                partial: rsyncPartial,
+                maxRetries: rsyncMaxRetries
               }
             }
           })
@@ -810,12 +843,16 @@ export const DataTransferCenter: React.FC = () => {
                 host: targetSshHost.trim(),
                 port: parseInt(targetSshPort, 10) || 22,
                 username: targetSshUser.trim() || 'ubuntu',
-                privateKey: targetSshPrivateKey
+                privateKey: targetSshPrivateKey,
+                archive: rsyncArchive,
+                compress: rsyncCompress,
+                partial: rsyncPartial,
+                maxRetries: rsyncMaxRetries
               }
             }
           })
         },
-        strategy: dataStrategy || 'auto'
+        strategy: effectiveStrategy
       };
 
       // Step 3: Encrypt Sensitive Credential Fields Client-Side
@@ -2359,25 +2396,195 @@ export const DataTransferCenter: React.FC = () => {
                 )}
               </div>
 
-              {/* 6. Source & Destination Commands (Optional) - transx preCmd / postCmd */}
-              <div className="p-4 sm:p-5 bg-bg-input/50 border border-border-main rounded-xl space-y-3">
+              {/* 6. Transfer Strategy & Rsync Resilience Options */}
+              <div className="p-5 bg-bg-input/60 border border-border-main/40 rounded-2xl space-y-4">
+                <div className="flex flex-wrap justify-between items-center border-b border-border-main/30 pb-2.5 gap-2">
+                  <span className="text-sm font-extrabold text-text-main font-mono flex items-center gap-1.5">
+                    <Zap className="w-4 h-4 text-emerald-500" />
+                    Transfer Strategy &amp; Rsync Resilience Options
+                  </span>
+                  <span className="text-xs font-mono text-text-muted">
+                    {isBothRemoteSsh
+                      ? 'SSH -> SSH: All 5 Strategies & Rsync Resilience Enabled'
+                      : hasAnyRemoteSsh
+                        ? 'Cross-Storage (SSH <-> S3): Auto / Relay & Rsync Resilience Enabled'
+                        : 'S3 -> S3: Auto / Relay via Beetle Staging (Rsync Options N/A)'}
+                  </span>
+                </div>
+
+                {/* Primary Transfer Strategy Selector */}
+                <div className="space-y-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="text-sm font-normal text-text-muted">
+                      Primary Transfer Strategy (model.strategy)
+                    </label>
+                    <span className="text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                      Active: {dataStrategy}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    {[
+                      { id: 'auto', label: 'auto (Recommended)', desc: 'Push -> Pull -> Relay Fallback', sshOnly: false },
+                      { id: 'direct', label: 'direct', desc: 'Direct Only (Push -> Pull)', sshOnly: true },
+                      { id: 'relay', label: 'relay', desc: '2-Step via Beetle Staging', sshOnly: false },
+                    ].map((opt) => {
+                      const isDisabled = opt.sshOnly && !isBothRemoteSsh;
+                      const isSelected = dataStrategy === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          disabled={isDisabled}
+                          onClick={() => setDataStrategy(opt.id)}
+                          className={`p-3 rounded-xl border text-left transition ${
+                            isDisabled
+                              ? 'opacity-40 cursor-not-allowed bg-bg-panel/40 border-border-main/40'
+                              : isSelected
+                                ? 'bg-emerald-500/15 border-emerald-500 text-text-main cursor-pointer shadow-xs'
+                                : 'bg-bg-panel hover:bg-bg-main border-border-main text-text-muted cursor-pointer'
+                          }`}
+                        >
+                          <div className="font-mono text-sm font-extrabold text-text-main flex items-center justify-between gap-1">
+                            <span>{opt.label}</span>
+                            {opt.sshOnly && (
+                              <span className="text-xs font-normal text-teal-600 dark:text-teal-400">SSH Only</span>
+                            )}
+                          </div>
+                          <div className="text-xs text-text-muted mt-0.5">{opt.desc}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Optional SSH Agent Forwarding Direction Override */}
+                  <div className="pt-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                      <span className="text-sm font-normal text-text-muted">
+                        Optional SSH Agent Forwarding Direction Override (SSH -&gt; SSH Only)
+                      </span>
+                      {!isBothRemoteSsh && (
+                        <span className="text-xs font-mono text-amber-500">
+                          Requires Remote SSH on both Source and Destination
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {[
+                        { id: 'ssh-agent-fwd-push', label: 'ssh-agent-fwd-push', desc: 'Source -> Destination (Force Push Only)' },
+                        { id: 'ssh-agent-fwd-pull', label: 'ssh-agent-fwd-pull', desc: 'Destination <- Source (Force Pull Only)' },
+                      ].map((opt) => {
+                        const isDisabled = !isBothRemoteSsh;
+                        const isSelected = dataStrategy === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            disabled={isDisabled}
+                            onClick={() => setDataStrategy(opt.id)}
+                            className={`p-2.5 px-3 rounded-xl border text-left transition flex items-center justify-between gap-2 ${
+                              isDisabled
+                                ? 'opacity-40 cursor-not-allowed bg-bg-panel/40 border-border-main/40'
+                                : isSelected
+                                  ? 'bg-teal-500/15 border-teal-500 text-text-main cursor-pointer shadow-xs'
+                                  : 'bg-bg-panel hover:bg-bg-main border-border-main text-text-muted cursor-pointer'
+                            }`}
+                          >
+                            <span className="font-mono text-sm font-extrabold text-text-main">{opt.label}</span>
+                            <span className="text-xs text-text-muted">{opt.desc}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rsync Transfer Options (Enabled when at least one endpoint is Remote SSH) */}
+                <div className={`pt-3 border-t border-border-main/30 grid grid-cols-1 sm:grid-cols-4 gap-3 ${!hasAnyRemoteSsh ? 'opacity-45 pointer-events-none' : ''}`}>
+                  <label className="flex items-center gap-2 p-2.5 bg-bg-panel border border-border-main rounded-xl cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={rsyncCompress}
+                      disabled={!hasAnyRemoteSsh}
+                      onChange={(e) => setRsyncCompress(e.target.checked)}
+                      className="w-4 h-4 accent-emerald-500 rounded"
+                    />
+                    <div>
+                      <span className="text-sm font-extrabold text-text-main block">Compress (-z)</span>
+                      <span className="text-xs font-normal text-text-muted">Disable for GGUF blobs</span>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center gap-2 p-2.5 bg-bg-panel border border-border-main rounded-xl cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={rsyncPartial}
+                      disabled={!hasAnyRemoteSsh}
+                      onChange={(e) => setRsyncPartial(e.target.checked)}
+                      className="w-4 h-4 accent-emerald-500 rounded"
+                    />
+                    <div>
+                      <span className="text-sm font-extrabold text-text-main block">Partial Resume</span>
+                      <span className="text-xs font-normal text-text-muted">--partial --append-verify</span>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center gap-2 p-2.5 bg-bg-panel border border-border-main rounded-xl cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={rsyncArchive}
+                      disabled={!hasAnyRemoteSsh}
+                      onChange={(e) => setRsyncArchive(e.target.checked)}
+                      className="w-4 h-4 accent-emerald-500 rounded"
+                    />
+                    <div>
+                      <span className="text-sm font-extrabold text-text-main block">Archive (-a)</span>
+                      <span className="text-xs font-normal text-text-muted">Preserve permissions</span>
+                    </div>
+                  </label>
+
+                  <div className="p-2.5 bg-bg-panel border border-border-main rounded-xl flex items-center justify-between gap-2">
+                    <div>
+                      <span className="text-sm font-normal text-text-muted block">Max Retries</span>
+                      <span className="text-xs font-normal text-text-muted">Auto-retry count</span>
+                    </div>
+                    <input
+                      type="number"
+                      min={1}
+                      max={10}
+                      disabled={!hasAnyRemoteSsh}
+                      value={rsyncMaxRetries}
+                      onChange={(e) => setRsyncMaxRetries(Math.max(1, Math.min(10, parseInt(e.target.value, 10) || 1)))}
+                      className="w-16 px-2.5 py-1 bg-bg-input border border-border-main rounded-lg text-text-main font-mono text-sm font-extrabold text-center focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 7. Source & Destination Commands (Optional) - transx preCmd / postCmd */}
+              <div className={`p-4 sm:p-5 bg-bg-input/50 border border-border-main rounded-xl space-y-3 transition ${!hasAnyRemoteSsh ? 'opacity-50' : ''}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <button
                     type="button"
-                    onClick={() => setShowCommandsSection(prev => !prev)}
-                    className="flex items-center gap-2 text-left cursor-pointer group"
+                    disabled={!hasAnyRemoteSsh}
+                    onClick={() => hasAnyRemoteSsh && setShowCommandsSection(prev => !prev)}
+                    className={`flex items-center gap-2 text-left group ${hasAnyRemoteSsh ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                   >
                     <Terminal className="w-4 h-4 text-emerald-500 shrink-0" />
                     <span className="text-sm font-extrabold text-text-main group-hover:text-emerald-500 transition">
                       Source &amp; Destination Commands (Optional)
                     </span>
                     <span className="text-xs font-normal text-text-muted">
-                      (Executes preCmd on Source before transfer and postCmd on Destination after transfer)
+                      {hasAnyRemoteSsh
+                        ? '(Executes preCmd on Source SSH before transfer and postCmd on Destination SSH after transfer)'
+                        : '(Disabled: Object Storage does not support remote shell command execution)'}
                     </span>
-                    {showCommandsSection ? (
-                      <ChevronUp className="w-4 h-4 text-text-muted" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-text-muted" />
+                    {hasAnyRemoteSsh && (
+                      showCommandsSection ? (
+                        <ChevronUp className="w-4 h-4 text-text-muted" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-text-muted" />
+                      )
                     )}
                   </button>
 
@@ -2392,8 +2599,9 @@ export const DataTransferCenter: React.FC = () => {
                     </button>
                     <button
                       type="button"
+                      disabled={!hasAnyRemoteSsh}
                       onClick={handleApplyMysqlCmdPreset}
-                      className="px-2.5 py-1 bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/40 text-teal-600 dark:text-teal-400 text-xs font-extrabold rounded-lg transition cursor-pointer"
+                      className="px-2.5 py-1 bg-teal-500/15 hover:bg-teal-500/25 disabled:opacity-40 disabled:cursor-not-allowed border border-teal-500/40 text-teal-600 dark:text-teal-400 text-xs font-extrabold rounded-lg transition cursor-pointer"
                     >
                       + Preset: MySQL Dump &amp; Restore
                     </button>
@@ -2412,47 +2620,53 @@ export const DataTransferCenter: React.FC = () => {
                   </div>
                 </div>
 
-                {showCommandsSection && (
+                {showCommandsSection && hasAnyRemoteSsh && (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2 border-t border-border-main/40">
-                    <div className="space-y-1.5">
+                    <div className={`space-y-1.5 ${!isSourceRemoteSsh ? 'opacity-50' : ''}`}>
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-normal text-text-muted">
                           Source Command (Before Transfer)
                         </label>
                         <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                          source.preCmd
+                          {isSourceRemoteSsh ? 'source.preCmd' : 'source.preCmd (SSH Only)'}
                         </span>
                       </div>
                       <textarea
                         rows={3}
+                        disabled={!isSourceRemoteSsh}
                         value={sourcePreCmd}
                         onChange={(e) => setSourcePreCmd(e.target.value)}
-                        placeholder="e.g., cd /opt/aimx/ai-service && sudo docker compose stop && sync"
-                        className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono text-xs font-extrabold focus:outline-none focus:border-emerald-500 resize-y"
+                        placeholder={isSourceRemoteSsh ? 'e.g., cd /opt/aimx/ai-service && sudo docker compose stop && sync' : 'Disabled: Source is Object Storage (SSH endpoint required for preCmd)'}
+                        className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono text-xs font-extrabold focus:outline-none focus:border-emerald-500 resize-y disabled:cursor-not-allowed"
                       />
                       <p className="text-xs text-text-muted">
-                        Runs on the Source server via SSH before rsync / S3 transfer begins (e.g., stop containers, flush DB, fix file ownership).
+                        {isSourceRemoteSsh
+                          ? 'Runs on the Source server via SSH before rsync / S3 transfer begins (e.g., stop containers, flush DB, fix file ownership).'
+                          : 'Not available when Source is Object Storage.'}
                       </p>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className={`space-y-1.5 ${!isTargetRemoteSsh ? 'opacity-50' : ''}`}>
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-normal text-text-muted">
                           Destination Command (After Transfer)
                         </label>
                         <span className="text-xs font-mono font-bold text-teal-600 dark:text-teal-400">
-                          destination.postCmd
+                          {isTargetRemoteSsh ? 'destination.postCmd' : 'destination.postCmd (SSH Only)'}
                         </span>
                       </div>
                       <textarea
                         rows={3}
+                        disabled={!isTargetRemoteSsh}
                         value={destinationPostCmd}
                         onChange={(e) => setDestinationPostCmd(e.target.value)}
-                        placeholder="e.g., cd /opt/aimx/ai-service && sudo docker compose up -d"
-                        className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono text-xs font-extrabold focus:outline-none focus:border-teal-500 resize-y"
+                        placeholder={isTargetRemoteSsh ? 'e.g., cd /opt/aimx/ai-service && sudo docker compose up -d' : 'Disabled: Destination is Object Storage (SSH endpoint required for postCmd)'}
+                        className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono text-xs font-extrabold focus:outline-none focus:border-teal-500 resize-y disabled:cursor-not-allowed"
                       />
                       <p className="text-xs text-text-muted">
-                        Runs on the Destination server via SSH immediately after data transfer completes (e.g., docker compose up -d, GPU model pre-warmup).
+                        {isTargetRemoteSsh
+                          ? 'Runs on the Destination server via SSH immediately after data transfer completes (e.g., docker compose up -d, GPU model pre-warmup).'
+                          : 'Not available when Destination is Object Storage.'}
                       </p>
                     </div>
                   </div>

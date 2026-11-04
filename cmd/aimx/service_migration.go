@@ -86,7 +86,7 @@ sha256sum %s/open-webui/webui.db 2>/dev/null | awk '{print $1}' || true`,
 	fmt.Printf("📦 [Stage 3-5] Transferring AI Service stack (%s) via CM-Beetle transx API (strategy=%s, transferModelWeights=%v, encrypt=%v)...\n",
 		cfg.AIService.RootDir, txModel.Strategy, cfg.AIService.TransferModelWeights, cfg.AIService.UseDataEncryption)
 	if txModel.Source.Filter != nil {
-		fmt.Printf("   🔎 Active transx Filter — include=%v, exclude=%v\n",
+		fmt.Printf("   🔎 Active transx Filter: include=%v, exclude=%v\n",
 			txModel.Source.Filter.Include, txModel.Source.Filter.Exclude)
 	}
 
@@ -274,6 +274,8 @@ func buildTransxMigrationModel(srcIP, tgtIP string, keys *ephemeralSshKeyPair, a
 					PrivateKey: srcKey,
 					Archive:    true,
 					Compress:   true,
+					Partial:    true,
+					MaxRetries: 3,
 				},
 			},
 			Filter: buildTransxFilter(aiCfg),
@@ -290,6 +292,8 @@ func buildTransxMigrationModel(srcIP, tgtIP string, keys *ephemeralSshKeyPair, a
 					PrivateKey: tgtKey,
 					Archive:    true,
 					Compress:   true,
+					Partial:    true,
+					MaxRetries: 3,
 				},
 			},
 		},
