@@ -17,47 +17,54 @@ import (
 // ============================================================================
 
 // Transfer runs the data transfer as defined by the given DataMigrationModel.
-// It automatically selects the appropriate transfer strategy based on source/destination types.
 func Transfer(dmm DataMigrationModel) error {
-	if err := Validate(dmm); err != nil {
-		return fmt.Errorf("validation failed: %w", err)
-	}
-
-	// Plan the transfer pipeline
-	pipeline, err := Plan(dmm)
-	if err != nil {
-		return fmt.Errorf("planning failed: %w", err)
-	}
-
-	// Execute the pipeline
-	return pipeline.Execute()
+	_, err := TransferWithPipeline(dmm)
+	return err
 }
 
-// MigrateData manages the complete data migration workflow:
-// 1. If Source.PreCmd is defined, perform pre-processing (e.g., backup)
-// 2. Always perform Transfer
-// 3. If Destination.PostCmd is defined, perform post-processing (e.g., restore)
+// TransferWithPipeline plans and executes the transfer and returns the executed Pipeline.
+func TransferWithPipeline(dmm DataMigrationModel) (*Pipeline, error) {
+	if err := Validate(dmm); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
+	pipeline, err := Plan(dmm)
+	if err != nil {
+		return nil, fmt.Errorf("planning failed: %w", err)
+	}
+
+	if err := pipeline.Execute(); err != nil {
+		return pipeline, err
+	}
+	return pipeline, nil
+}
+
+// MigrateData manages the complete data migration workflow (PreCmd, Transfer, PostCmd).
 func MigrateData(dmm DataMigrationModel) error {
-	// Step 1: Pre-processing (optional, e.g., backup)
+	_, err := MigrateDataWithPipeline(dmm)
+	return err
+}
+
+// MigrateDataWithPipeline manages the complete data migration workflow and returns the executed Pipeline.
+func MigrateDataWithPipeline(dmm DataMigrationModel) (*Pipeline, error) {
 	if strings.TrimSpace(dmm.Source.PreCmd) != "" {
 		if err := executePreCommand(dmm.Source); err != nil {
-			return &MigrationError{Stage: StageBackup, Err: err}
+			return nil, &MigrationError{Stage: StageBackup, Err: err}
 		}
 	}
 
-	// Step 2: Transfer (core)
-	if err := Transfer(dmm); err != nil {
-		return &MigrationError{Stage: StageTransfer, Err: err}
+	pipeline, err := TransferWithPipeline(dmm)
+	if err != nil {
+		return pipeline, &MigrationError{Stage: StageTransfer, Err: err}
 	}
 
-	// Step 3: Post-processing (optional, e.g., restore)
 	if strings.TrimSpace(dmm.Destination.PostCmd) != "" {
 		if err := executePostCommand(dmm.Destination); err != nil {
-			return &MigrationError{Stage: StageRestore, Err: err}
+			return pipeline, &MigrationError{Stage: StageRestore, Err: err}
 		}
 	}
 
-	return nil
+	return pipeline, nil
 }
 
 // ============================================================================

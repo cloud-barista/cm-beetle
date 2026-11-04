@@ -10,25 +10,27 @@ This example performs the following tasks:
 2. Transfer backup files to the target server (rsync via SSH)
 3. Database restoration on the target MariaDB (via SSH)
 
-### Supported Transfer Modes
+### Supported Strategies & Transfer Modes
 
-The transx library supports 3 transfer modes:
+The `transx` library supports 5 strategies (`auto`, `direct`, `relay`, `ssh-agent-fwd-push`, `ssh-agent-fwd-pull`) and generalized `TransferMode` execution directions:
 
-| Mode             | Source       | Destination  | Description                           |
-| ---------------- | ------------ | ------------ | ------------------------------------- |
-| **Pull**         | SSH (remote) | Local        | rsync from remote to local            |
-| **Push**         | Local        | SSH (remote) | rsync from local to remote            |
-| **AgentForward** | SSH (remote) | SSH (remote) | SSH into source, rsync to destination |
+| TransferMode         | Source       | Destination  | Description                                                                   |
+| -------------------- | ------------ | ------------ | ----------------------------------------------------------------------------- |
+| `pull`               | SSH / S3     | Local        | Pulls data from remote endpoint to local filesystem                           |
+| `push`               | Local        | SSH / S3 / Local | Pushes data from local filesystem to destination                          |
+| `ssh-agent-fwd-auto` | SSH (remote) | SSH (remote) | Probes `ssh-agent-fwd-push` first, then falls back to `ssh-agent-fwd-pull`    |
+| `ssh-agent-fwd-push` | SSH (remote) | SSH (remote) | Connects to Source with SSH agent forwarding and pushes directly to Destination |
+| `ssh-agent-fwd-pull` | SSH (remote) | SSH (remote) | Connects to Destination with SSH agent forwarding and pulls directly from Source |
 
 ### Example Configurations
 
 This example provides 3 configuration files:
 
-| Config                       | Mode         | Flow                           | Use Case                     |
-| ---------------------------- | ------------ | ------------------------------ | ---------------------------- |
-| `direct-mode-config.json`    | Pull         | SSH source → Local             | Backup only (no restore)     |
-| `relay-mode-config.json`     | Pull + Push  | SSH source → Local → SSH dest  | Full migration via local     |
-| `agent-fwd-mode-config.json` | AgentForward | SSH source → SSH dest (direct) | Direct container-to-container|
+| Config                       | Strategy | Flow                                     | Use Case                      |
+| ---------------------------- | -------- | ---------------------------------------- | ----------------------------- |
+| `direct-mode-config.json`    | `direct` | SSH source -> Local (`pull`)             | Backup only (no restore)      |
+| `relay-mode-config.json`     | `relay`  | SSH source -> Local -> SSH dest (`pull` + `push`) | Full migration via local |
+| `agent-fwd-mode-config.json` | `direct` | SSH source -> SSH dest (`ssh-agent-fwd-auto`) | Direct container-to-container |
 
 ## Prerequisites
 
@@ -158,7 +160,7 @@ This will:
     },
     "postCmd": "mariadb ..."
   },
-  "strategy": "agent-forward"
+  "strategy": "direct"
 }
 ```
 

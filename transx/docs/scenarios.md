@@ -27,7 +27,7 @@ This document describes various data migration scenarios supported by the transx
 - [1. Filesystem Transfers](#1-filesystem-transfers)
   - [1.1 Local → Remote (Push)](#11-local--remote-push)
   - [1.2 Remote → Local (Pull)](#12-remote--local-pull)
-  - [1.3 Remote → Remote (Agent Forward)](#13-remote--remote-agent-forward)
+  - [1.3 Remote → Remote (SSH Agent Forwarding: Push / Pull)](#13-remote--remote-ssh-agent-forwarding-push--pull)
   - [1.4 Remote → Remote (Relay)](#14-remote--remote-relay)
 - [2. Object Storage Transfers](#2-object-storage-transfers)
   - [2.1 Local → Object Storage (Upload)](#21-local--object-storage-upload)
@@ -144,9 +144,12 @@ Transfer files from a remote server to the local machine.
 └───────────────────────────────────────────────────────────────┘
 ```
 
-### 1.3 Remote → Remote (Agent Forward)
+### 1.3 Remote -> Remote (SSH Agent Forwarding: Push / Pull)
 
-Transfer files between two remote servers using SSH agent forwarding. The local machine orchestrates the transfer without staging data locally.
+Transfer files between two remote servers using in-memory SSH agent forwarding (`agent.NewKeyring()`). The local machine orchestrates the transfer without writing peer keys to disk or staging data locally.
+- `"auto"` (Default): Probes `1st ssh-agent-fwd-push -> 2nd ssh-agent-fwd-pull -> 3rd relay` fallback.
+- `"direct"`: Probes `1st ssh-agent-fwd-push -> 2nd ssh-agent-fwd-pull` (fails if both are blocked).
+- `"ssh-agent-fwd-push"` / `"ssh-agent-fwd-pull"`: Forces a specific SSH agent forwarding direction only.
 
 **Use Case**: Migrate data between servers without using local disk space.
 
@@ -184,14 +187,14 @@ Transfer files between two remote servers using SSH agent forwarding. The local 
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
-│                 Agent Forward Transfer (Direct)                       │
+│                 SSH Agent Forwarding Transfer (Direct)                │
 ├───────────────────────────────────────────────────────────────────────┤
 │                                                                       │
 │   transx HOST                                                         │
 │   ───────────                                                         │
 │   [Orchestrator]                                                      │
 │    ┌──────────────┐                                                   │
-│    │ SSH Agent    │  ← Keys stored here                               │
+│    │ SSH Agent    │  <- Keys stored in memory (agent.NewKeyring)      │
 │    └──────┬───────┘                                                   │
 │           │                                                           │
 │           │ SSH + Agent Forwarding                                    │
@@ -201,13 +204,12 @@ Transfer files between two remote servers using SSH agent forwarding. The local 
 │      [Source]       (auth via forwarded agent)         [Destination]  │
 │      /data/source ═══════════════════════════════════► /data/dest     │
 │                                                                       │
-│   • transx Host connects to Server A with agent forwarding            │
-│   • transx Host runs rsync command on Server A                        │
-│   • Server A authenticates to Server B using forwarded agent          │
-│   • Data transfers directly: Server A → Server B                      │
+│   * transx Host connects to Primary Server with agent forwarding      │
+│   * Pre-Flight Check verifies Primary -> Peer SSH reachability        │
+│   * Data transfers directly: Push (Src -> Dst) or Pull (Dst <- Src)   │
 │                                                                       │
 │   Pipeline: filesystem-transfer                                       │
-│   Step 1: rsync-transfer (agent-forward)                              │
+│   Step 1: rsync-transfer (ssh-agent-fwd-auto / push / pull)           │
 │                                                                       │
 └───────────────────────────────────────────────────────────────────────┘
 ```
@@ -711,18 +713,21 @@ Migrate a MariaDB database through a relay node when direct transfer is not poss
 
 ## Summary
 
-| Scenario                        | Pipeline               | Steps                 | Key Components                         |
-| ------------------------------- | ---------------------- | --------------------- | -------------------------------------- |
-| Local → Remote                  | filesystem-transfer    | 1 (push)              | rsync over SSH                         |
-| Remote → Local                  | filesystem-transfer    | 1 (pull)              | rsync over SSH                         |
-| Remote → Remote (Direct)        | filesystem-transfer    | 1 (agent-forward)     | rsync with SSH agent                   |
-| Remote → Remote (Relay)         | filesystem-transfer    | 2 (pull + push)       | rsync via local staging                |
-| Local → Object Storage          | cross-storage-transfer | 1 (upload)            | minio SDK / Spider API / Tumblebug API |
-| Object Storage → Local          | cross-storage-transfer | 1 (download)          | minio SDK / Spider API / Tumblebug API |
-| Object Storage → Object Storage | objectstorage-transfer | 2 (download + upload) | Object Storage API via local staging   |
-| Remote FS → Object Storage      | cross-storage-transfer | 2 (rsync + upload)    | rsync + Object Storage API             |
-| Object Storage → Remote FS      | cross-storage-transfer | 2 (download + rsync)  | Object Storage API + rsync             |
-| Database Migration              | Any of above           | + preCmd/postCmd      | Hooks for backup/restore               |
+| Scenario                                      | Strategy             | Pipeline               | Steps                   | Key Components                                        |
+| --------------------------------------------- | -------------------- | ---------------------- | ----------------------- | ----------------------------------------------------- |
+| Local -> Local                                | `auto`, `direct`     | filesystem-transfer    | 1 (`push`)              | local rsync                                           |
+| Local -> Remote                               | `auto`, `direct`     | filesystem-transfer    | 1 (`push`)              | rsync over SSH                                        |
+| Remote -> Local                               | `auto`, `direct`     | filesystem-transfer    | 1 (`pull`)              | rsync over SSH                                        |
+| Remote -> Remote (Auto Probing)               | `auto`               | filesystem-transfer    | 1 or 2 (`ssh-agent-fwd-auto` -> `relay` fallback) | Push -> Pull -> Relay via staging |
+| Remote -> Remote (Direct Auto Probing)        | `direct`             | filesystem-transfer    | 1 (`ssh-agent-fwd-auto`) | Push -> Pull with in-memory SSH agent                 |
+| Remote -> Remote (Force Push / Pull)          | `ssh-agent-fwd-push` / `ssh-agent-fwd-pull` | filesystem-transfer | 1 (`ssh-agent-fwd-push` / `ssh-agent-fwd-pull`) | Single-direction SSH agent forwarding |
+| Remote -> Remote (Relay)                      | `relay`              | filesystem-transfer    | 2 (`pull` + `push`)     | rsync via `/tmp/transx-staging/<subdir>`              |
+| Local -> Object Storage                       | `auto`, `direct`     | cross-storage-transfer | 1 (`push`)              | minio SDK / Spider API / Tumblebug API                |
+| Object Storage -> Local                       | `auto`, `direct`     | cross-storage-transfer | 1 (`pull`)              | minio SDK / Spider API / Tumblebug API                |
+| Object Storage -> Object Storage              | `auto`, `relay`      | objectstorage-transfer | 2 (`pull` + `push`)     | Object Storage API via local staging                  |
+| Remote FS -> Object Storage                   | `auto`, `relay`      | cross-storage-transfer | 2 (`pull` + `push`)     | rsync + Object Storage API                            |
+| Object Storage -> Remote FS                   | `auto`, `relay`      | cross-storage-transfer | 2 (`pull` + `push`)     | Object Storage API + rsync                            |
+| Database Migration                            | Any of above         | Any of above           | + `preCmd` / `postCmd`  | Hooks for backup/restore                              |
 
 ## Related Resources
 

@@ -1,6 +1,7 @@
 package transx
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -47,14 +48,20 @@ const (
 // ============================================================================
 
 const (
-	// StrategyAuto automatically selects the best transfer method.
+	// StrategyAuto automatically selects the optimal route (SSH -> SSH: Push -> Pull -> Relay).
 	StrategyAuto = "auto"
 
-	// StrategyDirect forces direct transfer (e.g., SSH agent forwarding).
+	// StrategyDirect enforces direct transfer without local staging (SSH -> SSH: Push -> Pull).
 	StrategyDirect = "direct"
 
-	// StrategyRelay forces relay via local machine.
+	// StrategyRelay enforces a 2-step relay via local staging (/tmp/transx-staging/<subdir>).
 	StrategyRelay = "relay"
+
+	// StrategySSHAgentFwdPush enforces SSH agent forwarding Push only (Source -> Destination).
+	StrategySSHAgentFwdPush = "ssh-agent-fwd-push"
+
+	// StrategySSHAgentFwdPull enforces SSH agent forwarding Pull only (Destination <- Source).
+	StrategySSHAgentFwdPull = "ssh-agent-fwd-pull"
 )
 
 // ============================================================================
@@ -67,6 +74,8 @@ const (
 	PipelineCrossStorageTransfer  = "cross-storage-transfer"
 
 	StepRsyncTransfer   = "rsync-transfer"
+	StepPullToStaging   = "pull-to-staging"
+	StepPushFromStaging = "push-from-staging"
 	StepDownloadFromS3  = "download-from-s3"
 	StepUploadToS3      = "upload-to-s3"
 	StepRsyncFromServer = "rsync-from-server"
@@ -101,15 +110,10 @@ type DataMigrationModel struct {
 	Source      DataLocation `json:"source" validate:"required"`
 	Destination DataLocation `json:"destination" validate:"required"`
 
-	// Strategy determines how the transfer is orchestrated.
-	// "auto": Automatically select best method.
-	// "direct": Force direct transfer (e.g., SSH agent forwarding).
-	// "relay": Force relay via local machine.
-	Strategy string `json:"strategy,omitempty" default:"auto" validate:"omitempty,oneof=auto direct relay"`
+	// Strategy determines how the transfer is orchestrated (auto, direct, relay, ssh-agent-fwd-push, ssh-agent-fwd-pull).
+	Strategy string `json:"strategy,omitempty" default:"auto" validate:"omitempty,oneof=auto direct relay ssh-agent-fwd-push ssh-agent-fwd-pull"`
 
-	// EncryptionKeyID indicates that sensitive fields are encrypted.
-	// Empty string means plaintext, non-empty means encrypted with the specified key.
-	// The key is one-time use and will be deleted after decryption.
+	// EncryptionKeyID indicates that sensitive fields are encrypted with the specified one-time key.
 	EncryptionKeyID string `json:"encryptionKeyId,omitempty"`
 }
 
@@ -169,22 +173,44 @@ type SSHConfig struct {
 	Username       string `json:"username" validate:"required"`
 	ConnectTimeout int    `json:"connectTimeout,omitempty" default:"30"`
 
-	// Authentication (priority: PrivateKey > PrivateKeyPath > Agent > none)
-	// At least one authentication method should be available.
-	//
-	// PrivateKey: PEM-encoded private key content (preferred for injected secrets).
-	// In JSON, use single line with \n for newlines:
-	//   "privateKey": "-----BEGIN RSA PRIVATE KEY-----\nMIIE...\n-----END RSA PRIVATE KEY-----"
-	PrivateKey     string `json:"privateKey,omitempty"`
-	PrivateKeyPath string `json:"privateKeyPath,omitempty"` // Path to private key file (legacy, prefer PrivateKey)
-	UseAgent       bool   `json:"useAgent,omitempty"`       // Use SSH agent for authentication (supports agent forwarding)
+	// PEM-encoded private key content (preferred for injected secrets)
+	PrivateKey string `json:"privateKey,omitempty"`
+
+	// Path to private key file (legacy, prefer PrivateKey)
+	PrivateKeyPath string `json:"privateKeyPath,omitempty"`
+
+	// Use SSH agent for authentication (supports agent forwarding)
+	UseAgent bool `json:"useAgent,omitempty"`
 
 	// Rsync options
-	Archive  bool `json:"archive,omitempty" default:"true"`
-	Compress bool `json:"compress,omitempty" default:"true"`
-	Delete   bool `json:"delete,omitempty"`
-	Verbose  bool `json:"verbose,omitempty"`
-	DryRun   bool `json:"dryRun,omitempty"`
+	Archive    bool `json:"archive,omitempty" default:"true"`
+	Compress   bool `json:"compress,omitempty" default:"true"`
+	Partial    bool `json:"partial,omitempty" default:"true"`
+	MaxRetries int  `json:"maxRetries,omitempty" default:"3"`
+	Delete     bool `json:"delete,omitempty"`
+	Verbose    bool `json:"verbose,omitempty"`
+	DryRun     bool `json:"dryRun,omitempty"`
+
+	explicitOptions bool
+}
+
+// UnmarshalJSON pre-populates default SSH and rsync options before decoding JSON.
+func (c *SSHConfig) UnmarshalJSON(data []byte) error {
+	type sshConfigAlias SSHConfig
+	alias := sshConfigAlias{
+		Port:            22,
+		ConnectTimeout:  30,
+		Archive:         true,
+		Compress:        true,
+		Partial:         true,
+		MaxRetries:      3,
+		explicitOptions: true,
+	}
+	if err := json.Unmarshal(data, &alias); err != nil {
+		return err
+	}
+	*c = SSHConfig(alias)
+	return nil
 }
 
 // ============================================================================
@@ -299,6 +325,65 @@ func Validate(dmm DataMigrationModel) error {
 	if err := validateLocation(dmm.Destination, "destination"); err != nil {
 		return err
 	}
+	if err := validateStrategy(dmm); err != nil {
+		return err
+	}
+	return nil
+}
+
+// validateStrategy verifies that the requested strategy is compatible with the source and destination endpoints.
+func validateStrategy(dmm DataMigrationModel) error {
+	strategy := strings.TrimSpace(dmm.Strategy)
+	if strategy == "" {
+		strategy = StrategyAuto
+	}
+
+	switch strategy {
+	case StrategyAuto, StrategyDirect, StrategyRelay, StrategySSHAgentFwdPush, StrategySSHAgentFwdPull:
+	default:
+		return fmt.Errorf("strategy: unsupported strategy %q (allowed: %s, %s, %s, %s, %s)",
+			dmm.Strategy, StrategyAuto, StrategyDirect, StrategyRelay, StrategySSHAgentFwdPush, StrategySSHAgentFwdPull)
+	}
+
+	srcIsSSH := dmm.Source.IsFilesystem() && dmm.Source.Filesystem != nil && dmm.Source.Filesystem.AccessType == AccessTypeSSH
+	dstIsSSH := dmm.Destination.IsFilesystem() && dmm.Destination.Filesystem != nil && dmm.Destination.Filesystem.AccessType == AccessTypeSSH
+	srcIsLocal := dmm.Source.IsLocal()
+	dstIsLocal := dmm.Destination.IsLocal()
+	srcIsOS := dmm.Source.IsObjectStorage()
+	dstIsOS := dmm.Destination.IsObjectStorage()
+
+	if strategy == StrategySSHAgentFwdPush || strategy == StrategySSHAgentFwdPull {
+		if !srcIsSSH || !dstIsSSH {
+			return fmt.Errorf("strategy %q is only supported when both source and destination are remote SSH filesystems", strategy)
+		}
+		return nil
+	}
+
+	if srcIsSSH && dstIsSSH {
+		return nil
+	}
+
+	if (srcIsLocal && dstIsSSH) || (srcIsSSH && dstIsLocal) || (srcIsLocal && dstIsLocal) {
+		if strategy == StrategyRelay {
+			return fmt.Errorf("strategy %q is not applicable when a local filesystem endpoint is involved (use %q or %q)", strategy, StrategyAuto, StrategyDirect)
+		}
+		return nil
+	}
+
+	if (srcIsLocal && dstIsOS) || (srcIsOS && dstIsLocal) {
+		if strategy == StrategyRelay {
+			return fmt.Errorf("strategy %q is not applicable for local-to-objectstorage or objectstorage-to-local transfer (use %q or %q)", strategy, StrategyAuto, StrategyDirect)
+		}
+		return nil
+	}
+
+	if (srcIsOS && dstIsOS) || (srcIsSSH && dstIsOS) || (srcIsOS && dstIsSSH) {
+		if strategy == StrategyDirect {
+			return fmt.Errorf("strategy %q is not supported for remote transfers involving object storage (local staging via %q or %q is required)", strategy, StrategyAuto, StrategyRelay)
+		}
+		return nil
+	}
+
 	return nil
 }
 

@@ -55,10 +55,17 @@ The library implements a **Transfer-Centric Data Migration Model** with the foll
 
 The transfer operation is the primary focus, with backup and restore serving as optional pre/post-processing steps.
 
-### Transfer Modes
+### Transfer Strategies (`DataMigrationModel.Strategy`) & Execution Modes (`TransferMode`)
 
-- **Direct Mode**: Source → Destination (at least one endpoint is local)
-- **Relay Mode**: Source → Relay Node → Destination (both endpoints are remote)
+- **Primary Strategies (`Strategy`)**:
+  - `auto` (Default): Automatically selects the optimal path. For `SSH -> SSH`, probes `1st ssh-agent-fwd-push -> 2nd ssh-agent-fwd-pull -> 3rd relay` fallback.
+  - `direct`: Direct transfer without local staging (`SSH -> SSH`: probes `1st ssh-agent-fwd-push -> 2nd ssh-agent-fwd-pull`; fails if both directions are blocked).
+  - `relay`: Two-step relay via isolated local staging (`/tmp/transx-staging/<subdir>`): Step 1 (`pull`) -> Step 2 (`push`).
+- **Optional SSH-Only Direction Overrides (`Strategy`)**:
+  - `ssh-agent-fwd-push`: Connects to Source with SSH agent forwarding and pushes directly to Destination (`src -> dst`).
+  - `ssh-agent-fwd-pull`: Connects to Destination with SSH agent forwarding and pulls directly from Source (`dst <- src`).
+- **Generalized Step Execution Modes (`TransferMode`)**:
+  - `pull`, `push`, `ssh-agent-fwd-auto`, `ssh-agent-fwd-push`, `ssh-agent-fwd-pull` across both `RsyncExecutor` and `S3Executor`.
 
 ## Error Handling
 
