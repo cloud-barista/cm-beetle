@@ -171,20 +171,36 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
           {/* Subnet Zone Container */}
           {subnets.map((sub: any, subIdx: number) => {
             const subnetCidr = sub.ipv4_CIDR || sub.cidrBlock || '10.0.1.0/24';
+            const allSubnetNames = subnets.map((s: any) => s.name);
+            const assignedNgs = nodeGroups.filter((ng: any) => ng.subnetId === sub.name);
+            const unassignedNgs =
+              subIdx === 0
+                ? nodeGroups.filter((ng: any) => !ng.subnetId || !allSubnetNames.includes(ng.subnetId))
+                : [];
+            const subnetNodeGroups = [...assignedNgs, ...unassignedNgs];
 
             return (
               <div key={subIdx} className="border border-dashed border-emerald-400 dark:border-emerald-800/30 bg-bg-panel/40 rounded-xl p-4 space-y-3">
-                <div className="flex items-center text-xs text-text-muted font-mono pb-2 border-b border-border-main">
+                <div className="flex items-center justify-between text-xs text-text-muted font-mono pb-2 border-b border-border-main">
                   <span>Subnet: {sub.name} ({subnetCidr})</span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold">
+                    {subnetNodeGroups.length} Node Group(s)
+                  </span>
                 </div>
 
                 {/* Node Groups Accordion List (Tab 3 Format) */}
+                {subnetNodeGroups.length === 0 ? (
+                  <div className="text-xs text-text-muted italic py-2 text-center font-mono">
+                    No Node Groups assigned to this subnet
+                  </div>
+                ) : (
                 <div className="divide-y divide-border-main/20 rounded-xl border border-border-main/30 overflow-hidden">
-                  {nodeGroups.map((ng, idx) => {
+                  {subnetNodeGroups.map((ng, idx) => {
                     const cardKey = `${subIdx}-${idx}`;
                     const isExpanded = !!expandedNgCards[cardKey];
                     const nodeCount = ng.nodeGroupSize || 1;
-                    const nodesArray = Array.from({ length: nodeCount });
+                    const deployedNodes: any[] = Array.isArray((ng as any).deployedNodes) ? (ng as any).deployedNodes : [];
+                    const nodesArray = deployedNodes.length > 0 ? deployedNodes : Array.from({ length: nodeCount });
                     const rootDiskSize = (ng as any).rootDiskSize || '30';
                     const specId = ng.specId || 'custom-spec';
                     const imageId = ng.imageId || 'ubuntu-22.04';
@@ -340,13 +356,36 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
                             <div className="space-y-1">
                               <span className="text-xs text-text-muted font-normal">Nodes</span>
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 font-mono text-xs">
-                                {nodesArray.map((_, nodeIdx) => {
-                                  const suffix = String(nodeIdx + 1).padStart(2, '0');
-                                  const nodeName = `${ng.name}-${suffix}`;
+                                {nodesArray.map((deployedNode: any, nodeIdx: number) => {
+                                  const nodeName = deployedNode?.name || `${ng.name}-${nodeIdx + 1}`;
+                                  const nodePrivateIp = deployedNode?.privateIP || deployedNode?.privateIp || '';
+                                  const nodeStatus = deployedNode?.status || '';
+                                  const isFailed = nodeStatus.toLowerCase() === 'failed' || nodeStatus.toLowerCase() === 'error';
                                   return (
-                                    <div key={nodeIdx} className="bg-bg-panel border border-emerald-500/10 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-                                      <Server className="w-3 h-3 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                                      <span className="text-text-muted truncate">{nodeName}</span>
+                                    <div
+                                      key={nodeIdx}
+                                      className={`bg-bg-panel border px-2.5 py-1.5 rounded-lg flex items-center justify-between gap-1.5 ${
+                                        isFailed ? 'border-red-500/30 bg-red-500/5' : 'border-emerald-500/10'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <Server className={`w-3 h-3 flex-shrink-0 ${isFailed ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`} />
+                                        <span className="text-text-main font-extrabold truncate" title={nodeName}>{nodeName}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5 shrink-0">
+                                        {nodePrivateIp && nodePrivateIp !== 'N/A' && (
+                                          <span className="text-text-muted">{nodePrivateIp}</span>
+                                        )}
+                                        {nodeStatus && (
+                                          <span className={`px-1.5 py-0.5 rounded text-xs font-extrabold border ${
+                                            isFailed
+                                              ? 'bg-red-500/15 text-red-500 border-red-500/30'
+                                              : 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30'
+                                          }`}>
+                                            {nodeStatus}
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
                                   );
                                 })}
@@ -358,6 +397,7 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
                     );
                   })}
                 </div>
+                )}
               </div>
             );
           })}

@@ -54,7 +54,7 @@ interface MigrationJob {
   nodeGroupsCount: number;
   totalVms: number;
   logs: string[];
-  vms?: { publicIp: string; privateIp: string; specId: string; name: string }[];
+  vms?: { publicIp: string; privateIp: string; specId: string; name: string; status?: string; systemMessage?: string }[];
   error?: string;
   isSample?: boolean;
   targetNlbList?: any[];
@@ -71,11 +71,13 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     setActiveJobId,
     removeJob,
     refinedSourceInfra,
+    savedSourceModels,
     selectedSourceModel,
     savedCloudModels,
     selectedCloudModel,
     namespaceId,
     nameSeed,
+    fetchSavedSourceModels,
     fetchSavedCloudModels,
     selectCloudModel,
     setActiveTab,
@@ -343,6 +345,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
 
   useEffect(() => {
     fetchSavedCloudModels();
+    fetchSavedSourceModels();
   }, []);
 
   // Update default infraId when selected model changes in launch modal
@@ -511,13 +514,17 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                       name: n.name || n.id || 'node',
                       specId: n.specId || n.spec || selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups[0]?.specId || 'c5.large',
                       publicIp: n.publicIP || n.publicIp || 'N/A',
-                      privateIp: n.privateIP || n.privateIp || 'N/A'
+                      privateIp: n.privateIP || n.privateIp || 'N/A',
+                      status: n.status || ((n.publicIP || n.publicIp || n.privateIP || n.privateIp) ? 'Running' : 'Failed'),
+                      systemMessage: n.systemMessage || ''
                     }))
                   : Array.from({ length: job.totalVms }).map((_, i) => ({
                       name: `node-${i + 1}`,
                       specId: selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups[i % (selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups.length || 1)]?.specId || 'c5.large',
                       publicIp: `54.180.${10 + i}.${30 + i}`,
-                      privateIp: `10.0.1.${100 + i}`
+                      privateIp: `10.0.1.${100 + i}`,
+                      status: 'Running',
+                      systemMessage: ''
                     }));
 
                 const cleanedLogs = updatedJob.logs.filter(l => !l.includes('GET /beetle/request/'));
@@ -856,6 +863,128 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
   const runningJobsCount = jobs.filter(j => j.status === 'Handling').length;
   const completedJobsCount = jobs.filter(j => j.status === 'Success').length;
 
+  // Resolve source model & nodes for 16:9 Live Topology Split View using lineage, selectedSourceModel, savedSourceModels, and refinedSourceInfra
+  const effectiveSourceInfo = React.useMemo(() => {
+    const lineage = selectedCloudModel?.lineage;
+    const lineageModel = lineage
+      ? savedSourceModels.find(
+          (m) => m.id === lineage.planningModelId || m.id === lineage.sourceModelId
+        )
+      : undefined;
+
+    if (lineageModel?.onpremiseInfraModel?.nodes?.length) {
+      return {
+        nodes: lineageModel.onpremiseInfraModel.nodes,
+        modelName: lineageModel.name
+      };
+    }
+
+    const selNodes = selectedSourceModel?.onpremiseInfraModel?.nodes || [];
+    const refNodes = refinedSourceInfra?.nodes || [];
+    const isRefFallback3Node =
+      refNodes.length === 3 && refNodes[0]?.hostname === 'ip-10-0-1-30';
+    const isSelFallback3Node =
+      selectedSourceModel?.id === 'demo-model-1' ||
+      (selNodes.length === 3 && selNodes[0]?.hostname === 'ip-10-0-1-30');
+
+    if (selNodes.length > 0 && (!isSelFallback3Node || isRefFallback3Node)) {
+      if (!isSelFallback3Node || selNodes.length >= refNodes.length) {
+        return {
+          nodes: selNodes,
+          modelName: selectedSourceModel?.name || 'Active Source Infra'
+        };
+      }
+    }
+
+    if (refNodes.length > 0 && !isRefFallback3Node) {
+      return {
+        nodes: refNodes,
+        modelName: selectedSourceModel?.name || 'Active Source Infra'
+      };
+    }
+
+    // Check if there is a user-saved source/planning model in savedSourceModels matching target node count or most recently saved
+    const targetNodeCount =
+      activeJob?.totalVms ||
+      selectedCloudModel?.cloudInfraModel?.targetInfra?.nodeGroups?.reduce(
+        (acc, ng) => acc + Math.max(1, Number(ng.nodeGroupSize || 1)),
+        0
+      ) ||
+      0;
+    const builtInIds = new Set(['sample-9-node-testbed', 'sample-15-node-enterprise', 'demo-model-1', 'demo-gpu-model-1']);
+    const userSavedModels = savedSourceModels.filter((m) => !builtInIds.has(m.id) && m.onpremiseInfraModel?.nodes?.length);
+    const countMatchedModel =
+      userSavedModels.find((m) => m.onpremiseInfraModel.nodes.length === targetNodeCount) ||
+      savedSourceModels.find((m) => m.onpremiseInfraModel?.nodes?.length === targetNodeCount);
+
+    if (countMatchedModel?.onpremiseInfraModel?.nodes?.length) {
+      return {
+        nodes: countMatchedModel.onpremiseInfraModel.nodes,
+        modelName: countMatchedModel.name
+      };
+    }
+    if (userSavedModels.length > 0) {
+      const latestUserModel = userSavedModels[userSavedModels.length - 1];
+      return {
+        nodes: latestUserModel.onpremiseInfraModel.nodes,
+        modelName: latestUserModel.name
+      };
+    }
+
+    return {
+      nodes: selNodes.length >= refNodes.length ? selNodes : refNodes,
+      modelName: selectedSourceModel?.name || 'Active Source Infra'
+    };
+  }, [selectedCloudModel, savedSourceModels, selectedSourceModel, refinedSourceInfra, activeJob]);
+
+  // Backfill per-node status & systemMessage from live infra detail for already-completed jobs
+  const enrichedJobIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (
+      !activeJob ||
+      activeJob.isSample ||
+      activeJob.status !== 'Success' ||
+      !activeJob.nsId ||
+      !activeJob.infraId
+    ) {
+      return;
+    }
+    const needsEnrichment =
+      !activeJob.vms ||
+      activeJob.vms.length === 0 ||
+      activeJob.vms.some(
+        (v) =>
+          !v.status ||
+          ((!v.publicIp || v.publicIp === 'N/A') && (!v.privateIp || v.privateIp === 'N/A') && !v.systemMessage)
+      );
+    if (!needsEnrichment || enrichedJobIdsRef.current.has(activeJob.id)) {
+      return;
+    }
+    enrichedJobIdsRef.current.add(activeJob.id);
+
+    beetleApi
+      .getMigratedInfraDetail(activeJob.nsId, activeJob.infraId)
+      .then((detail) => {
+        const rawNodes = detail?.node || detail?.infraInfo?.node || [];
+        if (Array.isArray(rawNodes) && rawNodes.length > 0) {
+          const updatedVms = rawNodes.map((n: any) => ({
+            name: n.name || n.id || 'node',
+            specId: n.specId || n.spec || 'c5.large',
+            publicIp: n.publicIP || n.publicIp || 'N/A',
+            privateIp: n.privateIP || n.privateIp || 'N/A',
+            status: n.status || ((n.publicIP || n.publicIp || n.privateIP || n.privateIp) ? 'Running' : 'Failed'),
+            systemMessage: n.systemMessage || ''
+          }));
+          setJobs((prev) =>
+            prev.map((j) => (j.id === activeJob.id ? { ...j, vms: updatedVms } : j))
+          );
+        }
+      })
+      .catch(() => {
+        // Ignore transient detail fetch error
+      });
+  }, [activeJob?.id, activeJob?.status, activeJob?.nsId, activeJob?.infraId]);
+
   return (
     <div className="space-y-6 animate-fade-in">
 
@@ -1051,8 +1180,8 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       {/* 16:9 Live Topology Split View (When toggled on) */}
       {viewMode === 'split' && (
         <MigrationSplitScreen
-          sourceNodes={refinedSourceInfra?.nodes || []}
-          sourceModelName={selectedSourceModel?.name || 'Active Source Infra'}
+          sourceNodes={effectiveSourceInfo.nodes}
+          sourceModelName={effectiveSourceInfo.modelName}
           selectedCloudModel={selectedCloudModel}
           activeJob={activeJob}
           sshReadyResponse={sshReadyModal.response}
@@ -1223,39 +1352,75 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                       <th className="py-3 px-4">Node Spec</th>
                       <th className="py-3 px-4">Public IP</th>
                       <th className="py-3 px-4">Private IP</th>
+                      <th className="py-3 px-4">Node Status</th>
                       <th className="py-3 px-4">SSH Readiness Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-main/40 text-text-main font-mono">
                     {activeJob.vms.map((vm, idx) => {
                       const matchedStatus = sshReadyModal.response?.nodeStatus?.find(
-                        (n) => n.id === vm.name || n.name === vm.name || n.publicIP === vm.publicIp
+                        (n) => n.id === vm.name || n.name === vm.name || (vm.publicIp !== 'N/A' && n.publicIP === vm.publicIp)
                       );
+                      const isNodeFailed =
+                        vm.status?.toLowerCase() === 'failed' ||
+                        vm.status?.toLowerCase() === 'error' ||
+                        ((!vm.publicIp || vm.publicIp === 'N/A') && (!vm.privateIp || vm.privateIp === 'N/A'));
+
                       return (
-                        <tr key={idx} className="hover:bg-emerald-500/[0.02] transition">
+                        <tr key={idx} className={`transition ${isNodeFailed ? 'bg-red-500/[0.04] hover:bg-red-500/[0.08]' : 'hover:bg-emerald-500/[0.02]'}`}>
                           <td className="py-3.5 px-4 font-extrabold text-text-main font-sans">{vm.name}</td>
                           <td className="py-3.5 px-4 text-emerald-400 font-extrabold">{vm.specId}</td>
-                          <td className="py-3.5 px-4 select-all font-extrabold">{vm.publicIp}</td>
-                          <td className="py-3.5 px-4 text-text-muted">{vm.privateIp}</td>
+                          <td className={`py-3.5 px-4 select-all font-extrabold ${isNodeFailed ? 'text-red-500' : 'text-text-main'}`}>{vm.publicIp}</td>
+                          <td className={`py-3.5 px-4 ${isNodeFailed ? 'text-red-500/80' : 'text-text-muted'}`}>{vm.privateIp}</td>
                           <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-2">
-                              {matchedStatus && (
-                                <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
-                                  matchedStatus.sshReady
-                                    ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
-                                    : 'bg-red-500/15 text-red-500 border-red-500/30'
-                                }`}>
-                                  {matchedStatus.sshReady ? `Ready (Port ${matchedStatus.sshPort || 22})` : 'Unreachable'}
+                            <div className="flex flex-col gap-1">
+                              <span
+                                className={`inline-flex items-center w-fit px-2 py-0.5 rounded text-xs font-extrabold border ${
+                                  isNodeFailed
+                                    ? 'bg-red-500/15 text-red-500 border-red-500/30'
+                                    : 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30'
+                                }`}
+                                title={vm.systemMessage || undefined}
+                              >
+                                {isNodeFailed ? (vm.status || 'Failed') : (vm.status || 'Running')}
+                              </span>
+                              {isNodeFailed && vm.systemMessage && (
+                                <span
+                                  className="text-xs font-sans text-red-500 max-w-xs truncate"
+                                  title={vm.systemMessage}
+                                >
+                                  {vm.systemMessage}
                                 </span>
                               )}
-                              <button
-                                onClick={() => handleCheckSshReady(vm.name)}
-                                disabled={sshCooldownSec > 0 || sshReadyModal.loading}
-                                className="px-3 py-1.5 bg-bg-panel border border-border-main hover:bg-emerald-500/10 hover:border-emerald-500/30 disabled:opacity-50 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5"
-                              >
-                                <Activity className="w-3.5 h-3.5 text-emerald-500" />
-                                <span>Inspect SSH Status</span>
-                              </button>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2">
+                              {isNodeFailed ? (
+                                <span className="px-2 py-0.5 rounded text-xs font-bold border bg-red-500/10 text-red-500 border-red-500/30">
+                                  Provisioning Failed (No IP)
+                                </span>
+                              ) : (
+                                <>
+                                  {matchedStatus && (
+                                    <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
+                                      matchedStatus.sshReady
+                                        ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+                                        : 'bg-red-500/15 text-red-500 border-red-500/30'
+                                    }`}>
+                                      {matchedStatus.sshReady ? `Ready (Port ${matchedStatus.sshPort || 22})` : 'Unreachable'}
+                                    </span>
+                                  )}
+                                  <button
+                                    onClick={() => handleCheckSshReady(vm.name)}
+                                    disabled={sshCooldownSec > 0 || sshReadyModal.loading}
+                                    className="px-3 py-1.5 bg-bg-panel border border-border-main hover:bg-emerald-500/10 hover:border-emerald-500/30 disabled:opacity-50 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5"
+                                  >
+                                    <Activity className="w-3.5 h-3.5 text-emerald-500" />
+                                    <span>Inspect SSH Status</span>
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </td>
                         </tr>

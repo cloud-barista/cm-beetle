@@ -17,6 +17,7 @@ export function useGlobalJobPolling() {
   const jobsRef = useRef(jobs);
   const objectStorageJobsRef = useRef(objectStorageJobs);
   const dataJobsRef = useRef(dataJobs);
+  const lastDataPollAtRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     jobsRef.current = jobs;
@@ -95,7 +96,9 @@ export function useGlobalJobPolling() {
                       name: n.name || n.id || 'node',
                       specId: n.specId || n.spec || 'c5.large',
                       publicIp: n.publicIP || n.publicIp || 'N/A',
-                      privateIp: n.privateIP || n.privateIp || 'N/A'
+                      privateIp: n.privateIP || n.privateIp || 'N/A',
+                      status: n.status || ((n.publicIP || n.publicIp || n.privateIP || n.privateIp) ? 'Running' : 'Failed'),
+                      systemMessage: n.systemMessage || ''
                     }))
                   : job.vms;
 
@@ -180,25 +183,35 @@ export function useGlobalJobPolling() {
         }
       }
 
-      // 3. Poll Active Data Migration Jobs
+      // 3. Poll Active Data Migration Jobs (Every 15 seconds per job)
       if (activeDataJobs.length > 0) {
+        const now = Date.now();
         for (const job of activeDataJobs) {
           if (!job.reqId || job.isSample) continue;
+          const lastPolled = lastDataPollAtRef.current[job.id] ?? job.createdAtMs ?? 0;
+          if (now - lastPolled < 15000) {
+            continue;
+          }
+          lastDataPollAtRef.current[job.id] = now;
           try {
             const reqDetails = await beetleApi.getRequestDetails(job.reqId);
             const status = reqDetails?.status;
             if (status === 'Completed' || status === 'Succeeded' || status === 'Success') {
+              delete lastDataPollAtRef.current[job.id];
               setDataJobs((prevJobs) =>
                 prevJobs.map((j) => {
                   if (j.id === job.id) {
                     const dur = calculateJobElapsedSeconds(j);
+                    const detailMsg = reqDetails?.responseData?.message
+                      ? ` - ${reqDetails.responseData.message}`
+                      : '';
                     return {
                       ...j,
                       status: 'Success',
                       elapsedSeconds: dur,
                       logs: [
                         ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
-                        `GET /beetle/request/${job.reqId} -> Status: Success (Duration: ${dur}s)`
+                        `GET /beetle/request/${job.reqId} -> Status: Success${detailMsg} (Duration: ${dur}s)`
                       ]
                     };
                   }
@@ -206,6 +219,7 @@ export function useGlobalJobPolling() {
                 })
               );
             } else if (status === 'Failed' || status === 'Error') {
+              delete lastDataPollAtRef.current[job.id];
               setDataJobs((prevJobs) =>
                 prevJobs.map((j) => {
                   if (j.id === job.id) {
@@ -225,7 +239,20 @@ export function useGlobalJobPolling() {
               );
             } else {
               setDataJobs((prevJobs) =>
-                prevJobs.map((j) => (j.id === job.id ? { ...j, elapsedSeconds: calculateJobElapsedSeconds(j) } : j))
+                prevJobs.map((j) => {
+                  if (j.id === job.id) {
+                    const dur = calculateJobElapsedSeconds(j);
+                    return {
+                      ...j,
+                      elapsedSeconds: dur,
+                      logs: [
+                        ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
+                        `GET /beetle/request/${job.reqId} -> Status: Handling (Elapsed: ${dur}s)`
+                      ]
+                    };
+                  }
+                  return j;
+                })
               );
             }
           } catch (err) {

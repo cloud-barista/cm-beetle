@@ -424,6 +424,16 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
   // ─── Init ──────────────────────────────────────────────────────
   useEffect(() => { fetchSourceGroups(); fetchSavedSourceModels(); }, []);
 
+  // Re-fetch refined infra automatically if loaded state lacks enriched disk/GPU fields
+  useEffect(() => {
+    if (activeSgId && activeSgId !== 'sg-sample' && refinedSourceInfra) {
+      const needsEnrichment = refinedSourceInfra.nodes?.some(n => !n.rootDisk?.totalSize);
+      if (needsEnrichment) {
+        fetchRefinedInfraByGroup(activeSgId);
+      }
+    }
+  }, [activeSgId, refinedSourceInfra, fetchRefinedInfraByGroup]);
+
   // Sync inline rows from store connections (when group selected / refreshed).
   // A blank draft row is always kept at the end, ready for entering the next server.
   useEffect(() => {
@@ -1209,9 +1219,17 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
               const cards = n.gpuCards || n.gpus || [];
               return cards.map((g: any) => `${g.vendor || 'GPU'} ${g.model || ''} ${g.memoryTotalGB ? `${g.memoryTotalGB}GB` : ''}`.trim());
             });
-            const primaryOs = nodes[0]?.os?.prettyName || nodes[0]?.os?.name || 'Ubuntu 22.04 LTS';
+            const uniqueOsList = Array.from(
+              new Set(
+                nodes.map((n: any) => n.os?.prettyName || (n.os?.name ? `${n.os.name} ${n.os.versionId || ''}`.trim() : 'Ubuntu 22.04 LTS'))
+              )
+            );
+            const osDistributionLabel = uniqueOsList.length <= 1
+              ? `OS: ${uniqueOsList[0] || 'Ubuntu 22.04 LTS'} (${nodes.length}/${nodes.length})`
+              : `${uniqueOsList.length} OS Types: ${uniqueOsList.join(', ')}`;
             const cidrList = refinedSourceInfra.network?.ipv4Networks?.cidrBlocks || [];
             const defaultGw = refinedSourceInfra.network?.ipv4Networks?.defaultGateways?.[0]?.ip || '10.0.1.1';
+            const networkHeadline = cidrList.length > 0 ? cidrList.join(', ') : `GW ${defaultGw}`;
 
             return (
               <div className="mt-5 pt-5 border-t border-border-main space-y-4">
@@ -1289,14 +1307,14 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
 
                       <div className="p-3.5 rounded-xl bg-bg-input/60 border border-border-main">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-normal text-text-muted">OS &amp; Network</span>
+                          <span className="text-sm font-normal text-text-muted">Network &amp; OS Summary</span>
                           <Network className="w-4 h-4 text-teal-500" />
                         </div>
-                        <div className="text-base font-extrabold text-text-main truncate" title={primaryOs}>
-                          {primaryOs}
+                        <div className="text-base font-extrabold text-text-main font-mono truncate" title={networkHeadline}>
+                          {networkHeadline}
                         </div>
-                        <div className="text-xs text-text-muted mt-0.5 font-mono truncate">
-                          {cidrList.length > 0 ? cidrList.join(', ') : `GW ${defaultGw}`}
+                        <div className="text-xs text-text-muted mt-0.5 truncate" title={osDistributionLabel}>
+                          {osDistributionLabel}
                         </div>
                       </div>
                     </div>
@@ -1309,6 +1327,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                             <th className="py-2.5 px-3 font-normal text-text-muted">#</th>
                             <th className="py-2.5 px-3 font-normal text-text-muted">Hostname</th>
                             <th className="py-2.5 px-3 font-normal text-text-muted">Private IP</th>
+                            <th className="py-2.5 px-3 font-normal text-text-muted">OS</th>
                             <th className="py-2.5 px-3 font-normal text-text-muted">Node Spec (CPU / RAM / Disk)</th>
                             <th className="py-2.5 px-3 font-normal text-text-muted">GPU Accelerator</th>
                             <th className="py-2.5 px-3 font-normal text-text-muted">Open Inbound Ports</th>
@@ -1321,6 +1340,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                             const disk = node.rootDisk?.totalSize || 0;
                             const primaryIface = (node.interfaces || []).find((iface: any) => iface.name !== 'lo' && Array.isArray(iface.ipv4CidrBlocks) && iface.ipv4CidrBlocks.length > 0);
                             const privateIp = primaryIface?.ipv4CidrBlocks?.[0]?.split('/')[0] || '-';
+                            const nodeOs = node.os?.prettyName || (node.os?.name ? `${node.os.name} ${node.os.versionId || ''}`.trim() : '-');
                             const gpus = node.gpuCards || node.gpus || [];
                             const openPorts = Array.from(
                               new Set(
@@ -1340,6 +1360,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                                   )}
                                 </td>
                                 <td className="py-2.5 px-3 font-mono font-extrabold text-text-main">{privateIp}</td>
+                                <td className="py-2.5 px-3 font-extrabold text-text-main">{nodeOs}</td>
                                 <td className="py-2.5 px-3 font-extrabold text-text-main">
                                   {vcpu} vCPU / {ram} GiB / {disk} GB {node.rootDisk?.type || 'SSD'}
                                 </td>

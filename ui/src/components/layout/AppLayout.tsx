@@ -32,13 +32,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   const dashboardNavItems = [
     { id: 'overview', label: 'Overview', icon: Server, desc: 'Multi-cloud topology & resource overview' },
-    { id: 'credential', label: 'Credential', icon: Key, desc: 'CSP Access credentials & Vault secrets', badge: 'WIP' },
+    { id: 'credential', label: 'Credential', icon: Key, desc: 'Ephemeral session credentials (not stored)', badge: 'Volatile' },
   ] as const;
 
   const migrationNavItems = [
     { id: 'infra', label: 'Infrastructure', icon: Cpu, desc: 'Host nodes & VM migration pipeline' },
     { id: 'storage', label: 'Object Storage', icon: HardDrive, desc: 'Cloud bucket recommendation & creation', badge: 'WIP' },
-    { id: 'data', label: 'Data', icon: Database, desc: 'Encrypted file & object data transfer', badge: 'WIP' },
+    { id: 'data', label: 'Data', icon: Database, desc: 'SSH server & S3 object data transfer', badge: 'Alpha' },
   ] as const;
 
   const isTabActive = (itemId: string) => {
@@ -147,7 +147,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                         }`}>
                         <span>{item.label}</span>
                         {(item as any).badge && (
-                          <span className="px-1.5 py-0.5 text-xs font-mono font-extrabold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-md">
+                          <span className={`px-1.5 py-0.5 text-xs font-mono font-extrabold rounded-md border ${
+                            (item as any).badge === 'WIP'
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                              : 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20'
+                          }`}>
                             {(item as any).badge}
                           </span>
                         )}
@@ -198,7 +202,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                         }`}>
                         <span>{item.label}</span>
                         {(item as any).badge && (
-                          <span className="px-1.5 py-0.5 text-xs font-mono font-extrabold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-md">
+                          <span className={`px-1.5 py-0.5 text-xs font-mono font-extrabold rounded-md border ${
+                            (item as any).badge === 'WIP'
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                              : 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20'
+                          }`}>
                             {(item as any).badge}
                           </span>
                         )}

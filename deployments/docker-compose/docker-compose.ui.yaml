@@ -37,7 +37,7 @@ services:
       - ./data/openbao-honeybee-data:/openbao/data
       - ./cm-honeybee/openbao/openbao-config.hcl:/openbao/config/openbao-config.hcl:ro
     healthcheck:
-      # 0=unsealed, 1=sealed, 2=uninitialized — all mean OpenBao process is ready;
+      # 0=unsealed, 1=sealed, 2=uninitialized: all mean OpenBao process is ready;
       # cm-honeybee automatically initializes/unseals it on startup.
       test: ["CMD", "sh", "-c", "rc=0; bao status || rc=$$?; [ $$rc -le 2 ]"]
       interval: 10s
@@ -50,7 +50,7 @@ services:
   # 2. CM-Honeybee (On-Premise Infrastructure Extractor)
   # ============================================================================
   cm-honeybee:
-    image: cloudbaristaorg/cm-honeybee:0.6.1
+    image: cloudbaristaorg/cm-honeybee:0.6.3
     container_name: cm-honeybee
     networks:
       - cloud-barista
@@ -59,18 +59,16 @@ services:
     depends_on:
       openbao-honeybee:
         condition: service_healthy
-      cb-spider:
-        condition: service_started
     environment:
-      - HONEYBEE_API_ALLOW_ORIGINS=*
-      - HONEYBEE_LOG_LEVEL=debug
+      # cm-honeybee self-manages OpenBao (init/unseal/KV-enable); the unseal key +
+      # root token are stored RSA-encrypted in its DB.
       - HONEYBEE_VAULT_ADDR=http://openbao-honeybee:8200
-      - HONEYBEE_SPIDER_ENDPOINT=http://cb-spider:1024/spider
-      - HONEYBEE_SPIDER_USERNAME=${SP_API_USERNAME:-default}
-      - HONEYBEE_SPIDER_PASSWORD=${SP_API_PASSWORD:-default}
+      # Optional overrides (defaults from server/conf/cm-honeybee.yaml):
+      # - HONEYBEE_LISTEN_PORT=8081
+      # - HONEYBEE_AGENT_PORT=8082
+      # - HONEYBEE_AGENT_REQUEST_TIMEOUT=600
     volumes:
       - ./data/cm-honeybee-container/data/:/root/.cm-honeybee/:rw
-      - ./data/cm-honeybee-container/db/:/app/db/
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/honeybee/readyz"]
       interval: 1m
