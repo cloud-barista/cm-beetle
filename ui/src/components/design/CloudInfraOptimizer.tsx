@@ -46,6 +46,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     saveCloudModel,
     updateCloudModel,
     deleteCloudModel,
+    clearCustomCloudModels,
     savedCloudModels,
     selectedCloudModel,
     selectCloudModel,
@@ -544,6 +545,34 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     }
   };
 
+  useEffect(() => {
+    if (
+      savedCloudModels.some(
+        m =>
+          m.name === 'Unnamed Design' ||
+          m.id.startsWith('cloud-model-') ||
+          m.id.startsWith('art-tgt-') ||
+          !m.cloudInfraModel
+      )
+    ) {
+      fetchSavedCloudModels();
+    }
+  }, [savedCloudModels, fetchSavedCloudModels]);
+
+  const handleClearAllCustomDesigns = async () => {
+    const customCount = savedCloudModels.filter(m => m.id !== 'cloud-demo-1').length;
+    if (customCount === 0) return;
+    if (!window.confirm(`Delete all ${customCount} saved custom target design(s)? (Built-in sample model will be kept)`)) {
+      return;
+    }
+    try {
+      await clearCustomCloudModels();
+      setActiveStep(1);
+    } catch (err: any) {
+      console.error('Failed to clear custom designs:', err);
+    }
+  };
+
   const handleAddCidr = (cidr: string) => {
     if (!cidr || !tunedNetwork) return;
     const currentCidrs = tunedNetwork.ipv4Networks?.cidrBlocks || [];
@@ -819,12 +848,35 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
   const handleAddSubnet = () => {
     if (!editedCandidate) return;
     const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
-    const n = updatedCandidate.targetVNet.subnetInfoList.length + 1;
-    const vnetCidrBase = updatedCandidate.targetVNet.cidrBlock.split('.').slice(0, 2).join('.');
+    const existingSubnets = updatedCandidate.targetVNet.subnetInfoList || [];
+    const existingNames = new Set(existingSubnets.map((s: any) => s.name));
+    const existingCidrs = new Set(existingSubnets.map((s: any) => s.ipv4_CIDR));
+
+    // Match the prefix convention of the first recommended subnet (e.g. "subnet-01" -> "subnet-", "mig-subnet-01" -> "mig-subnet-")
+    const firstSubnetName = existingSubnets[0]?.name || 'subnet-01';
+    const prefixMatch = firstSubnetName.match(/^(.*?)(\d+)$/);
+    const namePrefix = prefixMatch ? prefixMatch[1] : 'subnet-';
+    const padWidth = prefixMatch ? Math.max(prefixMatch[2].length, 2) : 2;
+
+    let n = existingSubnets.length + 1;
+    let nextName = `${namePrefix}${String(n).padStart(padWidth, '0')}`;
+    while (existingNames.has(nextName)) {
+      n += 1;
+      nextName = `${namePrefix}${String(n).padStart(padWidth, '0')}`;
+    }
+
+    const vnetCidrBase = (updatedCandidate.targetVNet.cidrBlock || '10.0.0.0/16').split('.').slice(0, 2).join('.');
+    let cidrOctet = n;
+    let nextCidr = `${vnetCidrBase}.${cidrOctet}.0/24`;
+    while (existingCidrs.has(nextCidr) && cidrOctet < 255) {
+      cidrOctet += 1;
+      nextCidr = `${vnetCidrBase}.${cidrOctet}.0/24`;
+    }
+
     updatedCandidate.targetVNet.subnetInfoList.push({
-      name: `${updatedCandidate.targetVNet.name}-subnet-${n}`,
-      ipv4_CIDR: `${vnetCidrBase}.${n}.0/24`,
-      description: '',
+      name: nextName,
+      ipv4_CIDR: nextCidr,
+      description: 'a recommended subnet for migration',
       zone: '',
     });
     updateEditedCandidate(updatedCandidate);
@@ -1522,12 +1574,14 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                 className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
               >
                 <option value="">-- Choose Target Cloud Infrastructure Model --</option>
-                {savedCloudModels.map((m: any) => (
-                  <option key={m.id} value={m.id}>{m.name} (v{m.version || '1.0.0'})</option>
-                ))}
+                {savedCloudModels
+                  .filter((m: any) => m && m.name !== 'Unnamed Design')
+                  .map((m: any) => (
+                    <option key={m.id} value={m.id}>{m.name} (v{m.version || '1.0.0'})</option>
+                  ))}
               </select>
             </div>
-            <div className="flex gap-3 pt-2">
+            <div className="flex flex-wrap gap-3 pt-2">
               <button
                 onClick={handleLoadDesign}
                 disabled={!selectedCloudModel}
@@ -1552,6 +1606,15 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                 <Trash2 className="w-4 h-4" />
                 <span>Delete Design</span>
               </button>
+              {savedCloudModels.filter((m: any) => m.id !== 'cloud-demo-1' && m.name !== 'Unnamed Design').length > 0 && (
+                <button
+                  onClick={handleClearAllCustomDesigns}
+                  className="px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer bg-red-500/15 hover:bg-red-500/25 text-red-600 dark:text-red-400 border border-red-500/30"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete All Custom Designs</span>
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -2003,18 +2066,21 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                           );
                           const allSubnetNames = editedCandidate.targetVNet.subnetInfoList?.map(s => s.name) || [];
                           const unassignedNgs = editedCandidate.targetInfra.nodeGroups.filter(
-                            ng => !allSubnetNames.includes(ng.subnetId)
+                            ng => !ng.subnetId || !allSubnetNames.includes(ng.subnetId)
                           );
-                          const displayNgs = assignedNgs.length > 0
-                            ? assignedNgs
-                            : subIdx === 0 ? unassignedNgs : [];
+                          const displayNgs = subIdx === 0
+                            ? [...assignedNgs, ...unassignedNgs]
+                            : assignedNgs;
 
                           return (
                         <div key={subIdx} className="border border-dashed border-emerald-400 dark:border-emerald-800/30 bg-bg-panel/40 rounded-xl p-4 space-y-3">
-                          <div className="flex items-center text-sm text-text-muted font-mono pb-2 border-b border-border-main">
+                          <div className="flex items-center justify-between text-sm text-text-muted font-mono pb-2 border-b border-border-main">
                             <span>
                               Subnet: {sub.name} ({sub.ipv4_CIDR})
                               {sub.zone && <span className="ml-2 text-xs text-emerald-600 dark:text-emerald-400/70">Zone: {sub.zone}</span>}
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold">
+                              {displayNgs.length} Node Group(s)
                             </span>
                           </div>
 
@@ -3102,10 +3168,10 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
               <div className="overflow-x-auto border border-border-main/50 rounded-xl bg-bg-panel/40">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-border-main bg-bg-input/60 text-text-muted font-bold">
-                      <th className="py-3 px-4 min-w-[180px]">Metric</th>
+                    <tr className="border-b border-border-main bg-bg-input/60 text-text-muted font-normal">
+                      <th className="py-3 px-4 min-w-[170px] whitespace-nowrap font-normal text-text-muted">Metric</th>
                       {recommendationCandidates.map((c, idx) => (
-                        <th key={idx} className="py-3 px-4 min-w-[200px]">
+                        <th key={idx} className="py-3 px-4 min-w-[320px] whitespace-nowrap font-extrabold text-text-main">
                           c {idx + 1} {c.targetCloud?.csp ? `(${c.targetCloud.csp.toUpperCase()})` : ''}
                         </th>
                       ))}
@@ -3113,20 +3179,20 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                   </thead>
                   <tbody className="divide-y divide-border-main/40">
                     <tr>
-                      <td className="py-3.5 px-4 font-bold text-text-muted bg-bg-input/10">Target Cloud</td>
+                      <td className="py-3.5 px-4 align-top font-normal text-text-muted bg-bg-input/10 whitespace-nowrap">Target Cloud</td>
                       {recommendationCandidates.map((c, idx) => (
-                        <td key={idx} className="py-3.5 px-4 text-emerald-600 dark:text-emerald-400 font-extrabold font-mono text-sm">
-                          {c.targetCloud?.csp ? c.targetCloud.csp.toUpperCase() : '—'} / {c.targetCloud?.region || '—'}
+                        <td key={idx} className="py-3.5 px-4 align-top text-emerald-600 dark:text-emerald-400 font-extrabold font-mono text-sm whitespace-nowrap">
+                          {c.targetCloud?.csp ? c.targetCloud.csp.toUpperCase() : '-'} / {c.targetCloud?.region || '-'}
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="py-3.5 px-4 font-bold text-text-muted bg-bg-input/10">Match Level</td>
+                      <td className="py-3.5 px-4 align-top font-normal text-text-muted bg-bg-input/10 whitespace-nowrap">Match Level</td>
                       {recommendationCandidates.map((c, idx) => (
-                        <td key={idx} className="py-3.5 px-4">
-                          <span className={`px-2.5 py-1 rounded-full text-sm font-bold uppercase ${c.status === 'highly-matched'
-                              ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20'
-                              : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                        <td key={idx} className="py-3.5 px-4 align-top whitespace-nowrap">
+                          <span className={`px-2.5 py-1 rounded-full text-sm font-extrabold uppercase ${c.status === 'highly-matched'
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                             }`}>
                             {c.status}
                           </span>
@@ -3134,44 +3200,46 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                       ))}
                     </tr>
                     <tr>
-                      <td className="py-3.5 px-4 font-bold text-text-muted bg-bg-input/10">Node Spec Allocation</td>
+                      <td className="py-3.5 px-4 align-top font-normal text-text-muted bg-bg-input/10 whitespace-nowrap">Node Spec Allocation</td>
                       {recommendationCandidates.map((c, idx) => (
-                        <td key={idx} className="py-3.5 px-4 text-text-main font-mono text-sm space-y-1">
-                          {c.targetInfra.nodeGroups.map((ng, i) => (
-                            <div key={i} className="flex justify-between border-b border-border-main/10 pb-1 last:border-0 last:pb-0">
-                              <span className="text-text-muted">{ng.name}:</span>
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-emerald-600 dark:text-emerald-400">{ng.specId} (x{ng.nodeGroupSize})</span>
-                                {(() => {
-                                  const matrixGpu = getGpuInfo(getSpecInfo(c, ng.specId), ng.specId, ng);
-                                  return matrixGpu ? (
-                                    <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-1.5 py-0.5 rounded font-mono" title={`Target Cloud GPU: ${matrixGpu.label}`}>
-                                      {matrixGpu.label !== 'GPU' ? `GPU: ${matrixGpu.label}` : 'GPU'}
-                                    </span>
-                                  ) : null;
-                                })()}
+                        <td key={idx} className="py-3.5 px-4 align-top text-text-main font-mono text-sm">
+                          <div className="divide-y divide-border-main/15">
+                            {c.targetInfra.nodeGroups.map((ng, i) => (
+                              <div key={i} className="flex items-center justify-between gap-4 py-1.5 min-h-[34px] first:pt-0 last:pb-0 whitespace-nowrap">
+                                <span className="text-text-muted font-normal shrink-0">{ng.name}:</span>
+                                <div className="flex items-center justify-end gap-1.5 shrink-0 text-right">
+                                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{ng.specId} (x{ng.nodeGroupSize})</span>
+                                  {(() => {
+                                    const matrixGpu = getGpuInfo(getSpecInfo(c, ng.specId), ng.specId, ng);
+                                    return matrixGpu ? (
+                                      <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-extrabold px-1.5 py-0.5 rounded font-mono shrink-0" title={`Target Cloud GPU: ${matrixGpu.label}`}>
+                                        {matrixGpu.label !== 'GPU' ? `GPU: ${matrixGpu.label}` : 'GPU'}
+                                      </span>
+                                    ) : null;
+                                  })()}
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </td>
-                      ))}
-                    </tr>
-                    <tr>
-                      <td className="py-3.5 px-4 font-bold text-text-muted bg-bg-input/10">Estimated Cost</td>
-                      {recommendationCandidates.map((c, idx) => (
-                        <td key={idx} className="py-3.5 px-4 text-emerald-600 dark:text-emerald-400 font-extrabold font-mono">
-                          <div className="flex items-center space-x-1">
-                            <DollarSign className="w-3.5 h-3.5" />
-                            <span>{getEstimatedMonthlyCost(c)}</span>
-                            <span className="text-sm text-text-muted">/ month</span>
+                            ))}
                           </div>
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="py-3.5 px-4 font-bold text-text-muted bg-bg-input/10">Description Summary</td>
+                      <td className="py-3.5 px-4 align-top font-normal text-text-muted bg-bg-input/10 whitespace-nowrap">Estimated Cost</td>
                       {recommendationCandidates.map((c, idx) => (
-                        <td key={idx} className="py-3.5 px-4 text-text-muted text-sm leading-relaxed max-w-[200px]">
+                        <td key={idx} className="py-3.5 px-4 align-top text-emerald-600 dark:text-emerald-400 font-extrabold font-mono whitespace-nowrap">
+                          <div className="flex items-center space-x-1">
+                            <DollarSign className="w-3.5 h-3.5" />
+                            <span>{getEstimatedMonthlyCost(c)}</span>
+                            <span className="text-sm font-normal text-text-muted">/ month</span>
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="py-3.5 px-4 align-top font-normal text-text-muted bg-bg-input/10 whitespace-nowrap">Description Summary</td>
+                      {recommendationCandidates.map((c, idx) => (
+                        <td key={idx} className="py-3.5 px-4 align-top text-text-main font-extrabold text-sm leading-relaxed">
                           {c.description}
                         </td>
                       ))}

@@ -240,6 +240,7 @@ interface MigrationState {
   saveCloudModel: (name: string, description: string, version: string, cloudInfra: RecommendedInfra) => Promise<CloudModelEnvelope>;
   updateCloudModel: (id: string, name: string, description: string, version: string, cloudInfra: RecommendedInfra) => Promise<CloudModelEnvelope>;
   deleteCloudModel: (id: string) => Promise<void>;
+  clearCustomCloudModels: () => Promise<number>;
   fetchTumblebugProviders: () => Promise<void>;
   fetchTumblebugRegions: (providerName: string) => Promise<void>;
 
@@ -309,7 +310,7 @@ export interface MigrationJob {
   nodeGroupsCount: number;
   totalVms: number;
   logs: string[];
-  vms?: { publicIp: string; privateIp: string; specId: string; name: string }[];
+  vms?: { publicIp: string; privateIp: string; specId: string; name: string; status?: string; systemMessage?: string }[];
   error?: string;
   isSample?: boolean;
   targetNlbList?: any[];
@@ -540,17 +541,45 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     const builtInSamples = [SAMPLE_9_NODE_TESTBED_MODEL, SAMPLE_15_NODE_MODEL, DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL];
     const builtInIds = new Set(builtInSamples.map(s => s.id));
     let allModels: OnpremModelEnvelope[] = [];
+    let userModels: OnpremModelEnvelope[] = [];
     try {
       const models = await artifactApi.getSourceModels();
-      const withoutSamples = models.filter((m: OnpremModelEnvelope) => !builtInIds.has(m.id));
-      allModels = [...builtInSamples, ...withoutSamples];
+      userModels = models.filter((m: OnpremModelEnvelope) => !builtInIds.has(m.id));
+      allModels = [...builtInSamples, ...userModels];
     } catch {
       // Artifact repository unreachable: show sample models only
       allModels = builtInSamples;
     }
     const curSelected = get().selectedSourceModel;
-    const updatedSelected = curSelected ? (allModels.find(m => m.id === curSelected.id) || curSelected) : DEFAULT_FALLBACK_SOURCE_MODEL;
-    set({ savedSourceModels: allModels, selectedSourceModel: updatedSelected });
+    const cloudLineage = get().selectedCloudModel?.lineage;
+    const lineageMatch = cloudLineage
+      ? allModels.find(m => m.id === cloudLineage.planningModelId || m.id === cloudLineage.sourceModelId)
+      : undefined;
+
+    let updatedSelected = curSelected ? (allModels.find(m => m.id === curSelected.id) || curSelected) : DEFAULT_FALLBACK_SOURCE_MODEL;
+    if (lineageMatch) {
+      updatedSelected = lineageMatch;
+    } else if (updatedSelected.id === DEFAULT_FALLBACK_SOURCE_MODEL.id && userModels.length > 0) {
+      updatedSelected = userModels[userModels.length - 1];
+    }
+
+    const curRefined = get().refinedSourceInfra;
+    const shouldSyncRefined =
+      !curRefined ||
+      curRefined === DEMO_SOURCE_INFRA ||
+      (updatedSelected?.onpremiseInfraModel?.nodes &&
+        curRefined.nodes &&
+        curRefined.nodes.length === DEMO_SOURCE_INFRA.nodes.length &&
+        curRefined.nodes[0]?.hostname === 'ip-10-0-1-30' &&
+        updatedSelected.onpremiseInfraModel.nodes.length !== curRefined.nodes.length);
+
+    set({
+      savedSourceModels: allModels,
+      selectedSourceModel: updatedSelected,
+      ...(shouldSyncRefined && updatedSelected?.onpremiseInfraModel
+        ? { refinedSourceInfra: updatedSelected.onpremiseInfraModel }
+        : {})
+    });
   },
 
   selectSourceModel: (model) => {
@@ -567,44 +596,17 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     const sourceGroupId = options?.sourceGroupId || parentModel?.lineage?.sourceGroupId || activeSgId || undefined;
     const parentId = options?.parentId || (stage === 'planning' ? (parentModel?.lineage?.sourceModelId || parentModel?.id) : undefined);
 
-    try {
-      const saved = await artifactApi.saveSourceModel(name, description, infra, version, {
-        stage,
-        parentId,
-        sourceGroupId
-      });
-      set({
-        savedSourceModels: [...get().savedSourceModels.filter(m => m.id !== saved.id), saved],
-        selectedSourceModel: saved,
-        refinedSourceInfra: infra
-      });
-      return saved;
-    } catch (err) {
-      console.warn('Artifact save error, saving source/planning model to local state:', err);
-      const localId = `art-${stage === 'planning' ? 'plan' : 'src'}-${Date.now()}`;
-      const localSaved: OnpremModelEnvelope = {
-        id: localId,
-        name,
-        description,
-        version: version || '1.0.0',
-        stage,
-        category: 'infra',
-        schemaType: 'OnpremInfra',
-        lineage: {
-          sourceGroupId,
-          sourceModelId: stage === 'source' ? localId : (parentId || parentModel?.id),
-          planningModelId: stage === 'planning' ? localId : undefined
-        },
-        onpremiseInfraModel: infra,
-        updatedTime: new Date().toISOString()
-      };
-      set({
-        savedSourceModels: [...get().savedSourceModels.filter(m => m.name !== name), localSaved],
-        selectedSourceModel: localSaved,
-        refinedSourceInfra: infra
-      });
-      return localSaved;
-    }
+    const saved = await artifactApi.saveSourceModel(name, description, infra, version, {
+      stage,
+      parentId,
+      sourceGroupId
+    });
+    set({
+      savedSourceModels: [...get().savedSourceModels.filter(m => m.id !== saved.id), saved],
+      selectedSourceModel: saved,
+      refinedSourceInfra: infra
+    });
+    return saved;
   },
 
   updateSourceModel: async (id, name, description, version, updatedInfra, options) => {
@@ -613,45 +615,18 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     const sourceGroupId = options?.sourceGroupId || parentModel?.lineage?.sourceGroupId || get().activeSgId || undefined;
     const parentId = options?.parentId || (stage === 'planning' ? parentModel?.lineage?.sourceModelId : undefined);
 
-    try {
-      const saved = await artifactApi.updateSourceModel(id, name, description, updatedInfra, version, {
-        stage,
-        parentId,
-        sourceGroupId
-      });
-      const updatedList = get().savedSourceModels.map(m => m.id === id ? saved : m);
-      set({
-        savedSourceModels: updatedList,
-        selectedSourceModel: saved,
-        refinedSourceInfra: updatedInfra
-      });
-      return saved;
-    } catch (err) {
-      console.warn('Artifact update error, updating source/planning model in local state:', err);
-      const localSaved: OnpremModelEnvelope = {
-        id,
-        name,
-        description,
-        version: version || '1.0.0',
-        stage,
-        category: 'infra',
-        schemaType: 'OnpremInfra',
-        lineage: {
-          sourceGroupId,
-          sourceModelId: stage === 'source' ? id : (parentId || parentModel?.lineage?.sourceModelId),
-          planningModelId: stage === 'planning' ? id : parentModel?.lineage?.planningModelId
-        },
-        onpremiseInfraModel: updatedInfra,
-        updatedTime: new Date().toISOString()
-      };
-      const updatedList = get().savedSourceModels.map(m => m.id === id ? localSaved : m);
-      set({
-        savedSourceModels: updatedList,
-        selectedSourceModel: localSaved,
-        refinedSourceInfra: updatedInfra
-      });
-      return localSaved;
-    }
+    const saved = await artifactApi.updateSourceModel(id, name, description, updatedInfra, version, {
+      stage,
+      parentId,
+      sourceGroupId
+    });
+    const updatedList = get().savedSourceModels.map(m => m.id === id ? saved : m);
+    set({
+      savedSourceModels: updatedList,
+      selectedSourceModel: saved,
+      refinedSourceInfra: updatedInfra
+    });
+    return saved;
   },
 
   deleteSourceModel: async (id) => {
@@ -774,7 +749,6 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   fetchSavedCloudModels: async () => {
-    // Fallback demo model shown when artifact repository is unreachable, to prevent an empty select box.
     const fallbackCloudModels: CloudModelEnvelope[] = [
       {
         id: 'cloud-demo-1',
@@ -787,16 +761,18 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     ];
     try {
       const models = await artifactApi.getCloudModels();
-      const existingLocal = get().savedCloudModels.filter(
-        m => m.id !== 'cloud-demo-1' && !models.some(remote => remote.id === m.id)
-      );
-      set({ savedCloudModels: [fallbackCloudModels[0], ...models, ...existingLocal] });
+      const nextList = [fallbackCloudModels[0], ...models];
+      const curSelected = get().selectedCloudModel;
+      const validSelected =
+        curSelected && nextList.some(m => m.id === curSelected.id)
+          ? curSelected
+          : null;
+      set({
+        savedCloudModels: nextList,
+        ...(curSelected !== validSelected ? { selectedCloudModel: validSelected } : {})
+      });
     } catch {
-      // Artifact repository unreachable: keep local models
-      const current = get().savedCloudModels;
-      if (current.length === 0) {
-        set({ savedCloudModels: fallbackCloudModels });
-      }
+      set({ savedCloudModels: fallbackCloudModels });
     }
   },
 
@@ -805,106 +781,80 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     if (typeof infra === 'string') {
       try { infra = JSON.parse(infra); } catch (e) {}
     }
+    const lineage = model?.lineage;
+    const linkedSource = lineage
+      ? get().savedSourceModels.find(
+          (m) => m.id === lineage.planningModelId || m.id === lineage.sourceModelId
+        )
+      : undefined;
+
     set({ 
       selectedCloudModel: model,
       editedCandidate: infra,
       recommendationCandidates: infra ? [infra] : [],
-      selectedCandidateIndex: 0
+      selectedCandidateIndex: 0,
+      ...(linkedSource
+        ? {
+            selectedSourceModel: linkedSource,
+            refinedSourceInfra: linkedSource.onpremiseInfraModel
+          }
+        : {})
     });
   },
 
   saveCloudModel: async (name, description, version, cloudInfra) => {
     const parentModel = get().selectedSourceModel;
     const sourceGroupId = parentModel?.lineage?.sourceGroupId || get().activeSgId || undefined;
-    try {
-      const saved = await artifactApi.saveCloudModel(name, description, cloudInfra, version, {
-        parentId: parentModel?.id,
-        sourceGroupId
-      });
-      set({
-        savedCloudModels: [...get().savedCloudModels.filter(m => m.id !== saved.id), saved],
-        selectedCloudModel: saved
-      });
-      return saved;
-    } catch (err) {
-      console.warn('Artifact save error, saving to local state:', err);
-      const localId = `cloud-model-${Date.now()}`;
-      const localSaved: CloudModelEnvelope = {
-        id: localId,
-        name,
-        description,
-        cloudInfraModel: cloudInfra,
-        version: version || '1.0.0',
-        stage: 'target',
-        category: 'infra',
-        schemaType: 'RecommendedInfra',
-        lineage: {
-          sourceGroupId,
-          sourceModelId: parentModel?.lineage?.sourceModelId || (parentModel?.stage !== 'planning' ? parentModel?.id : undefined),
-          planningModelId: parentModel?.lineage?.planningModelId || (parentModel?.stage === 'planning' ? parentModel?.id : undefined),
-          targetModelId: localId
-        },
-        updatedTime: new Date().toISOString()
-      };
-      set({
-        savedCloudModels: [...get().savedCloudModels.filter(m => m.name !== name), localSaved],
-        selectedCloudModel: localSaved
-      });
-      return localSaved;
-    }
+    const saved = await artifactApi.saveCloudModel(name, description, cloudInfra, version, {
+      parentId: parentModel?.id,
+      sourceGroupId
+    });
+    set({
+      savedCloudModels: [...get().savedCloudModels.filter(m => m.id !== saved.id), saved],
+      selectedCloudModel: saved
+    });
+    return saved;
   },
 
   updateCloudModel: async (id, name, description, version, cloudInfra) => {
     const parentModel = get().selectedSourceModel;
     const existingCloud = get().selectedCloudModel;
     const sourceGroupId = parentModel?.lineage?.sourceGroupId || existingCloud?.lineage?.sourceGroupId || get().activeSgId || undefined;
-    try {
-      const saved = await artifactApi.updateCloudModel(id, name, description, cloudInfra, version, {
-        parentId: parentModel?.id,
-        sourceGroupId
-      });
-      const updatedList = get().savedCloudModels.map(m => m.id === id ? saved : m);
-      set({ savedCloudModels: updatedList, selectedCloudModel: saved });
-      return saved;
-    } catch (err) {
-      console.warn('Artifact update error, updating in local state:', err);
-      const localSaved: CloudModelEnvelope = {
-        id,
-        name,
-        description,
-        cloudInfraModel: cloudInfra,
-        version: version || '1.0.0',
-        stage: 'target',
-        category: 'infra',
-        schemaType: 'RecommendedInfra',
-        lineage: {
-          sourceGroupId,
-          sourceModelId: parentModel?.lineage?.sourceModelId || existingCloud?.lineage?.sourceModelId || (parentModel?.stage !== 'planning' ? parentModel?.id : undefined),
-          planningModelId: parentModel?.lineage?.planningModelId || existingCloud?.lineage?.planningModelId || (parentModel?.stage === 'planning' ? parentModel?.id : undefined),
-          targetModelId: id
-        },
-        updatedTime: new Date().toISOString()
-      };
-      const updatedList = get().savedCloudModels.map(m => m.id === id ? localSaved : m);
-      set({ savedCloudModels: updatedList, selectedCloudModel: localSaved });
-      return localSaved;
-    }
+    const saved = await artifactApi.updateCloudModel(id, name, description, cloudInfra, version, {
+      parentId: parentModel?.id,
+      sourceGroupId
+    });
+    const updatedList = get().savedCloudModels.map(m => m.id === id ? saved : m);
+    set({ savedCloudModels: updatedList, selectedCloudModel: saved });
+    return saved;
   },
 
   deleteCloudModel: async (id) => {
-    try {
-      await artifactApi.deleteCloudModel(id);
-      const updated = get().savedCloudModels.filter(m => m.id !== id);
-      set({
-        savedCloudModels: updated,
-        selectedCloudModel: get().selectedCloudModel?.id === id ? null : get().selectedCloudModel,
-        editedCandidate: get().selectedCloudModel?.id === id ? null : get().editedCandidate,
-        recommendationCandidates: get().selectedCloudModel?.id === id ? [] : get().recommendationCandidates
-      });
-    } catch (err) {
-      console.error(err);
-      throw err;
+    await artifactApi.deleteCloudModel(id);
+    const updated = get().savedCloudModels.filter(m => m.id !== id);
+    set({
+      savedCloudModels: updated,
+      selectedCloudModel: get().selectedCloudModel?.id === id ? null : get().selectedCloudModel,
+      editedCandidate: get().selectedCloudModel?.id === id ? null : get().editedCandidate,
+      recommendationCandidates: get().selectedCloudModel?.id === id ? [] : get().recommendationCandidates
+    });
+  },
+
+  clearCustomCloudModels: async () => {
+    const current = get().savedCloudModels;
+    const customModels = current.filter(m => m.id !== 'cloud-demo-1');
+    for (const model of customModels) {
+      await artifactApi.deleteCloudModel(model.id);
     }
+    const remaining = current.filter(m => m.id === 'cloud-demo-1');
+    const isSelectedRemoved = get().selectedCloudModel && get().selectedCloudModel?.id !== 'cloud-demo-1';
+    set({
+      savedCloudModels: remaining,
+      selectedCloudModel: isSelectedRemoved ? null : get().selectedCloudModel,
+      editedCandidate: isSelectedRemoved ? null : get().editedCandidate,
+      recommendationCandidates: isSelectedRemoved ? [] : get().recommendationCandidates
+    });
+    return customModels.length;
   },
 
   fetchTumblebugProviders: async () => {
@@ -1172,69 +1122,37 @@ export const useMigrationStore = create<MigrationState>()(
       activeObjectStorageJobId: state.activeObjectStorageJobId,
       dataJobs: state.dataJobs,
       activeDataJobId: state.activeDataJobId,
-      savedCloudModels: state.savedCloudModels,
-      selectedCloudModel: state.selectedCloudModel,
-      savedSourceModels: state.savedSourceModels,
-      selectedSourceModel: state.selectedSourceModel,
       namespaceId: state.namespaceId,
       nameSeed: state.nameSeed,
       themeMode: state.themeMode,
       deletingInfrasMap: state.deletingInfrasMap,
       deletingStoragesMap: state.deletingStoragesMap
     }),
+    merge: (persistedState: any, currentState) => {
+      if (!persistedState || typeof persistedState !== 'object') {
+        return currentState;
+      }
+      // Explicitly exclude legacy persisted artifact model fields so /beetle/artifacts is the single source of truth
+      const {
+        savedCloudModels: _sc,
+        selectedCloudModel: _selc,
+        savedSourceModels: _ss,
+        selectedSourceModel: _sels,
+        ...restPersisted
+      } = persistedState;
+      return {
+        ...currentState,
+        ...restPersisted
+      };
+    },
     onRehydrateStorage: () => (state) => {
       if (state) {
-        const cleanGpuIfNonGpu = (m: OnpremModelEnvelope | null) => {
-          if (!m) return;
-          const isGpu =
-            m.id === 'sample-source-9node-testbed-1' ||
-            m.id === 'sample-source-15node-dc-1' ||
-            m.id?.toLowerCase().includes('gpu') ||
-            m.name?.toLowerCase().includes('gpu') ||
-            m.name?.toLowerCase().includes('ai') ||
-            m.onpremiseInfraModel?.nodes?.some(n => n.clusterGroup === 'ai-inference' || (n.gpuCards && n.gpuCards.length > 0 && m.id !== 'sample-source-infra-1'));
-          if (!isGpu && m.onpremiseInfraModel?.nodes) {
-            m.onpremiseInfraModel.nodes.forEach(n => {
-              delete (n as any).gpuCards;
-            });
-          }
-        };
-
-        if (state.selectedSourceModel?.id === 'sample-source-infra-1') {
-          state.selectedSourceModel = DEFAULT_FALLBACK_SOURCE_MODEL;
-          state.refinedSourceInfra = DEMO_SOURCE_INFRA;
-        } else if (state.selectedSourceModel?.id === 'sample-source-9node-testbed-1') {
-          state.selectedSourceModel = SAMPLE_9_NODE_TESTBED_MODEL;
-          state.refinedSourceInfra = SAMPLE_9_NODE_TESTBED_MODEL.onpremiseInfraModel;
-        } else if (state.selectedSourceModel?.id === 'sample-source-15node-dc-1') {
-          state.selectedSourceModel = SAMPLE_15_NODE_MODEL;
-          state.refinedSourceInfra = SAMPLE_15_NODE_MODEL.onpremiseInfraModel;
-        } else if (state.selectedSourceModel) {
-          cleanGpuIfNonGpu(state.selectedSourceModel);
-        }
-
         // Clean up any stale sample migration jobs from persisted state
         if (Array.isArray(state.jobs)) {
           state.jobs = state.jobs.filter(j => !j.isSample);
           if (!state.jobs.some(j => j.id === state.activeJobId)) {
             state.activeJobId = state.jobs[0]?.id || '';
           }
-        }
-
-        if (Array.isArray(state.savedSourceModels)) {
-          const mappedModels = state.savedSourceModels.map(m => {
-            if (m.id === 'sample-source-infra-1') return DEFAULT_FALLBACK_SOURCE_MODEL;
-            if (m.id === 'sample-source-9node-testbed-1') return SAMPLE_9_NODE_TESTBED_MODEL;
-            if (m.id === 'sample-source-15node-dc-1') return SAMPLE_15_NODE_MODEL;
-            cleanGpuIfNonGpu(m);
-            return m;
-          });
-          const has9NodeSample = mappedModels.some(m => m.id === 'sample-source-9node-testbed-1');
-          const has15NodeSample = mappedModels.some(m => m.id === 'sample-source-15node-dc-1');
-          const prefix: OnpremModelEnvelope[] = [];
-          if (!has9NodeSample) prefix.push(SAMPLE_9_NODE_TESTBED_MODEL);
-          if (!has15NodeSample) prefix.push(SAMPLE_15_NODE_MODEL);
-          state.savedSourceModels = [...prefix, ...mappedModels];
         }
       }
     }

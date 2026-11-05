@@ -192,6 +192,9 @@ export const DataTransferCenter: React.FC = () => {
 
   // Target SSH Fields & Mode (Tumblebug Infra vs Direct SSH)
   const [targetSshMode, setTargetSshMode] = useState<'tumblebug' | 'direct'>('tumblebug');
+  const [targetKeySourceMode, setTargetKeySourceMode] = useState<'tumblebug' | 'upload'>('tumblebug');
+  const [isLoadingTbSshKey, setIsLoadingTbSshKey] = useState(false);
+  const [activeTbSshKeyId, setActiveTbSshKeyId] = useState('');
   const [tbInfraList, setTbInfraList] = useState<any[]>([]);
   const [selectedTbInfraId, setSelectedTbInfraId] = useState('');
   const [tbNodeList, setTbNodeList] = useState<any[]>([]);
@@ -199,7 +202,7 @@ export const DataTransferCenter: React.FC = () => {
   const [isLoadingTbInfra, setIsLoadingTbInfra] = useState(false);
   const [targetSshHost, setTargetSshHost] = useState('');
   const [targetSshPort, setTargetSshPort] = useState('22');
-  const [targetSshUser, setTargetSshUser] = useState('ubuntu');
+  const [targetSshUser, setTargetSshUser] = useState('cb-user');
   const [targetSshPrivateKey, setTargetSshPrivateKey] = useState('');
   const [targetSshKeyLabel, setTargetSshKeyLabel] = useState('');
   const [isDraggingTargetPem, setIsDraggingTargetPem] = useState(false);
@@ -305,15 +308,21 @@ export const DataTransferCenter: React.FC = () => {
     );
   };
 
-  // Find AI GPU node in Tumblebug migrated infra nodes (e.g., GPU node among 9 migrated target nodes)
+  // Find AI GPU node in Tumblebug migrated infra nodes (prefers Running nodes with a valid IP)
   const findAiTargetNode = (nodes: any[]) => {
     if (!Array.isArray(nodes) || nodes.length === 0) return null;
+    const isReachableNode = (n: any) =>
+      String(n.status || '').toLowerCase() !== 'failed' &&
+      Boolean(n.publicIP || n.publicIp || n.privateIP || n.privateIp);
+    const gpuRegex = /(ai-gpu-01|ai-gpu|nvidiat4|nvidial4|gpu|g4dn|g5|p3|p4|t4|l4|a10|a100|nc\d)/i;
+    const matchText = (n: any) =>
+      `${n.name || ''} ${n.id || ''} ${n.subGroupId || ''} ${n.specId || ''} ${n.cspResourceName || ''}`;
+
     return (
-      nodes.find((n: any) =>
-        /(ai-gpu-01|ai-gpu|nvidiat4|nvidial4|gpu|g4dn|g5|p3|p4|t4|l4|a10|a100|nc\d)/i.test(
-          `${n.name || ''} ${n.id || ''} ${n.subGroupId || ''} ${n.specId || ''} ${n.cspResourceName || ''}`
-        )
-      ) || nodes[0]
+      nodes.find((n: any) => isReachableNode(n) && gpuRegex.test(matchText(n))) ||
+      nodes.find((n: any) => isReachableNode(n)) ||
+      nodes.find((n: any) => gpuRegex.test(matchText(n))) ||
+      nodes[0]
     );
   };
 
@@ -321,12 +330,8 @@ export const DataTransferCenter: React.FC = () => {
   const handleApplyAimxPreset = async () => {
     setSourceAccessType('remote-ssh');
     setTargetAccessType('remote-ssh');
-    if (!sourceSshPath.trim()) {
-      setSourceSshPath('/opt/aimx/ai-service');
-    }
-    if (!targetSshPath.trim()) {
-      setTargetSshPath('/opt/aimx/ai-service');
-    }
+    setSourceSshPath('/opt/aimx/ai-service');
+    setTargetSshPath('/opt/aimx/ai-service');
     if (hbConnections.length > 0) {
       const aiConn = findAiSourceConn(hbConnections);
       if (aiConn) applyHbConnection(aiConn);
@@ -340,11 +345,13 @@ export const DataTransferCenter: React.FC = () => {
         handleFetchHoneybeeGroups(true);
       }
     }
-    if (tbNodeList.length > 0) {
-      const aiTarget = findAiTargetNode(tbNodeList);
-      if (aiTarget) await applyTbNode(dataNsId, aiTarget);
-    } else if (targetSshMode === 'tumblebug') {
-      handleFetchTargetInfras(dataNsId, true);
+    if (!selectedTbNodeId || !targetSshHost.trim()) {
+      if (tbNodeList.length > 0) {
+        const aiTarget = findAiTargetNode(tbNodeList);
+        if (aiTarget) await applyTbNode(dataNsId, aiTarget);
+      } else if (targetSshMode === 'tumblebug') {
+        handleFetchTargetInfras(dataNsId, true);
+      }
     }
     setIncludeFilter('ollama/models/blobs/**, ollama/models/manifests/**, open-webui/webui.db, docker-compose.yml');
     setExcludeFilter('open-webui/cache/**, *.log, *.tmp, __pycache__/**');
@@ -352,6 +359,54 @@ export const DataTransferCenter: React.FC = () => {
     setDestinationPostCmd('cd /opt/aimx/ai-service && sudo docker compose up -d && sleep 5 && sudo docker exec aimx-ollama ollama run gemma4:e2b "Hello" >/dev/null 2>&1 || true');
     setShowDirectoryTree(true);
     setShowCommandsSection(true);
+  };
+
+  // Reset Source/Destination endpoints, paths, filters, and commands to clean defaults
+  const handleResetModalPreset = () => {
+    // Source Endpoint reset
+    setSelectedHbConnId('');
+    setSourceSshHost('');
+    setSourceSshPort('22');
+    setSourceSshUser('ubuntu');
+    setSourceSshPrivateKey('');
+    setSourceSshKeyLabel('');
+    setSourceSshPath('');
+    setDataAccessKeyId('');
+    setDataSecretAccessKey('');
+    setDataTenantId('');
+    setDataSubscriptionId('');
+    setSourceScopeMode('all');
+    setSourceSubPath('');
+
+    // Destination Endpoint reset
+    setSelectedTbNodeId('');
+    setTargetSshHost('');
+    setTargetSshPort('22');
+    setTargetSshUser(targetSshMode === 'tumblebug' ? 'cb-user' : 'ubuntu');
+    setTargetSshPrivateKey('');
+    setTargetSshKeyLabel('');
+    setActiveTbSshKeyId('');
+    setTargetKeySourceMode('tumblebug');
+    setTargetSshPath('');
+    setTargetAccessKeyId('');
+    setTargetSecretAccessKey('');
+    setTargetTenantId('');
+    setTargetSubscriptionId('');
+    setTargetSubPath('');
+
+    // Filters, Commands & Strategy reset
+    setIncludeFilter('');
+    setExcludeFilter('');
+    setSourcePreCmd('');
+    setDestinationPostCmd('');
+    setShowDirectoryTree(false);
+    setShowCommandsSection(false);
+    setDataStrategy('auto');
+    setRsyncArchive(true);
+    setRsyncCompress(true);
+    setRsyncPartial(true);
+    setRsyncMaxRetries(3);
+    setModalError(null);
   };
 
   // Apply MySQL / MariaDB Dump & Restore command preset
@@ -443,21 +498,36 @@ export const DataTransferCenter: React.FC = () => {
     }
   };
 
-  // Apply selected Tumblebug Target Node to Destination SSH fields (including SSH Private Key lookup)
-  const applyTbNode = async (nsId: string, node: any) => {
-    if (!node) return;
-    const nodeId = node.id || node.name || '';
-    setSelectedTbNodeId(nodeId);
-    setTargetSshHost(node.publicIP || node.publicIp || node.privateIP || node.privateIp || '');
-    setTargetSshPort(String(node.sshPort || '22'));
-    setTargetSshUser(node.vmUserName || node.nodeUserName || node.userName || 'ubuntu');
-    const sshKeyId = node.sshKeyId || node.cspSshKeyId || '';
-    if (sshKeyId) {
+  // Fetch Tumblebug-managed SSH Private Key by sshKeyId
+  const fetchTbManagedSshKey = async (nsId: string, sshKeyId: string) => {
+    if (!sshKeyId) return;
+    setIsLoadingTbSshKey(true);
+    try {
       const sshKeyObj = await tumblebugApi.getSshKey(nsId || 'mig01', sshKeyId);
       if (sshKeyObj?.privateKey) {
         setTargetSshPrivateKey(normalizePemKey(sshKeyObj.privateKey));
         setTargetSshKeyLabel(`Tumblebug (${sshKeyId})`);
       }
+      if (sshKeyObj?.verifiedUsername || sshKeyObj?.username) {
+        setTargetSshUser(sshKeyObj.verifiedUsername || sshKeyObj.username);
+      }
+    } finally {
+      setIsLoadingTbSshKey(false);
+    }
+  };
+
+  // Apply selected Tumblebug Target Node to Destination SSH fields (including SSH Private Key lookup)
+  const applyTbNode = async (nsId: string, node: any, forceKeyFetch = false) => {
+    if (!node) return;
+    const nodeId = node.id || node.name || '';
+    setSelectedTbNodeId(nodeId);
+    setTargetSshHost(node.publicIP || node.publicIp || node.privateIP || node.privateIp || '');
+    setTargetSshPort(String(node.sshPort || '22'));
+    setTargetSshUser(node.vmUserName || node.nodeUserName || node.userName || 'cb-user');
+    const sshKeyId = node.sshKeyId || node.cspSshKeyId || '';
+    setActiveTbSshKeyId(sshKeyId);
+    if (sshKeyId && (targetKeySourceMode === 'tumblebug' || forceKeyFetch)) {
+      await fetchTbManagedSshKey(nsId || 'mig01', sshKeyId);
     }
   };
 
@@ -471,14 +541,22 @@ export const DataTransferCenter: React.FC = () => {
     }
     setIsLoadingTbInfra(true);
     try {
-      const detail = (await tumblebugApi.getInfra(nsId || 'mig01', infraId)) ||
-        (await beetleApi.getMigratedInfraDetail(nsId || 'mig01', infraId));
       const fallbackObj = (infraListFallback || tbInfraList).find((item: any) => (item.id || item.name) === infraId);
-      const nodes = detail?.vm || detail?.nodes || fallbackObj?.vm || fallbackObj?.nodes || [];
+      const fallbackNodes = fallbackObj?.node || fallbackObj?.vm || fallbackObj?.nodes || [];
+      let nodes: any[] = Array.isArray(fallbackNodes) && fallbackNodes.length > 0 ? fallbackNodes : [];
+
+      if (nodes.length === 0) {
+        const detail = (await beetleApi.getMigratedInfraDetail(nsId || 'mig01', infraId)) ||
+          (await tumblebugApi.getInfra(nsId || 'mig01', infraId));
+        nodes = detail?.node || detail?.vm || detail?.nodes || [];
+      }
+
       setTbNodeList(nodes);
       if (nodes.length > 0) {
-        const targetNode = preferAiNode ? findAiTargetNode(nodes) : nodes[0];
-        await applyTbNode(nsId || 'mig01', targetNode || nodes[0]);
+        const firstActiveNode =
+          nodes.find((n: any) => Boolean(n.publicIP || n.publicIp || n.privateIP || n.privateIp)) || nodes[0];
+        const targetNode = preferAiNode ? findAiTargetNode(nodes) : firstActiveNode;
+        await applyTbNode(nsId || 'mig01', targetNode || firstActiveNode);
       } else {
         setSelectedTbNodeId('');
       }
@@ -494,12 +572,19 @@ export const DataTransferCenter: React.FC = () => {
   const handleFetchTargetInfras = async (nsIdToFetch: string, preferAiNode = false) => {
     setIsLoadingTbInfra(true);
     try {
-      const infras = await beetleApi.getMigratedInfraList(nsIdToFetch || 'mig01');
-      const list = Array.isArray(infras) ? infras : [];
+      const targetNs = nsIdToFetch || 'mig01';
+      const infras = await beetleApi.getMigratedInfraList(targetNs);
+      let list = Array.isArray(infras) ? infras : [];
+      if (list.length === 0) {
+        const idList = await beetleApi.getMigratedInfraIdList(targetNs);
+        if (Array.isArray(idList) && idList.length > 0) {
+          list = idList.map((id: string) => ({ id, name: id }));
+        }
+      }
       setTbInfraList(list);
       if (list.length > 0) {
         const firstId = list[0].id || list[0].name || '';
-        await handleSelectTbInfra(nsIdToFetch || 'mig01', firstId, list, preferAiNode);
+        await handleSelectTbInfra(targetNs, firstId, list, preferAiNode);
       } else {
         setSelectedTbInfraId('');
         setTbNodeList([]);
@@ -512,6 +597,20 @@ export const DataTransferCenter: React.FC = () => {
       setIsLoadingTbInfra(false);
     }
   };
+
+  // Auto-populate Target Nodes if Migrated Infra is selected but tbNodeList is empty (e.g. after HMR or mode switch)
+  useEffect(() => {
+    if (
+      showLaunchModal &&
+      targetAccessType === 'remote-ssh' &&
+      targetSshMode === 'tumblebug' &&
+      selectedTbInfraId &&
+      tbNodeList.length === 0 &&
+      !isLoadingTbInfra
+    ) {
+      handleSelectTbInfra(dataNsId, selectedTbInfraId, tbInfraList);
+    }
+  }, [showLaunchModal, targetAccessType, targetSshMode, selectedTbInfraId, tbNodeList.length]);
 
   // Normalize PEM private key (supports both multiline .pem and _oneline.pem with escaped \n)
   const normalizePemKey = (raw: string): string => {
@@ -842,7 +941,7 @@ export const DataTransferCenter: React.FC = () => {
               ssh: {
                 host: targetSshHost.trim(),
                 port: parseInt(targetSshPort, 10) || 22,
-                username: targetSshUser.trim() || 'ubuntu',
+                username: targetSshUser.trim() || (targetSshMode === 'tumblebug' ? 'cb-user' : 'ubuntu'),
                 privateKey: targetSshPrivateKey,
                 archive: rsyncArchive,
                 compress: rsyncCompress,
@@ -933,70 +1032,20 @@ export const DataTransferCenter: React.FC = () => {
   const runningJobsCount = dataJobs.filter(j => j.status === 'Handling').length;
   const completedJobsCount = dataJobs.filter(j => j.status === 'Success').length;
 
-  // Live Duration Timer & Status Polling Effect for Data Migration Jobs Queue
+  // Live Duration Timer (1s local UI clock; API status polling is handled every 15s in useGlobalJobPolling)
   useEffect(() => {
-    const runningJobs = dataJobs.filter((j) => j.status === 'Handling');
-    if (runningJobs.length === 0) return;
+    const hasRunning = dataJobs.some((j) => j.status === 'Handling');
+    if (!hasRunning) return;
 
-    const intervalId = setInterval(async () => {
-      // 1. Calculate real wall-clock elapsedSeconds for all running jobs
+    const intervalId = setInterval(() => {
       setDataJobs((prevJobs) =>
         prevJobs.map((job) => {
           if (job.status === 'Handling') {
-            const realElapsed = calculateJobElapsedSeconds(job);
-            return { ...job, elapsedSeconds: realElapsed };
+            return { ...job, elapsedSeconds: calculateJobElapsedSeconds(job) };
           }
           return job;
         })
       );
-
-      // 2. Poll Beetle REST API GET /beetle/request/{reqId} to check if job finished
-      for (const job of runningJobs) {
-        if (!job.reqId || job.isSample) continue;
-        try {
-          const reqDetails = await beetleApi.getRequestDetails(job.reqId);
-          const status = reqDetails?.status;
-          if (status === 'Completed' || status === 'Succeeded' || status === 'Success') {
-            setDataJobs((prevJobs) =>
-              prevJobs.map((j) => {
-                if (j.id === job.id) {
-                  const dur = calculateJobElapsedSeconds(j);
-                  return {
-                    ...j,
-                    status: 'Success',
-                    elapsedSeconds: dur,
-                    logs: [
-                      ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
-                      `GET /beetle/request/${job.reqId} -> Status: Success (Duration: ${dur}s)`
-                    ]
-                  };
-                }
-                return j;
-              })
-            );
-          } else if (status === 'Failed' || status === 'Error') {
-            setDataJobs((prevJobs) =>
-              prevJobs.map((j) => {
-                if (j.id === job.id) {
-                  const dur = calculateJobElapsedSeconds(j);
-                  return {
-                    ...j,
-                    status: 'Failed',
-                    elapsedSeconds: dur,
-                    logs: [
-                      ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
-                      `GET /beetle/request/${job.reqId} -> Status: Failed (${reqDetails?.errorResponse || 'Execution Error'}) (Duration: ${dur}s)`
-                    ]
-                  };
-                }
-                return j;
-              })
-            );
-          }
-        } catch (err) {
-          console.warn('Poll error for data job request', job.reqId, err);
-        }
-      }
     }, 1000);
 
     return () => clearInterval(intervalId);
@@ -1251,17 +1300,39 @@ export const DataTransferCenter: React.FC = () => {
           <div className="bg-bg-panel border border-border-main rounded-2xl w-[96vw] max-w-[1700px] p-6 sm:p-8 space-y-6 shadow-2xl overflow-hidden">
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-border-main/40 pb-4">
-              <div className="flex items-center space-x-3">
-                <Database className="w-6 h-6 text-emerald-500" />
-                <Shield className="w-5 h-5 text-teal-400" />
-                <h3 className="text-xl font-extrabold text-text-main">
-                  Launch New Data Migration (Field Encrypted)
-                </h3>
+            <div className="flex items-center justify-between border-b border-border-main/40 pb-4 gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center space-x-3">
+                  <Database className="w-6 h-6 text-emerald-500" />
+                  <Shield className="w-5 h-5 text-teal-400" />
+                  <h3 className="text-xl font-extrabold text-text-main">
+                    Launch New Data Migration (Field Encrypted)
+                  </h3>
+                </div>
+                <div className="flex items-center gap-1.5 ml-1">
+                  <button
+                    type="button"
+                    onClick={handleApplyAimxPreset}
+                    title="Apply ai-stack-testbed demo preset (Ollama + OpenWebUI)"
+                    className="px-2.5 py-1 rounded-lg bg-bg-input/70 hover:bg-bg-main border border-border-main text-text-muted hover:text-emerald-500 transition cursor-pointer text-xs font-semibold flex items-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-500/80" />
+                    <span>Preset: AIMX</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResetModalPreset}
+                    title="Reset preset paths, filters, and commands"
+                    className="px-2.5 py-1 rounded-lg bg-bg-input/70 hover:bg-bg-main border border-border-main text-text-muted hover:text-text-main transition cursor-pointer text-xs font-semibold flex items-center gap-1"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Reset</span>
+                  </button>
+                </div>
               </div>
               <button
                 onClick={() => setShowLaunchModal(false)}
-                className="w-9 h-9 rounded-xl bg-bg-input hover:bg-bg-main border border-border-main flex items-center justify-center text-text-muted hover:text-text-main transition cursor-pointer font-bold text-base"
+                className="w-9 h-9 rounded-xl bg-bg-input hover:bg-bg-main border border-border-main flex items-center justify-center text-text-muted hover:text-text-main transition cursor-pointer font-bold text-base shrink-0"
               >
                 ✕
               </button>
@@ -1436,21 +1507,29 @@ export const DataTransferCenter: React.FC = () => {
                                     value={selectedHbConnId}
                                     onChange={(e) => {
                                       const val = e.target.value;
+                                      if (!val) {
+                                        setSelectedHbConnId('');
+                                        setSourceSshHost('');
+                                        return;
+                                      }
                                       const conn = hbConnections.find((c: any) => (c.id || c.name) === val);
                                       if (conn) applyHbConnection(conn);
                                     }}
                                     className="w-full px-3 py-1.5 bg-bg-panel border border-border-main rounded-lg text-text-main font-bold font-mono text-sm focus:outline-none focus:border-emerald-500 cursor-pointer"
                                   >
                                     {hbConnections.length > 0 ? (
-                                      hbConnections.map((c: any) => {
-                                        const cid = c.id || c.name;
-                                        const ip = c.ip_address || c.ip || '';
-                                        return (
-                                          <option key={cid} value={cid}>
-                                            {c.name || cid} ({ip})
-                                          </option>
-                                        );
-                                      })
+                                      <>
+                                        <option value="">-- Select Source Node --</option>
+                                        {hbConnections.map((c: any) => {
+                                          const cid = c.id || c.name;
+                                          const ip = c.ip_address || c.ip || '';
+                                          return (
+                                            <option key={cid} value={cid}>
+                                              {c.name || cid} ({ip})
+                                            </option>
+                                          );
+                                        })}
+                                      </>
                                     ) : (
                                       <option value="">Select source group first</option>
                                     )}
@@ -1657,8 +1736,12 @@ export const DataTransferCenter: React.FC = () => {
                           type="button"
                           onClick={() => {
                             setTargetAccessType('remote-ssh');
-                            if (targetSshMode === 'tumblebug' && tbInfraList.length === 0) {
-                              handleFetchTargetInfras(dataNsId, false);
+                            if (targetSshMode === 'tumblebug') {
+                              if (tbInfraList.length === 0) {
+                                handleFetchTargetInfras(dataNsId, false);
+                              } else if (selectedTbInfraId && tbNodeList.length === 0) {
+                                handleSelectTbInfra(dataNsId, selectedTbInfraId, tbInfraList);
+                              }
                             }
                           }}
                           className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer flex items-center gap-1.5 ${
@@ -1711,7 +1794,17 @@ export const DataTransferCenter: React.FC = () => {
                               type="button"
                               onClick={() => {
                                 setTargetSshMode('tumblebug');
-                                if (tbInfraList.length === 0) handleFetchTargetInfras(dataNsId);
+                                setTargetKeySourceMode('tumblebug');
+                                if (!targetSshUser || targetSshUser === 'ubuntu') {
+                                  setTargetSshUser('cb-user');
+                                }
+                                if (tbInfraList.length === 0) {
+                                  handleFetchTargetInfras(dataNsId);
+                                } else if (selectedTbInfraId && tbNodeList.length === 0) {
+                                  handleSelectTbInfra(dataNsId, selectedTbInfraId, tbInfraList);
+                                } else if (activeTbSshKeyId) {
+                                  fetchTbManagedSshKey(dataNsId, activeTbSshKeyId);
+                                }
                               }}
                               className={`px-2 py-0.5 rounded-md font-extrabold transition cursor-pointer ${
                                 targetSshMode === 'tumblebug'
@@ -1723,7 +1816,13 @@ export const DataTransferCenter: React.FC = () => {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setTargetSshMode('direct')}
+                              onClick={() => {
+                                setTargetSshMode('direct');
+                                setTargetKeySourceMode('upload');
+                                if (!targetSshUser || targetSshUser === 'cb-user') {
+                                  setTargetSshUser('ubuntu');
+                                }
+                              }}
                               className={`px-2 py-0.5 rounded-md font-extrabold transition cursor-pointer ${
                                 targetSshMode === 'direct'
                                   ? 'bg-teal-400 text-slate-950 shadow-xs'
@@ -1842,23 +1941,36 @@ export const DataTransferCenter: React.FC = () => {
                                     value={selectedTbNodeId}
                                     onChange={(e) => {
                                       const val = e.target.value;
+                                      if (!val) {
+                                        setSelectedTbNodeId('');
+                                        setTargetSshHost('');
+                                        setTargetSshPrivateKey('');
+                                        setTargetSshKeyLabel('');
+                                        setActiveTbSshKeyId('');
+                                        return;
+                                      }
                                       const node = tbNodeList.find((n: any) => (n.id || n.name) === val);
                                       if (node) applyTbNode(dataNsId, node);
                                     }}
                                     className="w-full px-3 py-1.5 bg-bg-panel border border-border-main rounded-lg text-text-main font-bold font-mono text-sm focus:outline-none focus:border-teal-400 cursor-pointer"
                                   >
                                     {tbNodeList.length > 0 ? (
-                                      tbNodeList.map((n: any) => {
-                                        const nid = n.id || n.name || '';
-                                        const ip = n.publicIP || n.publicIp || n.privateIP || n.privateIp || '';
-                                        return (
-                                          <option key={nid} value={nid}>
-                                            {n.name || nid} ({ip || 'IP pending'})
-                                          </option>
-                                        );
-                                      })
+                                      <>
+                                        <option value="">-- Select Target Node --</option>
+                                        {tbNodeList.map((n: any) => {
+                                          const nid = n.id || n.name || '';
+                                          const ip = n.publicIP || n.publicIp || n.privateIP || n.privateIp || '';
+                                          const isFailed = ['failed', 'error'].includes(String(n.status || '').toLowerCase());
+                                          const statusLabel = ip ? ip : isFailed ? 'Failed' : 'IP pending';
+                                          return (
+                                            <option key={nid} value={nid} disabled={isFailed && !ip}>
+                                              {n.name || nid} ({statusLabel})
+                                            </option>
+                                          );
+                                        })}
+                                      </>
                                     ) : (
-                                      <option value="">Select infra first</option>
+                                      <option value="">{isLoadingTbInfra ? 'Loading nodes...' : 'Select infra first'}</option>
                                     )}
                                   </select>
                                 </div>
@@ -1894,21 +2006,134 @@ export const DataTransferCenter: React.FC = () => {
                               type="text"
                               value={targetSshUser}
                               onChange={(e) => setTargetSshUser(e.target.value)}
-                              placeholder="ubuntu"
+                              placeholder={targetSshMode === 'tumblebug' ? 'cb-user' : 'ubuntu'}
                               className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-teal-400 font-bold text-sm"
                             />
                           </div>
                           <div>
-                            <div className="flex items-center justify-between mb-1">
-                              <label className="block text-text-muted font-normal text-sm">SSH Private Key (Encrypted PEM Format)</label>
-                              {targetSshPrivateKey && (
-                                <span className="text-xs text-teal-500 font-bold flex items-center gap-1">
-                                  <Lock className="w-3 h-3" />
-                                  Ready for RSA-OAEP Encryption
-                                </span>
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <label className="block text-text-muted font-normal text-sm">SSH Private Key (Encrypted PEM Format)</label>
+                                {targetSshPrivateKey && (
+                                  <span className="text-xs text-teal-500 font-bold flex items-center gap-1">
+                                    <Lock className="w-3 h-3" />
+                                    Ready for RSA-OAEP Encryption
+                                  </span>
+                                )}
+                              </div>
+                              {targetSshMode === 'tumblebug' && (
+                                <div className="flex items-center gap-1 bg-bg-panel p-0.5 border border-border-main rounded-lg text-xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setTargetKeySourceMode('tumblebug');
+                                      if (activeTbSshKeyId) {
+                                        fetchTbManagedSshKey(dataNsId, activeTbSshKeyId);
+                                      }
+                                    }}
+                                    className={`px-2.5 py-0.5 rounded-md font-extrabold transition cursor-pointer ${
+                                      targetKeySourceMode === 'tumblebug'
+                                        ? 'bg-teal-400 text-slate-950 shadow-xs'
+                                        : 'text-text-muted hover:text-text-main'
+                                    }`}
+                                  >
+                                    Tumblebug Managed Key
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setTargetKeySourceMode('upload')}
+                                    className={`px-2.5 py-0.5 rounded-md font-extrabold transition cursor-pointer ${
+                                      targetKeySourceMode === 'upload'
+                                        ? 'bg-teal-400 text-slate-950 shadow-xs'
+                                        : 'text-text-muted hover:text-text-main'
+                                    }`}
+                                  >
+                                    Upload PEM File
+                                  </button>
+                                </div>
                               )}
                             </div>
-                            {targetSshPrivateKey ? (
+
+                            {targetSshMode === 'tumblebug' && targetKeySourceMode === 'tumblebug' ? (
+                              targetSshPrivateKey ? (
+                                <div className="w-full px-4 py-3 rounded-xl border bg-teal-500/10 border-teal-500/40 flex flex-wrap items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    {isLoadingTbSshKey ? (
+                                      <RefreshCw className="w-4 h-4 text-teal-500 animate-spin shrink-0" />
+                                    ) : (
+                                      <CheckCircle2 className="w-4 h-4 text-teal-500 shrink-0" />
+                                    )}
+                                    <div className="min-w-0">
+                                      <span className="text-sm font-extrabold text-teal-600 dark:text-teal-400 block truncate">
+                                        {isLoadingTbSshKey
+                                          ? `Fetching Managed SSH Key (${activeTbSshKeyId || 'sshKey'}) from CB-Tumblebug...`
+                                          : `✓ Tumblebug Managed Key Ready (${getPemByteSize(targetSshPrivateKey)} bytes)`}
+                                      </span>
+                                      <span className="text-xs font-mono text-text-muted block truncate">
+                                        Key Resource: {activeTbSshKeyId ? `ns/${dataNsId}/resources/sshKey/${activeTbSshKeyId}` : 'Tumblebug Managed SSH Key'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                      type="button"
+                                      disabled={isLoadingTbSshKey || !activeTbSshKeyId}
+                                      onClick={() => fetchTbManagedSshKey(dataNsId, activeTbSshKeyId)}
+                                      className="px-2.5 py-1 bg-bg-panel hover:bg-bg-main border border-border-main rounded-lg text-xs font-bold text-teal-600 dark:text-teal-400 cursor-pointer transition flex items-center gap-1 disabled:opacity-50"
+                                    >
+                                      <RefreshCw className={`w-3 h-3 ${isLoadingTbSshKey ? 'animate-spin' : ''}`} />
+                                      <span>Reload Key</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setTargetSshPrivateKey('');
+                                        setTargetSshKeyLabel('');
+                                      }}
+                                      title="Clear Loaded SSH Key"
+                                      className="p-1.5 bg-bg-panel hover:bg-red-500/15 border border-border-main hover:border-red-500/40 rounded-lg text-text-muted hover:text-red-400 cursor-pointer transition"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="w-full px-4 py-4 rounded-xl border-2 border-dashed bg-bg-panel/80 border-border-main flex flex-wrap items-center justify-between gap-2 transition">
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    {isLoadingTbSshKey ? (
+                                      <RefreshCw className="w-4 h-4 text-teal-500 animate-spin shrink-0" />
+                                    ) : (
+                                      <Key className="w-4 h-4 text-text-muted shrink-0" />
+                                    )}
+                                    <div className="min-w-0">
+                                      <span className="text-sm font-extrabold text-text-main block truncate">
+                                        {isLoadingTbSshKey
+                                          ? `Fetching Managed SSH Key (${activeTbSshKeyId || 'sshKey'}) from CB-Tumblebug...`
+                                          : activeTbSshKeyId
+                                            ? `Tumblebug Managed Key (${activeTbSshKeyId}) Not Loaded`
+                                            : 'Tumblebug Managed Key Not Loaded'}
+                                      </span>
+                                      <span className="text-xs font-mono text-text-muted block truncate">
+                                        {activeTbSshKeyId
+                                          ? `Key Resource: ns/${dataNsId}/resources/sshKey/${activeTbSshKeyId}`
+                                          : 'Select a Target Node above to auto-load its Tumblebug SSH key'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                      type="button"
+                                      disabled={isLoadingTbSshKey || !activeTbSshKeyId}
+                                      onClick={() => fetchTbManagedSshKey(dataNsId, activeTbSshKeyId)}
+                                      className="px-2.5 py-1 bg-bg-panel hover:bg-bg-main border border-border-main rounded-lg text-xs font-bold text-text-main hover:border-teal-500/50 cursor-pointer transition flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                      <RefreshCw className={`w-3 h-3 ${isLoadingTbSshKey ? 'animate-spin text-teal-500' : 'text-text-muted'}`} />
+                                      <span>Load Key</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              )
+                            ) : targetSshPrivateKey ? (
                               <div
                                 onDragOver={(e) => {
                                   e.preventDefault();
@@ -1930,7 +2155,7 @@ export const DataTransferCenter: React.FC = () => {
                                     </span>
                                     {targetSshKeyLabel && (
                                       <span className="text-xs font-mono text-text-muted block truncate">
-                                        Source: {targetSshKeyLabel}
+                                        File: {targetSshKeyLabel}
                                       </span>
                                     )}
                                   </div>
@@ -1978,7 +2203,7 @@ export const DataTransferCenter: React.FC = () => {
                                   <span>Drop .pem file here</span>
                                 </div>
                                 <span className="text-xs text-text-muted">
-                                  Auto-filled from Tumblebug or click to browse (.pem, .key)
+                                  or click to browse (.pem, .key)
                                 </span>
                                 <input
                                   type="file"
@@ -2266,14 +2491,6 @@ export const DataTransferCenter: React.FC = () => {
                     Data Filter Settings
                   </span>
                   <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handleApplyAimxPreset}
-                      className="px-3 py-1 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>+ Preset: AIMX (Ollama + OpenWebUI)</span>
-                    </button>
                     <button
                       type="button"
                       onClick={() => setShowDirectoryTree(!showDirectoryTree)}

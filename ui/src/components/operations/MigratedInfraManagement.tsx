@@ -603,7 +603,7 @@ export const MigratedInfraManagement: React.FC = () => {
 
   const handleCopySshCommand = (ip: string, keyName: string) => {
     if (!ip || ip === 'N/A') return;
-    const cmd = `ssh -i ~/.ssh/${keyName}.pem ubuntu@${ip}`;
+    const cmd = `ssh -i ~/.ssh/${keyName}.pem cb-user@${ip}`;
     navigator.clipboard.writeText(cmd);
     setCopiedIp(ip);
     setTimeout(() => setCopiedIp(null), 2000);
@@ -710,7 +710,14 @@ export const MigratedInfraManagement: React.FC = () => {
 
   // Active infra detail from loadedInfraDetail, completed session jobs, or savedCloudModels
   const activeJobInfra = completedJobs.find(j => j.id === selectedInfraId || j.infraId === selectedInfraId);
-  const activeSavedModel = savedCloudModels.find(m => m.id === selectedInfraId || m.name === selectedInfraId);
+  const targetModelIdLabel = loadedInfraDetail?.label?.['cm-target-model-id'];
+  const activeSavedModel = savedCloudModels.find(
+    (m) =>
+      (targetModelIdLabel && m.id === targetModelIdLabel) ||
+      m.id === selectedInfraId ||
+      m.name === selectedInfraId ||
+      m.cloudInfraModel?.targetInfra?.name === selectedInfraId
+  );
 
   // Extract real VNet, Subnet, Security Groups, SSH Key from loadedInfraDetail
   const liveNodes = loadedInfraDetail?.node || [];
@@ -719,7 +726,39 @@ export const MigratedInfraManagement: React.FC = () => {
   const extractedVNetName = firstNode?.vNetId || 'vnet-migrated';
   const extractedSubnetName = firstNode?.subnetId || 'subnet-default';
   const extractedSshKeyName = firstNode?.sshKeyId || `key-${loadedInfraDetail?.name || selectedInfraId || 'mig01'}`;
-  
+
+  // Extract unique subnets across all live nodes and infer /24 CIDR from private IP when needed
+  const inferSubnetCidr = (subnetName: string, idx: number): string => {
+    const savedSub = activeSavedModel?.cloudInfraModel?.targetVNet?.subnetInfoList?.find(
+      (s: any) => s.name === subnetName
+    );
+    const savedCidr = savedSub?.ipv4_CIDR || (savedSub as any)?.cidrBlock;
+    if (savedCidr) {
+      return savedCidr;
+    }
+    const nodeInSub = liveNodes.find(
+      (n: any) => n.subnetId === subnetName && (n.privateIP || n.privateIp) && (n.privateIP || n.privateIp) !== 'N/A'
+    );
+    const privIp = nodeInSub?.privateIP || nodeInSub?.privateIp || '';
+    const octets = privIp.split('.');
+    if (octets.length === 4) {
+      return `${octets[0]}.${octets[1]}.${octets[2]}.0/24`;
+    }
+    return `10.0.${idx + 1}.0/24`;
+  };
+
+  const uniqueLiveSubnets: string[] = Array.from(
+    new Set(liveNodes.map((n: any) => n.subnetId).filter(Boolean))
+  );
+  const extractedSubnetsList =
+    uniqueLiveSubnets.length > 0
+      ? uniqueLiveSubnets.map((subName, idx) => ({
+          name: subName,
+          ipv4_CIDR: inferSubnetCidr(subName, idx),
+          cidrBlock: inferSubnetCidr(subName, idx)
+        }))
+      : [{ name: extractedSubnetName, ipv4_CIDR: '10.0.1.0/24', cidrBlock: '10.0.1.0/24' }];
+
   // Extract unique security group IDs across all nodes
   const extractedSgNames: string[] = Array.from(
     new Set(
@@ -734,60 +773,106 @@ export const MigratedInfraManagement: React.FC = () => {
       }))
     : [{ name: 'sg-default', firewallRules: [{ protocol: 'tcp', dstPorts: '22, 80, 443' }] }];
 
-  // Normalize model data for TopologyMap and VM Access table
-  const currentCloudModel = activeSavedModel?.cloudInfraModel || {
-    name: loadedInfraDetail?.name || loadedInfraDetail?.id || activeJobInfra?.infraId || selectedInfraId || 'migrated-infra',
-    status: 'Running',
-    description: 'Migrated Infra',
-    targetCloud: {
-      csp: (firstNode?.region?.providerName || loadedInfraDetail?.id?.split('-')?.[1] || activeJobInfra?.csp || 'AWS').toUpperCase(),
-      region: firstNode?.region?.regionName || activeJobInfra?.region || 'ap-northeast-2'
-    },
-    targetVNet: {
-      name: extractedVNetName,
-      cidrBlock: '10.0.0.0/16',
-      subnetInfoList: [{ name: extractedSubnetName, cidrBlock: '10.0.1.0/24' }]
-    },
-    targetSshKey: {
-      name: extractedSshKeyName
-    },
-    targetSecurityGroupList,
-    targetInfra: {
-      name: loadedInfraDetail?.name || loadedInfraDetail?.id || activeJobInfra?.infraId || selectedInfraId || 'migrated-infra',
-      nodeGroups: liveNodes.length > 0
-        ? Array.from(new Set(liveNodes.map((n: any) => n.nodeGroupId || n.name || 'default-group'))).map((ngId: any) => {
-            const ngNodes = liveNodes.filter((n: any) => (n.nodeGroupId || n.name || 'default-group') === ngId);
-            const firstNode = ngNodes[0] || {};
-            const specName = firstNode.spec?.cspSpecName || firstNode.cspSpecName || firstNode.specId || 'c5.large';
-            const vcpu = firstNode.spec?.vCPU || firstNode.vCPU || (specName.includes('small') ? 2 : specName.includes('xlarge') ? 4 : 2);
-            const memGiB = firstNode.spec?.memoryGiB || firstNode.memoryGiB || (specName.includes('xlarge') ? 16 : 4);
-            const imageName = firstNode.cspImageName || firstNode.imageId || 'ubuntu-22.04';
-            const diskSize = firstNode.rootDiskSize || 30;
+  // Normalize model data for TopologyMap and VM Access table, synchronizing live node subnetId & deployedNodes
+  const currentCloudModel = (() => {
+    if (activeSavedModel?.cloudInfraModel) {
+      const base = activeSavedModel.cloudInfraModel;
+      const baseSubnets = base.targetVNet?.subnetInfoList || [];
+      const mergedSubnets = [...baseSubnets];
+      extractedSubnetsList.forEach((liveSub) => {
+        if (!mergedSubnets.some((s: any) => s.name === liveSub.name)) {
+          mergedSubnets.push(liveSub as any);
+        }
+      });
 
-            return {
-              name: ngId,
-              specId: specName,
-              vCPU: vcpu,
-              memoryGiB: memGiB,
-              nodeGroupSize: ngNodes.length,
-              imageId: imageName,
-              rootDiskSize: diskSize,
-              securityGroupIds: firstNode.securityGroupIds || extractedSgNames
-            };
-          })
-        : activeJobInfra?.vms
-        ? [{ name: 'worker-group', specId: activeJobInfra.vms[0]?.specId || 'c5.large', vCPU: 2, memoryGiB: 4, nodeGroupSize: activeJobInfra.vms.length, imageId: 'ubuntu-22.04', rootDiskSize: 30, securityGroupIds: [] }]
-        : [{ name: 'default-group', specId: 'c5.large', vCPU: 2, memoryGiB: 4, nodeGroupSize: 2, imageId: 'ubuntu-22.04', rootDiskSize: 30, securityGroupIds: [] }]
+      const enrichedNodeGroups = (base.targetInfra?.nodeGroups || []).map((ng: any) => {
+        const ngNodes = liveNodes.filter(
+          (n: any) =>
+            n.nodeGroupId === ng.name ||
+            n.subGroupId === ng.name ||
+            n.name === ng.name ||
+            (typeof n.name === 'string' && n.name.startsWith(`${ng.name}-`))
+        );
+        const liveSubnetId = ngNodes[0]?.subnetId;
+        return {
+          ...ng,
+          subnetId: liveSubnetId || ng.subnetId || mergedSubnets[0]?.name || extractedSubnetName,
+          deployedNodes: ngNodes
+        };
+      });
+
+      return {
+        ...base,
+        targetVNet: {
+          ...base.targetVNet,
+          subnetInfoList: mergedSubnets.length > 0 ? mergedSubnets : extractedSubnetsList
+        },
+        targetInfra: {
+          ...base.targetInfra,
+          nodeGroups: enrichedNodeGroups
+        }
+      };
     }
-  };
+
+    return {
+      name: loadedInfraDetail?.name || loadedInfraDetail?.id || activeJobInfra?.infraId || selectedInfraId || 'migrated-infra',
+      status: 'Running',
+      description: 'Migrated Infra',
+      targetCloud: {
+        csp: (firstNode?.region?.providerName || loadedInfraDetail?.id?.split('-')?.[1] || activeJobInfra?.csp || 'AWS').toUpperCase(),
+        region: firstNode?.region?.regionName || activeJobInfra?.region || 'ap-northeast-2'
+      },
+      targetVNet: {
+        name: extractedVNetName,
+        cidrBlock: '10.0.0.0/16',
+        subnetInfoList: extractedSubnetsList
+      },
+      targetSshKey: {
+        name: extractedSshKeyName
+      },
+      targetSecurityGroupList,
+      targetInfra: {
+        name: loadedInfraDetail?.name || loadedInfraDetail?.id || activeJobInfra?.infraId || selectedInfraId || 'migrated-infra',
+        nodeGroups: liveNodes.length > 0
+          ? Array.from(new Set(liveNodes.map((n: any) => n.nodeGroupId || n.subGroupId || n.name?.replace(/-\d+$/, '') || 'default-group'))).map((ngId: any) => {
+              const ngNodes = liveNodes.filter((n: any) => (n.nodeGroupId || n.subGroupId || n.name?.replace(/-\d+$/, '') || 'default-group') === ngId);
+              const firstNgNode = ngNodes[0] || {};
+              const specName = firstNgNode.spec?.cspSpecName || firstNgNode.cspSpecName || firstNgNode.specId || 'c5.large';
+              const vcpu = firstNgNode.spec?.vCPU || firstNgNode.vCPU || (specName.includes('small') ? 2 : specName.includes('xlarge') ? 4 : 2);
+              const memGiB = firstNgNode.spec?.memoryGiB || firstNgNode.memoryGiB || (specName.includes('xlarge') ? 16 : 4);
+              const imageName = firstNgNode.cspImageName || firstNgNode.imageId || 'ubuntu-22.04';
+              const diskSize = firstNgNode.rootDiskSize || 30;
+
+              return {
+                name: ngId,
+                specId: specName,
+                vCPU: vcpu,
+                memoryGiB: memGiB,
+                nodeGroupSize: ngNodes.length,
+                imageId: imageName,
+                rootDiskSize: diskSize,
+                subnetId: firstNgNode.subnetId || extractedSubnetName,
+                securityGroupIds: firstNgNode.securityGroupIds || extractedSgNames,
+                deployedNodes: ngNodes
+              };
+            })
+          : activeJobInfra?.vms
+          ? [{ name: 'worker-group', specId: activeJobInfra.vms[0]?.specId || 'c5.large', vCPU: 2, memoryGiB: 4, nodeGroupSize: activeJobInfra.vms.length, imageId: 'ubuntu-22.04', rootDiskSize: 30, subnetId: extractedSubnetName, securityGroupIds: [] }]
+          : [{ name: 'default-group', specId: 'c5.large', vCPU: 2, memoryGiB: 4, nodeGroupSize: 2, imageId: 'ubuntu-22.04', rootDiskSize: 30, subnetId: extractedSubnetName, securityGroupIds: [] }]
+      }
+    };
+  })();
 
   // Extract VM nodes array for VM Access table
-  const activeNodes: { name: string; specId: string; publicIp: string; privateIp: string }[] = loadedInfraDetail?.node && loadedInfraDetail.node.length > 0
+  const activeNodes: { name: string; specId: string; publicIp: string; privateIp: string; subnetId?: string; status?: string; systemMessage?: string }[] = loadedInfraDetail?.node && loadedInfraDetail.node.length > 0
     ? loadedInfraDetail.node.map((n: any) => ({
         name: n.name || n.id || 'node',
         specId: n.specId || n.spec || 'c5.large',
         publicIp: n.publicIP || n.publicIp || 'N/A',
-        privateIp: n.privateIP || n.privateIp || 'N/A'
+        privateIp: n.privateIP || n.privateIp || 'N/A',
+        subnetId: n.subnetId || '',
+        status: n.status || ((n.publicIP || n.publicIp || n.privateIP || n.privateIp) ? 'Running' : 'Failed'),
+        systemMessage: n.systemMessage || ''
       }))
     : activeJobInfra?.vms && activeJobInfra.vms.length > 0
     ? activeJobInfra.vms
@@ -795,7 +880,10 @@ export const MigratedInfraManagement: React.FC = () => {
         name: `${ng.name}-node-${idx + 1}`,
         specId: ng.specId,
         publicIp: `54.180.${10 + idx}.${25 + idx}`,
-        privateIp: `10.0.1.${100 + idx}`
+        privateIp: `10.0.1.${100 + idx}`,
+        subnetId: ng.subnetId || '',
+        status: 'Running',
+        systemMessage: ''
       }));
 
   return (
@@ -1296,6 +1384,7 @@ export const MigratedInfraManagement: React.FC = () => {
                         <th className="py-2.5 px-4">Node Spec</th>
                         <th className="py-2.5 px-4">Public IP Address</th>
                         <th className="py-2.5 px-4">Private IP Address</th>
+                        <th className="py-2.5 px-4">Node Status</th>
                         <th className="py-2.5 px-4">SSH Status</th>
                         <th className="py-2.5 px-4">SSH Command</th>
                       </tr>
@@ -1304,10 +1393,14 @@ export const MigratedInfraManagement: React.FC = () => {
                       {activeNodes.map((node, idx) => {
                         const isCopied = copiedIp === node.publicIp;
                         const matchedSsh = sshReadyData?.nodeStatus?.find(
-                          (ns) => ns.name === node.name || ns.id === node.name || ns.publicIP === node.publicIp
+                          (ns) => ns.name === node.name || ns.id === node.name || (node.publicIp !== 'N/A' && ns.publicIP === node.publicIp)
                         );
+                        const isNodeFailed =
+                          node.status?.toLowerCase() === 'failed' ||
+                          node.status?.toLowerCase() === 'error' ||
+                          ((!node.publicIp || node.publicIp === 'N/A') && (!node.privateIp || node.privateIp === 'N/A'));
                         return (
-                          <tr key={idx} className="hover:bg-emerald-500/[0.02] transition">
+                          <tr key={idx} className={`transition ${isNodeFailed ? 'bg-red-500/[0.04] hover:bg-red-500/[0.08]' : 'hover:bg-emerald-500/[0.02]'}`}>
                             <td className="py-3 px-4 font-extrabold text-text-main">{node.name}</td>
                             <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-extrabold">
                               <div className="flex items-center gap-1.5">
@@ -1319,10 +1412,45 @@ export const MigratedInfraManagement: React.FC = () => {
                                 )}
                               </div>
                             </td>
-                            <td className="py-3 px-4 select-all text-text-main font-extrabold">{node.publicIp}</td>
-                            <td className="py-3 px-4 text-text-muted">{node.privateIp}</td>
+                            <td className={`py-3 px-4 select-all font-extrabold ${isNodeFailed ? 'text-red-500' : 'text-text-main'}`}>{node.publicIp}</td>
+                            <td className={`py-3 px-4 ${isNodeFailed ? 'text-red-500/80' : 'text-text-muted'}`}>
+                              <div className="flex items-center gap-1.5">
+                                <span>{node.privateIp}</span>
+                                {node.subnetId && (
+                                  <span className="px-1.5 py-0.5 rounded bg-bg-panel border border-border-main text-text-muted text-xs font-mono">
+                                    {node.subnetId}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
                             <td className="py-3 px-4">
-                              {matchedSsh ? (
+                              <div className="flex flex-col gap-1">
+                                <span
+                                  className={`inline-flex items-center w-fit px-2 py-0.5 rounded font-bold border ${
+                                    isNodeFailed
+                                      ? 'bg-red-500/15 text-red-500 border-red-500/30'
+                                      : 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30'
+                                  }`}
+                                  title={node.systemMessage || undefined}
+                                >
+                                  {isNodeFailed ? (node.status || 'Failed') : (node.status || 'Running')}
+                                </span>
+                                {isNodeFailed && node.systemMessage && (
+                                  <span
+                                    className="text-xs font-sans text-red-500 max-w-xs truncate"
+                                    title={node.systemMessage}
+                                  >
+                                    {node.systemMessage}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              {isNodeFailed ? (
+                                <span className="px-2 py-0.5 rounded font-bold border bg-red-500/10 text-red-500 border-red-500/30">
+                                  N/A (Failed)
+                                </span>
+                              ) : matchedSsh ? (
                                 <span className={`px-2 py-0.5 rounded font-bold border ${
                                   matchedSsh.sshReady
                                     ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
@@ -1337,7 +1465,7 @@ export const MigratedInfraManagement: React.FC = () => {
                             <td className="py-3 px-4">
                               <button
                                 onClick={() => handleCopySshCommand(node.publicIp, currentCloudModel.targetSshKey?.name || 'key')}
-                                disabled={!node.publicIp || node.publicIp === 'N/A'}
+                                disabled={!node.publicIp || node.publicIp === 'N/A' || isNodeFailed}
                                 className="px-3 py-1.5 bg-bg-panel border border-border-main hover:bg-emerald-500/10 hover:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed font-mono"
                               >
                                 {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -1385,17 +1513,23 @@ export const MigratedInfraManagement: React.FC = () => {
                   <div className="glass-panel p-4 rounded-xl border border-border-main/60 space-y-3">
                     <span className="text-xs font-bold text-text-muted font-mono block">Subnets Allocation</span>
                     <div className="space-y-2 text-xs font-mono">
-                      {(currentCloudModel.targetVNet?.subnetInfoList || [{ name: extractedSubnetName, cidrBlock: '10.0.1.0/24' }]).map((sub: any, idx: number) => (
-                        <div key={idx} className="p-2.5 bg-bg-panel/60 rounded-lg border border-border-main/40 flex justify-between items-center">
-                          <div>
-                            <span className="font-extrabold text-text-main block">{sub.name}</span>
-                            <span className="text-text-muted text-xs">Subnet ID: {sub.name}</span>
+                      {(currentCloudModel.targetVNet?.subnetInfoList || [{ name: extractedSubnetName, ipv4_CIDR: '10.0.1.0/24', cidrBlock: '10.0.1.0/24' }]).map((sub: any, idx: number) => {
+                        const subCidr = sub.ipv4_CIDR || sub.cidrBlock || '10.0.1.0/24';
+                        const subNgCount = (currentCloudModel.targetInfra?.nodeGroups || []).filter(
+                          (ng: any) => ng.subnetId === sub.name
+                        ).length;
+                        return (
+                          <div key={idx} className="p-2.5 bg-bg-panel/60 rounded-lg border border-border-main/40 flex justify-between items-center">
+                            <div>
+                              <span className="font-extrabold text-text-main block">{sub.name}</span>
+                              <span className="text-text-muted text-xs">Subnet ID: {sub.name} ({subNgCount} Node Group(s))</span>
+                            </div>
+                            <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold">
+                              {subCidr}
+                            </span>
                           </div>
-                          <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold">
-                            {sub.cidrBlock}
-                          </span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -1465,7 +1599,7 @@ export const MigratedInfraManagement: React.FC = () => {
                     </div>
                     <div>
                       <span className="text-text-muted block font-bold">Default System User</span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400">ubuntu / root</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">cb-user</span>
                     </div>
                   </div>
 

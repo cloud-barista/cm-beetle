@@ -48,7 +48,10 @@ func TestUpcastTo_LegacyRecommendedInfra(t *testing.T) {
 				"id": "aws+ap-northeast-2+t3.medium",
 				"cspSpecName": "t3.medium",
 				"vCPU": 2,
-				"memoryGiB": 4
+				"memoryGiB": 4,
+				"availabilityStatus": "Available",
+				"availabilityCheckedAt": "2026-11-04T07:06:45.385496937Z",
+				"availabilityRefreshAfter": "2026-11-04T08:06:45.385496937Z"
 			}
 		],
 		"targetVmOsImageList": [

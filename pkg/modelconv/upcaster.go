@@ -8,7 +8,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
+
+var timeType = reflect.TypeOf(time.Time{})
 
 // FieldMigration records a legacy field or key that was mapped to a canonical target field.
 type FieldMigration struct {
@@ -149,6 +152,17 @@ func normalizeValue(rawVal any, targetType reflect.Type, path string, report *Co
 	}
 	for targetType.Kind() == reflect.Ptr {
 		targetType = targetType.Elem()
+	}
+
+	if targetType == timeType {
+		strVal, err := normalizeScalarString(rawVal, path)
+		if err != nil {
+			return nil, err
+		}
+		if strings.TrimSpace(strVal) == "" {
+			return nil, nil
+		}
+		return strVal, nil
 	}
 
 	switch targetType.Kind() {

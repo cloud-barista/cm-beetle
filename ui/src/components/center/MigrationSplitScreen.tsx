@@ -37,7 +37,7 @@ export interface SplitViewMigrationJob {
   nodeGroupsCount: number;
   totalVms: number;
   logs: string[];
-  vms?: { publicIp: string; privateIp: string; specId: string; name: string }[];
+  vms?: { publicIp: string; privateIp: string; specId: string; name: string; status?: string; systemMessage?: string }[];
   error?: string;
   isSample?: boolean;
   targetNlbList?: any[];
@@ -61,6 +61,8 @@ interface PlannedTargetNode {
   publicIp: string;
   privateIp: string;
   nodeGroupName?: string;
+  status?: string;
+  systemMessage?: string;
 }
 
 export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
@@ -80,7 +82,9 @@ export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
         name: vm.name,
         specId: vm.specId || 'cloud-spec',
         publicIp: vm.publicIp || '-',
-        privateIp: vm.privateIp || '-'
+        privateIp: vm.privateIp || '-',
+        status: vm.status,
+        systemMessage: vm.systemMessage
       }));
     }
 
@@ -430,17 +434,26 @@ export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
                   (n) =>
                     n.id === tn.name ||
                     n.name === tn.name ||
-                    (tn.publicIp !== '-' && n.publicIP === tn.publicIp)
+                    (tn.publicIp !== '-' && tn.publicIp !== 'N/A' && n.publicIP === tn.publicIp)
                 );
                 const isSshReady = Boolean(matchedSsh?.sshReady);
                 const isProvisioned = activeJob?.status === 'Success';
                 const isHandling = activeJob?.status === 'Handling';
+                const isNodeFailed =
+                  isProvisioned &&
+                  (tn.status?.toLowerCase() === 'failed' ||
+                    tn.status?.toLowerCase() === 'error' ||
+                    ((!tn.publicIp || tn.publicIp === 'N/A' || tn.publicIp === '-') &&
+                      (!tn.privateIp || tn.privateIp === 'N/A' || tn.privateIp === '-')));
 
                 return (
                   <div
                     key={`${tn.name}-${idx}`}
+                    title={tn.systemMessage || undefined}
                     className={`p-2.5 rounded-xl border transition flex flex-col justify-between space-y-1.5 ${
-                      isSshReady
+                      isNodeFailed
+                        ? 'bg-red-500/10 border-red-500/40'
+                        : isSshReady
                         ? 'bg-emerald-500/10 border-emerald-500/50 shadow-sm shadow-emerald-500/10'
                         : isProvisioned
                         ? 'bg-teal-500/10 border-teal-500/40'
@@ -457,7 +470,14 @@ export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
                         {tn.name}
                       </span>
 
-                      {isSshReady ? (
+                      {isNodeFailed ? (
+                        <span
+                          className="px-1.5 py-0.5 bg-red-500/20 text-red-500 border border-red-500/30 rounded text-xs font-extrabold shrink-0"
+                          title={tn.systemMessage || 'Node provisioning failed (no IP allocated)'}
+                        >
+                          Failed
+                        </span>
+                      ) : isSshReady ? (
                         <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded text-xs font-extrabold shrink-0">
                           SSH Ready
                         </span>
@@ -485,7 +505,7 @@ export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
 
                     <div className="text-xs font-mono flex items-center justify-between border-t border-border-main/20 pt-1">
                       <span className="font-normal text-text-muted">IP:</span>
-                      <span className="font-extrabold text-text-main select-all truncate">
+                      <span className={`font-extrabold select-all truncate ${isNodeFailed ? 'text-red-500' : 'text-text-main'}`}>
                         {tn.publicIp}
                       </span>
                     </div>
@@ -497,13 +517,30 @@ export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
 
           <div className="pt-2 border-t border-border-main/20 flex items-center justify-between text-xs">
             <span className="font-normal text-text-muted">Target Provisioning Status:</span>
-            <span className="font-extrabold text-emerald-500 font-mono">
-              {activeJob?.status === 'Success'
-                ? `${targetNodes.length} / ${targetNodes.length} Nodes Active`
-                : activeJob?.status === 'Handling'
-                ? 'Provisioning Cloud Nodes...'
-                : `${targetNodes.length} Planned Nodes`}
-            </span>
+            {(() => {
+              const failedCount =
+                activeJob?.status === 'Success'
+                  ? targetNodes.filter(
+                      (tn) =>
+                        tn.status?.toLowerCase() === 'failed' ||
+                        tn.status?.toLowerCase() === 'error' ||
+                        ((!tn.publicIp || tn.publicIp === 'N/A' || tn.publicIp === '-') &&
+                          (!tn.privateIp || tn.privateIp === 'N/A' || tn.privateIp === '-'))
+                    ).length
+                  : 0;
+              const activeCount = targetNodes.length - failedCount;
+              return (
+                <span className={`font-extrabold font-mono ${failedCount > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                  {activeJob?.status === 'Success'
+                    ? failedCount > 0
+                      ? `${activeCount} / ${targetNodes.length} Nodes Active (${failedCount} Failed)`
+                      : `${targetNodes.length} / ${targetNodes.length} Nodes Active`
+                    : activeJob?.status === 'Handling'
+                    ? 'Provisioning Cloud Nodes...'
+                    : `${targetNodes.length} Planned Nodes`}
+                </span>
+              );
+            })()}
           </div>
         </div>
       </div>

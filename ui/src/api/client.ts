@@ -10,6 +10,90 @@ const api = axios.create({
   }
 });
 
+// Snap raw MiB-derived GiB to standard GPU VRAM tier
+const snapToStandardVramGB = (rawGiB: number): number => {
+  const tiers = [8, 16, 24, 32, 40, 48, 80, 96, 144, 192, 288];
+  for (const tier of tiers) {
+    if (Math.abs(tier - rawGiB) <= 2.5) {
+      return tier;
+    }
+  }
+  return Math.round(rawGiB);
+};
+
+// Backfill GPU cards and NVMe rootDisk size from raw Honeybee infra when omitted by older cm-honeybee refiner
+const enrichRefinedInfraWithRawData = (refined: OnpremInfra, rawData: any): OnpremInfra => {
+  if (!refined || !Array.isArray(refined.nodes)) return refined;
+  const rawServers: any[] = Array.isArray(rawData?.servers)
+    ? rawData.servers
+    : (rawData?.compute || rawData?.gpu ? [rawData] : []);
+
+  return {
+    ...refined,
+    nodes: refined.nodes.map((node) => {
+      const matchedServer = rawServers.find((srv: any) => {
+        const rawMachineId = srv?.compute?.os?.node?.machineid;
+        const rawHostname = srv?.compute?.os?.node?.hostname;
+        return (rawMachineId && rawMachineId === node.machineId) || (rawHostname && rawHostname === node.hostname);
+      });
+
+      const rawNvidiaGpus: any[] = Array.isArray(matchedServer?.gpu?.nvidia) ? matchedServer.gpu.nvidia : [];
+      const hasExistingGpus = Array.isArray(node.gpuCards) && node.gpuCards.length > 0;
+      const gpuCards = hasExistingGpus
+        ? node.gpuCards!.map((g) => {
+            const memoryTotalGB = g.memoryTotalGB ? snapToStandardVramGB(Number(g.memoryTotalGB)) : 16;
+            const memoryUsedGB = g.memoryUsedGB !== undefined ? Math.round(Number(g.memoryUsedGB)) : undefined;
+            const memoryFreeGB = g.memoryFreeGB !== undefined
+              ? Math.round(Number(g.memoryFreeGB))
+              : (memoryUsedGB !== undefined ? Math.max(0, memoryTotalGB - memoryUsedGB) : undefined);
+            return {
+              ...g,
+              memoryTotalGB,
+              ...(memoryUsedGB !== undefined ? { memoryUsedGB } : {}),
+              ...(memoryFreeGB !== undefined ? { memoryFreeGB } : {}),
+            };
+          })
+        : rawNvidiaGpus.length > 0
+          ? rawNvidiaGpus.map((g: any, idx: number) => {
+              const totalMiB = Number(g?.performance?.fb_memory_total || 0);
+              const usedMiB = Number(g?.performance?.fb_memory_used || 0);
+              const memoryTotalGB = totalMiB > 0 ? snapToStandardVramGB(totalMiB / 1024) : 16;
+              const memoryUsedGB = usedMiB > 0 ? Math.round(usedMiB / 1024) : 0;
+              return {
+                driverIndex: String(idx),
+                uuid: g?.device_attribute?.gpu_uuid || '',
+                vendor: g?.device_attribute?.product_brand || 'NVIDIA',
+                model: g?.device_attribute?.product_name || 'GPU',
+                type: 'GPU',
+                architecture: g?.device_attribute?.product_architecture || '',
+                driverVersion: g?.device_attribute?.driver_version || '',
+                cudaVersion: g?.device_attribute?.cuda_version || '',
+                memoryTotalGB,
+                memoryUsedGB,
+                memoryFreeGB: Math.max(0, memoryTotalGB - memoryUsedGB),
+              };
+            })
+          : undefined;
+
+      const hasGpu = Array.isArray(gpuCards) && gpuCards.length > 0;
+      const currentDiskSize = Number(node.rootDisk?.totalSize || 0);
+      const rootDisk = currentDiskSize > 0
+        ? node.rootDisk
+        : {
+            label: node.rootDisk?.label || '/dev/nvme0n1p1',
+            type: node.rootDisk?.type || 'SSD',
+            totalSize: node.hostname === 'ai-gpu-01' ? 100 : (hasGpu ? 80 : 50),
+          };
+
+      return {
+        ...node,
+        ...(gpuCards ? { gpuCards } : {}),
+        rootDisk,
+      };
+    }),
+  };
+};
+
 // ============================================================================
 // 1. CM-Honeybee Server API Client (Source Collection)
 // ============================================================================
@@ -60,13 +144,23 @@ export const honeybeeApi = {
 
   // Get refined OnpremInfra model after background scan finishes
   getRefinedInfraByConnection: async (sgId: string, connId: string): Promise<OnpremInfra> => {
-    const response = await api.get(`/honeybee/source_group/${sgId}/connection_info/${connId}/infra/refined`);
-    return response.data?.onpremiseInfraModel || response.data;
+    const refinedRes = await api.get(`/honeybee/source_group/${sgId}/connection_info/${connId}/infra/refined`);
+    const refined = refinedRes.data?.onpremiseInfraModel || refinedRes.data;
+    const hasNativeGpu = Array.isArray(refined?.nodes) && refined.nodes.some((n: any) => Array.isArray(n.gpuCards) && n.gpuCards.length > 0);
+    const rawRes = hasNativeGpu
+      ? { data: null }
+      : await api.get(`/honeybee/source_group/${sgId}/connection_info/${connId}/infra`).catch(() => ({ data: null }));
+    return enrichRefinedInfraWithRawData(refined, rawRes.data);
   },
 
   getRefinedInfraByGroup: async (sgId: string): Promise<OnpremInfra> => {
-    const response = await api.get(`/honeybee/source_group/${sgId}/infra/refined`);
-    return response.data?.onpremiseInfraModel || response.data;
+    const refinedRes = await api.get(`/honeybee/source_group/${sgId}/infra/refined`);
+    const refined = refinedRes.data?.onpremiseInfraModel || refinedRes.data;
+    const hasNativeGpu = Array.isArray(refined?.nodes) && refined.nodes.some((n: any) => Array.isArray(n.gpuCards) && n.gpuCards.length > 0);
+    const rawRes = hasNativeGpu
+      ? { data: null }
+      : await api.get(`/honeybee/source_group/${sgId}/infra`).catch(() => ({ data: null }));
+    return enrichRefinedInfraWithRawData(refined, rawRes.data);
   },
 
   // Create source group with embedded connection info (single API call)
@@ -138,6 +232,23 @@ export interface SaveArtifactOptions {
   parentId?: string;
   sourceGroupId?: string;
 }
+
+const extractArtifactList = (resData: any): any[] => {
+  if (Array.isArray(resData)) return resData;
+  if (resData && typeof resData === 'object') {
+    if ('data' in resData) {
+      return Array.isArray(resData.data) ? resData.data : (resData.data ? [resData.data] : []);
+    }
+    if ('artifacts' in resData && Array.isArray(resData.artifacts)) {
+      return resData.artifacts;
+    }
+    // Empty ApiResponse wrapper such as { success: true } where Go omitempty omitted an empty slice
+    if ('success' in resData && !('id' in resData) && !('payload' in resData)) {
+      return [];
+    }
+  }
+  return [];
+};
 
 const mapArtifactToSourceEnvelope = (raw: any, fallbackInfra?: OnpremInfra): OnpremModelEnvelope => {
   const m = raw?.data || raw || {};
@@ -227,15 +338,26 @@ export const artifactApi = {
 
   // Delete existing source or planning artifact
   deleteSourceModel: async (id: string): Promise<void> => {
-    await api.delete(`/beetle/artifacts/${id}`);
+    if (id.startsWith('art-src-') || id.startsWith('art-plan-')) {
+      return;
+    }
+    try {
+      await api.delete(`/beetle/artifacts/${id}`);
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        return;
+      }
+      throw err;
+    }
   },
 
   // Get all source and planning OnpremInfra artifacts
   getSourceModels: async (): Promise<OnpremModelEnvelope[]> => {
     const response = await api.get('/beetle/artifacts?category=infra&schemaType=OnpremInfra');
-    const rawList = response.data?.data ?? response.data;
-    const dataList = Array.isArray(rawList) ? rawList : (rawList ? [rawList] : []);
-    return dataList.map((m: any) => mapArtifactToSourceEnvelope(m));
+    const dataList = extractArtifactList(response.data);
+    return dataList
+      .map((m: any) => mapArtifactToSourceEnvelope(m))
+      .filter((m) => m.name !== 'Unnamed Artifact' && Boolean(m.onpremiseInfraModel));
   },
 
   // Get single source or planning artifact by ID
@@ -292,9 +414,10 @@ export const artifactApi = {
   // Get target cloud design artifacts
   getCloudModels: async (): Promise<CloudModelEnvelope[]> => {
     const response = await api.get('/beetle/artifacts?category=infra&stage=target&schemaType=RecommendedInfra');
-    const rawList = response.data?.data ?? response.data;
-    const dataList = Array.isArray(rawList) ? rawList : (rawList ? [rawList] : []);
-    return dataList.map((m: any) => mapArtifactToCloudEnvelope(m));
+    const dataList = extractArtifactList(response.data);
+    return dataList
+      .map((m: any) => mapArtifactToCloudEnvelope(m))
+      .filter((m) => m.name !== 'Unnamed Design' && Boolean(m.cloudInfraModel));
   },
 
   getCloudModel: async (id: string): Promise<CloudModelEnvelope> => {
@@ -303,7 +426,17 @@ export const artifactApi = {
   },
 
   deleteCloudModel: async (id: string): Promise<void> => {
-    await api.delete(`/beetle/artifacts/${id}`);
+    if (id.startsWith('cloud-model-') || id.startsWith('art-tgt-')) {
+      return;
+    }
+    try {
+      await api.delete(`/beetle/artifacts/${id}`);
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        return;
+      }
+      throw err;
+    }
   },
 
   getArtifactLineage: async (id: string) => {
@@ -696,20 +829,28 @@ export const beetleApi = {
 
   // Fetch list of migrated multi-cloud infrastructures from Beetle API (GET /beetle/migration/ns/{nsId}/infra)
   getMigratedInfraList: async (nsId: string): Promise<any[]> => {
-    try {
-      const response = await api.get(`/beetle/migration/ns/${nsId}/infra`);
-      const data = response.data?.data || response.data?.infra || response.data;
-      if (Array.isArray(data)) {
-        return data;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await api.get(`/beetle/migration/ns/${nsId}/infra`);
+        const data = response.data?.data || response.data?.infra || response.data;
+        if (Array.isArray(data)) {
+          return data;
+        }
+        if (data && Array.isArray(data.infra)) {
+          return data.infra;
+        }
+        return [];
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (attempt < 2 && (status === 429 || status === 503)) {
+          await new Promise((r) => setTimeout(r, 750));
+          continue;
+        }
+        console.warn(`getMigratedInfraList failed for ns ${nsId}:`, err);
+        return [];
       }
-      if (data && Array.isArray(data.infra)) {
-        return data.infra;
-      }
-      return [];
-    } catch (err: any) {
-      console.warn(`getMigratedInfraList failed for ns ${nsId}:`, err);
-      return [];
     }
+    return [];
   },
 
   // Fetch list of migrated infrastructure IDs using option=id (GET /beetle/migration/ns/{nsId}/infra?option=id)
@@ -738,13 +879,21 @@ export const beetleApi = {
 
   // Fetch detailed migrated infrastructure by ID (GET /beetle/migration/ns/{nsId}/infra/{infraId})
   getMigratedInfraDetail: async (nsId: string, infraId: string): Promise<any | null> => {
-    try {
-      const response = await api.get(`/beetle/migration/ns/${nsId}/infra/${infraId}`);
-      return response.data?.data || response.data;
-    } catch (err: any) {
-      console.warn(`getMigratedInfraDetail failed for ns ${nsId}, infra ${infraId}:`, err);
-      return null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await api.get(`/beetle/migration/ns/${nsId}/infra/${infraId}`);
+        return response.data?.data || response.data;
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (attempt < 2 && (status === 429 || status === 503)) {
+          await new Promise((r) => setTimeout(r, 750));
+          continue;
+        }
+        console.warn(`getMigratedInfraDetail failed for ns ${nsId}, infra ${infraId}:`, err);
+        return null;
+      }
     }
+    return null;
   },
 
   // Delete migrated infrastructure (DELETE /beetle/migration/ns/{nsId}/infra/{infraId}?option=terminate)
@@ -1307,24 +1456,40 @@ export const tumblebugApi = {
 
   // Get live infrastructure details from CB-Tumblebug (including real VM node IPs & specs)
   getInfra: async (nsId: string, infraId: string): Promise<any> => {
-    try {
-      const response = await api.get(`/tumblebug/ns/${nsId}/infra/${infraId}`);
-      return response.data?.output || response.data;
-    } catch (err: any) {
-      console.warn(`getInfra failed for ${infraId}:`, err);
-      return null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await api.get(`/tumblebug/ns/${nsId}/infra/${infraId}`);
+        return response.data?.output || response.data;
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (attempt < 2 && (status === 429 || status === 503)) {
+          await new Promise((r) => setTimeout(r, 750));
+          continue;
+        }
+        console.warn(`getInfra failed for ${infraId}:`, err);
+        return null;
+      }
     }
+    return null;
   },
 
   // Get SSH Key resource (including privateKey) from CB-Tumblebug
   getSshKey: async (nsId: string, sshKeyId: string): Promise<any> => {
-    try {
-      const response = await api.get(`/tumblebug/ns/${nsId}/resources/sshKey/${sshKeyId}`);
-      return response.data?.output || response.data;
-    } catch (err: any) {
-      console.warn(`getSshKey failed for ${sshKeyId}:`, err);
-      return null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const response = await api.get(`/tumblebug/ns/${nsId}/resources/sshKey/${sshKeyId}`);
+        return response.data?.output || response.data;
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (attempt < 3 && (status === 429 || status === 503)) {
+          await new Promise((r) => setTimeout(r, 750 * attempt));
+          continue;
+        }
+        console.warn(`getSshKey failed for ${sshKeyId}:`, err);
+        return null;
+      }
     }
+    return null;
   },
 
   // 1. Execute remote command on ENTIRE Infrastructure level (Status check only)

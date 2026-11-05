@@ -5,78 +5,225 @@
   "modelType": "cloud",
   "version": "1.0",
   "cloudInfraModel": {
-    "status": "highly-matched",
-    "description": "Candidate #1 | highly-matched | 1 NLB(s) | Overall Match Rate: Min=100.0% Max=100.0% Avg=100.0% | VMs: 2 total, 2 matched, 0 acceptable | 1 NLB warning(s): NLB backend 'influxdb_back': load-balancing algorithm 'roundrobin' cannot be directly mapped to cloud NLB. CSP default algorithm will be used.",
+    "status": "partially-matched",
+    "description": "GPU Candidate #1 | partially-matched | Overall Match Rate: Min=50.0% Max=100.0% Avg=88.6% | VMs: 9 total, 0 matched, 9 acceptable",
     "targetCloud": {
-      "csp": "aws",
-      "region": "ap-northeast-2"
+      "csp": "azure",
+      "region": "koreacentral"
     },
     "targetInfra": {
-      "name": "my-target-model",
+      "name": "gpu-infra-01",
       "installMonAgent": "",
       "label": null,
       "systemLabel": "",
-      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "description": "",
       "nodeGroups": [
         {
-          "name": "ng-influxdb-back",
-          "nodeGroupSize": 2,
+          "name": "vm-ec289605-629d-eddf-d4df-0f4c172d84df",
+          "nodeGroupSize": 1,
           "label": {
-            "nlbBackend": "influxdb_back",
-            "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf"
+            "cm-source-machine-ids": "ec289605-629d-eddf-d4df-0f4c172d84df"
           },
-          "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
-          "connectionName": "aws-ap-northeast-2",
-          "specId": "aws+ap-northeast-2+t3.xlarge",
-          "imageId": "ami-012a353bb3afb92ee",
-          "vNetId": "mig-vnet-01",
-          "subnetId": "mig-subnet-01",
+          "description": "Recommended VM 01 for ec289605-629d-eddf-d4df-0f4c172d84df | Match Rate: CPU=100.0% Memory=57.1% Image=83.3% GPUCount=100.0% GPUVRAM=100.0% GPUModel=100.0%",
+          "connectionName": "azure-koreacentral",
+          "specId": "azure+koreacentral+standard_nc4as_t4_v3",
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "vNetId": "vnet-01",
+          "subnetId": "subnet-01",
           "securityGroupIds": [
-            "mig-sg-01"
+            "sg-01"
           ],
-          "sshKeyId": "mig-sshkey-01",
-          "rootDiskSize": 30,
+          "sshKeyId": "sshkey-01",
+          "rootDiskSize": 100,
           "dataDiskIds": null
         },
         {
-          "name": "ng-ec268ed7-821e-9d73-e79f-961262161624",
+          "name": "vm-ec20a168-fa99-a35c-48a4-632bc2167f5f",
           "nodeGroupSize": 1,
           "label": {
-            "sourceMachineIds": "ec268ed7-821e-9d73-e79f-961262161624"
+            "cm-source-machine-ids": "ec20a168-fa99-a35c-48a4-632bc2167f5f"
           },
-          "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
-          "connectionName": "aws-ap-northeast-2",
-          "specId": "aws+ap-northeast-2+t3.small",
-          "imageId": "ami-012a353bb3afb92ee",
-          "vNetId": "mig-vnet-01",
-          "subnetId": "mig-subnet-01",
+          "description": "Recommended VM 02 for ec20a168-fa99-a35c-48a4-632bc2167f5f | Match Rate: CPU=50.0% Memory=100.0% Image=83.3%",
+          "connectionName": "azure-koreacentral",
+          "specId": "azure+koreacentral+standard_e2_v4",
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "vNetId": "vnet-01",
+          "subnetId": "subnet-01",
           "securityGroupIds": [
-            "mig-sg-02"
+            "sg-02"
           ],
-          "sshKeyId": "mig-sshkey-01",
-          "rootDiskSize": 10,
+          "sshKeyId": "sshkey-01",
+          "rootDiskSize": 50,
+          "dataDiskIds": null
+        },
+        {
+          "name": "vm-ec2cefba-cec3-ae53-b070-1a4153c851cc",
+          "nodeGroupSize": 1,
+          "label": {
+            "cm-source-machine-ids": "ec2cefba-cec3-ae53-b070-1a4153c851cc"
+          },
+          "description": "Recommended VM 03 for ec2cefba-cec3-ae53-b070-1a4153c851cc | Match Rate: CPU=50.0% Memory=100.0% Image=83.3%",
+          "connectionName": "azure-koreacentral",
+          "specId": "azure+koreacentral+standard_e2_v4",
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "vNetId": "vnet-01",
+          "subnetId": "subnet-01",
+          "securityGroupIds": [
+            "sg-02"
+          ],
+          "sshKeyId": "sshkey-01",
+          "rootDiskSize": 50,
+          "dataDiskIds": null
+        },
+        {
+          "name": "vm-ec29ca25-7599-3899-0700-33d9a2d401a2",
+          "nodeGroupSize": 1,
+          "label": {
+            "cm-source-machine-ids": "ec29ca25-7599-3899-0700-33d9a2d401a2"
+          },
+          "description": "Recommended VM 04 for ec29ca25-7599-3899-0700-33d9a2d401a2 | Match Rate: CPU=100.0% Memory=100.0% Image=83.3%",
+          "connectionName": "azure-koreacentral",
+          "specId": "azure+koreacentral+standard_f2s_v2",
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "vNetId": "vnet-01",
+          "subnetId": "subnet-01",
+          "securityGroupIds": [
+            "sg-03"
+          ],
+          "sshKeyId": "sshkey-01",
+          "rootDiskSize": 50,
+          "dataDiskIds": null
+        },
+        {
+          "name": "vm-ec2eb246-6ebf-d90d-8ccf-27d4f0b899eb",
+          "nodeGroupSize": 1,
+          "label": {
+            "cm-source-machine-ids": "ec2eb246-6ebf-d90d-8ccf-27d4f0b899eb"
+          },
+          "description": "Recommended VM 05 for ec2eb246-6ebf-d90d-8ccf-27d4f0b899eb | Match Rate: CPU=100.0% Memory=100.0% Image=83.3%",
+          "connectionName": "azure-koreacentral",
+          "specId": "azure+koreacentral+standard_d2s_v5",
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "vNetId": "vnet-01",
+          "subnetId": "subnet-01",
+          "securityGroupIds": [
+            "sg-04"
+          ],
+          "sshKeyId": "sshkey-01",
+          "rootDiskSize": 50,
+          "dataDiskIds": null
+        },
+        {
+          "name": "vm-ec2bea1c-2805-10e9-b2e7-d6384a1d427a",
+          "nodeGroupSize": 1,
+          "label": {
+            "cm-source-machine-ids": "ec2bea1c-2805-10e9-b2e7-d6384a1d427a"
+          },
+          "description": "Recommended VM 06 for ec2bea1c-2805-10e9-b2e7-d6384a1d427a | Match Rate: CPU=50.0% Memory=100.0% Image=83.3%",
+          "connectionName": "azure-koreacentral",
+          "specId": "azure+koreacentral+standard_e2_v4",
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "vNetId": "vnet-01",
+          "subnetId": "subnet-01",
+          "securityGroupIds": [
+            "sg-05"
+          ],
+          "sshKeyId": "sshkey-01",
+          "rootDiskSize": 50,
+          "dataDiskIds": null
+        },
+        {
+          "name": "vm-ec244f3b-e085-b43a-4cfd-9be512e595ff",
+          "nodeGroupSize": 1,
+          "label": {
+            "cm-source-machine-ids": "ec244f3b-e085-b43a-4cfd-9be512e595ff"
+          },
+          "description": "Recommended VM 07 for ec244f3b-e085-b43a-4cfd-9be512e595ff | Match Rate: CPU=100.0% Memory=100.0% Image=83.3%",
+          "connectionName": "azure-koreacentral",
+          "specId": "azure+koreacentral+standard_d2s_v5",
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "vNetId": "vnet-01",
+          "subnetId": "subnet-02",
+          "securityGroupIds": [
+            "sg-06"
+          ],
+          "sshKeyId": "sshkey-01",
+          "rootDiskSize": 50,
+          "dataDiskIds": null
+        },
+        {
+          "name": "vm-ec21093c-e5f6-f75c-604b-7d65c7b92bb1",
+          "nodeGroupSize": 1,
+          "label": {
+            "cm-source-machine-ids": "ec21093c-e5f6-f75c-604b-7d65c7b92bb1"
+          },
+          "description": "Recommended VM 08 for ec21093c-e5f6-f75c-604b-7d65c7b92bb1 | Match Rate: CPU=100.0% Memory=100.0% Image=83.3%",
+          "connectionName": "azure-koreacentral",
+          "specId": "azure+koreacentral+standard_d2s_v5",
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "vNetId": "vnet-01",
+          "subnetId": "subnet-02",
+          "securityGroupIds": [
+            "sg-07"
+          ],
+          "sshKeyId": "sshkey-01",
+          "rootDiskSize": 50,
+          "dataDiskIds": null
+        },
+        {
+          "name": "vm-ec2f88e7-61ec-1c59-75c1-335197dddc71",
+          "nodeGroupSize": 1,
+          "label": {
+            "cm-source-machine-ids": "ec2f88e7-61ec-1c59-75c1-335197dddc71"
+          },
+          "description": "Recommended VM 09 for ec2f88e7-61ec-1c59-75c1-335197dddc71 | Match Rate: CPU=100.0% Memory=100.0% Image=83.3%",
+          "connectionName": "azure-koreacentral",
+          "specId": "azure+koreacentral+standard_f2s_v2",
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "vNetId": "vnet-01",
+          "subnetId": "subnet-02",
+          "securityGroupIds": [
+            "sg-08"
+          ],
+          "sshKeyId": "sshkey-01",
+          "rootDiskSize": 50,
           "dataDiskIds": null
         }
       ],
       "policyOnPartialFailure": ""
     },
     "targetVNet": {
-      "name": "mig-vnet-01",
-      "connectionName": "aws-ap-northeast-2",
+      "name": "vnet-01",
+      "connectionName": "azure-koreacentral",
       "cidrBlock": "10.0.0.0/21",
       "subnetInfoList": [
         {
-          "name": "mig-subnet-01",
+          "name": "subnet-01",
           "ipv4_CIDR": "10.0.1.0/24",
-          "description": "a recommended subnet for migration"
+          "description": "a recommended subnet for GPU migration"
+        },
+        {
+          "name": "subnet-02",
+          "ipv4_CIDR": "10.0.2.0/24",
+          "description": "a recommended subnet for migration",
+          "zone": ""
         }
       ],
-      "description": "a recommended vNet for migration"
+      "description": "a recommended vNet for GPU workload migration"
     },
     "targetSshKey": {
-      "name": "mig-sshkey-01",
-      "connectionName": "aws-ap-northeast-2",
-      "description": "SSH key pair for migration (Note: provided ONLY once, MUST be downloaded)",
+      "name": "sshkey-01",
+      "connectionName": "azure-koreacentral",
+      "description": "SSH Key pair for GPU migration",
       "cspResourceId": "",
       "fingerprint": "",
       "username": "",
@@ -86,22 +233,27 @@
     },
     "targetSpecList": [
       {
-        "id": "aws+ap-northeast-2+t3.xlarge",
-        "uid": "tbt1via2qor5okve6pun",
-        "cspSpecName": "t3.xlarge",
-        "name": "aws+ap-northeast-2+t3.xlarge",
+        "id": "azure+koreacentral+standard_nc4as_t4_v3",
+        "uid": "tbnn0ja0urttjsu8bmq5",
+        "cspSpecName": "Standard_NC4as_T4_v3",
+        "name": "azure+koreacentral+standard_nc4as_t4_v3",
         "namespace": "system",
-        "connectionName": "aws-ap-northeast-2",
-        "providerName": "aws",
-        "regionName": "ap-northeast-2",
-        "regionLatitude": 37.36,
-        "regionLongitude": 126.78,
+        "connectionName": "azure-koreacentral",
+        "providerName": "azure",
+        "regionName": "koreacentral",
+        "regionLatitude": 37.5665,
+        "regionLongitude": 126.978,
         "infraType": "node",
         "architecture": "x86_64",
         "vCPU": 4,
-        "memoryGiB": 16,
-        "diskSizeGB": -1,
-        "costPerHour": 0.208,
+        "memoryGiB": 28,
+        "diskSizeGB": 189,
+        "acceleratorModel": "NVIDIA Tesla T4",
+        "acceleratorCount": 1,
+        "acceleratorMemoryGB": 16,
+        "acceleratorType": "gpu",
+        "costPerHour": 0.647,
+        "orderInFilteredResult": 1,
         "evaluationScore01": -1,
         "evaluationScore02": -1,
         "evaluationScore03": -1,
@@ -113,108 +265,206 @@
         "evaluationScore09": -1,
         "evaluationScore10": -1,
         "rootDiskType": "",
-        "rootDiskSize": -1,
+        "rootDiskSize": 189,
         "systemLabel": "auto-gen",
         "details": [
           {
-            "key": "AutoRecoverySupported",
-            "value": "true"
+            "key": "MaxDataDiskCount",
+            "value": "8"
           },
           {
-            "key": "BareMetal",
-            "value": "false"
+            "key": "MemoryInMB",
+            "value": "28672"
           },
           {
-            "key": "BurstablePerformanceSupported",
-            "value": "true"
+            "key": "Name",
+            "value": "Standard_NC4as_T4_v3"
           },
           {
-            "key": "CurrentGeneration",
-            "value": "true"
+            "key": "NumberOfCores",
+            "value": "4"
           },
           {
-            "key": "DedicatedHostsSupported",
-            "value": "true"
+            "key": "OSDiskSizeInMB",
+            "value": "1047552"
           },
           {
-            "key": "EbsInfo",
-            "value": "{EbsOptimizedInfo:{BaselineBandwidthInMbps:695,BaselineIops:4000,BaselineThroughputInMBps:86.875,MaximumBandwidthInMbps:2780,MaximumIops:15700,MaximumThroughputInMBps:347.5},EbsOptimizedSupport:default,EncryptionSupport:supported,NvmeSupport:required}"
+            "key": "ResourceDiskSizeInMB",
+            "value": "180224"
           },
           {
-            "key": "FreeTierEligible",
-            "value": "false"
+            "key": "MaxResourceVolumeMB",
+            "value": "180224"
           },
           {
-            "key": "HibernationSupported",
-            "value": "true"
+            "key": "OSVhdSizeMB",
+            "value": "1047552"
           },
           {
-            "key": "Hypervisor",
-            "value": "nitro"
+            "key": "vCPUs",
+            "value": "4"
           },
           {
-            "key": "InstanceStorageSupported",
-            "value": "false"
+            "key": "MemoryPreservingMaintenanceSupported",
+            "value": "False"
           },
           {
-            "key": "InstanceType",
-            "value": "t3.xlarge"
+            "key": "HyperVGenerations",
+            "value": "V1,V2"
           },
           {
-            "key": "MemoryInfo",
-            "value": "{SizeInMiB:16384}"
+            "key": "SupportedCapacityReservationTypes",
+            "value": "Open,Targeted"
           },
           {
-            "key": "NetworkInfo",
-            "value": "{DefaultNetworkCardIndex:0,EfaInfo:null,EfaSupported:false,EnaSupport:required,Ipv4AddressesPerInterface:15,Ipv6AddressesPerInterface:15,Ipv6Supported:true,MaximumNetworkCards:1,MaximumNetworkInterfaces:4,NetworkCards:[{MaximumNetworkInterfaces:4,NetworkCardIndex:0,NetworkPerformance:Up to 5 Gigabit}],NetworkPerformance:Up to 5 Gigabit}"
+            "key": "SupportedEphemeralOSDiskPlacements",
+            "value": "ResourceDisk,CacheDisk"
           },
           {
-            "key": "PlacementGroupInfo",
-            "value": "{SupportedStrategies:[partition,spread]}"
+            "key": "MemoryGB",
+            "value": "28"
           },
           {
-            "key": "ProcessorInfo",
-            "value": "{SupportedArchitectures:[x86_64],SustainedClockSpeedInGhz:2.5}"
+            "key": "MaxDataDiskCount",
+            "value": "8"
           },
           {
-            "key": "SupportedBootModes",
-            "value": "legacy-bios; uefi"
+            "key": "CpuArchitectureType",
+            "value": "x64"
           },
           {
-            "key": "SupportedRootDeviceTypes",
-            "value": "ebs"
+            "key": "LowPriorityCapable",
+            "value": "True"
           },
           {
-            "key": "SupportedUsageClasses",
-            "value": "on-demand; spot"
+            "key": "PremiumIO",
+            "value": "True"
           },
           {
-            "key": "SupportedVirtualizationTypes",
-            "value": "hvm"
+            "key": "VMDeploymentTypes",
+            "value": "IaaS"
           },
           {
-            "key": "VCpuInfo",
-            "value": "{DefaultCores:2,DefaultThreadsPerCore:2,DefaultVCpus:4,ValidCores:[2],ValidThreadsPerCore:[1,2]}"
+            "key": "vCPUsConstraintsAllowed",
+            "value": "1, 2, 4"
+          },
+          {
+            "key": "vCPUsAvailable",
+            "value": "4"
+          },
+          {
+            "key": "GPUs",
+            "value": "1"
+          },
+          {
+            "key": "vCPUsPerCore",
+            "value": "1"
+          },
+          {
+            "key": "CombinedTempDiskAndCachedIOPS",
+            "value": "4000"
+          },
+          {
+            "key": "CombinedTempDiskAndCachedReadBytesPerSecond",
+            "value": "62914560"
+          },
+          {
+            "key": "CombinedTempDiskAndCachedWriteBytesPerSecond",
+            "value": "62914560"
+          },
+          {
+            "key": "CachedDiskBytes",
+            "value": "154618822656"
+          },
+          {
+            "key": "UncachedDiskIOPS",
+            "value": "48000"
+          },
+          {
+            "key": "UncachedDiskBytesPerSecond",
+            "value": "737280000"
+          },
+          {
+            "key": "EphemeralOSDiskSupported",
+            "value": "True"
+          },
+          {
+            "key": "EncryptionAtHostSupported",
+            "value": "True"
+          },
+          {
+            "key": "CapacityReservationSupported",
+            "value": "True"
+          },
+          {
+            "key": "AcceleratedNetworkingEnabled",
+            "value": "True"
+          },
+          {
+            "key": "RdmaEnabled",
+            "value": "False"
+          },
+          {
+            "key": "MaxNetworkInterfaces",
+            "value": "4"
+          },
+          {
+            "key": "UltraSSDAvailable",
+            "value": "True"
+          },
+          {
+            "key": "LocationInfo_0_Location",
+            "value": "KoreaCentral"
+          },
+          {
+            "key": "LocationInfo_0_Zone_0",
+            "value": "2"
+          },
+          {
+            "key": "LocationInfo_0_Zone_1",
+            "value": "3"
+          },
+          {
+            "key": "LocationInfo_0_ZoneDetail_0_Capability_0_UltraSSDAvailable",
+            "value": "True"
+          },
+          {
+            "key": "Family",
+            "value": "Standard NCASv3_T4 Family"
+          },
+          {
+            "key": "Tier",
+            "value": "Standard"
+          },
+          {
+            "key": "Size",
+            "value": "NC4as_T4_v3"
+          },
+          {
+            "key": "ResourceType",
+            "value": "virtualMachines"
           }
-        ]
+        ],
+        "availabilityStatus": "Unverified",
+        "availabilityCheckedAt": "2026-11-04T07:06:45.385496937Z"
       },
       {
-        "id": "aws+ap-northeast-2+t3.small",
-        "uid": "tbpf96u7vfjaf20v9o5q",
-        "cspSpecName": "t3.small",
-        "name": "aws+ap-northeast-2+t3.small",
+        "id": "azure+koreacentral+standard_e2_v4",
+        "uid": "tbie4davcl8ej3hom4m0",
+        "cspSpecName": "Standard_E2_v4",
+        "name": "azure+koreacentral+standard_e2_v4",
         "namespace": "system",
-        "connectionName": "aws-ap-northeast-2",
-        "providerName": "aws",
-        "regionName": "ap-northeast-2",
-        "regionLatitude": 37.36,
-        "regionLongitude": 126.78,
+        "connectionName": "azure-koreacentral",
+        "providerName": "azure",
+        "regionName": "koreacentral",
+        "regionLatitude": 37.5665,
+        "regionLongitude": 126.978,
         "infraType": "node",
         "architecture": "x86_64",
         "vCPU": 2,
-        "memoryGiB": 2,
-        "diskSizeGB": -1,
-        "costPerHour": 0.026,
+        "memoryGiB": 16,
+        "costPerHour": 0.152,
+        "orderInFilteredResult": 7,
         "evaluationScore01": -1,
         "evaluationScore02": -1,
         "evaluationScore03": -1,
@@ -226,110 +476,627 @@
         "evaluationScore09": -1,
         "evaluationScore10": -1,
         "rootDiskType": "",
-        "rootDiskSize": -1,
+        "rootDiskSize": 0,
         "systemLabel": "auto-gen",
         "details": [
           {
-            "key": "AutoRecoverySupported",
-            "value": "true"
+            "key": "MaxDataDiskCount",
+            "value": "4"
           },
           {
-            "key": "BareMetal",
-            "value": "false"
+            "key": "MemoryInMB",
+            "value": "16384"
           },
           {
-            "key": "BurstablePerformanceSupported",
-            "value": "true"
+            "key": "Name",
+            "value": "Standard_E2_v4"
           },
           {
-            "key": "CurrentGeneration",
-            "value": "true"
+            "key": "NumberOfCores",
+            "value": "2"
           },
           {
-            "key": "DedicatedHostsSupported",
-            "value": "true"
+            "key": "OSDiskSizeInMB",
+            "value": "1047552"
           },
           {
-            "key": "EbsInfo",
-            "value": "{EbsOptimizedInfo:{BaselineBandwidthInMbps:174,BaselineIops:1000,BaselineThroughputInMBps:21.75,MaximumBandwidthInMbps:2085,MaximumIops:11800,MaximumThroughputInMBps:260.625},EbsOptimizedSupport:default,EncryptionSupport:supported,NvmeSupport:required}"
+            "key": "ResourceDiskSizeInMB",
+            "value": "0"
           },
           {
-            "key": "FreeTierEligible",
-            "value": "true"
+            "key": "MaxResourceVolumeMB",
+            "value": "0"
+          },
+          {
+            "key": "OSVhdSizeMB",
+            "value": "1047552"
+          },
+          {
+            "key": "vCPUs",
+            "value": "2"
+          },
+          {
+            "key": "MemoryPreservingMaintenanceSupported",
+            "value": "True"
+          },
+          {
+            "key": "HyperVGenerations",
+            "value": "V1,V2"
+          },
+          {
+            "key": "SupportedCapacityReservationTypes",
+            "value": "Open,Targeted"
+          },
+          {
+            "key": "MemoryGB",
+            "value": "16"
+          },
+          {
+            "key": "MaxDataDiskCount",
+            "value": "4"
+          },
+          {
+            "key": "CpuArchitectureType",
+            "value": "x64"
+          },
+          {
+            "key": "LowPriorityCapable",
+            "value": "True"
+          },
+          {
+            "key": "PremiumIO",
+            "value": "False"
+          },
+          {
+            "key": "VMDeploymentTypes",
+            "value": "IaaS"
+          },
+          {
+            "key": "vCPUsConstraintsAllowed",
+            "value": "1, 2"
+          },
+          {
+            "key": "vCPUsAvailable",
+            "value": "2"
+          },
+          {
+            "key": "ACUs",
+            "value": "195"
+          },
+          {
+            "key": "vCPUsPerCore",
+            "value": "2"
+          },
+          {
+            "key": "CombinedTempDiskAndCachedIOPS",
+            "value": "19000"
+          },
+          {
+            "key": "CombinedTempDiskAndCachedReadBytesPerSecond",
+            "value": "120586240"
+          },
+          {
+            "key": "CombinedTempDiskAndCachedWriteBytesPerSecond",
+            "value": "120586240"
+          },
+          {
+            "key": "UncachedDiskIOPS",
+            "value": "3200"
+          },
+          {
+            "key": "UncachedDiskBytesPerSecond",
+            "value": "48000000"
+          },
+          {
+            "key": "EphemeralOSDiskSupported",
+            "value": "False"
+          },
+          {
+            "key": "EncryptionAtHostSupported",
+            "value": "False"
+          },
+          {
+            "key": "CapacityReservationSupported",
+            "value": "True"
+          },
+          {
+            "key": "AcceleratedNetworkingEnabled",
+            "value": "True"
+          },
+          {
+            "key": "RdmaEnabled",
+            "value": "False"
+          },
+          {
+            "key": "MaxNetworkInterfaces",
+            "value": "2"
+          },
+          {
+            "key": "LocationInfo_0_Location",
+            "value": "KoreaCentral"
+          },
+          {
+            "key": "LocationInfo_0_Zone_0",
+            "value": "1"
+          },
+          {
+            "key": "LocationInfo_0_Zone_1",
+            "value": "3"
+          },
+          {
+            "key": "LocationInfo_0_Zone_2",
+            "value": "2"
+          },
+          {
+            "key": "Family",
+            "value": "standardEv4Family"
+          },
+          {
+            "key": "Tier",
+            "value": "Standard"
+          },
+          {
+            "key": "Size",
+            "value": "E2_v4"
+          },
+          {
+            "key": "ResourceType",
+            "value": "virtualMachines"
+          }
+        ],
+        "availabilityStatus": "Available",
+        "availableZones": [
+          "1",
+          "2",
+          "3"
+        ],
+        "availabilityCheckedAt": "2026-11-04T07:06:49.325607102Z",
+        "availabilityRefreshAfter": "2026-11-04T08:06:49.325607102Z"
+      },
+      {
+        "id": "azure+koreacentral+standard_f2s_v2",
+        "uid": "tblb4ok7nttr67bc9df8",
+        "cspSpecName": "Standard_F2s_v2",
+        "name": "azure+koreacentral+standard_f2s_v2",
+        "namespace": "system",
+        "connectionName": "azure-koreacentral",
+        "providerName": "azure",
+        "regionName": "koreacentral",
+        "regionLatitude": 37.5665,
+        "regionLongitude": 126.978,
+        "infraType": "node",
+        "architecture": "x86_64",
+        "vCPU": 2,
+        "memoryGiB": 4,
+        "diskSizeGB": 17,
+        "costPerHour": 0.096,
+        "orderInFilteredResult": 16,
+        "evaluationScore01": -1,
+        "evaluationScore02": -1,
+        "evaluationScore03": -1,
+        "evaluationScore04": -1,
+        "evaluationScore05": -1,
+        "evaluationScore06": -1,
+        "evaluationScore07": -1,
+        "evaluationScore08": -1,
+        "evaluationScore09": -1,
+        "evaluationScore10": -1,
+        "rootDiskType": "",
+        "rootDiskSize": 17,
+        "systemLabel": "auto-gen",
+        "details": [
+          {
+            "key": "MaxDataDiskCount",
+            "value": "4"
+          },
+          {
+            "key": "MemoryInMB",
+            "value": "4096"
+          },
+          {
+            "key": "Name",
+            "value": "Standard_F2s_v2"
+          },
+          {
+            "key": "NumberOfCores",
+            "value": "2"
+          },
+          {
+            "key": "OSDiskSizeInMB",
+            "value": "1047552"
+          },
+          {
+            "key": "ResourceDiskSizeInMB",
+            "value": "16384"
+          },
+          {
+            "key": "MaxResourceVolumeMB",
+            "value": "16384"
+          },
+          {
+            "key": "OSVhdSizeMB",
+            "value": "1047552"
+          },
+          {
+            "key": "vCPUs",
+            "value": "2"
+          },
+          {
+            "key": "MemoryPreservingMaintenanceSupported",
+            "value": "True"
+          },
+          {
+            "key": "HyperVGenerations",
+            "value": "V1,V2"
+          },
+          {
+            "key": "SupportedCapacityReservationTypes",
+            "value": "Open,Targeted"
+          },
+          {
+            "key": "SupportedEphemeralOSDiskPlacements",
+            "value": "ResourceDisk,CacheDisk"
+          },
+          {
+            "key": "MemoryGB",
+            "value": "4"
+          },
+          {
+            "key": "MaxDataDiskCount",
+            "value": "4"
+          },
+          {
+            "key": "CpuArchitectureType",
+            "value": "x64"
+          },
+          {
+            "key": "LowPriorityCapable",
+            "value": "True"
+          },
+          {
+            "key": "PremiumIO",
+            "value": "True"
+          },
+          {
+            "key": "VMDeploymentTypes",
+            "value": "IaaS"
+          },
+          {
+            "key": "vCPUsConstraintsAllowed",
+            "value": "1, 2"
+          },
+          {
+            "key": "vCPUsAvailable",
+            "value": "2"
+          },
+          {
+            "key": "ACUs",
+            "value": "195"
+          },
+          {
+            "key": "vCPUsPerCore",
+            "value": "2"
+          },
+          {
+            "key": "CombinedTempDiskAndCachedIOPS",
+            "value": "4000"
+          },
+          {
+            "key": "CombinedTempDiskAndCachedReadBytesPerSecond",
+            "value": "32768000"
+          },
+          {
+            "key": "CombinedTempDiskAndCachedWriteBytesPerSecond",
+            "value": "32768000"
+          },
+          {
+            "key": "CachedDiskBytes",
+            "value": "34359738368"
+          },
+          {
+            "key": "UncachedDiskIOPS",
+            "value": "3200"
+          },
+          {
+            "key": "UncachedDiskBytesPerSecond",
+            "value": "48000000"
+          },
+          {
+            "key": "RetirementDateUtc",
+            "value": "11/15/2028"
+          },
+          {
+            "key": "EphemeralOSDiskSupported",
+            "value": "True"
+          },
+          {
+            "key": "EncryptionAtHostSupported",
+            "value": "True"
+          },
+          {
+            "key": "CapacityReservationSupported",
+            "value": "True"
+          },
+          {
+            "key": "AcceleratedNetworkingEnabled",
+            "value": "True"
+          },
+          {
+            "key": "RdmaEnabled",
+            "value": "False"
+          },
+          {
+            "key": "MaxNetworkInterfaces",
+            "value": "2"
+          },
+          {
+            "key": "UltraSSDAvailable",
+            "value": "True"
+          },
+          {
+            "key": "LocationInfo_0_Location",
+            "value": "KoreaCentral"
+          },
+          {
+            "key": "LocationInfo_0_Zone_0",
+            "value": "1"
+          },
+          {
+            "key": "LocationInfo_0_Zone_1",
+            "value": "3"
+          },
+          {
+            "key": "LocationInfo_0_Zone_2",
+            "value": "2"
+          },
+          {
+            "key": "LocationInfo_0_ZoneDetail_0_Capability_0_UltraSSDAvailable",
+            "value": "True"
+          },
+          {
+            "key": "Family",
+            "value": "standardFSv2Family"
+          },
+          {
+            "key": "Tier",
+            "value": "Standard"
+          },
+          {
+            "key": "Size",
+            "value": "F2s_v2"
+          },
+          {
+            "key": "ResourceType",
+            "value": "virtualMachines"
+          }
+        ],
+        "availabilityStatus": "Unverified"
+      },
+      {
+        "id": "azure+koreacentral+standard_d2s_v5",
+        "uid": "tbbvpp9ein9v9v21nkmh",
+        "cspSpecName": "Standard_D2s_v5",
+        "name": "azure+koreacentral+standard_d2s_v5",
+        "namespace": "system",
+        "connectionName": "azure-koreacentral",
+        "providerName": "azure",
+        "regionName": "koreacentral",
+        "regionLatitude": 37.5665,
+        "regionLongitude": 126.978,
+        "infraType": "node",
+        "architecture": "x86_64",
+        "vCPU": 2,
+        "memoryGiB": 8,
+        "costPerHour": 0.118,
+        "orderInFilteredResult": 13,
+        "evaluationScore01": -1,
+        "evaluationScore02": -1,
+        "evaluationScore03": -1,
+        "evaluationScore04": -1,
+        "evaluationScore05": -1,
+        "evaluationScore06": -1,
+        "evaluationScore07": -1,
+        "evaluationScore08": -1,
+        "evaluationScore09": -1,
+        "evaluationScore10": -1,
+        "rootDiskType": "",
+        "rootDiskSize": 0,
+        "systemLabel": "auto-gen",
+        "details": [
+          {
+            "key": "MaxDataDiskCount",
+            "value": "4"
+          },
+          {
+            "key": "MemoryInMB",
+            "value": "8192"
+          },
+          {
+            "key": "Name",
+            "value": "Standard_D2s_v5"
+          },
+          {
+            "key": "NumberOfCores",
+            "value": "2"
+          },
+          {
+            "key": "OSDiskSizeInMB",
+            "value": "1047552"
+          },
+          {
+            "key": "ResourceDiskSizeInMB",
+            "value": "0"
+          },
+          {
+            "key": "MaxResourceVolumeMB",
+            "value": "0"
+          },
+          {
+            "key": "OSVhdSizeMB",
+            "value": "1047552"
+          },
+          {
+            "key": "vCPUs",
+            "value": "2"
+          },
+          {
+            "key": "MemoryPreservingMaintenanceSupported",
+            "value": "True"
+          },
+          {
+            "key": "HyperVGenerations",
+            "value": "V1,V2"
+          },
+          {
+            "key": "SupportedCapacityReservationTypes",
+            "value": "Open,Targeted"
+          },
+          {
+            "key": "MemoryGB",
+            "value": "8"
+          },
+          {
+            "key": "MaxDataDiskCount",
+            "value": "4"
+          },
+          {
+            "key": "CpuArchitectureType",
+            "value": "x64"
+          },
+          {
+            "key": "LowPriorityCapable",
+            "value": "True"
           },
           {
             "key": "HibernationSupported",
-            "value": "true"
+            "value": "True"
           },
           {
-            "key": "Hypervisor",
-            "value": "nitro"
+            "key": "PremiumIO",
+            "value": "True"
           },
           {
-            "key": "InstanceStorageSupported",
-            "value": "false"
+            "key": "VMDeploymentTypes",
+            "value": "IaaS"
           },
           {
-            "key": "InstanceType",
-            "value": "t3.small"
+            "key": "vCPUsConstraintsAllowed",
+            "value": "1, 2"
           },
           {
-            "key": "MemoryInfo",
-            "value": "{SizeInMiB:2048}"
+            "key": "vCPUsAvailable",
+            "value": "2"
           },
           {
-            "key": "NetworkInfo",
-            "value": "{DefaultNetworkCardIndex:0,EfaInfo:null,EfaSupported:false,EnaSupport:required,Ipv4AddressesPerInterface:4,Ipv6AddressesPerInterface:4,Ipv6Supported:true,MaximumNetworkCards:1,MaximumNetworkInterfaces:3,NetworkCards:[{MaximumNetworkInterfaces:3,NetworkCardIndex:0,NetworkPerformance:Up to 5 Gigabit}],NetworkPerformance:Up to 5 Gigabit}"
+            "key": "vCPUsPerCore",
+            "value": "2"
           },
           {
-            "key": "PlacementGroupInfo",
-            "value": "{SupportedStrategies:[partition,spread]}"
+            "key": "CombinedTempDiskAndCachedIOPS",
+            "value": "9000"
           },
           {
-            "key": "ProcessorInfo",
-            "value": "{SupportedArchitectures:[x86_64],SustainedClockSpeedInGhz:2.5}"
+            "key": "CombinedTempDiskAndCachedReadBytesPerSecond",
+            "value": "125000000"
           },
           {
-            "key": "SupportedBootModes",
-            "value": "legacy-bios; uefi"
+            "key": "CombinedTempDiskAndCachedWriteBytesPerSecond",
+            "value": "125000000"
           },
           {
-            "key": "SupportedRootDeviceTypes",
-            "value": "ebs"
+            "key": "UncachedDiskIOPS",
+            "value": "3750"
           },
           {
-            "key": "SupportedUsageClasses",
-            "value": "on-demand; spot"
+            "key": "UncachedDiskBytesPerSecond",
+            "value": "85000000"
           },
           {
-            "key": "SupportedVirtualizationTypes",
-            "value": "hvm"
+            "key": "EphemeralOSDiskSupported",
+            "value": "False"
           },
           {
-            "key": "VCpuInfo",
-            "value": "{DefaultCores:1,DefaultThreadsPerCore:2,DefaultVCpus:2,ValidCores:[1],ValidThreadsPerCore:[1,2]}"
+            "key": "EncryptionAtHostSupported",
+            "value": "True"
+          },
+          {
+            "key": "CapacityReservationSupported",
+            "value": "True"
+          },
+          {
+            "key": "AcceleratedNetworkingEnabled",
+            "value": "True"
+          },
+          {
+            "key": "RdmaEnabled",
+            "value": "False"
+          },
+          {
+            "key": "MaxNetworkInterfaces",
+            "value": "2"
+          },
+          {
+            "key": "UltraSSDAvailable",
+            "value": "True"
+          },
+          {
+            "key": "LocationInfo_0_Location",
+            "value": "KoreaCentral"
+          },
+          {
+            "key": "LocationInfo_0_Zone_0",
+            "value": "1"
+          },
+          {
+            "key": "LocationInfo_0_Zone_1",
+            "value": "3"
+          },
+          {
+            "key": "LocationInfo_0_Zone_2",
+            "value": "2"
+          },
+          {
+            "key": "LocationInfo_0_ZoneDetail_0_Capability_0_UltraSSDAvailable",
+            "value": "True"
+          },
+          {
+            "key": "Family",
+            "value": "standardDSv5Family"
+          },
+          {
+            "key": "Tier",
+            "value": "Standard"
+          },
+          {
+            "key": "Size",
+            "value": "D2s_v5"
+          },
+          {
+            "key": "ResourceType",
+            "value": "virtualMachines"
           }
-        ]
+        ],
+        "availabilityStatus": "Unverified"
       }
     ],
     "targetOsImageList": [
       {
         "resourceType": "image",
         "namespace": "system",
-        "providerName": "aws",
-        "cspImageName": "ami-012a353bb3afb92ee",
+        "providerName": "azure",
+        "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
         "regionList": [
-          "ap-northeast-2"
+          "common"
         ],
-        "id": "ami-012a353bb3afb92ee",
-        "uid": "tbbe6d8vhrqe5l5nne2u",
-        "name": "ami-012a353bb3afb92ee",
+        "id": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+        "uid": "tbmm9857u5pvqm24elb2",
+        "name": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
         "sourceNodeUid": "",
         "sourceCspImageName": "",
-        "connectionName": "aws-ap-northeast-2",
+        "connectionName": "azure-australiacentral",
         "infraType": "",
-        "fetchedTime": "2026.08.21 14:20:39 Fri",
-        "creationDate": "2026-07-31T07:25:12.000Z",
+        "fetchedTime": "2026.10.29 04:34:25 Thu",
+        "creationDate": "",
         "isGPUImage": false,
         "isKubernetesImage": false,
         "isBasicImage": true,
@@ -337,112 +1104,88 @@
         "osType": "Ubuntu 22.04",
         "osArchitecture": "x86_64",
         "osPlatform": "Linux/UNIX",
-        "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731",
-        "osDiskType": "ebs",
+        "osDistribution": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+        "osDiskType": "default",
         "osDiskSizeGB": -1,
         "imageStatus": "Available",
         "details": [
           {
-            "key": "Architecture",
-            "value": "x86_64"
+            "key": "Location",
+            "value": "australiacentral"
           },
           {
-            "key": "BlockDeviceMappings",
-            "value": "{DeviceName:/dev/sda1,Ebs:{DeleteOnTermination:true,Encrypted:false,Iops:null,KmsKeyId:null,OutpostArn:null,SnapshotId:snap-047f4bba8e035b38e,Throughput:null,VolumeSize:8,VolumeType:gp2},NoDevice:null,VirtualName:null}; {DeviceName:/dev/sdb,Ebs:null,NoDevice:null,VirtualName:ephemeral0}; {DeviceName:/dev/sdc,Ebs:null,NoDevice:null,VirtualName:ephemeral1}"
+            "key": "Publisher",
+            "value": "Canonical"
           },
           {
-            "key": "BootMode",
-            "value": "uefi-preferred"
+            "key": "Offer",
+            "value": "0001-com-ubuntu-server-jammy"
           },
           {
-            "key": "CreationDate",
-            "value": "2026-07-31T07:25:12.000Z"
+            "key": "SKU",
+            "value": "22_04-lts-gen2"
           },
           {
-            "key": "DeprecationTime",
-            "value": "2028-07-31T07:25:12.000Z"
+            "key": "Version",
+            "value": "22.04.202610220"
           },
           {
-            "key": "Description",
-            "value": "Canonical, Ubuntu, 22.04, amd64 jammy image"
+            "key": "ID",
+            "value": "/Subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/Providers/Microsoft.Compute/Locations/AustraliaCentral/Publishers/Canonical/ArtifactTypes/VMImage/Offers/0001-com-ubuntu-server-jammy/Skus/22_04-lts-gen2/Versions/22.04.202610220"
           },
           {
-            "key": "EnaSupport",
-            "value": "true"
+            "key": "HyperVGeneration",
+            "value": "V2"
           },
           {
-            "key": "Hypervisor",
-            "value": "xen"
+            "key": "Features",
+            "value": "SecurityType=TrustedLaunchSupported, IsAcceleratedNetworkSupported=True, DiskControllerTypes=SCSI, NVMe, IsHibernateSupported=True"
           },
           {
-            "key": "ImageId",
-            "value": "ami-012a353bb3afb92ee"
+            "key": "FeatureCount",
+            "value": "4"
           },
           {
-            "key": "ImageLocation",
-            "value": "amazon/ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731"
-          },
-          {
-            "key": "ImageOwnerAlias",
-            "value": "amazon"
-          },
-          {
-            "key": "ImageType",
-            "value": "machine"
-          },
-          {
-            "key": "Name",
-            "value": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260731"
-          },
-          {
-            "key": "OwnerId",
-            "value": "099720109477"
-          },
-          {
-            "key": "PlatformDetails",
-            "value": "Linux/UNIX"
-          },
-          {
-            "key": "Public",
-            "value": "true"
-          },
-          {
-            "key": "RootDeviceName",
-            "value": "/dev/sda1"
-          },
-          {
-            "key": "RootDeviceType",
-            "value": "ebs"
-          },
-          {
-            "key": "SriovNetSupport",
-            "value": "simple"
-          },
-          {
-            "key": "State",
-            "value": "available"
-          },
-          {
-            "key": "UsageOperation",
-            "value": "RunInstances"
-          },
-          {
-            "key": "VirtualizationType",
-            "value": "hvm"
+            "key": "ImageDeprecationState",
+            "value": "Active"
           }
         ],
-        "systemLabel": "",
-        "description": "Canonical, Ubuntu, 22.04, amd64 jammy image",
+        "systemLabel": "from-assets",
+        "description": "Server LTS Gen2",
         "commandHistory": null
       }
     ],
     "targetSecurityGroupList": [
       {
-        "name": "mig-sg-01",
-        "connectionName": "aws-ap-northeast-2",
-        "vNetId": "mig-vnet-01",
-        "description": "Recommended security group for NLB backend influxdb_back",
+        "name": "sg-01",
+        "connectionName": "azure-koreacentral",
+        "vNetId": "vnet-01",
+        "description": "Recommended security group for ec289605-629d-eddf-d4df-0f4c172d84df",
         "firewallRules": [
+          {
+            "Ports": "",
+            "Protocol": "icmp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "68",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "5353",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1900",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
           {
             "Ports": "22",
             "Protocol": "tcp",
@@ -450,10 +1193,16 @@
             "CIDR": "0.0.0.0/0"
           },
           {
-            "Ports": "8086",
+            "Ports": "3000",
             "Protocol": "tcp",
             "Direction": "inbound",
-            "CIDR": "10.0.0.0/16"
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "11434",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
           },
           {
             "Ports": "",
@@ -462,20 +1211,50 @@
             "CIDR": "10.0.0.0/16"
           },
           {
-            "Ports": "8086",
+            "Ports": "1-65535",
             "Protocol": "tcp",
-            "Direction": "inbound",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "udp",
+            "Direction": "outbound",
             "CIDR": "0.0.0.0/0"
           }
         ],
         "cspResourceId": ""
       },
       {
-        "name": "mig-sg-02",
-        "connectionName": "aws-ap-northeast-2",
-        "vNetId": "mig-vnet-01",
-        "description": "Recommended security group for ec268ed7-821e-9d73-e79f-961262161624",
+        "name": "sg-02",
+        "connectionName": "azure-koreacentral",
+        "vNetId": "vnet-01",
+        "description": "Recommended security group for ec20a168-fa99-a35c-48a4-632bc2167f5f",
         "firewallRules": [
+          {
+            "Ports": "",
+            "Protocol": "icmp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "68",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "5353",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1900",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
           {
             "Ports": "22",
             "Protocol": "tcp",
@@ -483,7 +1262,13 @@
             "CIDR": "0.0.0.0/0"
           },
           {
-            "Ports": "9999",
+            "Ports": "11434",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "8000",
             "Protocol": "tcp",
             "Direction": "inbound",
             "CIDR": "0.0.0.0/0"
@@ -493,6 +1278,456 @@
             "Protocol": "ALL",
             "Direction": "inbound",
             "CIDR": "10.0.0.0/16"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "tcp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "udp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          }
+        ],
+        "cspResourceId": ""
+      },
+      {
+        "name": "sg-03",
+        "connectionName": "azure-koreacentral",
+        "vNetId": "vnet-01",
+        "description": "Recommended security group for ec29ca25-7599-3899-0700-33d9a2d401a2",
+        "firewallRules": [
+          {
+            "Ports": "",
+            "Protocol": "icmp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "68",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "5353",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1900",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "22",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "80",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "443",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "8000",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "8080",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "",
+            "Protocol": "ALL",
+            "Direction": "inbound",
+            "CIDR": "10.0.0.0/16"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "tcp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "udp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          }
+        ],
+        "cspResourceId": ""
+      },
+      {
+        "name": "sg-04",
+        "connectionName": "azure-koreacentral",
+        "vNetId": "vnet-01",
+        "description": "Recommended security group for ec2eb246-6ebf-d90d-8ccf-27d4f0b899eb",
+        "firewallRules": [
+          {
+            "Ports": "",
+            "Protocol": "icmp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "68",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "5353",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1900",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "22",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "9092",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "5044",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "",
+            "Protocol": "ALL",
+            "Direction": "inbound",
+            "CIDR": "10.0.0.0/16"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "tcp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "udp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          }
+        ],
+        "cspResourceId": ""
+      },
+      {
+        "name": "sg-05",
+        "connectionName": "azure-koreacentral",
+        "vNetId": "vnet-01",
+        "description": "Recommended security group for ec2bea1c-2805-10e9-b2e7-d6384a1d427a",
+        "firewallRules": [
+          {
+            "Ports": "",
+            "Protocol": "icmp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "68",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "5353",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1900",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "22",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "8080",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "7077",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "",
+            "Protocol": "ALL",
+            "Direction": "inbound",
+            "CIDR": "10.0.0.0/16"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "tcp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "udp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          }
+        ],
+        "cspResourceId": ""
+      },
+      {
+        "name": "sg-06",
+        "connectionName": "azure-koreacentral",
+        "vNetId": "vnet-01",
+        "description": "Recommended security group for ec244f3b-e085-b43a-4cfd-9be512e595ff",
+        "firewallRules": [
+          {
+            "Ports": "",
+            "Protocol": "icmp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "68",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "5353",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1900",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "22",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "8081",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "7077",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "",
+            "Protocol": "ALL",
+            "Direction": "inbound",
+            "CIDR": "10.0.0.0/16"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "tcp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "udp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          }
+        ],
+        "cspResourceId": ""
+      },
+      {
+        "name": "sg-07",
+        "connectionName": "azure-koreacentral",
+        "vNetId": "vnet-01",
+        "description": "Recommended security group for ec21093c-e5f6-f75c-604b-7d65c7b92bb1",
+        "firewallRules": [
+          {
+            "Ports": "",
+            "Protocol": "icmp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "68",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "5353",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1900",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "22",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "5432",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "",
+            "Protocol": "ALL",
+            "Direction": "inbound",
+            "CIDR": "10.0.0.0/16"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "tcp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "udp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          }
+        ],
+        "cspResourceId": ""
+      },
+      {
+        "name": "sg-08",
+        "connectionName": "azure-koreacentral",
+        "vNetId": "vnet-01",
+        "description": "Recommended security group for ec2f88e7-61ec-1c59-75c1-335197dddc71",
+        "firewallRules": [
+          {
+            "Ports": "",
+            "Protocol": "icmp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "68",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "5353",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1900",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "22",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "9000",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "9001",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "2049",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "2049",
+            "Protocol": "udp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "111",
+            "Protocol": "tcp",
+            "Direction": "inbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "",
+            "Protocol": "ALL",
+            "Direction": "inbound",
+            "CIDR": "10.0.0.0/16"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "tcp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
+          },
+          {
+            "Ports": "1-65535",
+            "Protocol": "udp",
+            "Direction": "outbound",
+            "CIDR": "0.0.0.0/0"
           }
         ],
         "cspResourceId": ""
@@ -533,5 +1768,5 @@
       "systemLabel": ""
     }
   },
-  "updatedTime": "2026-09-16T08:40:47.166Z"
+  "updatedTime": "2026-11-04T07:25:32.403Z"
 }
