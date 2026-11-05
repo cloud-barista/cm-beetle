@@ -8795,24 +8795,21 @@ definitions:
       destination:
         $ref: '#/definitions/transx.DataLocation'
       encryptionKeyId:
-        description: |-
-          EncryptionKeyID indicates that sensitive fields are encrypted.
-          Empty string means plaintext, non-empty means encrypted with the specified key.
-          The key is one-time use and will be deleted after decryption.
+        description: EncryptionKeyID indicates that sensitive fields are encrypted
+          with the specified one-time key.
         type: string
       source:
         $ref: '#/definitions/transx.DataLocation'
       strategy:
         default: auto
-        description: |-
-          Strategy determines how the transfer is orchestrated.
-          "auto": Automatically select best method.
-          "direct": Force direct transfer (e.g., SSH agent forwarding).
-          "relay": Force relay via local machine.
+        description: Strategy determines how the transfer is orchestrated (auto, direct,
+          relay, ssh-agent-fwd-push, ssh-agent-fwd-pull).
         enum:
         - auto
         - direct
         - relay
+        - ssh-agent-fwd-push
+        - ssh-agent-fwd-pull
         type: string
     required:
     - destination
@@ -8935,17 +8932,17 @@ definitions:
       host:
         description: Connection details
         type: string
+      maxRetries:
+        default: 3
+        type: integer
+      partial:
+        default: true
+        type: boolean
       port:
         default: 22
         type: integer
       privateKey:
-        description: |-
-          Authentication (priority: PrivateKey > PrivateKeyPath > Agent > none)
-          At least one authentication method should be available.
-
-          PrivateKey: PEM-encoded private key content (preferred for injected secrets).
-          In JSON, use single line with \n for newlines:
-            "privateKey": "-----BEGIN RSA PRIVATE KEY-----\nMIIE...\n-----END RSA PRIVATE KEY-----"
+        description: PEM-encoded private key content (preferred for injected secrets)
         type: string
       privateKeyPath:
         description: Path to private key file (legacy, prefer PrivateKey)
@@ -9316,7 +9313,7 @@ paths:
         * Local filesystem access is not allowed for security reasons
 
         [Transfer Options]
-        * Strategy: auto (default), direct, relay
+        * Strategy: auto (default), direct, relay, ssh-agent-fwd-push, ssh-agent-fwd-pull
         * SSH: Supports PrivateKey content or PrivateKeyPath
 
         [Encryption Support]

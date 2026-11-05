@@ -352,7 +352,7 @@
         },
         "/migration/data": {
             "post": {
-                "description": "By default this API runs synchronously and returns the migration result directly.\n\n[Async Operation (opt-in)]\n1. Send header `Prefer: respond-async` → Receive 202 Accepted with reqId\n2. Poll GET /request/{reqId} to check status\n3. Status flow: Handling → Success / Error\n* Only the \"respond-async\" preference token is recognized; other tokens (e.g. wait=N) are ignored.\n* If too many async jobs are already running, this returns 503 instead of 202; retry after the `Retry-After` seconds.\n\n[Endpoint Requirements]\n* Both source and destination must be remote endpoints (SSH or object storage)\n* Local filesystem access is not allowed for security reasons\n\n[Transfer Options]\n* Strategy: auto (default), direct, relay\n* SSH: Supports PrivateKey content or PrivateKeyPath\n\n[Encryption Support]\n* To encrypt sensitive fields, first call GET /migration/data/encryptionKey\n* Encrypted requests include `encryptionKeyId` field\n* Server automatically detects and decrypts encrypted requests\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
+                "description": "By default this API runs synchronously and returns the migration result directly.\n\n[Async Operation (opt-in)]\n1. Send header `Prefer: respond-async` → Receive 202 Accepted with reqId\n2. Poll GET /request/{reqId} to check status\n3. Status flow: Handling → Success / Error\n* Only the \"respond-async\" preference token is recognized; other tokens (e.g. wait=N) are ignored.\n* If too many async jobs are already running, this returns 503 instead of 202; retry after the `Retry-After` seconds.\n\n[Endpoint Requirements]\n* Both source and destination must be remote endpoints (SSH or object storage)\n* Local filesystem access is not allowed for security reasons\n\n[Transfer Options]\n* Strategy: auto (default), direct, relay, ssh-agent-fwd-push, ssh-agent-fwd-pull\n* SSH: Supports PrivateKey content or PrivateKeyPath\n\n[Encryption Support]\n* To encrypt sensitive fields, first call GET /migration/data/encryptionKey\n* Encrypted requests include `encryptionKeyId` field\n* Server automatically detects and decrypts encrypted requests\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -18669,20 +18669,22 @@
                     "$ref": "#/definitions/transx.DataLocation"
                 },
                 "encryptionKeyId": {
-                    "description": "EncryptionKeyID indicates that sensitive fields are encrypted.\nEmpty string means plaintext, non-empty means encrypted with the specified key.\nThe key is one-time use and will be deleted after decryption.",
+                    "description": "EncryptionKeyID indicates that sensitive fields are encrypted with the specified one-time key.",
                     "type": "string"
                 },
                 "source": {
                     "$ref": "#/definitions/transx.DataLocation"
                 },
                 "strategy": {
-                    "description": "Strategy determines how the transfer is orchestrated.\n\"auto\": Automatically select best method.\n\"direct\": Force direct transfer (e.g., SSH agent forwarding).\n\"relay\": Force relay via local machine.",
+                    "description": "Strategy determines how the transfer is orchestrated (auto, direct, relay, ssh-agent-fwd-push, ssh-agent-fwd-pull).",
                     "type": "string",
                     "default": "auto",
                     "enum": [
                         "auto",
                         "direct",
-                        "relay"
+                        "relay",
+                        "ssh-agent-fwd-push",
+                        "ssh-agent-fwd-pull"
                     ]
                 }
             }
@@ -18858,12 +18860,20 @@
                     "description": "Connection details",
                     "type": "string"
                 },
+                "maxRetries": {
+                    "type": "integer",
+                    "default": 3
+                },
+                "partial": {
+                    "type": "boolean",
+                    "default": true
+                },
                 "port": {
                     "type": "integer",
                     "default": 22
                 },
                 "privateKey": {
-                    "description": "Authentication (priority: PrivateKey \u003e PrivateKeyPath \u003e Agent \u003e none)\nAt least one authentication method should be available.\n\nPrivateKey: PEM-encoded private key content (preferred for injected secrets).\nIn JSON, use single line with \\n for newlines:\n  \"privateKey\": \"-----BEGIN RSA PRIVATE KEY-----\\nMIIE...\\n-----END RSA PRIVATE KEY-----\"",
+                    "description": "PEM-encoded private key content (preferred for injected secrets)",
                     "type": "string"
                 },
                 "privateKeyPath": {
