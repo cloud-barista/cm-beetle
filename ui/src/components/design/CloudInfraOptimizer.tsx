@@ -2238,8 +2238,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                         <span className="text-xs text-text-muted font-semibold">Nodes</span>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 max-h-40 overflow-y-auto">
                                           {nodesArray.map((_, nodeIdx) => {
-                                            const suffix   = String(nodeIdx + 1).padStart(2, '0');
-                                            const nodeName = `${ng.name}-${suffix}`;
+                                            const nodeName = `${ng.name}-${nodeIdx + 1}`;
                                             return (
                                               <div key={nodeIdx} className="bg-bg-panel border border-emerald-500/10 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 font-mono text-xs">
                                                 <Server className="w-3 h-3 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />

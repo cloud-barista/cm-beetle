@@ -3,6 +3,7 @@ package recommendation
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
@@ -236,8 +237,14 @@ func RecommendCompositeInfraCandidates(
 	}
 	expandedUnrelatedNodes := DecomposeOnpremNodes(unrelatedNodes)
 
+	shortIds := buildShortMachineIdMap(srcInfra.Nodes)
+	usedNames := make(map[string]bool, len(ngBlueprints)+len(expandedUnrelatedNodes))
+	for _, bp := range ngBlueprints {
+		usedNames[bp.skeleton.Name] = true
+	}
+
 	for i, node := range expandedUnrelatedNodes {
-		ngName := "ng-" + sanitizeName(node.MachineId)
+		ngName, origMachineId := buildNodeGroupNameAndLineage(node, shortIds, usedNames)
 
 		sg, sgErr := RecommendSecurityGroup(csp, region, node)
 		if sgErr != nil {
@@ -275,7 +282,7 @@ func RecommendCompositeInfraCandidates(
 				RootDiskSize:     rootDiskSize,
 				NodeGroupSize:    1,
 				Description:      fmt.Sprintf("Standalone VM %02d for %s", i+1, node.MachineId),
-				Label:            map[string]string{lineage.LabelSourceMachineIds: node.MachineId},
+				Label:            map[string]string{lineage.LabelSourceMachineIds: origMachineId},
 			},
 		})
 	}
@@ -592,7 +599,14 @@ func buildDividedVendorBlueprints(
 	var nlbs []cloudmodel.NlbReq
 	var sgs []cloudmodel.SecurityGroupReq
 
-	for vendor, ids := range vendorMap {
+	vendors := make([]string, 0, len(vendorMap))
+	for vendor := range vendorMap {
+		vendors = append(vendors, vendor)
+	}
+	slices.Sort(vendors)
+
+	for _, vendor := range vendors {
+		ids := vendorMap[vendor]
 		groupSuffix := fmt.Sprintf("%s-%s", rnlb.sourceNlb.Backend.Name, vendor)
 		b, n, s, err := buildSingleConsolidatedBlueprint(csp, region, connectionName, subnetId, skeleton, rnlb, ids, nodeByMachineId, groupSuffix)
 		if err != nil {
@@ -628,7 +642,14 @@ func buildDividedModelBlueprints(
 	var nlbs []cloudmodel.NlbReq
 	var sgs []cloudmodel.SecurityGroupReq
 
-	for key, ids := range modelMap {
+	keys := make([]string, 0, len(modelMap))
+	for key := range modelMap {
+		keys = append(keys, key)
+	}
+	slices.Sort(keys)
+
+	for _, key := range keys {
+		ids := modelMap[key]
 		groupSuffix := fmt.Sprintf("%s-%s", rnlb.sourceNlb.Backend.Name, key)
 		b, n, s, err := buildSingleConsolidatedBlueprint(csp, region, connectionName, subnetId, skeleton, rnlb, ids, nodeByMachineId, groupSuffix)
 		if err != nil {

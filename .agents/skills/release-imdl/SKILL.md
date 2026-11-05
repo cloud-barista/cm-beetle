@@ -1,0 +1,151 @@
+---
+name: release-imdl
+description: "Automate imdl release workflow: commit, push to fork, create PR, /approve, wait for auto-merge, and tag upstream."
+---
+
+# Release IMDL Module
+
+This skill automates the release process for the `imdl` module (`github.com/cloud-barista/cm-beetle/imdl`) following the three-tier remote model and release guidelines in [imdl/README.md](file:///home/ubuntu/dev/cloud-barista/cm-beetle/imdl/README.md).
+
+## Prerequisites & Context
+
+- **Remote Model**:
+  - `upstream`: Official repository (`git@github.com:cloud-barista/cm-beetle.git` or `https://github.com/cloud-barista/cm-beetle.git`)
+  - `origin`: Personal fork (`https://github.com/<user>/cm-beetle.git`)
+- **Credentials**:
+  - GitHub MCP server or personal access token configured for PR creation and commenting
+  - Git push access to `origin` (for branches) and `upstream` (for annotated tags)
+
+## Safety Guardrails
+
+- **NEVER push branches to `upstream`**: All code branches MUST be pushed strictly to `origin` (personal fork). Only release tags (`imdl/vX.Y.Z`) are pushed directly to `upstream`.
+- **Always use `--no-track`**: When branching from `upstream/main`, `--no-track` is mandatory to prevent Git from configuring `upstream/main` as the default push tracking target.
+- **Explicit push remote**: Always run `git push -u origin <branch>`, never an unqualified `git push`.
+
+---
+
+## Workflow Steps
+
+### Step 1: Pre-flight Verification & Validation
+
+1. **Verify Changed Files in `imdl/`**
+   // turbo
+   Run `git status -s imdl/` to verify modified or untracked files in the `imdl` directory.
+   Ensure no unrelated files outside `imdl/` are included in this release.
+
+2. **Verify Module Build**
+   // turbo
+   Run `go build ./imdl/...` to ensure all structs, methods, and tags compile without syntax errors.
+
+---
+
+### Step 2: Branch, Commit, and Push to Origin Fork
+
+1. **Fetch Latest Upstream and Create Release Branch**
+   // turbo
+   Run `git fetch upstream`
+   Create a dedicated branch from `upstream/main` with `--no-track` to prevent accidental tracking or pushing to upstream:
+   ```bash
+   # Create a local branch without tracking upstream
+   git checkout -b feat/update-imdl --no-track upstream/main
+   ```
+
+2. **Stage and Commit `imdl` Changes**
+   Stage only files in `imdl/`:
+   ```bash
+   # Stage imdl directory changes
+   git add imdl/
+   ```
+   Generate a conventional commit message following project standards:
+   - Format: `update(imdl): sync models with cb-tumblebug <version>` or concise summary of model improvements.
+   - Body: Max 5 bullet points describing updated structs or features.
+
+3. **Push to Personal Fork (`origin`)**
+   ```bash
+   # Push branch to personal fork
+   git push -u origin feat/update-imdl
+   ```
+
+---
+
+### Step 3: Open PR and Approve for Auto-Merge
+
+1. **Create Pull Request to Upstream**
+   Open a PR from `origin:feat/update-imdl` to `upstream:main` (`cloud-barista/cm-beetle:main`).
+   - Use GitHub MCP tool `create_pull_request` (or GitHub API / CLI).
+   - Base repository: `cloud-barista/cm-beetle`
+   - Base branch: `main`
+   - Head branch: `<your-github-username>:feat/update-imdl`
+   - Title: `update(imdl): sync models` (match commit title)
+   - Body: Summary of changes and checklist.
+
+2. **Post `/approve` Comment**
+   Immediately post a comment with `/approve` to the created PR.
+   - Use GitHub MCP tool `add_issue_comment` (or GitHub API / CLI).
+   - Body: `/approve`
+   - This activates `.github/workflows/auto-merge.yml`, which validates maintainer membership, applies the `approved` label, submits review approval, and triggers auto-merge.
+
+3. **Wait for Auto-Merge to Complete**
+   Wait and poll the PR status until merged:
+   - Check every 5 to 10 seconds using GitHub MCP tool `pull_request_read` (or GitHub API).
+   - Verify `merged == true` and `state == "closed"`.
+   - Do NOT proceed to Step 4 until merge is confirmed.
+
+---
+
+### Step 4: Tag the Released `imdl` Version (Step 2 in README)
+
+1. **Fetch Latest Upstream**
+   // turbo
+   Run `git fetch upstream` to fetch the newly merged commit on `upstream/main`.
+   Verify the merge commit:
+   ```bash
+   # Verify recent upstream commits
+   git log upstream/main --oneline -3
+   ```
+
+2. **Determine the Next Version Tag**
+   Check recent `imdl/*` tags to find the latest version:
+   // turbo
+   Run `git tag -l "imdl/*" --sort=-v:refname | head -5`
+   
+   Calculate the next version:
+   - If latest is `imdl/v0.1.17`, the next patch version is `imdl/v0.1.18`.
+   - If there are breaking changes or major model renames, consult the user to decide if a minor version bump is required (e.g., `imdl/v0.2.0`).
+
+3. **Create Annotated Tag on `upstream/main`**
+   ```bash
+   # Create annotated tag pointing to upstream/main
+   git tag -a $NEXT_IMDL_TAG upstream/main -m "imdl: release ${NEXT_IMDL_TAG#imdl/}"
+   ```
+
+4. **Push Tag Directly to Upstream**
+   Push the tag to `upstream` (not `origin`) so Go module proxy can discover and resolve it:
+   ```bash
+   # Push tag directly to upstream repository
+   git push upstream $NEXT_IMDL_TAG
+   ```
+
+5. **Verify Tag**
+   ```bash
+   # Verify the pushed tag details
+   git show $NEXT_IMDL_TAG
+   ```
+
+---
+
+### Step 5: Update CM-Beetle Root Dependency (Step 3 in README)
+
+Prompt the user and offer to update the root `go.mod` dependency to reference the newly tagged version:
+
+```bash
+# 1. Start a new branch from upstream/main
+git checkout -b chore/update-imdl-${NEXT_IMDL_TAG#imdl/} --no-track upstream/main
+
+# 2. Update dependency to the newly tagged version
+go get github.com/cloud-barista/cm-beetle/imdl@${NEXT_IMDL_TAG#imdl/}
+go mod tidy
+
+# 3. Verify root build
+go test ./... -run TestNonExistent || go build ./...
+```

@@ -186,13 +186,16 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 
 	var ngBlueprints []nodeGroupBlueprint
 	var deduplicatedSgList []cloudmodel.SecurityGroupReq
+	shortIds := buildShortMachineIdMap(srcInfra.Nodes)
+	usedNames := make(map[string]bool, len(resolvedNlbs)+len(srcInfra.Nodes))
 
-	// NLB-related NodeGroups — added first so indexes remain stable when NLB target list references them.
+	// NLB-related NodeGroups are added first so indexes remain stable when NLB target list references them.
 	// NodeGroup name "ng-<backendName>" must match the nodeGroupId used in buildTargetNlbList.
 	for _, rnlb := range resolvedNlbs {
 		backendName := rnlb.sourceNlb.Backend.Name
 		nodeGroupSize := len(rnlb.memberMachineIds)
 		ngId := "ng-" + sanitizeName(backendName)
+		usedNames[ngId] = true
 		// Synthetic node: CPU from max-vCPU member; memory and root disk are per-dimension maxima.
 		syntheticNode := synthesizeGroupRepresentativeNode(rnlb.memberMachineIds, nodeByMachineId)
 		nodeWithMergedFirewallRules := mergeNodesFirewallRules(rnlb.memberMachineIds, nodeByMachineId, syntheticNode)
@@ -241,13 +244,13 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 		})
 	}
 
-	// NLB-unrelated NodeGroups — one per source node; NLB-member nodes are skipped here.
+	// NLB-unrelated NodeGroups: one per source node; NLB-member nodes are skipped here.
 	for i, node := range srcInfra.Nodes {
 		if _, isMember := nlbMemberMachineIds[node.MachineId]; isMember {
 			continue
 		}
 
-		ngName := "ng-" + sanitizeName(node.MachineId)
+		ngName, origMachineId := buildNodeGroupNameAndLineage(node, shortIds, usedNames)
 
 		sg, sgErr := RecommendSecurityGroup(csp, region, node)
 		if sgErr != nil {
@@ -280,7 +283,7 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 				RootDiskSize:     rootDiskSize,
 				NodeGroupSize:    1,
 				Description:      fmt.Sprintf("Recommended VM %02d for %s", i+1, node.MachineId),
-				Label:            map[string]string{lineage.LabelSourceMachineIds: node.MachineId},
+				Label:            map[string]string{lineage.LabelSourceMachineIds: origMachineId},
 			},
 		})
 	}

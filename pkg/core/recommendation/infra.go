@@ -206,13 +206,16 @@ func RecommendInfraWithDefaults(desiredCsp string, desiredRegion string, srcInfr
 			},
 		}
 
+		shortIds := buildShortMachineIdMap(srcInfra.Nodes)
+		usedNames := make(map[string]bool, len(vmInfoList))
 		for j, nodegroupInfo := range vmInfoList {
+			ngName, _ := buildNodeGroupNameAndLineage(srcInfra.Nodes[j], shortIds, usedNames)
 			tempCreateNodegroupReq := cloudmodel.CreateNodeGroupDynamicReq{
 				ConnectionName: fmt.Sprintf("%s-%s", desiredCsp, desiredRegion),
 				ImageId:        nodegroupInfo.vmOsImageId,
 				SpecId:         nodegroupInfo.vmSpecId,
 				Description:    "a recommended virtual machine",
-				Name:           fmt.Sprintf("migrated-%s", srcInfra.Nodes[j].MachineId), // Set MachineId to identify the source node
+				Name:           ngName,
 				RootDiskSize:   0,                                                       // TBD
 				RootDiskType:   "",                                                      // TBD
 				NodeGroupSize:  1,                                                       // TBD
@@ -314,6 +317,9 @@ func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmode
 	if len(recommendedVmInfra.TargetVNet.SubnetInfoList) > 0 {
 		firstSubnetId = recommendedVmInfra.TargetVNet.SubnetInfoList[0].Name
 	}
+
+	shortIds := buildShortMachineIdMap(srcInfra.Nodes)
+	usedNames := make(map[string]bool, len(srcInfra.Nodes))
 
 	for i, node := range srcInfra.Nodes {
 
@@ -492,16 +498,17 @@ func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmode
 		// Use the source disk size as the base, with a CSP-specific minimum floor to avoid
 		// over-provisioning and keep costs low (e.g., AWS/GCP support as low as 10 GB).
 		rootDiskSize := max(int(node.RootDisk.TotalSize), getCspMinRootDiskSizeGB(csp))
+		ngName, origMachineId := buildNodeGroupNameAndLineage(node, shortIds, usedNames)
 		tempCreateNodeGroupReq := cloudmodel.CreateNodeGroupReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
-			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, node.MachineId), // Set MachineId to identify the source node
+			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, origMachineId),
 			SpecId:           selectedVmSpec.Id,
 			ImageId:          selectedVmOsImage.Id,
 			CspImageName:     resolvedCspImageName, // Set only when review resolved a newer image; TumbleBug sends this to Spider instead of looking up via ImageId.
 			VNetId:           recommendedVmInfra.TargetVNet.Name,
 			SubnetId:         firstSubnetId,
 			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
-			Name:             fmt.Sprintf("migrated-%s", node.MachineId),           // Set MachineId to identify the source node
+			Name:             ngName,
 			RootDiskType:     suggestedSystemDisk,                                  // Confirmed-available disk type from specImagePairReview; empty → CSP default
 			RootDiskSize:     rootDiskSize,                                         // max(source disk size, CSP minimum) to keep costs low
 			SshKeyId:         recommendedVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
@@ -509,7 +516,7 @@ func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmode
 			NodeUserPassword: "",                                                   // TBD
 			NodeGroupSize:    1,                                                    // TBD
 			Label: map[string]string{
-				lineage.LabelSourceMachineIds: node.MachineId,
+				lineage.LabelSourceMachineIds: origMachineId,
 			},
 		}
 
@@ -615,18 +622,22 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 	// - NHN: ["General_HDD", "General_SSD"]
 	// - KT: ["HDD", "SSD"]
 
+	shortIds := buildShortMachineIdMap(srcInfra.Nodes)
+	usedNames := make(map[string]bool, len(srcInfra.Nodes))
+
 	// * Set names to indicate a dependency between resources.
 	for i, node := range srcInfra.Nodes {
 		// * Set names to indicate a dependency between resources.
 		// Use the source disk size as the base, with a CSP-specific minimum floor to avoid
 		// over-provisioning and keep costs low (e.g., AWS/GCP support as low as 10 GB).
 		rootDiskSize := max(int(node.RootDisk.TotalSize), getCspMinRootDiskSizeGB(csp))
+		ngName, origMachineId := buildNodeGroupNameAndLineage(node, shortIds, usedNames)
 		tempCreateNodeGroupReq := cloudmodel.CreateNodeGroupReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
-			Description:      fmt.Sprintf("Recommended VM %02d for %s", i+1, node.MachineId), // Set MachineId to identify the source node
+			Description:      fmt.Sprintf("Recommended VM %02d for %s", i+1, origMachineId),
 			VNetId:           skeletonVmInfra.TargetVNet.Name,
 			SubnetId:         firstSubnetId,
-			Name:             fmt.Sprintf("vm-%s", node.MachineId),              // Set MachineId to identify the source node
+			Name:             ngName,
 			RootDiskType:     "",                                                // Set "" or default to use CSP's default
 			RootDiskSize:     rootDiskSize,                                      // max(source disk size, CSP minimum) to keep costs low
 			SshKeyId:         skeletonVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
@@ -634,7 +645,7 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 			NodeUserPassword: "",                                                // TBD
 			NodeGroupSize:    1,                                                 // Default: 1
 			Label: map[string]string{
-				lineage.LabelSourceMachineIds: node.MachineId,
+				lineage.LabelSourceMachineIds: origMachineId,
 			},
 		}
 
