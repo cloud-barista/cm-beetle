@@ -128,35 +128,30 @@ func buildExecutiveSummary(sourceSummary *summary.SourceInfraSummary, targetSumm
 func buildMigrationMappings(sourceSummary *summary.SourceInfraSummary, targetSummary *summary.TargetInfraSummary) []SourceTargetMapping {
 	var mappings []SourceTargetMapping
 
-	// Build a source-machine-ID -> target VM index, preferring the
-	// authoritative "cm-source-machine-ids" label set at NodeGroup creation time
-	// (see resolveSourceMachineID) over any inference from the VM name.
-	vmByMachineID := make(map[string]*summary.SummaryVmInfo)
+	// Build a source-machine-ID to target VMs slice index using the lineage label.
+	vmsByMachineID := make(map[string][]*summary.SummaryVmInfo)
 	for i, vm := range targetSummary.ComputeResources.Vms {
 		if machineID := resolveSourceMachineID(vm); machineID != "" {
-			vmByMachineID[machineID] = &targetSummary.ComputeResources.Vms[i]
+			vmsByMachineID[machineID] = append(vmsByMachineID[machineID], &targetSummary.ComputeResources.Vms[i])
 		}
 	}
 
-	// Match source servers to target VMs
+	// Match source servers to target VMs (supports 1:1, N:1, and 1:N decomposed servers).
 	mappingID := 1
 	for _, sourceNode := range sourceSummary.ComputeResources.Servers {
 		machineID := sourceNode.MachineId
-		targetVM := vmByMachineID[machineID]
+		targetVMs := vmsByMachineID[machineID]
 
-		if targetVM == nil && machineID != "" {
-			// Fallback for VMs without a usable label (e.g. manually
-			// registered nodes): match by substring containment of the
-			// machine ID in the VM name.
+		if len(targetVMs) == 0 && machineID != "" {
+			// Fallback for VMs without a lineage label: match by machine ID substring.
 			for i, vm := range targetSummary.ComputeResources.Vms {
 				if strings.Contains(vm.Name, machineID) {
-					targetVM = &targetSummary.ComputeResources.Vms[i]
-					break
+					targetVMs = append(targetVMs, &targetSummary.ComputeResources.Vms[i])
 				}
 			}
 		}
 
-		if targetVM == nil {
+		if len(targetVMs) == 0 {
 			log.Warn().Msgf("No matching target VM found for source node: %s (MachineId: %s)", sourceNode.Hostname, machineID)
 			continue
 		}
@@ -184,45 +179,47 @@ func buildMigrationMappings(sourceSummary *summary.SourceInfraSummary, targetSum
 			FirewallRules: sourceFirewallRules,
 		}
 
-		// Build target VM brief
-		targetBrief := TargetVMBrief{
-			InstanceName:    targetVM.Name,
-			InstanceID:      targetVM.CspVmId,
-			SourceMachineID: machineID,
-			Status:          targetVM.Status,
-			SpecName:        targetVM.Spec.Name,
-			VCPUs:           targetVM.Spec.VCpus,
-			MemoryGB:        targetVM.Spec.MemoryGiB,
-			RootDiskGB:      50,    // Default, would need to get from VM details
-			RootDiskType:    "gp2", // Default, would need to get from VM details
-			PublicIP:        targetVM.Misc.PublicIp,
-			PrivateIP:       targetVM.Misc.PrivateIp,
-			SecurityGroups:  targetVM.Misc.SecurityGroups,
-		}
-
-		// Analyze resource changes
-		resourceChanges := analyzeResourceChanges(sourceNode, *targetVM)
-
-		// Calculate cost for this VM
-		costPerMonth := 0.0
-		for _, vmCost := range targetSummary.CostEstimation.ByVm {
-			if vmCost.VmName == targetVM.Name {
-				costPerMonth = float64(vmCost.CostPerMonth)
-				break
+		for _, targetVM := range targetVMs {
+			// Build target VM brief
+			targetBrief := TargetVMBrief{
+				InstanceName:    targetVM.Name,
+				InstanceID:      targetVM.CspVmId,
+				SourceMachineID: machineID,
+				Status:          targetVM.Status,
+				SpecName:        targetVM.Spec.Name,
+				VCPUs:           targetVM.Spec.VCpus,
+				MemoryGB:        targetVM.Spec.MemoryGiB,
+				RootDiskGB:      50,    // Default, would need to get from VM details
+				RootDiskType:    "gp2", // Default, would need to get from VM details
+				PublicIP:        targetVM.Misc.PublicIp,
+				PrivateIP:       targetVM.Misc.PrivateIp,
+				SecurityGroups:  targetVM.Misc.SecurityGroups,
 			}
-		}
 
-		mapping := SourceTargetMapping{
-			MappingID:       mappingID,
-			SourceServer:    sourceBrief,
-			TargetVM:        targetBrief,
-			ResourceChanges: resourceChanges,
-			MigrationStatus: "Success",
-			CostPerMonth:    costPerMonth,
-		}
+			// Analyze resource changes
+			resourceChanges := analyzeResourceChanges(sourceNode, *targetVM)
 
-		mappings = append(mappings, mapping)
-		mappingID++
+			// Calculate cost for this VM
+			costPerMonth := 0.0
+			for _, vmCost := range targetSummary.CostEstimation.ByVm {
+				if vmCost.VmName == targetVM.Name {
+					costPerMonth = float64(vmCost.CostPerMonth)
+					break
+				}
+			}
+
+			mapping := SourceTargetMapping{
+				MappingID:       mappingID,
+				SourceServer:    sourceBrief,
+				TargetVM:        targetBrief,
+				ResourceChanges: resourceChanges,
+				MigrationStatus: "Success",
+				CostPerMonth:    costPerMonth,
+			}
+
+			mappings = append(mappings, mapping)
+			mappingID++
+		}
 	}
 
 	return mappings
@@ -331,10 +328,10 @@ func buildNetworkAnalysis(sourceSummary *summary.SourceInfraSummary, targetSumma
 	}
 
 	// Build IP mappings using lineage label resolution with VM name substring fallback.
-	vmByMachineID := make(map[string]summary.SummaryVmInfo)
+	vmsByMachineID := make(map[string][]summary.SummaryVmInfo)
 	for _, vm := range targetSummary.ComputeResources.Vms {
 		if mid := resolveSourceMachineID(vm); mid != "" {
-			vmByMachineID[mid] = vm
+			vmsByMachineID[mid] = append(vmsByMachineID[mid], vm)
 		}
 	}
 
@@ -342,13 +339,15 @@ func buildNetworkAnalysis(sourceSummary *summary.SourceInfraSummary, targetSumma
 	for _, node := range sourceSummary.ComputeResources.Servers {
 		machineID := node.MachineId
 
-		if vm, ok := vmByMachineID[machineID]; ok {
-			ipMappings = append(ipMappings, IPMapping{
-				SourceIP:        node.Network.IPAddress,
-				SourceHostname:  node.Hostname,
-				TargetPrivateIP: vm.Misc.PrivateIp,
-				TargetPublicIP:  vm.Misc.PublicIp,
-			})
+		if vms, ok := vmsByMachineID[machineID]; ok && len(vms) > 0 {
+			for _, vm := range vms {
+				ipMappings = append(ipMappings, IPMapping{
+					SourceIP:        node.Network.IPAddress,
+					SourceHostname:  node.Hostname,
+					TargetPrivateIP: vm.Misc.PrivateIp,
+					TargetPublicIP:  vm.Misc.PublicIp,
+				})
+			}
 			continue
 		}
 
@@ -360,7 +359,6 @@ func buildNetworkAnalysis(sourceSummary *summary.SourceInfraSummary, targetSumma
 					TargetPrivateIP: vm.Misc.PrivateIp,
 					TargetPublicIP:  vm.Misc.PublicIp,
 				})
-				break
 			}
 		}
 	}

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from '../design/TopologyMap';
 import { beetleApi } from '../../api/client';
+import { resolveTargetNodeLineage } from '../../utils/nodeLineage';
 import { CheckSSHReadyResponse } from '../../types/migration';
 import { ObjectDirectoryTree } from '../storage/ObjectDirectoryTree';
 import { 
@@ -864,7 +865,7 @@ export const MigratedInfraManagement: React.FC = () => {
   })();
 
   // Extract VM nodes array for VM Access table
-  const activeNodes: { name: string; specId: string; publicIp: string; privateIp: string; subnetId?: string; status?: string; systemMessage?: string }[] = loadedInfraDetail?.node && loadedInfraDetail.node.length > 0
+  const activeNodes: { name: string; specId: string; publicIp: string; privateIp: string; subnetId?: string; status?: string; systemMessage?: string; label?: Record<string, string>; subGroupId?: string }[] = loadedInfraDetail?.node && loadedInfraDetail.node.length > 0
     ? loadedInfraDetail.node.map((n: any) => ({
         name: n.name || n.id || 'node',
         specId: n.specId || n.spec || 'c5.large',
@@ -872,18 +873,22 @@ export const MigratedInfraManagement: React.FC = () => {
         privateIp: n.privateIP || n.privateIp || 'N/A',
         subnetId: n.subnetId || '',
         status: n.status || ((n.publicIP || n.publicIp || n.privateIP || n.privateIp) ? 'Running' : 'Failed'),
-        systemMessage: n.systemMessage || ''
+        systemMessage: n.systemMessage || '',
+        label: n.label,
+        subGroupId: n.subGroupId || n.nodeGroupId || ''
       }))
     : activeJobInfra?.vms && activeJobInfra.vms.length > 0
     ? activeJobInfra.vms
     : currentCloudModel.targetInfra?.nodeGroups.map((ng: any, idx: number) => ({
-        name: `${ng.name}-node-${idx + 1}`,
+        name: `${ng.name}-${idx + 1}`,
         specId: ng.specId,
         publicIp: `54.180.${10 + idx}.${25 + idx}`,
         privateIp: `10.0.1.${100 + idx}`,
         subnetId: ng.subnetId || '',
         status: 'Running',
-        systemMessage: ''
+        systemMessage: '',
+        label: ng.label,
+        subGroupId: ng.name
       }));
 
   return (
@@ -1399,9 +1404,23 @@ export const MigratedInfraManagement: React.FC = () => {
                           node.status?.toLowerCase() === 'failed' ||
                           node.status?.toLowerCase() === 'error' ||
                           ((!node.publicIp || node.publicIp === 'N/A') && (!node.privateIp || node.privateIp === 'N/A'));
+                        const nodeLineage = resolveTargetNodeLineage(
+                          node,
+                          currentCloudModel.targetInfra?.nodeGroups,
+                          refinedSourceInfra
+                        );
                         return (
                           <tr key={idx} className={`transition ${isNodeFailed ? 'bg-red-500/[0.04] hover:bg-red-500/[0.08]' : 'hover:bg-emerald-500/[0.02]'}`}>
-                            <td className="py-3 px-4 font-extrabold text-text-main">{node.name}</td>
+                            <td className="py-3 px-4 font-extrabold text-text-main">
+                              <div className="flex flex-col gap-0.5">
+                                <span>{node.name}</span>
+                                {nodeLineage?.sourceHostname && (
+                                  <span className="text-xs font-normal text-text-muted">
+                                    Source: <span className="font-bold text-emerald-600 dark:text-emerald-400">{nodeLineage.sourceHostname}</span>
+                                  </span>
+                                )}
+                              </div>
+                            </td>
                             <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-extrabold">
                               <div className="flex items-center gap-1.5">
                                 <span>{node.specId}</span>

@@ -108,3 +108,49 @@ func TestBuildMigrationMappingsNlbGroup(t *testing.T) {
 		}
 	}
 }
+
+func TestBuildMigrationMappingsDecomposedGpu(t *testing.T) {
+	// 1:N decomposed GPU server: one physical server decomposed into two target VMs
+	// sharing the same physical MachineId in cm-source-machine-ids.
+	sourceSummary := &summary.SourceInfraSummary{
+		ComputeResources: summary.SourceSummaryComputeResources{
+			Servers: []summary.SourceServerInfo{
+				{
+					Hostname:  "ai-gpu-01",
+					MachineId: "c1fb45d7-f1a0-465c-96f9-269c172d84df",
+					CPU:       summary.SourceCPUInfo{Cores: 32},
+					Memory:    summary.SourceMemoryInfo{TotalGB: 128},
+					Disk:      summary.SourceDiskInfo{TotalGB: 500},
+				},
+			},
+		},
+	}
+
+	targetSummary := &summary.TargetInfraSummary{
+		ComputeResources: summary.SummaryComputeResources{
+			Vms: []summary.SummaryVmInfo{
+				{
+					Name:   "ng-ai-gpu-01-a100-1",
+					Status: "Running",
+					Spec:   summary.SummaryVmSpecInfo{Name: "p4d.24xlarge", VCpus: 96, MemoryGiB: 1152},
+					Label:  map[string]string{"cm-source-machine-ids": "c1fb45d7-f1a0-465c-96f9-269c172d84df"},
+				},
+				{
+					Name:   "ng-ai-gpu-01-t4-1",
+					Status: "Running",
+					Spec:   summary.SummaryVmSpecInfo{Name: "g4dn.4xlarge", VCpus: 16, MemoryGiB: 64},
+					Label:  map[string]string{"cm-source-machine-ids": "c1fb45d7-f1a0-465c-96f9-269c172d84df"},
+				},
+			},
+		},
+	}
+
+	mappings := buildMigrationMappings(sourceSummary, targetSummary)
+	if len(mappings) != 2 {
+		t.Fatalf("buildMigrationMappings() returned %d mappings for 1:N GPU server, want 2", len(mappings))
+	}
+	if mappings[0].TargetVM.InstanceName != "ng-ai-gpu-01-a100-1" || mappings[1].TargetVM.InstanceName != "ng-ai-gpu-01-t4-1" {
+		t.Errorf("unexpected target VM names: %q, %q", mappings[0].TargetVM.InstanceName, mappings[1].TargetVM.InstanceName)
+	}
+}
+

@@ -129,3 +129,75 @@ func TestSanitizeSourceNode_CrossRestore(t *testing.T) {
 	assert.Equal(t, uint32(1), sanitized2.CPU.Cpus)
 }
 
+func TestBuildNodeGroupNameAndLineage(t *testing.T) {
+	nodes := []onpremmodel.NodeProperty{
+		{
+			Hostname:  "ai-gpu-01",
+			MachineId: "c1fb45d7-f1a0-465c-96f9-269c172d84df",
+		},
+		{
+			Hostname:  "ubuntu",
+			MachineId: "11111111-2222-3333-4444-aaaa55556666",
+		},
+		{
+			Hostname:  "ubuntu",
+			MachineId: "99999999-8888-7777-6666-bbbb55556666",
+		},
+		{
+			Hostname:  "",
+			MachineId: "00000000-0000-0000-0000-1234abcd5678",
+		},
+		{
+			Hostname:  "web-01.corp.internal",
+			MachineId: "abcdef12-3456-7890-abcd-ef1234567890",
+		},
+	}
+
+	shortIds := buildShortMachineIdMap(nodes)
+	usedNames := make(map[string]bool)
+
+	// 1:1 standalone node with hostname and UUID
+	name1, orig1 := buildNodeGroupNameAndLineage(nodes[0], shortIds, usedNames)
+	assert.Equal(t, "ng-ai-gpu-01-172d84df", name1)
+	assert.Equal(t, "c1fb45d7-f1a0-465c-96f9-269c172d84df", orig1)
+
+	// Duplicate hostname "ubuntu" disambiguated by 8-char short ID
+	name2, orig2 := buildNodeGroupNameAndLineage(nodes[1], shortIds, usedNames)
+	assert.Equal(t, "ng-ubuntu-55556666", name2)
+	assert.Equal(t, "11111111-2222-3333-4444-aaaa55556666", orig2)
+
+	// Second node shares the last 8 chars ("55556666") so shortIds falls back to first 8 chars ("99999999")
+	name3, orig3 := buildNodeGroupNameAndLineage(nodes[2], shortIds, usedNames)
+	assert.Equal(t, "ng-ubuntu-99999999", name3)
+	assert.Equal(t, "99999999-8888-7777-6666-bbbb55556666", orig3)
+
+	// Empty hostname falls back to ng-{shortId8}
+	name4, orig4 := buildNodeGroupNameAndLineage(nodes[3], shortIds, usedNames)
+	assert.Equal(t, "ng-abcd5678", name4)
+	assert.Equal(t, "00000000-0000-0000-0000-1234abcd5678", orig4)
+
+	// FQDN strips domain suffix
+	name5, orig5 := buildNodeGroupNameAndLineage(nodes[4], shortIds, usedNames)
+	assert.Equal(t, "ng-web-01-34567890", name5)
+	assert.Equal(t, "abcdef12-3456-7890-abcd-ef1234567890", orig5)
+
+	// 1:N decomposed GPU nodes use ng-{hostname}-{gpuModel} and restore physical MachineId
+	decomposedNode1 := onpremmodel.NodeProperty{
+		Hostname:  "ai-gpu-01",
+		MachineId: "c1fb45d7-f1a0-465c-96f9-269c172d84df-primary-a100",
+	}
+	decomposedNode2 := onpremmodel.NodeProperty{
+		Hostname:  "ai-gpu-01",
+		MachineId: "c1fb45d7-f1a0-465c-96f9-269c172d84df-gpu-t4",
+	}
+
+	gpuName1, gpuOrig1 := buildNodeGroupNameAndLineage(decomposedNode1, shortIds, usedNames)
+	assert.Equal(t, "ng-ai-gpu-01-a100", gpuName1)
+	assert.Equal(t, "c1fb45d7-f1a0-465c-96f9-269c172d84df", gpuOrig1)
+
+	gpuName2, gpuOrig2 := buildNodeGroupNameAndLineage(decomposedNode2, shortIds, usedNames)
+	assert.Equal(t, "ng-ai-gpu-01-t4", gpuName2)
+	assert.Equal(t, "c1fb45d7-f1a0-465c-96f9-269c172d84df", gpuOrig2)
+}
+
+

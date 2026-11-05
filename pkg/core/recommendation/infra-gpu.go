@@ -40,6 +40,12 @@ func DecomposeOnpremNodes(nodes []onpremmodel.NodeProperty) []onpremmodel.NodePr
 			continue
 		}
 
+		// Count model occurrences to disambiguate same-model cards with different VRAM.
+		modelCount := make(map[string]int, len(clusters))
+		for _, cluster := range clusters {
+			modelCount[sanitizeName(cluster.Model)]++
+		}
+
 		// Heterogeneous: decompose into K logical nodes
 		for clusterIdx, cluster := range clusters {
 			// Find all physical cards matching this cluster
@@ -56,6 +62,8 @@ func DecomposeOnpremNodes(nodes []onpremmodel.NodeProperty) []onpremmodel.NodePr
 			sanitizedModel := sanitizeName(cluster.Model)
 			if sanitizedModel == "" {
 				sanitizedModel = fmt.Sprintf("cluster-%d", clusterIdx+1)
+			} else if modelCount[sanitizedModel] > 1 && cluster.MemoryTotalGB > 0 {
+				sanitizedModel = fmt.Sprintf("%s-%dgb", sanitizedModel, int(cluster.MemoryTotalGB))
 			}
 			logicalMachineId := fmt.Sprintf("%s-gpu-%s", node.MachineId, sanitizedModel)
 			if clusterIdx == 0 {
@@ -155,6 +163,9 @@ func RecommendGpuInfraCandidates(
 		firstSubnetId = skeletonVmInfra.TargetVNet.SubnetInfoList[0].Name
 	}
 
+	shortIds := buildShortMachineIdMap(srcInfra.Nodes)
+	usedNames := make(map[string]bool, len(expandedNodes))
+
 	for i, node := range expandedNodes {
 		minDisk := getCspMinRootDiskSizeGB(csp)
 		if hasGpu(node) && minDisk < gpuMinRootDiskSizeGB {
@@ -179,19 +190,21 @@ func RecommendGpuInfraCandidates(
 			recommendedSg = existingSg
 		}
 
+		ngName, origMachineId := buildNodeGroupNameAndLineage(node, shortIds, usedNames)
+
 		tempCreateNodeGroupReq := cloudmodel.CreateNodeGroupReq{
 			ConnectionName:   connectionName,
 			Description:      fmt.Sprintf("Recommended VM %02d for %s", i+1, node.MachineId),
 			VNetId:           skeletonVmInfra.TargetVNet.Name,
 			SubnetId:         firstSubnetId,
-			Name:             fmt.Sprintf("vm-%s", sanitizeName(node.MachineId)),
+			Name:             ngName,
 			RootDiskType:     "",
 			RootDiskSize:     rootDiskSize,
 			SshKeyId:         skeletonVmInfra.TargetSshKey.Name,
 			NodeGroupSize:    1,
 			SecurityGroupIds: []string{recommendedSg.Name},
 			Label: map[string]string{
-				lineage.LabelSourceMachineIds: node.MachineId,
+				lineage.LabelSourceMachineIds: origMachineId,
 			},
 		}
 

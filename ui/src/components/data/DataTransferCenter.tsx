@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore, calculateJobElapsedSeconds } from '@/store/migrationStore';
 import { beetleApi, tumblebugApi, honeybeeApi } from '@/api/client';
+import { resolveTargetNodeLineage } from '@/utils/nodeLineage';
 import { CspCredentialForm } from '../common/CspCredentialForm';
 import { DirectoryTreeExplorer } from './DirectoryTreeExplorer';
 import { 
@@ -59,6 +60,8 @@ interface DataMigrationJob {
 export const DataTransferCenter: React.FC = () => {
   const {
     namespaceId,
+    refinedSourceInfra,
+    savedCloudModels,
     dataJobs,
     setDataJobs,
     addDataJob,
@@ -308,6 +311,14 @@ export const DataTransferCenter: React.FC = () => {
     );
   };
 
+  const activeCloudModelNodeGroups =
+    savedCloudModels.find(
+      (m) =>
+        m.id === selectedTbInfraId ||
+        m.name === selectedTbInfraId ||
+        m.cloudInfraModel?.targetInfra?.name === selectedTbInfraId
+    )?.cloudInfraModel?.targetInfra?.nodeGroups || [];
+
   // Find AI GPU node in Tumblebug migrated infra nodes (prefers Running nodes with a valid IP)
   const findAiTargetNode = (nodes: any[]) => {
     if (!Array.isArray(nodes) || nodes.length === 0) return null;
@@ -315,8 +326,10 @@ export const DataTransferCenter: React.FC = () => {
       String(n.status || '').toLowerCase() !== 'failed' &&
       Boolean(n.publicIP || n.publicIp || n.privateIP || n.privateIp);
     const gpuRegex = /(ai-gpu-01|ai-gpu|nvidiat4|nvidial4|gpu|g4dn|g5|p3|p4|t4|l4|a10|a100|nc\d)/i;
-    const matchText = (n: any) =>
-      `${n.name || ''} ${n.id || ''} ${n.subGroupId || ''} ${n.specId || ''} ${n.cspResourceName || ''}`;
+    const matchText = (n: any) => {
+      const lineage = resolveTargetNodeLineage(n, activeCloudModelNodeGroups, refinedSourceInfra);
+      return `${n.name || ''} ${n.id || ''} ${n.subGroupId || ''} ${n.specId || ''} ${n.cspResourceName || ''} ${lineage?.sourceHostname || ''}`;
+    };
 
     return (
       nodes.find((n: any) => isReachableNode(n) && gpuRegex.test(matchText(n))) ||
@@ -1962,9 +1975,11 @@ export const DataTransferCenter: React.FC = () => {
                                           const ip = n.publicIP || n.publicIp || n.privateIP || n.privateIp || '';
                                           const isFailed = ['failed', 'error'].includes(String(n.status || '').toLowerCase());
                                           const statusLabel = ip ? ip : isFailed ? 'Failed' : 'IP pending';
+                                          const lineage = resolveTargetNodeLineage(n, activeCloudModelNodeGroups, refinedSourceInfra);
+                                          const sourceTag = lineage?.sourceHostname ? ` [Source: ${lineage.sourceHostname}]` : '';
                                           return (
                                             <option key={nid} value={nid} disabled={isFailed && !ip}>
-                                              {n.name || nid} ({statusLabel})
+                                              {n.name || nid}{sourceTag} ({statusLabel})
                                             </option>
                                           );
                                         })}
