@@ -87,6 +87,8 @@ github.com/cloud-barista/cb-tumblebug v0.13.8 h1:I35WrvVlRD3bZtue0LufdyZzucfCGfO
 github.com/cloud-barista/cb-tumblebug v0.13.8/go.mod h1:vscxEXJAhrKWdYOqJdXfBnBQVmFQQOjKpkLD8EaSa4g=
 github.com/cloud-barista/cm-beetle/transx v0.1.3 h1:g8ZhHOuj/1zphRV+xA7mdVE73RWhjBcnMb3Ckckzk4c=
 github.com/cloud-barista/cm-beetle/transx v0.1.3/go.mod h1:Jb8XAIXp7qJgSpWm0GM/EX7N6s/fB5iMMeMEkVA55O4=
+github.com/cloud-barista/cm-beetle/transx v0.1.4 h1:xtrYD4oM4Zw8h5+nizDg31vea/F+A9MK9ph6q3TbweQ=
+github.com/cloud-barista/cm-beetle/transx v0.1.4/go.mod h1:LWCD4mPMy89apObhBzk3Nm72PU3Yzam5i7D8JQJuD+c=
 github.com/cloud-barista/ktcloudvpc-sdk-go v0.0.0-20260713072217-58ff4a0ab139 h1:4vZeAomyjMJKUVzseDoUaLkrQIXwN1eeqDSq3dhacWE=
 github.com/cloud-barista/ktcloudvpc-sdk-go v0.0.0-20260713072217-58ff4a0ab139/go.mod h1:KTct9zIiho4yDWKGVDz1Wde20bqXkH51o8EKfLzoyG8=
 github.com/cloud-barista/mc-terrarium v0.1.4 h1:w60hp6lEquL41/f1L08E9qchm7qL9hfiyr3AXASZIdI=
