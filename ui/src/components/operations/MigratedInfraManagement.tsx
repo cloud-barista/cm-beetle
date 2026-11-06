@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from '../design/TopologyMap';
 import { beetleApi } from '../../api/client';
-import { resolveTargetNodeLineage } from '../../utils/nodeLineage';
+import { resolveTargetNodeLineage, parseDiscreteTcpPorts } from '../../utils/nodeLineage';
 import { CheckSSHReadyResponse } from '../../types/migration';
 import { ObjectDirectoryTree } from '../storage/ObjectDirectoryTree';
 import { 
@@ -34,7 +34,8 @@ import {
   Sliders,
   Zap,
   Activity,
-  FileText
+  FileText,
+  ExternalLink
 } from 'lucide-react';
 
 const SAMPLE_INFRA_ID = 'sample-aws-infra-01';
@@ -180,12 +181,20 @@ const isGpuSpec = (specId: string, specList?: any[]): boolean => {
   );
 };
 
+const isValidEndpointHost = (host?: string): boolean => {
+  if (!host || host === 'N/A') return false;
+  return /^[a-zA-Z0-9.-]+$/.test(host.trim());
+};
+
 export const MigratedInfraManagement: React.FC = () => {
   const {
     jobs,
     objectStorageJobs,
     savedCloudModels,
     selectedCloudModel,
+    editedCandidate,
+    recommendationCandidates,
+    selectedCandidateIndex,
     selectedSourceModel,
     refinedSourceInfra,
     fetchSavedCloudModels,
@@ -216,6 +225,7 @@ export const MigratedInfraManagement: React.FC = () => {
   const [deleteStage, setDeleteStage] = useState<'idle' | 'deleting-nlb' | 'deleting-infra'>('idle');
   const [liveNlbs, setLiveNlbs] = useState<any[]>([]);
   const [hasFetchedLiveNlbs, setHasFetchedLiveNlbs] = useState<boolean>(false);
+  const [liveSecurityGroups, setLiveSecurityGroups] = useState<any[]>([]);
   const [deletingNlbId, setDeletingNlbId] = useState<string | null>(null);
 
   // Migrated Infra IDs fetched from GET /beetle/migration/ns/{nsId}/infra?option=id
@@ -527,6 +537,7 @@ export const MigratedInfraManagement: React.FC = () => {
         setLoadedInfraDetail(SAMPLE_INFRA_DETAIL);
         setLiveNlbs([]);
         setHasFetchedLiveNlbs(false);
+        setLiveSecurityGroups([]);
         setIsLoadingDetail(false);
         return;
       }
@@ -534,9 +545,23 @@ export const MigratedInfraManagement: React.FC = () => {
       const detail = await beetleApi.getMigratedInfraDetail(ns, infraIdToLoad);
       if (!detail) {
         setLoadedInfraDetail(null);
+        setLiveSecurityGroups([]);
         return;
       }
       setLoadedInfraDetail(detail);
+
+      try {
+        const summaryJson = await beetleApi.getTargetInfraSummary(ns, infraIdToLoad, 'json');
+        const parsedSummary = typeof summaryJson === 'string' ? JSON.parse(summaryJson) : summaryJson;
+        const sgs = parsedSummary?.securityResources?.securityGroups;
+        if (Array.isArray(sgs) && sgs.length > 0) {
+          setLiveSecurityGroups(sgs);
+        } else {
+          setLiveSecurityGroups([]);
+        }
+      } catch {
+        setLiveSecurityGroups([]);
+      }
 
       // Fetch compliance report or target summary in active format
       await fetchReportOrSummary(infraIdToLoad, reportDocType, reportFormat);
@@ -805,12 +830,64 @@ export const MigratedInfraManagement: React.FC = () => {
     )
   );
 
+  const knownModelSecurityGroups: any[] = [
+    ...(activeSavedModel?.cloudInfraModel?.targetSecurityGroupList || []),
+    ...(selectedCloudModel?.cloudInfraModel?.targetSecurityGroupList || []),
+    ...(editedCandidate?.targetSecurityGroupList || []),
+    ...(recommendationCandidates?.[selectedCandidateIndex]?.targetSecurityGroupList || []),
+    ...(loadedInfraDetail?.targetSecurityGroupList || [])
+  ];
+
+  const resolveFirewallRulesForSg = (sgName: string): { rules: any[]; isFallback: boolean } => {
+    const liveMatch = liveSecurityGroups.find(
+      (sg: any) =>
+        sg?.name === sgName ||
+        sg?.cspSecurityGroupId === sgName ||
+        (sg?.name && (sgName.includes(sg.name) || sg.name.includes(sgName)))
+    );
+    if (liveMatch && Array.isArray(liveMatch.rules) && liveMatch.rules.length > 0) {
+      const inboundRules = liveMatch.rules
+        .filter((r: any) => String(r.direction || 'inbound').toLowerCase() !== 'outbound')
+        .map((r: any) => ({
+          protocol: r.protocol || 'tcp',
+          dstPorts: r.fromPort && r.toPort && r.fromPort !== r.toPort ? `${r.fromPort}-${r.toPort}` : (r.fromPort || r.toPort || '22'),
+          fromPort: r.fromPort,
+          toPort: r.toPort,
+          cidr: r.cidr || '0.0.0.0/0',
+          direction: r.direction || 'inbound'
+        }));
+      if (inboundRules.length > 0) {
+        return { rules: inboundRules, isFallback: false };
+      }
+    }
+
+    const modelMatch = knownModelSecurityGroups.find(
+      (sg: any) =>
+        sg?.name === sgName ||
+        (sg?.name && (sgName.includes(sg.name) || sg.name.includes(sgName)))
+    );
+    if (modelMatch && Array.isArray(modelMatch.firewallRules) && modelMatch.firewallRules.length > 0) {
+      return { rules: modelMatch.firewallRules, isFallback: false };
+    }
+
+    return { rules: [{ protocol: 'tcp', dstPorts: '22, 80, 443' }], isFallback: true };
+  };
+
   const targetSecurityGroupList = extractedSgNames.length > 0
-    ? extractedSgNames.map((sgName: string) => ({
-        name: sgName,
-        firewallRules: [{ protocol: 'tcp', dstPorts: '22, 80, 443' }]
+    ? extractedSgNames.map((sgName: string) => {
+        const resolved = resolveFirewallRulesForSg(sgName);
+        return {
+          name: sgName,
+          firewallRules: resolved.rules,
+          isFallback: resolved.isFallback
+        };
+      })
+    : Array.isArray(loadedInfraDetail?.targetSecurityGroupList) && loadedInfraDetail.targetSecurityGroupList.length > 0
+    ? loadedInfraDetail.targetSecurityGroupList.map((sg: any) => ({
+        ...sg,
+        isFallback: false
       }))
-    : [{ name: 'sg-default', firewallRules: [{ protocol: 'tcp', dstPorts: '22, 80, 443' }] }];
+    : [{ name: 'sg-default', firewallRules: [{ protocol: 'tcp', dstPorts: '22, 80, 443' }], isFallback: true }];
 
   // Normalize model data for TopologyMap and VM Access table, synchronizing live node subnetId & deployedNodes
   const currentCloudModel = (() => {
@@ -926,7 +1003,7 @@ export const MigratedInfraManagement: React.FC = () => {
   })();
 
   // Extract VM nodes array for VM Access table
-  const activeNodes: { name: string; specId: string; publicIp: string; privateIp: string; subnetId?: string; status?: string; systemMessage?: string; label?: Record<string, string>; subGroupId?: string }[] = loadedInfraDetail?.node && loadedInfraDetail.node.length > 0
+  const activeNodes: { name: string; specId: string; publicIp: string; privateIp: string; subnetId?: string; status?: string; systemMessage?: string; label?: Record<string, string>; subGroupId?: string; securityGroupIds?: string[] }[] = loadedInfraDetail?.node && loadedInfraDetail.node.length > 0
     ? loadedInfraDetail.node.map((n: any) => ({
         name: n.name || n.id || 'node',
         specId: n.specId || n.cspSpecName || n.spec?.cspSpecName || (typeof n.spec === 'string' ? n.spec : '') || 'c5.large',
@@ -936,7 +1013,8 @@ export const MigratedInfraManagement: React.FC = () => {
         status: n.status || ((n.publicIP || n.publicIp || n.privateIP || n.privateIp) ? 'Running' : 'Failed'),
         systemMessage: n.systemMessage || '',
         label: n.label,
-        subGroupId: n.subGroupId || n.nodeGroupId || ''
+        subGroupId: n.subGroupId || n.nodeGroupId || '',
+        securityGroupIds: Array.isArray(n.securityGroupIds) ? n.securityGroupIds : []
       }))
     : activeJobInfra?.vms && activeJobInfra.vms.length > 0
     ? activeJobInfra.vms
@@ -949,8 +1027,59 @@ export const MigratedInfraManagement: React.FC = () => {
         status: 'Running',
         systemMessage: '',
         label: ng.label,
-        subGroupId: ng.name
+        subGroupId: ng.name,
+        securityGroupIds: Array.isArray(ng.securityGroupIds) ? ng.securityGroupIds : []
       }));
+
+  const resolveNodeServicePorts = (node: any, lineagePorts?: number[]): number[] => {
+    const portSet = new Set<number>(lineagePorts || []);
+    const nodeGroups = currentCloudModel.targetInfra?.nodeGroups || [];
+    const matchedNg = nodeGroups.find(
+      (ng: any) =>
+        ng?.name &&
+        (ng.name === node.subGroupId ||
+          ng.name === node.name ||
+          (typeof node.name === 'string' && node.name.startsWith(`${ng.name}-`)))
+    );
+    const nodeSgIds: string[] =
+      Array.isArray(node.securityGroupIds) && node.securityGroupIds.length > 0
+        ? node.securityGroupIds
+        : Array.isArray(matchedNg?.securityGroupIds) && matchedNg.securityGroupIds.length > 0
+        ? matchedNg.securityGroupIds
+        : [];
+
+    const allSgs = [
+      ...(targetSecurityGroupList || []),
+      ...((currentCloudModel as any)?.targetSecurityGroupList || [])
+    ];
+
+    const matchedSgs =
+      nodeSgIds.length > 0
+        ? allSgs.filter((sg: any) =>
+            nodeSgIds.some(
+              (id) =>
+                sg?.name === id ||
+                (sg?.name && (id.includes(sg.name) || sg.name.includes(id)))
+            )
+          )
+        : allSgs.length === 1
+        ? allSgs
+        : [];
+
+    for (const sg of matchedSgs) {
+      if (sg?.isFallback) continue;
+      for (const rule of sg?.firewallRules || []) {
+        const dir = String(rule?.direction || 'inbound').toLowerCase();
+        const proto = String(rule?.protocol || 'tcp').toLowerCase();
+        if (dir === 'outbound' || (proto !== 'tcp' && proto !== 'all' && proto !== '*')) continue;
+        for (const p of parseDiscreteTcpPorts(rule?.dstPorts ?? rule?.fromPort, rule?.toPort)) {
+          portSet.add(p);
+        }
+      }
+    }
+
+    return Array.from(portSet).sort((a, b) => a - b);
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -1468,8 +1597,11 @@ export const MigratedInfraManagement: React.FC = () => {
                         const nodeLineage = resolveTargetNodeLineage(
                           node,
                           currentCloudModel.targetInfra?.nodeGroups,
-                          refinedSourceInfra
+                          selectedSourceModel?.onpremiseInfraModel || refinedSourceInfra
                         );
+                        const nodeServicePorts = !isNodeFailed && isValidEndpointHost(node.publicIp)
+                          ? resolveNodeServicePorts(node, nodeLineage?.servicePorts)
+                          : [];
                         return (
                           <tr key={idx} className={`transition ${isNodeFailed ? 'bg-red-500/[0.04] hover:bg-red-500/[0.08]' : 'hover:bg-emerald-500/[0.02]'}`}>
                             <td className="py-3 px-4 font-extrabold text-text-main">
@@ -1492,7 +1624,28 @@ export const MigratedInfraManagement: React.FC = () => {
                                 )}
                               </div>
                             </td>
-                            <td className={`py-3 px-4 select-all font-extrabold ${isNodeFailed ? 'text-red-500' : 'text-text-main'}`}>{node.publicIp}</td>
+                            <td className={`py-3 px-4 font-extrabold ${isNodeFailed ? 'text-red-500' : 'text-text-main'}`}>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="select-all">{node.publicIp}</span>
+                                {nodeServicePorts.map((port) => {
+                                  const scheme = port === 443 || port === 8443 ? 'https' : 'http';
+                                  const endpointUrl = `${scheme}://${node.publicIp.trim()}:${port}`;
+                                  return (
+                                    <a
+                                      key={port}
+                                      href={endpointUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      title={`Open ${endpointUrl} in a new tab`}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold font-mono transition cursor-pointer"
+                                    >
+                                      <span>:{port}</span>
+                                      <ExternalLink className="w-3 h-3 shrink-0" />
+                                    </a>
+                                  );
+                                })}
+                              </div>
+                            </td>
                             <td className={`py-3 px-4 ${isNodeFailed ? 'text-red-500/80' : 'text-text-muted'}`}>
                               <div className="flex items-center gap-1.5">
                                 <span>{node.privateIp}</span>
