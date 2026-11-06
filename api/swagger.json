@@ -5762,11 +5762,12 @@
         },
         "/report/migration/ns/{nsId}/infra/{infraId}": {
             "post": {
-                "description": "Generate a comprehensive migration report comparing source infrastructure with target cloud VMs, including resource mappings, network/security analysis, cost summary, and recommendations in Markdown or HTML format",
+                "description": "Generate a comprehensive migration report comparing source infrastructure with target cloud VMs, including resource mappings, network/security analysis, cost summary, and recommendations in Markdown, HTML, or JSON format",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
+                    "application/json",
                     "text/markdown",
                     "text/html"
                 ],
@@ -5797,11 +5798,12 @@
                     {
                         "enum": [
                             "md",
-                            "html"
+                            "html",
+                            "json"
                         ],
                         "type": "string",
                         "default": "md",
-                        "description": "Report format: md or html",
+                        "description": "Report format: md, html, or json",
                         "name": "format",
                         "in": "query"
                     },
@@ -5828,9 +5830,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Migration report in markdown or HTML format",
+                        "description": "Migration report in markdown, HTML, or JSON format",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/model.ApiResponse-report_MigrationReport"
                         },
                         "headers": {
                             "Content-Disposition": {
@@ -5839,7 +5841,7 @@
                             },
                             "Content-Type": {
                                 "type": "string",
-                                "description": "text/markdown; charset=utf-8 or text/html; charset=utf-8"
+                                "description": "text/markdown; charset=utf-8 or text/html; charset=utf-8 or application/json"
                             }
                         }
                     },
@@ -11930,6 +11932,34 @@
                 }
             }
         },
+        "model.ApiResponse-report_MigrationReport": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/report.MigrationReport"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-storagemodel_IdList": {
             "type": "object",
             "properties": {
@@ -15979,6 +16009,84 @@
                 }
             }
         },
+        "report.ExecutiveSummary": {
+            "type": "object",
+            "properties": {
+                "failedNlbs": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "failedServers": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "migratedNlbs": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "migratedServers": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "migrationStatus": {
+                    "type": "string",
+                    "example": "Completed"
+                },
+                "monthlyCostUsd": {
+                    "type": "number",
+                    "example": 382.46
+                },
+                "nlbMigrationStatus": {
+                    "type": "string",
+                    "example": "Completed"
+                },
+                "targetCloud": {
+                    "type": "string",
+                    "example": "AWS"
+                },
+                "targetRegion": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                },
+                "totalNlbs": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "totalServers": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "totalSourceGpus": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "totalTargetGpus": {
+                    "type": "integer",
+                    "example": 2
+                }
+            }
+        },
+        "report.IPMapping": {
+            "type": "object",
+            "properties": {
+                "sourceHostname": {
+                    "type": "string",
+                    "example": "cm-nfs"
+                },
+                "sourceIp": {
+                    "type": "string",
+                    "example": "172.29.0.102"
+                },
+                "targetPrivateIp": {
+                    "type": "string",
+                    "example": "192.168.110.167"
+                },
+                "targetPublicIp": {
+                    "type": "string",
+                    "example": "43.201.85.138"
+                }
+            }
+        },
         "report.K8sExecutiveSummary": {
             "type": "object",
             "properties": {
@@ -16112,6 +16220,182 @@
                 }
             }
         },
+        "report.MigrationReport": {
+            "type": "object",
+            "properties": {
+                "costSummary": {
+                    "$ref": "#/definitions/report.CostSummary"
+                },
+                "executiveSummary": {
+                    "$ref": "#/definitions/report.ExecutiveSummary"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/report.ReportMetadata"
+                },
+                "migrationMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/report.SourceTargetMapping"
+                    }
+                },
+                "networkAnalysis": {
+                    "$ref": "#/definitions/report.NetworkMigrationAnalysis"
+                },
+                "nlbMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/report.NlbMigrationMapping"
+                    }
+                },
+                "recommendations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/report.Recommendation"
+                    }
+                },
+                "securityAnalysis": {
+                    "$ref": "#/definitions/report.SecurityMigrationAnalysis"
+                },
+                "sourceDetails": {
+                    "$ref": "#/definitions/summary.SourceInfraSummary"
+                },
+                "targetDetails": {
+                    "$ref": "#/definitions/summary.TargetInfraSummary"
+                }
+            }
+        },
+        "report.NetworkChange": {
+            "type": "object",
+            "properties": {
+                "changeType": {
+                    "type": "string",
+                    "example": "Public IP Added"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Added public IP for internet access"
+                },
+                "sourceIp": {
+                    "type": "string",
+                    "example": "172.29.0.102"
+                },
+                "targetPrivateIp": {
+                    "type": "string",
+                    "example": "192.168.110.167"
+                },
+                "targetPublicIp": {
+                    "type": "string",
+                    "example": "43.201.85.138"
+                }
+            }
+        },
+        "report.NetworkMigrationAnalysis": {
+            "type": "object",
+            "properties": {
+                "cidrPreserved": {
+                    "type": "boolean"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "ipMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/report.IPMapping"
+                    }
+                },
+                "sourceNetwork": {
+                    "$ref": "#/definitions/report.SourceNetworkInfo"
+                },
+                "targetNetwork": {
+                    "$ref": "#/definitions/report.TargetNetworkInfo"
+                }
+            }
+        },
+        "report.NlbBackendNodeMapping": {
+            "type": "object",
+            "properties": {
+                "sourceHostname": {
+                    "type": "string",
+                    "example": "ip-10-0-1-221"
+                },
+                "sourceIp": {
+                    "type": "string",
+                    "example": "10.0.1.221"
+                },
+                "sourceMachineId": {
+                    "type": "string",
+                    "example": "ec2d32b5-98fb-5a96-7913-d3db1ec18932"
+                },
+                "sourcePort": {
+                    "type": "integer",
+                    "example": 8086
+                },
+                "sourceServerName": {
+                    "type": "string",
+                    "example": "influx1"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "Running"
+                },
+                "targetCspVmId": {
+                    "type": "string",
+                    "example": "i-0dee049fb9412465b"
+                },
+                "targetPort": {
+                    "type": "string",
+                    "example": "8086"
+                },
+                "targetPrivateIp": {
+                    "type": "string",
+                    "example": "10.0.1.221"
+                },
+                "targetPublicIp": {
+                    "type": "string",
+                    "example": "13.125.79.237"
+                },
+                "targetVmName": {
+                    "type": "string",
+                    "example": "my01-ng-influxdb-back-1"
+                }
+            }
+        },
+        "report.NlbMigrationMapping": {
+            "type": "object",
+            "properties": {
+                "backendNodeMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/report.NlbBackendNodeMapping"
+                    }
+                },
+                "hostNodeTargetVmName": {
+                    "type": "string",
+                    "example": "my01-ng-ec268ed7-821e-9d73-e79f-961262161624-1"
+                },
+                "mappingId": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "migrationStatus": {
+                    "type": "string",
+                    "example": "Migrated"
+                },
+                "notes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "sourceNlb": {
+                    "$ref": "#/definitions/summary.SourceNlbInfo"
+                },
+                "targetNlb": {
+                    "$ref": "#/definitions/summary.SummaryNlbInfo"
+                }
+            }
+        },
         "report.Recommendation": {
             "type": "object",
             "properties": {
@@ -16196,6 +16480,110 @@
                 }
             }
         },
+        "report.ResourceChangeAnalysis": {
+            "type": "object",
+            "properties": {
+                "cpuChange": {
+                    "$ref": "#/definitions/report.ResourceChange"
+                },
+                "gpuChange": {
+                    "$ref": "#/definitions/report.ResourceChange"
+                },
+                "memoryChange": {
+                    "$ref": "#/definitions/report.ResourceChange"
+                },
+                "networkChange": {
+                    "$ref": "#/definitions/report.NetworkChange"
+                },
+                "securityChange": {
+                    "$ref": "#/definitions/report.SecurityChange"
+                },
+                "storageChange": {
+                    "$ref": "#/definitions/report.ResourceChange"
+                }
+            }
+        },
+        "report.SecurityChange": {
+            "type": "object",
+            "properties": {
+                "conversionStatus": {
+                    "type": "string",
+                    "example": "Converted"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Converted 3 iptables rules to AWS Security Group"
+                },
+                "sourceRules": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "targetRules": {
+                    "type": "integer",
+                    "example": 6
+                }
+            }
+        },
+        "report.SecurityConversion": {
+            "type": "object",
+            "properties": {
+                "conversionType": {
+                    "type": "string",
+                    "example": "iptables to AWS SG"
+                },
+                "sourceHostname": {
+                    "type": "string",
+                    "example": "cm-nfs"
+                },
+                "sourceRules": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "status": {
+                    "type": "string",
+                    "example": "Converted"
+                },
+                "targetRules": {
+                    "type": "integer",
+                    "example": 6
+                },
+                "targetSgName": {
+                    "type": "string",
+                    "example": "mig-sg-02"
+                }
+            }
+        },
+        "report.SecurityMigrationAnalysis": {
+            "type": "object",
+            "properties": {
+                "conversions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/report.SecurityConversion"
+                    }
+                },
+                "summary": {
+                    "type": "string"
+                }
+            }
+        },
+        "report.SourceNetworkInfo": {
+            "type": "object",
+            "properties": {
+                "cidr": {
+                    "type": "string",
+                    "example": "192.168.110.0/24"
+                },
+                "connectedServers": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "gateway": {
+                    "type": "string",
+                    "example": "192.168.110.254"
+                }
+            }
+        },
         "report.SourceServerBrief": {
             "type": "object",
             "properties": {
@@ -16223,6 +16611,14 @@
                     "type": "integer",
                     "example": 3
                 },
+                "gpuCount": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "gpuSummary": {
+                    "type": "string",
+                    "example": "1 x NVIDIA A100-PCIE-40GB"
+                },
                 "hostname": {
                     "type": "string",
                     "example": "cm-nfs"
@@ -16242,6 +16638,119 @@
                 "primaryIp": {
                     "type": "string",
                     "example": "172.29.0.102"
+                }
+            }
+        },
+        "report.SourceTargetMapping": {
+            "type": "object",
+            "properties": {
+                "costPerMonth": {
+                    "type": "number",
+                    "example": 247.68
+                },
+                "mappingId": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "migrationStatus": {
+                    "type": "string",
+                    "example": "Success"
+                },
+                "resourceChanges": {
+                    "$ref": "#/definitions/report.ResourceChangeAnalysis"
+                },
+                "sourceServer": {
+                    "$ref": "#/definitions/report.SourceServerBrief"
+                },
+                "targetVM": {
+                    "$ref": "#/definitions/report.TargetVMBrief"
+                }
+            }
+        },
+        "report.TargetNetworkInfo": {
+            "type": "object",
+            "properties": {
+                "cspVnetId": {
+                    "type": "string",
+                    "example": "vpc-0200cd398ed7c7f17"
+                },
+                "subnetCidr": {
+                    "type": "string",
+                    "example": "192.168.110.0/24"
+                },
+                "vnetCidr": {
+                    "type": "string",
+                    "example": "192.168.96.0/19"
+                },
+                "vnetName": {
+                    "type": "string",
+                    "example": "mig-vnet-01"
+                }
+            }
+        },
+        "report.TargetVMBrief": {
+            "type": "object",
+            "properties": {
+                "gpuCount": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "gpuSummary": {
+                    "type": "string",
+                    "example": "1 x Tesla T4 (16 GB)"
+                },
+                "instanceId": {
+                    "type": "string",
+                    "example": "i-093b4b7c722ed9ec5"
+                },
+                "instanceName": {
+                    "type": "string",
+                    "example": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1"
+                },
+                "memoryGb": {
+                    "type": "number",
+                    "example": 16
+                },
+                "privateIp": {
+                    "type": "string",
+                    "example": "192.168.110.167"
+                },
+                "publicIp": {
+                    "type": "string",
+                    "example": "43.201.85.138"
+                },
+                "rootDiskGb": {
+                    "type": "integer",
+                    "example": 50
+                },
+                "rootDiskType": {
+                    "type": "string",
+                    "example": "gp2"
+                },
+                "securityGroups": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "mig-sg-02"
+                    ]
+                },
+                "sourceMachineId": {
+                    "type": "string",
+                    "example": "0036e4b9-c8b4-e811-906e-000ffee02d5c"
+                },
+                "specName": {
+                    "type": "string",
+                    "example": "c5a.2xlarge"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "Running"
+                },
+                "vcpus": {
+                    "type": "integer",
+                    "example": 8
                 }
             }
         },
@@ -16885,6 +17394,39 @@
                 }
             }
         },
+        "summary.SourceGPUInfo": {
+            "type": "object",
+            "properties": {
+                "architecture": {
+                    "type": "string",
+                    "example": "Ampere"
+                },
+                "cudaVersion": {
+                    "type": "string",
+                    "example": "12.2"
+                },
+                "driverVersion": {
+                    "type": "string",
+                    "example": "535.129.03"
+                },
+                "memoryTotalGb": {
+                    "type": "number",
+                    "example": 40
+                },
+                "model": {
+                    "type": "string",
+                    "example": "NVIDIA A100-PCIE-40GB"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "GPU"
+                },
+                "vendor": {
+                    "type": "string",
+                    "example": "NVIDIA"
+                }
+            }
+        },
         "summary.SourceInfraSummary": {
             "type": "object",
             "properties": {
@@ -17218,6 +17760,12 @@
                 "disk": {
                     "$ref": "#/definitions/summary.SourceDiskInfo"
                 },
+                "gpuCards": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/summary.SourceGPUInfo"
+                    }
+                },
                 "hostname": {
                     "type": "string",
                     "example": "web-server-01"
@@ -17316,6 +17864,10 @@
                 "totalDiskGb": {
                     "type": "integer",
                     "example": 2000
+                },
+                "totalGpus": {
+                    "type": "integer",
+                    "example": 2
                 },
                 "totalMemoryGb": {
                     "type": "integer",
@@ -18346,6 +18898,22 @@
         "summary.SummaryVmSpecInfo": {
             "type": "object",
             "properties": {
+                "acceleratorCount": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "acceleratorMemoryGB": {
+                    "type": "number",
+                    "example": 16
+                },
+                "acceleratorModel": {
+                    "type": "string",
+                    "example": "Tesla T4"
+                },
+                "acceleratorType": {
+                    "type": "string",
+                    "example": "gpu"
+                },
                 "architecture": {
                     "type": "string",
                     "example": "x86_64"
@@ -18404,6 +18972,10 @@
                 "targetRegion": {
                     "type": "string",
                     "example": "ap-northeast-2"
+                },
+                "totalGpuCount": {
+                    "type": "integer",
+                    "example": 2
                 },
                 "totalNlbCount": {
                     "type": "integer",

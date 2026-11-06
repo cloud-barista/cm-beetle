@@ -90,6 +90,11 @@ func writeExecutiveSummary(md *strings.Builder, summary *ExecutiveSummary, metad
 		md.WriteString(fmt.Sprintf("⚠️ **Failed Servers:** %d\n\n", summary.FailedServers))
 	}
 
+	if summary.TotalSourceGPUs > 0 || summary.TotalTargetGPUs > 0 {
+		md.WriteString(fmt.Sprintf("**Total Source GPUs:** %d\n\n", summary.TotalSourceGPUs))
+		md.WriteString(fmt.Sprintf("**Total Target GPUs:** %d\n\n", summary.TotalTargetGPUs))
+	}
+
 	if summary.TotalNLBs > 0 || summary.MigratedNLBs > 0 {
 		if summary.NlbMigrationStatus != "" {
 			md.WriteString(fmt.Sprintf("**NLB Migration Status:** %s\n\n", summary.NlbMigrationStatus))
@@ -790,8 +795,13 @@ func extractSourceOSInfoDetailed(vm summary.SummaryVmInfo, sourceDetails *summar
 func formatVmSpecInfo(vm summary.SummaryVmInfo) string {
 	// Assuming Root Disk size is 50GB by default (this should be retrieved from actual VM data if available)
 	rootDiskGB := 50
-	return fmt.Sprintf("**Spec ID:** %s<br>**vCPUs:** %d<br>**Memory:** %.1f GB<br>**Root Disk:** %d GB",
+	base := fmt.Sprintf("**Spec ID:** %s<br>**vCPUs:** %d<br>**Memory:** %.1f GB<br>**Root Disk:** %d GB",
 		vm.Spec.Name, vm.Spec.VCpus, vm.Spec.MemoryGiB, rootDiskGB)
+	if vm.Spec.AcceleratorCount > 0 {
+		gpuDesc := formatTargetGPUSummary(vm.Spec)
+		return fmt.Sprintf("%s<br>**GPU:** %s", base, gpuDesc)
+	}
+	return base
 }
 
 // formatSourceServerSpecInfo formats source node spec information for display
@@ -801,8 +811,13 @@ func formatSourceServerSpecInfo(vm summary.SummaryVmInfo, sourceDetails *summary
 		return "**CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A"
 	}
 
-	return fmt.Sprintf("**CPUs:** %d<br>**Threads:** %d<br>**Memory:** %d GB<br>**Root Disk:** %d GB",
+	base := fmt.Sprintf("**CPUs:** %d<br>**Threads:** %d<br>**Memory:** %d GB<br>**Root Disk:** %d GB",
 		node.CPU.CPUs, node.CPU.Threads, node.Memory.TotalGB, node.Disk.TotalGB)
+	if len(node.GPUCards) > 0 {
+		gpuDesc := formatSourceGPUSummary(node.GPUCards)
+		return fmt.Sprintf("%s<br>**GPU:** %s", base, gpuDesc)
+	}
+	return base
 }
 
 func getVMsUsingSecurityGroupList(sgName string, targetDetails *summary.TargetInfraSummary) []summary.SummaryVmInfo {

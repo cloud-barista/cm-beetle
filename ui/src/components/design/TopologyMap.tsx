@@ -57,6 +57,29 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
   const targetSecurityGroupList = data.targetSecurityGroupList || [];
   const targetInfra = data.targetInfra || { name: 'infra', nodeGroups: [] };
   const targetNlbList = data.targetNlbList || [];
+  const targetSpecList: any[] = (data as any).targetSpecList || [];
+
+  const resolveNgGpuLabel = (specInfo: any, specId: string): string | null => {
+    if (specInfo) {
+      const count = Number(specInfo.acceleratorCount ?? specInfo.AcceleratorCount ?? specInfo.gpuCount ?? 0);
+      const model = String(specInfo.acceleratorModel ?? specInfo.AcceleratorModel ?? specInfo.gpuModel ?? '').trim();
+      const memGb = Number(specInfo.acceleratorMemoryGB ?? specInfo.AcceleratorMemoryGB ?? 0);
+      if (count > 0 || model) {
+        const prefix = count > 1 ? `${count}x ` : '';
+        const memSuffix = memGb > 0 ? ` (${memGb}GB)` : '';
+        return model ? `${prefix}${model}${memSuffix}` : `${count || 1}x GPU${memSuffix}`;
+      }
+    }
+    const s = (specId || '').toLowerCase();
+    if (s.includes('g4dn.') || (s.includes('standard_nc') && s.includes('t4'))) return 'Tesla T4';
+    if (s.includes('g5.') || s.includes('g5g.') || (s.includes('standard_nv') && s.includes('a10'))) return 'A10G';
+    if (s.includes('g6.') || s.includes('g2-')) return 'L4';
+    if (s.includes('p3.') || s.includes('standard_nc6s_v3') || s.includes('standard_nc12s_v3') || s.includes('standard_nc24s_v3')) return 'V100';
+    if (s.includes('p4d') || s.includes('a2-') || (s.includes('standard_nc') && s.includes('a100')) || (s.includes('standard_nd') && s.includes('a100'))) return 'A100';
+    if (s.includes('p5.') || s.includes('a3-') || (s.includes('standard_nc') && s.includes('h100')) || (s.includes('standard_nd') && s.includes('h100'))) return 'H100';
+    if (s.includes('standard_nc') || s.includes('standard_nd') || s.includes('standard_nv')) return 'GPU';
+    return null;
+  };
 
   const nodeGroups = (targetInfra && Array.isArray(targetInfra.nodeGroups)) ? targetInfra.nodeGroups : [];
   const subnets = (targetVNet.subnetInfoList && targetVNet.subnetInfoList.length > 0)
@@ -203,12 +226,21 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
                     const nodesArray = deployedNodes.length > 0 ? deployedNodes : Array.from({ length: nodeCount });
                     const rootDiskSize = (ng as any).rootDiskSize || '30';
                     const specId = ng.specId || 'custom-spec';
+                    const lowerSpecId = specId.toLowerCase();
+                    const matchedSpec = targetSpecList.find(
+                      (s: any) =>
+                        s?.id?.toLowerCase() === lowerSpecId ||
+                        s?.cspSpecName?.toLowerCase() === lowerSpecId ||
+                        (s?.cspSpecName && lowerSpecId.endsWith(String(s.cspSpecName).toLowerCase()))
+                    );
+                    const gpuLabel = resolveNgGpuLabel(matchedSpec, specId);
                     const imageId = ng.imageId || 'ubuntu-22.04';
                     const cspImageName = ng.cspImageName;
                     const sourceMachineIds = ng.label?.['cm-source-machine-ids'] || ng.label?.sourceMachineIds;
-                    const vcpu = (ng as any).vCPU || (specId.includes('small') ? 2 : specId.includes('xlarge') ? 4 : 2);
-                    const memGiB = (ng as any).memoryGiB || (specId.includes('xlarge') ? 16 : 4);
-                    const ngHourlyCost = getSpecHourlyCost(specId) * nodeCount;
+                    const vcpu = (ng as any).vCPU || matchedSpec?.vCPU || (specId.includes('small') ? 2 : specId.includes('xlarge') ? 4 : 2);
+                    const memGiB = (ng as any).memoryGiB || matchedSpec?.memoryGiB || (specId.includes('xlarge') ? 16 : 4);
+                    const specHourlyCost = matchedSpec?.costPerHour > 0 ? matchedSpec.costPerHour : getSpecHourlyCost(specId);
+                    const ngHourlyCost = specHourlyCost * nodeCount;
                     const ngMonthlyCost = (ngHourlyCost * 720).toFixed(2);
 
                     // Associated security groups
@@ -235,7 +267,7 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
                             </div>
                           </div>
 
-                          {/* Spec: vCPU, Memory, instance type */}
+                          {/* Spec: vCPU, Memory, GPU, instance type */}
                           <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap font-mono">
                             <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">
                               {vcpu} vCPU
@@ -243,6 +275,11 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
                             <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">
                               {typeof memGiB === 'number' ? (Number.isInteger(memGiB) ? memGiB : Math.round(memGiB * 100) / 100) : memGiB} GiB
                             </span>
+                            {gpuLabel && (
+                              <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">
+                                GPU: {gpuLabel}
+                              </span>
+                            )}
                             <span className="text-xs font-mono text-text-muted">
                               {specId.split('-').pop() || specId}
                             </span>
@@ -289,6 +326,11 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
                                   <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">
                                     {typeof memGiB === 'number' ? (Number.isInteger(memGiB) ? memGiB : Math.round(memGiB * 100) / 100) : memGiB} GiB
                                   </span>
+                                  {gpuLabel && (
+                                    <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">
+                                      GPU: {gpuLabel}
+                                    </span>
+                                  )}
                                 </div>
                                 <span className="text-xs font-mono text-text-muted mt-1 block" title={specId}>
                                   {specId}

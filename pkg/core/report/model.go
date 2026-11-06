@@ -49,6 +49,8 @@ type ExecutiveSummary struct {
 	TotalServers       int     `json:"totalServers" example:"2"`
 	MigratedServers    int     `json:"migratedServers" example:"2"`
 	FailedServers      int     `json:"failedServers" example:"0"`
+	TotalSourceGPUs    int     `json:"totalSourceGpus,omitempty" example:"2"`
+	TotalTargetGPUs    int     `json:"totalTargetGpus,omitempty" example:"2"`
 	NlbMigrationStatus string  `json:"nlbMigrationStatus,omitempty" example:"Completed"`
 	TotalNLBs          int     `json:"totalNlbs,omitempty" example:"1"`
 	MigratedNLBs       int     `json:"migratedNlbs,omitempty" example:"1"`
@@ -107,6 +109,8 @@ type SourceServerBrief struct {
 	OSName        string `json:"osName" example:"Ubuntu 22.04"`
 	PrimaryIP     string `json:"primaryIp" example:"172.29.0.102"`
 	FirewallRules int    `json:"firewallRules" example:"3"`
+	GPUCount      int    `json:"gpuCount,omitempty" example:"1"`
+	GPUSummary    string `json:"gpuSummary,omitempty" example:"1 x NVIDIA A100-PCIE-40GB"`
 }
 
 // TargetVMBrief contains brief target VM information
@@ -123,15 +127,18 @@ type TargetVMBrief struct {
 	PublicIP        string   `json:"publicIp" example:"43.201.85.138"`
 	PrivateIP       string   `json:"privateIp" example:"192.168.110.167"`
 	SecurityGroups  []string `json:"securityGroups" example:"mig-sg-02"`
+	GPUCount        int      `json:"gpuCount,omitempty" example:"1"`
+	GPUSummary      string   `json:"gpuSummary,omitempty" example:"1 x Tesla T4 (16 GB)"`
 }
 
 // ResourceChangeAnalysis contains detailed resource change analysis
 type ResourceChangeAnalysis struct {
-	CPUChange      ResourceChange `json:"cpuChange"`
-	MemoryChange   ResourceChange `json:"memoryChange"`
-	StorageChange  ResourceChange `json:"storageChange"`
-	NetworkChange  NetworkChange  `json:"networkChange"`
-	SecurityChange SecurityChange `json:"securityChange"`
+	CPUChange      ResourceChange  `json:"cpuChange"`
+	MemoryChange   ResourceChange  `json:"memoryChange"`
+	StorageChange  ResourceChange  `json:"storageChange"`
+	GPUChange      *ResourceChange `json:"gpuChange,omitempty"`
+	NetworkChange  NetworkChange   `json:"networkChange"`
+	SecurityChange SecurityChange  `json:"securityChange"`
 }
 
 // ResourceChange represents a change in a resource

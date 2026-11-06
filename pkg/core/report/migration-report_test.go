@@ -14,6 +14,8 @@ limitations under the License.
 package report
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/summary"
@@ -151,6 +153,113 @@ func TestBuildMigrationMappingsDecomposedGpu(t *testing.T) {
 	}
 	if mappings[0].TargetVM.InstanceName != "ng-ai-gpu-01-a100-1" || mappings[1].TargetVM.InstanceName != "ng-ai-gpu-01-t4-1" {
 		t.Errorf("unexpected target VM names: %q, %q", mappings[0].TargetVM.InstanceName, mappings[1].TargetVM.InstanceName)
+	}
+}
+
+func TestMigrationReportGPUOmitemptyAndMarkdown(t *testing.T) {
+	// 1. CPU-only mapping: GPU fields must be omitted in JSON
+	cpuSource := &summary.SourceInfraSummary{
+		Overview: summary.SourceSummaryInfraOverview{TotalServerCount: 1},
+		ComputeResources: summary.SourceSummaryComputeResources{
+			Servers: []summary.SourceServerInfo{
+				{Hostname: "web-01", MachineId: "m-web-01", CPU: summary.SourceCPUInfo{Cores: 4}, Memory: summary.SourceMemoryInfo{TotalGB: 16}, Disk: summary.SourceDiskInfo{TotalGB: 100}},
+			},
+		},
+	}
+	cpuTarget := &summary.TargetInfraSummary{
+		Overview: summary.TargetInfraOverview{TotalVmCount: 1, TargetCloud: "AWS", TargetRegion: "ap-northeast-2"},
+		ComputeResources: summary.SummaryComputeResources{
+			Vms: []summary.SummaryVmInfo{
+				{
+					Name:   "ng-web-01-1",
+					Status: "Running",
+					Spec:   summary.SummaryVmSpecInfo{Name: "t3.xlarge", VCpus: 4, MemoryGiB: 16},
+					Label:  map[string]string{"cm-source-machine-ids": "m-web-01"},
+				},
+			},
+		},
+	}
+	cpuMappings := buildMigrationMappings(cpuSource, cpuTarget)
+	cpuExec := buildExecutiveSummary(cpuSource, cpuTarget)
+	cpuReport := &MigrationReport{
+		ExecutiveSummary:  cpuExec,
+		MigrationMappings: cpuMappings,
+		SourceDetails:     cpuSource,
+		TargetDetails:     cpuTarget,
+	}
+	cpuBytes, err := json.Marshal(cpuReport)
+	if err != nil {
+		t.Fatalf("json.Marshal(cpuReport) failed: %v", err)
+	}
+	cpuJson := string(cpuBytes)
+	for _, forbidden := range []string{`"totalSourceGpus"`, `"totalTargetGpus"`, `"gpuCount"`, `"gpuSummary"`, `"gpuChange"`, `"nlbMappings"`} {
+		if strings.Contains(cpuJson, forbidden) {
+			t.Errorf("CPU-only report JSON should omit %s, got: %s", forbidden, cpuJson)
+		}
+	}
+
+	// 2. GPU mapping: GPU fields must be included in JSON and Markdown
+	gpuSource := &summary.SourceInfraSummary{
+		Overview: summary.SourceSummaryInfraOverview{TotalServerCount: 1, TotalGPUs: 1},
+		ComputeResources: summary.SourceSummaryComputeResources{
+			Servers: []summary.SourceServerInfo{
+				{
+					Hostname:  "gpu-01",
+					MachineId: "m-gpu-01",
+					CPU:       summary.SourceCPUInfo{CPUs: 1, Cores: 8, Threads: 16},
+					Memory:    summary.SourceMemoryInfo{TotalGB: 64},
+					Disk:      summary.SourceDiskInfo{TotalGB: 200},
+					GPUCards: []summary.SourceGPUInfo{
+						{Vendor: "NVIDIA", Model: "NVIDIA Tesla T4", MemoryTotalGB: 16},
+					},
+				},
+			},
+		},
+	}
+	gpuTarget := &summary.TargetInfraSummary{
+		Overview: summary.TargetInfraOverview{TotalVmCount: 1, TotalGpuCount: 1, TargetCloud: "AWS", TargetRegion: "ap-northeast-2"},
+		ComputeResources: summary.SummaryComputeResources{
+			Vms: []summary.SummaryVmInfo{
+				{
+					Name:   "ng-gpu-01-1",
+					Status: "Running",
+					Spec: summary.SummaryVmSpecInfo{
+						Name:                "g4dn.2xlarge",
+						VCpus:               8,
+						MemoryGiB:           32,
+						AcceleratorType:     "gpu",
+						AcceleratorModel:    "Tesla T4",
+						AcceleratorCount:    1,
+						AcceleratorMemoryGB: 16,
+					},
+					Label: map[string]string{"cm-source-machine-ids": "m-gpu-01"},
+				},
+			},
+		},
+	}
+	gpuMappings := buildMigrationMappings(gpuSource, gpuTarget)
+	gpuExec := buildExecutiveSummary(gpuSource, gpuTarget)
+	gpuReport := &MigrationReport{
+		ExecutiveSummary:  gpuExec,
+		MigrationMappings: gpuMappings,
+		SourceDetails:     gpuSource,
+		TargetDetails:     gpuTarget,
+	}
+	gpuBytes, err := json.Marshal(gpuReport)
+	if err != nil {
+		t.Fatalf("json.Marshal(gpuReport) failed: %v", err)
+	}
+	gpuJson := string(gpuBytes)
+	for _, want := range []string{`"totalSourceGpus":1`, `"totalTargetGpus":1`, `"gpuCount":1`, `"gpuSummary"`, `"gpuChange"`} {
+		if !strings.Contains(gpuJson, want) {
+			t.Errorf("GPU report JSON missing %s, got: %s", want, gpuJson)
+		}
+	}
+	gpuMD := GenerateMigrationReportMarkdown(gpuReport)
+	for _, wantMD := range []string{"**Total Source GPUs:** 1", "**Total Target GPUs:** 1", "**GPU:** 1 x Tesla T4 (16 GB)", "**GPU:** 1 card(s): NVIDIA Tesla T4 (16 GB)"} {
+		if !strings.Contains(gpuMD, wantMD) {
+			t.Errorf("GPU report markdown missing %q\n--- got ---\n%s", wantMD, gpuMD)
+		}
 	}
 }
 

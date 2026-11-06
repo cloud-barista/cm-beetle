@@ -44,6 +44,7 @@ type SourceSummaryInfraOverview struct {
 	TotalDiskGB      int    `json:"totalDiskGb" example:"2000"`
 	TotalNetworks    int    `json:"totalNetworks" example:"3"`
 	TotalNLBs        int    `json:"totalNlbs,omitempty" example:"1"`
+	TotalGPUs        int    `json:"totalGpus,omitempty" example:"2"`
 }
 
 // SourceSummaryComputeResources contains source server information
@@ -59,11 +60,23 @@ type SourceServerInfo struct {
 	Memory       SourceMemoryInfo        `json:"memory"`
 	Disk         SourceDiskInfo          `json:"disk"`
 	OS           SourceOSInfo            `json:"os"`
+	GPUCards     []SourceGPUInfo         `json:"gpuCards,omitempty"`
 	RootDiskType string                  `json:"rootDiskType" example:"SSD"`
 	RootDiskSize int                     `json:"rootDiskSize" example:"100"`
 	Network      SourceNetworkBrief      `json:"network"`
 	Interfaces   []SourceInterfaceInfo   `json:"interfaces,omitempty"`
 	RoutingTable []SourceRoutingTableRow `json:"routingTable,omitempty"`
+}
+
+// SourceGPUInfo represents physical GPU card information on a source server
+type SourceGPUInfo struct {
+	Vendor        string  `json:"vendor,omitempty" example:"NVIDIA"`
+	Model         string  `json:"model" example:"NVIDIA A100-PCIE-40GB"`
+	Type          string  `json:"type,omitempty" example:"GPU"`
+	Architecture  string  `json:"architecture,omitempty" example:"Ampere"`
+	MemoryTotalGB float32 `json:"memoryTotalGb,omitempty" example:"40"`
+	DriverVersion string  `json:"driverVersion,omitempty" example:"535.129.03"`
+	CudaVersion   string  `json:"cudaVersion,omitempty" example:"12.2"`
 }
 
 // SourceCPUInfo represents CPU information

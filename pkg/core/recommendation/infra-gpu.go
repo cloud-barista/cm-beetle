@@ -281,7 +281,22 @@ func RecommendGpuInfraCandidates(
 			matchRateVec := calculateMatchRateVector(csp, expandedNodes[nodeIdx], selectedPair.Spec, selectedPair.Image)
 			candidateNodeGroups[nodeIdx].SpecId = selectedPair.Spec.Id
 			candidateNodeGroups[nodeIdx].ImageId = selectedPair.Image.Id
-			candidateNodeGroups[nodeIdx].CspImageName = selectedPair.Image.CspImageName
+
+			// Resolve the latest CSP image name and confirm available system disk
+			precheck, reviewErr := PreflightCheckCspProvisioning(
+				selectedPair.Spec.Id, selectedPair.Image.Id, selectedPair.Image.CspImageName, "",
+			)
+			if reviewErr != nil {
+				log.Warn().Err(reviewErr).Msgf("preflight check failed for node %s; using cached image", expandedNodes[nodeIdx].MachineId)
+			} else {
+				if precheck.SuggestedSystemDisk != "" {
+					candidateNodeGroups[nodeIdx].RootDiskType = precheck.SuggestedSystemDisk
+				}
+				if precheck.ResolvedCspImageName != selectedPair.Image.CspImageName {
+					candidateNodeGroups[nodeIdx].CspImageName = precheck.ResolvedCspImageName
+				}
+			}
+
 			candidateNodeGroups[nodeIdx].Description = fmt.Sprintf(
 				"%s | %s",
 				skeletonNodegroupList[nodeIdx].Description,

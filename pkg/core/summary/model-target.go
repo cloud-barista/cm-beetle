@@ -51,6 +51,7 @@ type TargetInfraOverview struct {
 	RunningVmCount   int               `json:"runningVmCount" example:"3"`
 	StoppedVmCount   int               `json:"stoppedVmCount" example:"0"`
 	TotalNlbCount    int               `json:"totalNlbCount,omitempty" example:"1"`
+	TotalGpuCount    int               `json:"totalGpuCount,omitempty" example:"2"`
 	Label            map[string]string `json:"label,omitempty"`
 	InstallMonAgent  string            `json:"installMonAgent" example:"no"`
 }
@@ -198,10 +199,14 @@ type SummaryVmInfo struct {
 
 // SummaryVmSpecInfo represents VM Spec summary embedded in VM info
 type SummaryVmSpecInfo struct {
-	Name         string  `json:"name" example:"t3a.xlarge"`
-	VCpus        int     `json:"vcpus" example:"4"`
-	MemoryGiB    float32 `json:"memoryGiB" example:"16"`
-	Architecture string  `json:"architecture,omitempty" example:"x86_64"`
+	Name                string  `json:"name" example:"t3a.xlarge"`
+	VCpus               int     `json:"vcpus" example:"4"`
+	MemoryGiB           float32 `json:"memoryGiB" example:"16"`
+	Architecture        string  `json:"architecture,omitempty" example:"x86_64"`
+	AcceleratorType     string  `json:"acceleratorType,omitempty" example:"gpu"`
+	AcceleratorModel    string  `json:"acceleratorModel,omitempty" example:"Tesla T4"`
+	AcceleratorCount    int     `json:"acceleratorCount,omitempty" example:"1"`
+	AcceleratorMemoryGB float32 `json:"acceleratorMemoryGB,omitempty" example:"16"`
 }
 
 // SummaryVmImageInfo represents VM Image summary embedded in VM info

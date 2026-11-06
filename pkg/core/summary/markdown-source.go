@@ -82,6 +82,9 @@ func generateSourceOverviewMarkdown(overview *SourceSummaryInfraOverview) string
 	md.WriteString(fmt.Sprintf("| Total Memory (GB) | %d |\n", overview.TotalMemoryGB))
 	md.WriteString(fmt.Sprintf("| Total Disk (GB) | %d |\n", overview.TotalDiskGB))
 	md.WriteString(fmt.Sprintf("| Total Networks | %d |\n", overview.TotalNetworks))
+	if overview.TotalGPUs > 0 {
+		md.WriteString(fmt.Sprintf("| Total GPU Cards | %d |\n", overview.TotalGPUs))
+	}
 	if overview.TotalNLBs > 0 {
 		md.WriteString(fmt.Sprintf("| Total Load Balancers | %d |\n", overview.TotalNLBs))
 	}
@@ -131,6 +134,22 @@ func generateSourceComputeResourcesMarkdown(resources *SourceSummaryComputeResou
 
 		// OS
 		md.WriteString(fmt.Sprintf("| **OS** | %s %s |\n", node.OS.Name, node.OS.Version))
+
+		// GPU Cards
+		if len(node.GPUCards) > 0 {
+			var gpuLabels []string
+			for _, gpu := range node.GPUCards {
+				label := gpu.Model
+				if label == "" {
+					label = gpu.Vendor
+				}
+				if gpu.MemoryTotalGB > 0 {
+					label = fmt.Sprintf("%s (%.0f GB)", label, gpu.MemoryTotalGB)
+				}
+				gpuLabels = append(gpuLabels, label)
+			}
+			md.WriteString(fmt.Sprintf("| **GPU Cards (%d)** | %s |\n", len(node.GPUCards), strings.Join(gpuLabels, ", ")))
+		}
 
 		// Network brief
 		if node.Network.IPAddress != "" {

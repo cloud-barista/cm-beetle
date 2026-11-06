@@ -1365,11 +1365,42 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                         vm.status?.toLowerCase() === 'failed' ||
                         vm.status?.toLowerCase() === 'error' ||
                         ((!vm.publicIp || vm.publicIp === 'N/A') && (!vm.privateIp || vm.privateIp === 'N/A'));
+                      const lowerSpec = (vm.specId || '').toLowerCase();
+                      const specFromModel = (selectedCloudModel?.cloudInfraModel as any)?.targetSpecList?.find(
+                        (s: any) =>
+                          s?.id?.toLowerCase() === lowerSpec ||
+                          s?.cspSpecName?.toLowerCase() === lowerSpec ||
+                          (s?.cspSpecName && lowerSpec.endsWith(String(s.cspSpecName).toLowerCase()))
+                      );
+                      const isGpuSpec =
+                        Boolean(specFromModel && (Number(specFromModel.acceleratorCount ?? specFromModel.AcceleratorCount ?? 0) > 0 || specFromModel.acceleratorModel)) ||
+                        lowerSpec.includes('g4dn.') ||
+                        lowerSpec.includes('g5.') ||
+                        lowerSpec.includes('g5g.') ||
+                        lowerSpec.includes('g6.') ||
+                        lowerSpec.includes('g2-') ||
+                        lowerSpec.includes('p3.') ||
+                        lowerSpec.includes('p4d') ||
+                        lowerSpec.includes('a2-') ||
+                        lowerSpec.includes('a3-') ||
+                        lowerSpec.includes('p5.') ||
+                        lowerSpec.includes('standard_nc') ||
+                        lowerSpec.includes('standard_nd') ||
+                        lowerSpec.includes('standard_nv');
 
                       return (
                         <tr key={idx} className={`transition ${isNodeFailed ? 'bg-red-500/[0.04] hover:bg-red-500/[0.08]' : 'hover:bg-emerald-500/[0.02]'}`}>
                           <td className="py-3.5 px-4 font-extrabold text-text-main font-sans">{vm.name}</td>
-                          <td className="py-3.5 px-4 text-emerald-400 font-extrabold">{vm.specId}</td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-emerald-400 font-extrabold">{vm.specId}</span>
+                              {isGpuSpec && (
+                                <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded text-xs font-extrabold font-mono">
+                                  GPU
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className={`py-3.5 px-4 select-all font-extrabold ${isNodeFailed ? 'text-red-500' : 'text-text-main'}`}>{vm.publicIp}</td>
                           <td className={`py-3.5 px-4 ${isNodeFailed ? 'text-red-500/80' : 'text-text-muted'}`}>{vm.privateIp}</td>
                           <td className="py-3.5 px-4">

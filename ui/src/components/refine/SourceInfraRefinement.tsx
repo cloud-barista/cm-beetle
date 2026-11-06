@@ -262,7 +262,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
       const filtered = (n.gpuCards || []).filter((_, i) => i !== idx);
       return {
         ...n,
-        gpuCards: filtered.length > 0 ? filtered : null
+        gpuCards: filtered.length > 0 ? filtered : undefined
       };
     }));
   };
@@ -508,15 +508,33 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     setNewRulePort('');
   };
 
+  const [isJsonCopied, setIsJsonCopied] = useState(false);
+
+  const filteredPlanningNodes = tunedNodes
+    .filter(n => !excludedNodeIds.includes(n.machineId))
+    .map(n => ({
+      ...n,
+      gpuCards: n.gpuCards && n.gpuCards.length > 0 ? n.gpuCards : undefined,
+    }));
+
+  const totalPlanningGpus = filteredPlanningNodes.reduce(
+    (sum, n) => sum + (n.gpuCards ? n.gpuCards.length : 0),
+    0
+  );
+
+  const effectivePlanningInfra = selectedSourceModel
+    ? {
+        ...selectedSourceModel.onpremiseInfraModel,
+        nodes: filteredPlanningNodes,
+        network: tunedNetwork || selectedSourceModel.onpremiseInfraModel.network,
+        nlbs: tunedNlbs.length > 0 ? tunedNlbs : undefined,
+      }
+    : null;
+
   const handleSaveArtifact = async (result: { name: string; description: string; version: string; overwriteId: string | null }) => {
-    if (!selectedSourceModel) return;
-    const filteredNodes = tunedNodes.filter(n => !excludedNodeIds.includes(n.machineId));
-    const updatedInfra = {
-      ...selectedSourceModel.onpremiseInfraModel,
-      nodes: filteredNodes,
-      network: tunedNetwork || selectedSourceModel.onpremiseInfraModel.network,
-      nlbs: tunedNlbs
-    };
+    if (!selectedSourceModel || !effectivePlanningInfra) return;
+    const filteredNodes = filteredPlanningNodes;
+    const updatedInfra = effectivePlanningInfra;
 
     const resolvedSourceParentId = selectedSourceModel.stage === 'planning'
       ? (selectedSourceModel.lineage?.sourceModelId || selectedSourceModel.id)
@@ -551,14 +569,9 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleDirectSaveSourceModel = async () => {
-    if (!selectedSourceModel) return;
-    const filteredNodes = tunedNodes.filter(n => !excludedNodeIds.includes(n.machineId));
-    const updatedInfra = {
-      ...selectedSourceModel.onpremiseInfraModel,
-      nodes: filteredNodes,
-      network: tunedNetwork || selectedSourceModel.onpremiseInfraModel.network,
-      nlbs: tunedNlbs
-    };
+    if (!selectedSourceModel || !effectivePlanningInfra) return;
+    const filteredNodes = filteredPlanningNodes;
+    const updatedInfra = effectivePlanningInfra;
 
     setIsSavingSource(true);
     setSourceSaveSuccessMsg('');
@@ -648,12 +661,11 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     setShowSourceSummaryModal(true);
     setIsLoadingSourceSummary(true);
     try {
-      const filteredNodes = tunedNodes.filter(n => !excludedNodeIds.includes(n.machineId));
       const currentInfra = {
         ...selectedSourceModel.onpremiseInfraModel,
-        nodes: filteredNodes.length > 0 ? filteredNodes : selectedSourceModel.onpremiseInfraModel.nodes,
+        nodes: filteredPlanningNodes.length > 0 ? filteredPlanningNodes : selectedSourceModel.onpremiseInfraModel.nodes,
         network: tunedNetwork || selectedSourceModel.onpremiseInfraModel.network,
-        nlbs: tunedNlbs
+        nlbs: tunedNlbs.length > 0 ? tunedNlbs : undefined,
       };
       const content = await beetleApi.getSourceInfraSummary(currentInfra, fmt);
       setSourceSummaryContent(content);
@@ -803,6 +815,30 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
               }`}>
                 Stage: {selectedSourceModel.stage || 'source'}
               </span>
+              <span className="px-2.5 py-0.5 rounded-md text-xs bg-bg-panel border border-border-main/50">
+                <span className="font-normal text-text-muted">Nodes: </span>
+                <span className="font-extrabold text-text-main">{filteredPlanningNodes.length}</span>
+              </span>
+              <span className={`px-2.5 py-0.5 rounded-md text-xs border ${
+                totalPlanningGpus > 0
+                  ? 'bg-emerald-500/15 border-emerald-500/30'
+                  : 'bg-bg-panel border-border-main/50'
+              }`}>
+                <span className="font-normal text-text-muted">GPU: </span>
+                <span className={totalPlanningGpus > 0 ? 'font-extrabold text-emerald-600 dark:text-emerald-400' : 'font-extrabold text-text-main'}>
+                  {totalPlanningGpus > 0 ? `${totalPlanningGpus} Card(s)` : 'CPU Only'}
+                </span>
+              </span>
+              <span className={`px-2.5 py-0.5 rounded-md text-xs border ${
+                tunedNlbs.length > 0
+                  ? 'bg-teal-500/15 border-teal-500/30'
+                  : 'bg-bg-panel border-border-main/50'
+              }`}>
+                <span className="font-normal text-text-muted">NLB: </span>
+                <span className={tunedNlbs.length > 0 ? 'font-extrabold text-teal-600 dark:text-teal-400' : 'font-extrabold text-text-main'}>
+                  {tunedNlbs.length > 0 ? `${tunedNlbs.length} Configured` : 'No NLB'}
+                </span>
+              </span>
               {selectedSourceModel.lineage?.sourceModelId && selectedSourceModel.stage === 'planning' && (
                 <span className="text-xs font-mono text-text-muted bg-bg-panel px-2 py-0.5 rounded border border-border-main/40">
                   Source Parent: {selectedSourceModel.lineage.sourceModelId}
@@ -827,16 +863,17 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                     <span className="text-sm text-text-muted font-mono">onpremiseInfraModel</span>
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(JSON.stringify(selectedSourceModel?.onpremiseInfraModel, null, 2));
-                        alert('JSON copied!');
+                        navigator.clipboard.writeText(JSON.stringify(effectivePlanningInfra, null, 2));
+                        setIsJsonCopied(true);
+                        setTimeout(() => setIsJsonCopied(false), 2000);
                       }}
                       className="px-3 py-1 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-xs font-bold transition flex items-center cursor-pointer text-emerald-600 dark:text-emerald-400"
                     >
-                      <Copy className="w-3.5 h-3.5 mr-1" /> Copy JSON
+                      <Copy className="w-3.5 h-3.5 mr-1" /> {isJsonCopied ? 'Copied!' : 'Copy JSON'}
                     </button>
                   </div>
                   <pre className="text-sm font-mono text-slate-800 dark:text-emerald-400 bg-bg-panel p-3.5 rounded-xl border border-border-main overflow-y-auto max-h-[400px] select-text">
-                    {JSON.stringify(selectedSourceModel?.onpremiseInfraModel, null, 2)}
+                    {JSON.stringify(effectivePlanningInfra, null, 2)}
                   </pre>
                 </div>
               ) : (

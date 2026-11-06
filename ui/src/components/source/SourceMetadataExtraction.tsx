@@ -1230,6 +1230,13 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
             const cidrList = refinedSourceInfra.network?.ipv4Networks?.cidrBlocks || [];
             const defaultGw = refinedSourceInfra.network?.ipv4Networks?.defaultGateways?.[0]?.ip || '10.0.1.1';
             const networkHeadline = cidrList.length > 0 ? cidrList.join(', ') : `GW ${defaultGw}`;
+            const detectedNlbs: any[] = Array.isArray(refinedSourceInfra.nlbs) ? refinedSourceInfra.nlbs : [];
+            const nlbSummaryBadges = detectedNlbs.map((nlb: any) => {
+              const proto = (nlb.listener?.protocol || 'tcp').toUpperCase();
+              const port = nlb.listener?.port || '-';
+              const backend = nlb.backend?.name || nlb.software || 'nlb';
+              return `${backend} (${proto}:${port})`;
+            });
 
             return (
               <div className="mt-5 pt-5 border-t border-border-main space-y-4">
@@ -1266,16 +1273,16 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
 
                 {previewMode === 'summary' ? (
                   <div className="space-y-4">
-                    {/* 4 Summary Metric Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {/* 5 Summary Metric Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                       <div className="p-3.5 rounded-xl bg-bg-input/60 border border-border-main">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm font-normal text-text-muted">Collected Nodes</span>
                           <Server className="w-4 h-4 text-emerald-500" />
                         </div>
                         <div className="text-base font-extrabold text-text-main">{nodes.length} Nodes</div>
-                        <div className="text-xs text-text-muted mt-0.5">
-                          {refinedSourceInfra.nlbs?.length ? `${refinedSourceInfra.nlbs.length} Load Balancer(s) detected` : 'Honeybee SSH collection verified'}
+                        <div className="text-xs text-text-muted mt-0.5 truncate" title={osDistributionLabel}>
+                          {osDistributionLabel}
                         </div>
                       </div>
 
@@ -1307,14 +1314,27 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
 
                       <div className="p-3.5 rounded-xl bg-bg-input/60 border border-border-main">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-normal text-text-muted">Network &amp; OS Summary</span>
+                          <span className="text-sm font-normal text-text-muted">Network Load Balancers</span>
                           <Network className="w-4 h-4 text-teal-500" />
+                        </div>
+                        <div className="text-base font-extrabold text-text-main">
+                          {detectedNlbs.length > 0 ? `${detectedNlbs.length} NLB Detected` : 'None (Direct IP)'}
+                        </div>
+                        <div className="text-xs text-teal-600 dark:text-teal-400 font-bold mt-0.5 truncate" title={nlbSummaryBadges.join(', ')}>
+                          {nlbSummaryBadges.length > 0 ? nlbSummaryBadges.join(', ') : 'No L4/L7 Balancer Configured'}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-bg-input/60 border border-border-main">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-normal text-text-muted">Network Topology</span>
+                          <Network className="w-4 h-4 text-emerald-500" />
                         </div>
                         <div className="text-base font-extrabold text-text-main font-mono truncate" title={networkHeadline}>
                           {networkHeadline}
                         </div>
-                        <div className="text-xs text-text-muted mt-0.5 truncate" title={osDistributionLabel}>
-                          {osDistributionLabel}
+                        <div className="text-xs text-text-muted mt-0.5 truncate">
+                          Gateway: {defaultGw}
                         </div>
                       </div>
                     </div>
@@ -1382,6 +1402,60 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                         </tbody>
                       </table>
                     </div>
+
+                    {/* Conditional Detected NLB Summary Table */}
+                    {detectedNlbs.length > 0 && (
+                      <div className="overflow-x-auto border border-border-main rounded-xl">
+                        <div className="px-3.5 py-2.5 bg-bg-input/80 border-b border-border-main flex items-center justify-between">
+                          <span className="text-sm font-extrabold text-text-main flex items-center gap-2">
+                            <Network className="w-4 h-4 text-teal-500" />
+                            Detected Network Load Balancers ({detectedNlbs.length})
+                          </span>
+                          <span className="text-xs text-text-muted">Source L4/L7 traffic routing rules</span>
+                        </div>
+                        <table className="w-full text-left border-collapse text-sm">
+                          <thead>
+                            <tr className="border-b border-border-main bg-bg-input/50">
+                              <th className="py-2 px-3 font-normal text-text-muted">#</th>
+                              <th className="py-2 px-3 font-normal text-text-muted">Software</th>
+                              <th className="py-2 px-3 font-normal text-text-muted">Listener (Protocol / Port)</th>
+                              <th className="py-2 px-3 font-normal text-text-muted">Backend Pool</th>
+                              <th className="py-2 px-3 font-normal text-text-muted">Target Backend Servers</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border-main/50">
+                            {detectedNlbs.map((nlb: any, nlbIdx: number) => {
+                              const software = nlb.software || 'haproxy';
+                              const listenerProto = (nlb.listener?.protocol || 'tcp').toUpperCase();
+                              const listenerBind = nlb.listener?.bindAddress || '*';
+                              const listenerPort = nlb.listener?.port || '-';
+                              const backendName = nlb.backend?.name || `backend-${nlbIdx + 1}`;
+                              const backendBalance = nlb.backend?.balance || 'roundrobin';
+                              const servers = Array.isArray(nlb.backend?.servers) ? nlb.backend.servers : [];
+
+                              return (
+                                <tr key={`${backendName}-${nlbIdx}`} className="hover:bg-teal-500/5 transition">
+                                  <td className="py-2 px-3 text-xs text-text-muted font-mono">{nlbIdx + 1}</td>
+                                  <td className="py-2 px-3 font-extrabold text-text-main">{software}</td>
+                                  <td className="py-2 px-3 font-mono font-extrabold text-teal-600 dark:text-teal-400">
+                                    {listenerBind}:{listenerPort} ({listenerProto})
+                                  </td>
+                                  <td className="py-2 px-3">
+                                    <span className="font-extrabold text-text-main">{backendName}</span>
+                                    <span className="ml-2 text-xs text-text-muted">({backendBalance})</span>
+                                  </td>
+                                  <td className="py-2 px-3 font-mono text-xs font-extrabold text-text-main">
+                                    {servers.length > 0
+                                      ? servers.map((s: any) => `${s.name || 'node'} (${s.ip}:${s.port})`).join(', ')
+                                      : '-'}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="bg-bg-input border border-border-main rounded-xl p-4 text-xs font-mono text-slate-800 dark:text-emerald-400 max-h-[60vh] overflow-y-auto">
