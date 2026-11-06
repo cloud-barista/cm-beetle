@@ -88,6 +88,9 @@ func GenerateInfraSummary(nsId, infraId string) (*TargetInfraSummary, error) {
 	// Step 8: Build infrastructure overview
 	overview := buildInfraOverview(&infraInfo)
 	overview.TotalNlbCount = len(nlbResources)
+	for _, vm := range computeResources.Vms {
+		overview.TotalGpuCount += vm.Spec.AcceleratorCount
+	}
 
 	// Step 9: Assemble final summary
 	infraSummary := &TargetInfraSummary{
@@ -362,10 +365,14 @@ func collectComputeResources(nsId string, infraInfo *tbmodel.InfraInfo, specIds,
 			CspVmId:     node.CspResourceId,
 			Status:  node.Status,
 			Spec: SummaryVmSpecInfo{
-				Name:         extractShortSpecName(node.CspSpecName),
-				VCpus:        getSpecVCpus(spec),
-				MemoryGiB:    getSpecMemory(spec),
-				Architecture: getSpecArchitecture(spec),
+				Name:                extractShortSpecName(node.CspSpecName),
+				VCpus:               getSpecVCpus(spec),
+				MemoryGiB:           getSpecMemory(spec),
+				Architecture:        getSpecArchitecture(spec),
+				AcceleratorType:     getSpecAcceleratorType(spec),
+				AcceleratorModel:    getSpecAcceleratorModel(spec),
+				AcceleratorCount:    getSpecAcceleratorCount(spec),
+				AcceleratorMemoryGB: getSpecAcceleratorMemoryGB(spec),
 			},
 			Image: SummaryVmImageInfo{
 				Name:         extractShortImageName(image),
@@ -594,4 +601,32 @@ func getSpecMemory(spec *tbmodel.SpecInfo) float32 {
 		return 0
 	}
 	return spec.MemoryGiB
+}
+
+func getSpecAcceleratorType(spec *tbmodel.SpecInfo) string {
+	if spec == nil {
+		return ""
+	}
+	return spec.AcceleratorType
+}
+
+func getSpecAcceleratorModel(spec *tbmodel.SpecInfo) string {
+	if spec == nil {
+		return ""
+	}
+	return spec.AcceleratorModel
+}
+
+func getSpecAcceleratorCount(spec *tbmodel.SpecInfo) int {
+	if spec == nil {
+		return 0
+	}
+	return int(spec.AcceleratorCount)
+}
+
+func getSpecAcceleratorMemoryGB(spec *tbmodel.SpecInfo) float32 {
+	if spec == nil {
+		return 0
+	}
+	return spec.AcceleratorMemoryGB
 }

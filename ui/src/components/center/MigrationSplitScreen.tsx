@@ -123,6 +123,35 @@ export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
   const ngCount = targetInfra?.targetInfra?.nodeGroups?.length || activeJob?.nodeGroupsCount || 1;
   const nlbCount = activeJob?.targetNlbList?.length || targetInfra?.targetNlbList?.length || 0;
 
+  const isTargetGpuSpec = (specId?: string): boolean => {
+    const s = (specId || '').toLowerCase();
+    if (!s) return false;
+    const matched = (targetInfra as any)?.targetSpecList?.find(
+      (sp: any) =>
+        sp?.id?.toLowerCase() === s ||
+        sp?.cspSpecName?.toLowerCase() === s ||
+        (sp?.cspSpecName && s.endsWith(String(sp.cspSpecName).toLowerCase()))
+    );
+    if (matched && (Number(matched.acceleratorCount ?? matched.AcceleratorCount ?? 0) > 0 || matched.acceleratorModel)) {
+      return true;
+    }
+    return (
+      s.includes('g4dn.') ||
+      s.includes('g5.') ||
+      s.includes('g5g.') ||
+      s.includes('g6.') ||
+      s.includes('g2-') ||
+      s.includes('p3.') ||
+      s.includes('p4d') ||
+      s.includes('a2-') ||
+      s.includes('a3-') ||
+      s.includes('p5.') ||
+      s.includes('standard_nc') ||
+      s.includes('standard_nd') ||
+      s.includes('standard_nv')
+    );
+  };
+
   const getStageState = (stageIndex: number): 'completed' | 'active' | 'pending' | 'failed' => {
     if (!activeJob) return 'pending';
     if (activeJob.status === 'Failed') {
@@ -130,6 +159,7 @@ export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
     }
     if (activeJob.status === 'Success') {
       if (stageIndex === 6) {
+        if (nlbCount === 0) return 'pending';
         if (activeJob.nlbStatus === 'Provisioning') return 'active';
         if (activeJob.nlbStatus === 'Failed') return 'failed';
         return 'completed';
@@ -180,7 +210,7 @@ export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
     {
       index: 6,
       title: '6. Network Load Balancer',
-      detail: nlbCount > 0 ? `${nlbCount} NLB Configured` : 'Optional / Ready',
+      detail: nlbCount > 0 ? `${nlbCount} NLB Configured` : 'No NLB (Skipped)',
       icon: Network
     }
   ];
@@ -496,11 +526,18 @@ export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
                       )}
                     </div>
 
-                    <div className="text-xs font-mono flex items-center justify-between">
+                    <div className="text-xs font-mono flex items-center justify-between gap-1">
                       <span className="font-normal text-text-muted">Spec:</span>
-                      <span className="font-extrabold text-emerald-500 truncate max-w-[120px]" title={tn.specId}>
-                        {tn.specId}
-                      </span>
+                      <div className="flex items-center gap-1 min-w-0">
+                        {isTargetGpuSpec(tn.specId) && (
+                          <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded text-xs font-extrabold font-mono shrink-0">
+                            GPU
+                          </span>
+                        )}
+                        <span className="font-extrabold text-emerald-500 truncate max-w-[120px]" title={tn.specId}>
+                          {tn.specId}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="text-xs font-mono flex items-center justify-between border-t border-border-main/20 pt-1">

@@ -35,19 +35,20 @@ type GenerateMigrationReportRequest struct {
 // GenerateMigrationReport godoc
 // @ID GenerateMigrationReport
 // @Summary Generate migration report (with source-target correlation analysis)
-// @Description Generate a comprehensive migration report comparing source infrastructure with target cloud VMs, including resource mappings, network/security analysis, cost summary, and recommendations in Markdown or HTML format
+// @Description Generate a comprehensive migration report comparing source infrastructure with target cloud VMs, including resource mappings, network/security analysis, cost summary, and recommendations in Markdown, HTML, or JSON format
 // @Tags [Summary/Report] Infrastructure Analysis for Migration
 // @Accept json
+// @Produce json
 // @Produce text/markdown
 // @Produce text/html
 // @Param nsId path string true "Namespace ID" example("mig01") default(mig01)
 // @Param infraId path string true "Infra ID" example("infra101") default(infra101)
-// @Param format query string false "Report format: md or html" Enums(md,html) default(md)
+// @Param format query string false "Report format: md, html, or json" Enums(md,html,json) default(md)
 // @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
 // @Param onpremiseInfraModel body controller.GenerateMigrationReportRequest true "Source infrastructure data from on-premise"
-// @Success 200 {string} string "Migration report in markdown or HTML format"
+// @Success 200 {object} model.ApiResponse[report.MigrationReport] "Migration report in markdown, HTML, or JSON format"
 // @Header 200 {string} Content-Disposition "inline; filename="migration-report.md" or "migration-report.html" (or attachment when download=true)"
-// @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8"
+// @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8 or application/json"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during report generation"
 // @Router /report/migration/ns/{nsId}/infra/{infraId} [post]
@@ -70,9 +71,9 @@ func GenerateMigrationReport(c echo.Context) error {
 	if format == "" {
 		format = "md" // default format
 	}
-	if format != "md" && format != "html" {
+	if format != "md" && format != "html" && format != "json" {
 		log.Warn().Msgf("Invalid format: %s", format)
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Format must be 'md' or 'html'"))
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Format must be 'md', 'html', or 'json'"))
 	}
 
 	download := c.QueryParam("download")
@@ -119,6 +120,10 @@ func GenerateMigrationReport(c echo.Context) error {
 	}
 
 	// [Output]
+	if format == "json" {
+		return c.JSON(http.StatusOK, model.SuccessResponse(migrationReport))
+	}
+
 	// Generate markdown report
 	markdownReport := report.GenerateMigrationReportMarkdown(migrationReport)
 

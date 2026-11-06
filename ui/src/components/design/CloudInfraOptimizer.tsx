@@ -327,13 +327,14 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     setTargetPairs([{ csp, region }]);
     setRecommendationLimit(5);
     const filteredNodes = tunedNodes.filter(n => !excludedNodeIds.includes(n.machineId));
+    const sourceNlbs = selectedSourceModel?.onpremiseInfraModel?.nlbs;
     const sourceInfra: OnpremInfra = {
       nodes: filteredNodes.length > 0 ? filteredNodes : (selectedSourceModel?.onpremiseInfraModel?.nodes || []),
       network: tunedNetwork || selectedSourceModel?.onpremiseInfraModel?.network || {
         ipv4Networks: {},
         ipv6Networks: {}
       },
-      nlbs: selectedSourceModel?.onpremiseInfraModel?.nlbs || []
+      nlbs: sourceNlbs && sourceNlbs.length > 0 ? sourceNlbs : undefined
     };
     useMigrationStore.setState({ isRecommending: true, recommendationCandidates: [], editedCandidate: null });
     try {
@@ -486,13 +487,14 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     selectCloudModel(null);
     const filteredNodes = tunedNodes.filter(n => !excludedNodeIds.includes(n.machineId));
     if (filteredNodes.length === 0) return;
+    const sourceNlbs = selectedSourceModel?.onpremiseInfraModel?.nlbs;
     const sourceInfra: OnpremInfra = {
       nodes: filteredNodes,
       network: tunedNetwork || selectedSourceModel?.onpremiseInfraModel?.network || {
         ipv4Networks: {},
         ipv6Networks: {}
       },
-      nlbs: selectedSourceModel?.onpremiseInfraModel?.nlbs || []
+      nlbs: sourceNlbs && sourceNlbs.length > 0 ? sourceNlbs : undefined
     };
     await triggerRecommendation(sourceInfra);
     setActiveStep(2);
@@ -604,11 +606,15 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
   // specId format: "csp+region+instanceType" → extract instance type portion
   const extractInstanceType = (specId: string) => specId.split('+').pop() || specId;
 
-  // Lookup SpecInfo from targetSpecList by specId (try id, name, cspSpecName)
+  // Lookup SpecInfo from targetSpecList by specId (try id, name, cspSpecName case-insensitively)
   const getSpecInfo = (candidate: typeof editedCandidate, specId: string) => {
-    if (!candidate?.targetSpecList) return null;
+    if (!candidate?.targetSpecList || !specId) return null;
+    const lowerId = specId.toLowerCase();
+    const extractedLower = extractInstanceType(specId).toLowerCase();
     return candidate.targetSpecList.find((s: any) =>
-      s.id === specId || s.name === specId || s.cspSpecName === extractInstanceType(specId)
+      s.id?.toLowerCase() === lowerId ||
+      s.name?.toLowerCase() === lowerId ||
+      s.cspSpecName?.toLowerCase() === extractedLower
     ) ?? (candidate.targetSpecList.length === 1 ? candidate.targetSpecList[0] : null);
   };
 
@@ -643,8 +649,23 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     return null;
   };
 
-  // Helper to determine if target node / spec or mapped source server has GPU hardware
+  const [isTargetJsonOpen, setIsTargetJsonOpen] = useState(false);
+  const [isTargetJsonCopied, setIsTargetJsonCopied] = useState(false);
+
+  // Helper to determine if target node / spec has GPU hardware
   const getGpuInfo = (specInfo: any, specId?: string, ng?: any): { hasGpu: boolean; label: string } | null => {
+    const matchByInstanceName = (rawName: string): { hasGpu: boolean; label: string } | null => {
+      const s = rawName.toLowerCase();
+      if (s.includes('g4dn.') || (s.includes('standard_nc') && s.includes('t4'))) return { hasGpu: true, label: 'Tesla T4' };
+      if (s.includes('g5.') || s.includes('g5g.') || (s.includes('standard_nv') && s.includes('a10'))) return { hasGpu: true, label: 'A10G' };
+      if (s.includes('g6.') || s.includes('g2-')) return { hasGpu: true, label: 'L4' };
+      if (s.includes('p3.') || s.includes('standard_nc6s_v3') || s.includes('standard_nc12s_v3') || s.includes('standard_nc24s_v3')) return { hasGpu: true, label: 'V100' };
+      if (s.includes('p4d') || s.includes('a2-') || (s.includes('standard_nc') && s.includes('a100')) || (s.includes('standard_nd') && s.includes('a100'))) return { hasGpu: true, label: 'A100' };
+      if (s.includes('p5.') || s.includes('a3-') || (s.includes('standard_nc') && s.includes('h100')) || (s.includes('standard_nd') && s.includes('h100'))) return { hasGpu: true, label: 'H100' };
+      if (s.includes('standard_nc') || s.includes('standard_nd') || s.includes('standard_nv')) return { hasGpu: true, label: 'GPU' };
+      return null;
+    };
+
     // 1. Authoritative: CB-Tumblebug SpecInfo metadata
     if (specInfo) {
       const count = Number(specInfo.acceleratorCount ?? specInfo.AcceleratorCount ?? specInfo.gpuCount ?? specInfo.GpuCount ?? 0);
@@ -662,38 +683,19 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         );
         if (gpuDetail) return { hasGpu: true, label: String(gpuDetail.value || 'GPU') };
       }
+      const bySpecName = matchByInstanceName(String(specInfo.cspSpecName || specInfo.name || specId || ''));
+      if (bySpecName) return bySpecName;
+      return null;
     }
 
-    // 2. CSP Instance Spec naming pattern
+    // 2. CSP Instance Spec naming pattern when SpecInfo object is unavailable
     if (specId) {
-      const s = specId.toLowerCase();
-      if (s.includes('g4dn.')) return { hasGpu: true, label: 'Tesla T4' };
-      if (s.includes('g5.') || s.includes('g5g.')) return { hasGpu: true, label: 'A10G' };
-      if (s.includes('g6.') || s.includes('g2-')) return { hasGpu: true, label: 'L4' };
-      if (s.includes('p3.')) return { hasGpu: true, label: 'V100' };
-      if (s.includes('p4d') || s.includes('a2-')) return { hasGpu: true, label: 'A100' };
-      if (s.includes('p5.')) return { hasGpu: true, label: 'H100' };
+      return matchByInstanceName(specId);
     }
 
-    // 3. Check if mapped source node has GPU cards attached
-    if (ng) {
-      const rawSourceIds = ng.label?.['cm-source-machine-ids'] || ng.label?.sourceMachineIds || ng.label?.sourceMachineId || ng.label?.sourceMachine || '';
-      const sourceIds = String(rawSourceIds).split(',').map((id: string) => id.trim()).filter(Boolean);
-      for (const sId of sourceIds) {
-        const sourceNode = findSourceNode(sId);
-        if (sourceNode?.gpuCards && sourceNode.gpuCards.length > 0) {
-          const firstCard = sourceNode.gpuCards[0];
-          const cardModel = firstCard?.model?.trim();
-          const cardMem = firstCard?.memoryTotalGB ? ` (${firstCard.memoryTotalGB}GB)` : '';
-          return {
-            hasGpu: true,
-            label: cardModel ? `${cardModel}${cardMem}` : 'GPU'
-          };
-        }
-      }
-      if ((ng.name || '').toLowerCase().includes('gpu')) {
-        return { hasGpu: true, label: 'GPU' };
-      }
+    // 3. Fallback when neither specInfo nor specId is populated yet
+    if (ng && (ng.name || '').toLowerCase().includes('gpu')) {
+      return { hasGpu: true, label: 'GPU' };
     }
 
     return null;
@@ -704,32 +706,17 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     if (!editedCandidate?.targetInfra?.nodeGroups) {
       return { hasGpu: false, gpuNgCount: 0, gpuNodeCount: 0 };
     }
-    // Web / Database workloads (e.g. web-haproxy-influxdb) have no GPU
-    const isExplicitNonGpu = 
-      selectedSourceModel?.id === 'sample-source-infra-1' ||
-      selectedSourceModel?.name?.toLowerCase().includes('web-haproxy') ||
-      selectedSourceModel?.name?.toLowerCase().includes('influxdb');
-    if (isExplicitNonGpu) {
-      return { hasGpu: false, gpuNgCount: 0, gpuNodeCount: 0 };
-    }
-
-    // Check if source model has GPU hardware or is a GPU workload
-    const sourceHasGpu = Boolean(
-      selectedSourceModel?.id?.toLowerCase().includes('gpu') ||
-      selectedSourceModel?.name?.toLowerCase().includes('gpu') ||
-      selectedSourceModel?.onpremiseInfraModel?.nodes?.some((n: any) => n.gpuCards && n.gpuCards.length > 0)
-    );
 
     const gpuNgs = editedCandidate.targetInfra.nodeGroups.filter(ng => {
       const specInfo = getSpecInfo(editedCandidate, ng.specId);
       return !!getGpuInfo(specInfo, ng.specId, ng);
     });
 
-    const hasGpu = sourceHasGpu || gpuNgs.length > 0;
-    const gpuNgCount = hasGpu ? gpuNgs.length : 0;
-    const gpuNodeCount = hasGpu ? gpuNgs.reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0) : 0;
+    const hasGpu = gpuNgs.length > 0;
+    const gpuNgCount = gpuNgs.length;
+    const gpuNodeCount = gpuNgs.reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0);
     return { hasGpu, gpuNgCount, gpuNodeCount };
-  }, [editedCandidate, selectedSourceModel, savedSourceModels]);
+  }, [editedCandidate]);
 
   // Lookup ImageInfo from targetOsImageList by imageId
   const getImageInfo = (candidate: typeof editedCandidate, imageId: string) => {
@@ -1135,10 +1122,20 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     updateEditedCandidate(updatedCandidate);
   };
 
+  useEffect(() => {
+    if (targetActiveTab === 'nlb' && (!editedCandidate?.targetNlbList || editedCandidate.targetNlbList.length === 0)) {
+      setTargetActiveTab('compute');
+    }
+  }, [editedCandidate, targetActiveTab]);
+
   const handleSaveArtifact = async (result: { name: string; description: string; version: string; overwriteId: string | null }) => {
     if (!editedCandidate) return;
     const targetModelToSave: RecommendedInfra = {
       ...editedCandidate,
+      targetNlbList:
+        editedCandidate.targetNlbList && editedCandidate.targetNlbList.length > 0
+          ? editedCandidate.targetNlbList
+          : undefined,
       targetInfra: {
         ...editedCandidate.targetInfra,
         name: result.name
@@ -1624,14 +1621,65 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
           STEP 2: Recommended Target Cloud Alternatives Review and Editing
          ------------------------------------------------------------- */}
       <div className={`glass-panel p-6 rounded-2xl transition-all duration-300 ${activeStep >= 2 ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
-        <div className="flex items-center space-x-3 mb-4 border-b border-border-main/40 pb-3">
-          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold ${activeStep > 2 ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-emerald-500 text-slate-950'}`}>
-            {activeStep > 2 ? '✓' : '2'}
-          </span>
-          <h3 className="text-base font-extrabold text-text-main">
-            Step 2: Recommended Target Cloud Alternatives Review and Editing
-          </h3>
+        <div className="flex items-center justify-between mb-4 border-b border-border-main/40 pb-3">
+          <div className="flex items-center space-x-3">
+            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold ${activeStep > 2 ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-emerald-500 text-slate-950'}`}>
+              {activeStep > 2 ? '✓' : '2'}
+            </span>
+            <h3 className="text-base font-extrabold text-text-main">
+              Step 2: Recommended Target Cloud Alternatives Review and Editing
+            </h3>
+          </div>
+          {editedCandidate && (
+            <button
+              type="button"
+              onClick={() => setIsTargetJsonOpen(!isTargetJsonOpen)}
+              className="px-3 py-1.5 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-sm font-bold transition cursor-pointer flex items-center text-emerald-600 dark:text-emerald-400"
+            >
+              <Copy className="w-3.5 h-3.5 mr-1" />
+              JSON View
+            </button>
+          )}
         </div>
+
+        {isTargetJsonOpen && editedCandidate && (
+          <div className="space-y-3 mb-6">
+            <div className="flex justify-between items-center bg-bg-input px-3.5 py-2 rounded-xl border border-border-main/50">
+              <span className="text-sm text-text-muted font-mono">cloudInfraModel</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const normalizedTarget = {
+                    ...editedCandidate,
+                    targetNlbList:
+                      editedCandidate.targetNlbList && editedCandidate.targetNlbList.length > 0
+                        ? editedCandidate.targetNlbList
+                        : undefined,
+                  };
+                  navigator.clipboard.writeText(JSON.stringify(normalizedTarget, null, 2));
+                  setIsTargetJsonCopied(true);
+                  setTimeout(() => setIsTargetJsonCopied(false), 2000);
+                }}
+                className="px-3 py-1 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-xs font-bold transition flex items-center cursor-pointer text-emerald-600 dark:text-emerald-400"
+              >
+                <Copy className="w-3.5 h-3.5 mr-1" /> {isTargetJsonCopied ? 'Copied!' : 'Copy JSON'}
+              </button>
+            </div>
+            <pre className="text-sm font-mono text-slate-800 dark:text-emerald-400 bg-bg-panel p-3.5 rounded-xl border border-border-main overflow-y-auto max-h-[400px] select-text">
+              {JSON.stringify(
+                {
+                  ...editedCandidate,
+                  targetNlbList:
+                    editedCandidate.targetNlbList && editedCandidate.targetNlbList.length > 0
+                      ? editedCandidate.targetNlbList
+                      : undefined,
+                },
+                null,
+                2
+              )}
+            </pre>
+          </div>
+        )}
 
         {recommendationCandidates.length === 0 ? (
           <div className="py-8 text-center text-text-muted text-sm italic">
@@ -1737,11 +1785,16 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                         return recommendationCandidates.map((c, idx) => {
                           const isActive = selectedCandidateIndex === idx;
                           const cspName = c.targetCloud?.csp ? c.targetCloud.csp.toUpperCase() : '';
-                          const regionName = c.targetCloud?.region || '—';
+                          const regionName = c.targetCloud?.region || '-';
                           const cost = getEstimatedMonthlyCost(c);
                           const nodeGroups = c.targetInfra?.nodeGroups || [];
                           const nodeCount = nodeGroups.reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0);
                           const nodeGroupCount = nodeGroups.length;
+                          const candNlbCount = (c.targetNlbList || []).length;
+                          const candGpuNodeCount = nodeGroups.reduce((acc, ng) => {
+                            const sInfo = getSpecInfo(c, ng.specId);
+                            return getGpuInfo(sInfo, ng.specId, ng) ? acc + (ng.nodeGroupSize || 0) : acc;
+                          }, 0);
 
                           return (
                             <button
@@ -1791,8 +1844,8 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                   {nodeGroupCount} Node Group(s), {nodeCount} Node(s)
                                 </div>
 
-                                {/* Match Level Value (Badge) */}
-                                <div>
+                                {/* Match Level, GPU, and NLB Badges */}
+                                <div className="flex flex-wrap items-center gap-1.5">
                                   <span className={`inline-block text-xs uppercase font-extrabold px-2.5 py-0.5 rounded ${
                                     c.status === 'highly-matched'
                                       ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
@@ -1800,6 +1853,16 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                   }`}>
                                     {c.status || 'matched'}
                                   </span>
+                                  {candGpuNodeCount > 0 && (
+                                    <span className="inline-block text-xs font-extrabold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                                      GPU ({candGpuNodeCount})
+                                    </span>
+                                  )}
+                                  {candNlbCount > 0 && (
+                                    <span className="inline-block text-xs font-extrabold px-2 py-0.5 rounded bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30">
+                                      NLB ({candNlbCount})
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 

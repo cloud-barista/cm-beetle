@@ -145,10 +145,39 @@ const SAMPLE_INFRA_DETAIL = {
   ]
 };
 
-const isGpuSpec = (specId: string): boolean => {
+const isGpuSpec = (specId: string, specList?: any[]): boolean => {
   if (!specId) return false;
   const s = specId.toLowerCase();
-  return s.includes('gpu') || s.includes('g4dn') || s.includes('g5') || s.includes('p3') || s.includes('p4') || s.includes('a2') || s.includes('tesla') || s.includes('a100') || s.includes('h100');
+  if (Array.isArray(specList)) {
+    const matched = specList.find(
+      (sp: any) =>
+        sp?.id?.toLowerCase() === s ||
+        sp?.cspSpecName?.toLowerCase() === s ||
+        (sp?.cspSpecName && s.endsWith(String(sp.cspSpecName).toLowerCase()))
+    );
+    if (matched) {
+      return Number(matched.acceleratorCount ?? matched.AcceleratorCount ?? 0) > 0 || Boolean(matched.acceleratorModel);
+    }
+  }
+  return (
+    s.includes('gpu') ||
+    s.includes('g4dn.') ||
+    s.includes('g5.') ||
+    s.includes('g5g.') ||
+    s.includes('g6.') ||
+    s.includes('g2-') ||
+    s.includes('p3.') ||
+    s.includes('p4d') ||
+    s.includes('p5.') ||
+    s.includes('a2-') ||
+    s.includes('a3-') ||
+    s.includes('standard_nc') ||
+    s.includes('standard_nd') ||
+    s.includes('standard_nv') ||
+    s.includes('tesla') ||
+    s.includes('a100') ||
+    s.includes('h100')
+  );
 };
 
 export const MigratedInfraManagement: React.FC = () => {
@@ -186,6 +215,7 @@ export const MigratedInfraManagement: React.FC = () => {
   const [detectedNlbs, setDetectedNlbs] = useState<any[]>([]);
   const [deleteStage, setDeleteStage] = useState<'idle' | 'deleting-nlb' | 'deleting-infra'>('idle');
   const [liveNlbs, setLiveNlbs] = useState<any[]>([]);
+  const [hasFetchedLiveNlbs, setHasFetchedLiveNlbs] = useState<boolean>(false);
   const [deletingNlbId, setDeletingNlbId] = useState<string | null>(null);
 
   // Migrated Infra IDs fetched from GET /beetle/migration/ns/{nsId}/infra?option=id
@@ -495,6 +525,8 @@ export const MigratedInfraManagement: React.FC = () => {
     try {
       if (infraIdToLoad === SAMPLE_INFRA_ID) {
         setLoadedInfraDetail(SAMPLE_INFRA_DETAIL);
+        setLiveNlbs([]);
+        setHasFetchedLiveNlbs(false);
         setIsLoadingDetail(false);
         return;
       }
@@ -514,17 +546,22 @@ export const MigratedInfraManagement: React.FC = () => {
         const nRes = await beetleApi.getNlbList(ns, infraIdToLoad);
         if (nRes.success && Array.isArray(nRes.data)) {
           setLiveNlbs(nRes.data);
+          setHasFetchedLiveNlbs(true);
         } else {
           setLiveNlbs([]);
+          setHasFetchedLiveNlbs(false);
         }
       } catch (nErr) {
         console.warn('NLB list fetch notice:', nErr);
         setLiveNlbs([]);
+        setHasFetchedLiveNlbs(false);
       }
     } catch (err) {
       console.warn('Failed to load infra detail for', infraIdToLoad, err);
       if (infraIdToLoad === SAMPLE_INFRA_ID) {
         setLoadedInfraDetail(SAMPLE_INFRA_DETAIL);
+        setLiveNlbs([]);
+        setHasFetchedLiveNlbs(false);
       }
     } finally {
       setIsLoadingDetail(false);
@@ -569,6 +606,7 @@ export const MigratedInfraManagement: React.FC = () => {
       const res = await beetleApi.deleteNlb(ns, selectedInfraId, nlbId);
       if (res.success) {
         setLiveNlbs(prev => prev.filter(n => (n.id || n.name) !== nlbId));
+        setHasFetchedLiveNlbs(true);
         setDeleteSuccessMsg(`✓ Managed NLB "${nlbId}" was deleted successfully.`);
       } else {
         alert(`Failed to delete NLB: ${res.error || 'Unknown error'}`);
@@ -802,8 +840,19 @@ export const MigratedInfraManagement: React.FC = () => {
         };
       });
 
+      const resolvedNlbList = hasFetchedLiveNlbs
+        ? liveNlbs.length > 0
+          ? liveNlbs
+          : undefined
+        : liveNlbs.length > 0
+        ? liveNlbs
+        : base.targetNlbList && base.targetNlbList.length > 0
+        ? base.targetNlbList
+        : undefined;
+
       return {
         ...base,
+        targetNlbList: resolvedNlbList,
         targetVNet: {
           ...base.targetVNet,
           subnetInfoList: mergedSubnets.length > 0 ? mergedSubnets : extractedSubnetsList
@@ -814,6 +863,16 @@ export const MigratedInfraManagement: React.FC = () => {
         }
       };
     }
+
+    const fallbackNlbList = hasFetchedLiveNlbs
+      ? liveNlbs.length > 0
+        ? liveNlbs
+        : undefined
+      : liveNlbs.length > 0
+      ? liveNlbs
+      : activeJobInfra?.targetNlbList && activeJobInfra.targetNlbList.length > 0
+      ? activeJobInfra.targetNlbList
+      : undefined;
 
     return {
       name: loadedInfraDetail?.name || loadedInfraDetail?.id || activeJobInfra?.infraId || selectedInfraId || 'migrated-infra',
@@ -832,6 +891,8 @@ export const MigratedInfraManagement: React.FC = () => {
         name: extractedSshKeyName
       },
       targetSecurityGroupList,
+      targetSpecList: liveNodes.map((n: any) => n.spec).filter((sp: any) => sp && typeof sp === 'object'),
+      targetNlbList: fallbackNlbList,
       targetInfra: {
         name: loadedInfraDetail?.name || loadedInfraDetail?.id || activeJobInfra?.infraId || selectedInfraId || 'migrated-infra',
         nodeGroups: liveNodes.length > 0
@@ -868,7 +929,7 @@ export const MigratedInfraManagement: React.FC = () => {
   const activeNodes: { name: string; specId: string; publicIp: string; privateIp: string; subnetId?: string; status?: string; systemMessage?: string; label?: Record<string, string>; subGroupId?: string }[] = loadedInfraDetail?.node && loadedInfraDetail.node.length > 0
     ? loadedInfraDetail.node.map((n: any) => ({
         name: n.name || n.id || 'node',
-        specId: n.specId || n.spec || 'c5.large',
+        specId: n.specId || n.cspSpecName || n.spec?.cspSpecName || (typeof n.spec === 'string' ? n.spec : '') || 'c5.large',
         publicIp: n.publicIP || n.publicIp || 'N/A',
         privateIp: n.privateIP || n.privateIp || 'N/A',
         subnetId: n.subnetId || '',
@@ -1424,7 +1485,7 @@ export const MigratedInfraManagement: React.FC = () => {
                             <td className="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-extrabold">
                               <div className="flex items-center gap-1.5">
                                 <span>{node.specId}</span>
-                                {isGpuSpec(node.specId) && (
+                                {isGpuSpec(node.specId, (currentCloudModel as any)?.targetSpecList) && (
                                   <span className="px-1.5 py-0.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold rounded">
                                     GPU
                                   </span>

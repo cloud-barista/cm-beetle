@@ -14,6 +14,7 @@ limitations under the License.
 package summary
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -241,5 +242,107 @@ func TestGenerateTargetMarkdownSummaryWithAndWithoutNLB(t *testing.T) {
 		if !strings.Contains(nlbMD, wantSub) {
 			t.Errorf("target NLB summary markdown missing %q\n--- got ---\n%s", wantSub, nlbMD)
 		}
+	}
+}
+
+func TestSourceAndTargetSummaryGPUJsonOmitempty(t *testing.T) {
+	// 1. CPU-only without NLB: GPU and NLB fields must be omitted in JSON
+	cpuOnlyInfra := onpremmodel.OnpremInfra{
+		Nodes: []onpremmodel.NodeProperty{
+			{Hostname: "cpu-node-01", MachineId: "m-cpu-01"},
+		},
+	}
+	cpuSummary, err := GenerateSourceInfraSummary("cpu-infra", cpuOnlyInfra)
+	if err != nil {
+		t.Fatalf("GenerateSourceInfraSummary failed: %v", err)
+	}
+	cpuJsonBytes, err := json.Marshal(cpuSummary)
+	if err != nil {
+		t.Fatalf("json.Marshal(cpuSummary) failed: %v", err)
+	}
+	cpuJsonStr := string(cpuJsonBytes)
+	for _, forbiddenKey := range []string{`"totalGpus"`, `"gpuCards"`, `"totalNlbs"`, `"nlbs"`} {
+		if strings.Contains(cpuJsonStr, forbiddenKey) {
+			t.Errorf("CPU-only source summary JSON should omit %s, got: %s", forbiddenKey, cpuJsonStr)
+		}
+	}
+
+	// 2. GPU-equipped source node: GPU fields must be present in JSON and Markdown
+	gpuInfra := onpremmodel.OnpremInfra{
+		Nodes: []onpremmodel.NodeProperty{
+			{
+				Hostname:  "gpu-node-01",
+				MachineId: "m-gpu-01",
+				GPUCards: []onpremmodel.GpuCardProperty{
+					{Vendor: "NVIDIA", Model: "NVIDIA A100-PCIE-40GB", MemoryTotalGB: 40},
+				},
+			},
+		},
+	}
+	gpuSummary, err := GenerateSourceInfraSummary("gpu-infra", gpuInfra)
+	if err != nil {
+		t.Fatalf("GenerateSourceInfraSummary failed: %v", err)
+	}
+	gpuJsonBytes, err := json.Marshal(gpuSummary)
+	if err != nil {
+		t.Fatalf("json.Marshal(gpuSummary) failed: %v", err)
+	}
+	gpuJsonStr := string(gpuJsonBytes)
+	for _, wantKey := range []string{`"totalGpus":1`, `"gpuCards"`, `"NVIDIA A100-PCIE-40GB"`} {
+		if !strings.Contains(gpuJsonStr, wantKey) {
+			t.Errorf("GPU source summary JSON missing %s, got: %s", wantKey, gpuJsonStr)
+		}
+	}
+	gpuMD := GenerateSourceMarkdownSummary(gpuSummary)
+	if !strings.Contains(gpuMD, "| Total GPU Cards | 1 |") || !strings.Contains(gpuMD, "| **GPU Cards (1)** | NVIDIA A100-PCIE-40GB (40 GB) |") {
+		t.Errorf("GPU source summary markdown missing GPU details:\n%s", gpuMD)
+	}
+
+	// 3. Target summary omitempty for CPU-only vs GPU VM
+	targetCpuSummary := &TargetInfraSummary{
+		Overview: TargetInfraOverview{InfraName: "target-cpu", TotalVmCount: 1},
+		ComputeResources: SummaryComputeResources{
+			Vms: []SummaryVmInfo{
+				{Name: "vm-cpu-1", Spec: SummaryVmSpecInfo{Name: "t3.large", VCpus: 2, MemoryGiB: 8}},
+			},
+		},
+	}
+	targetCpuBytes, _ := json.Marshal(targetCpuSummary)
+	targetCpuJson := string(targetCpuBytes)
+	for _, forbiddenKey := range []string{`"totalGpuCount"`, `"acceleratorCount"`, `"acceleratorModel"`, `"totalNlbCount"`, `"nlbs"`} {
+		if strings.Contains(targetCpuJson, forbiddenKey) {
+			t.Errorf("CPU-only target summary JSON should omit %s, got: %s", forbiddenKey, targetCpuJson)
+		}
+	}
+
+	targetGpuSummary := &TargetInfraSummary{
+		Overview: TargetInfraOverview{InfraName: "target-gpu", TotalVmCount: 1, TotalGpuCount: 1},
+		ComputeResources: SummaryComputeResources{
+			Vms: []SummaryVmInfo{
+				{
+					Name: "vm-gpu-1",
+					Spec: SummaryVmSpecInfo{
+						Name:                "g4dn.xlarge",
+						VCpus:               4,
+						MemoryGiB:           16,
+						AcceleratorType:     "gpu",
+						AcceleratorModel:    "Tesla T4",
+						AcceleratorCount:    1,
+						AcceleratorMemoryGB: 16,
+					},
+				},
+			},
+		},
+	}
+	targetGpuBytes, _ := json.Marshal(targetGpuSummary)
+	targetGpuJson := string(targetGpuBytes)
+	for _, wantKey := range []string{`"totalGpuCount":1`, `"acceleratorCount":1`, `"acceleratorModel":"Tesla T4"`} {
+		if !strings.Contains(targetGpuJson, wantKey) {
+			t.Errorf("GPU target summary JSON missing %s, got: %s", wantKey, targetGpuJson)
+		}
+	}
+	targetGpuMD := GenerateMarkdownSummary(targetGpuSummary)
+	if !strings.Contains(targetGpuMD, "| **Total GPUs** | 1 |") || !strings.Contains(targetGpuMD, "1 x Tesla T4") {
+		t.Errorf("GPU target summary markdown missing GPU details:\n%s", targetGpuMD)
 	}
 }

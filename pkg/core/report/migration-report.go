@@ -118,6 +118,8 @@ func buildExecutiveSummary(sourceSummary *summary.SourceInfraSummary, targetSumm
 		TotalServers:    totalServers,
 		MigratedServers: migratedServers,
 		FailedServers:   failedServers,
+		TotalSourceGPUs: sourceSummary.Overview.TotalGPUs,
+		TotalTargetGPUs: targetSummary.Overview.TotalGpuCount,
 		TargetCloud:     targetSummary.Overview.TargetCloud,
 		TargetRegion:    targetSummary.Overview.TargetRegion,
 		MonthlyCostUSD:  float64(targetSummary.CostEstimation.TotalCostPerMonth),
@@ -165,6 +167,7 @@ func buildMigrationMappings(sourceSummary *summary.SourceInfraSummary, targetSum
 			}
 		}
 
+		sourceGPUSummary := formatSourceGPUSummary(sourceNode.GPUCards)
 		sourceBrief := SourceServerBrief{
 			Hostname:      sourceNode.Hostname,
 			MachineID:     machineID,
@@ -177,9 +180,12 @@ func buildMigrationMappings(sourceSummary *summary.SourceInfraSummary, targetSum
 			OSName:        fmt.Sprintf("%s %s", sourceNode.OS.Name, sourceNode.OS.Version),
 			PrimaryIP:     sourceNode.Network.IPAddress,
 			FirewallRules: sourceFirewallRules,
+			GPUCount:      len(sourceNode.GPUCards),
+			GPUSummary:    sourceGPUSummary,
 		}
 
 		for _, targetVM := range targetVMs {
+			targetGPUSummary := formatTargetGPUSummary(targetVM.Spec)
 			// Build target VM brief
 			targetBrief := TargetVMBrief{
 				InstanceName:    targetVM.Name,
@@ -194,6 +200,8 @@ func buildMigrationMappings(sourceSummary *summary.SourceInfraSummary, targetSum
 				PublicIP:        targetVM.Misc.PublicIp,
 				PrivateIP:       targetVM.Misc.PrivateIp,
 				SecurityGroups:  targetVM.Misc.SecurityGroups,
+				GPUCount:        targetVM.Spec.AcceleratorCount,
+				GPUSummary:      targetGPUSummary,
 			}
 
 			// Analyze resource changes
@@ -282,13 +290,76 @@ func analyzeResourceChanges(sourceNode summary.SourceServerInfo, targetVM summar
 		Description:      "Security rules converted to cloud-native format",
 	}
 
+	var gpuChange *ResourceChange
+	if len(sourceNode.GPUCards) > 0 || targetVM.Spec.AcceleratorCount > 0 {
+		sourceGPUVal := "None"
+		if len(sourceNode.GPUCards) > 0 {
+			sourceGPUVal = formatSourceGPUSummary(sourceNode.GPUCards)
+		}
+		targetGPUVal := "None"
+		if targetVM.Spec.AcceleratorCount > 0 {
+			targetGPUVal = formatTargetGPUSummary(targetVM.Spec)
+		}
+		changeType := determineChangeType(float64(len(sourceNode.GPUCards)), float64(targetVM.Spec.AcceleratorCount))
+		if len(sourceNode.GPUCards) == 0 && targetVM.Spec.AcceleratorCount > 0 {
+			changeType = "Added"
+		} else if len(sourceNode.GPUCards) > 0 && targetVM.Spec.AcceleratorCount == 0 {
+			changeType = "Removed"
+		}
+		ratio := 1.0
+		if len(sourceNode.GPUCards) > 0 {
+			ratio = float64(targetVM.Spec.AcceleratorCount) / float64(len(sourceNode.GPUCards))
+		}
+		gpuChange = &ResourceChange{
+			ResourceType: "GPU",
+			SourceValue:  sourceGPUVal,
+			TargetValue:  targetGPUVal,
+			ChangeType:   changeType,
+			ChangeRatio:  ratio,
+			Description:  fmt.Sprintf("%s to %s", sourceGPUVal, targetGPUVal),
+		}
+	}
+
 	return ResourceChangeAnalysis{
 		CPUChange:      cpuChange,
 		MemoryChange:   memoryChange,
 		StorageChange:  storageChange,
+		GPUChange:      gpuChange,
 		NetworkChange:  networkChange,
 		SecurityChange: securityChange,
 	}
+}
+
+func formatSourceGPUSummary(cards []summary.SourceGPUInfo) string {
+	if len(cards) == 0 {
+		return ""
+	}
+	var parts []string
+	for _, card := range cards {
+		name := card.Model
+		if name == "" {
+			name = card.Vendor
+		}
+		if card.MemoryTotalGB > 0 {
+			name = fmt.Sprintf("%s (%.0f GB)", name, card.MemoryTotalGB)
+		}
+		parts = append(parts, name)
+	}
+	return fmt.Sprintf("%d card(s): %s", len(cards), strings.Join(parts, ", "))
+}
+
+func formatTargetGPUSummary(spec summary.SummaryVmSpecInfo) string {
+	if spec.AcceleratorCount <= 0 {
+		return ""
+	}
+	model := spec.AcceleratorModel
+	if model == "" {
+		model = spec.AcceleratorType
+	}
+	if spec.AcceleratorMemoryGB > 0 {
+		return fmt.Sprintf("%d x %s (%.0f GB)", spec.AcceleratorCount, model, spec.AcceleratorMemoryGB)
+	}
+	return fmt.Sprintf("%d x %s", spec.AcceleratorCount, model)
 }
 
 // determineChangeType determines if a change is an upgrade, downgrade, or same

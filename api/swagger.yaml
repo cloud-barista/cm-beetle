@@ -3964,6 +3964,25 @@ definitions:
         example: true
         type: boolean
     type: object
+  model.ApiResponse-report_MigrationReport:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/report.MigrationReport'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
   model.ApiResponse-storagemodel_IdList:
     properties:
       data:
@@ -6891,6 +6910,63 @@ definitions:
         example: control-plane
         type: string
     type: object
+  report.ExecutiveSummary:
+    properties:
+      failedNlbs:
+        example: 0
+        type: integer
+      failedServers:
+        example: 0
+        type: integer
+      migratedNlbs:
+        example: 1
+        type: integer
+      migratedServers:
+        example: 2
+        type: integer
+      migrationStatus:
+        example: Completed
+        type: string
+      monthlyCostUsd:
+        example: 382.46
+        type: number
+      nlbMigrationStatus:
+        example: Completed
+        type: string
+      targetCloud:
+        example: AWS
+        type: string
+      targetRegion:
+        example: ap-northeast-2
+        type: string
+      totalNlbs:
+        example: 1
+        type: integer
+      totalServers:
+        example: 2
+        type: integer
+      totalSourceGpus:
+        example: 2
+        type: integer
+      totalTargetGpus:
+        example: 2
+        type: integer
+    type: object
+  report.IPMapping:
+    properties:
+      sourceHostname:
+        example: cm-nfs
+        type: string
+      sourceIp:
+        example: 172.29.0.102
+        type: string
+      targetPrivateIp:
+        example: 192.168.110.167
+        type: string
+      targetPublicIp:
+        example: 43.201.85.138
+        type: string
+    type: object
   report.K8sExecutiveSummary:
     properties:
       migrationStatus:
@@ -6983,6 +7059,128 @@ definitions:
         example: Upgraded (Compatible)
         type: string
     type: object
+  report.MigrationReport:
+    properties:
+      costSummary:
+        $ref: '#/definitions/report.CostSummary'
+      executiveSummary:
+        $ref: '#/definitions/report.ExecutiveSummary'
+      metadata:
+        $ref: '#/definitions/report.ReportMetadata'
+      migrationMappings:
+        items:
+          $ref: '#/definitions/report.SourceTargetMapping'
+        type: array
+      networkAnalysis:
+        $ref: '#/definitions/report.NetworkMigrationAnalysis'
+      nlbMappings:
+        items:
+          $ref: '#/definitions/report.NlbMigrationMapping'
+        type: array
+      recommendations:
+        items:
+          $ref: '#/definitions/report.Recommendation'
+        type: array
+      securityAnalysis:
+        $ref: '#/definitions/report.SecurityMigrationAnalysis'
+      sourceDetails:
+        $ref: '#/definitions/summary.SourceInfraSummary'
+      targetDetails:
+        $ref: '#/definitions/summary.TargetInfraSummary'
+    type: object
+  report.NetworkChange:
+    properties:
+      changeType:
+        example: Public IP Added
+        type: string
+      description:
+        example: Added public IP for internet access
+        type: string
+      sourceIp:
+        example: 172.29.0.102
+        type: string
+      targetPrivateIp:
+        example: 192.168.110.167
+        type: string
+      targetPublicIp:
+        example: 43.201.85.138
+        type: string
+    type: object
+  report.NetworkMigrationAnalysis:
+    properties:
+      cidrPreserved:
+        type: boolean
+      description:
+        type: string
+      ipMappings:
+        items:
+          $ref: '#/definitions/report.IPMapping'
+        type: array
+      sourceNetwork:
+        $ref: '#/definitions/report.SourceNetworkInfo'
+      targetNetwork:
+        $ref: '#/definitions/report.TargetNetworkInfo'
+    type: object
+  report.NlbBackendNodeMapping:
+    properties:
+      sourceHostname:
+        example: ip-10-0-1-221
+        type: string
+      sourceIp:
+        example: 10.0.1.221
+        type: string
+      sourceMachineId:
+        example: ec2d32b5-98fb-5a96-7913-d3db1ec18932
+        type: string
+      sourcePort:
+        example: 8086
+        type: integer
+      sourceServerName:
+        example: influx1
+        type: string
+      status:
+        example: Running
+        type: string
+      targetCspVmId:
+        example: i-0dee049fb9412465b
+        type: string
+      targetPort:
+        example: "8086"
+        type: string
+      targetPrivateIp:
+        example: 10.0.1.221
+        type: string
+      targetPublicIp:
+        example: 13.125.79.237
+        type: string
+      targetVmName:
+        example: my01-ng-influxdb-back-1
+        type: string
+    type: object
+  report.NlbMigrationMapping:
+    properties:
+      backendNodeMappings:
+        items:
+          $ref: '#/definitions/report.NlbBackendNodeMapping'
+        type: array
+      hostNodeTargetVmName:
+        example: my01-ng-ec268ed7-821e-9d73-e79f-961262161624-1
+        type: string
+      mappingId:
+        example: 1
+        type: integer
+      migrationStatus:
+        example: Migrated
+        type: string
+      notes:
+        items:
+          type: string
+        type: array
+      sourceNlb:
+        $ref: '#/definitions/summary.SourceNlbInfo'
+      targetNlb:
+        $ref: '#/definitions/summary.SummaryNlbInfo'
+    type: object
   report.Recommendation:
     properties:
       actionItems:
@@ -7044,6 +7242,78 @@ definitions:
         example: 8 vCPU
         type: string
     type: object
+  report.ResourceChangeAnalysis:
+    properties:
+      cpuChange:
+        $ref: '#/definitions/report.ResourceChange'
+      gpuChange:
+        $ref: '#/definitions/report.ResourceChange'
+      memoryChange:
+        $ref: '#/definitions/report.ResourceChange'
+      networkChange:
+        $ref: '#/definitions/report.NetworkChange'
+      securityChange:
+        $ref: '#/definitions/report.SecurityChange'
+      storageChange:
+        $ref: '#/definitions/report.ResourceChange'
+    type: object
+  report.SecurityChange:
+    properties:
+      conversionStatus:
+        example: Converted
+        type: string
+      description:
+        example: Converted 3 iptables rules to AWS Security Group
+        type: string
+      sourceRules:
+        example: 3
+        type: integer
+      targetRules:
+        example: 6
+        type: integer
+    type: object
+  report.SecurityConversion:
+    properties:
+      conversionType:
+        example: iptables to AWS SG
+        type: string
+      sourceHostname:
+        example: cm-nfs
+        type: string
+      sourceRules:
+        example: 3
+        type: integer
+      status:
+        example: Converted
+        type: string
+      targetRules:
+        example: 6
+        type: integer
+      targetSgName:
+        example: mig-sg-02
+        type: string
+    type: object
+  report.SecurityMigrationAnalysis:
+    properties:
+      conversions:
+        items:
+          $ref: '#/definitions/report.SecurityConversion'
+        type: array
+      summary:
+        type: string
+    type: object
+  report.SourceNetworkInfo:
+    properties:
+      cidr:
+        example: 192.168.110.0/24
+        type: string
+      connectedServers:
+        example: 2
+        type: integer
+      gateway:
+        example: 192.168.110.254
+        type: string
+    type: object
   report.SourceServerBrief:
     properties:
       cpuModel:
@@ -7064,6 +7334,12 @@ definitions:
       firewallRules:
         example: 3
         type: integer
+      gpuCount:
+        example: 1
+        type: integer
+      gpuSummary:
+        example: 1 x NVIDIA A100-PCIE-40GB
+        type: string
       hostname:
         example: cm-nfs
         type: string
@@ -7079,6 +7355,87 @@ definitions:
       primaryIp:
         example: 172.29.0.102
         type: string
+    type: object
+  report.SourceTargetMapping:
+    properties:
+      costPerMonth:
+        example: 247.68
+        type: number
+      mappingId:
+        example: 1
+        type: integer
+      migrationStatus:
+        example: Success
+        type: string
+      resourceChanges:
+        $ref: '#/definitions/report.ResourceChangeAnalysis'
+      sourceServer:
+        $ref: '#/definitions/report.SourceServerBrief'
+      targetVM:
+        $ref: '#/definitions/report.TargetVMBrief'
+    type: object
+  report.TargetNetworkInfo:
+    properties:
+      cspVnetId:
+        example: vpc-0200cd398ed7c7f17
+        type: string
+      subnetCidr:
+        example: 192.168.110.0/24
+        type: string
+      vnetCidr:
+        example: 192.168.96.0/19
+        type: string
+      vnetName:
+        example: mig-vnet-01
+        type: string
+    type: object
+  report.TargetVMBrief:
+    properties:
+      gpuCount:
+        example: 1
+        type: integer
+      gpuSummary:
+        example: 1 x Tesla T4 (16 GB)
+        type: string
+      instanceId:
+        example: i-093b4b7c722ed9ec5
+        type: string
+      instanceName:
+        example: migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1
+        type: string
+      memoryGb:
+        example: 16
+        type: number
+      privateIp:
+        example: 192.168.110.167
+        type: string
+      publicIp:
+        example: 43.201.85.138
+        type: string
+      rootDiskGb:
+        example: 50
+        type: integer
+      rootDiskType:
+        example: gp2
+        type: string
+      securityGroups:
+        example:
+        - mig-sg-02
+        items:
+          type: string
+        type: array
+      sourceMachineId:
+        example: 0036e4b9-c8b4-e811-906e-000ffee02d5c
+        type: string
+      specName:
+        example: c5a.2xlarge
+        type: string
+      status:
+        example: Running
+        type: string
+      vcpus:
+        example: 8
+        type: integer
     type: object
   report.WorkerNodeGroupMapping:
     properties:
@@ -7529,6 +7886,30 @@ definitions:
         example: '*'
         type: string
     type: object
+  summary.SourceGPUInfo:
+    properties:
+      architecture:
+        example: Ampere
+        type: string
+      cudaVersion:
+        example: "12.2"
+        type: string
+      driverVersion:
+        example: 535.129.03
+        type: string
+      memoryTotalGb:
+        example: 40
+        type: number
+      model:
+        example: NVIDIA A100-PCIE-40GB
+        type: string
+      type:
+        example: GPU
+        type: string
+      vendor:
+        example: NVIDIA
+        type: string
+    type: object
   summary.SourceInfraSummary:
     properties:
       computeResources:
@@ -7765,6 +8146,10 @@ definitions:
         $ref: '#/definitions/summary.SourceCPUInfo'
       disk:
         $ref: '#/definitions/summary.SourceDiskInfo'
+      gpuCards:
+        items:
+          $ref: '#/definitions/summary.SourceGPUInfo'
+        type: array
       hostname:
         example: web-server-01
         type: string
@@ -7833,6 +8218,9 @@ definitions:
         type: integer
       totalDiskGb:
         example: 2000
+        type: integer
+      totalGpus:
+        example: 2
         type: integer
       totalMemoryGb:
         example: 160
@@ -8572,6 +8960,18 @@ definitions:
     type: object
   summary.SummaryVmSpecInfo:
     properties:
+      acceleratorCount:
+        example: 1
+        type: integer
+      acceleratorMemoryGB:
+        example: 16
+        type: number
+      acceleratorModel:
+        example: Tesla T4
+        type: string
+      acceleratorType:
+        example: gpu
+        type: string
       architecture:
         example: x86_64
         type: string
@@ -8615,6 +9015,9 @@ definitions:
       targetRegion:
         example: ap-northeast-2
         type: string
+      totalGpuCount:
+        example: 2
+        type: integer
       totalNlbCount:
         example: 1
         type: integer
@@ -13558,7 +13961,7 @@ paths:
       - application/json
       description: Generate a comprehensive migration report comparing source infrastructure
         with target cloud VMs, including resource mappings, network/security analysis,
-        cost summary, and recommendations in Markdown or HTML format
+        cost summary, and recommendations in Markdown, HTML, or JSON format
       operationId: GenerateMigrationReport
       parameters:
       - default: mig01
@@ -13576,10 +13979,11 @@ paths:
         required: true
         type: string
       - default: md
-        description: 'Report format: md or html'
+        description: 'Report format: md, html, or json'
         enum:
         - md
         - html
+        - json
         in: query
         name: format
         type: string
@@ -13599,11 +14003,12 @@ paths:
         schema:
           $ref: '#/definitions/controller.GenerateMigrationReportRequest'
       produces:
+      - application/json
       - text/markdown
       - text/html
       responses:
         "200":
-          description: Migration report in markdown or HTML format
+          description: Migration report in markdown, HTML, or JSON format
           headers:
             Content-Disposition:
               description: inline; filename="migration-report.md" or "migration-report.html"
@@ -13611,9 +14016,10 @@ paths:
               type: string
             Content-Type:
               description: text/markdown; charset=utf-8 or text/html; charset=utf-8
+                or application/json
               type: string
           schema:
-            type: string
+            $ref: '#/definitions/model.ApiResponse-report_MigrationReport'
         "400":
           description: Invalid request parameters
           schema:

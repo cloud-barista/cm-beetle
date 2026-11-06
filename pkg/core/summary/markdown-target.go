@@ -75,6 +75,9 @@ func generateOverviewMarkdown(overview *TargetInfraOverview) string {
 	md.WriteString(fmt.Sprintf("| **Total VMs** | %d |\n", overview.TotalVmCount))
 	md.WriteString(fmt.Sprintf("| **Running VMs** | %d |\n", overview.RunningVmCount))
 	md.WriteString(fmt.Sprintf("| **Stopped VMs** | %d |\n", overview.StoppedVmCount))
+	if overview.TotalGpuCount > 0 {
+		md.WriteString(fmt.Sprintf("| **Total GPUs** | %d |\n", overview.TotalGpuCount))
+	}
 	if overview.TotalNlbCount > 0 {
 		md.WriteString(fmt.Sprintf("| **Total NLBs** | %d |\n", overview.TotalNlbCount))
 	}
@@ -324,6 +327,9 @@ func generateComputeResourcesMarkdown(resources *SummaryComputeResources) string
 	md.WriteString("|---------|-----------|--------|-------------------------|-------|------|\n")
 	for _, vm := range resources.Vms {
 		specInfo := fmt.Sprintf("%d vCPU, %.1f GiB", vm.Spec.VCpus, vm.Spec.MemoryGiB)
+		if vm.Spec.AcceleratorCount > 0 {
+			specInfo = fmt.Sprintf("%s, %d x %s", specInfo, vm.Spec.AcceleratorCount, vm.Spec.AcceleratorModel)
+		}
 		imageInfo := fmt.Sprintf("%s (%s)", vm.Image.Distribution, vm.Image.OsVersion)
 		miscInfo := fmt.Sprintf("**VNet:** %s<br>**Subnet:** %s<br>**Public IP:** %s<br>**Private IP:** %s<br>**SGs:** %s<br>**SSH:** %s",
 			vm.Misc.VNet, vm.Misc.Subnet, vm.Misc.PublicIp, vm.Misc.PrivateIp,

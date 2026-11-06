@@ -70,6 +70,7 @@ func buildSourceInfraOverview(infraName string, infraData *onpremmodel.OnpremInf
 	totalCPUCores := 0
 	totalMemoryGB := 0
 	totalDiskGB := 0
+	totalGPUs := 0
 
 	// Count unique networks from IPv4Networks CIDRs and DefaultGateways
 	networkCount := len(infraData.Network.IPv4Networks.CidrBlocks)
@@ -92,6 +93,9 @@ func buildSourceInfraOverview(infraName string, infraData *onpremmodel.OnpremInf
 		for _, disk := range node.DataDisks {
 			totalDiskGB += int(disk.TotalSize)
 		}
+
+		// GPU cards installed on the node
+		totalGPUs += len(node.GPUCards)
 	}
 
 	return SourceSummaryInfraOverview{
@@ -102,6 +106,7 @@ func buildSourceInfraOverview(infraName string, infraData *onpremmodel.OnpremInf
 		TotalDiskGB:      totalDiskGB,
 		TotalNetworks:    networkCount,
 		TotalNLBs:        len(infraData.NLBs),
+		TotalGPUs:        totalGPUs,
 	}
 }
 
@@ -191,6 +196,20 @@ func collectSourceComputeResources(infraData *onpremmodel.OnpremInfra) SourceSum
 			}
 		}
 
+		// Collect GPU cards if installed on the node
+		var gpuCards []SourceGPUInfo
+		for _, gpu := range node.GPUCards {
+			gpuCards = append(gpuCards, SourceGPUInfo{
+				Vendor:        gpu.Vendor,
+				Model:         gpu.Model,
+				Type:          gpu.Type,
+				Architecture:  gpu.Architecture,
+				MemoryTotalGB: gpu.MemoryTotalGB,
+				DriverVersion: gpu.DriverVersion,
+				CudaVersion:   gpu.CudaVersion,
+			})
+		}
+
 		serverInfo := SourceServerInfo{
 			Hostname:     node.Hostname,
 			MachineId:    node.MachineId,
@@ -198,6 +217,7 @@ func collectSourceComputeResources(infraData *onpremmodel.OnpremInfra) SourceSum
 			Memory:       memoryInfo,
 			Disk:         diskInfo,
 			OS:           osInfo,
+			GPUCards:     gpuCards,
 			RootDiskType: node.RootDisk.Type,
 			RootDiskSize: int(node.RootDisk.TotalSize),
 			Network:      networkBrief,
