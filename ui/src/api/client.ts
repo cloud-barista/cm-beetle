@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, CheckSSHReadyResponse, ArtifactLineage } from '../types/migration';
+import { OnpremInfra, OnpremNlb, OnpremNode, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, CheckSSHReadyResponse, ArtifactLineage } from '../types/migration';
 
 // Shared Axios client with basic authentication pre-configured (standard Cloud-Barista settings)
 const api = axios.create({
@@ -21,15 +21,132 @@ const snapToStandardVramGB = (rawGiB: number): number => {
   return Math.round(rawGiB);
 };
 
-// Backfill GPU cards and NVMe rootDisk size from raw Honeybee infra when omitted by older cm-honeybee refiner
+// Parse HAProxy bind directive (e.g., "*:80", "0.0.0.0:9999", "10.0.1.50:8080")
+const parseHaproxyBind = (bindStr: string): { bindAddress: string; port: number } => {
+  const firstToken = String(bindStr || '').trim().split(/\s+/)[0] || '*:80';
+  const lastColon = firstToken.lastIndexOf(':');
+  if (lastColon === -1) {
+    const maybePort = parseInt(firstToken, 10);
+    return { bindAddress: '*', port: Number.isFinite(maybePort) && maybePort > 0 ? maybePort : 80 };
+  }
+  const rawAddr = firstToken.slice(0, lastColon).trim();
+  const rawPort = parseInt(firstToken.slice(lastColon + 1).trim(), 10);
+  const bindAddress = !rawAddr || rawAddr === '*' || rawAddr === '0.0.0.0' || rawAddr === '::' ? '*' : rawAddr;
+  return { bindAddress, port: Number.isFinite(rawPort) && rawPort > 0 ? rawPort : 80 };
+};
+
+// Extract OnpremNlb list from raw cm-honeybee infra servers[].haproxy
+const extractNlbsFromRawServers = (rawServers: any[], refinedNodes: OnpremNode[]): OnpremNlb[] => {
+  const nlbs: OnpremNlb[] = [];
+  for (const srv of rawServers) {
+    const haproxy = srv?.haproxy;
+    if (!haproxy) continue;
+    const rawMachineId = srv?.compute?.os?.node?.machineid || '';
+    const rawHostname = srv?.compute?.os?.node?.hostname || '';
+    const matchedNode = refinedNodes.find(
+      (n) => (rawMachineId && n.machineId === rawMachineId) || (rawHostname && n.hostname === rawHostname)
+    );
+    const hostMachineId = matchedNode?.machineId || rawMachineId || rawHostname || 'haproxy-node';
+    const defaultMode = String(haproxy?.defaults?.mode || 'tcp').trim().toLowerCase();
+
+    const parseServers = (srvList: any[], fallbackPort: number) =>
+      (Array.isArray(srvList) ? srvList : [])
+        .map((s: any, idx: number) => {
+          const addr = String(s?.address || '').trim();
+          if (!addr) return null;
+          const colonIdx = addr.lastIndexOf(':');
+          const ip = colonIdx > 0 ? addr.slice(0, colonIdx).trim() : addr;
+          const parsedPort = colonIdx > 0 ? parseInt(addr.slice(colonIdx + 1).trim(), 10) : fallbackPort;
+          if (!ip) return null;
+          return {
+            name: String(s?.name || `srv-${idx + 1}`),
+            ip,
+            port: Number.isFinite(parsedPort) && parsedPort > 0 ? parsedPort : fallbackPort,
+          };
+        })
+        .filter((s): s is { name: string; ip: string; port: number } => s !== null);
+
+    const frontends: any[] = Array.isArray(haproxy.frontends) ? haproxy.frontends : [];
+    const backends: any[] = Array.isArray(haproxy.backends) ? haproxy.backends : [];
+    for (const fe of frontends) {
+      const be =
+        backends.find((b: any) => b?.name && b.name === fe?.default_backend) ||
+        (backends.length === 1 ? backends[0] : undefined);
+      if (!be) continue;
+      const listener = parseHaproxyBind(fe?.bind || '*:80');
+      const servers = parseServers(be?.servers, listener.port);
+      if (servers.length === 0) continue;
+      const mode = String(be?.options?.mode || fe?.options?.mode || defaultMode).toLowerCase();
+      const backendProtocol = mode === 'http' ? 'http' : 'tcp';
+      nlbs.push({
+        hostMachineId,
+        software: 'haproxy',
+        listener: {
+          bindAddress: listener.bindAddress,
+          port: listener.port,
+          protocol: 'tcp',
+        },
+        backend: {
+          name: String(be?.name || fe?.name || 'haproxy-backend'),
+          balance: String(be?.balance || haproxy?.defaults?.balance || 'roundrobin'),
+          protocol: backendProtocol,
+          servers,
+        },
+        healthCheck: {
+          enabled: true,
+          interval: 10,
+          timeout: 5,
+          threshold: 3,
+        },
+      });
+    }
+
+    const listens: any[] = Array.isArray(haproxy.listens) ? haproxy.listens : [];
+    for (const ls of listens) {
+      const listener = parseHaproxyBind(ls?.bind || '*:80');
+      const servers = parseServers(ls?.servers, listener.port);
+      if (servers.length === 0) continue;
+      const mode = String(ls?.options?.mode || defaultMode).toLowerCase();
+      const backendProtocol = mode === 'http' ? 'http' : 'tcp';
+      nlbs.push({
+        hostMachineId,
+        software: 'haproxy',
+        listener: {
+          bindAddress: listener.bindAddress,
+          port: listener.port,
+          protocol: 'tcp',
+        },
+        backend: {
+          name: String(ls?.name || 'haproxy-listen'),
+          balance: String(ls?.balance || haproxy?.defaults?.balance || 'roundrobin'),
+          protocol: backendProtocol,
+          servers,
+        },
+        healthCheck: {
+          enabled: true,
+          interval: 10,
+          timeout: 5,
+          threshold: 3,
+        },
+      });
+    }
+  }
+  return nlbs;
+};
+
+// Backfill GPU cards, NVMe rootDisk size, and HAProxy NLBs from raw Honeybee infra when omitted by cm-honeybee refiner
 const enrichRefinedInfraWithRawData = (refined: OnpremInfra, rawData: any): OnpremInfra => {
   if (!refined || !Array.isArray(refined.nodes)) return refined;
   const rawServers: any[] = Array.isArray(rawData?.servers)
     ? rawData.servers
-    : (rawData?.compute || rawData?.gpu ? [rawData] : []);
+    : (rawData?.compute || rawData?.gpu || rawData?.haproxy ? [rawData] : []);
+
+  const existingNlbs = Array.isArray(refined.nlbs) && refined.nlbs.length > 0 ? refined.nlbs : [];
+  const extractedNlbs = existingNlbs.length > 0 ? existingNlbs : extractNlbsFromRawServers(rawServers, refined.nodes);
 
   return {
     ...refined,
+    ...(extractedNlbs.length > 0 ? { nlbs: extractedNlbs } : {}),
     nodes: refined.nodes.map((node) => {
       const matchedServer = rawServers.find((srv: any) => {
         const rawMachineId = srv?.compute?.os?.node?.machineid;
@@ -147,7 +264,8 @@ export const honeybeeApi = {
     const refinedRes = await api.get(`/honeybee/source_group/${sgId}/connection_info/${connId}/infra/refined`);
     const refined = refinedRes.data?.onpremiseInfraModel || refinedRes.data;
     const hasNativeGpu = Array.isArray(refined?.nodes) && refined.nodes.some((n: any) => Array.isArray(n.gpuCards) && n.gpuCards.length > 0);
-    const rawRes = hasNativeGpu
+    const hasNativeNlb = Array.isArray(refined?.nlbs) && refined.nlbs.length > 0;
+    const rawRes = (hasNativeGpu && hasNativeNlb)
       ? { data: null }
       : await api.get(`/honeybee/source_group/${sgId}/connection_info/${connId}/infra`).catch(() => ({ data: null }));
     return enrichRefinedInfraWithRawData(refined, rawRes.data);
@@ -157,7 +275,8 @@ export const honeybeeApi = {
     const refinedRes = await api.get(`/honeybee/source_group/${sgId}/infra/refined`);
     const refined = refinedRes.data?.onpremiseInfraModel || refinedRes.data;
     const hasNativeGpu = Array.isArray(refined?.nodes) && refined.nodes.some((n: any) => Array.isArray(n.gpuCards) && n.gpuCards.length > 0);
-    const rawRes = hasNativeGpu
+    const hasNativeNlb = Array.isArray(refined?.nlbs) && refined.nlbs.length > 0;
+    const rawRes = (hasNativeGpu && hasNativeNlb)
       ? { data: null }
       : await api.get(`/honeybee/source_group/${sgId}/infra`).catch(() => ({ data: null }));
     return enrichRefinedInfraWithRawData(refined, rawRes.data);
@@ -250,6 +369,81 @@ const extractArtifactList = (resData: any): any[] => {
   return [];
 };
 
+const LEGACY_SAMPLE_MACHINE_ID_MAP: Record<string, string> = {
+  'mig-testbed-vm1': 'ec289605-629d-4ddf-b4df-0f4c172d8401',
+  'mig-testbed-vm2': 'ec289605-629d-4ddf-b4df-0f4c172d8402',
+  'mig-testbed-vm3': 'ec289605-629d-4ddf-b4df-0f4c172d8403',
+  'mig-testbed-vm4': 'ec289605-629d-4ddf-b4df-0f4c172d8404',
+  'mig-testbed-vm5': 'ec289605-629d-4ddf-b4df-0f4c172d8405',
+};
+
+// Normalize uint32/uint64/int fields on OnpremInfra so Go json.Unmarshal never fails on decimals.
+const sanitizeOnpremInfraIntegers = (infra: OnpremInfra | undefined | null): OnpremInfra => {
+  if (!infra || typeof infra !== 'object') return infra as any;
+  const toUint = (val: unknown, minVal = 0): number => {
+    const n = Number(val);
+    if (!Number.isFinite(n)) return minVal;
+    return Math.max(minVal, Math.round(n));
+  };
+  return {
+    ...infra,
+    nodes: Array.isArray(infra.nodes)
+      ? infra.nodes.map((node) => ({
+          ...node,
+          machineId: LEGACY_SAMPLE_MACHINE_ID_MAP[node.machineId] || node.machineId,
+          cpu: node.cpu
+            ? {
+                ...node.cpu,
+                cpus: toUint(node.cpu.cpus, 1),
+                cores: toUint(node.cpu.cores, 1),
+                threads: toUint(node.cpu.threads, 1),
+              }
+            : node.cpu,
+          memory: node.memory
+            ? {
+                ...node.memory,
+                totalSize: toUint(node.memory.totalSize, 1),
+                available: toUint(node.memory.available, 0),
+                ...(typeof (node.memory as any).used === 'number'
+                  ? { used: toUint((node.memory as any).used, 0) }
+                  : {}),
+              }
+            : node.memory,
+          rootDisk: node.rootDisk
+            ? {
+                ...node.rootDisk,
+                totalSize: toUint(node.rootDisk.totalSize, 1),
+                ...(typeof (node.rootDisk as any).available === 'number'
+                  ? { available: toUint((node.rootDisk as any).available, 0) }
+                  : {}),
+                ...(typeof (node.rootDisk as any).used === 'number'
+                  ? { used: toUint((node.rootDisk as any).used, 0) }
+                  : {}),
+              }
+            : node.rootDisk,
+          ...(Array.isArray(node.dataDisks)
+            ? {
+                dataDisks: node.dataDisks.map((d) => ({
+                  ...d,
+                  totalSize: toUint(d.totalSize, 1),
+                })),
+              }
+            : {}),
+        }))
+      : [],
+    ...(Array.isArray(infra.nlbs)
+      ? {
+          nlbs: infra.nlbs.map((nlb) => ({
+            ...nlb,
+            ...(nlb.hostMachineId && LEGACY_SAMPLE_MACHINE_ID_MAP[nlb.hostMachineId]
+              ? { hostMachineId: LEGACY_SAMPLE_MACHINE_ID_MAP[nlb.hostMachineId] }
+              : {}),
+          })),
+        }
+      : {}),
+  };
+};
+
 const mapArtifactToSourceEnvelope = (raw: any, fallbackInfra?: OnpremInfra): OnpremModelEnvelope => {
   const m = raw?.data || raw || {};
   let payload = m.payload || m.onpremiseInfraModel || fallbackInfra;
@@ -265,7 +459,7 @@ const mapArtifactToSourceEnvelope = (raw: any, fallbackInfra?: OnpremInfra): Onp
     category: m.category || 'infra',
     schemaType: m.schemaType || 'OnpremInfra',
     lineage: m.lineage,
-    onpremiseInfraModel: payload as OnpremInfra,
+    onpremiseInfraModel: sanitizeOnpremInfraIntegers(payload as OnpremInfra),
     updatedTime: m.updateTime || m.createTime || m.updatedTime || new Date().toISOString()
   };
 };
@@ -299,6 +493,7 @@ export const artifactApi = {
     version?: string,
     options?: SaveArtifactOptions
   ): Promise<OnpremModelEnvelope> => {
+    const sanitizedModel = sanitizeOnpremInfraIntegers(onpremiseInfraModel);
     const response = await api.post('/beetle/artifacts', {
       name,
       description,
@@ -308,9 +503,9 @@ export const artifactApi = {
       schemaType: 'OnpremInfra',
       parentId: options?.parentId,
       sourceGroupId: options?.sourceGroupId,
-      payload: onpremiseInfraModel
+      payload: sanitizedModel
     });
-    return mapArtifactToSourceEnvelope(response.data, onpremiseInfraModel);
+    return mapArtifactToSourceEnvelope(response.data, sanitizedModel);
   },
 
   // Update existing source or planning infra artifact
@@ -322,6 +517,7 @@ export const artifactApi = {
     version?: string,
     options?: SaveArtifactOptions
   ): Promise<OnpremModelEnvelope> => {
+    const sanitizedModel = sanitizeOnpremInfraIntegers(onpremiseInfraModel);
     const response = await api.put(`/beetle/artifacts/${id}`, {
       name,
       description,
@@ -331,9 +527,9 @@ export const artifactApi = {
       schemaType: 'OnpremInfra',
       parentId: options?.parentId,
       sourceGroupId: options?.sourceGroupId,
-      payload: onpremiseInfraModel
+      payload: sanitizedModel
     });
-    return mapArtifactToSourceEnvelope(response.data, onpremiseInfraModel);
+    return mapArtifactToSourceEnvelope(response.data, sanitizedModel);
   },
 
   // Delete existing source or planning artifact
@@ -461,7 +657,8 @@ export const beetleApi = {
     limit?: number,
     minMatchRate?: number
   ): Promise<RecommendedInfra[]> => {
-    const hasNlbs = sourceInfra.nlbs && sourceInfra.nlbs.length > 0;
+    const sanitizedInfra = sanitizeOnpremInfraIntegers(sourceInfra);
+    const hasNlbs = sanitizedInfra.nlbs && sanitizedInfra.nlbs.length > 0;
     const limitQuery = limit ? `&limit=${limit}` : '';
     const matchRateQuery = typeof minMatchRate === 'number' && !isNaN(minMatchRate) ? `&minMatchRate=${minMatchRate}` : '';
 
@@ -471,7 +668,7 @@ export const beetleApi = {
       response = await api.post(`/beetle/recommendation/infraWithNlb?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}${limitQuery}${matchRateQuery}`, {
         desiredCsp,
         desiredRegion,
-        sourceInfra
+        sourceInfra: sanitizedInfra
       });
     } else {
       // Call standard VM recommendation endpoint
@@ -480,7 +677,7 @@ export const beetleApi = {
           csp: desiredCsp,
           region: desiredRegion
         },
-        onpremiseInfraModel: sourceInfra
+        onpremiseInfraModel: sanitizedInfra
       });
     }
 
@@ -497,7 +694,8 @@ export const beetleApi = {
     targetPairs: CloudProperty[],
     minMatchRate: number = 85
   ): Promise<RecommendedInfra[]> => {
-    const hasNlbs = sourceInfra.nlbs && sourceInfra.nlbs.length > 0;
+    const sanitizedInfra = sanitizeOnpremInfraIntegers(sourceInfra);
+    const hasNlbs = sanitizedInfra.nlbs && sanitizedInfra.nlbs.length > 0;
     const query = `?minMatchRate=${minMatchRate}`;
 
     let response;
@@ -505,13 +703,13 @@ export const beetleApi = {
       // Call NLB-aware multi-infra recommendation endpoint
       response = await api.post(`/beetle/recommendation/multiInfraWithNlb${query}`, {
         desiredCspAndRegionPairs: targetPairs,
-        sourceInfra
+        sourceInfra: sanitizedInfra
       });
     } else {
       // Call standard multi-infra recommendation endpoint
       response = await api.post(`/beetle/recommendation/multiInfra${query}`, {
         desiredCspAndRegionPairs: targetPairs,
-        sourceInfra
+        sourceInfra: sanitizedInfra
       });
     }
 
@@ -1322,6 +1520,68 @@ export const beetleApi = {
 let providersCachePromise: Promise<string[]> | null = null;
 const regionsCacheMap: Record<string, Promise<{ id: string; name: string }[]>> = {};
 
+// Preferred Korea (or nearest East Asia) region IDs per CSP in priority order.
+export const PREFERRED_KOREA_REGIONS_BY_CSP: Record<string, string[]> = {
+  aws: ['ap-northeast-2', 'ap-northeast-1'],
+  gcp: ['asia-northeast3', 'asia-northeast1'],
+  azure: ['koreacentral', 'koreasouth', 'japaneast'],
+  alibaba: ['ap-northeast-2', 'ap-northeast-1'],
+  tencent: ['ap-seoul', 'ap-tokyo'],
+  ncp: ['KR', 'kr', 'kr-1', 'kr-2'],
+  ncloud: ['KR', 'kr', 'kr-1', 'kr-2'],
+  nhn: ['KR1', 'kr1', 'KR2', 'kr2'],
+  nhncloud: ['KR1', 'kr1', 'KR2', 'kr2'],
+  kt: ['KR1', 'kr1', 'kr-1', 'kr-central'],
+  openstack: ['RegionOne', 'default'],
+  ibm: ['jp-tok', 'jp-osa', 'au-syd', 'us-south'],
+};
+
+// Check whether a region entry represents a Korea location.
+export const isKoreaRegion = (region: { id: string; name?: string }): boolean => {
+  const idLower = (region.id || '').toLowerCase();
+  const nameLower = (region.name || '').toLowerCase();
+  const combined = `${idLower} ${nameLower}`;
+  if (
+    combined.includes('seoul') ||
+    combined.includes('korea') ||
+    combined.includes('pangyo') ||
+    combined.includes('pyeongchon') ||
+    combined.includes('mok-dong') ||
+    combined.includes('busan') ||
+    combined.includes('cheongju') ||
+    combined.includes('cheonan') ||
+    combined.includes('daejeon') ||
+    combined.includes('gasan')
+  ) {
+    return true;
+  }
+  if (idLower === 'kr' || idLower.startsWith('kr-') || /^kr\d+$/.test(idLower)) {
+    return true;
+  }
+  return false;
+};
+
+// Select the preferred Korea region (or nearest region if none exists) for a CSP.
+export const pickPreferredKoreaRegion = (
+  csp: string,
+  regions?: { id: string; name: string }[]
+): string => {
+  const key = (csp || '').toLowerCase();
+  const preferredIds = PREFERRED_KOREA_REGIONS_BY_CSP[key] || [];
+
+  if (regions && regions.length > 0) {
+    for (const pref of preferredIds) {
+      const exact = regions.find((r) => r.id.toLowerCase() === pref.toLowerCase());
+      if (exact) return exact.id;
+    }
+    const krMatch = regions.find((r) => isKoreaRegion(r));
+    if (krMatch) return krMatch.id;
+    return regions[0].id;
+  }
+
+  return preferredIds[0] || 'ap-northeast-2';
+};
+
 export const tumblebugApi = {
   // Get all active cloud providers in Tumblebug ordered by market share (Memoized & Cached)
   getProviders: async (): Promise<string[]> => {
@@ -1377,7 +1637,8 @@ export const tumblebugApi = {
         { id: 'eu-west-1', name: 'Ireland' }
       ],
       azure: [
-        { id: 'koreacentral', name: 'Seoul' },
+        { id: 'koreacentral', name: 'Korea Central' },
+        { id: 'koreasouth', name: 'Korea South' },
         { id: 'eastus', name: 'East US' },
         { id: 'westeurope', name: 'West Europe' }
       ],
@@ -1387,6 +1648,7 @@ export const tumblebugApi = {
         { id: 'europe-west3', name: 'Frankfurt' }
       ],
       alibaba: [
+        { id: 'ap-northeast-2', name: 'Seoul' },
         { id: 'ap-northeast-1', name: 'Tokyo' },
         { id: 'ap-southeast-1', name: 'Singapore' },
         { id: 'us-east-1', name: 'Virginia' }
@@ -1397,29 +1659,44 @@ export const tumblebugApi = {
         { id: 'na-siliconvalley', name: 'Silicon Valley' }
       ],
       ibm: [
-        { id: 'us-south-1', name: 'Dallas' },
-        { id: 'us-east-1', name: 'Washington DC' }
+        { id: 'jp-tok', name: 'Tokyo' },
+        { id: 'jp-osa', name: 'Osaka' },
+        { id: 'au-syd', name: 'Sydney' },
+        { id: 'us-south', name: 'Dallas' }
       ],
       ncp: [
-        { id: 'kr-1', name: 'Seoul' },
-        { id: 'kr-2', name: 'Cheongju' },
-        { id: 'sg-1', name: 'Singapore' }
+        { id: 'KR', name: 'Korea 1' },
+        { id: 'JPN', name: 'Japan' },
+        { id: 'SGN', name: 'Singapore' }
       ],
       nhn: [
-        { id: 'kr1', name: 'Pangyo' },
-        { id: 'kr2', name: 'Gwangju' }
+        { id: 'KR1', name: 'Pangyo' },
+        { id: 'KR2', name: 'Pyeongchon' }
       ],
       kt: [
-        { id: 'kr-1', name: 'Seoul' },
-        { id: 'kr-2', name: 'Cheonan' }
+        { id: 'KR1', name: 'Mok-dong - Seoul' }
       ],
       openstack: [
-        { id: 'default', name: 'Default' }
+        { id: 'RegionOne', name: 'Korea Daejeon' }
       ]
     };
-    const defaultRegions = (fallbacks[key] || [{ id: 'default', name: 'Default' }])
-      .slice()
-      .sort((a, b) => a.id.localeCompare(b.id));
+    const sortKoreaFirst = (arr: { id: string; name: string }[]) => {
+      const prefs = (PREFERRED_KOREA_REGIONS_BY_CSP[key] || []).map((p) => p.toLowerCase());
+      return arr.slice().sort((a, b) => {
+        const aPrefIdx = prefs.indexOf(a.id.toLowerCase());
+        const bPrefIdx = prefs.indexOf(b.id.toLowerCase());
+        if (aPrefIdx !== -1 || bPrefIdx !== -1) {
+          if (aPrefIdx === -1) return 1;
+          if (bPrefIdx === -1) return -1;
+          return aPrefIdx - bPrefIdx;
+        }
+        const aKr = isKoreaRegion(a) ? 0 : 1;
+        const bKr = isKoreaRegion(b) ? 0 : 1;
+        if (aKr !== bKr) return aKr - bKr;
+        return a.id.localeCompare(b.id);
+      });
+    };
+    const defaultRegions = sortKoreaFirst(fallbacks[key] || [{ id: 'default', name: 'Default' }]);
 
     regionsCacheMap[key] = (async () => {
       try {
@@ -1441,7 +1718,7 @@ export const tumblebugApi = {
             return { id, name };
           }).filter(r => r.id);
 
-          const sorted = list.sort((a, b) => a.id.localeCompare(b.id));
+          const sorted = sortKoreaFirst(list);
           return sorted.length > 0 ? sorted : defaultRegions;
         }
         return defaultRegions;

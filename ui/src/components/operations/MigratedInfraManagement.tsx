@@ -549,6 +549,8 @@ export const MigratedInfraManagement: React.FC = () => {
         return;
       }
       setLoadedInfraDetail(detail);
+      setLiveNlbs([]);
+      setHasFetchedLiveNlbs(false);
 
       try {
         const summaryJson = await beetleApi.getTargetInfraSummary(ns, infraIdToLoad, 'json');
@@ -563,24 +565,26 @@ export const MigratedInfraManagement: React.FC = () => {
         setLiveSecurityGroups([]);
       }
 
-      // Fetch compliance report or target summary in active format
-      await fetchReportOrSummary(infraIdToLoad, reportDocType, reportFormat);
-
-      // Fetch active NLB list for this infrastructure
-      try {
-        const nRes = await beetleApi.getNlbList(ns, infraIdToLoad);
-        if (nRes.success && Array.isArray(nRes.data)) {
-          setLiveNlbs(nRes.data);
-          setHasFetchedLiveNlbs(true);
-        } else {
-          setLiveNlbs([]);
-          setHasFetchedLiveNlbs(false);
-        }
-      } catch (nErr) {
-        console.warn('NLB list fetch notice:', nErr);
-        setLiveNlbs([]);
-        setHasFetchedLiveNlbs(false);
-      }
+      // Fetch active NLB list and compliance report in parallel
+      await Promise.all([
+        (async () => {
+          try {
+            const nRes = await beetleApi.getNlbList(ns, infraIdToLoad);
+            if (nRes.success && Array.isArray(nRes.data)) {
+              setLiveNlbs(nRes.data);
+              setHasFetchedLiveNlbs(true);
+            } else {
+              setLiveNlbs([]);
+              setHasFetchedLiveNlbs(true);
+            }
+          } catch (nErr) {
+            console.warn('NLB list fetch notice:', nErr);
+            setLiveNlbs([]);
+            setHasFetchedLiveNlbs(true);
+          }
+        })(),
+        fetchReportOrSummary(infraIdToLoad, reportDocType, reportFormat)
+      ]);
     } catch (err) {
       console.warn('Failed to load infra detail for', infraIdToLoad, err);
       if (infraIdToLoad === SAMPLE_INFRA_ID) {
@@ -775,7 +779,15 @@ export const MigratedInfraManagement: React.FC = () => {
   // Active infra detail from loadedInfraDetail, completed session jobs, or savedCloudModels
   const activeJobInfra = completedJobs.find(j => j.id === selectedInfraId || j.infraId === selectedInfraId);
   const targetModelIdLabel = loadedInfraDetail?.label?.['cm-target-model-id'];
-  const activeSavedModel = savedCloudModels.find(
+  const isBuiltInSampleCloudModel = (m: any) =>
+    m?.id === 'cloud-demo-1' ||
+    m?.id === 'sample-mig-testbed-cloud-1' ||
+    (typeof m?.name === 'string' && m.name.startsWith('[Sample]'));
+  const candidateSavedModels =
+    selectedInfraId === SAMPLE_INFRA_ID
+      ? savedCloudModels
+      : [...savedCloudModels].reverse().filter((m) => !isBuiltInSampleCloudModel(m));
+  const activeSavedModel = candidateSavedModels.find(
     (m) =>
       (targetModelIdLabel && m.id === targetModelIdLabel) ||
       m.id === selectedInfraId ||
@@ -891,6 +903,56 @@ export const MigratedInfraManagement: React.FC = () => {
 
   // Normalize model data for TopologyMap and VM Access table, synchronizing live node subnetId & deployedNodes
   const currentCloudModel = (() => {
+    const liveDerivedNodeGroups =
+      liveNodes.length > 0
+        ? Array.from(
+            new Set(
+              liveNodes.map(
+                (n: any) => n.nodeGroupId || n.subGroupId || n.name?.replace(/-\d+$/, '') || 'default-group'
+              )
+            )
+          ).map((ngId: any) => {
+            const ngNodes = liveNodes.filter(
+              (n: any) => (n.nodeGroupId || n.subGroupId || n.name?.replace(/-\d+$/, '') || 'default-group') === ngId
+            );
+            const firstNgNode = ngNodes[0] || {};
+            const specName = firstNgNode.spec?.cspSpecName || firstNgNode.cspSpecName || firstNgNode.specId || 'c5.large';
+            const vcpu = firstNgNode.spec?.vCPU || firstNgNode.vCPU || (specName.includes('small') ? 2 : specName.includes('xlarge') ? 4 : 2);
+            const memGiB = firstNgNode.spec?.memoryGiB || firstNgNode.memoryGiB || (specName.includes('xlarge') ? 16 : 4);
+            const imageName = firstNgNode.cspImageName || firstNgNode.imageId || 'ubuntu-22.04';
+            const diskSize = firstNgNode.rootDiskSize || 30;
+
+            return {
+              name: ngId,
+              specId: specName,
+              vCPU: vcpu,
+              memoryGiB: memGiB,
+              nodeGroupSize: ngNodes.length,
+              imageId: imageName,
+              rootDiskSize: diskSize,
+              subnetId: firstNgNode.subnetId || extractedSubnetName,
+              securityGroupIds: firstNgNode.securityGroupIds || extractedSgNames,
+              deployedNodes: ngNodes
+            };
+          })
+        : [];
+
+    const hasProvisionedJobNlb =
+      activeJobInfra?.nlbStatus === 'Success' || activeJobInfra?.nlbStatus === 'Provisioning';
+
+    const resolveActiveNlbList = (modelNlbs?: any[]) => {
+      if (selectedInfraId === SAMPLE_INFRA_ID) {
+        return modelNlbs && modelNlbs.length > 0 ? modelNlbs : SAMPLE_INFRA_DETAIL.targetNlbList;
+      }
+      if (liveNlbs.length > 0) {
+        return liveNlbs;
+      }
+      if (!hasFetchedLiveNlbs && hasProvisionedJobNlb && activeJobInfra?.targetNlbList?.length) {
+        return activeJobInfra.targetNlbList;
+      }
+      return undefined;
+    };
+
     if (activeSavedModel?.cloudInfraModel) {
       const base = activeSavedModel.cloudInfraModel;
       const baseSubnets = base.targetVNet?.subnetInfoList || [];
@@ -917,15 +979,16 @@ export const MigratedInfraManagement: React.FC = () => {
         };
       });
 
-      const resolvedNlbList = hasFetchedLiveNlbs
-        ? liveNlbs.length > 0
-          ? liveNlbs
-          : undefined
-        : liveNlbs.length > 0
-        ? liveNlbs
-        : base.targetNlbList && base.targetNlbList.length > 0
-        ? base.targetNlbList
-        : undefined;
+      const matchedLiveNodesCount = enrichedNodeGroups.reduce(
+        (sum: number, ng: any) => sum + (Array.isArray(ng.deployedNodes) ? ng.deployedNodes.length : 0),
+        0
+      );
+      const finalNodeGroups =
+        liveNodes.length > 0 && matchedLiveNodesCount === 0
+          ? liveDerivedNodeGroups
+          : enrichedNodeGroups;
+
+      const resolvedNlbList = resolveActiveNlbList(base.targetNlbList);
 
       return {
         ...base,
@@ -936,20 +999,12 @@ export const MigratedInfraManagement: React.FC = () => {
         },
         targetInfra: {
           ...base.targetInfra,
-          nodeGroups: enrichedNodeGroups
+          nodeGroups: finalNodeGroups
         }
       };
     }
 
-    const fallbackNlbList = hasFetchedLiveNlbs
-      ? liveNlbs.length > 0
-        ? liveNlbs
-        : undefined
-      : liveNlbs.length > 0
-      ? liveNlbs
-      : activeJobInfra?.targetNlbList && activeJobInfra.targetNlbList.length > 0
-      ? activeJobInfra.targetNlbList
-      : undefined;
+    const fallbackNlbList = resolveActiveNlbList(activeJobInfra?.targetNlbList);
 
     return {
       name: loadedInfraDetail?.name || loadedInfraDetail?.id || activeJobInfra?.infraId || selectedInfraId || 'migrated-infra',
@@ -972,32 +1027,12 @@ export const MigratedInfraManagement: React.FC = () => {
       targetNlbList: fallbackNlbList,
       targetInfra: {
         name: loadedInfraDetail?.name || loadedInfraDetail?.id || activeJobInfra?.infraId || selectedInfraId || 'migrated-infra',
-        nodeGroups: liveNodes.length > 0
-          ? Array.from(new Set(liveNodes.map((n: any) => n.nodeGroupId || n.subGroupId || n.name?.replace(/-\d+$/, '') || 'default-group'))).map((ngId: any) => {
-              const ngNodes = liveNodes.filter((n: any) => (n.nodeGroupId || n.subGroupId || n.name?.replace(/-\d+$/, '') || 'default-group') === ngId);
-              const firstNgNode = ngNodes[0] || {};
-              const specName = firstNgNode.spec?.cspSpecName || firstNgNode.cspSpecName || firstNgNode.specId || 'c5.large';
-              const vcpu = firstNgNode.spec?.vCPU || firstNgNode.vCPU || (specName.includes('small') ? 2 : specName.includes('xlarge') ? 4 : 2);
-              const memGiB = firstNgNode.spec?.memoryGiB || firstNgNode.memoryGiB || (specName.includes('xlarge') ? 16 : 4);
-              const imageName = firstNgNode.cspImageName || firstNgNode.imageId || 'ubuntu-22.04';
-              const diskSize = firstNgNode.rootDiskSize || 30;
-
-              return {
-                name: ngId,
-                specId: specName,
-                vCPU: vcpu,
-                memoryGiB: memGiB,
-                nodeGroupSize: ngNodes.length,
-                imageId: imageName,
-                rootDiskSize: diskSize,
-                subnetId: firstNgNode.subnetId || extractedSubnetName,
-                securityGroupIds: firstNgNode.securityGroupIds || extractedSgNames,
-                deployedNodes: ngNodes
-              };
-            })
-          : activeJobInfra?.vms
-          ? [{ name: 'worker-group', specId: activeJobInfra.vms[0]?.specId || 'c5.large', vCPU: 2, memoryGiB: 4, nodeGroupSize: activeJobInfra.vms.length, imageId: 'ubuntu-22.04', rootDiskSize: 30, subnetId: extractedSubnetName, securityGroupIds: [] }]
-          : [{ name: 'default-group', specId: 'c5.large', vCPU: 2, memoryGiB: 4, nodeGroupSize: 2, imageId: 'ubuntu-22.04', rootDiskSize: 30, subnetId: extractedSubnetName, securityGroupIds: [] }]
+        nodeGroups:
+          liveDerivedNodeGroups.length > 0
+            ? liveDerivedNodeGroups
+            : activeJobInfra?.vms
+            ? [{ name: 'worker-group', specId: activeJobInfra.vms[0]?.specId || 'c5.large', vCPU: 2, memoryGiB: 4, nodeGroupSize: activeJobInfra.vms.length, imageId: 'ubuntu-22.04', rootDiskSize: 30, subnetId: extractedSubnetName, securityGroupIds: [] }]
+            : [{ name: 'default-group', specId: 'c5.large', vCPU: 2, memoryGiB: 4, nodeGroupSize: 2, imageId: 'ubuntu-22.04', rootDiskSize: 30, subnetId: extractedSubnetName, securityGroupIds: [] }]
       }
     };
   })();

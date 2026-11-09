@@ -1,4 +1,4 @@
-import { OnpremInfra, OnpremModelEnvelope, OnpremNode } from '../types/migration';
+import { OnpremInfra, OnpremModelEnvelope, OnpremNode, RecommendedInfra, CloudModelEnvelope } from '../types/migration';
 
 // Helper to build standard network interfaces and routing for 10.0.1.0/24 nodes
 function buildNodeNetwork(ipOctet: number, macSuffix: string) {
@@ -136,7 +136,7 @@ const TESLA_T4_GPU = [
 const NODES_15: OnpremNode[] = [
   // 1. AI Inference Cluster (3 Nodes: 4 vCPU, 16 GiB Memory, Tesla T4 16GB)
   {
-    machineId: 'dc15-ai-gpu-01',
+    machineId: 'ec215001-629d-4ddf-b4df-0f4c1500a101',
     hostname: 'ai-gpu-01',
     cpu: CPU_4_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -150,7 +150,7 @@ const NODES_15: OnpremNode[] = [
     serviceUrl: 'http://3.36.85.152:3000',
   },
   {
-    machineId: 'dc15-ai-gpu-02',
+    machineId: 'ec215002-629d-4ddf-b4df-0f4c1500a102',
     hostname: 'ai-gpu-02',
     cpu: CPU_4_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -163,7 +163,7 @@ const NODES_15: OnpremNode[] = [
     workloadTag: 'Ollama Runtime (Port 11434)',
   },
   {
-    machineId: 'dc15-ai-gpu-03',
+    machineId: 'ec215003-629d-4ddf-b4df-0f4c1500a103',
     hostname: 'ai-gpu-03',
     cpu: CPU_4_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -178,7 +178,7 @@ const NODES_15: OnpremNode[] = [
 
   // 2. Analytics Compute Cluster (6 Nodes: 8 vCPU, 16 GiB Memory, 100 GB SSD)
   {
-    machineId: 'dc15-data-master-01',
+    machineId: 'ec215004-629d-4ddf-b4df-0f4c1500b201',
     hostname: 'data-master-01',
     cpu: CPU_8_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -190,7 +190,7 @@ const NODES_15: OnpremNode[] = [
     workloadTag: 'Airflow Coordinator',
   },
   {
-    machineId: 'dc15-data-worker-01',
+    machineId: 'ec215005-629d-4ddf-b4df-0f4c1500b202',
     hostname: 'data-worker-01',
     cpu: CPU_8_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -202,7 +202,7 @@ const NODES_15: OnpremNode[] = [
     workloadTag: 'PySpark Worker 1',
   },
   {
-    machineId: 'dc15-data-worker-02',
+    machineId: 'ec215006-629d-4ddf-b4df-0f4c1500b203',
     hostname: 'data-worker-02',
     cpu: CPU_8_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -214,7 +214,7 @@ const NODES_15: OnpremNode[] = [
     workloadTag: 'PySpark Worker 2',
   },
   {
-    machineId: 'dc15-data-worker-03',
+    machineId: 'ec215007-629d-4ddf-b4df-0f4c1500b204',
     hostname: 'data-worker-03',
     cpu: CPU_8_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -226,7 +226,7 @@ const NODES_15: OnpremNode[] = [
     workloadTag: 'PySpark Worker 3',
   },
   {
-    machineId: 'dc15-data-worker-04',
+    machineId: 'ec215008-629d-4ddf-b4df-0f4c1500b205',
     hostname: 'data-worker-04',
     cpu: CPU_8_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -238,7 +238,7 @@ const NODES_15: OnpremNode[] = [
     workloadTag: 'PySpark Worker 4',
   },
   {
-    machineId: 'dc15-data-etl-01',
+    machineId: 'ec215009-629d-4ddf-b4df-0f4c1500b206',
     hostname: 'data-etl-01',
     cpu: CPU_8_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -252,7 +252,7 @@ const NODES_15: OnpremNode[] = [
 
   // 3. Backend & DB Cluster (6 Nodes: 2x 32 GiB DB + 4x 16 GiB Service/Storage/Cache)
   {
-    machineId: 'dc15-db-primary-01',
+    machineId: 'ec215010-629d-4ddf-b4df-0f4c1500c301',
     hostname: 'db-primary-01',
     cpu: CPU_4_VCPU,
     memory: { available: 28, totalSize: 32, type: 'DDR4' },
@@ -264,7 +264,7 @@ const NODES_15: OnpremNode[] = [
     workloadTag: 'PostgreSQL Primary (5432)',
   },
   {
-    machineId: 'dc15-db-replica-02',
+    machineId: 'ec215011-629d-4ddf-b4df-0f4c1500c302',
     hostname: 'db-replica-02',
     cpu: CPU_4_VCPU,
     memory: { available: 28, totalSize: 32, type: 'DDR4' },
@@ -276,7 +276,7 @@ const NODES_15: OnpremNode[] = [
     workloadTag: 'PostgreSQL Replica (5432)',
   },
   {
-    machineId: 'dc15-backend-api-01',
+    machineId: 'ec215012-629d-4ddf-b4df-0f4c1500c303',
     hostname: 'backend-api-01',
     cpu: CPU_4_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -288,7 +288,7 @@ const NODES_15: OnpremNode[] = [
     workloadTag: 'FastAPI Service 1 (8000)',
   },
   {
-    machineId: 'dc15-backend-api-02',
+    machineId: 'ec215013-629d-4ddf-b4df-0f4c1500c304',
     hostname: 'backend-api-02',
     cpu: CPU_4_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -300,7 +300,7 @@ const NODES_15: OnpremNode[] = [
     workloadTag: 'FastAPI Service 2 (8000)',
   },
   {
-    machineId: 'dc15-storage-gateway-01',
+    machineId: 'ec215014-629d-4ddf-b4df-0f4c1500c305',
     hostname: 'storage-gateway-01',
     cpu: CPU_4_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -312,7 +312,7 @@ const NODES_15: OnpremNode[] = [
     workloadTag: 'MinIO / Storage Gateway',
   },
   {
-    machineId: 'dc15-cache-redis-01',
+    machineId: 'ec215015-629d-4ddf-b4df-0f4c1500c306',
     hostname: 'cache-redis-01',
     cpu: CPU_4_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -360,7 +360,7 @@ export const SAMPLE_15_NODE_MODEL: OnpremModelEnvelope = {
 const NODES_9_TESTBED: OnpremNode[] = [
   // 1. AI Inference Cluster (3 Source Nodes)
   {
-    machineId: 'testbed-ai-gpu-01',
+    machineId: 'ec209001-629d-4ddf-b4df-0f4c0900a101',
     hostname: 'ai-gpu-01',
     cpu: CPU_4_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -374,7 +374,7 @@ const NODES_9_TESTBED: OnpremNode[] = [
     serviceUrl: 'http://3.36.85.152:3000',
   },
   {
-    machineId: 'testbed-ai-gpu-02',
+    machineId: 'ec209002-629d-4ddf-b4df-0f4c0900a102',
     hostname: 'ai-gpu-02',
     cpu: CPU_4_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -386,7 +386,7 @@ const NODES_9_TESTBED: OnpremNode[] = [
     workloadTag: 'AI Inference Worker 1 - Ollama Runtime (:11434)',
   },
   {
-    machineId: 'testbed-ai-gpu-03',
+    machineId: 'ec209003-629d-4ddf-b4df-0f4c0900a103',
     hostname: 'ai-gpu-03',
     cpu: CPU_4_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -400,7 +400,7 @@ const NODES_9_TESTBED: OnpremNode[] = [
 
   // 2. Analytics Compute Cluster (3 Source Nodes)
   {
-    machineId: 'testbed-data-master-01',
+    machineId: 'ec209004-629d-4ddf-b4df-0f4c0900b201',
     hostname: 'data-master-01',
     cpu: CPU_4_VCPU,
     memory: { available: 14, totalSize: 16, type: 'DDR4' },
@@ -412,7 +412,7 @@ const NODES_9_TESTBED: OnpremNode[] = [
     workloadTag: 'Spark / Airflow Coordinator (:8080, :7077)',
   },
   {
-    machineId: 'testbed-data-worker-01',
+    machineId: 'ec209005-629d-4ddf-b4df-0f4c0900b202',
     hostname: 'data-worker-01',
     cpu: CPU_2_VCPU,
     memory: { available: 7, totalSize: 8, type: 'DDR4' },
@@ -424,7 +424,7 @@ const NODES_9_TESTBED: OnpremNode[] = [
     workloadTag: 'PySpark Worker (:8081, :7077)',
   },
   {
-    machineId: 'testbed-data-etl-01',
+    machineId: 'ec209006-629d-4ddf-b4df-0f4c0900b203',
     hostname: 'data-etl-01',
     cpu: CPU_2_VCPU,
     memory: { available: 7, totalSize: 8, type: 'DDR4' },
@@ -438,7 +438,7 @@ const NODES_9_TESTBED: OnpremNode[] = [
 
   // 3. Backend & DB Cluster (3 Source Nodes)
   {
-    machineId: 'testbed-db-primary-01',
+    machineId: 'ec209007-629d-4ddf-b4df-0f4c0900c301',
     hostname: 'db-primary-01',
     cpu: CPU_2_VCPU,
     memory: { available: 7, totalSize: 8, type: 'DDR4' },
@@ -450,10 +450,10 @@ const NODES_9_TESTBED: OnpremNode[] = [
     workloadTag: 'PostgreSQL Primary Database (:5432)',
   },
   {
-    machineId: 'testbed-backend-api-01',
+    machineId: 'ec209008-629d-4ddf-b4df-0f4c0900c302',
     hostname: 'backend-api-01',
     cpu: CPU_2_VCPU,
-    memory: { available: 3.5, totalSize: 4, type: 'DDR4' },
+    memory: { available: 3, totalSize: 4, type: 'DDR4' },
     rootDisk: { label: 'root', totalSize: 50, type: 'SSD' },
     ...buildNodeNetwork(32, '32'),
     firewallTable: buildFirewallRules(['22', '80', '443', '8000']),
@@ -462,10 +462,10 @@ const NODES_9_TESTBED: OnpremNode[] = [
     workloadTag: 'FastAPI / Nginx Application Server (:80, :443, :8000)',
   },
   {
-    machineId: 'testbed-storage-gateway-01',
+    machineId: 'ec209009-629d-4ddf-b4df-0f4c0900c303',
     hostname: 'storage-gateway-01',
     cpu: CPU_2_VCPU,
-    memory: { available: 3.5, totalSize: 4, type: 'DDR4' },
+    memory: { available: 3, totalSize: 4, type: 'DDR4' },
     rootDisk: { label: 'root', totalSize: 50, type: 'SSD' },
     ...buildNodeNetwork(33, '33'),
     firewallTable: buildFirewallRules(['22', '9000', '9001', '2049']),
@@ -502,6 +502,422 @@ export const SAMPLE_9_NODE_TESTBED_MODEL: OnpremModelEnvelope = {
   lineage: {
     sourceGroupId: 'sg-ai-stack-testbed',
     sourceModelId: 'sample-source-9node-testbed-1',
+  },
+  updatedTime: new Date().toISOString(),
+};
+
+// 5-Node AWS Migration Testbed matching mc-terrarium/examples/aws/migration-testbed (vm1~vm5)
+const NODES_5_MIG_TESTBED: OnpremNode[] = [
+  {
+    machineId: 'ec289605-629d-4ddf-b4df-0f4c172d8401',
+    hostname: 'vm1',
+    cpu: CPU_2_VCPU,
+    memory: { available: 3, totalSize: 4, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 50, type: 'SSD' },
+    ...buildNodeNetwork(11, '21'),
+    firewallTable: buildFirewallRules(['22', '80', '443', '8080']),
+    os: STANDARD_UBUNTU_OS,
+    workloadTag: 'Web Server - Nginx HTTP/HTTPS (:80, :443, :8080)',
+  },
+  {
+    machineId: 'ec289605-629d-4ddf-b4df-0f4c172d8402',
+    hostname: 'vm2',
+    cpu: CPU_4_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 50, type: 'SSD' },
+    ...buildNodeNetwork(12, '22'),
+    firewallTable: buildFirewallRules(['22', '2049', '111', '20048']),
+    os: STANDARD_UBUNTU_OS,
+    workloadTag: 'File Server - NFS Storage (:2049, :111)',
+  },
+  {
+    machineId: 'ec289605-629d-4ddf-b4df-0f4c172d8403',
+    hostname: 'vm3',
+    cpu: CPU_2_VCPU,
+    memory: { available: 7, totalSize: 8, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 50, type: 'SSD' },
+    ...buildNodeNetwork(13, '23'),
+    firewallTable: buildFirewallRules(['22', '3306', '4567', '4568']),
+    os: STANDARD_UBUNTU_OS,
+    workloadTag: 'Database Server - MariaDB Primary (:3306)',
+  },
+  {
+    machineId: 'ec289605-629d-4ddf-b4df-0f4c172d8404',
+    hostname: 'vm4',
+    cpu: CPU_4_VCPU,
+    memory: { available: 14, totalSize: 16, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 50, type: 'SSD' },
+    ...buildNodeNetwork(14, '24'),
+    firewallTable: buildFirewallRules(['22', '80', '443', '8080', '8443']),
+    os: STANDARD_UBUNTU_OS,
+    workloadTag: 'Application Server - Apache Tomcat (:8080, :8443)',
+  },
+  {
+    machineId: 'ec289605-629d-4ddf-b4df-0f4c172d8405',
+    hostname: 'vm5',
+    cpu: CPU_8_VCPU,
+    memory: { available: 30, totalSize: 32, type: 'DDR4' },
+    rootDisk: { label: 'root', totalSize: 50, type: 'SSD' },
+    ...buildNodeNetwork(15, '25'),
+    firewallTable: buildFirewallRules(['22', '80', '443', '9999', '8404']),
+    os: STANDARD_UBUNTU_OS,
+    workloadTag: 'Load Balancer - HAProxy (:80, :443, :9999, :8404)',
+  },
+];
+
+export const SAMPLE_MIGRATION_TESTBED_INFRA: OnpremInfra = {
+  network: {
+    ipv4Networks: {
+      defaultGateways: NODES_5_MIG_TESTBED.map((n) => ({
+        interfaceName: 'ens5',
+        ip: '10.0.1.1',
+        machineId: n.machineId,
+      })),
+      cidrBlocks: ['10.0.1.0/24'],
+    },
+    ipv6Networks: {},
+  },
+  nodes: NODES_5_MIG_TESTBED,
+  nlbs: [
+    {
+      hostMachineId: 'ec289605-629d-4ddf-b4df-0f4c172d8405',
+      software: 'haproxy',
+      listener: { bindAddress: '*', port: 80, protocol: 'tcp' },
+      backend: {
+        name: 'web_was_backend',
+        balance: 'roundrobin',
+        protocol: 'tcp',
+        servers: [
+          { name: 'vm1', ip: '10.0.1.11', port: 8080 },
+          { name: 'vm4', ip: '10.0.1.14', port: 8080 },
+        ],
+      },
+      healthCheck: { enabled: true, interval: 10, timeout: 10, threshold: 3 },
+    },
+  ],
+};
+
+export const SAMPLE_MIGRATION_TESTBED_MODEL: OnpremModelEnvelope = {
+  id: 'sample-source-migration-testbed-1',
+  name: '[Sample] migration-testbed-5node',
+  description: '5-Node AWS Migration Testbed (vm1 Nginx, vm2 NFS, vm3 MariaDB, vm4 Tomcat, vm5 HAProxy NLB)',
+  onpremiseInfraModel: SAMPLE_MIGRATION_TESTBED_INFRA,
+  version: '1.0',
+  stage: 'source',
+  category: 'infra',
+  schemaType: 'OnpremInfra',
+  lineage: {
+    sourceGroupId: 'sg-sample-mig-testbed',
+    sourceModelId: 'sample-source-migration-testbed-1',
+  },
+  updatedTime: new Date().toISOString(),
+};
+
+export const SAMPLE_MIGRATION_TESTBED_TARGET_INFRA: RecommendedInfra = {
+  status: 'highly-matched',
+  description:
+    'Candidate #1 | highly-matched | 1 NLB(s) | Overall Match Rate: Min=100.0% Max=100.0% Avg=100.0% | VMs: 5 total, 5 matched, 0 acceptable',
+  targetCloud: {
+    csp: 'aws',
+    region: 'ap-northeast-2',
+  },
+  targetInfra: {
+    name: 'mig-testbed-infra01',
+    description: 'NLB-aware recommended target infrastructure for 5-Node Migration Testbed',
+    nodeGroups: [
+      {
+        name: 'ng-web-was-backend',
+        nodeGroupSize: 2,
+        label: {
+          'cm-source-machine-ids': 'ec289605-629d-4ddf-b4df-0f4c172d8401,ec289605-629d-4ddf-b4df-0f4c172d8404',
+          nlbBackend: 'web_was_backend',
+        },
+        description:
+          'Recommended VM for NLB backend web_was_backend (2 nodes: vm1, vm4) | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%',
+        connectionName: 'aws-ap-northeast-2',
+        specId: 'aws+ap-northeast-2+m5.xlarge',
+        imageId: 'ami-046333f9ecafdf406',
+        cspImageName: 'ami-046333f9ecafdf406',
+        vNetId: 'mig-vnet-01',
+        subnetId: 'mig-subnet-01',
+        securityGroupIds: ['mig-sg-01'],
+        sshKeyId: 'mig-sshkey-01',
+        rootDiskSize: 50,
+        rootDiskType: 'gp3',
+        dataDiskIds: null,
+      },
+      {
+        name: 'ng-vm2-172d8402',
+        nodeGroupSize: 1,
+        label: {
+          'cm-source-machine-ids': 'ec289605-629d-4ddf-b4df-0f4c172d8402',
+        },
+        description:
+          'Standalone VM 01 for ec289605-629d-4ddf-b4df-0f4c172d8402 (vm2 NFS) | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%',
+        connectionName: 'aws-ap-northeast-2',
+        specId: 'aws+ap-northeast-2+t3.xlarge',
+        imageId: 'ami-046333f9ecafdf406',
+        cspImageName: 'ami-046333f9ecafdf406',
+        vNetId: 'mig-vnet-01',
+        subnetId: 'mig-subnet-01',
+        securityGroupIds: ['mig-sg-02'],
+        sshKeyId: 'mig-sshkey-01',
+        rootDiskSize: 50,
+        rootDiskType: 'gp3',
+        dataDiskIds: null,
+      },
+      {
+        name: 'ng-vm3-172d8403',
+        nodeGroupSize: 1,
+        label: {
+          'cm-source-machine-ids': 'ec289605-629d-4ddf-b4df-0f4c172d8403',
+        },
+        description:
+          'Standalone VM 02 for ec289605-629d-4ddf-b4df-0f4c172d8403 (vm3 MariaDB) | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%',
+        connectionName: 'aws-ap-northeast-2',
+        specId: 'aws+ap-northeast-2+t3.large',
+        imageId: 'ami-046333f9ecafdf406',
+        cspImageName: 'ami-046333f9ecafdf406',
+        vNetId: 'mig-vnet-01',
+        subnetId: 'mig-subnet-01',
+        securityGroupIds: ['mig-sg-03'],
+        sshKeyId: 'mig-sshkey-01',
+        rootDiskSize: 50,
+        rootDiskType: 'gp3',
+        dataDiskIds: null,
+      },
+      {
+        name: 'ng-vm5-172d8405',
+        nodeGroupSize: 1,
+        label: {
+          'cm-source-machine-ids': 'ec289605-629d-4ddf-b4df-0f4c172d8405',
+        },
+        description:
+          'Standalone VM 03 for ec289605-629d-4ddf-b4df-0f4c172d8405 (vm5 HAProxy) | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%',
+        connectionName: 'aws-ap-northeast-2',
+        specId: 'aws+ap-northeast-2+m5.2xlarge',
+        imageId: 'ami-046333f9ecafdf406',
+        cspImageName: 'ami-046333f9ecafdf406',
+        vNetId: 'mig-vnet-01',
+        subnetId: 'mig-subnet-01',
+        securityGroupIds: ['mig-sg-04'],
+        sshKeyId: 'mig-sshkey-01',
+        rootDiskSize: 50,
+        rootDiskType: 'gp3',
+        dataDiskIds: null,
+      },
+    ],
+  },
+  targetVNet: {
+    name: 'mig-vnet-01',
+    connectionName: 'aws-ap-northeast-2',
+    cidrBlock: '10.0.0.0/21',
+    subnetInfoList: [
+      {
+        name: 'mig-subnet-01',
+        ipv4_CIDR: '10.0.1.0/24',
+        description: 'Recommended subnet for migration-testbed',
+      },
+    ],
+    description: 'Recommended vNet for migration-testbed',
+  },
+  targetSshKey: {
+    name: 'mig-sshkey-01',
+    connectionName: 'aws-ap-northeast-2',
+    description: 'SSH Key pair for migration-testbed',
+  },
+  targetSpecList: [
+    {
+      id: 'aws+ap-northeast-2+t3.small',
+      cspSpecName: 't3.small',
+      name: 'aws+ap-northeast-2+t3.small',
+      namespace: 'system',
+      connectionName: 'aws-ap-northeast-2',
+      providerName: 'aws',
+      regionName: 'ap-northeast-2',
+      infraType: 'node',
+      architecture: 'x86_64',
+      vCPU: 2,
+      memoryGiB: 2,
+      diskSizeGB: -1,
+      costPerHour: 0.026,
+      availabilityStatus: 'Available',
+    },
+    {
+      id: 'aws+ap-northeast-2+t3.large',
+      cspSpecName: 't3.large',
+      name: 'aws+ap-northeast-2+t3.large',
+      namespace: 'system',
+      connectionName: 'aws-ap-northeast-2',
+      providerName: 'aws',
+      regionName: 'ap-northeast-2',
+      infraType: 'node',
+      architecture: 'x86_64',
+      vCPU: 2,
+      memoryGiB: 8,
+      diskSizeGB: -1,
+      costPerHour: 0.104,
+      availabilityStatus: 'Available',
+    },
+    {
+      id: 'aws+ap-northeast-2+t3.xlarge',
+      cspSpecName: 't3.xlarge',
+      name: 'aws+ap-northeast-2+t3.xlarge',
+      namespace: 'system',
+      connectionName: 'aws-ap-northeast-2',
+      providerName: 'aws',
+      regionName: 'ap-northeast-2',
+      infraType: 'node',
+      architecture: 'x86_64',
+      vCPU: 4,
+      memoryGiB: 16,
+      diskSizeGB: -1,
+      costPerHour: 0.208,
+      availabilityStatus: 'Available',
+    },
+    {
+      id: 'aws+ap-northeast-2+m5.xlarge',
+      cspSpecName: 'm5.xlarge',
+      name: 'aws+ap-northeast-2+m5.xlarge',
+      namespace: 'system',
+      connectionName: 'aws-ap-northeast-2',
+      providerName: 'aws',
+      regionName: 'ap-northeast-2',
+      infraType: 'node',
+      architecture: 'x86_64',
+      vCPU: 4,
+      memoryGiB: 16,
+      diskSizeGB: -1,
+      costPerHour: 0.236,
+      availabilityStatus: 'Available',
+    },
+    {
+      id: 'aws+ap-northeast-2+m5.2xlarge',
+      cspSpecName: 'm5.2xlarge',
+      name: 'aws+ap-northeast-2+m5.2xlarge',
+      namespace: 'system',
+      connectionName: 'aws-ap-northeast-2',
+      providerName: 'aws',
+      regionName: 'ap-northeast-2',
+      infraType: 'node',
+      architecture: 'x86_64',
+      vCPU: 8,
+      memoryGiB: 32,
+      diskSizeGB: -1,
+      costPerHour: 0.472,
+      availabilityStatus: 'Available',
+    },
+  ],
+  targetOsImageList: [
+    {
+      resourceType: 'image',
+      namespace: 'system',
+      providerName: 'aws',
+      cspImageName: 'ami-046333f9ecafdf406',
+      regionList: ['ap-northeast-2'],
+      id: 'ami-046333f9ecafdf406',
+      name: 'ami-046333f9ecafdf406',
+      connectionName: 'aws-ap-northeast-2',
+      isGPUImage: false,
+      isBasicImage: true,
+      osType: 'Ubuntu 22.04',
+      osArchitecture: 'x86_64',
+      osPlatform: 'Linux/UNIX',
+      osDistribution: 'ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20261021',
+      osDiskType: 'ebs',
+      osDiskSizeGB: -1,
+      imageStatus: 'Available',
+      description: 'Canonical, Ubuntu, 22.04, amd64 jammy image',
+    },
+  ],
+  targetSecurityGroupList: [
+    {
+      name: 'mig-sg-01',
+      connectionName: 'aws-ap-northeast-2',
+      vNetId: 'mig-vnet-01',
+      description: 'Recommended security group for NLB backend web_was_backend (vm1, vm4)',
+      firewallRules: [
+        { Ports: '22', Protocol: 'tcp', Direction: 'inbound', CIDR: '0.0.0.0/0' },
+        { Ports: '80', Protocol: 'tcp', Direction: 'inbound', CIDR: '0.0.0.0/0' },
+        { Ports: '443', Protocol: 'tcp', Direction: 'inbound', CIDR: '0.0.0.0/0' },
+        { Ports: '8080', Protocol: 'tcp', Direction: 'inbound', CIDR: '0.0.0.0/0' },
+        { Ports: '8443', Protocol: 'tcp', Direction: 'inbound', CIDR: '0.0.0.0/0' },
+        { Ports: '1-65535', Protocol: 'tcp', Direction: 'inbound', CIDR: '10.0.0.0/16' },
+      ],
+    },
+    {
+      name: 'mig-sg-02',
+      connectionName: 'aws-ap-northeast-2',
+      vNetId: 'mig-vnet-01',
+      description: 'Recommended security group for mig-testbed-vm2 (NFS)',
+      firewallRules: [
+        { Ports: '22', Protocol: 'tcp', Direction: 'inbound', CIDR: '0.0.0.0/0' },
+        { Ports: '2049', Protocol: 'tcp', Direction: 'inbound', CIDR: '10.0.0.0/16' },
+        { Ports: '111', Protocol: 'tcp', Direction: 'inbound', CIDR: '10.0.0.0/16' },
+        { Ports: '20048', Protocol: 'tcp', Direction: 'inbound', CIDR: '10.0.0.0/16' },
+      ],
+    },
+    {
+      name: 'mig-sg-03',
+      connectionName: 'aws-ap-northeast-2',
+      vNetId: 'mig-vnet-01',
+      description: 'Recommended security group for mig-testbed-vm3 (MariaDB)',
+      firewallRules: [
+        { Ports: '22', Protocol: 'tcp', Direction: 'inbound', CIDR: '0.0.0.0/0' },
+        { Ports: '3306', Protocol: 'tcp', Direction: 'inbound', CIDR: '10.0.0.0/16' },
+        { Ports: '4567-4568', Protocol: 'tcp', Direction: 'inbound', CIDR: '10.0.0.0/16' },
+      ],
+    },
+    {
+      name: 'mig-sg-04',
+      connectionName: 'aws-ap-northeast-2',
+      vNetId: 'mig-vnet-01',
+      description: 'Recommended security group for mig-testbed-vm5 (HAProxy)',
+      firewallRules: [
+        { Ports: '22', Protocol: 'tcp', Direction: 'inbound', CIDR: '0.0.0.0/0' },
+        { Ports: '80', Protocol: 'tcp', Direction: 'inbound', CIDR: '0.0.0.0/0' },
+        { Ports: '443', Protocol: 'tcp', Direction: 'inbound', CIDR: '0.0.0.0/0' },
+        { Ports: '9999', Protocol: 'tcp', Direction: 'inbound', CIDR: '0.0.0.0/0' },
+        { Ports: '8404', Protocol: 'tcp', Direction: 'inbound', CIDR: '0.0.0.0/0' },
+      ],
+    },
+  ],
+  targetNlbList: [
+    {
+      description: 'Migrated from HAProxy backend: web_was_backend',
+      type: 'PUBLIC',
+      scope: 'REGION',
+      listener: {
+        protocol: 'TCP',
+        port: '80',
+      },
+      targetGroup: {
+        protocol: 'TCP',
+        port: '8080',
+        nodeGroupId: 'ng-web-was-backend',
+      },
+      healthChecker: {
+        interval: 10,
+        threshold: 3,
+        timeout: 10,
+      },
+    },
+  ],
+};
+
+export const SAMPLE_MIGRATION_TESTBED_CLOUD_MODEL: CloudModelEnvelope = {
+  id: 'sample-cloud-migration-testbed-1',
+  name: '[Sample] migration-testbed-aws-target',
+  description: 'Recommended AWS (ap-northeast-2) target infrastructure with NLB for 5-Node Migration Testbed',
+  cloudInfraModel: SAMPLE_MIGRATION_TESTBED_TARGET_INFRA,
+  version: '1.0',
+  stage: 'target',
+  category: 'infra',
+  schemaType: 'RecommendedInfra',
+  lineage: {
+    sourceGroupId: 'sg-sample-mig-testbed',
+    sourceModelId: 'sample-source-migration-testbed-1',
+    planningModelId: 'sample-source-migration-testbed-1',
   },
   updatedTime: new Date().toISOString(),
 };

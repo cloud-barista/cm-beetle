@@ -7,7 +7,7 @@ import { MatchRateRadarChart } from './MatchRateRadarChart';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope } from '../../types/migration';
 import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2, Compass, ArrowRight, ArrowLeft, Plus, AlertTriangle, ShieldCheck, CheckCircle2, Globe, Target, Zap, Undo2 } from 'lucide-react';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
-import { tumblebugApi, beetleApi } from '../../api/client';
+import { tumblebugApi, beetleApi, pickPreferredKoreaRegion, isKoreaRegion, PREFERRED_KOREA_REGIONS_BY_CSP } from '../../api/client';
 import sampleGpuData from '../../data/sampleSourceGpuInfra.json';
 
 
@@ -207,30 +207,18 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
   const getCspDefaultRegion = async (csp: string): Promise<string> => {
     const key = (csp || '').toLowerCase();
-    let regions = pairRegionsMap[key];
+    let regions = pairRegionsMap[key] || pairRegionsMap[csp];
     if (!regions || regions.length === 0) {
       try {
         regions = await tumblebugApi.getRegions(key);
         if (regions && regions.length > 0) {
-          setPairRegionsMap(prev => ({ ...prev, [key]: regions }));
+          setPairRegionsMap(prev => ({ ...prev, [key]: regions, [csp]: regions }));
         }
       } catch (err) {
         console.warn(`Failed to fetch regions for ${key}:`, err);
       }
     }
-    if (regions && regions.length > 0) {
-      return regions[0].id;
-    }
-    if (key === 'aws') return 'ap-northeast-2';
-    if (key === 'azure') return 'koreacentral';
-    if (key === 'gcp') return 'asia-northeast3';
-    if (key === 'alibaba') return 'ap-northeast-1';
-    if (key === 'ncp' || key === 'ncloud') return 'kr';
-    if (key === 'ibm') return 'us-south';
-    if (key === 'tencent') return 'ap-seoul';
-    if (key === 'nhn' || key === 'nhncloud') return 'kr1';
-    if (key === 'kt') return 'kr-central';
-    return 'ap-northeast-2';
+    return pickPreferredKoreaRegion(key, regions);
   };
 
   const handlePairCspChange = async (index: number, newCsp: string) => {
@@ -297,19 +285,13 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     });
   };
 
-  const handleApplyDomesticBig2 = () => {
-    const domestic2 = [
-      { csp: 'ncp', region: 'kr' },
-      { csp: 'nhn', region: 'kr1' }
-    ];
-    setTargetPairs(domestic2);
-    domestic2.forEach(p => {
-      tumblebugApi.getRegions(p.csp).then(regs => {
-        if (regs && regs.length > 0) {
-          setPairRegionsMap(prev => ({ ...prev, [p.csp]: regs }));
-        }
-      }).catch(() => {});
-    });
+  const handleApplyDomesticBig2 = async () => {
+    const ncpRegion = await getCspDefaultRegion('ncp');
+    const nhnRegion = await getCspDefaultRegion('nhn');
+    setTargetPairs([
+      { csp: 'ncp', region: ncpRegion },
+      { csp: 'nhn', region: nhnRegion }
+    ]);
   };
 
   const handleResetToDefaultMultiPairs = () => {
@@ -523,8 +505,11 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     setActiveStep(2);
   };
 
+  const isBuiltInCloudSample = (id?: string) =>
+    id === 'cloud-demo-1' || id === 'sample-cloud-migration-testbed-1';
+
   const handleDeleteDesign = () => {
-    if (!selectedCloudModel || selectedCloudModel.id === 'cloud-demo-1') return;
+    if (!selectedCloudModel || isBuiltInCloudSample(selectedCloudModel.id)) return;
     setDeleteConfirmText('');
     setDeleteError('');
     setIsDeleting(false);
@@ -562,7 +547,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
   }, [savedCloudModels, fetchSavedCloudModels]);
 
   const handleClearAllCustomDesigns = async () => {
-    const customCount = savedCloudModels.filter(m => m.id !== 'cloud-demo-1').length;
+    const customCount = savedCloudModels.filter(m => !isBuiltInCloudSample(m.id)).length;
     if (customCount === 0) return;
     if (!window.confirm(`Delete all ${customCount} saved custom target design(s)? (Built-in sample model will be kept)`)) {
       return;
@@ -1453,8 +1438,25 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
               <div className="space-y-3">
                 {(targetPairs || []).map((pair, idx) => {
-                  const availableRegions = pairRegionsMap[pair.csp] || tumblebugRegions;
-                  const sortedRegions = [...availableRegions].sort((a, b) => a.id.localeCompare(b.id));
+                  const cspKey = (pair.csp || '').toLowerCase();
+                  const availableRegions = pairRegionsMap[pair.csp] || pairRegionsMap[cspKey] || tumblebugRegions;
+                  const prefs = (PREFERRED_KOREA_REGIONS_BY_CSP[cspKey] || []).map((p) => p.toLowerCase());
+                  const sortedRegions = [...availableRegions].sort((a, b) => {
+                    const aPref = prefs.indexOf(a.id.toLowerCase());
+                    const bPref = prefs.indexOf(b.id.toLowerCase());
+                    if (aPref !== -1 || bPref !== -1) {
+                      if (aPref === -1) return 1;
+                      if (bPref === -1) return -1;
+                      return aPref - bPref;
+                    }
+                    const aKr = isKoreaRegion(a) ? 0 : 1;
+                    const bKr = isKoreaRegion(b) ? 0 : 1;
+                    if (aKr !== bKr) return aKr - bKr;
+                    return a.id.localeCompare(b.id);
+                  });
+                  const selectedRegionValue =
+                    sortedRegions.find((r) => r.id.toLowerCase() === (pair.region || '').toLowerCase())?.id ||
+                    pair.region;
 
                   return (
                     <div key={idx} className="bg-bg-panel/50 border border-border-main/50 p-4 rounded-xl flex flex-col md:flex-row items-stretch md:items-center gap-4 transition hover:border-emerald-500/30">
@@ -1499,7 +1501,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                         <div>
                           <label className="block text-xs font-normal text-text-muted mb-1">Region</label>
                           <select
-                            value={pair.region}
+                            value={selectedRegionValue}
                             onChange={(e) => updateTargetPair(idx, pair.csp, e.target.value)}
                             className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-3 py-2.5 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
                           >
@@ -1593,9 +1595,9 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
               </button>
               <button
                 onClick={handleDeleteDesign}
-                disabled={!selectedCloudModel || selectedCloudModel.id === 'cloud-demo-1'}
+                disabled={!selectedCloudModel || isBuiltInCloudSample(selectedCloudModel.id)}
                 className={`px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer ${
-                  selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1'
+                  selectedCloudModel && !isBuiltInCloudSample(selectedCloudModel.id)
                     ? 'bg-red-500 hover:bg-red-600 text-white shadow-md shadow-red-500/20'
                     : 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
                 }`}
@@ -1603,7 +1605,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                 <Trash2 className="w-4 h-4" />
                 <span>Delete Design</span>
               </button>
-              {savedCloudModels.filter((m: any) => m.id !== 'cloud-demo-1' && m.name !== 'Unnamed Design').length > 0 && (
+              {savedCloudModels.filter((m: any) => !isBuiltInCloudSample(m.id) && m.name !== 'Unnamed Design').length > 0 && (
                 <button
                   onClick={handleClearAllCustomDesigns}
                   className="px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer bg-red-500/15 hover:bg-red-500/25 text-red-600 dark:text-red-400 border border-red-500/30"
@@ -3328,10 +3330,10 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         isOpen={showSaveTargetModal}
         onClose={() => setShowSaveTargetModal(false)}
         title="Save Target Cloud Infra Model"
-        defaultName={selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1' ? selectedCloudModel.name : (editedCandidate?.targetInfra?.name || `${editedCandidate?.targetCloud?.csp || 'cloud'}-target-model`)}
-        defaultDescription={selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1' ? (selectedCloudModel.description || '') : (editedCandidate?.description || `Optimized target cloud model for ${editedCandidate?.targetCloud?.csp?.toUpperCase() || 'Cloud'} (${editedCandidate?.targetCloud?.region || ''})`)}
-        defaultVersion={selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1' ? (selectedCloudModel.version || '1.0.0') : '1.0.0'}
-        existingRevisions={savedCloudModels.filter(m => m.id !== 'cloud-demo-1').map(m => ({ id: m.id, name: m.name, version: m.version }))}
+        defaultName={selectedCloudModel && !isBuiltInCloudSample(selectedCloudModel.id) ? selectedCloudModel.name : (editedCandidate?.targetInfra?.name || `${editedCandidate?.targetCloud?.csp || 'cloud'}-target-model`)}
+        defaultDescription={selectedCloudModel && !isBuiltInCloudSample(selectedCloudModel.id) ? (selectedCloudModel.description || '') : (editedCandidate?.description || `Optimized target cloud model for ${editedCandidate?.targetCloud?.csp?.toUpperCase() || 'Cloud'} (${editedCandidate?.targetCloud?.region || ''})`)}
+        defaultVersion={selectedCloudModel && !isBuiltInCloudSample(selectedCloudModel.id) ? (selectedCloudModel.version || '1.0.0') : '1.0.0'}
+        existingRevisions={savedCloudModels.filter(m => !isBuiltInCloudSample(m.id)).map(m => ({ id: m.id, name: m.name, version: m.version }))}
         onSave={handleSaveArtifact}
         successMessage="Target Cloud Infrastructure Model saved to repository successfully."
       />

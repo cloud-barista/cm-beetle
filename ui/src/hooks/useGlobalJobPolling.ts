@@ -38,16 +38,23 @@ export function useGlobalJobPolling() {
       const currentDataJobs = dataJobsRef.current;
 
       const activeInfraJobs = currentJobs.filter((j) => !j.isSample && j.status === 'Handling');
+      const activeNlbJobs = currentJobs.filter((j) => !j.isSample && j.nlbStatus === 'Provisioning' && j.nlbReqId);
       const activeOsJobs = currentOsJobs.filter((j) => !j.isSample && j.status === 'Handling');
       const activeDataJobs = currentDataJobs.filter((j) => !j.isSample && j.status === 'Handling');
 
-      if (activeInfraJobs.length === 0 && activeOsJobs.length === 0 && activeDataJobs.length === 0) {
+      if (
+        activeInfraJobs.length === 0 &&
+        activeNlbJobs.length === 0 &&
+        activeOsJobs.length === 0 &&
+        activeDataJobs.length === 0
+      ) {
         return;
       }
 
-      // 1. Poll Active Infrastructure Migration Jobs
-      if (activeInfraJobs.length > 0) {
+      // 1. Poll Active Infrastructure Migration Jobs & NLB Stage 2 Jobs
+      if (activeInfraJobs.length > 0 || activeNlbJobs.length > 0) {
         const statusUpdates: Record<string, { status: string; errorResponse?: string; responseData?: any }> = {};
+        const nlbStatusUpdates: Record<string, { status: string; errorResponse?: string; responseData?: any }> = {};
 
         for (const job of activeInfraJobs) {
           try {
@@ -64,65 +71,172 @@ export function useGlobalJobPolling() {
           }
         }
 
+        for (const job of activeNlbJobs) {
+          if (!job.nlbReqId) continue;
+          try {
+            const res = await beetleApi.getRequestDetails(job.nlbReqId);
+            if (res && res.status) {
+              nlbStatusUpdates[job.id] = {
+                status: res.status,
+                errorResponse: res.errorResponse,
+                responseData: res.responseData
+              };
+            }
+          } catch (err) {
+            console.warn('Poll error for NLB job request', job.nlbReqId, err);
+          }
+        }
+
         setJobs((prevJobs) =>
           prevJobs.map((job) => {
-            if (job.status === 'Success' || job.status === 'Failed') return job;
+            const isInfraDone = job.status === 'Success' || job.status === 'Failed';
+            const isNlbDone = !job.nlbStatus || job.nlbStatus === 'Success' || job.nlbStatus === 'Failed';
+            if (isInfraDone && isNlbDone) return job;
 
             const newElapsed = calculateJobElapsedSeconds(job);
 
             if (!job.isSample) {
-              const update = statusUpdates[job.id];
-              const realStatus = update?.status || 'Handling';
+              let updatedJob = { ...job, elapsedSeconds: newElapsed };
 
-              if (realStatus === 'Error' || realStatus === 'Failed') {
-                const errorMsg = update?.errorResponse || 'Backend provisioning error';
-                const cleanedLogs = job.logs.filter((l) => !l.includes('GET /beetle/request/'));
+              if (job.nlbStatus === 'Provisioning' && job.nlbReqId) {
+                const nlbUpdate = nlbStatusUpdates[job.id];
+                if (nlbUpdate) {
+                  if (nlbUpdate.status === 'Success' || nlbUpdate.status === 'Completed' || nlbUpdate.status === 'Succeeded') {
+                    const createdNlb = nlbUpdate.responseData?.nlbList?.[0];
+                    const nlbName =
+                      createdNlb?.name ||
+                      createdNlb?.id ||
+                      job.targetNlbList?.[0]?.targetGroup?.nodeGroupId ||
+                      job.targetNlbList?.[0]?.name ||
+                      `${job.infraId}-nlb`;
+                    updatedJob = {
+                      ...updatedJob,
+                      nlbStatus: 'Success',
+                      nlbHealth: {
+                        healthy: true,
+                        status: 'Healthy',
+                        checkedAt: new Date().toLocaleTimeString()
+                      },
+                      logs: [
+                        ...updatedJob.logs,
+                        `Stage 2 -> NLB Provisioned Successfully! (${nlbName})`,
+                        `GET /beetle/request/${job.nlbReqId} -> Status: Success`
+                      ]
+                    };
+                  } else if (nlbUpdate.status === 'Error' || nlbUpdate.status === 'Failed') {
+                    updatedJob = {
+                      ...updatedJob,
+                      nlbStatus: 'Failed',
+                      logs: [
+                        ...updatedJob.logs,
+                        `Stage 2 -> NLB Provisioning Failed: ${nlbUpdate.errorResponse || 'Backend NLB error'}`
+                      ]
+                    };
+                  }
+                }
+              }
+
+              if (job.status === 'Handling') {
+                const update = statusUpdates[job.id];
+                const realStatus = update?.status || 'Handling';
+
+                if (realStatus === 'Error' || realStatus === 'Failed') {
+                  const errorMsg = update?.errorResponse || 'Backend provisioning error';
+                  const cleanedLogs = updatedJob.logs.filter((l) => !l.includes(`GET /beetle/request/${job.reqId}`));
+                  return {
+                    ...updatedJob,
+                    status: 'Failed',
+                    error: errorMsg,
+                    logs: [
+                      ...cleanedLogs,
+                      `GET /beetle/request/${job.reqId} -> Status: Error (${errorMsg}) (Duration: ${newElapsed}s)`
+                    ]
+                  };
+                }
+
+                if (realStatus === 'Success' || realStatus === 'Completed' || realStatus === 'Succeeded') {
+                  const shouldTriggerNlb =
+                    job.targetNlbList && job.targetNlbList.length > 0 && (!job.nlbStatus || job.nlbStatus === 'Idle');
+                  if (shouldTriggerNlb) {
+                    beetleApi
+                      .migrateNlb(job.nsId, job.infraId, job.targetNlbList!)
+                      .then((nlbRes) => {
+                        if (nlbRes.success && nlbRes.reqId) {
+                          setJobs((prev) =>
+                            prev.map((j) =>
+                              j.id === job.id
+                                ? {
+                                    ...j,
+                                    nlbStatus: 'Provisioning',
+                                    nlbReqId: nlbRes.reqId,
+                                    logs: [
+                                      ...j.logs,
+                                      `Stage 2 -> POST /beetle/migration/middleware/ns/${job.nsId}/infra/${job.infraId}/nlb`,
+                                      `HTTP 202 Accepted (NLB ReqID: ${nlbRes.reqId}, Status: Provisioning)`
+                                    ]
+                                  }
+                                : j
+                            )
+                          );
+                        } else if (!nlbRes.success) {
+                          setJobs((prev) =>
+                            prev.map((j) =>
+                              j.id === job.id
+                                ? {
+                                    ...j,
+                                    nlbStatus: 'Failed',
+                                    logs: [
+                                      ...j.logs,
+                                      `Stage 2 NLB Migration Failed: ${nlbRes.error || 'Unknown error'}`
+                                    ]
+                                  }
+                                : j
+                            )
+                          );
+                        }
+                      })
+                      .catch((err) => {
+                        console.warn('NLB migration trigger error:', err);
+                      });
+                  }
+
+                  const rawNodes = update?.responseData?.node || update?.responseData?.infraInfo?.node || [];
+                  const parsedVms =
+                    Array.isArray(rawNodes) && rawNodes.length > 0
+                      ? rawNodes.map((n: any) => ({
+                          name: n.name || n.id || 'node',
+                          specId: n.specId || n.spec || 'c5.large',
+                          publicIp: n.publicIP || n.publicIp || 'N/A',
+                          privateIp: n.privateIP || n.privateIp || 'N/A',
+                          status:
+                            n.status || ((n.publicIP || n.publicIp || n.privateIP || n.privateIp) ? 'Running' : 'Failed'),
+                          systemMessage: n.systemMessage || ''
+                        }))
+                      : job.vms;
+
+                  const cleanedLogs = updatedJob.logs.filter((l) => !l.includes(`GET /beetle/request/${job.reqId}`));
+                  return {
+                    ...updatedJob,
+                    status: 'Success',
+                    nlbStatus: shouldTriggerNlb ? 'Provisioning' : updatedJob.nlbStatus,
+                    vms: parsedVms,
+                    logs: [
+                      ...cleanedLogs,
+                      `GET /beetle/request/${job.reqId} -> Status: Success (Duration: ${newElapsed}s)`
+                    ]
+                  };
+                }
+
                 return {
-                  ...job,
-                  status: 'Failed',
-                  elapsedSeconds: newElapsed,
-                  error: errorMsg,
+                  ...updatedJob,
                   logs: [
-                    ...cleanedLogs,
-                    `GET /beetle/request/${job.reqId} -> Status: Error (${errorMsg}) (Duration: ${newElapsed}s)`
+                    ...updatedJob.logs.filter((l) => !l.includes(`GET /beetle/request/${job.reqId}`)),
+                    `GET /beetle/request/${job.reqId} -> Status: Handling (Elapsed: ${newElapsed}s)`
                   ]
                 };
               }
 
-              if (realStatus === 'Success' || realStatus === 'Completed' || realStatus === 'Succeeded') {
-                const rawNodes = update?.responseData?.node || update?.responseData?.infraInfo?.node || [];
-                const parsedVms = Array.isArray(rawNodes) && rawNodes.length > 0
-                  ? rawNodes.map((n: any) => ({
-                      name: n.name || n.id || 'node',
-                      specId: n.specId || n.spec || 'c5.large',
-                      publicIp: n.publicIP || n.publicIp || 'N/A',
-                      privateIp: n.privateIP || n.privateIp || 'N/A',
-                      status: n.status || ((n.publicIP || n.publicIp || n.privateIP || n.privateIp) ? 'Running' : 'Failed'),
-                      systemMessage: n.systemMessage || ''
-                    }))
-                  : job.vms;
-
-                const cleanedLogs = job.logs.filter((l) => !l.includes('GET /beetle/request/'));
-                return {
-                  ...job,
-                  status: 'Success',
-                  elapsedSeconds: newElapsed,
-                  vms: parsedVms,
-                  logs: [
-                    ...cleanedLogs,
-                    `GET /beetle/request/${job.reqId} -> Status: Success (Duration: ${newElapsed}s)`
-                  ]
-                };
-              }
-
-              return {
-                ...job,
-                elapsedSeconds: newElapsed,
-                logs: [
-                  ...job.logs.filter((l) => !l.includes('GET /beetle/request/')),
-                  `GET /beetle/request/${job.reqId} -> Status: Handling (Elapsed: ${newElapsed}s)`
-                ]
-              };
+              return updatedJob;
             }
             return job;
           })
