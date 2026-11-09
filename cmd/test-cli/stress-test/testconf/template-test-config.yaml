@@ -1,0 +1,93 @@
+stress:
+  # Execution mode:
+  # - "simulate" (default): Generates random onpremiseInfraModel (calls live Recommendation API if CM-Beetle is running) and simulates provisioning/failure/cleanup timeline.
+  # - "real": Executes live Recommendation, Validation, Migration, and 2-Stage Force Cleanup against CM-Beetle and target CSPs.
+  executionMode: simulate
+
+  # Each round tests all surviving CSPs with the same Node count, increasing by +stepNodes per round.
+  initialNodes: 10
+  stepNodes: 10
+  maxNodes: 100
+  randomSeed: 20261109
+  mergeIdenticalNodeGroups: true
+  nameSeedPrefix: st
+
+  # Resource bounds for random onpremiseInfraModel Node generation (Web/WAS/DB/Worker presets)
+  generator:
+    minVcpu: 1
+    maxVcpu: 4
+    minMemoryGb: 2
+    maxMemoryGb: 8
+    minDiskGb: 20
+    maxDiskGb: 40
+
+test:
+  cases:
+    - csp: aws
+      region: ap-northeast-2
+      name: AWS-Seoul
+      execute: true
+      simMaxNodes: 100
+      simFailureCode: QUOTA_EXCEEDED
+      simFailureReason: "Regional On-Demand Standard instance vCPU quota reached in ap-northeast-2"
+
+    - csp: azure
+      region: koreasouth
+      name: Azure-Busan
+      execute: true
+      simMaxNodes: 80
+      simFailureCode: QUOTA_EXCEEDED
+      simFailureReason: "Total Regional vCPUs quota limit (240 vCPUs) exceeded for Standard D-series in koreasouth"
+
+    - csp: gcp
+      region: asia-northeast3
+      name: GCP-Seoul
+      execute: true
+      simMaxNodes: 90
+      simFailureCode: API_RATE_LIMIT
+      simFailureReason: "Compute Engine regional instance insert rate quota exceeded at 100 concurrent Nodes in asia-northeast3"
+
+    - csp: alibaba
+      region: ap-northeast-2
+      name: Alibaba-Seoul
+      execute: true
+      simMaxNodes: 70
+      simFailureCode: PROVISIONING_TIMEOUT
+      simFailureReason: "ECS batch provisioning and cloud_essd disk attachment exceeded stabilization window at 80 Nodes"
+
+    - csp: ibm
+      region: au-syd
+      name: IBMCloud-Sydney
+      execute: true
+      simMaxNodes: 40
+      simFailureCode: API_RATE_LIMIT
+      simFailureReason: "VPC Virtual Server API rate limit (HTTP 429 Too Many Requests) triggered at 50 concurrent Nodes in au-syd"
+
+    - csp: ncp
+      region: kr
+      name: NCP-Seoul
+      execute: true
+      simMaxNodes: 50
+      simFailureCode: SUBNET_IP_EXHAUSTED
+      simFailureReason: "VPC concurrent server creation and ACG attachment limit (50 Nodes per batch) reached in KR region"
+
+    - csp: tencent
+      region: ap-seoul
+      name: Tencent-Seoul
+      execute: true
+      simMaxNodes: 60
+      simFailureCode: AZ_CAPACITY_EXHAUSTED
+      simFailureReason: "Insufficient CVM S5/SA2 instance inventory in ap-seoul availability zone for 70 concurrent Nodes"
+
+    - csp: nhn
+      region: kr1
+      name: NHNCloud-Pangyo
+      execute: true
+      simMaxNodes: 30
+      simFailureCode: QUOTA_EXCEEDED
+      simFailureReason: "Project hypervisor instance and vCPU quota limit reached at 40 Nodes in kr1 (Pangyo)"
+
+beetle:
+  endpoint: http://localhost:8056
+  namespaceId: mig01
+  authConfigFile: testconf/auth-config.json
