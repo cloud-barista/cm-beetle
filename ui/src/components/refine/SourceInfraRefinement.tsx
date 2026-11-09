@@ -5,7 +5,11 @@ import { useMigrationStore } from '../../store/migrationStore';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope } from '../../types/migration';
 import sampleData from '../../data/sampleSourceInfra.json';
 import sampleGpuData from '../../data/sampleSourceGpuInfra.json';
-import { SAMPLE_15_NODE_MODEL, SAMPLE_9_NODE_TESTBED_MODEL } from '../../data/sample15NodeInfra';
+import {
+  SAMPLE_15_NODE_MODEL,
+  SAMPLE_9_NODE_TESTBED_MODEL,
+  SAMPLE_MIGRATION_TESTBED_MODEL,
+} from '../../data/sample15NodeInfra';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
 import { beetleApi } from '../../api/client';
 import {
@@ -51,6 +55,7 @@ export const SAMPLE_MODEL: OnpremModelEnvelope = {
 };
 
 const BUILTIN_SAMPLE_IDS = new Set([
+  'sample-source-migration-testbed-1',
   'sample-source-9node-testbed-1',
   'sample-source-15node-dc-1',
   'sample-source-gpu-infra-1',
@@ -96,7 +101,6 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   const [newRuleCidr, setNewRuleCidr] = useState('0.0.0.0/0');
   const [tuningSourceSaveSuccess, setTuningSourceSaveSuccess] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [isSavingSource, setIsSavingSource] = useState(false);
   const [sourceSaveSuccessMsg, setSourceSaveSuccessMsg] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -366,12 +370,16 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleAddNlbServer = (nlbIdx: number) => {
-    if (!newNlbServerIp) return;
+    const cleanIp = newNlbServerIp.trim();
+    if (!cleanIp) return;
     const srvPort = parseInt(newNlbServerPort, 10) || 80;
-    const srvName = `srv-${newNlbServerIp.replaceAll('.', '-')}`;
+    const matchedNode = tunedNodes.find(n =>
+      n.interfaces?.some(iface => iface.ipv4CidrBlocks?.some(cidr => cidr.split('/')[0].trim() === cleanIp))
+    );
+    const srvName = matchedNode?.hostname || `srv-${cleanIp.replaceAll('.', '-')}`;
     const newSrv = {
       name: srvName,
-      ip: newNlbServerIp,
+      ip: cleanIp,
       port: srvPort
     };
     setTunedNlbs(prev => prev.map((nlb, idx) => {
@@ -433,6 +441,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
 
   // Ensure built-in sample models are always at the top of the list
   const allModels: OnpremModelEnvelope[] = [
+    SAMPLE_MIGRATION_TESTBED_MODEL,
     SAMPLE_9_NODE_TESTBED_MODEL,
     SAMPLE_15_NODE_MODEL,
     SAMPLE_MODEL,
@@ -564,68 +573,10 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     setTunedNodes(filteredNodes);
     setExcludedNodeIds([]);
     setTuningSourceSaveSuccess(true);
+    setSourceSaveSuccessMsg('Planning infrastructure artifact saved successfully (stage: planning).');
     setActiveStep(3); // Advance to Step 3: Desired Cloud Target Specification
     setTimeout(() => setTuningSourceSaveSuccess(false), 2000);
-  };
-
-  const handleDirectSaveSourceModel = async () => {
-    if (!selectedSourceModel || !effectivePlanningInfra) return;
-    const filteredNodes = filteredPlanningNodes;
-    const updatedInfra = effectivePlanningInfra;
-
-    setIsSavingSource(true);
-    setSourceSaveSuccessMsg('');
-    try {
-      const isExistingPlanningArtifact = selectedSourceModel.stage === 'planning' && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id);
-      const resolvedSourceParentId = selectedSourceModel.stage === 'planning'
-        ? (selectedSourceModel.lineage?.sourceModelId || selectedSourceModel.id)
-        : selectedSourceModel.id;
-
-      if (isExistingPlanningArtifact) {
-        const currentVer = parseFloat(selectedSourceModel.version || '1.0');
-        const nextVer = isNaN(currentVer) ? '1.1' : (currentVer + 0.1).toFixed(1);
-        await updateSourceModel(
-          selectedSourceModel.id,
-          selectedSourceModel.name,
-          selectedSourceModel.description || 'Refined planning infrastructure model',
-          nextVer,
-          updatedInfra,
-          {
-            stage: 'planning',
-            parentId: resolvedSourceParentId,
-            sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
-          }
-        );
-      } else {
-        const baseName = selectedSourceModel.name.replace(/^\[Sample\]\s*/i, '');
-        const planningName = baseName.endsWith('-planning') ? baseName : `${baseName}-planning`;
-        await saveSourceModel(
-          planningName,
-          `Refined planning infrastructure model derived from ${selectedSourceModel.name}`,
-          '1.0.0',
-          updatedInfra,
-          {
-            stage: 'planning',
-            parentId: resolvedSourceParentId,
-            sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
-          }
-        );
-      }
-
-      const isGpu = selectedSourceModel.id === 'sample-source-gpu-infra-1';
-      await beetleApi.saveSourceInfraModelToFile(updatedInfra, isGpu).catch((e) => {
-        console.warn('Local file sync skipped:', e);
-      });
-
-      setSourceSaveSuccessMsg('Planning infrastructure artifact saved successfully (stage: planning).');
-      setTunedNodes(filteredNodes);
-      setExcludedNodeIds([]);
-      setTimeout(() => setSourceSaveSuccessMsg(''), 4000);
-    } catch (err: any) {
-      console.error('Failed to save planning infra model:', err);
-    } finally {
-      setIsSavingSource(false);
-    }
+    setTimeout(() => setSourceSaveSuccessMsg(''), 4000);
   };
 
   const handleAddCidr = (cidr: string) => {
@@ -1854,9 +1805,24 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                                 {/* Add Backend Server Form in Edit Mode */}
                                 {isEditingNlbConfig && (
                                   <div className="pt-2 border-t border-border-main/20 flex gap-1.5 items-center">
+                                    <datalist id={`nlb-node-ips-${idx}`}>
+                                      {tunedNodes.flatMap(n =>
+                                        (n.interfaces || []).flatMap(iface =>
+                                          (iface.ipv4CidrBlocks || [])
+                                            .map(cidr => cidr.split('/')[0].trim())
+                                            .filter(ip => ip && !ip.startsWith('127.'))
+                                            .map(ip => (
+                                              <option key={`${n.machineId}-${ip}`} value={ip}>
+                                                {`${n.hostname} (${ip})`}
+                                              </option>
+                                            ))
+                                        )
+                                      )}
+                                    </datalist>
                                     <input
                                       type="text"
-                                      placeholder="Server IP (10.0.1.15)"
+                                      list={`nlb-node-ips-${idx}`}
+                                      placeholder="Select Node or Enter IP"
                                       value={newNlbServerIp}
                                       onChange={(e) => setNewNlbServerIp(e.target.value)}
                                       className="flex-1 bg-bg-input border border-border-main/60 rounded px-2 py-0.5 text-xs text-text-main"
@@ -1929,23 +1895,11 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border-main/20 mt-4">
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={handleDirectSaveSourceModel}
-                        disabled={isSavingSource}
-                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold flex items-center transition cursor-pointer shadow-md shadow-emerald-500/20 shrink-0 disabled:opacity-50"
-                      >
-                        {isSavingSource ? (
-                          <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                        ) : (
-                          <Save className="w-3.5 h-3.5 mr-1.5" />
-                        )}
-                        <span>{isSavingSource ? 'Saving Planning Model...' : 'Save Planning Infra Model'}</span>
-                      </button>
-                      <button
                         onClick={() => setShowSaveModal(true)}
-                        className="px-3.5 py-2.5 bg-bg-panel border border-border-main hover:bg-bg-input text-text-muted hover:text-text-main rounded-xl text-xs font-bold transition cursor-pointer"
-                        title="Save as a new named planning artifact revision"
+                        className="px-5 py-2.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 rounded-xl text-xs font-extrabold flex items-center transition cursor-pointer shadow-md shadow-emerald-500/20 shrink-0"
                       >
-                        Save Revision As...
+                        <Save className="w-3.5 h-3.5 mr-1.5 text-slate-950" />
+                        <span>Save Planning Infra Revision</span>
                       </button>
                     </div>
 
@@ -2001,9 +1955,25 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
         isOpen={showSaveModal}
         onClose={() => setShowSaveModal(false)}
         title="Save Planning Infra Revision"
-        defaultName={selectedSourceModel && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id) ? selectedSourceModel.name : ''}
-        defaultDescription={selectedSourceModel && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id) ? (selectedSourceModel.description || '') : ''}
-        defaultVersion={selectedSourceModel && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id) ? (selectedSourceModel.version || '1.0.0') : '1.0.0'}
+        defaultName={
+          selectedSourceModel
+            ? selectedSourceModel.stage === 'planning' && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id)
+              ? selectedSourceModel.name
+              : `${selectedSourceModel.name.replace(/^\[Sample\]\s*/i, '').replace(/-planning$/i, '')}-planning`
+            : ''
+        }
+        defaultDescription={
+          selectedSourceModel
+            ? selectedSourceModel.stage === 'planning' && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id)
+              ? selectedSourceModel.description || 'Refined planning infrastructure model'
+              : `Refined planning infrastructure model derived from ${selectedSourceModel.name}`
+            : ''
+        }
+        defaultVersion={
+          selectedSourceModel && selectedSourceModel.stage === 'planning' && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id)
+            ? selectedSourceModel.version || '1.0.0'
+            : '1.0.0'
+        }
         existingRevisions={savedSourceModels
           .filter(m => !BUILTIN_SAMPLE_IDS.has(m.id) && m.stage === 'planning')
           .map(m => ({ id: m.id, name: m.name, version: m.version }))}

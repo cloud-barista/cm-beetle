@@ -1,10 +1,15 @@
 import { create, StateCreator } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty } from '../types/migration';
-import { honeybeeApi, artifactApi, SaveArtifactOptions, beetleApi, tumblebugApi } from '../api/client';
+import { honeybeeApi, artifactApi, SaveArtifactOptions, beetleApi, tumblebugApi, pickPreferredKoreaRegion } from '../api/client';
 import recommendedInfraSample from '../data/sampleTargetInfra.json';
 import sampleGpuData from '../data/sampleSourceGpuInfra.json';
-import { SAMPLE_15_NODE_MODEL, SAMPLE_9_NODE_TESTBED_MODEL } from '../data/sample15NodeInfra';
+import {
+  SAMPLE_15_NODE_MODEL,
+  SAMPLE_9_NODE_TESTBED_MODEL,
+  SAMPLE_MIGRATION_TESTBED_MODEL,
+  SAMPLE_MIGRATION_TESTBED_CLOUD_MODEL,
+} from '../data/sample15NodeInfra';
 
 // ----------------------------------------------------------------------------
 // HIGH QUALITY DEMO / SOURCE INFRA MODEL DATA
@@ -419,7 +424,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   connections: [],
   isLoadingSource: false,
   refinedSourceInfra: DEMO_SOURCE_INFRA,
-  savedSourceModels: [SAMPLE_9_NODE_TESTBED_MODEL, SAMPLE_15_NODE_MODEL, DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL],
+  savedSourceModels: [SAMPLE_MIGRATION_TESTBED_MODEL, SAMPLE_9_NODE_TESTBED_MODEL, SAMPLE_15_NODE_MODEL, DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL],
   selectedSourceModel: DEFAULT_FALLBACK_SOURCE_MODEL,
   lastImportedSourceSshKey: '',
   setLastImportedSourceSshKey: (key) => set({ lastImportedSourceSshKey: key }),
@@ -530,15 +535,18 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     try {
       const data = await honeybeeApi.getRefinedInfraByGroup(sgId);
       set({ refinedSourceInfra: data });
-    } catch (err) {
-      console.warn('Failed to fetch refined infra from Honeybee by group:', err);
-      // For real groups, set to null if fetching fails (i.e. not yet collected or error)
+    } catch (err: any) {
+      // HTTP 400/404 from Honeybee /infra/refined is expected when a group is newly registered and not yet collected
+      const status = err?.response?.status;
+      if (status !== 400 && status !== 404) {
+        console.warn('Failed to fetch refined infra from Honeybee by group:', err?.message || 'Unknown error');
+      }
       set({ refinedSourceInfra: null });
     }
   },
 
   fetchSavedSourceModels: async () => {
-    const builtInSamples = [SAMPLE_9_NODE_TESTBED_MODEL, SAMPLE_15_NODE_MODEL, DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL];
+    const builtInSamples = [SAMPLE_MIGRATION_TESTBED_MODEL, SAMPLE_9_NODE_TESTBED_MODEL, SAMPLE_15_NODE_MODEL, DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL];
     const builtInIds = new Set(builtInSamples.map(s => s.id));
     let allModels: OnpremModelEnvelope[] = [];
     let userModels: OnpremModelEnvelope[] = [];
@@ -655,7 +663,17 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   recommendationCandidates: [],
   selectedCandidateIndex: 0,
   editedCandidate: null,
-  savedCloudModels: [],
+  savedCloudModels: [
+    SAMPLE_MIGRATION_TESTBED_CLOUD_MODEL,
+    {
+      id: 'cloud-demo-1',
+      name: '[Sample] cloud-target-v1',
+      description: 'Optimized Cloud architecture generated for onpremise cluster.',
+      cloudInfraModel: recommendedInfraSample.data[0] as any,
+      version: '1.0',
+      updatedTime: new Date().toISOString()
+    }
+  ],
   selectedCloudModel: null,
   isRecommending: false,
 
@@ -665,7 +683,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
       const regions = await tumblebugApi.getRegions(csp);
       set({ tumblebugRegions: regions });
       if (regions.length > 0) {
-        set({ desiredRegion: regions[0].id });
+        set({ desiredRegion: pickPreferredKoreaRegion(csp, regions) });
       }
     } catch (err) {
       console.error('Failed to sync regions on CSP change', err);
@@ -750,6 +768,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
 
   fetchSavedCloudModels: async () => {
     const fallbackCloudModels: CloudModelEnvelope[] = [
+      SAMPLE_MIGRATION_TESTBED_CLOUD_MODEL,
       {
         id: 'cloud-demo-1',
         name: '[Sample] cloud-target-v1',
@@ -759,9 +778,11 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
         updatedTime: new Date().toISOString()
       }
     ];
+    const builtInCloudIds = new Set(fallbackCloudModels.map(m => m.id));
     try {
       const models = await artifactApi.getCloudModels();
-      const nextList = [fallbackCloudModels[0], ...models];
+      const userModels = models.filter((m: CloudModelEnvelope) => !builtInCloudIds.has(m.id));
+      const nextList = [...fallbackCloudModels, ...userModels];
       const curSelected = get().selectedCloudModel;
       const validSelected =
         curSelected && nextList.some(m => m.id === curSelected.id)
@@ -842,12 +863,14 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
 
   clearCustomCloudModels: async () => {
     const current = get().savedCloudModels;
-    const customModels = current.filter(m => m.id !== 'cloud-demo-1');
+    const isBuiltIn = (id: string) => id === 'cloud-demo-1' || id === 'sample-cloud-migration-testbed-1';
+    const customModels = current.filter(m => !isBuiltIn(m.id));
     for (const model of customModels) {
       await artifactApi.deleteCloudModel(model.id);
     }
-    const remaining = current.filter(m => m.id === 'cloud-demo-1');
-    const isSelectedRemoved = get().selectedCloudModel && get().selectedCloudModel?.id !== 'cloud-demo-1';
+    const remaining = current.filter(m => isBuiltIn(m.id));
+    const curSelId = get().selectedCloudModel?.id;
+    const isSelectedRemoved = curSelId ? !isBuiltIn(curSelId) : false;
     set({
       savedCloudModels: remaining,
       selectedCloudModel: isSelectedRemoved ? null : get().selectedCloudModel,
@@ -870,7 +893,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     if (regions.length > 0) {
       const exists = regions.some(r => r.id === get().desiredRegion);
       if (!exists) {
-        set({ desiredRegion: regions[0].id });
+        set({ desiredRegion: pickPreferredKoreaRegion(activeCsp, regions) });
       }
     }
   },
@@ -881,7 +904,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     if (regions.length > 0) {
       const exists = regions.some(r => r.id === get().desiredRegion);
       if (!exists) {
-        set({ desiredRegion: regions[0].id });
+        set({ desiredRegion: pickPreferredKoreaRegion(providerName, regions) });
       }
     }
   },

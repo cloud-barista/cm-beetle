@@ -9,19 +9,29 @@
       "ipv4Networks": {
         "defaultGateways": [
           {
-            "interfaceName": "ens5",
             "ip": "10.0.1.1",
-            "machineId": "ec268ed7-821e-9d73-e79f-961262161624"
+            "interfaceName": "ens5",
+            "machineId": "ec2fd3e2-3956-e08b-9802-e789b98e0710"
           },
           {
-            "interfaceName": "ens5",
             "ip": "10.0.1.1",
-            "machineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932"
+            "interfaceName": "ens5",
+            "machineId": "ec25c977-40a4-c7c7-121f-c81c8278b6ca"
           },
           {
-            "interfaceName": "ens5",
             "ip": "10.0.1.1",
-            "machineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf"
+            "interfaceName": "ens5",
+            "machineId": "ec297634-506d-023b-8494-ed6183a1a355"
+          },
+          {
+            "ip": "10.0.1.1",
+            "interfaceName": "ens5",
+            "machineId": "ec286789-3d12-64fb-9ca4-5707756a47d0"
+          },
+          {
+            "ip": "10.0.1.1",
+            "interfaceName": "ens5",
+            "machineId": "ec2b46da-8df6-4845-5c37-3b365e4bdff5"
           }
         ]
       },
@@ -29,385 +39,2447 @@
     },
     "nodes": [
       {
+        "hostname": "vm1",
+        "machineId": "ec2fd3e2-3956-e08b-9802-e789b98e0710",
         "cpu": {
           "architecture": "x86_64",
-          "cores": 1,
           "cpus": 1,
-          "maxSpeed": 2.499,
-          "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
+          "cores": 1,
           "threads": 2,
-          "vendor": "GenuineIntel"
+          "maxSpeed": 2.499,
+          "vendor": "GenuineIntel",
+          "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz"
         },
+        "memory": {
+          "type": "DDR4",
+          "totalSize": 2,
+          "available": 2
+        },
+        "rootDisk": {
+          "label": "/dev/nvme0n1p1",
+          "type": "SSD",
+          "totalSize": 50
+        },
+        "interfaces": [
+          {
+            "name": "lo",
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
+            "mtu": 65536,
+            "state": "up"
+          },
+          {
+            "name": "ens5",
+            "macAddress": "02:ff:e5:c1:d8:29",
+            "ipv4CidrBlocks": [
+              "10.0.1.252/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::ff:e5ff:fec1:d829/64"
+            ],
+            "mtu": 9001,
+            "state": "up"
+          }
+        ],
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.0.2/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.0/24",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.1/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::/64",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::ff:e5ff:fec1:d829/128",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          }
+        ],
         "firewallTable": [
           {
-            "action": "allow",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
             "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "icmp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "67",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "68",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "224.0.0.251/32",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "239.255.255.250/32",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
             "dstCIDR": "0.0.0.0/0",
             "dstPorts": "22",
             "protocol": "tcp",
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*"
+            "direction": "inbound",
+            "action": "allow"
           },
           {
-            "action": "allow",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
             "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "5432",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9113",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9113",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "547",
+            "dstCIDR": "fe80::/10",
+            "dstPorts": "546",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::fb/128",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::f/128",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "5432",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          }
+        ],
+        "os": {
+          "prettyName": "Ubuntu 22.04.3 LTS",
+          "version": "22.04.3 LTS (Jammy Jellyfish)",
+          "name": "Ubuntu",
+          "versionId": "22.04",
+          "versionCodename": "jammy",
+          "id": "ubuntu",
+          "idLike": "debian"
+        }
+      },
+      {
+        "hostname": "vm2",
+        "machineId": "ec25c977-40a4-c7c7-121f-c81c8278b6ca",
+        "cpu": {
+          "architecture": "x86_64",
+          "cpus": 1,
+          "cores": 2,
+          "threads": 4,
+          "maxSpeed": 2.499,
+          "vendor": "GenuineIntel",
+          "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz"
+        },
+        "memory": {
+          "type": "DDR4",
+          "totalSize": 16,
+          "available": 15
+        },
+        "rootDisk": {
+          "label": "/dev/nvme0n1p1",
+          "type": "SSD",
+          "totalSize": 50
+        },
+        "interfaces": [
+          {
+            "name": "lo",
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
+            "mtu": 65536,
+            "state": "up"
+          },
+          {
+            "name": "ens5",
+            "macAddress": "02:ff:c2:f0:36:95",
+            "ipv4CidrBlocks": [
+              "10.0.1.48/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::ff:c2ff:fef0:3695/64"
+            ],
+            "mtu": 9001,
+            "state": "up"
+          }
+        ],
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.0.2/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.0/24",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.1/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::/64",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::ff:c2ff:fef0:3695/128",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          }
+        ],
+        "firewallTable": [
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "icmp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "67",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "68",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "224.0.0.251/32",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "239.255.255.250/32",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "2049",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "2049",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "111",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "111",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "20048",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "20048",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "32803",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "32803",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9100",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9100",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "547",
+            "dstCIDR": "fe80::/10",
+            "dstPorts": "546",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::fb/128",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::f/128",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "2049",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "2049",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "111",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "111",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          }
+        ],
+        "os": {
+          "prettyName": "Ubuntu 22.04.3 LTS",
+          "version": "22.04.3 LTS (Jammy Jellyfish)",
+          "name": "Ubuntu",
+          "versionId": "22.04",
+          "versionCodename": "jammy",
+          "id": "ubuntu",
+          "idLike": "debian"
+        }
+      },
+      {
+        "hostname": "vm3",
+        "machineId": "ec297634-506d-023b-8494-ed6183a1a355",
+        "cpu": {
+          "architecture": "x86_64",
+          "cpus": 1,
+          "cores": 1,
+          "threads": 2,
+          "maxSpeed": 2.499,
+          "vendor": "GenuineIntel",
+          "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz"
+        },
+        "memory": {
+          "type": "DDR4",
+          "totalSize": 8,
+          "available": 7
+        },
+        "rootDisk": {
+          "label": "/dev/nvme0n1p1",
+          "type": "SSD",
+          "totalSize": 50
+        },
+        "interfaces": [
+          {
+            "name": "lo",
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
+            "mtu": 65536,
+            "state": "up"
+          },
+          {
+            "name": "ens5",
+            "macAddress": "02:ff:ee:a8:59:d3",
+            "ipv4CidrBlocks": [
+              "10.0.1.28/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::ff:eeff:fea8:59d3/64"
+            ],
+            "mtu": 9001,
+            "state": "up"
+          }
+        ],
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.0.2/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.0/24",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.1/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::/64",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::ff:eeff:fea8:59d3/128",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          }
+        ],
+        "firewallTable": [
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "icmp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "67",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "68",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "224.0.0.251/32",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "239.255.255.250/32",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4567",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4567",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4568",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4568",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4444",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4444",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9104",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9104",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "547",
+            "dstCIDR": "fe80::/10",
+            "dstPorts": "546",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::fb/128",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::f/128",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "3306",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          }
+        ],
+        "os": {
+          "prettyName": "Ubuntu 22.04.3 LTS",
+          "version": "22.04.3 LTS (Jammy Jellyfish)",
+          "name": "Ubuntu",
+          "versionId": "22.04",
+          "versionCodename": "jammy",
+          "id": "ubuntu",
+          "idLike": "debian"
+        }
+      },
+      {
+        "hostname": "vm4",
+        "machineId": "ec286789-3d12-64fb-9ca4-5707756a47d0",
+        "cpu": {
+          "architecture": "x86_64",
+          "cpus": 1,
+          "cores": 2,
+          "threads": 4,
+          "maxSpeed": 3.1,
+          "vendor": "GenuineIntel",
+          "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz"
+        },
+        "memory": {
+          "type": "DDR4",
+          "totalSize": 16,
+          "available": 15
+        },
+        "rootDisk": {
+          "label": "/dev/nvme0n1p1",
+          "type": "SSD",
+          "totalSize": 50
+        },
+        "interfaces": [
+          {
+            "name": "lo",
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
+            "mtu": 65536,
+            "state": "up"
+          },
+          {
+            "name": "ens5",
+            "macAddress": "02:ff:f3:00:86:6f",
+            "ipv4CidrBlocks": [
+              "10.0.1.247/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::ff:f3ff:fe00:866f/64"
+            ],
+            "mtu": 9001,
+            "state": "up"
+          }
+        ],
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.0.2/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.0/24",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.1/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::/64",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::ff:f3ff:fe00:866f/128",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          }
+        ],
+        "firewallTable": [
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "icmp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "67",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "68",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "224.0.0.251/32",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "239.255.255.250/32",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8005",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8005",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8009",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8009",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "5432",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
             "dstCIDR": "0.0.0.0/0",
             "dstPorts": "9999",
             "protocol": "tcp",
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*"
+            "direction": "inbound",
+            "action": "allow"
           },
           {
-            "action": "allow",
-            "direction": "inbound",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "*",
-            "protocol": "*",
             "srcCIDR": "10.0.0.0/16",
-            "srcPorts": "*"
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9999",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
           },
           {
-            "action": "allow",
-            "direction": "outbound",
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8000-8100",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
             "dstCIDR": "0.0.0.0/0",
             "dstPorts": "*",
             "protocol": "*",
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*"
-          }
-        ],
-        "hostname": "ip-10-0-1-30",
-        "interfaces": [
-          {
-            "ipv4CidrBlocks": [
-              "127.0.0.1/8"
-            ],
-            "ipv6CidrBlocks": [
-              "::1/128"
-            ],
-            "mtu": 65536,
-            "name": "lo",
-            "state": "up"
-          },
-          {
-            "ipv4CidrBlocks": [
-              "10.0.1.30/24"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::6f:deff:fefc:71b1/64"
-            ],
-            "macAddress": "02:6f:de:fc:71:b1",
-            "mtu": 9001,
-            "name": "ens5",
-            "state": "up"
-          }
-        ],
-        "machineId": "ec268ed7-821e-9d73-e79f-961262161624",
-        "memory": {
-          "available": 1,
-          "totalSize": 2,
-          "type": "DDR4"
-        },
-        "os": {
-          "id": "ubuntu",
-          "idLike": "debian",
-          "name": "Ubuntu",
-          "prettyName": "Ubuntu 22.04.3 LTS",
-          "version": "22.04.3 LTS (Jammy Jellyfish)",
-          "versionCodename": "jammy",
-          "versionId": "22.04"
-        },
-        "rootDisk": {
-          "label": "",
-          "totalSize": 8,
-          "type": "SSD"
-        },
-        "routingTable": [
-          {
-            "destination": "0.0.0.0/0",
-            "gateway": "10.0.1.1",
-            "interface": "ens5",
-            "linkState": "up",
-            "metric": 100,
-            "protocol": "kernel",
-            "scope": "universe"
-          },
-          {
-            "destination": "10.0.1.0/24",
-            "gateway": "10.0.1.1",
-            "interface": "ens5",
-            "linkState": "up",
-            "metric": 100,
-            "protocol": "kernel",
-            "scope": "universe"
-          }
-        ]
-      },
-      {
-        "cpu": {
-          "architecture": "x86_64",
-          "cores": 2,
-          "cpus": 1,
-          "maxSpeed": 2.499,
-          "model": "Intel(R) Xeon(R) Platinum 8175M CPU @ 2.50GHz",
-          "threads": 4,
-          "vendor": "GenuineIntel"
-        },
-        "firewallTable": [
-          {
-            "action": "allow",
             "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
             "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "547",
+            "dstCIDR": "fe80::/10",
+            "dstPorts": "546",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::fb/128",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::f/128",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
             "dstPorts": "22",
             "protocol": "tcp",
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*"
+            "direction": "inbound",
+            "action": "allow"
           },
           {
-            "action": "allow",
-            "direction": "inbound",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "8086",
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "8080",
             "protocol": "tcp",
-            "srcCIDR": "10.0.0.0/16",
-            "srcPorts": "*"
-          },
-          {
-            "action": "allow",
             "direction": "inbound",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "*",
-            "protocol": "*",
-            "srcCIDR": "10.0.0.0/16",
-            "srcPorts": "*"
+            "action": "allow"
           },
           {
-            "action": "allow",
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "8443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "5432",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
             "direction": "outbound",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "*",
-            "protocol": "*",
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*"
-          }
-        ],
-        "hostname": "ip-10-0-1-221",
-        "interfaces": [
-          {
-            "ipv4CidrBlocks": [
-              "127.0.0.1/8"
-            ],
-            "ipv6CidrBlocks": [
-              "::1/128"
-            ],
-            "mtu": 65536,
-            "name": "lo",
-            "state": "up"
+            "action": "allow"
           },
           {
-            "ipv4CidrBlocks": [
-              "10.0.1.221/24"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::8:96ff:fe7d:f417/64"
-            ],
-            "macAddress": "02:08:96:7d:f4:17",
-            "mtu": 9001,
-            "name": "ens5",
-            "state": "up"
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
           }
         ],
-        "machineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
-        "memory": {
-          "available": 15,
-          "totalSize": 16,
-          "type": "DDR4"
-        },
         "os": {
-          "id": "ubuntu",
-          "idLike": "debian",
-          "name": "Ubuntu",
           "prettyName": "Ubuntu 22.04.3 LTS",
           "version": "22.04.3 LTS (Jammy Jellyfish)",
-          "versionCodename": "jammy",
-          "versionId": "22.04"
-        },
-        "rootDisk": {
-          "label": "",
-          "totalSize": 30,
-          "type": "SSD"
-        },
-        "routingTable": [
-          {
-            "destination": "0.0.0.0/0",
-            "gateway": "10.0.1.1",
-            "interface": "ens5",
-            "linkState": "up",
-            "metric": 100,
-            "protocol": "kernel",
-            "scope": "universe"
-          },
-          {
-            "destination": "10.0.1.0/24",
-            "gateway": "10.0.1.1",
-            "interface": "ens5",
-            "linkState": "up",
-            "metric": 100,
-            "protocol": "kernel",
-            "scope": "universe"
-          }
-        ]
-      },
-      {
-        "cpu": {
-          "architecture": "x86_64",
-          "cores": 2,
-          "cpus": 1,
-          "maxSpeed": 2.499,
-          "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
-          "threads": 4,
-          "vendor": "GenuineIntel"
-        },
-        "firewallTable": [
-          {
-            "action": "allow",
-            "direction": "inbound",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "22",
-            "protocol": "tcp",
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*"
-          },
-          {
-            "action": "allow",
-            "direction": "inbound",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "8086",
-            "protocol": "tcp",
-            "srcCIDR": "10.0.0.0/16",
-            "srcPorts": "*"
-          },
-          {
-            "action": "allow",
-            "direction": "inbound",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "*",
-            "protocol": "*",
-            "srcCIDR": "10.0.0.0/16",
-            "srcPorts": "*"
-          },
-          {
-            "action": "allow",
-            "direction": "outbound",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "*",
-            "protocol": "*",
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*"
-          }
-        ],
-        "hostname": "ip-10-0-1-138",
-        "interfaces": [
-          {
-            "ipv4CidrBlocks": [
-              "127.0.0.1/8"
-            ],
-            "ipv6CidrBlocks": [
-              "::1/128"
-            ],
-            "mtu": 65536,
-            "name": "lo",
-            "state": "up"
-          },
-          {
-            "ipv4CidrBlocks": [
-              "10.0.1.138/24"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::bf:6eff:fe6c:6e31/64"
-            ],
-            "macAddress": "02:bf:6e:6c:6e:31",
-            "mtu": 9001,
-            "name": "ens5",
-            "state": "up"
-          }
-        ],
-        "machineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "memory": {
-          "available": 7,
-          "totalSize": 8,
-          "type": "DDR4"
-        },
-        "os": {
-          "id": "ubuntu",
-          "idLike": "debian",
           "name": "Ubuntu",
-          "prettyName": "Ubuntu 22.04.3 LTS",
-          "version": "22.04.3 LTS (Jammy Jellyfish)",
+          "versionId": "22.04",
           "versionCodename": "jammy",
-          "versionId": "22.04"
-        },
-        "rootDisk": {
-          "label": "",
-          "totalSize": 30,
-          "type": "SSD"
-        },
-        "routingTable": [
-          {
-            "destination": "0.0.0.0/0",
-            "gateway": "10.0.1.1",
-            "interface": "ens5",
-            "linkState": "up",
-            "metric": 100,
-            "protocol": "kernel",
-            "scope": "universe"
-          },
-          {
-            "destination": "10.0.1.0/24",
-            "gateway": "10.0.1.1",
-            "interface": "ens5",
-            "linkState": "up",
-            "metric": 100,
-            "protocol": "kernel",
-            "scope": "universe"
-          }
-        ]
-      }
-    ],
-    "nlbs": [
-      {
-        "hostMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
-        "software": "haproxy",
-        "listener": {
-          "bindAddress": "*",
-          "port": 9999,
-          "protocol": "tcp"
-        },
-        "backend": {
-          "name": "influxdb_back",
-          "balance": "roundrobin",
-          "protocol": "tcp",
-          "servers": [
-            {
-              "name": "influx1",
-              "ip": "10.0.1.221",
-              "port": 8086
-            },
-            {
-              "name": "influx2",
-              "ip": "10.0.1.138",
-              "port": 8086
-            }
-          ]
-        },
-        "healthCheck": {
-          "enabled": true,
-          "interval": 10,
-          "timeout": 10,
-          "threshold": 3
+          "id": "ubuntu",
+          "idLike": "debian"
         }
       }
     ]
   },
-  "updatedTime": "2026-09-10T10:18:27.269Z"
+  "updatedTime": "2026-11-09T08:56:04.623Z"
 }

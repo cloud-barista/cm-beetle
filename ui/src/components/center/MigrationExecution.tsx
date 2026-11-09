@@ -462,7 +462,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 setToastMsg(`✕ [${job.infraId}] Migration Failed: ${errorMsg}`);
                 setTimeout(() => setToastMsg(null), 6000);
 
-                const cleanedLogs = updatedJob.logs.filter(l => !l.includes('GET /beetle/request/'));
+                const cleanedLogs = updatedJob.logs.filter(l => !l.includes(`GET /beetle/request/${job.reqId}`));
                 return {
                   ...updatedJob,
                   status: 'Failed',
@@ -479,8 +479,10 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 setTimeout(() => setToastMsg(null), 5000);
 
                 // Stage 2: Automatic NLB Deployment Trigger if targetNlbList is present and nlbStatus is 'Idle'
-                if (job.targetNlbList && job.targetNlbList.length > 0 && (!job.nlbStatus || job.nlbStatus === 'Idle')) {
-                  beetleApi.migrateNlb(job.nsId, job.infraId, job.targetNlbList).then(nlbRes => {
+                const shouldTriggerNlb =
+                  job.targetNlbList && job.targetNlbList.length > 0 && (!job.nlbStatus || job.nlbStatus === 'Idle');
+                if (shouldTriggerNlb) {
+                  beetleApi.migrateNlb(job.nsId, job.infraId, job.targetNlbList!).then(nlbRes => {
                     if (nlbRes.success && nlbRes.reqId) {
                       setJobs(prev => prev.map(j => j.id === job.id ? {
                         ...j,
@@ -527,10 +529,11 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                       systemMessage: ''
                     }));
 
-                const cleanedLogs = updatedJob.logs.filter(l => !l.includes('GET /beetle/request/'));
+                const cleanedLogs = updatedJob.logs.filter(l => !l.includes(`GET /beetle/request/${job.reqId}`));
                 return {
                   ...updatedJob,
                   status: 'Success',
+                  nlbStatus: shouldTriggerNlb ? 'Provisioning' : updatedJob.nlbStatus,
                   logs: [
                     ...cleanedLogs,
                     `GET /beetle/request/${job.reqId} -> Status: Success (Duration: ${newElapsed}s)`
@@ -540,7 +543,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
               }
 
               // Still Handling on backend API
-              const cleanedLogs = updatedJob.logs.filter(l => !l.includes('GET /beetle/request/'));
+              const cleanedLogs = updatedJob.logs.filter(l => !l.includes(`GET /beetle/request/${job.reqId}`));
               return {
                 ...updatedJob,
                 logs: [
@@ -911,7 +914,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
         0
       ) ||
       0;
-    const builtInIds = new Set(['sample-9-node-testbed', 'sample-15-node-enterprise', 'demo-model-1', 'demo-gpu-model-1']);
+    const builtInIds = new Set(['sample-source-migration-testbed-1', 'sample-source-9node-testbed-1', 'sample-source-15node-dc-1', 'sample-source-infra-1', 'sample-source-gpu-infra-1', 'sample-9-node-testbed', 'sample-15-node-enterprise', 'demo-model-1', 'demo-gpu-model-1']);
     const userSavedModels = savedSourceModels.filter((m) => !builtInIds.has(m.id) && m.onpremiseInfraModel?.nodes?.length);
     const countMatchedModel =
       userSavedModels.find((m) => m.onpremiseInfraModel.nodes.length === targetNodeCount) ||

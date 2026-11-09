@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore, DEMO_SOURCE_INFRA } from '../../store/migrationStore';
-import { SAMPLE_9_NODE_TESTBED_INFRA } from '../../data/sample15NodeInfra';
+import { SAMPLE_9_NODE_TESTBED_INFRA, SAMPLE_MIGRATION_TESTBED_INFRA } from '../../data/sample15NodeInfra';
 import { honeybeeApi } from '../../api/client';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
 import {
@@ -596,6 +596,92 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     });
   };
 
+  // Parse YAML list of connection objects (supports OpenTofu yamlencode block scalars and quoted strings)
+  const parseYamlToObjects = (rawText: string): Record<string, string>[] => {
+    const lines = rawText.replace(/^\uFEFF/, '').split(/\r?\n/);
+    const items: Record<string, string>[] = [];
+    let currentItem: Record<string, string> | null = null;
+    let blockKey: string | null = null;
+    let blockIndent = 0;
+    let blockContentIndent = -1;
+    let blockLines: string[] = [];
+
+    const flushBlock = () => {
+      if (currentItem && blockKey) {
+        currentItem[blockKey] = blockLines.join('\n');
+      }
+      blockKey = null;
+      blockIndent = 0;
+      blockContentIndent = -1;
+      blockLines = [];
+    };
+
+    const unquoteYamlValue = (val: string): string => {
+      const trimmed = val.trim();
+      if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
+        return trimmed.slice(1, -1).replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+      }
+      if (trimmed.length >= 2 && trimmed.startsWith("'") && trimmed.endsWith("'")) {
+        return trimmed.slice(1, -1).replace(/''/g, "'");
+      }
+      return trimmed;
+    };
+
+    const parseKeyValue = (lineContent: string, target: Record<string, string>, lineIndent: number) => {
+      const colonIdx = lineContent.indexOf(':');
+      if (colonIdx === -1) return;
+      const key = unquoteYamlValue(lineContent.slice(0, colonIdx)).toLowerCase();
+      const rawVal = lineContent.slice(colonIdx + 1).trim();
+      if (/^[|>][-+]?$/.test(rawVal)) {
+        blockKey = key;
+        blockIndent = lineIndent;
+        blockContentIndent = -1;
+        blockLines = [];
+      } else {
+        target[key] = unquoteYamlValue(rawVal);
+      }
+    };
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const indent = line.search(/\S/);
+
+      if (blockKey) {
+        if (trimmed === '') {
+          blockLines.push('');
+          continue;
+        }
+        if (indent > blockIndent) {
+          if (blockContentIndent === -1) blockContentIndent = indent;
+          blockLines.push(line.slice(Math.min(blockContentIndent, indent)));
+          continue;
+        }
+        flushBlock();
+      }
+
+      if (!trimmed || trimmed.startsWith('#') || trimmed === '---' || trimmed === '...') continue;
+
+      if (trimmed.startsWith('- ') || trimmed === '-') {
+        if (currentItem && Object.keys(currentItem).length > 0) {
+          items.push(currentItem);
+        }
+        currentItem = {};
+        const afterDash = trimmed.slice(1).trim();
+        if (afterDash) {
+          parseKeyValue(afterDash, currentItem, indent);
+        }
+      } else if (currentItem) {
+        parseKeyValue(trimmed, currentItem, indent);
+      }
+    }
+
+    flushBlock();
+    if (currentItem && Object.keys(currentItem).length > 0) {
+      items.push(currentItem);
+    }
+    return items;
+  };
+
   const handleJsonImport = (setter: React.Dispatch<React.SetStateAction<ServerRow[]>>) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -604,11 +690,18 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       reader.onload = ev => {
         try {
           const content = String(ev.target?.result ?? '');
-          const isCsv = file.name.toLowerCase().endsWith('.csv') || !content.trim().startsWith('[');
-          const parsed = isCsv ? parseCsvToObjects(content) : JSON.parse(content);
+          const lowerName = file.name.toLowerCase();
+          const trimmed = content.trim();
+          const isJson = lowerName.endsWith('.json') || trimmed.startsWith('[');
+          const isYaml = lowerName.endsWith('.yaml') || lowerName.endsWith('.yml') || (!lowerName.endsWith('.csv') && !isJson && (trimmed.startsWith('-') || trimmed.startsWith('---')));
+          const parsed = isJson
+            ? JSON.parse(content)
+            : isYaml
+              ? parseYamlToObjects(content)
+              : parseCsvToObjects(content);
           if (Array.isArray(parsed) && parsed.length > 0) {
             const importedRows: ServerRow[] = parsed.map((item: any, idx: number) => {
-              const rawKey = normalizePemKey(String(item.private_key || item.privateKey || ''));
+              const rawKey = normalizePemKey(String(item.private_key || item.saved_private_key || item.privateKey || ''));
               const rawPort = item.ssh_port ?? item.port;
               return {
                 localId: `import-${idx}-${Date.now()}`,
@@ -635,18 +728,6 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
               setLastImportedSourceSshKey(firstImportedKey);
             }
 
-            // Auto-suggest group name & description in New Source Group modal if blank
-            if (showModal && !newGroupName.trim()) {
-              const fname = file.name.toLowerCase();
-              const isPublic = fname.includes('public');
-              setNewGroupName('ai-stack-testbed');
-              if (!newGroupDesc.trim()) {
-                setNewGroupDesc(
-                  `9-Node AWS AI Stack Testbed (${isPublic ? 'Public IP' : 'Private IP'} - 3 AI Inference, 3 Analytics Compute, 3 Backend & DB)`
-                );
-              }
-            }
-
             setter(prev => {
               const existingRegistered = prev.filter(r => r.connId);
               return existingRegistered.length > 0
@@ -654,10 +735,10 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                 : importedRows;
             });
           } else {
-            alert('File must contain at least one server row (CSV or JSON array).');
+            alert('File must contain at least one server row (CSV, JSON, or YAML).');
           }
         } catch {
-          alert('Invalid CSV or JSON format.');
+          alert('Invalid CSV, JSON, or YAML format.');
         } finally {
           e.target.value = '';
         }
@@ -684,11 +765,45 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
 
   // ─── Inline Section 2 actions ─────────────────────────────────
 
-  // Load built-in 9-node AI Stack Testbed sample infrastructure (no API call required)
+  const SAMPLE_MIG_ID = 'sg-sample-mig-testbed';
+  const SAMPLE_AI_ID = 'sg-sample';
+
+  const sampleMigTestbedConnections = [
+    { id: 'mig-c1', name: 'vm1', description: 'Web Server - Nginx HTTP/HTTPS (:80, :443, :8080)', ip_address: '10.0.1.11', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    { id: 'mig-c2', name: 'vm2', description: 'File Server - NFS Storage (:2049, :111)', ip_address: '10.0.1.12', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    { id: 'mig-c3', name: 'vm3', description: 'Database Server - MariaDB Primary (:3306)', ip_address: '10.0.1.13', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    { id: 'mig-c4', name: 'vm4', description: 'Application Server - Apache Tomcat (:8080, :8443)', ip_address: '10.0.1.14', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    { id: 'mig-c5', name: 'vm5', description: 'Load Balancer - HAProxy (:80, :443, :9999, :8404)', ip_address: '10.0.1.15', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+  ];
+
+  const sampleAiStackConnections = [
+    { id: 'sample-c1', name: 'ai-gpu-01',          description: 'AI Inference Primary - Ollama (:11434) + gemma4:e2b + Open WebUI (:3000)', ip_address: '10.0.1.11', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    { id: 'sample-c2', name: 'ai-gpu-02',          description: 'AI Inference Worker 1 - Ollama Runtime (:11434)',                          ip_address: '10.0.1.12', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    { id: 'sample-c3', name: 'ai-gpu-03',          description: 'AI Inference Worker 2 - vLLM / Vector Worker (:8000, :11434)',             ip_address: '10.0.1.13', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    { id: 'sample-c4', name: 'data-master-01',     description: 'Analytics Compute Master - Spark / Airflow Coordinator (:8080, :7077)',    ip_address: '10.0.1.21', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    { id: 'sample-c5', name: 'data-worker-01',     description: 'Analytics Compute Worker - PySpark Worker (:8081, :7077)',                 ip_address: '10.0.1.22', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    { id: 'sample-c6', name: 'data-etl-01',        description: 'Analytics Compute ETL - Kafka / Batch ETL Preprocessing (:9092, :5044)',   ip_address: '10.0.1.23', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    { id: 'sample-c7', name: 'db-primary-01',      description: 'Backend & DB - PostgreSQL Primary Database (:5432)',                       ip_address: '10.0.1.31', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    { id: 'sample-c8', name: 'backend-api-01',     description: 'Backend & DB - FastAPI / Nginx Application Server (:80, :443, :8000)',     ip_address: '10.0.1.32', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    { id: 'sample-c9', name: 'storage-gateway-01', description: 'Backend & DB - MinIO / NFS Storage Gateway (:9000, :9001, :2049)',         ip_address: '10.0.1.33', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+  ];
+
+  // Load built-in 5-node Migration Testbed & 9-node AI Stack Testbed sample infrastructure (no API call required)
   const handleLoadSampleInfra = () => {
-    const SAMPLE_ID = 'sg-sample';
-    const sampleGroup = {
-      id: SAMPLE_ID,
+    const sampleMigGroup = {
+      id: SAMPLE_MIG_ID,
+      name: '[Sample] migration-testbed',
+      description: '5-Node AWS Migration Testbed (vm1 Nginx, vm2 NFS, vm3 MariaDB, vm4 Tomcat, vm5 HAProxy NLB)',
+      connection_info_status_count: {
+        connection_info_total: 5,
+        count_connection_success: 5,
+        count_connection_failed: 0,
+        count_agent_success: 5,
+        count_agent_failed: 0,
+      },
+    };
+    const sampleAiGroup = {
+      id: SAMPLE_AI_ID,
       name: '[Sample] ai-stack-testbed',
       description: '9-Node AWS AI Stack Testbed (3 AI Inference, 3 Analytics Compute, 3 Backend & DB on 10.0.1.x)',
       connection_info_status_count: {
@@ -699,24 +814,13 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
         count_agent_failed: 0,
       },
     };
-    const sampleConnections = [
-      { id: 'sample-c1', name: 'ai-gpu-01',          description: 'AI Inference Primary - Ollama (:11434) + gemma4:e2b + Open WebUI (:3000)', ip_address: '10.0.1.11', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
-      { id: 'sample-c2', name: 'ai-gpu-02',          description: 'AI Inference Worker 1 - Ollama Runtime (:11434)',                          ip_address: '10.0.1.12', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
-      { id: 'sample-c3', name: 'ai-gpu-03',          description: 'AI Inference Worker 2 - vLLM / Vector Worker (:8000, :11434)',             ip_address: '10.0.1.13', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
-      { id: 'sample-c4', name: 'data-master-01',     description: 'Analytics Compute Master - Spark / Airflow Coordinator (:8080, :7077)',    ip_address: '10.0.1.21', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
-      { id: 'sample-c5', name: 'data-worker-01',     description: 'Analytics Compute Worker - PySpark Worker (:8081, :7077)',                 ip_address: '10.0.1.22', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
-      { id: 'sample-c6', name: 'data-etl-01',        description: 'Analytics Compute ETL - Kafka / Batch ETL Preprocessing (:9092, :5044)',   ip_address: '10.0.1.23', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
-      { id: 'sample-c7', name: 'db-primary-01',      description: 'Backend & DB - PostgreSQL Primary Database (:5432)',                       ip_address: '10.0.1.31', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
-      { id: 'sample-c8', name: 'backend-api-01',     description: 'Backend & DB - FastAPI / Nginx Application Server (:80, :443, :8000)',     ip_address: '10.0.1.32', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
-      { id: 'sample-c9', name: 'storage-gateway-01', description: 'Backend & DB - MinIO / NFS Storage Gateway (:9000, :9001, :2049)',         ip_address: '10.0.1.33', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
-    ];
     const current = useMigrationStore.getState().sourceGroups;
-    const withoutSample = current.filter((g: any) => g.id !== SAMPLE_ID);
+    const withoutSample = current.filter((g: any) => g.id !== SAMPLE_MIG_ID && g.id !== SAMPLE_AI_ID);
     useMigrationStore.setState({
-      sourceGroups: [sampleGroup, ...withoutSample],
-      activeSgId: SAMPLE_ID,
-      connections: sampleConnections,
-      refinedSourceInfra: SAMPLE_9_NODE_TESTBED_INFRA,
+      sourceGroups: [sampleMigGroup, sampleAiGroup, ...withoutSample],
+      activeSgId: SAMPLE_MIG_ID,
+      connections: sampleMigTestbedConnections,
+      refinedSourceInfra: SAMPLE_MIGRATION_TESTBED_INFRA,
     });
     setRegisterStatus('done');
     setImportStatus('done');
@@ -728,9 +832,23 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     setRegisterStatus('idle');
     setImportStatus('idle');
     setRefreshStatus('idle');
-    // Skip API call for the built-in sample group - connections are already in store
-    if (sgId === 'sg-sample') {
-      useMigrationStore.setState({ refinedSourceInfra: SAMPLE_9_NODE_TESTBED_INFRA });
+    // Skip API call for the built-in sample groups - populate sample connections and infra directly
+    if (sgId === SAMPLE_MIG_ID) {
+      useMigrationStore.setState({
+        connections: sampleMigTestbedConnections,
+        refinedSourceInfra: SAMPLE_MIGRATION_TESTBED_INFRA,
+      });
+      setRegisterStatus('done');
+      setImportStatus('done');
+      return;
+    }
+    if (sgId === SAMPLE_AI_ID) {
+      useMigrationStore.setState({
+        connections: sampleAiStackConnections,
+        refinedSourceInfra: SAMPLE_9_NODE_TESTBED_INFRA,
+      });
+      setRegisterStatus('done');
+      setImportStatus('done');
       return;
     }
     // Set refinedSourceInfra to null first when switching groups so we don't show stale preview
@@ -750,7 +868,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
   const handleDeleteInlineRow = (localId: string) => {
     const row = serverRows.find(r => r.localId === localId);
     if (!row) return;
-    if (row.connId && activeSgId && activeSgId !== 'sg-sample') {
+    if (row.connId && activeSgId && activeSgId !== SAMPLE_AI_ID && activeSgId !== SAMPLE_MIG_ID) {
       setConnectionToDelete({ localId, connId: row.connId, name: row.name || row.ip || 'Unnamed Server' });
       setConnDeleteConfirmText('');
       setConnDeleteError('');
@@ -784,7 +902,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
   };
 
   const handleRegisterConnections = async () => {
-    if (!activeSgId || activeSgId === 'sg-sample') return;
+    if (!activeSgId || activeSgId === SAMPLE_AI_ID || activeSgId === SAMPLE_MIG_ID) return;
     const newRows = serverRows.filter(r => !r.connId && r.ip.trim());
     if (newRows.length === 0) return;
     const missing = newRows.filter(r => !hasAuth(r, useCommonCred, commonKey, commonPassword));
@@ -804,11 +922,16 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       const list: any[] = data?.connection_info || (Array.isArray(data) ? data : []);
       useMigrationStore.setState({ connections: list });
       setRegisterStatus('done');
-    } catch (err) { console.error('Register failed:', err); setRegisterStatus('failed'); }
+    } catch (err: any) {
+      console.error('Register failed:', err);
+      const errMsg = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to register server connections.';
+      setRegisterCredError(errMsg);
+      setRegisterStatus('failed');
+    }
   };
 
   const handleRefreshAll = async () => {
-    if (!activeSgId || activeSgId === 'sg-sample') return;
+    if (!activeSgId || activeSgId === SAMPLE_AI_ID || activeSgId === SAMPLE_MIG_ID) return;
     setRefreshStatus('refreshing');
     try {
       await refreshSourceGroup(activeSgId);
@@ -857,10 +980,10 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
         await createSourceGroup(newGroupName.trim(), newGroupDesc.trim());
       }
       setShowModal(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Create group failed:', err);
-      await createSourceGroup(newGroupName.trim(), newGroupDesc.trim());
-      setShowModal(false);
+      const errMsg = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to create source group and register server connections.';
+      setModalCredError(errMsg);
     } finally {
       setIsCreating(false);
     }
@@ -888,7 +1011,12 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
   // ─── Collect & Save ──────────────────────────────────────────────
   const handleImportInfra = async () => {
     if (!activeSgId) return;
-    if (activeSgId === 'sg-sample') {
+    if (activeSgId === SAMPLE_MIG_ID) {
+      useMigrationStore.setState({ refinedSourceInfra: SAMPLE_MIGRATION_TESTBED_INFRA });
+      setImportStatus('done');
+      return;
+    }
+    if (activeSgId === SAMPLE_AI_ID) {
       useMigrationStore.setState({ refinedSourceInfra: SAMPLE_9_NODE_TESTBED_INFRA });
       setImportStatus('done');
       return;
@@ -1091,8 +1219,8 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                 <Download className="w-3.5 h-3.5" /> Template (CSV)
               </button>
               <label className="px-3 py-2 bg-bg-panel border border-border-main hover:bg-bg-input rounded-lg text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer text-text-muted hover:text-text-main">
-                <Upload className="w-3.5 h-3.5" /> Import CSV / JSON
-                <input type="file" accept=".csv,.json" onChange={handleJsonImport(setServerRows)} className="hidden" />
+                <Upload className="w-3.5 h-3.5" /> Import CSV / JSON / YAML
+                <input type="file" accept=".csv,.json,.yaml,.yml" onChange={handleJsonImport(setServerRows)} className="hidden" />
               </label>
             </div>
           </div>
@@ -1530,8 +1658,8 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                       <Download className="w-3.5 h-3.5" /> Template (CSV)
                     </button>
                     <label className="px-3 py-1.5 bg-bg-panel border border-border-main hover:bg-bg-input rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer text-text-muted">
-                      <Upload className="w-3.5 h-3.5" /> Import CSV / JSON
-                      <input type="file" accept=".csv,.json" onChange={handleJsonImport(setModalRows)} className="hidden" />
+                      <Upload className="w-3.5 h-3.5" /> Import CSV / JSON / YAML
+                      <input type="file" accept=".csv,.json,.yaml,.yml" onChange={handleJsonImport(setModalRows)} className="hidden" />
                     </label>
                     <button onClick={addModalRow} className="px-3 py-1.5 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer text-emerald-600 dark:text-emerald-400">
                       <Plus className="w-3.5 h-3.5" /> Add Server
@@ -1732,7 +1860,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
         defaultDescription=""
         defaultVersion="1.0.0"
         existingRevisions={savedSourceModels
-          .filter(m => m.id !== 'sample-source-9node-testbed-1' && m.id !== 'sample-source-15node-dc-1' && m.id !== 'sample-source-infra-1' && m.id !== 'sample-source-gpu-infra-1' && (m.stage || 'source') === 'source')
+          .filter(m => m.id !== 'sample-source-migration-testbed-1' && m.id !== 'sample-source-9node-testbed-1' && m.id !== 'sample-source-15node-dc-1' && m.id !== 'sample-source-infra-1' && m.id !== 'sample-source-gpu-infra-1' && (m.stage || 'source') === 'source')
           .map(m => ({ id: m.id, name: m.name, version: m.version }))}
         onSave={handleSaveArtifact}
       />
