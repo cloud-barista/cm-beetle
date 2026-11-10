@@ -14,6 +14,7 @@ export const BUILTIN_SOURCE_INFRA_SAMPLE_IDS = new Set([
 
 export const BUILTIN_CLOUD_INFRA_SAMPLE_IDS = new Set([
   'sample-cloud-migration-testbed-1',
+  'sample-cloud-ai-stack-testbed-1',
   'sample-mig-testbed-cloud-1',
   'cloud-demo-1',
 ]);

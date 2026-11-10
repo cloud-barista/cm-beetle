@@ -8,8 +8,10 @@ import sampleGpuData from '../data/sampleSourceGpuInfra.json';
 import {
   SAMPLE_15_NODE_MODEL,
   SAMPLE_9_NODE_TESTBED_MODEL,
+  SAMPLE_MIGRATION_TESTBED_INFRA,
   SAMPLE_MIGRATION_TESTBED_MODEL,
   SAMPLE_MIGRATION_TESTBED_CLOUD_MODEL,
+  SAMPLE_AI_STACK_TESTBED_CLOUD_MODEL,
 } from '../data/sample15NodeInfra';
 
 // ----------------------------------------------------------------------------
@@ -193,8 +195,6 @@ interface MigrationState {
   refinedSourceInfra: OnpremInfra | null;
   savedSourceModels: OnpremModelEnvelope[];
   selectedSourceModel: OnpremModelEnvelope | null;
-  lastImportedSourceSshKey: string;
-  setLastImportedSourceSshKey: (key: string) => void;
   
   fetchSourceGroups: () => Promise<void>;
   createSourceGroup: (name: string, description: string) => Promise<string>;
@@ -424,11 +424,9 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   activeSgId: '',
   connections: [],
   isLoadingSource: false,
-  refinedSourceInfra: DEMO_SOURCE_INFRA,
-  savedSourceModels: [SAMPLE_MIGRATION_TESTBED_MODEL, SAMPLE_9_NODE_TESTBED_MODEL, SAMPLE_15_NODE_MODEL, DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL],
-  selectedSourceModel: DEFAULT_FALLBACK_SOURCE_MODEL,
-  lastImportedSourceSshKey: '',
-  setLastImportedSourceSshKey: (key) => set({ lastImportedSourceSshKey: key }),
+  refinedSourceInfra: SAMPLE_MIGRATION_TESTBED_INFRA,
+  savedSourceModels: [SAMPLE_MIGRATION_TESTBED_MODEL, SAMPLE_9_NODE_TESTBED_MODEL, SAMPLE_15_NODE_MODEL],
+  selectedSourceModel: SAMPLE_MIGRATION_TESTBED_MODEL,
   tumblebugProviders: [
     'aws', 'azure', 'gcp', 'alibaba', 'tencent',
     'ibm', 'ncp', 'nhn', 'kt', 'openstack'
@@ -474,10 +472,12 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   deleteSourceGroup: async (sgId) => {
-    try {
-      await honeybeeApi.deleteSourceGroup(sgId);
-    } catch {
-      // proceed with local removal even if API call fails
+    if (sgId !== 'sg-sample' && sgId !== 'sg-sample-mig-testbed') {
+      try {
+        await honeybeeApi.deleteSourceGroup(sgId);
+      } catch {
+        // proceed with local removal even if API call fails
+      }
     }
     const updated = get().sourceGroups.filter((g: any) => g.id !== sgId);
     const nextActiveId = get().activeSgId === sgId ? (updated[0]?.id || '') : get().activeSgId;
@@ -547,7 +547,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   fetchSavedSourceModels: async () => {
-    const builtInSamples = [SAMPLE_MIGRATION_TESTBED_MODEL, SAMPLE_9_NODE_TESTBED_MODEL, SAMPLE_15_NODE_MODEL, DEFAULT_FALLBACK_SOURCE_MODEL, DEFAULT_GPU_SOURCE_MODEL];
+    const builtInSamples = [SAMPLE_MIGRATION_TESTBED_MODEL, SAMPLE_9_NODE_TESTBED_MODEL, SAMPLE_15_NODE_MODEL];
     const builtInIds = new Set(builtInSamples.map(s => s.id));
     let allModels: OnpremModelEnvelope[] = [];
     let userModels: OnpremModelEnvelope[] = [];
@@ -565,17 +565,22 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
       ? allModels.find(m => m.id === cloudLineage.planningModelId || m.id === cloudLineage.sourceModelId)
       : undefined;
 
-    let updatedSelected = curSelected ? (allModels.find(m => m.id === curSelected.id) || curSelected) : DEFAULT_FALLBACK_SOURCE_MODEL;
+    let updatedSelected = curSelected ? (allModels.find(m => m.id === curSelected.id) || curSelected) : SAMPLE_MIGRATION_TESTBED_MODEL;
     if (lineageMatch) {
       updatedSelected = lineageMatch;
-    } else if (updatedSelected.id === DEFAULT_FALLBACK_SOURCE_MODEL.id && userModels.length > 0) {
+    } else if (
+      (updatedSelected.id === SAMPLE_MIGRATION_TESTBED_MODEL.id || updatedSelected.id === DEFAULT_FALLBACK_SOURCE_MODEL.id) &&
+      userModels.length > 0
+    ) {
       updatedSelected = userModels[userModels.length - 1];
     }
 
     const curRefined = get().refinedSourceInfra;
+    const activeSgId = get().activeSgId;
     const shouldSyncRefined =
       !curRefined ||
       curRefined === DEMO_SOURCE_INFRA ||
+      (!activeSgId && curRefined === SAMPLE_MIGRATION_TESTBED_INFRA) ||
       (updatedSelected?.onpremiseInfraModel?.nodes &&
         curRefined.nodes &&
         curRefined.nodes.length === DEMO_SOURCE_INFRA.nodes.length &&
@@ -666,17 +671,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   editedCandidate: null,
   savedCloudModels: [
     SAMPLE_MIGRATION_TESTBED_CLOUD_MODEL,
-    {
-      id: 'cloud-demo-1',
-      name: '[Sample] cloud-target-v1',
-      description: 'Optimized Cloud architecture generated for onpremise cluster.',
-      cloudInfraModel: recommendedInfraSample.data[0] as any,
-      version: '1.0',
-      stage: 'target',
-      category: 'infra',
-      schemaType: 'RecommendedInfra',
-      updatedTime: new Date().toISOString()
-    }
+    SAMPLE_AI_STACK_TESTBED_CLOUD_MODEL,
   ],
   selectedCloudModel: null,
   isRecommending: false,
@@ -773,17 +768,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   fetchSavedCloudModels: async () => {
     const fallbackCloudModels: CloudModelEnvelope[] = [
       SAMPLE_MIGRATION_TESTBED_CLOUD_MODEL,
-      {
-        id: 'cloud-demo-1',
-        name: '[Sample] cloud-target-v1',
-        description: 'Optimized Cloud architecture generated for onpremise cluster.',
-        cloudInfraModel: recommendedInfraSample.data[0] as any,
-        version: '1.0',
-        stage: 'target',
-        category: 'infra',
-        schemaType: 'RecommendedInfra',
-        updatedTime: new Date().toISOString()
-      }
+      SAMPLE_AI_STACK_TESTBED_CLOUD_MODEL,
     ];
     try {
       const models = await artifactApi.getCloudModels();
@@ -805,10 +790,11 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   selectCloudModel: (model) => {
-    let infra = model ? (model.cloudInfraModel || (model as any).cloud_infra_model || (model as any).recommendedInfra) : null;
-    if (typeof infra === 'string') {
-      try { infra = JSON.parse(infra); } catch (e) {}
+    let rawInfra = model ? (model.cloudInfraModel || (model as any).cloud_infra_model || (model as any).recommendedInfra) : null;
+    if (typeof rawInfra === 'string') {
+      try { rawInfra = JSON.parse(rawInfra); } catch (e) {}
     }
+    const infra = rawInfra ? JSON.parse(JSON.stringify(rawInfra)) : null;
     const lineage = model?.lineage;
     const linkedSource = lineage
       ? get().savedSourceModels.find(
