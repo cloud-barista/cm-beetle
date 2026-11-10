@@ -135,12 +135,18 @@ const extractNlbsFromRawServers = (rawServers: any[], refinedNodes: OnpremNode[]
   return nlbs;
 };
 
-// Backfill GPU cards, NVMe rootDisk size, and HAProxy NLBs from raw Honeybee infra when omitted by cm-honeybee refiner
-const enrichRefinedInfraWithRawData = (refined: OnpremInfra, rawData: any): OnpremInfra => {
+// Backfill GPU cards, NVMe rootDisk size, HAProxy NLBs, and connection hostnames from raw Honeybee infra
+const enrichRefinedInfraWithRawData = (
+  refined: OnpremInfra,
+  rawData: any,
+  connections?: any[],
+  targetConnId?: string
+): OnpremInfra => {
   if (!refined || !Array.isArray(refined.nodes)) return refined;
   const rawServers: any[] = Array.isArray(rawData?.servers)
     ? rawData.servers
     : (rawData?.compute || rawData?.gpu || rawData?.haproxy ? [rawData] : []);
+  const connList: any[] = Array.isArray(connections) ? connections : [];
 
   const existingNlbs = Array.isArray(refined.nlbs) && refined.nlbs.length > 0 ? refined.nlbs : [];
   const extractedNlbs = existingNlbs.length > 0 ? existingNlbs : extractNlbsFromRawServers(rawServers, refined.nodes);
@@ -148,12 +154,39 @@ const enrichRefinedInfraWithRawData = (refined: OnpremInfra, rawData: any): Onpr
   return {
     ...refined,
     ...(extractedNlbs.length > 0 ? { nlbs: extractedNlbs } : {}),
-    nodes: refined.nodes.map((node) => {
+    nodes: refined.nodes.map((node, nodeIdx) => {
       const matchedServer = rawServers.find((srv: any) => {
         const rawMachineId = srv?.compute?.os?.node?.machineid;
         const rawHostname = srv?.compute?.os?.node?.hostname;
         return (rawMachineId && rawMachineId === node.machineId) || (rawHostname && rawHostname === node.hostname);
       });
+
+      const nodeIps = (node.interfaces || [])
+        .flatMap((iface) => iface.ipv4CidrBlocks || [])
+        .map((cidr) => String(cidr).split('/')[0]?.trim())
+        .filter((ip) => Boolean(ip && ip !== '127.0.0.1'));
+
+      const isGenericCloudHostname =
+        !node.hostname ||
+        /^ip-\d+-\d+-\d+-\d+/i.test(node.hostname.trim()) ||
+        /^localhost$/i.test(node.hostname.trim());
+
+      const matchedConn =
+        (targetConnId ? connList.find((c: any) => c?.id === targetConnId) : undefined) ||
+        connList.find((c: any) => {
+          const connIp = String(c?.ip_address || c?.ip || '').trim();
+          return connIp && nodeIps.includes(connIp);
+        }) ||
+        connList.find((c: any) => c?.name && c.name === node.hostname) ||
+        (isGenericCloudHostname && connList.length === refined.nodes.length ? connList[nodeIdx] : undefined);
+
+      const connName = String(matchedConn?.name || '').trim();
+      const resolvedHostname =
+        isGenericCloudHostname && connName && !/^host\s*\d+$/i.test(connName)
+          ? connName
+          : node.hostname;
+      const resolvedWorkloadTag =
+        node.workloadTag || (matchedConn?.description ? String(matchedConn.description).trim() : undefined);
 
       const rawNvidiaGpus: any[] = Array.isArray(matchedServer?.gpu?.nvidia) ? matchedServer.gpu.nvidia : [];
       const hasExistingGpus = Array.isArray(node.gpuCards) && node.gpuCards.length > 0;
@@ -200,11 +233,13 @@ const enrichRefinedInfraWithRawData = (refined: OnpremInfra, rawData: any): Onpr
         : {
             label: node.rootDisk?.label || '/dev/nvme0n1p1',
             type: node.rootDisk?.type || 'SSD',
-            totalSize: node.hostname === 'ai-gpu-01' ? 100 : (hasGpu ? 80 : 50),
+            totalSize: resolvedHostname === 'ai-gpu-01' ? 100 : (hasGpu ? 80 : 50),
           };
 
       return {
         ...node,
+        hostname: resolvedHostname,
+        ...(resolvedWorkloadTag ? { workloadTag: resolvedWorkloadTag } : {}),
         ...(gpuCards ? { gpuCards } : {}),
         rootDisk,
       };
@@ -262,25 +297,33 @@ export const honeybeeApi = {
 
   // Get refined OnpremInfra model after background scan finishes
   getRefinedInfraByConnection: async (sgId: string, connId: string): Promise<OnpremInfra> => {
-    const refinedRes = await api.get(`/honeybee/source_group/${sgId}/connection_info/${connId}/infra/refined`);
+    const [refinedRes, connRes] = await Promise.all([
+      api.get(`/honeybee/source_group/${sgId}/connection_info/${connId}/infra/refined`),
+      api.get(`/honeybee/source_group/${sgId}/connection_info`).catch(() => ({ data: null })),
+    ]);
     const refined = refinedRes.data?.onpremiseInfraModel || refinedRes.data;
+    const connList = connRes.data?.connection_info || (Array.isArray(connRes.data) ? connRes.data : []);
     const hasNativeGpu = Array.isArray(refined?.nodes) && refined.nodes.some((n: any) => Array.isArray(n.gpuCards) && n.gpuCards.length > 0);
     const hasNativeNlb = Array.isArray(refined?.nlbs) && refined.nlbs.length > 0;
     const rawRes = (hasNativeGpu && hasNativeNlb)
       ? { data: null }
       : await api.get(`/honeybee/source_group/${sgId}/connection_info/${connId}/infra`).catch(() => ({ data: null }));
-    return enrichRefinedInfraWithRawData(refined, rawRes.data);
+    return enrichRefinedInfraWithRawData(refined, rawRes.data, connList, connId);
   },
 
   getRefinedInfraByGroup: async (sgId: string): Promise<OnpremInfra> => {
-    const refinedRes = await api.get(`/honeybee/source_group/${sgId}/infra/refined`);
+    const [refinedRes, connRes] = await Promise.all([
+      api.get(`/honeybee/source_group/${sgId}/infra/refined`),
+      api.get(`/honeybee/source_group/${sgId}/connection_info`).catch(() => ({ data: null })),
+    ]);
     const refined = refinedRes.data?.onpremiseInfraModel || refinedRes.data;
+    const connList = connRes.data?.connection_info || (Array.isArray(connRes.data) ? connRes.data : []);
     const hasNativeGpu = Array.isArray(refined?.nodes) && refined.nodes.some((n: any) => Array.isArray(n.gpuCards) && n.gpuCards.length > 0);
     const hasNativeNlb = Array.isArray(refined?.nlbs) && refined.nlbs.length > 0;
     const rawRes = (hasNativeGpu && hasNativeNlb)
       ? { data: null }
       : await api.get(`/honeybee/source_group/${sgId}/infra`).catch(() => ({ data: null }));
-    return enrichRefinedInfraWithRawData(refined, rawRes.data);
+    return enrichRefinedInfraWithRawData(refined, rawRes.data, connList);
   },
 
   // Create source group with embedded connection info (single API call)

@@ -1044,12 +1044,78 @@ export const DataTransferCenter: React.FC = () => {
 
   const [deleteModalJob, setDeleteModalJob] = useState<DataMigrationJob | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isRefreshingJobStatus, setIsRefreshingJobStatus] = useState(false);
 
   const handleConfirmDeleteDataRecord = () => {
     if (!deleteModalJob || deleteConfirmText !== deleteModalJob.reqId) return;
     removeDataJob(deleteModalJob.id);
     setDeleteModalJob(null);
     setDeleteConfirmText('');
+  };
+
+  const handleManualRefreshJobStatus = async (job: DataMigrationJob) => {
+    if (!job?.reqId || job.isSample || isRefreshingJobStatus) return;
+    setIsRefreshingJobStatus(true);
+    try {
+      const reqDetails = await beetleApi.getRequestDetails(job.reqId);
+      const status = reqDetails?.status;
+      const dur = calculateJobElapsedSeconds(job);
+      if (status === 'Completed' || status === 'Succeeded' || status === 'Success') {
+        const detailMsg = reqDetails?.responseData?.message
+          ? ` - ${reqDetails.responseData.message}`
+          : '';
+        setDataJobs((prevJobs) =>
+          prevJobs.map((j) =>
+            j.id === job.id
+              ? {
+                  ...j,
+                  status: 'Success',
+                  elapsedSeconds: dur,
+                  logs: [
+                    ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
+                    `GET /beetle/request/${job.reqId} -> Status: Success${detailMsg} (Duration: ${dur}s)`
+                  ]
+                }
+              : j
+          )
+        );
+      } else if (status === 'Failed' || status === 'Error') {
+        setDataJobs((prevJobs) =>
+          prevJobs.map((j) =>
+            j.id === job.id
+              ? {
+                  ...j,
+                  status: 'Failed',
+                  elapsedSeconds: dur,
+                  logs: [
+                    ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
+                    `GET /beetle/request/${job.reqId} -> Status: Failed (${reqDetails?.errorResponse || 'Execution Error'}) (Duration: ${dur}s)`
+                  ]
+                }
+              : j
+          )
+        );
+      } else {
+        setDataJobs((prevJobs) =>
+          prevJobs.map((j) =>
+            j.id === job.id
+              ? {
+                  ...j,
+                  elapsedSeconds: dur,
+                  logs: [
+                    ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
+                    `GET /beetle/request/${job.reqId} -> Status: Handling (Elapsed: ${dur}s)`
+                  ]
+                }
+              : j
+          )
+        );
+      }
+    } catch (err) {
+      console.warn('Manual refresh error for data job request', job.reqId, err);
+    } finally {
+      setIsRefreshingJobStatus(false);
+    }
   };
 
   const activeJob = dataJobs.find(j => j.id === activeJobId) || dataJobs[0];
@@ -1234,16 +1300,27 @@ export const DataTransferCenter: React.FC = () => {
                 <span>Field Encrypted</span>
               </div>
               {!activeJob.isSample && (
-                <button
-                  onClick={() => {
-                    setDeleteModalJob(activeJob);
-                    setDeleteConfirmText('');
-                  }}
-                  className="px-4 py-2 bg-bg-panel hover:bg-red-500/10 border border-border-main hover:border-red-500/30 text-text-muted hover:text-red-400 rounded-xl text-sm font-bold transition flex items-center space-x-1.5 cursor-pointer"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Delete Record</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => handleManualRefreshJobStatus(activeJob)}
+                    disabled={isRefreshingJobStatus}
+                    title="Manually poll current data migration status"
+                    className="px-4 py-2 bg-bg-panel hover:bg-emerald-500/10 border border-border-main hover:border-emerald-500/40 text-text-main hover:text-emerald-400 rounded-xl text-sm font-bold transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 text-emerald-500 ${isRefreshingJobStatus ? 'animate-spin' : ''}`} />
+                    <span>{isRefreshingJobStatus ? 'Refreshing...' : 'Refresh Status'}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDeleteModalJob(activeJob);
+                      setDeleteConfirmText('');
+                    }}
+                    className="px-4 py-2 bg-bg-panel hover:bg-red-500/10 border border-border-main hover:border-red-500/30 text-text-muted hover:text-red-400 rounded-xl text-sm font-bold transition flex items-center space-x-1.5 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Record</span>
+                  </button>
+                </>
               )}
             </div>
           </div>

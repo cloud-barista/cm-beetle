@@ -377,12 +377,15 @@ const TABLE_HEADER = (
 // Main component
 // ─────────────────────────────────────────────────────────
 
+const SAMPLE_MIG_ID = 'sg-sample-mig-testbed';
+const SAMPLE_AI_ID = 'sg-sample';
+
 export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ onNext }) => {
   const {
     sourceGroups, activeSgId, connections, refinedSourceInfra, isLoadingSource,
     fetchSourceGroups, createSourceGroup, deleteSourceGroup, refreshSourceGroup,
     registerConnection, fetchRefinedInfraByGroup, fetchSavedSourceModels, savedSourceModels,
-    saveSourceModel, updateSourceModel, setLastImportedSourceSshKey,
+    saveSourceModel, updateSourceModel,
   } = useMigrationStore();
 
   // ── Shared credentials (used in both modal & inline section) ────
@@ -441,7 +444,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
 
   // Re-fetch refined infra automatically if loaded state lacks enriched disk/GPU fields
   useEffect(() => {
-    if (activeSgId && activeSgId !== 'sg-sample' && refinedSourceInfra) {
+    if (activeSgId && activeSgId !== SAMPLE_AI_ID && activeSgId !== SAMPLE_MIG_ID && refinedSourceInfra) {
       const needsEnrichment = refinedSourceInfra.nodes?.some(n => !n.rootDisk?.totalSize);
       if (needsEnrichment) {
         fetchRefinedInfraByGroup(activeSgId);
@@ -512,7 +515,6 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
         reader.onload = ev => {
           const normalized = normalizePemKey(String(ev.target?.result ?? ''));
           makeUpdater(setter)(localId, 'privateKey', normalized);
-          if (normalized) setLastImportedSourceSshKey(normalized);
         };
         reader.readAsText(file);
       }
@@ -526,7 +528,6 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       reader.onload = ev => {
         const normalized = normalizePemKey(String(ev.target?.result ?? ''));
         makeUpdater(setter)(localId, 'privateKey', normalized);
-        if (normalized) setLastImportedSourceSshKey(normalized);
         e.target.value = '';
       };
       reader.readAsText(file);
@@ -540,7 +541,6 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       reader.onload = ev => {
         const normalized = normalizePemKey(String(ev.target?.result ?? ''));
         setCommonKey(normalized);
-        if (normalized) setLastImportedSourceSshKey(normalized);
       };
       reader.readAsText(file);
     }
@@ -553,7 +553,6 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     reader.onload = ev => {
       const normalized = normalizePemKey(String(ev.target?.result ?? ''));
       setCommonKey(normalized);
-      if (normalized) setLastImportedSourceSshKey(normalized);
       e.target.value = '';
     };
     reader.readAsText(file);
@@ -743,11 +742,10 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
               };
             });
 
-            // Auto-sync imported SSH Private Key to Shared Credentials & Store for Step 4 Data Migration
+            // Auto-sync imported SSH Private Key to local Shared Credentials only
             const firstImportedKey = importedRows.find(r => r.privateKey)?.privateKey || '';
-            if (firstImportedKey) {
-              if (!commonKey) setCommonKey(firstImportedKey);
-              setLastImportedSourceSshKey(firstImportedKey);
+            if (firstImportedKey && !commonKey) {
+              setCommonKey(firstImportedKey);
             }
 
             setter(prev => {
@@ -788,9 +786,6 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
   };
 
   // ─── Inline Section 2 actions ─────────────────────────────────
-
-  const SAMPLE_MIG_ID = 'sg-sample-mig-testbed';
-  const SAMPLE_AI_ID = 'sg-sample';
 
   const sampleMigTestbedConnections = [
     { id: 'mig-c1', name: 'vm1', description: 'Web Server - Nginx HTTP/HTTPS (:80, :443, :8080)', ip_address: '10.0.1.11', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
@@ -945,7 +940,6 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     try {
       for (const row of newRows) {
         const creds = resolveCredentials(row);
-        if (creds.privateKey) setLastImportedSourceSshKey(creds.privateKey);
         await registerConnection({ name: row.name, ip: row.ip, port: creds.port, user: creds.user, privateKey: creds.privateKey, password: creds.password, description: row.description || '' });
       }
       const data = await honeybeeApi.getConnectionInfoList(activeSgId);
@@ -997,7 +991,6 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       const connList = rowsWithIp
          .map(r => {
            const creds = resolveCredentials(r);
-           if (creds.privateKey) setLastImportedSourceSshKey(creds.privateKey);
            return { name: r.name || 'Server', ip_address: r.ip.trim(), ssh_port: String(creds.port), user: creds.user, private_key: creds.privateKey, password: creds.password, description: r.description || '' };
          });
 
@@ -1027,8 +1020,22 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
   const handleDeleteGroup = async (sgId: string) => {
     setIsDeletingGroup(true);
     setGroupDeleteError('');
+    const wasActive = activeSgId === sgId;
     try {
       await deleteSourceGroup(sgId);
+      const nextActiveId = useMigrationStore.getState().activeSgId;
+      if (wasActive) {
+        if (nextActiveId) {
+          handleSelectGroup(nextActiveId);
+        } else {
+          useMigrationStore.setState({ connections: [], refinedSourceInfra: null });
+          setRegisterStatus('idle');
+          setImportStatus('idle');
+          setRefreshStatus('idle');
+          setLastSavedSourceModel(null);
+          setHasUnsavedChanges(false);
+        }
+      }
       setDeleteConfirmId(null);
       setDeleteConfirmText('');
     } catch (err: any) {
@@ -1295,7 +1302,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
             enabled={useCommonCred} onToggleEnabled={setUseCommonCred}
             user={commonUser} onUser={setCommonUser}
             port={commonPort} onPort={setCommonPort}
-            pemKey={commonKey} onPemKey={(k) => { setCommonKey(k); if (k) setLastImportedSourceSshKey(k); }}
+            pemKey={commonKey} onPemKey={setCommonKey}
             password={commonPassword} onPassword={setCommonPassword}
             onKeyDrop={handleCommonKeyDrop}
             onKeyFileSelect={handleCommonKeyFileSelect}
@@ -1744,7 +1751,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                 enabled={useCommonCred} onToggleEnabled={setUseCommonCred}
                 user={commonUser} onUser={setCommonUser}
                 port={commonPort} onPort={setCommonPort}
-                pemKey={commonKey} onPemKey={(k) => { setCommonKey(k); if (k) setLastImportedSourceSshKey(k); }}
+                pemKey={commonKey} onPemKey={setCommonKey}
                 password={commonPassword} onPassword={setCommonPassword}
                 onKeyDrop={handleCommonKeyDrop}
                 onKeyFileSelect={handleCommonKeyFileSelect}

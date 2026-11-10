@@ -3,8 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope } from '../../types/migration';
-import sampleData from '../../data/sampleSourceInfra.json';
-import sampleGpuData from '../../data/sampleSourceGpuInfra.json';
 import {
   SAMPLE_15_NODE_MODEL,
   SAMPLE_9_NODE_TESTBED_MODEL,
@@ -30,41 +28,6 @@ import {
   FileText, Copy, Sparkles, GitBranch, Layers, X, Sliders,
   ArrowRight, ArrowLeft, Download,
 } from 'lucide-react';
-
-const SAMPLE_INFRA: OnpremInfra = sampleData.sourceInfra as unknown as OnpremInfra;
-const SAMPLE_GPU_INFRA: OnpremInfra = sampleGpuData.sourceInfra as unknown as OnpremInfra;
-
-export const SAMPLE_GPU_MODEL: OnpremModelEnvelope = {
-  id: 'sample-source-gpu-infra-1',
-  name: '[Sample] ai-gpu-cluster-multi-vendor',
-  description: 'AI/LLM cluster with heterogeneous GPUs (2x A100 80GB, 1x T4, 1x MI350, 1x L4)',
-  stage: 'source',
-  category: 'infra',
-  schemaType: 'OnpremInfra',
-  lineage: {
-    sourceGroupId: 'sg-sample-gpu',
-    sourceModelId: 'sample-source-gpu-infra-1',
-  },
-  onpremiseInfraModel: SAMPLE_GPU_INFRA,
-  version: '1.0',
-  updatedTime: new Date().toISOString(),
-};
-
-export const SAMPLE_MODEL: OnpremModelEnvelope = {
-  id: 'sample-source-infra-1',
-  name: '[Sample] web-haproxy-influxdb',
-  description: '1 HAProxy/App node + 2 InfluxDB nodes with NLB (sample)',
-  stage: 'source',
-  category: 'infra',
-  schemaType: 'OnpremInfra',
-  lineage: {
-    sourceGroupId: 'sg-sample-infra',
-    sourceModelId: 'sample-source-infra-1',
-  },
-  onpremiseInfraModel: SAMPLE_INFRA,
-  version: '1.0',
-  updatedTime: new Date().toISOString(),
-};
 
 type ClusterGroupFilter = 'all' | 'ai-inference' | 'analytics-compute' | 'backend-db';
 
@@ -458,8 +421,6 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     SAMPLE_MIGRATION_TESTBED_MODEL,
     SAMPLE_9_NODE_TESTBED_MODEL,
     SAMPLE_15_NODE_MODEL,
-    SAMPLE_MODEL,
-    SAMPLE_GPU_MODEL,
   ];
   const userModels = savedSourceModels.filter(m => !isBuiltInSampleModel(m));
   const userPlanningModels = userModels.filter(m => m.stage === 'planning');

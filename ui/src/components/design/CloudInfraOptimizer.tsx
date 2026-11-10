@@ -505,10 +505,21 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     if (!pendingCloudModel) return;
     selectCloudModel(pendingCloudModel);
     setLoadedCloudModelId(pendingCloudModel.id);
-    let infra = pendingCloudModel.cloudInfraModel || (pendingCloudModel as any).cloud_infra_model || (pendingCloudModel as any).recommendedInfra;
-    if (typeof infra === 'string') {
-      try { infra = JSON.parse(infra); } catch {}
+    const linkedSource = useMigrationStore.getState().selectedSourceModel;
+    if (linkedSource?.onpremiseInfraModel) {
+      setLoadedSourceModelId(linkedSource.id);
+      setPendingSourceModelId(linkedSource.id);
+      setTunedNodes(JSON.parse(JSON.stringify(linkedSource.onpremiseInfraModel.nodes || [])));
+      setTunedNetwork(JSON.parse(JSON.stringify(linkedSource.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
+      if (linkedSource.onpremiseInfraModel.nodes && linkedSource.onpremiseInfraModel.nodes.length > 0) {
+        setActiveTunedNodeId(linkedSource.onpremiseInfraModel.nodes[0]?.machineId || '');
+      }
     }
+    let rawInfra = pendingCloudModel.cloudInfraModel || (pendingCloudModel as any).cloud_infra_model || (pendingCloudModel as any).recommendedInfra;
+    if (typeof rawInfra === 'string') {
+      try { rawInfra = JSON.parse(rawInfra); } catch {}
+    }
+    const infra = rawInfra ? JSON.parse(JSON.stringify(rawInfra)) : null;
     if (infra) {
       storeUpdateEditedCandidate(infra);
       useMigrationStore.setState({
