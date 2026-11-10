@@ -7,6 +7,20 @@ import { MatchRateRadarChart } from './MatchRateRadarChart';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope } from '../../types/migration';
 import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2, Compass, ArrowRight, ArrowLeft, Plus, AlertTriangle, ShieldCheck, CheckCircle2, Globe, Target, Zap, Undo2 } from 'lucide-react';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
+import { ActiveModelBanner } from '../common/ActiveModelBanner';
+import { DeleteModelConfirmModal } from '../common/DeleteModelConfirmModal';
+import { UnsavedConfirmModal } from '../common/UnsavedConfirmModal';
+import { ModelToast } from '../common/ModelToast';
+import {
+  buildDefaultModelName,
+  cleanModelDisplayName,
+  formatSourceOptionText,
+  formatTargetOptionText,
+  getStageBadgeMeta,
+  isBuiltInSampleModel,
+  resolveModelStageKind,
+  resolveValidTargetInfraName,
+} from '../../utils/modelFormat';
 import { tumblebugApi, beetleApi, pickPreferredKoreaRegion, isKoreaRegion, PREFERRED_KOREA_REGIONS_BY_CSP } from '../../api/client';
 import sampleGpuData from '../../data/sampleSourceGpuInfra.json';
 
@@ -42,7 +56,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     updateTargetPair,
     triggerRecommendation,
     selectCandidate,
-    updateEditedCandidate,
+    updateEditedCandidate: storeUpdateEditedCandidate,
     saveCloudModel,
     updateCloudModel,
     deleteCloudModel,
@@ -94,75 +108,73 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
   };
 
   const [activeTunedNodeId, setActiveTunedNodeId] = useState<string>('');
+  const [pendingSourceModelId, setPendingSourceModelId] = useState<string>(selectedSourceModel?.id || '');
+  const [loadedSourceModelId, setLoadedSourceModelId] = useState<string>('');
+  const [pendingCloudModelId, setPendingCloudModelId] = useState<string>(selectedCloudModel?.id || '');
+  const [loadedCloudModelId, setLoadedCloudModelId] = useState<string>('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [showSaveTargetModal, setShowSaveTargetModal] = useState(false);
-  const [isSavingTarget, setIsSavingTarget] = useState(false);
-  const [targetSaveSuccessMsg, setTargetSaveSuccessMsg] = useState('');
+  const [showUnsavedNextModal, setShowUnsavedNextModal] = useState(false);
+  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [toastTone, setToastTone] = useState<'success' | 'error'>('success');
 
-  const handleDirectSaveTargetModel = async () => {
-    if (!editedCandidate) return;
-    setIsSavingTarget(true);
-    setTargetSaveSuccessMsg('');
-    const isGpu = Boolean(
-      selectedSourceModel?.id?.includes('gpu') ||
-      selectedSourceModel?.name?.toLowerCase().includes('gpu') ||
-      (editedCandidate as any)?.id?.includes('gpu') ||
-      (editedCandidate as any)?.targetSubnetList?.some((sn: any) =>
-        sn.targetNodeGroupList?.some((ng: any) => ng.name?.toLowerCase().includes('gpu'))
-      )
-    );
-    try {
-      const res = await beetleApi.saveTargetInfraModelToFile(editedCandidate, isGpu);
-      if (res.success) {
-        setTargetSaveSuccessMsg(
-          isGpu
-            ? 'Target model saved and overwritten to sampleTargetGpuInfra.json successfully!'
-            : 'Target model saved and overwritten to sampleTargetInfra.json successfully!'
-        );
-        setTimeout(() => setTargetSaveSuccessMsg(''), 4000);
-      } else {
-        alert(res.error || 'Failed to overwrite target model to file.');
-      }
-    } catch (err: any) {
-      console.error('Failed to save target model to file:', err);
-    } finally {
-      setIsSavingTarget(false);
-    }
+  const updateEditedCandidate = (updated: RecommendedInfra) => {
+    setHasUnsavedChanges(true);
+    storeUpdateEditedCandidate(updated);
   };
 
-  const handleProceedToMigration = () => {
-    // Sync current edited candidate to selected cloud model before advancing
+  const executeProceedToMigration = () => {
     if (editedCandidate) {
-      const modelName = editedCandidate.targetInfra?.name || selectedCloudModel?.name || `${editedCandidate.targetCloud?.csp || 'cloud'}-target-model`;
-      selectCloudModel({
-        id: selectedCloudModel?.id || `candidate-${Date.now()}`,
-        name: modelName,
-        description: selectedCloudModel?.description || `Optimized target cloud model for ${editedCandidate.targetCloud?.csp?.toUpperCase() || 'Cloud'} (${editedCandidate.targetCloud?.region || ''})`,
-        cloudInfraModel: editedCandidate,
-        version: selectedCloudModel?.version || '1.0',
-        updatedTime: new Date().toISOString()
-      });
+      const isSavedModel = Boolean(selectedCloudModel && !String(selectedCloudModel.id).startsWith('candidate-'));
+      if (isSavedModel && !hasUnsavedChanges && selectedCloudModel) {
+        useMigrationStore.setState({ selectedCloudModel });
+      } else {
+        const modelName =
+          (isSavedModel ? selectedCloudModel?.name : '') ||
+          buildDefaultModelName('target', selectedSourceModel?.name, editedCandidate.targetCloud?.csp);
+        useMigrationStore.setState({
+          selectedCloudModel: {
+            id: `candidate-${Date.now()}`,
+            name: modelName,
+            description:
+              selectedCloudModel?.description ||
+              `Optimized target cloud model for ${editedCandidate.targetCloud?.csp?.toUpperCase() || 'Cloud'} (${editedCandidate.targetCloud?.region || ''})`,
+            cloudInfraModel: editedCandidate,
+            version: selectedCloudModel?.version || '1.0.0',
+            stage: 'target',
+            updatedTime: new Date().toISOString(),
+          },
+        });
+      }
     }
     if (onNext) {
       onNext();
     }
   };
 
+  const handleProceedToMigration = () => {
+    if (editedCandidate && hasUnsavedChanges) {
+      setShowUnsavedNextModal(true);
+      return;
+    }
+    executeProceedToMigration();
+  };
+
   const [pairRegionsMap, setPairRegionsMap] = useState<Record<string, { id: string; name: string }[]>>({});
 
   // Tuned nodes state for left spec editor
   const [tunedNodes, setTunedNodes] = useState<OnpremNode[]>([]);
-  const [tuningSourceSaveSuccess, setTuningSourceSaveSuccess] = useState(false);
   const [isJsonOpen, setIsJsonOpen] = useState(false);
   const [tunedNetwork, setTunedNetwork] = useState<any>(null);
   const [newCidr, setNewCidr] = useState('');
-  const [activeStep, setActiveStep] = useState<number>(1);
+  const [activeStep, setActiveStep] = useState<number>(() =>
+    editedCandidate && recommendationCandidates.length > 0 ? 2 : 1
+  );
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [recommendMode, setRecommendMode] = useState<'new' | 'saved'>('new');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // Excluded node IDs list for target recommendation filters
   const [excludedNodeIds, setExcludedNodeIds] = useState<string[]>([]);
@@ -327,11 +339,13 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         editedCandidate: candidates.length > 0 ? candidates[0] : null,
         isRecommending: false
       });
+      setHasUnsavedChanges(candidates.length > 0);
       setActiveStep(2);
     } catch (err) {
       console.error('Failed to get deep-dive recommendations:', err);
       useMigrationStore.setState({ isRecommending: false });
-      alert('Failed to get deep-dive recommendations for ' + csp.toUpperCase());
+      setToastTone('error');
+      setToastMsg('Failed to get deep-dive recommendations for ' + csp.toUpperCase());
     }
   };
 
@@ -346,35 +360,74 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         cachedMultiCandidates: null,
         cachedMultiPairs: null,
       });
+      setHasUnsavedChanges(true);
       setActiveStep(2);
     }
   };
 
-  // Auto-load tunedNodes from selectedSourceModel when tab is entered
-  // (source model selection & tuning now happens in SourceInfraRefinement)
   useEffect(() => {
-    if (selectedSourceModel?.onpremiseInfraModel && tunedNodes.length === 0) {
-      setTunedNodes(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.nodes || [])));
-      setTunedNetwork(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
-      if (selectedSourceModel.onpremiseInfraModel.nodes && selectedSourceModel.onpremiseInfraModel.nodes.length > 0) {
-        setActiveTunedNodeId(selectedSourceModel.onpremiseInfraModel.nodes[0]?.machineId || '');
+    if (selectedSourceModel?.id) {
+      setPendingSourceModelId(selectedSourceModel.id);
+    }
+  }, [selectedSourceModel?.id]);
+
+  useEffect(() => {
+    if (pendingSourceModelId && !savedSourceModels.some(m => m.id === pendingSourceModelId)) {
+      setPendingSourceModelId(selectedSourceModel?.id || savedSourceModels[0]?.id || '');
+    }
+    if (loadedSourceModelId && !savedSourceModels.some(m => m.id === loadedSourceModelId)) {
+      setLoadedSourceModelId('');
+      setTunedNodes([]);
+      setTunedNetwork(null);
+      if (recommendMode === 'new') {
+        setIsModelLoaded(false);
       }
     }
-  }, [selectedSourceModel]);
+  }, [savedSourceModels, pendingSourceModelId, loadedSourceModelId, selectedSourceModel?.id, recommendMode]);
 
+  const userPlanningModels = savedSourceModels.filter(m => !isBuiltInSampleModel(m) && m.stage === 'planning');
+  const userSourceModels = savedSourceModels.filter(m => !isBuiltInSampleModel(m) && m.stage !== 'planning');
+  const sampleSourceModels = savedSourceModels.filter(m => isBuiltInSampleModel(m));
+  const pendingSourceModel = savedSourceModels.find(m => m.id === pendingSourceModelId) || null;
+  const isSourceAlreadyLoaded =
+    recommendMode === 'new' && Boolean(loadedSourceModelId) && Boolean(pendingSourceModel) && loadedSourceModelId === pendingSourceModel?.id;
 
+  const validSavedCloudModels = savedCloudModels.filter(m => m && m.name !== 'Unnamed Design');
+  const userTargetModels = validSavedCloudModels.filter(m => !isBuiltInSampleModel(m));
+  const sampleTargetModels = validSavedCloudModels.filter(m => isBuiltInSampleModel(m));
 
+  useEffect(() => {
+    if (selectedCloudModel?.id && !String(selectedCloudModel.id).startsWith('candidate-')) {
+      setPendingCloudModelId(selectedCloudModel.id);
+    } else if (
+      (!pendingCloudModelId || isBuiltInSampleModel(pendingCloudModelId)) &&
+      !loadedCloudModelId &&
+      userTargetModels.length > 0
+    ) {
+      setPendingCloudModelId(userTargetModels[userTargetModels.length - 1].id);
+    } else if (!pendingCloudModelId && validSavedCloudModels.length > 0) {
+      setPendingCloudModelId(validSavedCloudModels[0].id);
+    }
+  }, [selectedCloudModel?.id, userTargetModels.length, validSavedCloudModels.length]);
 
+  const pendingCloudModel = validSavedCloudModels.find(m => m.id === pendingCloudModelId) || null;
+  const isTargetAlreadyLoaded =
+    recommendMode === 'saved' &&
+    Boolean(loadedCloudModelId) &&
+    Boolean(pendingCloudModel) &&
+    loadedCloudModelId === pendingCloudModel?.id &&
+    !hasUnsavedChanges;
 
   const handleLoadModel = () => {
-    if (!selectedSourceModel || !selectedSourceModel.onpremiseInfraModel) return;
-    setTunedNodes(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.nodes || [])));
-    setTunedNetwork(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
+    if (!pendingSourceModel || !pendingSourceModel.onpremiseInfraModel) return;
+    selectSourceModel(pendingSourceModel);
+    setLoadedSourceModelId(pendingSourceModel.id);
+    setTunedNodes(JSON.parse(JSON.stringify(pendingSourceModel.onpremiseInfraModel.nodes || [])));
+    setTunedNetwork(JSON.parse(JSON.stringify(pendingSourceModel.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
     setExcludedNodeIds([]);
     setIsModelLoaded(true);
-    setActiveStep(2); // Unlock Step 2: Review and Editing
-    if (selectedSourceModel.onpremiseInfraModel.nodes && selectedSourceModel.onpremiseInfraModel.nodes.length > 0) {
-      setActiveTunedNodeId(selectedSourceModel.onpremiseInfraModel.nodes[0]?.machineId || '');
+    if (pendingSourceModel.onpremiseInfraModel.nodes && pendingSourceModel.onpremiseInfraModel.nodes.length > 0) {
+      setActiveTunedNodeId(pendingSourceModel.onpremiseInfraModel.nodes[0]?.machineId || '');
     }
   };
 
@@ -428,45 +481,9 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     setNewRulePort('');
   };
 
-  const handleSaveTunedSourceModel = async () => {
-    if (!selectedSourceModel) return;
-    try {
-      const filteredNodes = tunedNodes.filter(n => !excludedNodeIds.includes(n.machineId));
-      const currentVer = parseFloat(selectedSourceModel.version || '1.0');
-      const nextVer = (currentVer + 0.1).toFixed(1);
-
-      const updatedInfra = {
-        ...selectedSourceModel.onpremiseInfraModel,
-        nodes: filteredNodes,
-        network: tunedNetwork || selectedSourceModel.onpremiseInfraModel.network
-      };
-
-      const updatedModel: OnpremModelEnvelope = {
-        ...selectedSourceModel,
-        stage: selectedSourceModel.stage || 'planning',
-        onpremiseInfraModel: updatedInfra,
-        version: nextVer.toString(),
-        updatedTime: new Date().toISOString()
-      };
-
-      const updatedList = savedSourceModels.map(m => m.id === selectedSourceModel.id ? updatedModel : m);
-      useMigrationStore.setState({
-        savedSourceModels: updatedList,
-        selectedSourceModel: updatedModel
-      });
-
-      setTunedNodes(filteredNodes);
-      setExcludedNodeIds([]);
-      setTuningSourceSaveSuccess(true);
-      setActiveStep(1); // Advance to Step 3: Desired Cloud Target Specification
-      setTimeout(() => setTuningSourceSaveSuccess(false), 2000);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const handleRecommend = async () => {
     selectCloudModel(null);
+    setLoadedCloudModelId('');
     const filteredNodes = tunedNodes.filter(n => !excludedNodeIds.includes(n.machineId));
     if (filteredNodes.length === 0) return;
     const sourceNlbs = selectedSourceModel?.onpremiseInfraModel?.nlbs;
@@ -479,17 +496,21 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
       nlbs: sourceNlbs && sourceNlbs.length > 0 ? sourceNlbs : undefined
     };
     await triggerRecommendation(sourceInfra);
+    const latestCandidates = useMigrationStore.getState().recommendationCandidates;
+    setHasUnsavedChanges(latestCandidates.length > 0);
     setActiveStep(2);
   };
 
   const handleLoadDesign = () => {
-    if (!selectedCloudModel) return;
-    let infra = selectedCloudModel.cloudInfraModel || (selectedCloudModel as any).cloud_infra_model || (selectedCloudModel as any).recommendedInfra;
+    if (!pendingCloudModel) return;
+    selectCloudModel(pendingCloudModel);
+    setLoadedCloudModelId(pendingCloudModel.id);
+    let infra = pendingCloudModel.cloudInfraModel || (pendingCloudModel as any).cloud_infra_model || (pendingCloudModel as any).recommendedInfra;
     if (typeof infra === 'string') {
-      try { infra = JSON.parse(infra); } catch (e) {}
+      try { infra = JSON.parse(infra); } catch {}
     }
     if (infra) {
-      updateEditedCandidate(infra);
+      storeUpdateEditedCandidate(infra);
       useMigrationStore.setState({
         recommendationCandidates: [infra],
         selectedCandidateIndex: 0
@@ -502,34 +523,13 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
       }
     }
     setIsModelLoaded(true);
+    setHasUnsavedChanges(false);
     setActiveStep(2);
   };
 
-  const isBuiltInCloudSample = (id?: string) =>
-    id === 'cloud-demo-1' || id === 'sample-cloud-migration-testbed-1';
-
   const handleDeleteDesign = () => {
-    if (!selectedCloudModel || isBuiltInCloudSample(selectedCloudModel.id)) return;
-    setDeleteConfirmText('');
-    setDeleteError('');
-    setIsDeleting(false);
+    if (!pendingCloudModel || isBuiltInSampleModel(pendingCloudModel)) return;
     setShowDeleteConfirm(true);
-  };
-
-  const handleConfirmDeleteDesign = async () => {
-    if (!selectedCloudModel) return;
-    setIsDeleting(true);
-    setDeleteError('');
-    try {
-      await deleteCloudModel(selectedCloudModel.id);
-      setShowDeleteConfirm(false);
-      setDeleteConfirmText('');
-      setActiveStep(1);
-    } catch (err: any) {
-      setDeleteError(err.message || 'Failed to delete design');
-    } finally {
-      setIsDeleting(false);
-    }
   };
 
   useEffect(() => {
@@ -546,18 +546,10 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     }
   }, [savedCloudModels, fetchSavedCloudModels]);
 
-  const handleClearAllCustomDesigns = async () => {
-    const customCount = savedCloudModels.filter(m => !isBuiltInCloudSample(m.id)).length;
+  const handleClearAllCustomDesigns = () => {
+    const customCount = savedCloudModels.filter(m => !isBuiltInSampleModel(m)).length;
     if (customCount === 0) return;
-    if (!window.confirm(`Delete all ${customCount} saved custom target design(s)? (Built-in sample model will be kept)`)) {
-      return;
-    }
-    try {
-      await clearCustomCloudModels();
-      setActiveStep(1);
-    } catch (err: any) {
-      console.error('Failed to clear custom designs:', err);
-    }
+    setShowClearAllConfirm(true);
   };
 
   const handleAddCidr = (cidr: string) => {
@@ -1115,6 +1107,11 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
   const handleSaveArtifact = async (result: { name: string; description: string; version: string; overwriteId: string | null }) => {
     if (!editedCandidate) return;
+    const validInfraName = resolveValidTargetInfraName(
+      editedCandidate.targetInfra?.name,
+      result.name,
+      editedCandidate.targetCloud?.csp
+    );
     const targetModelToSave: RecommendedInfra = {
       ...editedCandidate,
       targetNlbList:
@@ -1123,37 +1120,27 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
           : undefined,
       targetInfra: {
         ...editedCandidate.targetInfra,
-        name: result.name
+        name: validInfraName
       }
     };
-    updateEditedCandidate(targetModelToSave);
+    storeUpdateEditedCandidate(targetModelToSave);
 
-    let savedModel: CloudModelEnvelope | null = null;
-    if (result.overwriteId) {
-      savedModel = await updateCloudModel(result.overwriteId, result.name, result.description, result.version, targetModelToSave);
-    } else {
-      savedModel = await saveCloudModel(result.name, result.description, result.version, targetModelToSave);
-    }
-
-    const isGpu = Boolean(
-      selectedSourceModel?.id?.includes('gpu') ||
-      selectedSourceModel?.name?.toLowerCase().includes('gpu') ||
-      (targetModelToSave as any)?.id?.includes('gpu') ||
-      (targetModelToSave as any)?.targetSubnetList?.some((sn: any) =>
-        sn.targetNodeGroupList?.some((ng: any) => ng.name?.toLowerCase().includes('gpu'))
-      )
-    );
-    try {
-      await beetleApi.saveTargetInfraModelToFile(targetModelToSave, isGpu);
-    } catch (err) {
-      console.warn('Failed to overwrite local sample json file:', err);
-    }
+    const savedModel = result.overwriteId
+      ? await updateCloudModel(result.overwriteId, result.name, result.description, result.version, targetModelToSave)
+      : await saveCloudModel(result.name, result.description, result.version, targetModelToSave);
 
     if (savedModel) {
       selectCloudModel(savedModel);
+      setPendingCloudModelId(savedModel.id);
+      setLoadedCloudModelId(savedModel.id);
     }
-    setTargetSaveSuccessMsg(`Target Cloud Model "${result.name}" saved to repository successfully.`);
-    setTimeout(() => setTargetSaveSuccessMsg(''), 5000);
+    setHasUnsavedChanges(false);
+    setToastTone('success');
+    setToastMsg(
+      result.overwriteId
+        ? `Target cloud model "${savedModel.name}" (v${savedModel.version || result.version}) updated successfully.`
+        : `Target cloud model "${savedModel.name}" (v${savedModel.version || result.version}) saved successfully.`
+    );
   };
 
   const { isRecommending } = useMigrationStore();
@@ -1190,8 +1177,9 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         {/* Tab switch control */}
         <div className="flex border-b border-border-main/20 mb-6 max-w-4xl">
           <button
-            onClick={() => { setRecommendMode('new'); selectCloudModel(null); }}
-            className={`flex-1 pb-3 text-sm font-bold text-center border-b-2 transition-all cursor-pointer ${
+            type="button"
+            onClick={() => { setRecommendMode('new'); setIsModelLoaded(Boolean(selectedSourceModel && tunedNodes.length > 0)); }}
+            className={`flex-1 pb-3 text-sm font-extrabold text-center border-b-2 transition-all cursor-pointer ${
               recommendMode === 'new'
                 ? 'border-emerald-500 text-emerald-500'
                 : 'border-transparent text-text-muted hover:text-text-main'
@@ -1200,14 +1188,15 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
             Generate New Recommendation
           </button>
           <button
-            onClick={() => { setRecommendMode('saved'); selectSourceModel(null); setTunedNodes([]); setIsModelLoaded(false); }}
-            className={`flex-1 pb-3 text-sm font-bold text-center border-b-2 transition-all cursor-pointer ${
+            type="button"
+            onClick={() => { setRecommendMode('saved'); setIsModelLoaded(Boolean(selectedCloudModel && !String(selectedCloudModel.id).startsWith('candidate-'))); }}
+            className={`flex-1 pb-3 text-sm font-extrabold text-center border-b-2 transition-all cursor-pointer ${
               recommendMode === 'saved'
                 ? 'border-emerald-500 text-emerald-500'
                 : 'border-transparent text-text-muted hover:text-text-main'
             }`}
           >
-            Load Customized Cloud Infrastructure
+            Load Saved Target Cloud Model
           </button>
         </div>
 
@@ -1215,53 +1204,92 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
           <>
             {/* Source Model selection */}
             <div className="mb-6 pb-6 border-b border-border-main/20">
-              <label className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Source Infrastructure Model</label>
-              <div className="flex flex-col gap-2 max-w-4xl">
-                <select
-                  value={selectedSourceModel?.id || ''}
-                  onChange={(e) => {
-                    const m = savedSourceModels.find((x: any) => x.id === e.target.value) || null;
-                    selectSourceModel(m);
-                    setTunedNodes([]);
-                    setIsModelLoaded(false);
-                  }}
-                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
-                >
-                  <option value="">-- Choose Source Model --</option>
-                  {savedSourceModels.map((m: any) => {
-                    const stageLabel = m.stage === 'planning' ? '[Planning] ' : '';
+              <label className="block text-sm font-normal text-text-muted mb-2">Source or Planning Infrastructure Model</label>
+              <div className="flex flex-col gap-3 max-w-2xl">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <select
+                    value={pendingSourceModelId}
+                    onChange={(e) => setPendingSourceModelId(e.target.value)}
+                    className="flex-1 min-w-[260px] bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+                  >
+                    <option value="">-- Choose Infrastructure Model --</option>
+                    {userPlanningModels.length > 0 && (
+                      <optgroup label="Planning Models">
+                        {userPlanningModels.map((m) => (
+                          <option key={m.id} value={m.id}>{formatSourceOptionText(m)}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {userSourceModels.length > 0 && (
+                      <optgroup label="Source Models">
+                        {userSourceModels.map((m) => (
+                          <option key={m.id} value={m.id}>{formatSourceOptionText(m)}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                    <optgroup label="Sample Models">
+                      {sampleSourceModels.map((m) => (
+                        <option key={m.id} value={m.id}>{formatSourceOptionText(m)}</option>
+                      ))}
+                    </optgroup>
+                  </select>
+                  {pendingSourceModel && (() => {
+                    const badge = getStageBadgeMeta(resolveModelStageKind(pendingSourceModel, 'source'));
                     return (
-                      <option key={m.id} value={m.id}>{stageLabel}{m.name} (v{m.version || '1.0'})</option>
+                      <span className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border shrink-0 ${badge.className}`}>
+                        {badge.label}
+                      </span>
                     );
-                  })}
-                </select>
-                <button
-                  onClick={handleLoadModel}
-                  disabled={!selectedSourceModel}
-                  className={`self-start px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer ${selectedSourceModel
-                    ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/25'
-                    : 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'}`}
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  {isModelLoaded ? 'Model Loaded ✓' : 'Load Model'}
-                </button>
-              </div>
-              {isModelLoaded && tunedNodes.length > 0 && (
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                    {tunedNodes.length} node(s) ready for recommendation
-                  </span>
-                  {selectedSourceModel && (
-                    <span className={`px-2 py-0.5 rounded font-extrabold border ${
-                      selectedSourceModel.stage === 'planning'
-                        ? 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30'
-                        : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                    }`}>
-                      Stage: {selectedSourceModel.stage || 'source'}
+                  })()}
+                </div>
+
+                {pendingSourceModel && (
+                  <div className="text-xs bg-bg-input/50 border border-border-main/50 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <span>
+                      <span className="font-normal text-text-muted">Nodes: </span>
+                      <span className="font-extrabold text-text-main">{pendingSourceModel.onpremiseInfraModel?.nodes?.length || 0}</span>
+                    </span>
+                    {pendingSourceModel.description && (
+                      <span className="truncate max-w-md">
+                        <span className="font-normal text-text-muted">Info: </span>
+                        <span className="font-extrabold text-text-main">{pendingSourceModel.description}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleLoadModel}
+                    disabled={!pendingSourceModel}
+                    className={`px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer ${
+                      !pendingSourceModel
+                        ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                        : isSourceAlreadyLoaded
+                          ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/25'
+                    }`}
+                  >
+                    {isSourceAlreadyLoaded ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Model Loaded</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4" />
+                        <span>Load Model</span>
+                      </>
+                    )}
+                  </button>
+                  {isModelLoaded && tunedNodes.length > 0 && selectedSourceModel && (
+                    <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+                      {tunedNodes.length} Node(s) loaded from &quot;{cleanModelDisplayName(selectedSourceModel.name)}&quot;
                     </span>
                   )}
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Target Cloud Pair(s) Selection Container */}
@@ -1561,57 +1589,108 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
             </div>
           </>
         ) : (
-          <div className="max-w-4xl space-y-4">
-            <div>
-              <label className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Target Cloud Infrastructure Model</label>
+          <div className="max-w-2xl space-y-3">
+            <label className="block text-sm font-normal text-text-muted">Target Cloud Infrastructure Model</label>
+            <div className="flex flex-wrap items-center gap-2.5">
               <select
-                value={selectedCloudModel?.id || ''}
-                onChange={(e) => {
-                  const m = savedCloudModels.find((x: any) => x.id === e.target.value) || null;
-                  selectCloudModel(m);
-                }}
-                className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+                value={pendingCloudModelId}
+                onChange={(e) => setPendingCloudModelId(e.target.value)}
+                className="flex-1 min-w-[260px] bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
               >
-                <option value="">-- Choose Target Cloud Infrastructure Model --</option>
-                {savedCloudModels
-                  .filter((m: any) => m && m.name !== 'Unnamed Design')
-                  .map((m: any) => (
-                    <option key={m.id} value={m.id}>{m.name} (v{m.version || '1.0.0'})</option>
+                <option value="">-- Choose Target Cloud Model --</option>
+                {userTargetModels.length > 0 && (
+                  <optgroup label="Target Models">
+                    {userTargetModels.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {formatTargetOptionText(m, m.cloudInfraModel?.targetCloud?.csp)}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                <optgroup label="Sample Models">
+                  {sampleTargetModels.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {formatTargetOptionText(m, m.cloudInfraModel?.targetCloud?.csp)}
+                    </option>
                   ))}
+                </optgroup>
               </select>
+              {pendingCloudModel && (() => {
+                const badge = getStageBadgeMeta(resolveModelStageKind(pendingCloudModel, 'target'));
+                return (
+                  <span className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border shrink-0 ${badge.className}`}>
+                    {badge.label}
+                  </span>
+                );
+              })()}
             </div>
-            <div className="flex flex-wrap gap-3 pt-2">
+
+            {pendingCloudModel && (
+              <div className="text-xs bg-bg-input/50 border border-border-main/50 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span>
+                  <span className="font-normal text-text-muted">Cloud: </span>
+                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
+                    {(pendingCloudModel.cloudInfraModel?.targetCloud?.csp || 'CLOUD').toUpperCase()} ({pendingCloudModel.cloudInfraModel?.targetCloud?.region || '-'})
+                  </span>
+                </span>
+                <span>
+                  <span className="font-normal text-text-muted">Node Groups: </span>
+                  <span className="font-extrabold text-text-main">
+                    {pendingCloudModel.cloudInfraModel?.targetInfra?.nodeGroups?.length || 0}
+                  </span>
+                </span>
+                {pendingCloudModel.description && (
+                  <span className="truncate max-w-md">
+                    <span className="font-normal text-text-muted">Info: </span>
+                    <span className="font-extrabold text-text-main">{pendingCloudModel.description}</span>
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-3 pt-1">
               <button
+                type="button"
                 onClick={handleLoadDesign}
-                disabled={!selectedCloudModel}
+                disabled={!pendingCloudModel}
                 className={`px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer ${
-                  selectedCloudModel
-                    ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/25'
-                    : 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                  !pendingCloudModel
+                    ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                    : isTargetAlreadyLoaded
+                      ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/25'
                 }`}
               >
-                <RefreshCw className="w-4 h-4" />
-                <span>Load Design</span>
+                {isTargetAlreadyLoaded ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Model Loaded</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Load Model</span>
+                  </>
+                )}
               </button>
-              <button
-                onClick={handleDeleteDesign}
-                disabled={!selectedCloudModel || isBuiltInCloudSample(selectedCloudModel.id)}
-                className={`px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer ${
-                  selectedCloudModel && !isBuiltInCloudSample(selectedCloudModel.id)
-                    ? 'bg-red-500 hover:bg-red-600 text-white shadow-md shadow-red-500/20'
-                    : 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
-                }`}
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>Delete Design</span>
-              </button>
-              {savedCloudModels.filter((m: any) => !isBuiltInCloudSample(m.id) && m.name !== 'Unnamed Design').length > 0 && (
+              {pendingCloudModel && !isBuiltInSampleModel(pendingCloudModel) && (
                 <button
-                  onClick={handleClearAllCustomDesigns}
-                  className="px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer bg-red-500/15 hover:bg-red-500/25 text-red-600 dark:text-red-400 border border-red-500/30"
+                  type="button"
+                  onClick={handleDeleteDesign}
+                  className="px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer"
                 >
                   <Trash2 className="w-4 h-4" />
-                  <span>Delete All Custom Designs</span>
+                  <span>Delete Model</span>
+                </button>
+              )}
+              {userTargetModels.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearAllCustomDesigns}
+                  className="px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete All Custom Models</span>
                 </button>
               )}
             </div>
@@ -1622,7 +1701,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
       {/* -------------------------------------------------------------
           STEP 2: Recommended Target Cloud Alternatives Review and Editing
          ------------------------------------------------------------- */}
-      <div className={`glass-panel p-6 rounded-2xl transition-all duration-300 ${activeStep >= 2 ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+      <div className={`glass-panel p-6 rounded-2xl transition-all duration-300 ${activeStep >= 2 || (Boolean(editedCandidate) && recommendationCandidates.length > 0) ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
         <div className="flex items-center justify-between mb-4 border-b border-border-main/40 pb-3">
           <div className="flex items-center space-x-3">
             <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold ${activeStep > 2 ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-emerald-500 text-slate-950'}`}>
@@ -1709,6 +1788,43 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
               ) : (
                 <div className="flex flex-col space-y-6 pt-4 border-t border-border-main/20">
 
+                  <ActiveModelBanner
+                    mode={selectedCloudModel && !String(selectedCloudModel.id).startsWith('candidate-') ? 'loaded' : 'draft'}
+                    name={
+                      selectedCloudModel && !String(selectedCloudModel.id).startsWith('candidate-')
+                        ? selectedCloudModel.name
+                        : buildDefaultModelName('target', selectedSourceModel?.name, editedCandidate.targetCloud?.csp)
+                    }
+                    version={
+                      selectedCloudModel && !String(selectedCloudModel.id).startsWith('candidate-')
+                        ? selectedCloudModel.version
+                        : undefined
+                    }
+                    stageKind={
+                      selectedCloudModel && !String(selectedCloudModel.id).startsWith('candidate-')
+                        ? resolveModelStageKind(selectedCloudModel, 'target')
+                        : 'draft'
+                    }
+                    hasUnsavedChanges={hasUnsavedChanges}
+                    updatedTime={selectedCloudModel?.updatedTime}
+                    metrics={[
+                      {
+                        label: 'Cloud',
+                        value: `${(editedCandidate.targetCloud?.csp || 'CLOUD').toUpperCase()} / ${editedCandidate.targetCloud?.region || '-'}`,
+                        tone: 'emerald',
+                      },
+                      {
+                        label: 'Node Groups',
+                        value: String(editedCandidate.targetInfra?.nodeGroups?.length || 0),
+                      },
+                      {
+                        label: 'Est. Cost',
+                        value: `$${getEstimatedMonthlyCost(editedCandidate)}/mo`,
+                        tone: 'teal',
+                      },
+                    ]}
+                  />
+
                   {/* Row 1: Recommended Target Cloud Candidates (Horizontal Scroll) */}
                   <div className="bg-bg-panel/30 border border-border-main/50 rounded-2xl p-5 space-y-3 w-full">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-border-main/30 pb-3 mb-2">
@@ -1721,11 +1837,6 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                           <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold border border-emerald-500/20 font-mono">
                             {recommendationCandidates.length} Candidate{recommendationCandidates.length > 1 ? 's' : ''}
                           </span>
-                          {selectedCloudModel && (
-                            <span className="text-xs font-mono font-extrabold px-2 py-0.5 rounded bg-bg-panel border border-border-main text-text-muted">
-                              Loaded: {selectedCloudModel.name}
-                            </span>
-                          )}
                         </div>
                         <span className="text-sm text-text-muted mt-0.5 block">
                           Select a recommended candidate to examine its topology and customize infrastructure settings.
@@ -1743,20 +1854,6 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                         </button>
                       )}
                     </div>
-
-                    {selectedCloudModel && (
-                      <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between max-w-xl">
-                        <div>
-                          <span className="text-xs font-normal text-text-muted block">Loaded Design Model</span>
-                          <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
-                            {selectedCloudModel.name} (v{selectedCloudModel.version})
-                          </span>
-                        </div>
-                        <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/20 px-2.5 py-1 rounded-lg">
-                          Active Model
-                        </span>
-                      </div>
-                    )}
 
                     {/* Multi-CSP rollback banner if viewing single-CSP deep dive */}
                     {cachedMultiCandidates && cachedMultiCandidates.length > 0 && (
@@ -3139,20 +3236,13 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                             <span>Resource creation may fail due to account-level CSP quota limits, regional availability, or insufficient instance stock. Verify your account quotas before deployment.</span>
                           </div>
 
-                          {/* Success feedback toast */}
-                          {targetSaveSuccessMsg && (
-                            <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold animate-fade-in">
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                              <span>{targetSaveSuccessMsg}</span>
-                            </div>
-                          )}
-
                           {/* Unified Bottom Action & Navigation Bar */}
                           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-border-main/20 mt-4">
                             {onBack ? (
                               <button
+                                type="button"
                                 onClick={onBack}
-                                className="w-full sm:w-auto px-4 py-2.5 bg-bg-input border border-border-main hover:bg-bg-main text-text-main font-bold text-xs rounded-xl transition cursor-pointer flex items-center justify-center space-x-1.5"
+                                className="w-full sm:w-auto px-4 py-2.5 bg-bg-input border border-border-main hover:bg-bg-main text-text-main font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center justify-center space-x-1.5"
                               >
                                 <ArrowLeft className="w-3.5 h-3.5" />
                                 <span>Back to 2. Migration Planning</span>
@@ -3161,6 +3251,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
                             <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
                               <button
+                                type="button"
                                 onClick={handleDryRunValidate}
                                 disabled={isValidatingDryRun}
                                 className="w-full sm:w-auto px-4 py-2.5 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-extrabold flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-sm disabled:opacity-50"
@@ -3174,15 +3265,17 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                               </button>
 
                               <button
+                                type="button"
                                 onClick={() => setShowSaveTargetModal(true)}
-                                className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-md shadow-emerald-500/20"
+                                className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 rounded-xl text-xs font-extrabold flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-md shadow-emerald-500/20"
                               >
-                                <Save className="w-3.5 h-3.5" />
-                                <span>Save Target Cloud Infra Model</span>
+                                <Save className="w-3.5 h-3.5 text-slate-950" />
+                                <span>Save Target Cloud Model</span>
                               </button>
 
                               {onNext && (
                                 <button
+                                  type="button"
                                   onClick={handleProceedToMigration}
                                   className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center space-x-1.5 cursor-pointer"
                                 >
@@ -3329,82 +3422,82 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
       <SaveRevisionModal
         isOpen={showSaveTargetModal}
         onClose={() => setShowSaveTargetModal(false)}
-        title="Save Target Cloud Infra Model"
-        defaultName={selectedCloudModel && !isBuiltInCloudSample(selectedCloudModel.id) ? selectedCloudModel.name : (editedCandidate?.targetInfra?.name || `${editedCandidate?.targetCloud?.csp || 'cloud'}-target-model`)}
-        defaultDescription={selectedCloudModel && !isBuiltInCloudSample(selectedCloudModel.id) ? (selectedCloudModel.description || '') : (editedCandidate?.description || `Optimized target cloud model for ${editedCandidate?.targetCloud?.csp?.toUpperCase() || 'Cloud'} (${editedCandidate?.targetCloud?.region || ''})`)}
-        defaultVersion={selectedCloudModel && !isBuiltInCloudSample(selectedCloudModel.id) ? (selectedCloudModel.version || '1.0.0') : '1.0.0'}
-        existingRevisions={savedCloudModels.filter(m => !isBuiltInCloudSample(m.id)).map(m => ({ id: m.id, name: m.name, version: m.version }))}
+        title="Save Target Cloud Model"
+        stageKind="target"
+        defaultName={
+          selectedCloudModel && !isBuiltInSampleModel(selectedCloudModel) && !String(selectedCloudModel.id).startsWith('candidate-')
+            ? cleanModelDisplayName(selectedCloudModel.name)
+            : buildDefaultModelName('target', selectedSourceModel?.name || editedCandidate?.targetInfra?.name, editedCandidate?.targetCloud?.csp)
+        }
+        defaultDescription={
+          selectedCloudModel && !isBuiltInSampleModel(selectedCloudModel) && !String(selectedCloudModel.id).startsWith('candidate-')
+            ? selectedCloudModel.description || ''
+            : `Optimized target cloud model for ${editedCandidate?.targetCloud?.csp?.toUpperCase() || 'Cloud'} (${editedCandidate?.targetCloud?.region || ''})`
+        }
+        defaultVersion={
+          selectedCloudModel && !isBuiltInSampleModel(selectedCloudModel) && !String(selectedCloudModel.id).startsWith('candidate-')
+            ? selectedCloudModel.version || '1.0.0'
+            : '1.0.0'
+        }
+        defaultOverwriteId={
+          selectedCloudModel && !isBuiltInSampleModel(selectedCloudModel) && !String(selectedCloudModel.id).startsWith('candidate-')
+            ? selectedCloudModel.id
+            : null
+        }
+        existingRevisions={userTargetModels.map(m => ({ id: m.id, name: m.name, description: m.description, version: m.version }))}
         onSave={handleSaveArtifact}
-        successMessage="Target Cloud Infrastructure Model saved to repository successfully."
       />
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && selectedCloudModel && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="glass-panel p-6 rounded-2xl w-full max-w-md border border-border-main animate-scale-up">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-base font-bold text-text-main flex items-center gap-2">
-                <Trash2 className="w-4 h-4 text-red-500" /> Delete Target Cloud Infrastructure Model
-              </h3>
-              <button
-                onClick={() => { setShowDeleteConfirm(false); setDeleteError(''); setDeleteConfirmText(''); }}
-                disabled={isDeleting}
-                className="text-text-muted hover:text-text-main transition p-1 hover:bg-bg-input rounded-lg cursor-pointer disabled:opacity-50"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      <DeleteModelConfirmModal
+        isOpen={showDeleteConfirm && Boolean(pendingCloudModel)}
+        onClose={() => setShowDeleteConfirm(false)}
+        title="Delete Target Cloud Model"
+        modelName={pendingCloudModel?.name || ''}
+        onConfirm={async () => {
+          if (!pendingCloudModel) return;
+          const deletedName = cleanModelDisplayName(pendingCloudModel.name);
+          const deletedId = pendingCloudModel.id;
+          await deleteCloudModel(deletedId);
+          const remaining = validSavedCloudModels.filter(m => m.id !== deletedId);
+          setPendingCloudModelId(remaining[0]?.id || '');
+          if (loadedCloudModelId === deletedId || selectedCloudModel?.id === deletedId) {
+            setLoadedCloudModelId('');
+            setIsModelLoaded(false);
+            setHasUnsavedChanges(false);
+            setActiveStep(1);
+          }
+          setToastTone('success');
+          setToastMsg(`Target cloud model "${deletedName}" deleted.`);
+        }}
+      />
 
-            <div className="space-y-4">
-              <p className="text-sm text-text-muted leading-relaxed">
-                Are you sure you want to delete the target cloud infrastructure model <strong className="text-text-main">"{selectedCloudModel.name}"</strong>? This action cannot be undone.
-              </p>
+      <DeleteModelConfirmModal
+        isOpen={showClearAllConfirm}
+        onClose={() => setShowClearAllConfirm(false)}
+        title="Delete All Custom Models"
+        modelName="DELETE"
+        descriptionText={`Are you sure you want to delete all ${userTargetModels.length} custom target cloud model(s)? Built-in sample models will be preserved.`}
+        onConfirm={async () => {
+          const count = await clearCustomCloudModels();
+          setPendingCloudModelId(sampleTargetModels[0]?.id || '');
+          setActiveStep(1);
+          setHasUnsavedChanges(false);
+          setToastTone('success');
+          setToastMsg(`Deleted ${count} custom target cloud model(s).`);
+        }}
+      />
 
-              <div className="space-y-1.5 pt-1">
-                <label className="block text-xs font-bold text-text-muted">
-                  To confirm, type <span className="font-mono bg-bg-panel px-1 py-0.5 rounded border border-border-main/60 text-text-main select-all">{selectedCloudModel.name}</span> in the box below:
-                </label>
-                <input
-                  type="text"
-                  value={deleteConfirmText}
-                  onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder="Type the design name to delete"
-                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-red-500 font-bold font-mono"
-                  disabled={isDeleting}
-                />
-              </div>
+      <UnsavedConfirmModal
+        isOpen={showUnsavedNextModal}
+        onStay={() => setShowUnsavedNextModal(false)}
+        onProceed={executeProceedToMigration}
+      />
 
-              {deleteError && (
-                <div className="flex items-center gap-2 bg-red-500/10 text-red-500 px-4 py-3 rounded-xl text-xs font-semibold border border-red-500/20">
-                  <span>{deleteError}</span>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  onClick={() => { setShowDeleteConfirm(false); setDeleteError(''); setDeleteConfirmText(''); }}
-                  disabled={isDeleting}
-                  className="px-4 py-2 bg-bg-panel border border-border-main text-text-main rounded-xl text-sm font-semibold hover:bg-bg-input transition cursor-pointer disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirmDeleteDesign}
-                  disabled={isDeleting || deleteConfirmText !== selectedCloudModel.name}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 ${
-                    isDeleting || deleteConfirmText !== selectedCloudModel.name
-                      ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
-                      : 'bg-red-500 hover:bg-red-600 text-white cursor-pointer shadow-md shadow-red-500/20'
-                  }`}
-                >
-                  {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Confirm Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ModelToast
+        message={toastMsg}
+        tone={toastTone}
+        onClose={() => setToastMsg(null)}
+      />
 
       {/* Pre-Flight Validation Modal */}
       {dryRunResult.open && (

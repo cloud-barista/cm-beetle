@@ -5,11 +5,15 @@ import { useMigrationStore, DEMO_SOURCE_INFRA } from '../../store/migrationStore
 import { SAMPLE_9_NODE_TESTBED_INFRA, SAMPLE_MIGRATION_TESTBED_INFRA } from '../../data/sample15NodeInfra';
 import { honeybeeApi } from '../../api/client';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
+import { ActiveModelBanner } from '../common/ActiveModelBanner';
+import { ModelToast } from '../common/ModelToast';
+import { UnsavedConfirmModal } from '../common/UnsavedConfirmModal';
+import { buildDefaultModelName, isBuiltInSampleModel } from '../../utils/modelFormat';
 import {
   Plus, Server, Key, Upload, CheckCircle2, XCircle,
   RefreshCw, FileText, ChevronRight, Download, Trash2,
   AlertCircle, Loader2, ChevronDown, ChevronUp, Play, X, Save,
-  Database, ArrowRight, Cpu, HardDrive, Network
+  Database, ArrowRight, Cpu, HardDrive, Network, Copy
 } from 'lucide-react';
 
 // Normalize PEM private key (handles both multiline .pem and _oneline.pem with literal \n)
@@ -417,8 +421,19 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
 
   // ── Collect & Save ───────────────────────────────────────────────
   const [importStatus, setImportStatus] = useState<'idle'|'importing'|'done'|'failed'>('idle');
-  const [saveSuccess,  setSaveSuccess]  = useState(false);
+  const [lastSavedSourceModel, setLastSavedSourceModel] = useState<{
+    id: string;
+    name: string;
+    description?: string;
+    version: string;
+    updatedTime?: string;
+  } | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showUnsavedNextModal, setShowUnsavedNextModal] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [toastTone, setToastTone] = useState<'success' | 'error'>('success');
+  const [isJsonCopied, setIsJsonCopied] = useState(false);
   const [previewMode, setPreviewMode] = useState<'summary' | 'json'>('summary');
 
   // ─── Init ──────────────────────────────────────────────────────
@@ -433,6 +448,13 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       }
     }
   }, [activeSgId, refinedSourceInfra, fetchRefinedInfraByGroup]);
+
+  useEffect(() => {
+    if (lastSavedSourceModel && !savedSourceModels.some(m => m.id === lastSavedSourceModel.id)) {
+      setLastSavedSourceModel(null);
+      setHasUnsavedChanges(Boolean(refinedSourceInfra));
+    }
+  }, [lastSavedSourceModel, savedSourceModels, refinedSourceInfra]);
 
   // Sync inline rows from store connections (when group selected / refreshed).
   // A blank draft row is always kept at the end, ready for entering the next server.
@@ -735,10 +757,12 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                 : importedRows;
             });
           } else {
-            alert('File must contain at least one server row (CSV, JSON, or YAML).');
+            setToastTone('error');
+            setToastMsg('File must contain at least one server row (CSV, JSON, or YAML).');
           }
         } catch {
-          alert('Invalid CSV, JSON, or YAML format.');
+          setToastTone('error');
+          setToastMsg('Invalid CSV, JSON, or YAML format.');
         } finally {
           e.target.value = '';
         }
@@ -825,6 +849,8 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     setRegisterStatus('done');
     setImportStatus('done');
     setRefreshStatus('idle');
+    setLastSavedSourceModel(null);
+    setHasUnsavedChanges(true);
   };
 
   const handleSelectGroup = (sgId: string) => {
@@ -832,6 +858,8 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     setRegisterStatus('idle');
     setImportStatus('idle');
     setRefreshStatus('idle');
+    setLastSavedSourceModel(null);
+    setHasUnsavedChanges(false);
     // Skip API call for the built-in sample groups - populate sample connections and infra directly
     if (sgId === SAMPLE_MIG_ID) {
       useMigrationStore.setState({
@@ -840,6 +868,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       });
       setRegisterStatus('done');
       setImportStatus('done');
+      setHasUnsavedChanges(true);
       return;
     }
     if (sgId === SAMPLE_AI_ID) {
@@ -849,6 +878,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       });
       setRegisterStatus('done');
       setImportStatus('done');
+      setHasUnsavedChanges(true);
       return;
     }
     // Set refinedSourceInfra to null first when switching groups so we don't show stale preview
@@ -1014,11 +1044,13 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     if (activeSgId === SAMPLE_MIG_ID) {
       useMigrationStore.setState({ refinedSourceInfra: SAMPLE_MIGRATION_TESTBED_INFRA });
       setImportStatus('done');
+      setHasUnsavedChanges(true);
       return;
     }
     if (activeSgId === SAMPLE_AI_ID) {
       useMigrationStore.setState({ refinedSourceInfra: SAMPLE_9_NODE_TESTBED_INFRA });
       setImportStatus('done');
+      setHasUnsavedChanges(true);
       return;
     }
     setImportStatus('importing');
@@ -1026,28 +1058,49 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       await honeybeeApi.importInfraByGroup(activeSgId);
       await fetchRefinedInfraByGroup(activeSgId);
       setImportStatus('done');
+      setHasUnsavedChanges(true);
     } catch (err) {
       console.warn('Honeybee import failed, falling back to demo data for testing:', err);
       useMigrationStore.setState({ refinedSourceInfra: DEMO_SOURCE_INFRA });
       setImportStatus('done');
+      setHasUnsavedChanges(true);
     }
   };
 
   const handleSaveArtifact = async (result: { name: string; description: string; version: string; overwriteId: string | null }) => {
     if (!refinedSourceInfra) return;
-    if (result.overwriteId) {
-      await updateSourceModel(result.overwriteId, result.name, result.description, result.version, refinedSourceInfra, {
-        stage: 'source',
-        sourceGroupId: activeSgId || undefined
-      });
-    } else {
-      await saveSourceModel(result.name, result.description, result.version, refinedSourceInfra, {
-        stage: 'source',
-        sourceGroupId: activeSgId || undefined
-      });
+    const saved = result.overwriteId
+      ? await updateSourceModel(result.overwriteId, result.name, result.description, result.version, refinedSourceInfra, {
+          stage: 'source',
+          sourceGroupId: activeSgId || undefined
+        })
+      : await saveSourceModel(result.name, result.description, result.version, refinedSourceInfra, {
+          stage: 'source',
+          sourceGroupId: activeSgId || undefined
+        });
+    setLastSavedSourceModel({
+      id: saved.id,
+      name: saved.name,
+      description: saved.description,
+      version: saved.version || result.version || '1.0.0',
+      updatedTime: saved.updatedTime || new Date().toISOString(),
+    });
+    setHasUnsavedChanges(false);
+    setToastTone('success');
+    setToastMsg(
+      result.overwriteId
+        ? `Source model "${saved.name}" (v${saved.version || result.version}) updated successfully.`
+        : `Source model "${saved.name}" (v${saved.version || result.version}) saved successfully.`
+    );
+  };
+
+  const handleProceedNext = () => {
+    if (!onNext) return;
+    if (hasUnsavedChanges && refinedSourceInfra) {
+      setShowUnsavedNextModal(true);
+      return;
     }
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    onNext();
   };
 
   // ─── Derived ────────────────────────────────────────────────────
@@ -1182,15 +1235,26 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
           </div>
         )}
 
-        {!activeSgId && onNext && (
-          <div className="mt-5 pt-4 border-t border-border-main/50 flex justify-end">
+        {!activeSgId && (
+          <div className="mt-5 pt-4 border-t border-border-main/50 flex flex-wrap items-center justify-end gap-2.5">
             <button
-              onClick={onNext}
-              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
+              type="button"
+              disabled
+              className="px-5 py-2.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 text-slate-950 font-extrabold text-xs rounded-xl shadow-md shadow-emerald-500/20 transition flex items-center gap-1.5 opacity-50 cursor-not-allowed"
             >
-              <span>Next: Proceed to 2. Migration Planning</span>
-              <ArrowRight className="w-4 h-4" />
+              <Save className="w-3.5 h-3.5 text-slate-950" />
+              <span>Save Source Model</span>
             </button>
+            {onNext && (
+              <button
+                type="button"
+                onClick={onNext}
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center gap-2 cursor-pointer"
+              >
+                <span>Next: Proceed to 2. Migration Planning</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -1294,9 +1358,9 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
           {/* Step progress */}
           <div className="flex items-center gap-3 mb-6 flex-wrap">
             {[
-              { n: 1, label: 'Connections Registered', done: registerStatus === 'done',   active: registerStatus === 'registering' },
-              { n: 2, label: 'Infra Collected',        done: importStatus   === 'done',   active: importStatus   === 'importing'   },
-              { n: 3, label: 'Model Saved',            done: saveSuccess,                 active: false },
+              { n: 1, label: 'Connections Registered', done: registerStatus === 'done',        active: registerStatus === 'registering' },
+              { n: 2, label: 'Infra Collected',        done: importStatus   === 'done',        active: importStatus   === 'importing'   },
+              { n: 3, label: 'Model Saved',            done: Boolean(lastSavedSourceModel),    active: false },
             ].map((step, i) => (
               <React.Fragment key={step.n}>
                 <div className={`flex items-center gap-2 text-sm ${step.done ? 'text-emerald-400' : step.active ? 'text-teal-400' : 'text-text-muted'}`}>
@@ -1314,27 +1378,17 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-5 items-start">
-            <div className="flex-1 min-w-[220px]">
-              <button onClick={handleImportInfra} disabled={importStatus === 'importing'}
-                className="w-full py-3 bg-bg-panel border-2 border-emerald-500/40 hover:border-emerald-500/70 hover:bg-emerald-500/5 rounded-xl text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50">
-                {importStatus === 'importing' ? <><Loader2 className="w-4 h-4 animate-spin" /> Collecting...</>
-                  : importStatus === 'done'   ? <><CheckCircle2 className="w-4 h-4" /> Collected - Re-Import</>
-                  : importStatus === 'failed' ? <><AlertCircle className="w-4 h-4 text-red-400" /> Failed - Retry</>
-                  : <><Play className="w-4 h-4" /> Collect Infra from All Servers</>}
-              </button>
-              <p className="text-xs text-text-muted mt-2 text-center leading-relaxed">
-                Triggers the Honeybee agent to collect infrastructure specs from all registered servers.
-              </p>
-            </div>
-            <div className="flex-1 min-w-[280px] flex flex-col justify-center space-y-3">
-              <button onClick={() => setShowSaveModal(true)} disabled={!refinedSourceInfra} className="w-full py-3 bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 font-extrabold rounded-xl text-sm transition shadow-md shadow-emerald-500/20 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
-                <Save className="w-4 h-4 text-slate-950" /> Save Source Infra Revision
-              </button>
-              <p className="text-xs text-text-muted text-center leading-relaxed">
-                Opens a popup to name, version, and save this collected source artifact.
-              </p>
-            </div>
+          <div className="max-w-xl">
+            <button onClick={handleImportInfra} disabled={importStatus === 'importing'}
+              className="w-full py-3 bg-bg-panel border-2 border-emerald-500/40 hover:border-emerald-500/70 hover:bg-emerald-500/5 rounded-xl text-sm font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50">
+              {importStatus === 'importing' ? <><Loader2 className="w-4 h-4 animate-spin" /> Collecting...</>
+                : importStatus === 'done'   ? <><CheckCircle2 className="w-4 h-4" /> Collected - Re-Import</>
+                : importStatus === 'failed' ? <><AlertCircle className="w-4 h-4 text-red-400" /> Failed - Retry</>
+                : <><Play className="w-4 h-4" /> Collect Infra from All Servers</>}
+            </button>
+            <p className="text-xs text-text-muted mt-2 leading-relaxed">
+              Triggers the Honeybee agent to collect infrastructure specs from all registered servers. Review the extracted model below and save it from the bottom action bar.
+            </p>
           </div>
 
           {refinedSourceInfra && (() => {
@@ -1368,6 +1422,27 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
 
             return (
               <div className="mt-5 pt-5 border-t border-border-main space-y-4">
+                <ActiveModelBanner
+                  mode={lastSavedSourceModel ? 'loaded' : 'draft'}
+                  name={lastSavedSourceModel?.name || buildDefaultModelName('source', activeGroup?.name)}
+                  version={lastSavedSourceModel?.version}
+                  stageKind={lastSavedSourceModel ? 'source' : 'draft'}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  updatedTime={lastSavedSourceModel?.updatedTime}
+                  metrics={[
+                    { label: 'Nodes', value: String(nodes.length) },
+                    {
+                      label: 'GPU',
+                      value: gpuSummaryBadges.length > 0 ? `${gpuSummaryBadges.length} Card(s)` : 'CPU Only',
+                      tone: gpuSummaryBadges.length > 0 ? 'emerald' : 'default',
+                    },
+                    {
+                      label: 'NLB',
+                      value: detectedNlbs.length > 0 ? `${detectedNlbs.length} Detected` : 'No NLB',
+                      tone: detectedNlbs.length > 0 ? 'teal' : 'default',
+                    },
+                  ]}
+                />
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h3 className="text-sm font-bold text-text-main flex items-center gap-2">
                     <FileText className="w-4 h-4 text-emerald-500" />
@@ -1586,25 +1661,51 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                     )}
                   </div>
                 ) : (
-                  <div className="bg-bg-input border border-border-main rounded-xl p-4 text-xs font-mono text-slate-800 dark:text-emerald-400 max-h-[60vh] overflow-y-auto">
-                    <pre>{JSON.stringify(refinedSourceInfra, null, 2)}</pre>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center bg-bg-input px-3.5 py-2 rounded-xl border border-border-main/50">
+                      <span className="text-sm text-text-muted font-mono">onpremiseInfraModel</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(JSON.stringify(refinedSourceInfra, null, 2));
+                          setIsJsonCopied(true);
+                          setTimeout(() => setIsJsonCopied(false), 2000);
+                        }}
+                        className="px-3 py-1 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-xs font-extrabold transition flex items-center cursor-pointer text-emerald-600 dark:text-emerald-400"
+                      >
+                        <Copy className="w-3.5 h-3.5 mr-1" /> {isJsonCopied ? 'Copied!' : 'Copy JSON'}
+                      </button>
+                    </div>
+                    <div className="bg-bg-input border border-border-main rounded-xl p-4 text-xs font-mono text-slate-800 dark:text-emerald-400 max-h-[60vh] overflow-y-auto">
+                      <pre>{JSON.stringify(refinedSourceInfra, null, 2)}</pre>
+                    </div>
                   </div>
                 )}
               </div>
             );
           })()}
 
-          {onNext && (
-            <div className="mt-5 pt-4 border-t border-border-main flex justify-end">
+          <div className="mt-5 pt-4 border-t border-border-main flex flex-wrap items-center justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={() => setShowSaveModal(true)}
+              disabled={!refinedSourceInfra}
+              className="px-5 py-2.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 font-extrabold text-xs rounded-xl shadow-md shadow-emerald-500/20 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <Save className="w-3.5 h-3.5 text-slate-950" />
+              <span>Save Source Model</span>
+            </button>
+            {onNext && (
               <button
-                onClick={onNext}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
+                type="button"
+                onClick={handleProceedNext}
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center gap-2 cursor-pointer"
               >
                 <span>Next: Proceed to 2. Migration Planning</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
@@ -1855,23 +1956,37 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       <SaveRevisionModal
         isOpen={showSaveModal}
         onClose={() => setShowSaveModal(false)}
-        title="Save Source Infra Revision"
-        defaultName=""
-        defaultDescription=""
-        defaultVersion="1.0.0"
+        title="Save Source Model"
+        stageKind="source"
+        defaultName={lastSavedSourceModel?.name || buildDefaultModelName('source', activeGroup?.name)}
+        defaultDescription={
+          lastSavedSourceModel?.description ||
+          activeGroup?.description ||
+          (refinedSourceInfra?.nodes
+            ? `Extracted source infrastructure model (${refinedSourceInfra.nodes.length} nodes)`
+            : '')
+        }
+        defaultVersion={lastSavedSourceModel?.version || '1.0.0'}
+        defaultOverwriteId={lastSavedSourceModel?.id || null}
         existingRevisions={savedSourceModels
-          .filter(m => m.id !== 'sample-source-migration-testbed-1' && m.id !== 'sample-source-9node-testbed-1' && m.id !== 'sample-source-15node-dc-1' && m.id !== 'sample-source-infra-1' && m.id !== 'sample-source-gpu-infra-1' && (m.stage || 'source') === 'source')
-          .map(m => ({ id: m.id, name: m.name, version: m.version }))}
+          .filter(m => !isBuiltInSampleModel(m) && (m.stage || 'source') === 'source')
+          .map(m => ({ id: m.id, name: m.name, description: m.description, version: m.version }))}
         onSave={handleSaveArtifact}
       />
 
-      {/* Toast Notification */}
-      {saveSuccess && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-950/95 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 px-5 py-4.5 rounded-2xl shadow-2xl shadow-emerald-500/10 animate-fade-in font-bold text-sm backdrop-blur-md">
-          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-          <span>Artifact revision saved successfully.</span>
-        </div>
-      )}
+      <UnsavedConfirmModal
+        isOpen={showUnsavedNextModal}
+        onStay={() => setShowUnsavedNextModal(false)}
+        onProceed={() => {
+          if (onNext) onNext();
+        }}
+      />
+
+      <ModelToast
+        message={toastMsg}
+        tone={toastTone}
+        onClose={() => setToastMsg(null)}
+      />
     </div>
   );
 };

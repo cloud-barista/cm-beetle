@@ -2,18 +2,34 @@
 
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore, calculateJobElapsedSeconds } from '@/store/migrationStore';
-import { beetleApi } from '@/api/client';
+import {
+  artifactApi,
+  beetleApi,
+  StorageSourceModelEnvelope,
+  StorageTargetModelEnvelope,
+} from '@/api/client';
 import { CspCredentialForm } from '../common/CspCredentialForm';
 import { SaveRevisionModal, SaveRevisionResult } from '../common/SaveRevisionModal';
+import { ActiveModelBanner } from '../common/ActiveModelBanner';
+import { DeleteModelConfirmModal } from '../common/DeleteModelConfirmModal';
+import { UnsavedConfirmModal } from '../common/UnsavedConfirmModal';
+import { ModelToast } from '../common/ModelToast';
 import { ObjectDirectoryTree } from './ObjectDirectoryTree';
+import {
+  buildDefaultModelName,
+  cleanModelDisplayName,
+  formatSourceOptionText,
+  formatTargetOptionText,
+  getStageBadgeMeta,
+  isBuiltInSampleModel,
+  resolveModelStageKind,
+} from '../../utils/modelFormat';
 import sampleStorageRequest from '../../data/sampleSourceObjectStorage.json';
 import sampleTargetObjectStorage from '../../data/sampleTargetObjectStorage.json';
 import {
   HardDrive, Plus, Trash2, CheckCircle2, ArrowRight, ArrowLeft, Check, Zap,
-  ShieldCheck, Database, RefreshCw, Server, AlertCircle, Play, Key,
-  Search, ChevronDown, ChevronUp, Lock, FileText, Upload, Save, X,
-  Sliders, Compass, Copy, Edit3, Settings2, Globe, Shield, Tag, AlertTriangle, Sparkles,
-  Activity, Clock, Folder
+  Database, RefreshCw, AlertCircle, Play, Key, Lock, FileText, Save, X,
+  Sliders, Compass, Copy, Globe, Sparkles, Activity, Clock, Folder
 } from 'lucide-react';
 
 interface CorsRuleItem {
@@ -105,13 +121,49 @@ const CSP_REGIONS_MAP: Record<string, { id: string; name: string }[]> = {
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'];
 
-const SAMPLE_STORAGE_MODEL = {
+const SAMPLE_STORAGE_MODEL: StorageSourceModelEnvelope = {
   id: 'sample-source-storage-01',
   name: '[Sample] sampleSourceObjectStorage.json',
-  version: '1.0',
-  updatedTime: new Date().toISOString(),
-  description: 'Sample object storage model for quick demonstration'
+  version: '1.0.0',
+  stage: 'source',
+  category: 'infra',
+  schemaType: 'SourceObjectStorage',
+  description: 'Sample object storage model for quick demonstration',
+  sourceCloud: { csp: 'aws', region: 'ap-northeast-2' },
+  sourceObjectStorages: sampleStorageRequest.sourceObjectStorages as any[],
 };
+
+const SAMPLE_TARGET_STORAGE_MODEL: StorageTargetModelEnvelope = {
+  id: 'sample-target-storage-01',
+  name: '[Sample] target-storage-v1',
+  description: 'Default sample target object storage recommendation',
+  version: '1.0.0',
+  stage: 'target',
+  category: 'infra',
+  schemaType: 'RecommendedObjectStorage',
+  csp: 'aws',
+  region: 'ap-northeast-2',
+  targetObjectStorages: [
+    {
+      bucketName: 'target-storage-01-x8f2',
+      sourceBucketName: 'datamold-aws-test',
+      versioningEnabled: true,
+      corsEnabled: true,
+      corsRule: [
+        {
+          allowedHeader: ['*'],
+          allowedMethod: ['GET', 'POST', 'PUT', 'DELETE'],
+          allowedOrigin: ['*'],
+          exposeHeader: ['ETag'],
+          maxAgeSeconds: 3600,
+        },
+      ],
+    },
+  ],
+  raw: sampleTargetObjectStorage,
+};
+
+const DRAFT_STORAGE_TARGET_ID = '__draft_target_storage__';
 
 export interface ObjectStorageJobCard {
   id: string;
@@ -141,7 +193,6 @@ export const ObjectStorageMigration: React.FC = () => {
     fetchTumblebugRegions,
     objectStorageJobs,
     setObjectStorageJobs,
-    addObjectStorageJob,
     removeObjectStorageJob,
     activeObjectStorageJobId,
     setActiveObjectStorageJobId
@@ -199,7 +250,7 @@ export const ObjectStorageMigration: React.FC = () => {
   const [credAccessKey, setCredAccessKey] = useState('');
   const [credSecretKey, setCredSecretKey] = useState('');
   const [savedCredProfiles, setSavedCredProfiles] = useState<
-    { id: string; name: string; csp: string; region: string; accessKey: string }[]
+    { id: string; name: string; csp: string; region: string; accessKey: string; secretKey?: string }[]
   >([]);
 
   const [scanCsp, setScanCsp] = useState('aws');
@@ -253,27 +304,61 @@ export const ObjectStorageMigration: React.FC = () => {
   const [isInspectLoading, setIsInspectLoading] = useState(false);
   const [isInspectDone, setIsInspectDone] = useState(false);
 
-  const [savedSourceModels, setSavedSourceModels] = useState<any[]>([]);
-  const [selectedSourceModelId, setSelectedSourceModelId] = useState<string>('');
+  // Unified Artifact Repository State across Steps 1-4
+  const [savedSourceModels, setSavedSourceModels] = useState<StorageSourceModelEnvelope[]>([]);
+  const [savedTargetModels, setSavedTargetModels] = useState<StorageTargetModelEnvelope[]>([]);
+
+  // Step 1 save state
+  const [lastSavedSourceStorageModel, setLastSavedSourceStorageModel] = useState<StorageSourceModelEnvelope | null>(null);
+  const [hasStep1UnsavedChanges, setHasStep1UnsavedChanges] = useState(false);
+  const [showSaveStep1Modal, setShowSaveStep1Modal] = useState(false);
+
+  // Step 2 selection, loaded, and save state
+  const [pendingSourceModelId, setPendingSourceModelId] = useState<string>(SAMPLE_STORAGE_MODEL.id);
+  const [loadedSourceModel, setLoadedSourceModel] = useState<StorageSourceModelEnvelope | null>(null);
   const [isModelLoaded, setIsModelLoaded] = useState<boolean>(false);
   const [activeRefineStep, setActiveRefineStep] = useState<number>(1);
-  const [loadedModelName, setLoadedModelName] = useState<string>('');
-  const [loadedModelVersion, setLoadedModelVersion] = useState<string>('1.0');
-  const [loadedModelTime, setLoadedModelTime] = useState<string>('');
+  const [hasRefineUnsavedChanges, setHasRefineUnsavedChanges] = useState<boolean>(false);
+  const [showSavePlanningModal, setShowSavePlanningModal] = useState(false);
+  const [deleteSourceModalTarget, setDeleteSourceModalTarget] = useState<StorageSourceModelEnvelope | null>(null);
 
-  const [savedTargetModelId, setSavedTargetModelId] = useState<string | null>(null);
-  const [savedTargetModels, setSavedTargetModels] = useState<any[]>([]);
-  const [selectedTargetModelId, setSelectedTargetModelId] = useState<string>('sample-target-storage-01');
-  const [showSaveSourceModal, setShowSaveSourceModal] = useState(false);
+  // Step 3 selection, loaded, and save state
+  const [step1SubTab, setStep1SubTab] = useState<'generate' | 'load'>('generate');
+  const [pendingOptSourceModelId, setPendingOptSourceModelId] = useState<string>(SAMPLE_STORAGE_MODEL.id);
+  const [loadedOptSourceModel, setLoadedOptSourceModel] = useState<StorageSourceModelEnvelope | null>(null);
+  const [isOptSourceLoaded, setIsOptSourceLoaded] = useState<boolean>(false);
+  const [pendingTargetModelId, setPendingTargetModelId] = useState<string>(SAMPLE_TARGET_STORAGE_MODEL.id);
+  const [loadedTargetModel, setLoadedTargetModel] = useState<StorageTargetModelEnvelope | null>(null);
+  const [hasTargetUnsavedChanges, setHasTargetUnsavedChanges] = useState<boolean>(false);
   const [showSaveTargetModal, setShowSaveTargetModal] = useState(false);
-  const [modelLog, setModelLog] = useState<string[]>([]);
+  const [deleteTargetModalTarget, setDeleteTargetModalTarget] = useState<StorageTargetModelEnvelope | null>(null);
+
+  // Step 4 launch selector state
+  const [selectedTargetModelId, setSelectedTargetModelId] = useState<string>(SAMPLE_TARGET_STORAGE_MODEL.id);
+
+  // Shared unsaved Next confirmation & toast notifications
+  const [unsavedNextTarget, setUnsavedNextTarget] = useState<'refine' | 'optimize' | 'provision' | null>(null);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [toastTone, setToastTone] = useState<'success' | 'error'>('success');
+
+  const showToast = (msg: string, tone: 'success' | 'error' = 'success') => {
+    setToastTone(tone);
+    setToastMsg(msg);
+  };
 
   const [isRefineJsonOpen, setIsRefineJsonOpen] = useState(false);
   const [selectedBucketIndex, setSelectedBucketIndex] = useState<number>(0);
   const [excludedBucketNames, setExcludedBucketNames] = useState<string[]>([]);
   const [showCorsGuide, setShowCorsGuide] = useState<boolean>(false);
 
+  const markActiveStageDirty = () => {
+    if (subTab === 'source') setHasStep1UnsavedChanges(true);
+    else if (subTab === 'refine') setHasRefineUnsavedChanges(true);
+    else if (subTab === 'optimize') setHasTargetUnsavedChanges(true);
+  };
+
   const toggleExcludeBucket = (bucketName: string) => {
+    markActiveStageDirty();
     setExcludedBucketNames((prev) =>
       prev.includes(bucketName)
         ? prev.filter((name) => name !== bucketName)
@@ -285,7 +370,6 @@ export const ObjectStorageMigration: React.FC = () => {
   const [newAllowedHeaderInputs, setNewAllowedHeaderInputs] = useState<Record<number, string>>({});
   const [newExposeHeaderInputs, setNewExposeHeaderInputs] = useState<Record<number, string>>({});
 
-  const [step1SubTab, setStep1SubTab] = useState<'generate' | 'load'>('generate');
   const [desiredCsp, setDesiredCsp] = useState('aws');
   const [desiredRegion, setDesiredRegion] = useState('ap-northeast-2');
   const [targetObjectStorageName, setTargetObjectStorageName] = useState('');
@@ -298,8 +382,6 @@ export const ObjectStorageMigration: React.FC = () => {
   const [isDeploying, setIsDeploying] = useState(false);
   const [showLaunchModal, setShowLaunchModal] = useState(false);
   const [deploymentLog, setDeploymentLog] = useState<string[]>([]);
-  const [migratedStorages, setMigratedStorages] = useState<any[]>([]);
-  const [isLoadingMigrated, setIsLoadingMigrated] = useState(false);
 
   const [cspSupportMap, setCspSupportMap] = useState<Record<string, { cors: boolean; presignedUrl: boolean; versioning: boolean }>>({
     aws: { cors: true, presignedUrl: true, versioning: true },
@@ -320,7 +402,6 @@ export const ObjectStorageMigration: React.FC = () => {
     if (runningJobs.length === 0) return;
 
     const intervalId = setInterval(async () => {
-      // 1. Calculate real wall-clock elapsedSeconds for all running jobs
       setObjectStorageJobs((prevJobs) =>
         prevJobs.map((job) => {
           if (job.status === 'Handling') {
@@ -331,7 +412,6 @@ export const ObjectStorageMigration: React.FC = () => {
         })
       );
 
-      // 2. Poll Beetle REST API GET /beetle/request/{reqId} to check if job finished
       for (const job of runningJobs) {
         if (!job.reqId || job.isSample) continue;
         try {
@@ -383,112 +463,140 @@ export const ObjectStorageMigration: React.FC = () => {
     return () => clearInterval(intervalId);
   }, [objectStorageJobs, setObjectStorageJobs]);
 
+  const fetchSavedStorageModels = async () => {
+    try {
+      const [srcList, tgtList] = await Promise.all([
+        artifactApi.getStorageSourceModels().catch(() => []),
+        artifactApi.getStorageTargetModels().catch(() => []),
+      ]);
+      const cleanSrc = srcList.filter((m) => !isBuiltInSampleModel(m));
+      const cleanTgt = tgtList.filter((m) => !isBuiltInSampleModel(m));
+      setSavedSourceModels(cleanSrc);
+      setSavedTargetModels(cleanTgt);
+      if (cleanSrc.length > 0) {
+        setPendingSourceModelId((prev) => (prev === SAMPLE_STORAGE_MODEL.id ? cleanSrc[0].id : prev));
+        setPendingOptSourceModelId((prev) => (prev === SAMPLE_STORAGE_MODEL.id ? cleanSrc[0].id : prev));
+      }
+      if (cleanTgt.length > 0) {
+        setPendingTargetModelId((prev) => (prev === SAMPLE_TARGET_STORAGE_MODEL.id ? cleanTgt[0].id : prev));
+        setSelectedTargetModelId((prev) => (prev === SAMPLE_TARGET_STORAGE_MODEL.id ? cleanTgt[0].id : prev));
+      }
+    } catch (err) {
+      console.warn('Initial storage artifact load failed:', err);
+    }
+  };
+
   useEffect(() => {
     fetchTumblebugProviders();
     beetleApi.getObjectStorageSupport().then((data) => {
       if (data && typeof data === 'object') {
         setCspSupportMap(data);
       }
-    }).catch(() => {
-      // Retain fallback support map if Tumblebug proxy returns 404 or error
-    });
-
-    // Automatically fetch persisted source storage model from server API
-    beetleApi.getSourceObjectStorageModel().then((res) => {
-      if (res.success && res.sourceModel) {
-        const sm = res.sourceModel;
-        const modelId = `saved-file-source-model`;
-        const fileModel = {
-          id: modelId,
-          name: sm.name || sm.description || 'source_storage_model.json',
-          description: sm.description || 'Persisted Source Storage Model from Server File',
-          version: sm.version || '1.0',
-          updatedTime: new Date().toISOString(),
-          buckets: sm.sourceObjectStorages || sm.buckets || [],
-          sourceObjectStorages: sm.sourceObjectStorages || sm.buckets || []
-        };
-        setSavedSourceModels([fileModel]);
-        setSelectedSourceModelId(modelId);
-      }
-    }).catch((err) => {
-      console.warn('Initial source model file load:', err);
-    });
-
-    // Automatically fetch persisted target storage model from server API
-    beetleApi.getTargetObjectStorageModel().then((res) => {
-      if (res.success && res.targetModel) {
-        const tm = res.targetModel;
-        const modelId = `saved-file-target-model`;
-        const modelName = tm.name || tm.userModelName || 'target-storage-model-rev1';
-        const fileModel = {
-          id: modelId,
-          name: modelName,
-          userModelName: modelName,
-          description: tm.description || 'Persisted Target Storage Model Revision',
-          version: tm.version || tm.userModelVersion || '1.0.0',
-          csp: tm.targetCloud?.csp || 'aws',
-          region: tm.targetCloud?.region || 'ap-northeast-2',
-          targetObjectStorages: tm.targetObjectStorages || [],
-          raw: tm
-        };
-        setSavedTargetModels([fileModel]);
-        setSelectedTargetModelId(modelId);
-      }
-    }).catch((err) => {
-      console.warn('Initial target model file load:', err);
-    });
+    }).catch(() => {});
+    fetchSavedStorageModels();
   }, []);
 
-  const SAMPLE_TARGET_STORAGE_MODEL = {
-    id: 'sample-target-storage-01',
-    name: '[Sample] target-storage-v1',
-    description: 'Default sample target object storage recommendation',
-    version: '1.0.0',
-    csp: 'aws',
-    region: 'ap-northeast-2',
-    targetObjectStorages: [
-      {
-        bucketName: 'target-storage-01-x8f2',
-        sourceBucketName: 'datamold-aws-test',
-        versioningEnabled: true,
-        corsEnabled: true,
-        corsRule: [
-          {
-            allowedHeader: ['*'],
-            allowedMethod: ['GET', 'POST', 'PUT', 'DELETE'],
-            allowedOrigin: ['*'],
-            exposeHeader: ['ETag'],
-            maxAgeSeconds: 3600
-          }
-        ]
-      }
-    ]
+  // Grouped model lists for dropdowns
+  const userStorageModels = savedSourceModels.filter((m) => !isBuiltInSampleModel(m));
+  const userPlanningModels = userStorageModels.filter((m) => m.stage === 'planning');
+  const userSourceModels = userStorageModels.filter((m) => m.stage !== 'planning');
+  const sampleSourceModels: StorageSourceModelEnvelope[] = [SAMPLE_STORAGE_MODEL];
+  const allSourceModels: StorageSourceModelEnvelope[] = [
+    ...userPlanningModels,
+    ...userSourceModels,
+    ...sampleSourceModels,
+  ];
+
+  const userTargetModels = savedTargetModels.filter((m) => !isBuiltInSampleModel(m));
+  const sampleTargetModels: StorageTargetModelEnvelope[] = [SAMPLE_TARGET_STORAGE_MODEL];
+  const allTargetModels: StorageTargetModelEnvelope[] = [
+    ...userTargetModels,
+    ...sampleTargetModels,
+  ];
+
+  const pendingSourceModel = allSourceModels.find((m) => m.id === pendingSourceModelId) || allSourceModels[0] || null;
+  const isRefinePendingAlreadyLoaded = Boolean(
+    isModelLoaded &&
+      loadedSourceModel &&
+      pendingSourceModel &&
+      loadedSourceModel.id === pendingSourceModel.id &&
+      !hasRefineUnsavedChanges
+  );
+
+  const pendingOptSourceModel = allSourceModels.find((m) => m.id === pendingOptSourceModelId) || allSourceModels[0] || null;
+  const isOptSourcePendingAlreadyLoaded = Boolean(
+    isOptSourceLoaded &&
+      loadedOptSourceModel &&
+      pendingOptSourceModel &&
+      loadedOptSourceModel.id === pendingOptSourceModel.id
+  );
+
+  const pendingTargetModel = allTargetModels.find((m) => m.id === pendingTargetModelId) || allTargetModels[0] || null;
+  const isTargetPendingAlreadyLoaded = Boolean(
+    recommendationResult &&
+      loadedTargetModel &&
+      pendingTargetModel &&
+      loadedTargetModel.id === pendingTargetModel.id &&
+      !hasTargetUnsavedChanges
+  );
+
+  const buildActiveTargetStoragesPayload = () => {
+    const activeBuckets = sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName));
+    return activeBuckets.map((b) => {
+      const isCorsOn = b.corsEnabled || false;
+      const validRules = b.corsRule && b.corsRule.length > 0
+        ? b.corsRule
+        : [{ allowedOrigin: ['*'], allowedMethod: ['GET', 'POST', 'PUT', 'DELETE'], allowedHeader: ['*'], exposeHeader: ['ETag'], maxAgeSeconds: 3600 }];
+      const cleanTargetName = b.targetBucketName || b.bucketName;
+      return {
+        bucketName: cleanTargetName,
+        targetObjectStorageName: cleanTargetName,
+        sourceBucketName: b.bucketName,
+        storageClass: b.accessFrequency === 'frequent' ? 'Standard' : b.accessFrequency === 'infrequent' ? 'Standard-IA' : 'Archive',
+        versioningEnabled: b.versioningEnabled || false,
+        encryptionEnabled: b.encryptionEnabled || false,
+        corsEnabled: isCorsOn,
+        corsRule: isCorsOn ? validRules : [],
+        isPublic: b.isPublic || false,
+      };
+    });
   };
 
-  const allTargetModels = [
-    SAMPLE_TARGET_STORAGE_MODEL,
-    ...savedTargetModels.filter((m) => m.id !== 'sample-target-storage-01')
-  ].reduce((acc: any[], current: any) => {
-    const exists = acc.some((item) => item.id === current.id || (item.name && item.name === current.name));
-    if (!exists) acc.push(current);
-    return acc;
-  }, []);
+  const hasUnsavedTargetDraft = Boolean(recommendationResult && (!loadedTargetModel || hasTargetUnsavedChanges));
+  const draftTargetModelEnvelope: StorageTargetModelEnvelope | null = recommendationResult
+    ? {
+        id: DRAFT_STORAGE_TARGET_ID,
+        name:
+          loadedTargetModel && !isBuiltInSampleModel(loadedTargetModel)
+            ? loadedTargetModel.name
+            : buildDefaultModelName(
+                'target',
+                loadedOptSourceModel?.name || loadedSourceModel?.name || 'storage',
+                desiredCsp
+              ),
+        description: recommendationResult.description || 'Unsaved target object storage draft',
+        version: loadedTargetModel?.version || '1.0.0',
+        stage: 'target',
+        category: 'infra',
+        schemaType: 'RecommendedObjectStorage',
+        csp: desiredCsp,
+        region: desiredRegion,
+        targetObjectStorages: buildActiveTargetStoragesPayload(),
+        raw: recommendationResult,
+      }
+    : null;
 
-  const activeSelectedTargetModel = allTargetModels.find((m) => m.id === selectedTargetModelId) || allTargetModels[allTargetModels.length - 1] || SAMPLE_TARGET_STORAGE_MODEL;
+  const activeSelectedTargetModel: StorageTargetModelEnvelope =
+    selectedTargetModelId === DRAFT_STORAGE_TARGET_ID && draftTargetModelEnvelope
+      ? draftTargetModelEnvelope
+      : allTargetModels.find((m) => m.id === selectedTargetModelId) ||
+        allTargetModels[0] ||
+        SAMPLE_TARGET_STORAGE_MODEL;
 
   const getCspSupport = (cspKey: string) => {
     const key = (cspKey || '').toLowerCase();
     return cspSupportMap[key] || { cors: true, presignedUrl: true, versioning: true };
   };
-
-  const allSourceModels = [
-    SAMPLE_STORAGE_MODEL,
-    ...savedSourceModels.filter((m) => m.id !== 'sample-source-storage-01')
-  ].reduce((acc: any[], current: any) => {
-    const exists = acc.some((item) => item.id === current.id || (item.name && item.name === current.name));
-    if (!exists) acc.push(current);
-    return acc;
-  }, []);
 
   const getCspList = () => {
     const map = new Map<string, string>();
@@ -527,13 +635,6 @@ export const ObjectStorageMigration: React.FC = () => {
     );
   };
 
-  const handleCspChange = (newCsp: string) => {
-    setScanCsp(newCsp);
-    fetchTumblebugRegions(newCsp);
-    const available = getRegionsForCsp(newCsp);
-    if (available.length > 0) setScanRegion(available[0].id);
-  };
-
   const handleDesiredCspChange = (newCsp: string) => {
     setDesiredCsp(newCsp);
     fetchTumblebugRegions(newCsp);
@@ -549,60 +650,99 @@ export const ObjectStorageMigration: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
-  // Step 1 Load / Delete Handlers
-  const handleLoadModel = async () => {
-    let targetModel: any = null;
-
-    if (selectedSourceModelId && selectedSourceModelId !== 'sample-source-storage-01') {
-      const foundInState = savedSourceModels.find((m) => m.id === selectedSourceModelId);
-      if (foundInState) {
-        targetModel = foundInState;
-      }
-    }
-
-    if (!targetModel) {
-      try {
-        const res = await beetleApi.getSourceObjectStorageModel();
-        if (res.success && res.sourceModel) {
-          targetModel = res.sourceModel;
-        }
-      } catch (err) {
-        console.warn('API model fetch failed:', err);
-      }
-    }
-
-    if (!targetModel) {
-      targetModel = allSourceModels.find((m) => m.id === selectedSourceModelId) || SAMPLE_STORAGE_MODEL;
-    }
-
-    const rawBuckets = targetModel.sourceObjectStorages || targetModel.buckets || sampleStorageRequest.sourceObjectStorages || [];
-    const bucketsToLoad: SourceBucket[] = rawBuckets.map((b: any) => ({
+  const mapEnvelopeToSourceBuckets = (model: StorageSourceModelEnvelope): SourceBucket[] => {
+    const rawBuckets =
+      model.sourceObjectStorages && model.sourceObjectStorages.length > 0
+        ? model.sourceObjectStorages
+        : sampleStorageRequest.sourceObjectStorages || [];
+    return rawBuckets.map((b: any) => ({
       bucketName: b.bucketName || 'sample-bucket-01',
+      targetBucketName: b.targetBucketName || b.bucketName || 'sample-bucket-01',
       totalSizeBytes: b.totalSizeBytes || 10737418240,
       objectCount: b.objectCount || 1000,
       accessFrequency: b.accessFrequency || 'frequent',
-      versioningEnabled: b.versioningEnabled || false,
-      encryptionEnabled: b.encryptionEnabled || false,
-      corsEnabled: b.corsEnabled || false,
-      corsRule: b.corsRule || [],
-      isPublic: b.isPublic || false,
-      tags: b.tags || {}
+      versioningEnabled: Boolean(b.versioningEnabled),
+      encryptionEnabled: Boolean(b.encryptionEnabled),
+      corsEnabled: Boolean(b.corsEnabled),
+      corsRule: Array.isArray(b.corsRule) ? b.corsRule : [],
+      isPublic: Boolean(b.isPublic),
+      creationDate: b.creationDate,
+      tags: b.tags || {},
+      objects: b.objects,
     }));
-
-    setSourceBuckets(bucketsToLoad);
-    setLoadedModelName(targetModel.name || targetModel.userModelName || targetModel.description || 'source_storage_model.json');
-    setLoadedModelVersion(targetModel.version || targetModel.userModelVersion || '1.0');
-    setLoadedModelTime(new Date().toLocaleString());
-    setIsModelLoaded(true);
-    setActiveRefineStep(2);
   };
 
-  const handleDeleteModel = () => {
-    if (selectedSourceModelId === 'sample-source-storage-01') return;
-    if (!confirm('Are you sure you want to delete this source storage model revision?')) return;
-    setSavedSourceModels((prev) => prev.filter((m) => m.id !== selectedSourceModelId));
-    setSelectedSourceModelId('sample-source-storage-01');
-    handleLoadModel();
+  // Explicit Load handler for Step 2 (Refinement)
+  const handleLoadRefineModel = () => {
+    if (!pendingSourceModel) return;
+    const bucketsToLoad = mapEnvelopeToSourceBuckets(pendingSourceModel);
+    setSourceBuckets(bucketsToLoad);
+    setExcludedBucketNames([]);
+    setSelectedBucketIndex(0);
+    setLoadedSourceModel(pendingSourceModel);
+    setIsModelLoaded(true);
+    setActiveRefineStep(2);
+    setHasRefineUnsavedChanges(false);
+    if (!isOptSourceLoaded) {
+      setPendingOptSourceModelId(pendingSourceModel.id);
+    }
+  };
+
+  // Explicit Load handler for Step 3 Sub-Tab 1 (Generate Recommendation)
+  const handleLoadOptSourceModel = () => {
+    if (!pendingOptSourceModel) return;
+    const bucketsToLoad = mapEnvelopeToSourceBuckets(pendingOptSourceModel);
+    setSourceBuckets(bucketsToLoad);
+    setExcludedBucketNames([]);
+    setLoadedOptSourceModel(pendingOptSourceModel);
+    setIsOptSourceLoaded(true);
+  };
+
+  // Explicit Load handler for Step 3 Sub-Tab 2 (Load Saved Target Model)
+  const handleLoadTargetModel = () => {
+    if (!pendingTargetModel) return;
+    const targetCsp = (pendingTargetModel.csp || 'aws').toLowerCase();
+    const targetReg = pendingTargetModel.region || 'ap-northeast-2';
+    setDesiredCsp(targetCsp);
+    setDesiredRegion(targetReg);
+    fetchTumblebugRegions(targetCsp);
+
+    const mappedBuckets: SourceBucket[] = (pendingTargetModel.targetObjectStorages || []).map((tb: any, idx: number) => {
+      const rawBucketName = String(tb.bucketName || `target-storage-${idx + 1}`);
+      const cleanTargetName = tb.targetObjectStorageName || rawBucketName.replace(/-x8f2$/, '');
+      const srcName = tb.sourceBucketName || cleanTargetName;
+      const freq: 'frequent' | 'infrequent' | 'archive' =
+        tb.storageClass === 'Standard-IA' ? 'infrequent' : tb.storageClass === 'Archive' ? 'archive' : 'frequent';
+      return {
+        bucketName: srcName,
+        targetBucketName: cleanTargetName,
+        totalSizeBytes: tb.totalSizeBytes || 10737418240,
+        objectCount: tb.objectCount || 1000,
+        accessFrequency: freq,
+        versioningEnabled: Boolean(tb.versioningEnabled),
+        encryptionEnabled: Boolean(tb.encryptionEnabled),
+        corsEnabled: Boolean(tb.corsEnabled),
+        corsRule: Array.isArray(tb.corsRule) ? tb.corsRule : [],
+        isPublic: Boolean(tb.isPublic),
+        tags: tb.tags || {},
+      };
+    });
+
+    if (mappedBuckets.length > 0) {
+      setSourceBuckets(mappedBuckets);
+    }
+    setExcludedBucketNames([]);
+    setRecommendationResult(
+      pendingTargetModel.raw || {
+        status: 'recommended',
+        description: pendingTargetModel.description || 'Loaded target object storage model',
+        targetCloud: { csp: targetCsp, region: targetReg },
+        targetObjectStorages: pendingTargetModel.targetObjectStorages,
+      }
+    );
+    setLoadedTargetModel(pendingTargetModel);
+    setSelectedTargetModelId(pendingTargetModel.id);
+    setHasTargetUnsavedChanges(false);
   };
 
   // Detailed CORS Config Rule Modification Helpers
@@ -618,6 +758,7 @@ export const ObjectStorageMigration: React.FC = () => {
   };
 
   const updateCorsRuleForBucket = (bucketIdx: number, updater: (rule: CorsRuleItem) => CorsRuleItem) => {
+    markActiveStageDirty();
     setSourceBuckets((prev) =>
       prev.map((b, i) => {
         if (i !== bucketIdx) return b;
@@ -683,43 +824,10 @@ export const ObjectStorageMigration: React.FC = () => {
     }));
   };
 
-  const applyCorsPreset = (bucketIdx: number, presetType: 'allow-all' | 'web-app' | 'read-only') => {
-    let presetRule: CorsRuleItem;
-    if (presetType === 'allow-all') {
-      presetRule = {
-        allowedOrigin: ['*'],
-        allowedMethod: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
-        allowedHeader: ['*'],
-        exposeHeader: ['ETag'],
-        maxAgeSeconds: 3600
-      };
-    } else if (presetType === 'web-app') {
-      presetRule = {
-        allowedOrigin: ['https://example.com', 'https://app.example.com'],
-        allowedMethod: ['GET', 'PUT', 'POST', 'DELETE'],
-        allowedHeader: ['*'],
-        exposeHeader: ['ETag', 'x-amz-request-id'],
-        maxAgeSeconds: 3600
-      };
-    } else {
-      presetRule = {
-        allowedOrigin: ['*'],
-        allowedMethod: ['GET', 'HEAD'],
-        allowedHeader: ['*'],
-        exposeHeader: ['ETag'],
-        maxAgeSeconds: 86400
-      };
-    }
-
-    setSourceBuckets((prev) =>
-      prev.map((b, i) => (i === bucketIdx ? { ...b, corsEnabled: true, corsRule: [presetRule] } : b))
-    );
-  };
-
   // Step 1: Scan Source Buckets
   const handleScanSourceBuckets = async () => {
     if (!scanAccessKey || !scanSecretKey) {
-      alert('Please enter Access Key ID and Secret Access Key before scanning buckets.');
+      showToast('Please enter Access Key ID and Secret Access Key before scanning buckets.', 'error');
       return;
     }
 
@@ -732,16 +840,16 @@ export const ObjectStorageMigration: React.FC = () => {
         secretAccessKey: scanSecretKey,
       });
       if (res.success && res.bucketNames && res.bucketNames.length > 0) {
-        const sortedBucketNames = [...res.bucketNames].sort((a, b) => a.localeCompare(b));
+        const sortedBucketNames = [...res.bucketNames].sort((a: string, b: string) => a.localeCompare(b));
         setScannedBucketNames(sortedBucketNames);
         setScannedBuckets(res.buckets || []);
         setSelectedBucketNames([sortedBucketNames[0]]);
       } else {
-        alert(res.error || 'No buckets found for the specified region or scan failed.');
+        showToast(res.error || 'No buckets found for the specified region or scan failed.', 'error');
       }
     } catch (e: any) {
       console.error('Scan error:', e);
-      alert('Error scanning cloud account buckets.');
+      showToast('Error scanning cloud account buckets.', 'error');
     } finally {
       setIsScanning(false);
     }
@@ -750,7 +858,7 @@ export const ObjectStorageMigration: React.FC = () => {
   // Inspect Source Storage Buckets Metadata Handler
   const handleInspectSourceBuckets = async () => {
     if (sourceBuckets.length === 0) {
-      alert('Please add or scan at least one source object storage bucket first.');
+      showToast('Please add or scan at least one source object storage bucket first.', 'error');
       return;
     }
     setIsInspectLoading(true);
@@ -782,31 +890,32 @@ export const ObjectStorageMigration: React.FC = () => {
           })
         );
         setIsInspectDone(true);
-        alert('Source object storage detailed metadata inspection completed successfully!');
+        setHasStep1UnsavedChanges(true);
+        showToast('Source object storage metadata inspection completed.');
       } else {
         setIsInspectDone(true);
-        alert('Inspected source object storage metadata updated.');
+        setHasStep1UnsavedChanges(true);
+        showToast('Source object storage metadata updated.');
       }
     } catch (err: any) {
       console.warn('Inspect error:', err);
       setIsInspectDone(true);
+      setHasStep1UnsavedChanges(true);
     } finally {
       setIsInspectLoading(false);
     }
   };
 
-  // Save Source Storage Model Revision Handler
-  const handleSaveSourceModelRevision = async (result: SaveRevisionResult) => {
-    const activeBuckets = sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName));
-    if (activeBuckets.length === 0) {
-      alert('No active included source buckets available to save. Please include at least one bucket.');
-      return;
-    }
-    const formattedBuckets = activeBuckets.map((b) => {
+  const formatSourceBucketsForArtifact = (buckets: SourceBucket[]) => {
+    return buckets.map((b) => {
       const isCorsOn = b.corsEnabled || false;
-      const validRules = b.corsRule && b.corsRule.length > 0
+      const rawRules = b.corsRule && b.corsRule.length > 0
         ? b.corsRule
         : [{ allowedOrigin: ['*'], allowedMethod: ['GET', 'POST', 'PUT', 'DELETE'], allowedHeader: ['*'], exposeHeader: ['ETag'], maxAgeSeconds: 3600 }];
+      const validRules = rawRules.map((r) => ({
+        ...r,
+        maxAgeSeconds: Math.max(0, Math.round(Number(r.maxAgeSeconds) || 3600)),
+      }));
       return {
         accessFrequency: b.accessFrequency || 'frequent',
         bucketName: b.bucketName,
@@ -815,70 +924,113 @@ export const ObjectStorageMigration: React.FC = () => {
         creationDate: b.creationDate || '',
         encryptionEnabled: b.encryptionEnabled || false,
         isPublic: b.isPublic || false,
-        objectCount: b.objectCount || 0,
+        objectCount: Math.max(0, Math.round(Number(b.objectCount) || 0)),
         tags: b.tags || {},
-        totalSizeBytes: b.totalSizeBytes || 0,
+        totalSizeBytes: Math.max(0, Math.round(Number(b.totalSizeBytes) || 0)),
         versioningEnabled: b.versioningEnabled || false
       };
     });
+  };
 
-    const targetStage = subTab === 'refine' ? 'planning' : 'source';
-    const res = await beetleApi.saveSourceObjectStorageModel({
-      namespaceId,
-      sourceObjectStorages: formattedBuckets,
-      name: result.name,
-      description: result.description,
-      version: result.version,
-      stage: targetStage,
-      parentId: subTab === 'refine' ? selectedSourceModelId : undefined,
-      overwriteId: result.overwriteId
-    });
-    if (res.success) {
-      const modelId = res.modelId || `source-storage-model-${Date.now()}`;
-      const newModel = {
-        id: modelId,
-        name: result.name,
-        description: result.description,
-        version: result.version,
-        stage: targetStage,
-        updatedTime: new Date().toISOString(),
-        buckets: formattedBuckets
-      };
-      setSavedSourceModels((prev) => [newModel, ...prev.filter((m) => m.id !== modelId)]);
-      setSelectedSourceModelId(modelId);
-      setLoadedModelName(result.name);
-      setLoadedModelVersion(result.version);
-      setLoadedModelTime(new Date().toLocaleString());
-      setModelLog((prev) => [...prev, `[Beetle] ${targetStage === 'planning' ? 'Planning' : 'Source'} Storage Artifact Saved (ID: ${modelId}, Name: ${result.name})`]);
+  // Step 1: Save Source Storage Model (stage: 'source')
+  const handleSaveStep1SourceModel = async (result: SaveRevisionResult) => {
+    if (sourceBuckets.length === 0) {
+      throw new Error('At least one source bucket is required to save.');
     }
+    const payload = {
+      description: result.description || `Extracted source object storage model for ${scanCsp.toUpperCase()} (${scanRegion})`,
+      sourceCloud: { csp: scanCsp, region: scanRegion },
+      sourceObjectStorages: formatSourceBucketsForArtifact(sourceBuckets),
+    };
+    const saved = result.overwriteId
+      ? await artifactApi.updateStorageSourceModel(
+          result.overwriteId,
+          result.name,
+          result.description,
+          payload,
+          result.version,
+          { stage: 'source' }
+        )
+      : await artifactApi.saveStorageSourceModel(
+          result.name,
+          result.description,
+          payload,
+          result.version,
+          { stage: 'source' }
+        );
+    setSavedSourceModels((prev) => [saved, ...prev.filter((m) => m.id !== saved.id)]);
+    setLastSavedSourceStorageModel(saved);
+    setHasStep1UnsavedChanges(false);
+    setPendingSourceModelId(saved.id);
+    setPendingOptSourceModelId(saved.id);
+    showToast(
+      result.overwriteId
+        ? `Source model "${saved.name}" (v${saved.version}) updated.`
+        : `Source model "${saved.name}" (v${saved.version}) saved.`
+    );
+  };
+
+  // Step 2: Save Planning Storage Model (stage: 'planning')
+  const handleSavePlanningStorageModel = async (result: SaveRevisionResult) => {
+    const activeBuckets = sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName));
+    if (activeBuckets.length === 0) {
+      throw new Error('Include at least one bucket before saving a planning model.');
+    }
+    const sourceCloud = loadedSourceModel?.sourceCloud || { csp: scanCsp, region: scanRegion };
+    const payload = {
+      description: result.description || 'Refined planning object storage model',
+      sourceCloud,
+      sourceObjectStorages: formatSourceBucketsForArtifact(activeBuckets),
+    };
+    const parentId =
+      loadedSourceModel && !isBuiltInSampleModel(loadedSourceModel)
+        ? loadedSourceModel.id
+        : undefined;
+    const saved = result.overwriteId
+      ? await artifactApi.updateStorageSourceModel(
+          result.overwriteId,
+          result.name,
+          result.description,
+          payload,
+          result.version,
+          { stage: 'planning', parentId }
+        )
+      : await artifactApi.saveStorageSourceModel(
+          result.name,
+          result.description,
+          payload,
+          result.version,
+          { stage: 'planning', parentId }
+        );
+    setSavedSourceModels((prev) => [saved, ...prev.filter((m) => m.id !== saved.id)]);
+    setLoadedSourceModel(saved);
+    setPendingSourceModelId(saved.id);
+    setActiveRefineStep(3);
+    setHasRefineUnsavedChanges(false);
+    setPendingOptSourceModelId(saved.id);
+    showToast(
+      result.overwriteId
+        ? `Planning model "${saved.name}" (v${saved.version}) updated.`
+        : `Planning model "${saved.name}" (v${saved.version}) saved.`
+    );
   };
 
   // Step 3: Run Beetle Object Storage Recommendation API
   const handleGenerateRecommendation = async () => {
     const activeBuckets = sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName));
     if (activeBuckets.length === 0) {
-      alert('All buckets are currently excluded. Please include at least one bucket for target recommendation.');
+      showToast('All buckets are currently excluded. Include at least one bucket for recommendation.', 'error');
       return;
     }
 
-    const payloadSourceBuckets = activeBuckets.map((b) => ({
-      accessFrequency: b.accessFrequency || 'frequent',
-      bucketName: b.bucketName,
-      corsEnabled: b.corsEnabled || false,
-      corsRule: b.corsRule || [],
-      creationDate: b.creationDate || '',
-      encryptionEnabled: b.encryptionEnabled || false,
-      isPublic: b.isPublic || false,
-      objectCount: b.objectCount || 0,
-      tags: b.tags || {},
-      totalSizeBytes: b.totalSizeBytes || 0,
-      versioningEnabled: b.versioningEnabled || false
-    }));
+    const payloadSourceBuckets = formatSourceBucketsForArtifact(activeBuckets);
 
     setIsRecommending(true);
     try {
       const res = await beetleApi.recommendObjectStorage(desiredCsp, desiredRegion, payloadSourceBuckets);
       setRecommendationResult(res);
+      setLoadedTargetModel(null);
+      setHasTargetUnsavedChanges(true);
     } catch (err: any) {
       console.warn('API recommendation fallback using sampleTargetObjectStorage', err);
       setRecommendationResult({
@@ -886,62 +1038,81 @@ export const ObjectStorageMigration: React.FC = () => {
         targetCloud: { csp: desiredCsp, region: desiredRegion },
         description: `Target cloud object storage recommendation for ${activeBuckets.length} bucket(s) on ${desiredCsp.toUpperCase()} (${desiredRegion})`
       });
+      setLoadedTargetModel(null);
+      setHasTargetUnsavedChanges(true);
     } finally {
       setIsRecommending(false);
     }
   };
 
-  // Step 3: Save Target Storage Model Revision
+  // Step 3: Save Target Storage Model (stage: 'target')
   const handleSaveTargetModelRevision = async (result: SaveRevisionResult) => {
     if (!recommendationResult) {
-      alert('Generate target recommendation first.');
-      return;
+      throw new Error('Generate or load a target recommendation first.');
     }
-    const activeBuckets = sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName));
+    const targetStorages = buildActiveTargetStoragesPayload();
+    if (targetStorages.length === 0) {
+      throw new Error('Include at least one target bucket before saving.');
+    }
     const payloadRecommendation = {
       ...recommendationResult,
-      targetObjectStorages: activeBuckets.map((b) => {
-        const isCorsOn = b.corsEnabled || false;
-        const validRules = b.corsRule && b.corsRule.length > 0
-          ? b.corsRule
-          : [{ allowedOrigin: ['*'], allowedMethod: ['GET', 'POST', 'PUT', 'DELETE'], allowedHeader: ['*'], exposeHeader: ['ETag'], maxAgeSeconds: 3600 }];
-        return {
-          bucketName: `${b.targetBucketName || b.bucketName}-x8f2`,
-          sourceBucketName: b.bucketName,
-          versioningEnabled: b.versioningEnabled || false,
-          corsEnabled: isCorsOn,
-          corsRule: isCorsOn ? validRules : []
-        };
-      })
-    };
-
-    const res = await beetleApi.saveTargetObjectStorageModel({
-      namespaceId,
-      recommendation: payloadRecommendation,
-      nameSeed,
-      name: result.name,
-      description: result.description,
-      version: result.version,
-      parentId: selectedSourceModelId || undefined,
-      overwriteId: result.overwriteId
-    });
-    if (res.success) {
-      const modelId = res.modelId || `target-storage-model-${Date.now()}`;
-      setSavedTargetModelId(modelId);
-      const newModel = {
-        id: modelId,
-        name: result.name || `target-storage-model-rev-${Date.now().toString().slice(-4)}`,
-        description: result.description || 'Saved Target Object Storage Model Revision',
-        version: result.version || '1.0.0',
+      status: recommendationResult.status || 'recommended',
+      description: result.description || recommendationResult.description || 'Recommended target cloud object storage model',
+      targetCloud: {
         csp: desiredCsp,
         region: desiredRegion,
-        targetObjectStorages: payloadRecommendation.targetObjectStorages,
-        raw: payloadRecommendation
-      };
-      setSavedTargetModels((prev) => [newModel, ...prev.filter((m) => m.id !== modelId)]);
-      setSelectedTargetModelId(modelId);
-      setModelLog((prev) => [...prev, `[Beetle] Target Storage Artifact Saved (ID: ${modelId}, Name: ${result.name})`]);
+      },
+      targetObjectStorages: targetStorages,
+    };
+
+    const parentCandidate = loadedOptSourceModel || loadedSourceModel;
+    const parentId =
+      parentCandidate && !isBuiltInSampleModel(parentCandidate)
+        ? parentCandidate.id
+        : undefined;
+
+    const saved = result.overwriteId
+      ? await artifactApi.updateStorageTargetModel(
+          result.overwriteId,
+          result.name,
+          result.description,
+          payloadRecommendation,
+          result.version,
+          { stage: 'target', parentId }
+        )
+      : await artifactApi.saveStorageTargetModel(
+          result.name,
+          result.description,
+          payloadRecommendation,
+          result.version,
+          { stage: 'target', parentId }
+        );
+
+    setSavedTargetModels((prev) => [saved, ...prev.filter((m) => m.id !== saved.id)]);
+    setLoadedTargetModel(saved);
+    setPendingTargetModelId(saved.id);
+    setSelectedTargetModelId(saved.id);
+    setHasTargetUnsavedChanges(false);
+    showToast(
+      result.overwriteId
+        ? `Target model "${saved.name}" (v${saved.version}) updated.`
+        : `Target model "${saved.name}" (v${saved.version}) saved.`
+    );
+  };
+
+  const handleProceedToStep = (nextTab: 'refine' | 'optimize' | 'provision', isDirty: boolean) => {
+    if (isDirty) {
+      setUnsavedNextTarget(nextTab);
+      return;
     }
+    if (nextTab === 'provision') {
+      if (hasUnsavedTargetDraft) {
+        setSelectedTargetModelId(DRAFT_STORAGE_TARGET_ID);
+      } else if (loadedTargetModel) {
+        setSelectedTargetModelId(loadedTargetModel.id);
+      }
+    }
+    setSubTab(nextTab);
   };
 
   // Step 4: Provision & Migrate Object Storage (Async API via Prefer: respond-async)
@@ -949,35 +1120,41 @@ export const ObjectStorageMigration: React.FC = () => {
     setSubTab('provision');
     setIsDeploying(true);
     const mockReqId = `req-${Date.now().toString().slice(-6)}`;
-    
-    // Only pass nameSeed query param if explicitly set and <= 20 chars (common.IsValidNameSeed constraint)
+
+    // Pass nameSeed query param only if explicitly set and <= 20 chars (common.IsValidNameSeed constraint)
     const rawSeed = (nameSeed || '').trim();
     const effectiveSeed = rawSeed.length > 0 && rawSeed.length <= 20 ? rawSeed : '';
 
-    const activeBuckets = sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName));
+    const rawTargetStorages =
+      activeSelectedTargetModel.targetObjectStorages && activeSelectedTargetModel.targetObjectStorages.length > 0
+        ? activeSelectedTargetModel.targetObjectStorages
+        : buildActiveTargetStoragesPayload();
 
-    const payloadTargetStorages = activeBuckets.map((b) => {
-      const isCorsOn = b.corsEnabled || false;
+    const payloadTargetStorages = rawTargetStorages.map((b: any) => {
+      const isCorsOn = Boolean(b.corsEnabled);
       const validRules = b.corsRule && b.corsRule.length > 0
         ? b.corsRule
         : [{ allowedOrigin: ['*'], allowedMethod: ['GET', 'POST', 'PUT', 'DELETE'], allowedHeader: ['*'], exposeHeader: ['ETag'], maxAgeSeconds: 3600 }];
       return {
-        sourceBucketName: b.bucketName,
-        bucketName: b.targetBucketName || b.bucketName,
-        versioningEnabled: b.versioningEnabled || false,
+        sourceBucketName: b.sourceBucketName || b.bucketName,
+        bucketName: b.targetObjectStorageName || b.bucketName,
+        versioningEnabled: Boolean(b.versioningEnabled),
         corsEnabled: isCorsOn,
         corsRule: isCorsOn ? validRules : []
       };
     });
 
+    const targetCsp = (activeSelectedTargetModel.csp || desiredCsp || 'aws').toLowerCase();
+    const targetReg = activeSelectedTargetModel.region || desiredRegion || 'ap-northeast-2';
+
     const targetModel = {
-      status: recommendationResult?.status || 'recommended',
-      description: recommendationResult?.description || `Object storage migration request for ${activeBuckets.length} bucket(s)`,
+      status: activeSelectedTargetModel.raw?.status || 'recommended',
+      description: activeSelectedTargetModel.description || `Object storage migration request for ${payloadTargetStorages.length} bucket(s)`,
       targetCloud: {
-        csp: (recommendationResult?.targetCloud?.csp || activeSelectedTargetModel?.csp || desiredCsp || 'aws').toLowerCase(),
-        region: recommendationResult?.targetCloud?.region || activeSelectedTargetModel?.region || desiredRegion || 'ap-northeast-2'
+        csp: targetCsp,
+        region: targetReg,
       },
-      targetObjectStorages: payloadTargetStorages
+      targetObjectStorages: payloadTargetStorages,
     };
 
     setDeploymentLog([
@@ -991,8 +1168,6 @@ export const ObjectStorageMigration: React.FC = () => {
       const res = await beetleApi.executeObjectStorageMigration(namespaceId || 'mig01', effectiveSeed, targetModel, true);
 
       const realReqId = res.reqId || mockReqId;
-      const targetCsp = targetModel.targetCloud.csp;
-      const targetReg = targetModel.targetCloud.region;
       const storageJobName = `${effectiveSeed || 'mig01'}-${targetCsp.toLowerCase()}-storage`;
       const newJobId = `os-job-${Date.now()}`;
 
@@ -1018,7 +1193,7 @@ export const ObjectStorageMigration: React.FC = () => {
         status: res.success ? 'Handling' : 'Failed',
         startTime: new Date().toISOString(),
         elapsedSeconds: 0,
-        buckets: payloadTargetStorages.map((b) => ({
+        buckets: payloadTargetStorages.map((b: any) => ({
           name: b.bucketName,
           targetClass: 'Standard (S3/Hot)',
           cors: b.corsEnabled ? 'ENABLED' : 'DISABLED',
@@ -1031,14 +1206,12 @@ export const ObjectStorageMigration: React.FC = () => {
 
       setObjectStorageJobs((prev) => [newJobCard, ...prev]);
       setSelectedJobId(newJobId);
+      setDeploymentLog(logsList);
 
       if (res.success) {
-        setDeploymentLog(logsList);
         setTimeout(() => {
           loadMigratedStorages();
         }, 3000);
-      } else {
-        setDeploymentLog(logsList);
       }
     } catch (err: any) {
       setDeploymentLog((prev) => [...prev, `[Error] ${err.message || 'Execution error'}`]);
@@ -1047,25 +1220,11 @@ export const ObjectStorageMigration: React.FC = () => {
     }
   };
 
-  const handleDeleteStorage = async (osId: string) => {
-    if (!confirm(`Are you sure you want to delete object storage '${osId}'?`)) return;
-    try {
-      await beetleApi.deleteMigratedObjectStorage(namespaceId, osId);
-      await loadMigratedStorages();
-    } catch (err) {
-      alert('Failed to delete storage');
-    }
-  };
-
   const loadMigratedStorages = async () => {
-    setIsLoadingMigrated(true);
     try {
-      const list = await beetleApi.getMigratedObjectStorages(namespaceId);
-      setMigratedStorages(list);
+      await beetleApi.getMigratedObjectStorages(namespaceId);
     } catch (err) {
       console.warn('Failed to load migrated storages', err);
-    } finally {
-      setIsLoadingMigrated(false);
     }
   };
 
@@ -1183,7 +1342,7 @@ export const ObjectStorageMigration: React.FC = () => {
                         )}
                       </div>
                       <p className="text-xs text-text-muted mb-3 font-mono">
-                        {cred.csp.toUpperCase()} • {cred.region}
+                        {cred.csp.toUpperCase()} / {cred.region}
                       </p>
                       <div className="flex items-center justify-between text-xs">
                         <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono font-bold">
@@ -1255,7 +1414,11 @@ export const ObjectStorageMigration: React.FC = () => {
                       </td>
                       <td className="p-3 text-right">
                         <button
-                          onClick={() => setSourceBuckets(prev => prev.filter((_, idx) => idx !== i))}
+                          type="button"
+                          onClick={() => {
+                            setSourceBuckets(prev => prev.filter((_, idx) => idx !== i));
+                            setHasStep1UnsavedChanges(true);
+                          }}
                           className="p-1 text-text-muted hover:text-red-500 transition cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -1269,14 +1432,17 @@ export const ObjectStorageMigration: React.FC = () => {
 
           </div>
 
-          {/* ═══ SECTION 3: Collect & Save Source Storage Model Card (Exact Parity with Screenshot) ═══ */}
+          {/* ═══ SECTION 3: Collect & Save Source Storage Model Card ═══ */}
           <div className="glass-panel p-6 rounded-2xl border border-border-main space-y-6 shadow-sm">
             {/* Header & 3-Step Lifecycle Stepper */}
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-main/30 pb-4">
               <div className="flex items-center space-x-3">
                 <FileText className="w-5 h-5 text-emerald-500" />
                 <h3 className="text-base font-extrabold text-text-main font-mono">
-                  Collect &amp; Save Source Storage Model <span className="text-text-muted font-normal text-sm">— [{scanCsp.toUpperCase()}] {scanRegion}</span>
+                  Collect &amp; Save Source Storage Model{' '}
+                  <span className="text-text-muted font-normal text-sm">
+                    ([{scanCsp.toUpperCase()}] {scanRegion})
+                  </span>
                 </h3>
               </div>
 
@@ -1292,61 +1458,85 @@ export const ObjectStorageMigration: React.FC = () => {
                   <span>2 Storage Metadata Inspected</span>
                 </span>
                 <span className="text-text-muted">&gt;</span>
-                <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold border ${savedSourceModels.length > 0 ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' : 'bg-bg-panel text-text-muted border-border-main'}`}>
-                  <span className="w-4 h-4 rounded-full bg-bg-input text-text-muted flex items-center justify-center text-xs">{savedSourceModels.length > 0 ? '✓' : '3'}</span>
+                <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold border ${lastSavedSourceStorageModel && !hasStep1UnsavedChanges ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' : 'bg-bg-panel text-text-muted border-border-main'}`}>
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-xs ${lastSavedSourceStorageModel && !hasStep1UnsavedChanges ? 'bg-emerald-500/20 text-emerald-400' : 'bg-bg-input text-text-muted'}`}>
+                    {lastSavedSourceStorageModel && !hasStep1UnsavedChanges ? '✓' : '3'}
+                  </span>
                   <span>3 Model Saved</span>
                 </span>
               </div>
             </div>
 
-            {/* Top Action Buttons Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Button 1: Inspect Storage Metadata */}
-              <div className="space-y-1.5">
-                <button
-                  type="button"
-                  onClick={handleInspectSourceBuckets}
-                  disabled={isInspectLoading || sourceBuckets.length === 0}
-                  className="w-full py-3 bg-bg-panel hover:bg-bg-input border border-emerald-500/50 hover:border-emerald-500 text-emerald-500 dark:text-emerald-400 font-extrabold text-sm rounded-xl transition flex items-center justify-center space-x-2 cursor-pointer shadow-sm disabled:opacity-50"
-                >
-                  <Play className={`w-4 h-4 text-emerald-500 ${isInspectLoading ? 'animate-spin' : ''}`} />
-                  <span>Inspect Storage Metadata from All Buckets</span>
-                </button>
-                <p className="text-xs text-text-muted text-center font-mono">
-                  Inspects metadata (objects, size, CORS, policies) from registered buckets.
-                </p>
-              </div>
-
-              {/* Button 2: Save Source Storage Revision */}
-              <div className="space-y-1.5">
-                <button
-                  type="button"
-                  onClick={() => setShowSaveSourceModal(true)}
-                  disabled={sourceBuckets.length === 0}
-                  className="w-full py-3 bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-600 hover:from-emerald-500 hover:to-blue-700 text-slate-950 font-extrabold text-sm rounded-xl transition flex items-center justify-center space-x-2 cursor-pointer shadow-lg shadow-emerald-500/20 disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4 text-slate-950" />
-                  <span>Save Source Storage Revision</span>
-                </button>
-                <p className="text-xs text-text-muted text-center font-mono">
-                  Opens a popup to version and save this collected storage artifact.
-                </p>
-              </div>
+            {/* Metadata Inspection Action Row */}
+            <div className="space-y-1.5">
+              <button
+                type="button"
+                onClick={handleInspectSourceBuckets}
+                disabled={isInspectLoading || sourceBuckets.length === 0}
+                className="w-full py-3 bg-bg-panel hover:bg-bg-input border border-emerald-500/50 hover:border-emerald-500 text-emerald-500 dark:text-emerald-400 font-extrabold text-sm rounded-xl transition flex items-center justify-center space-x-2 cursor-pointer shadow-sm disabled:opacity-50"
+              >
+                <Play className={`w-4 h-4 text-emerald-500 ${isInspectLoading ? 'animate-spin' : ''}`} />
+                <span>Inspect Storage Metadata from All Buckets</span>
+              </button>
+              <p className="text-xs text-text-muted text-center font-mono">
+                Inspects metadata (objects, size, CORS, policies) from registered buckets.
+              </p>
             </div>
 
-            {/* Collected Storage Model Preview (JSON Preview - 3x Height) */}
+            {sourceBuckets.length > 0 && (
+              <ActiveModelBanner
+                mode={lastSavedSourceStorageModel ? 'loaded' : 'draft'}
+                name={
+                  lastSavedSourceStorageModel?.name ||
+                  buildDefaultModelName('source', `${scanCsp}-${scanRegion}-storage`)
+                }
+                version={lastSavedSourceStorageModel?.version}
+                stageKind={lastSavedSourceStorageModel ? 'source' : 'draft'}
+                hasUnsavedChanges={hasStep1UnsavedChanges}
+                updatedTime={lastSavedSourceStorageModel?.updatedTime}
+                metrics={[
+                  { label: 'CSP', value: `${scanCsp.toUpperCase()} (${scanRegion})`, tone: 'emerald' },
+                  { label: 'Buckets', value: String(sourceBuckets.length) },
+                ]}
+              />
+            )}
+
+            {/* Collected Storage Model Preview */}
             <div className="space-y-3 pt-2 border-t border-border-main/30">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <h4 className="text-sm font-bold text-text-main flex items-center space-x-2 font-mono">
                   <FileText className="w-4 h-4 text-emerald-500" />
                   <span>Collected Storage Model Preview</span>
                 </h4>
-                <span className="text-xs text-text-muted font-mono">
-                  {sourceBuckets.length} Buckets Registered
-                </span>
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xs text-text-muted font-mono">
+                    {sourceBuckets.length} Buckets Registered
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        JSON.stringify(
+                          {
+                            description: `Extracted source object storage model for ${scanCsp.toUpperCase()} (${scanRegion})`,
+                            sourceCloud: { csp: scanCsp, region: scanRegion },
+                            sourceObjectStorages: sourceBuckets,
+                          },
+                          null,
+                          2
+                        )
+                      );
+                      showToast('JSON copied to clipboard.');
+                    }}
+                    className="px-3 py-1 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-xs font-extrabold transition flex items-center cursor-pointer text-emerald-600 dark:text-emerald-400"
+                  >
+                    <Copy className="w-3.5 h-3.5 mr-1" />
+                    <span>Copy JSON</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="bg-bg-panel border border-border-main rounded-xl p-4 font-mono text-xs text-slate-800 dark:text-emerald-400 max-h-[860px] min-h-[500px] overflow-y-auto select-text shadow-inner">
+              <div className="bg-bg-panel border border-border-main rounded-xl p-4 font-mono text-xs text-slate-800 dark:text-emerald-400 max-h-[860px] min-h-[320px] overflow-y-auto select-text shadow-inner">
                 <pre>
                   {JSON.stringify(
                     {
@@ -1364,11 +1554,21 @@ export const ObjectStorageMigration: React.FC = () => {
               </div>
             </div>
 
-            {/* Bottom Right Navigation Button */}
-            <div className="flex justify-end pt-3 border-t border-border-main/40">
+            {/* Unified Bottom Action & Navigation Bar */}
+            <div className="flex flex-wrap items-center justify-end gap-2.5 pt-4 border-t border-border-main/40">
               <button
-                onClick={() => setSubTab('refine')}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
+                type="button"
+                onClick={() => setShowSaveStep1Modal(true)}
+                disabled={sourceBuckets.length === 0}
+                className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-extrabold text-xs rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-500/20"
+              >
+                <Save className="w-3.5 h-3.5 text-slate-950" />
+                <span>Save Source Model</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleProceedToStep('refine', hasStep1UnsavedChanges)}
+                className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Next: Proceed to 2. Refinement</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1380,7 +1580,6 @@ export const ObjectStorageMigration: React.FC = () => {
 
       {/* ══════════════════════════════════════════════════
           SUB-STEP 2: Source Object Storage Refinement
-          (100% Visual & Design Parity with SourceInfraRefinement.tsx)
       ══════════════════════════════════════════════════ */}
       {subTab === 'refine' && (
         <div className="space-y-6">
@@ -1393,11 +1592,11 @@ export const ObjectStorageMigration: React.FC = () => {
               </h2>
             </div>
             <span className="text-sm text-text-muted">
-              Review &amp; refine extracted source metadata, adjust bucket specifications, configure CORS rules, and save source model revisions.
+              Review &amp; refine extracted source metadata, adjust bucket specifications, configure CORS rules, and save planning models.
             </span>
           </div>
 
-          {/* ═══ STEP 1 Card: Source Object Storage Model Selection (Exact Infra Parity) ═══ */}
+          {/* ═══ STEP 1 Card: Source Object Storage Model Selection ═══ */}
           <div className={`glass-panel p-6 rounded-2xl transition-all duration-300 ${activeRefineStep >= 1 ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
             <div className="flex items-center space-x-3 mb-4 border-b border-border-main/40 pb-3">
               <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold ${isModelLoaded ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-emerald-500 text-slate-950'}`}>
@@ -1405,47 +1604,107 @@ export const ObjectStorageMigration: React.FC = () => {
               </span>
               <h3 className="text-base font-extrabold text-text-main">Step 1: Source Object Storage Model Selection</h3>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-text-muted mb-2">Choose Source Model</label>
+            <div className="space-y-3 max-w-xl">
+              <label className="block text-sm font-normal text-text-muted">Choose Source or Planning Model</label>
+              <div className="flex flex-wrap items-center gap-2.5">
                 <select
-                  value={selectedSourceModelId}
-                  onChange={(e) => {
-                    setSelectedSourceModelId(e.target.value);
-                    setIsModelLoaded(false);
-                    setActiveRefineStep(1);
-                  }}
-                  className="w-full max-w-md bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer mb-3"
+                  value={pendingSourceModelId}
+                  onChange={(e) => setPendingSourceModelId(e.target.value)}
+                  className="flex-1 min-w-[260px] bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
                 >
-                  <option value="sample-source-storage-01">[Sample] sampleSourceObjectStorage.json (v1.0)</option>
-                  {savedSourceModels.map(m => (
-                    <option key={m.id} value={m.id}>{m.name} (v{m.version || '1.0'})</option>
-                  ))}
+                  {userPlanningModels.length > 0 && (
+                    <optgroup label="Planning Models">
+                      {userPlanningModels.map((m) => (
+                        <option key={m.id} value={m.id}>{formatSourceOptionText(m)}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {userSourceModels.length > 0 && (
+                    <optgroup label="Source Models">
+                      {userSourceModels.map((m) => (
+                        <option key={m.id} value={m.id}>{formatSourceOptionText(m)}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <optgroup label="Sample Models">
+                    {sampleSourceModels.map((m) => (
+                      <option key={m.id} value={m.id}>{formatSourceOptionText(m)}</option>
+                    ))}
+                  </optgroup>
                 </select>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={handleLoadModel}
-                    disabled={!selectedSourceModelId}
-                    className={`px-5 py-3 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer ${selectedSourceModelId
-                      ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/25'
-                      : 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'}`}
-                  >
-                    <RefreshCw className="w-4 h-4 mr-1.5" /> Load Model
-                  </button>
-                  {selectedSourceModelId && selectedSourceModelId !== 'sample-source-storage-01' && (
-                    <button
-                      onClick={handleDeleteModel}
-                      className="px-5 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4 mr-1.5" /> Delete Model
-                    </button>
+                {pendingSourceModel && (() => {
+                  const badge = getStageBadgeMeta(resolveModelStageKind(pendingSourceModel, 'source'));
+                  return (
+                    <span className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border shrink-0 ${badge.className}`}>
+                      {badge.label}
+                    </span>
+                  );
+                })()}
+              </div>
+
+              {pendingSourceModel && (
+                <div className="text-xs bg-bg-input/50 border border-border-main/50 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <span>
+                    <span className="font-normal text-text-muted">Buckets: </span>
+                    <span className="font-extrabold text-text-main">{pendingSourceModel.sourceObjectStorages?.length || 0}</span>
+                  </span>
+                  {pendingSourceModel.sourceCloud?.csp && (
+                    <span>
+                      <span className="font-normal text-text-muted">CSP: </span>
+                      <span className="font-extrabold text-text-main">
+                        {pendingSourceModel.sourceCloud.csp.toUpperCase()} ({pendingSourceModel.sourceCloud.region})
+                      </span>
+                    </span>
+                  )}
+                  {pendingSourceModel.description && (
+                    <span className="truncate max-w-md">
+                      <span className="font-normal text-text-muted">Info: </span>
+                      <span className="font-extrabold text-text-main">{pendingSourceModel.description}</span>
+                    </span>
                   )}
                 </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={handleLoadRefineModel}
+                  disabled={!pendingSourceModel}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-1.5 transition cursor-pointer ${
+                    !pendingSourceModel
+                      ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                      : isRefinePendingAlreadyLoaded
+                        ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/25'
+                  }`}
+                >
+                  {isRefinePendingAlreadyLoaded ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Model Loaded</span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4" />
+                      <span>Load Model</span>
+                    </>
+                  )}
+                </button>
+                {pendingSourceModel && !isBuiltInSampleModel(pendingSourceModel) && (
+                  <button
+                    type="button"
+                    onClick={() => setDeleteSourceModalTarget(pendingSourceModel)}
+                    className="px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-sm font-extrabold flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Model</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
 
-          {/* ═══ STEP 2 Card: Source Object Storage Review & Editing (Exact Infra Parity) ═══ */}
+          {/* ═══ STEP 2 Card: Planning Object Storage Specification & Refinement ═══ */}
           <div className={`glass-panel p-6 rounded-2xl transition-all duration-300 ${isModelLoaded ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
             <div className="flex items-center justify-between mb-4 border-b border-border-main/40 pb-3">
               <div className="flex items-center space-x-3">
@@ -1453,60 +1712,88 @@ export const ObjectStorageMigration: React.FC = () => {
                   {activeRefineStep > 2 ? '✓' : '2'}
                 </span>
                 <h3 className="text-base font-extrabold text-text-main">
-                  Step 2: Source Object Storage Review &amp; Editing
+                  Step 2: Planning Object Storage Specification &amp; Refinement
                 </h3>
               </div>
               {isModelLoaded && (
                 <div className="flex items-center space-x-2">
                   <button
+                    type="button"
                     onClick={() => setIsRefineJsonOpen(!isRefineJsonOpen)}
                     className="px-3 py-1.5 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-sm font-bold transition cursor-pointer flex items-center text-emerald-600 dark:text-emerald-400"
                   >
                     <Copy className="w-3.5 h-3.5 mr-1" />
-                    JSON View
+                    <span>{isRefineJsonOpen ? 'Hide JSON' : 'JSON View'}</span>
                   </button>
                 </div>
               )}
             </div>
 
-            {isModelLoaded && (
-              <div className="bg-bg-panel/40 border border-border-main/30 rounded-xl p-3.5 flex flex-col md:flex-row md:items-center justify-between text-sm space-y-2 md:space-y-0 mb-4">
-                <div className="flex items-center space-x-2">
-                  <span className="text-text-muted font-bold">Loaded Model:</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-sm">{loadedModelName}</span>
-                  <span className="text-sm text-text-muted font-mono bg-bg-panel px-2 py-0.5 rounded border border-border-main/40">
-                    v{loadedModelVersion}
-                  </span>
-                </div>
-                <div className="text-sm text-text-muted">
-                  Last Updated: <span className="text-text-main font-semibold">{loadedModelTime}</span>
-                </div>
+            {isModelLoaded && loadedSourceModel && (
+              <div className="mb-4">
+                <ActiveModelBanner
+                  mode="loaded"
+                  name={loadedSourceModel.name}
+                  version={loadedSourceModel.version}
+                  stageKind={resolveModelStageKind(loadedSourceModel, 'source')}
+                  hasUnsavedChanges={hasRefineUnsavedChanges}
+                  updatedTime={loadedSourceModel.updatedTime}
+                  metrics={[
+                    {
+                      label: 'Buckets',
+                      value: String(sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName)).length),
+                    },
+                    ...(excludedBucketNames.length > 0
+                      ? [{ label: 'Excluded', value: String(excludedBucketNames.length) }]
+                      : []),
+                  ]}
+                />
               </div>
             )}
 
             {isModelLoaded && (
               <div className="space-y-6">
-                {isRefineJsonOpen ? (
-                  <div className="space-y-3">
+                {isRefineJsonOpen && (
+                  <div className="space-y-3 animate-fade-in">
                     <div className="flex justify-between items-center bg-bg-input px-3.5 py-2 rounded-xl border border-border-main/50">
-                      <span className="text-sm text-text-muted font-mono">sampleSourceObjectStorage.json</span>
+                      <span className="text-sm text-text-muted font-mono">
+                        {cleanModelDisplayName(loadedSourceModel?.name, 'source-object-storage')}.json
+                      </span>
                       <button
+                        type="button"
                         onClick={() => {
-                          navigator.clipboard.writeText(JSON.stringify({ nameSeed, sourceObjectStorages: sourceBuckets }, null, 2));
-                          alert('JSON copied!');
+                          navigator.clipboard.writeText(
+                            JSON.stringify(
+                              {
+                                sourceCloud: loadedSourceModel?.sourceCloud || { csp: scanCsp, region: scanRegion },
+                                sourceObjectStorages: sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName)),
+                              },
+                              null,
+                              2
+                            )
+                          );
+                          showToast('JSON copied to clipboard.');
                         }}
-                        className="px-3 py-1 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-xs font-bold transition flex items-center cursor-pointer text-emerald-600 dark:text-emerald-400"
+                        className="px-3 py-1 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-xs font-extrabold transition flex items-center cursor-pointer text-emerald-600 dark:text-emerald-400"
                       >
                         <Copy className="w-3.5 h-3.5 mr-1" /> Copy JSON
                       </button>
                     </div>
-                    <pre className="text-sm font-mono text-slate-800 dark:text-emerald-400 bg-bg-panel p-3.5 rounded-xl border border-border-main overflow-y-auto max-h-[400px] select-text">
-                      {JSON.stringify({ nameSeed, sourceObjectStorages: sourceBuckets }, null, 2)}
+                    <pre className="text-xs font-mono text-slate-800 dark:text-emerald-400 bg-bg-panel p-3.5 rounded-xl border border-border-main overflow-y-auto max-h-[360px] select-text">
+                      {JSON.stringify(
+                        {
+                          sourceCloud: loadedSourceModel?.sourceCloud || { csp: scanCsp, region: scanRegion },
+                          sourceObjectStorages: sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName)),
+                        },
+                        null,
+                        2
+                      )}
                     </pre>
                   </div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Bucket Card List & Selected Bucket Refinement Section (Exact Infra Parity) */}
+                )}
+
+                <div className="space-y-6">
+                    {/* Bucket Card List & Selected Bucket Refinement Section */}
                     <div className="bg-bg-panel/40 p-4 border border-border-main/50 rounded-xl space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center">
@@ -1523,6 +1810,7 @@ export const ObjectStorageMigration: React.FC = () => {
                           return (
                             <button
                               key={idx}
+                              type="button"
                               onClick={() => setSelectedBucketIndex(idx)}
                               className={`px-4 py-2.5 rounded-xl border text-sm font-extrabold flex items-center space-x-3 transition cursor-pointer ${
                                 isExcluded
@@ -1535,7 +1823,6 @@ export const ObjectStorageMigration: React.FC = () => {
                               <Database className={`w-4 h-4 ${isExcluded ? 'text-text-muted' : isSelected ? 'text-emerald-500' : 'text-text-muted'}`} />
                               <span>{b.bucketName}</span>
 
-                              {/* Toggle Button inside the card pill (Frequency badge removed) */}
                               <span
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1630,6 +1917,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                     checked={b.versioningEnabled}
                                     onChange={(e) => {
                                       const checked = e.target.checked;
+                                      setHasRefineUnsavedChanges(true);
                                       setSourceBuckets((prev) => prev.map((item, i) => (i === currentIdx ? { ...item, versioningEnabled: checked } : item)));
                                     }}
                                     className="accent-emerald-500 cursor-pointer w-4 h-4"
@@ -1643,6 +1931,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                     checked={b.encryptionEnabled}
                                     onChange={(e) => {
                                       const checked = e.target.checked;
+                                      setHasRefineUnsavedChanges(true);
                                       setSourceBuckets((prev) => prev.map((item, i) => (i === currentIdx ? { ...item, encryptionEnabled: checked } : item)));
                                     }}
                                     className="accent-emerald-500 cursor-pointer w-4 h-4"
@@ -1656,6 +1945,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                     checked={b.isPublic}
                                     onChange={(e) => {
                                       const checked = e.target.checked;
+                                      setHasRefineUnsavedChanges(true);
                                       setSourceBuckets((prev) => prev.map((item, i) => (i === currentIdx ? { ...item, isPublic: checked } : item)));
                                     }}
                                     className="accent-emerald-500 cursor-pointer w-4 h-4"
@@ -1669,6 +1959,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                     checked={b.corsEnabled}
                                     onChange={(e) => {
                                       const checked = e.target.checked;
+                                      setHasRefineUnsavedChanges(true);
                                       setSourceBuckets((prev) => prev.map((item, i) => (i === currentIdx ? { ...item, corsEnabled: checked } : item)));
                                     }}
                                     className="accent-emerald-500 cursor-pointer w-4 h-4"
@@ -1686,17 +1977,18 @@ export const ObjectStorageMigration: React.FC = () => {
                                 <div className="flex items-center space-x-2">
                                   <Globe className="w-4 h-4 text-emerald-500" />
                                   <span className="font-extrabold text-sm text-text-main">
-                                    CORS Detailed Configuration Rules — {b.bucketName}
+                                    CORS Detailed Configuration Rules ({b.bucketName})
                                   </span>
                                 </div>
 
                                 <div className="flex items-center space-x-3 text-xs shrink-0">
                                   <button
+                                    type="button"
                                     onClick={() => setShowCorsGuide(true)}
                                     className="px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold rounded-lg transition cursor-pointer flex items-center space-x-1"
                                   >
                                     <AlertCircle className="w-3.5 h-3.5 text-emerald-500" />
-                                    <span>❓ CORS Rule Guide &amp; Examples</span>
+                                    <span>CORS Rule Guide &amp; Examples</span>
                                   </button>
                                   <div className="flex items-center space-x-1.5 font-mono">
                                     <span className="text-text-muted font-normal">Status:</span>
@@ -1716,6 +2008,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                       <span key={oIdx} className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-md font-mono text-sm font-bold flex items-center space-x-1">
                                         <span>{orig}</span>
                                         <button
+                                          type="button"
                                           onClick={() => handleRemoveCorsOrigin(currentIdx, oIdx)}
                                           className="hover:text-red-400 font-extrabold ml-1 cursor-pointer"
                                         >
@@ -1736,6 +2029,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                       className="flex-1 px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono text-sm focus:outline-none focus:border-emerald-500"
                                     />
                                     <button
+                                      type="button"
                                       onClick={() => handleAddCorsOrigin(currentIdx, newOriginInputs[currentIdx] || '')}
                                       className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg cursor-pointer transition text-sm shrink-0"
                                     >
@@ -1753,6 +2047,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                       return (
                                         <button
                                           key={m}
+                                          type="button"
                                           onClick={() => handleToggleCorsMethod(currentIdx, m)}
                                           className={`px-3 py-1.5 rounded-lg text-sm font-mono font-bold transition cursor-pointer border ${
                                             isSelected
@@ -1775,6 +2070,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                       <span key={hIdx} className="bg-teal-500/15 border border-teal-500/30 text-teal-600 dark:text-teal-400 px-2.5 py-1 rounded-md font-mono text-sm font-bold flex items-center space-x-1">
                                         <span>{h}</span>
                                         <button
+                                          type="button"
                                           onClick={() => handleRemoveCorsHeader(currentIdx, 'allowedHeader', hIdx)}
                                           className="hover:text-red-400 font-extrabold ml-1 cursor-pointer"
                                         >
@@ -1795,6 +2091,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                       className="flex-1 px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono text-sm focus:outline-none focus:border-emerald-500"
                                     />
                                     <button
+                                      type="button"
                                       onClick={() => handleAddCorsHeader(currentIdx, 'allowedHeader', newAllowedHeaderInputs[currentIdx] || '')}
                                       className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg cursor-pointer transition text-sm shrink-0"
                                     >
@@ -1811,6 +2108,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                       <span key={ehIdx} className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-md font-mono text-sm font-bold flex items-center space-x-1">
                                         <span>{eh}</span>
                                         <button
+                                          type="button"
                                           onClick={() => handleRemoveCorsHeader(currentIdx, 'exposeHeader', ehIdx)}
                                           className="hover:text-red-400 font-extrabold ml-1 cursor-pointer"
                                         >
@@ -1850,7 +2148,7 @@ export const ObjectStorageMigration: React.FC = () => {
                             <div className="flex items-center space-x-2 pb-1">
                               <Folder className="w-4 h-4 text-emerald-500" />
                               <span className="font-extrabold text-sm text-text-main font-mono">
-                                Bucket Directory &amp; Object Hierarchy Tree — {b.bucketName}
+                                Bucket Directory &amp; Object Hierarchy Tree ({b.bucketName})
                               </span>
                             </div>
                             <ObjectDirectoryTree
@@ -1869,42 +2167,36 @@ export const ObjectStorageMigration: React.FC = () => {
                       );
                     })()}
                   </div>
-                )}
 
-                {/* Save Revision Action Bar (Matching Infra Parity) */}
-                <div className="flex flex-row items-center justify-start pt-4 border-t border-border-main/20 mt-4 space-x-4">
+                {/* Unified Bottom Action & Navigation Bar */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-border-main/20 mt-4">
                   <button
-                    onClick={() => setShowSaveSourceModal(true)}
-                    className="px-6 py-3 bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-600 hover:from-emerald-500 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer shadow-lg shadow-emerald-500/10 shrink-0"
-                  >
-                    <Save className="w-4 h-4 mr-1.5 text-slate-950" /> Save Source Storage Revision
-                  </button>
-                  <div className="flex items-center space-x-2 text-sm text-text-muted">
-                    <span className="font-bold">Model to save:</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-sm">
-                      {loadedModelName || '[Sample] sampleSourceObjectStorage.json'}
-                    </span>
-                    <span className="text-sm text-text-muted font-mono bg-bg-panel px-1.5 py-0.5 rounded border border-border-main/40">
-                      v{loadedModelVersion || '1.0'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-4 border-t border-border-main/20 mt-4">
-                  <button
+                    type="button"
                     onClick={() => setSubTab('source')}
-                    className="px-4 py-2 bg-bg-input border border-border-main hover:bg-bg-main text-text-main font-bold text-xs rounded-xl transition cursor-pointer flex items-center space-x-1.5"
+                    className="w-full sm:w-auto px-4 py-2.5 bg-bg-input border border-border-main hover:bg-bg-main text-text-main font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center justify-center space-x-1.5"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Back to 1. Source Storage</span>
                   </button>
-                  <button
-                    onClick={() => setSubTab('optimize')}
-                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer ml-auto"
-                  >
-                    <span>Next: Proceed to 3. Target Object Storage Optimizer</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+
+                  <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowSavePlanningModal(true)}
+                      className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md shadow-emerald-500/20"
+                    >
+                      <Save className="w-3.5 h-3.5 text-slate-950" />
+                      <span>Save Planning Model</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleProceedToStep('optimize', hasRefineUnsavedChanges)}
+                      className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>Next: Proceed to 3. Target Object Storage Optimizer</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -1935,20 +2227,25 @@ export const ObjectStorageMigration: React.FC = () => {
             {/* Step Header with Green Check Circle Icon / Number Badge */}
             <div className="flex items-center space-x-2.5 border-b border-border-main/40 pb-3">
               <div className={`w-6 h-6 rounded-full flex items-center justify-center font-extrabold text-xs shrink-0 ${
-                isModelLoaded
+                (step1SubTab === 'generate' ? isOptSourceLoaded : Boolean(loadedTargetModel))
                   ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/40'
                   : 'bg-emerald-500 text-slate-950'
               }`}>
-                {isModelLoaded ? <Check className="w-3.5 h-3.5 text-emerald-500 font-bold" /> : '1'}
+                {(step1SubTab === 'generate' ? isOptSourceLoaded : Boolean(loadedTargetModel)) ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-500 font-bold" />
+                ) : (
+                  '1'
+                )}
               </div>
               <h3 className="text-base font-extrabold text-text-main">
-                Step 1: Desired CSP and Region Selection
+                Step 1: Target Cloud &amp; Model Selection
               </h3>
             </div>
 
             {/* Sub-Navigation Tabs */}
             <div className="flex items-center space-x-8 border-b border-border-main/40 text-sm font-extrabold pt-1">
               <button
+                type="button"
                 onClick={() => setStep1SubTab('generate')}
                 className={`pb-3 transition relative cursor-pointer ${
                   step1SubTab === 'generate'
@@ -1960,6 +2257,7 @@ export const ObjectStorageMigration: React.FC = () => {
               </button>
 
               <button
+                type="button"
                 onClick={() => setStep1SubTab('load')}
                 className={`pb-3 transition relative cursor-pointer ${
                   step1SubTab === 'load'
@@ -1967,71 +2265,117 @@ export const ObjectStorageMigration: React.FC = () => {
                     : 'text-text-muted hover:text-text-main font-bold'
                 }`}
               >
-                Load Customized Cloud Infrastructure
+                Load Saved Target Object Storage Model
               </button>
             </div>
 
-            {/* Sub-Tab 1: Generate New Recommendation (Exact 50% Width) */}
+            {/* Sub-Tab 1: Generate New Recommendation */}
             {step1SubTab === 'generate' && (
-              <div className="space-y-5 pt-2 w-full md:w-1/2">
-                {/* Form Row 1: Source Object Storage Model Selection + Load Model Button below */}
-                <div className="space-y-2">
-                  <label className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 block">
-                    Source Object Storage Model
+              <div className="space-y-5 pt-2 max-w-xl">
+                <div className="space-y-2.5">
+                  <label className="text-sm font-normal text-text-muted block">
+                    Source or Planning Object Storage Model
                   </label>
-                  <select
-                    value={selectedSourceModelId}
-                    onChange={(e) => {
-                      setSelectedSourceModelId(e.target.value);
-                      setIsModelLoaded(false);
-                    }}
-                    className="w-full px-4 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold text-sm focus:outline-none focus:border-emerald-500"
-                  >
-                    <option value="">-- Choose Source Model --</option>
-                    <option value="sample-source-storage-01">
-                      [Sample] sampleSourceObjectStorage.json (v1.0)
-                    </option>
-                    {savedSourceModels.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} ({m.version || 'v1.0'})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <select
+                      value={pendingOptSourceModelId}
+                      onChange={(e) => setPendingOptSourceModelId(e.target.value)}
+                      className="flex-1 min-w-[260px] px-4 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold text-sm focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    >
+                      {userPlanningModels.length > 0 && (
+                        <optgroup label="Planning Models">
+                          {userPlanningModels.map((m) => (
+                            <option key={m.id} value={m.id}>{formatSourceOptionText(m)}</option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {userSourceModels.length > 0 && (
+                        <optgroup label="Source Models">
+                          {userSourceModels.map((m) => (
+                            <option key={m.id} value={m.id}>{formatSourceOptionText(m)}</option>
+                          ))}
+                        </optgroup>
+                      )}
+                      <optgroup label="Sample Models">
+                        {sampleSourceModels.map((m) => (
+                          <option key={m.id} value={m.id}>{formatSourceOptionText(m)}</option>
+                        ))}
+                      </optgroup>
+                    </select>
+                    {pendingOptSourceModel && (() => {
+                      const badge = getStageBadgeMeta(resolveModelStageKind(pendingOptSourceModel, 'source'));
+                      return (
+                        <span className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border shrink-0 ${badge.className}`}>
+                          {badge.label}
+                        </span>
+                      );
+                    })()}
+                  </div>
 
-                  <div className="space-y-1.5 pt-1">
+                  {pendingOptSourceModel && (
+                    <div className="text-xs bg-bg-input/50 border border-border-main/50 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                      <span>
+                        <span className="font-normal text-text-muted">Buckets: </span>
+                        <span className="font-extrabold text-text-main">{pendingOptSourceModel.sourceObjectStorages?.length || 0}</span>
+                      </span>
+                      {pendingOptSourceModel.description && (
+                        <span className="truncate max-w-md">
+                          <span className="font-normal text-text-muted">Info: </span>
+                          <span className="font-extrabold text-text-main">{pendingOptSourceModel.description}</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-3 pt-1">
                     <button
-                      onClick={handleLoadModel}
-                      disabled={!selectedSourceModelId}
-                      className={`px-4 py-2 rounded-xl text-xs font-extrabold flex items-center space-x-1.5 transition shadow-md ${
-                        !selectedSourceModelId
-                          ? 'bg-bg-panel/40 border border-border-main/50 text-text-muted/50 cursor-not-allowed opacity-60'
-                          : isModelLoaded
-                          ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 border border-emerald-600 font-extrabold cursor-pointer'
-                          : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 border border-emerald-600 font-extrabold cursor-pointer'
+                      type="button"
+                      onClick={handleLoadOptSourceModel}
+                      disabled={!pendingOptSourceModel}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer ${
+                        !pendingOptSourceModel
+                          ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                          : isOptSourcePendingAlreadyLoaded
+                            ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/20'
                       }`}
                     >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      <span>{isModelLoaded ? 'Model Loaded ✓' : 'Load Model'}</span>
+                      {isOptSourcePendingAlreadyLoaded ? (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Model Loaded</span>
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span>Load Model</span>
+                        </>
+                      )}
                     </button>
 
-                    {isModelLoaded && (
-                      <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 pt-0.5 animate-fade-in">
-                        {sourceBuckets.length} bucket(s) ready for recommendation
-                      </div>
+                    {pendingOptSourceModel && !isBuiltInSampleModel(pendingOptSourceModel) && (
+                      <button
+                        type="button"
+                        onClick={() => setDeleteSourceModalTarget(pendingOptSourceModel)}
+                        className="px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete Model</span>
+                      </button>
                     )}
                   </div>
                 </div>
 
-                {/* Form Row 2: Desired CSP & Desired Region (2 columns side by side taking 50% total) */}
+                {/* Desired CSP & Desired Region */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div className="space-y-2">
-                    <label className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 block">
+                    <label className="text-sm font-normal text-text-muted block">
                       Desired CSP
                     </label>
                     <select
                       value={desiredCsp}
                       onChange={(e) => handleDesiredCspChange(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold text-sm focus:outline-none focus:border-emerald-500"
+                      className="w-full px-4 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold text-sm focus:outline-none focus:border-emerald-500 cursor-pointer"
                     >
                       {getCspList().map((c) => (
                         <option key={c.id} value={c.id}>
@@ -2042,13 +2386,13 @@ export const ObjectStorageMigration: React.FC = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 block">
+                    <label className="text-sm font-normal text-text-muted block">
                       Desired Region
                     </label>
                     <select
                       value={desiredRegion}
                       onChange={(e) => setDesiredRegion(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-mono text-sm focus:outline-none focus:border-emerald-500"
+                      className="w-full px-4 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold font-mono text-sm focus:outline-none focus:border-emerald-500 cursor-pointer"
                     >
                       {getRegionsForCsp(desiredCsp).map((r) => (
                         <option key={r.id} value={r.id}>
@@ -2059,21 +2403,22 @@ export const ObjectStorageMigration: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Form Row 3: Recommend Action Button */}
+                {/* Recommend Action Button */}
                 <div className="pt-2">
                   <button
+                    type="button"
                     onClick={handleGenerateRecommendation}
-                    disabled={isRecommending || !selectedSourceModelId || sourceBuckets.length === 0}
-                    className={`px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm flex items-center space-x-2 transition-all shadow-md ${
-                      !selectedSourceModelId || sourceBuckets.length === 0
-                        ? 'bg-gradient-to-r from-emerald-300/40 via-teal-300/30 to-blue-400/30 text-slate-500/70 dark:text-slate-400/70 border border-emerald-500/20 cursor-not-allowed opacity-70'
-                        : 'bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-600 hover:from-emerald-500 hover:to-blue-700 text-slate-950 cursor-pointer shadow-lg shadow-emerald-500/20'
+                    disabled={isRecommending || !isOptSourceLoaded || sourceBuckets.length === 0}
+                    className={`px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm flex items-center space-x-2 transition-all ${
+                      !isOptSourceLoaded || sourceBuckets.length === 0
+                        ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed opacity-60'
+                        : 'bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 cursor-pointer shadow-lg shadow-emerald-500/20'
                     }`}
                   >
                     {isRecommending ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
                     ) : (
-                      <Sparkles className={`w-4 h-4 ${!selectedSourceModelId || sourceBuckets.length === 0 ? 'text-slate-500/80 dark:text-slate-400/80' : 'text-slate-950 fill-slate-950/20'}`} />
+                      <Sparkles className={`w-4 h-4 ${!isOptSourceLoaded || sourceBuckets.length === 0 ? 'text-text-muted' : 'text-slate-950'}`} />
                     )}
                     <span>Recommend Target Cloud Object Storage</span>
                   </button>
@@ -2081,57 +2426,104 @@ export const ObjectStorageMigration: React.FC = () => {
               </div>
             )}
 
-            {/* Sub-Tab 2: Load Customized Cloud Infrastructure (Exact 50% Width) */}
+            {/* Sub-Tab 2: Load Saved Target Object Storage Model */}
             {step1SubTab === 'load' && (
-              <div className="space-y-4 pt-2 w-full md:w-1/2">
-                <div className="space-y-2">
-                  <label className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 block">
-                    Target Cloud Infrastructure Model
+              <div className="space-y-4 pt-2 max-w-xl">
+                <div className="space-y-2.5">
+                  <label className="text-sm font-normal text-text-muted block">
+                    Saved Target Object Storage Model
                   </label>
-                  <select
-                    value={selectedSourceModelId}
-                    onChange={(e) => setSelectedSourceModelId(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold text-sm focus:outline-none focus:border-emerald-500"
-                  >
-                    <option value="">-- Choose Target Model --</option>
-                    <option value="sample-source-storage-01">
-                      my-target-aws-ap-northeast-2 (v1.0)
-                    </option>
-                  </select>
-                  <div className="space-y-1.5 pt-2">
-                    <div className="flex items-center space-x-2.5">
-                      <button
-                        onClick={() => {
-                          handleGenerateRecommendation();
-                        }}
-                        disabled={!selectedSourceModelId}
-                        className={`px-4 py-2 rounded-xl text-xs font-extrabold flex items-center space-x-1.5 transition shadow-md ${
-                          !selectedSourceModelId
-                            ? 'bg-bg-panel/40 border border-border-main/50 text-text-muted/50 cursor-not-allowed opacity-60'
-                            : recommendationResult
-                            ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 border border-emerald-600 font-extrabold cursor-pointer'
-                            : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold cursor-pointer border border-emerald-600'
-                        }`}
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                        <span>{recommendationResult ? 'Design Loaded ✓' : 'Load Design'}</span>
-                      </button>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <select
+                      value={pendingTargetModelId}
+                      onChange={(e) => setPendingTargetModelId(e.target.value)}
+                      className="flex-1 min-w-[260px] px-4 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold text-sm focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    >
+                      {userTargetModels.length > 0 && (
+                        <optgroup label="Target Models">
+                          {userTargetModels.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {formatTargetOptionText(m, m.csp)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      <optgroup label="Sample Models">
+                        {sampleTargetModels.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {formatTargetOptionText(m, m.csp)}
+                          </option>
+                        ))}
+                      </optgroup>
+                    </select>
+                    {pendingTargetModel && (() => {
+                      const badge = getStageBadgeMeta(resolveModelStageKind(pendingTargetModel, 'target'));
+                      return (
+                        <span className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border shrink-0 ${badge.className}`}>
+                          {badge.label}
+                        </span>
+                      );
+                    })()}
+                  </div>
 
+                  {pendingTargetModel && (
+                    <div className="text-xs bg-bg-input/50 border border-border-main/50 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                      <span>
+                        <span className="font-normal text-text-muted">CSP / Region: </span>
+                        <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
+                          {(pendingTargetModel.csp || 'aws').toUpperCase()} ({pendingTargetModel.region || 'ap-northeast-2'})
+                        </span>
+                      </span>
+                      <span>
+                        <span className="font-normal text-text-muted">Buckets: </span>
+                        <span className="font-extrabold text-text-main">
+                          {pendingTargetModel.targetObjectStorages?.length || 0}
+                        </span>
+                      </span>
+                      {pendingTargetModel.description && (
+                        <span className="truncate max-w-md">
+                          <span className="font-normal text-text-muted">Info: </span>
+                          <span className="font-extrabold text-text-main">{pendingTargetModel.description}</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleLoadTargetModel}
+                      disabled={!pendingTargetModel}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer ${
+                        !pendingTargetModel
+                          ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                          : isTargetPendingAlreadyLoaded
+                            ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/20'
+                      }`}
+                    >
+                      {isTargetPendingAlreadyLoaded ? (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Model Loaded</span>
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span>Load Model</span>
+                        </>
+                      )}
+                    </button>
+
+                    {pendingTargetModel && !isBuiltInSampleModel(pendingTargetModel) && (
                       <button
-                        onClick={() => {
-                          setRecommendationResult(null);
-                        }}
-                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-extrabold flex items-center space-x-1.5 cursor-pointer transition shadow-md"
+                        type="button"
+                        onClick={() => setDeleteTargetModalTarget(pendingTargetModel)}
+                        className="px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                        <span>Delete Design</span>
+                        <span>Delete Model</span>
                       </button>
-                    </div>
-
-                    {recommendationResult && (
-                      <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 pt-0.5 animate-fade-in">
-                        Target design model ready
-                      </div>
                     )}
                   </div>
                 </div>
@@ -2140,39 +2532,116 @@ export const ObjectStorageMigration: React.FC = () => {
 
           </div>
 
-          {/* Step 2 Panel Container (Exact Infra Parity) */}
+          {/* Step 2 Panel Container */}
           <div className="glass-panel p-6 rounded-2xl space-y-6 border border-border-main/60 shadow-sm mt-6">
             {/* Step 2 Header */}
-            <div className="flex items-center space-x-2.5 border-b border-border-main/40 pb-3">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center font-extrabold text-xs shrink-0 ${
-                recommendationResult
-                  ? 'bg-emerald-500 text-slate-950 font-bold'
-                  : 'bg-emerald-500/20 text-emerald-500/60 border border-emerald-500/30'
-              }`}>
-                2
+            <div className="flex items-center justify-between border-b border-border-main/40 pb-3 gap-2">
+              <div className="flex items-center space-x-2.5">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center font-extrabold text-xs shrink-0 ${
+                  recommendationResult
+                    ? 'bg-emerald-500 text-slate-950 font-bold'
+                    : 'bg-emerald-500/20 text-emerald-500/60 border border-emerald-500/30'
+                }`}>
+                  2
+                </div>
+                <h3 className={`text-base font-extrabold ${recommendationResult ? 'text-text-main' : 'text-text-muted/70'}`}>
+                  Step 2: Recommended Target Object Storage Review and Editing
+                </h3>
               </div>
-              <h3 className={`text-base font-extrabold ${recommendationResult ? 'text-text-main' : 'text-text-muted/70'}`}>
-                Step 2: Recommended Target Object Storage Review and Editing
-              </h3>
+
+              {recommendationResult && (
+                <button
+                  type="button"
+                  onClick={() => setIsTargetJsonOpen(!isTargetJsonOpen)}
+                  className="px-3 py-1.5 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center text-emerald-600 dark:text-emerald-400 shrink-0"
+                >
+                  <Copy className="w-3.5 h-3.5 mr-1" />
+                  <span>{isTargetJsonOpen ? 'Hide JSON' : 'JSON View'}</span>
+                </button>
+              )}
             </div>
 
             {!recommendationResult ? (
               <div className="py-12 text-center text-sm font-medium text-text-muted/60 italic">
-                No recommendation generated yet. Complete previous steps to run recommendations.
+                No target model loaded or generated yet. Load a source model and run recommendation, or load a saved target model above.
               </div>
             ) : (
               <div className="space-y-6 animate-fade-in">
+                <ActiveModelBanner
+                  mode={loadedTargetModel ? 'loaded' : 'draft'}
+                  name={
+                    loadedTargetModel?.name ||
+                    buildDefaultModelName(
+                      'target',
+                      loadedOptSourceModel?.name || loadedSourceModel?.name || 'storage',
+                      desiredCsp
+                    )
+                  }
+                  version={loadedTargetModel?.version}
+                  stageKind={loadedTargetModel ? resolveModelStageKind(loadedTargetModel, 'target') : 'draft'}
+                  hasUnsavedChanges={hasTargetUnsavedChanges}
+                  updatedTime={loadedTargetModel?.updatedTime}
+                  metrics={[
+                    { label: 'CSP', value: `${desiredCsp.toUpperCase()} (${desiredRegion})`, tone: 'emerald' },
+                    {
+                      label: 'Buckets',
+                      value: String(sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName)).length),
+                    },
+                  ]}
+                />
+
+                {isTargetJsonOpen && (
+                  <div className="space-y-3 animate-fade-in">
+                    <div className="flex justify-between items-center bg-bg-input px-3.5 py-2 rounded-xl border border-border-main/50">
+                      <span className="text-xs text-text-muted font-mono">
+                        {cleanModelDisplayName(loadedTargetModel?.name, `${desiredCsp}-target-storage`)}.json
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(
+                            JSON.stringify(
+                              {
+                                ...recommendationResult,
+                                targetCloud: { csp: desiredCsp, region: desiredRegion },
+                                targetObjectStorages: buildActiveTargetStoragesPayload(),
+                              },
+                              null,
+                              2
+                            )
+                          );
+                          showToast('JSON copied to clipboard.');
+                        }}
+                        className="px-3 py-1 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-xs font-extrabold transition flex items-center cursor-pointer text-emerald-600 dark:text-emerald-400"
+                      >
+                        <Copy className="w-3.5 h-3.5 mr-1" /> Copy JSON
+                      </button>
+                    </div>
+                    <pre className="font-mono text-xs text-slate-800 dark:text-emerald-300 bg-bg-panel p-4 rounded-xl border border-border-main max-h-[360px] overflow-y-auto leading-relaxed select-text">
+                      {JSON.stringify(
+                        {
+                          ...recommendationResult,
+                          targetCloud: { csp: desiredCsp, region: desiredRegion },
+                          targetObjectStorages: buildActiveTargetStoragesPayload(),
+                        },
+                        null,
+                        2
+                      )}
+                    </pre>
+                  </div>
+                )}
+
                 {/* Recommended Target Object Storage Banner */}
                 <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-2 text-xs">
                   <div className="font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center space-x-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span>Target Object Storage Recommendation Completed</span>
+                    <span>Target Object Storage Specification Ready</span>
                   </div>
                   <div className="text-xs text-text-muted">{recommendationResult.description}</div>
                   <div className="pt-2 border-t border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 flex items-start space-x-1.5 font-medium">
                     <AlertCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                     <span>
-                      <strong>CB-managed UID 안내:</strong> 클라우드 Bucket Name은 Cloud-Barista 내부에서 고유한 <strong>CB-managed UID</strong>로 자동 할당·관리됩니다. 사용자 지정 식별을 위해 UI에서는 <strong>Object Storage Name</strong>으로 표기합니다.
+                      <strong>CB-managed UID 안내:</strong> 클라우드 Bucket Name은 Cloud-Barista 내부에서 고유한 <strong>CB-managed UID</strong>로 자동 할당 및 관리됩니다. 사용자 지정 식별을 위해 UI에서는 <strong>Object Storage Name</strong>으로 표기합니다.
                     </span>
                   </div>
                 </div>
@@ -2206,55 +2675,19 @@ export const ObjectStorageMigration: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Review and Editing Section (Matching Refinement & Infra Node Group UI 100%) */}
+                {/* Review and Editing Section */}
                 <div className="space-y-5 pt-2 border-t border-border-main/40">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                      <h4 className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center space-x-2">
-                        <Sliders className="w-4 h-4 text-emerald-500" />
-                        <span>Review and Editing</span>
-                      </h4>
-                      <p className="text-xs text-text-muted italic pt-0.5">
-                        * Modifying target resource values updates the target object storage model in real-time
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => setIsTargetJsonOpen(!isTargetJsonOpen)}
-                      className="px-3.5 py-1.5 bg-bg-input border border-border-main text-text-main rounded-xl text-xs font-extrabold hover:border-emerald-500/40 cursor-pointer shrink-0 transition"
-                    >
-                      {isTargetJsonOpen ? 'Hide Target JSON' : 'Target Model JSON View'}
-                    </button>
+                  <div>
+                    <h4 className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center space-x-2">
+                      <Sliders className="w-4 h-4 text-emerald-500" />
+                      <span>Review and Editing</span>
+                    </h4>
+                    <p className="text-xs text-text-muted italic pt-0.5">
+                      * Modifying target resource values updates the target object storage model in real-time
+                    </p>
                   </div>
 
-                  {isTargetJsonOpen && (
-                    <div className="p-4 bg-bg-main/80 border border-border-main rounded-2xl animate-fade-in">
-                      <pre className="font-mono text-xs text-slate-800 dark:text-emerald-300 max-h-[24rem] overflow-y-auto leading-relaxed select-all">
-                        {JSON.stringify(
-                          {
-                            ...recommendationResult,
-                            targetObjectStorages: sourceBuckets
-                              .filter((b) => !excludedBucketNames.includes(b.bucketName))
-                              .map((b) => ({
-                                bucketName: `${b.targetBucketName || b.bucketName}-x8f2`,
-                                targetObjectStorageName: b.targetBucketName || b.bucketName,
-                                sourceBucketName: b.bucketName,
-                                storageClass: b.accessFrequency === 'frequent' ? 'Standard' : b.accessFrequency === 'infrequent' ? 'Standard-IA' : 'Archive',
-                                versioningEnabled: b.versioningEnabled,
-                                encryptionEnabled: b.encryptionEnabled,
-                                corsEnabled: b.corsEnabled,
-                                corsRule: b.corsRule,
-                                isPublic: b.isPublic
-                              }))
-                          },
-                          null,
-                          2
-                        )}
-                      </pre>
-                    </div>
-                  )}
-
-                  {/* Target Bucket Editing Cards Grid (Matching Infra Node Group Layout) */}
+                  {/* Target Bucket Editing Cards Grid */}
                   <div className="grid grid-cols-1 gap-4">
                     {sourceBuckets.map((b, i) => {
                       const isExcluded = excludedBucketNames.includes(b.bucketName);
@@ -2306,6 +2739,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                 value={currentTargetName}
                                 onChange={(e) => {
                                   const val = e.target.value;
+                                  setHasTargetUnsavedChanges(true);
                                   setSourceBuckets((prev) =>
                                     prev.map((item, idx) => (idx === i ? { ...item, targetBucketName: val } : item))
                                   );
@@ -2337,6 +2771,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                     onChange={(e) => {
                                       if (!cspSupport.versioning) return;
                                       const checked = e.target.checked;
+                                      setHasTargetUnsavedChanges(true);
                                       setSourceBuckets((prev) => prev.map((item, idx) => (idx === i ? { ...item, versioningEnabled: checked } : item)));
                                     }}
                                     className="accent-emerald-500 cursor-pointer w-4 h-4 disabled:cursor-not-allowed"
@@ -2364,6 +2799,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                     onChange={(e) => {
                                       if (!cspSupport.cors) return;
                                       const checked = e.target.checked;
+                                      setHasTargetUnsavedChanges(true);
                                       setSourceBuckets((prev) => prev.map((item, idx) => (idx === i ? { ...item, corsEnabled: checked } : item)));
                                     }}
                                     className="accent-emerald-500 cursor-pointer w-4 h-4 disabled:cursor-not-allowed"
@@ -2386,17 +2822,18 @@ export const ObjectStorageMigration: React.FC = () => {
                                 <div className="flex items-center space-x-2">
                                   <Globe className="w-4 h-4 text-emerald-500" />
                                   <span className="font-extrabold text-sm text-text-main">
-                                    CORS Detailed Configuration Rules — {currentTargetName}
+                                    CORS Detailed Configuration Rules ({currentTargetName})
                                   </span>
                                 </div>
 
                                 <div className="flex items-center space-x-3 text-xs shrink-0">
                                   <button
+                                    type="button"
                                     onClick={() => setShowCorsGuide(true)}
                                     className="px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold rounded-lg transition cursor-pointer flex items-center space-x-1"
                                   >
                                     <AlertCircle className="w-3.5 h-3.5 text-emerald-500" />
-                                    <span>❓ CORS Rule Guide &amp; Examples</span>
+                                    <span>CORS Rule Guide &amp; Examples</span>
                                   </button>
                                   <div className="flex items-center space-x-1.5 font-mono">
                                     <span className="text-text-muted font-normal">Status:</span>
@@ -2416,6 +2853,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                       <span key={oIdx} className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-md font-mono text-sm font-bold flex items-center space-x-1">
                                         <span>{orig}</span>
                                         <button
+                                          type="button"
                                           onClick={() => handleRemoveCorsOrigin(i, oIdx)}
                                           className="hover:text-red-400 font-extrabold ml-1 cursor-pointer"
                                         >
@@ -2436,6 +2874,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                       className="flex-1 px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono text-sm focus:outline-none focus:border-emerald-500"
                                     />
                                     <button
+                                      type="button"
                                       onClick={() => handleAddCorsOrigin(i, newOriginInputs[i] || '')}
                                       className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg cursor-pointer transition text-sm shrink-0"
                                     >
@@ -2453,6 +2892,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                       return (
                                         <button
                                           key={m}
+                                          type="button"
                                           onClick={() => handleToggleCorsMethod(i, m)}
                                           className={`px-3 py-1.5 rounded-lg text-sm font-mono font-bold transition cursor-pointer border ${
                                             isSelected
@@ -2475,6 +2915,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                       <span key={hIdx} className="bg-teal-500/15 border border-teal-500/30 text-teal-600 dark:text-teal-400 px-2.5 py-1 rounded-md font-mono text-sm font-bold flex items-center space-x-1">
                                         <span>{h}</span>
                                         <button
+                                          type="button"
                                           onClick={() => handleRemoveCorsHeader(i, 'allowedHeader', hIdx)}
                                           className="hover:text-red-400 font-extrabold ml-1 cursor-pointer"
                                         >
@@ -2495,6 +2936,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                       className="flex-1 px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono text-sm focus:outline-none focus:border-emerald-500"
                                     />
                                     <button
+                                      type="button"
                                       onClick={() => handleAddCorsHeader(i, 'allowedHeader', newAllowedHeaderInputs[i] || '')}
                                       className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg cursor-pointer transition text-sm shrink-0"
                                     >
@@ -2511,6 +2953,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                       <span key={ehIdx} className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-md font-mono text-sm font-bold flex items-center space-x-1">
                                         <span>{eh}</span>
                                         <button
+                                          type="button"
                                           onClick={() => handleRemoveCorsHeader(i, 'exposeHeader', ehIdx)}
                                           className="hover:text-red-400 font-extrabold ml-1 cursor-pointer"
                                         >
@@ -2588,44 +3031,44 @@ export const ObjectStorageMigration: React.FC = () => {
               </div>
             )}
 
-            <div className="space-y-4 pt-4 border-t border-border-main/50">
-              {/* Save Target Cloud Model Action Button */}
-              <div className="flex justify-end">
+            {/* Unified Bottom Action & Navigation Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-border-main/50">
+              <button
+                type="button"
+                onClick={() => setSubTab('refine')}
+                className="w-full sm:w-auto px-4 py-2.5 bg-bg-input hover:bg-bg-main border border-border-main text-text-main font-extrabold text-xs rounded-xl transition flex items-center justify-center space-x-1.5 cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to 2. Refinement</span>
+              </button>
+
+              <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
                 <button
+                  type="button"
                   onClick={() => setShowSaveTargetModal(true)}
                   disabled={!recommendationResult}
-                  className={`px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm flex items-center space-x-2 transition-all shadow-md shrink-0 ${
+                  className={`w-full sm:w-auto px-5 py-2.5 rounded-xl font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shrink-0 ${
                     !recommendationResult
-                      ? 'bg-gradient-to-r from-emerald-300/40 via-teal-300/30 to-blue-400/30 text-slate-500/70 dark:text-slate-400/70 border border-emerald-500/20 cursor-not-allowed opacity-70'
-                      : 'bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-600 hover:from-emerald-500 hover:to-blue-700 text-slate-950 cursor-pointer shadow-lg shadow-emerald-500/20'
+                      ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed opacity-60'
+                      : 'bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 cursor-pointer shadow-md shadow-emerald-500/20'
                   }`}
                 >
-                  <Save className={`w-4 h-4 ${!recommendationResult ? 'text-slate-500/80 dark:text-slate-400/80' : 'text-slate-950'}`} />
-                  <span>Save Target Cloud Object Storage Model</span>
-                </button>
-              </div>
-
-              {/* Row 2: Back & Next Navigation Buttons */}
-              <div className="flex items-center justify-between pt-1">
-                <button
-                  onClick={() => setSubTab('refine')}
-                  className="px-4 py-2 bg-bg-input hover:bg-bg-main border border-border-main text-text-muted hover:text-text-main font-bold text-xs rounded-xl transition flex items-center space-x-2 cursor-pointer"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Back to 2. Refinement</span>
+                  <Save className={`w-3.5 h-3.5 ${!recommendationResult ? 'text-text-muted' : 'text-slate-950'}`} />
+                  <span>Save Target Model</span>
                 </button>
 
                 <button
-                  onClick={() => setSubTab('provision')}
+                  type="button"
+                  onClick={() => handleProceedToStep('provision', hasTargetUnsavedChanges)}
                   disabled={!recommendationResult}
-                  className={`px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm flex items-center space-x-2 transition-all shadow-md ${
+                  className={`w-full sm:w-auto px-6 py-2.5 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 transition-all ${
                     !recommendationResult
-                      ? 'bg-emerald-500/20 text-slate-400/80 dark:text-slate-400/80 border border-emerald-500/20 cursor-not-allowed opacity-60'
-                      : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 cursor-pointer shadow-md'
+                      ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed opacity-60'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-lg shadow-emerald-500/20'
                   }`}
                 >
                   <span>Next: Proceed to 4. Migration Execution</span>
-                  <ArrowRight className={`w-4 h-4 ${!recommendationResult ? 'text-slate-400/80 dark:text-slate-400/80' : 'text-slate-950'}`} />
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -2654,9 +3097,17 @@ export const ObjectStorageMigration: React.FC = () => {
           {/* 2. Dedicated Action Control Box */}
           <div className="glass-panel p-4 rounded-2xl border border-border-main flex flex-wrap items-center gap-3">
             <button
-              onClick={() => setShowLaunchModal(true)}
+              type="button"
+              onClick={() => {
+                if (hasUnsavedTargetDraft) {
+                  setSelectedTargetModelId(DRAFT_STORAGE_TARGET_ID);
+                } else if (loadedTargetModel) {
+                  setSelectedTargetModelId(loadedTargetModel.id);
+                }
+                setShowLaunchModal(true);
+              }}
               disabled={isDeploying}
-              className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 disabled:opacity-50 text-slate-950 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/20"
+              className="px-5 py-2.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 disabled:opacity-50 text-slate-950 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/20"
             >
               {isDeploying ? <RefreshCw className="w-4 h-4 animate-spin text-slate-950" /> : <Plus className="w-4 h-4 text-slate-950" />}
               <span>Launch New Migration</span>
@@ -2693,7 +3144,7 @@ export const ObjectStorageMigration: React.FC = () => {
                         : 'bg-bg-panel hover:bg-bg-input border-border-main/60'
                     }`}
                   >
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-emerald-500 to-blue-500" />
+                    <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-emerald-500 to-teal-500" />
 
                     <div className="flex justify-between items-center gap-2">
                       <div className="flex items-center gap-2 min-w-0">
@@ -2870,7 +3321,12 @@ export const ObjectStorageMigration: React.FC = () => {
                             </td>
                             <td className="p-3.5">
                               <button
-                                onClick={() => alert(`[OK] Storage Access Point reachable for '${b.name}' on ${(activeJob?.csp || 'aws').toUpperCase()} (${activeJob?.region || 'ap-northeast-2'})`)}
+                                type="button"
+                                onClick={() =>
+                                  showToast(
+                                    `Storage access point reachable for "${b.name}" on ${(activeJob?.csp || 'aws').toUpperCase()} (${activeJob?.region || 'ap-northeast-2'}).`
+                                  )
+                                }
                                 className="px-3 py-1 bg-bg-input hover:bg-bg-main border border-border-main text-emerald-600 dark:text-emerald-400 rounded-lg font-bold transition flex items-center space-x-1.5 cursor-pointer text-xs"
                               >
                                 <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
@@ -2920,30 +3376,190 @@ export const ObjectStorageMigration: React.FC = () => {
           </div>
         )}
 
-      {/* Save Source Model Revision Modal */}
+      {/* Step 1: Save Source Model Modal */}
       <SaveRevisionModal
-        isOpen={showSaveSourceModal}
-        onClose={() => setShowSaveSourceModal(false)}
-        title="Save Source Storage Model Revision"
-        defaultName="source-storage-model-rev1"
-        defaultDescription="Extracted and refined source object storage model"
-        defaultVersion="1.0.0"
-        existingRevisions={savedSourceModels}
-        onSave={handleSaveSourceModelRevision}
-        successMessage="Source storage artifact revision saved successfully."
+        isOpen={showSaveStep1Modal}
+        onClose={() => setShowSaveStep1Modal(false)}
+        title="Save Source Model"
+        stageKind="source"
+        defaultName={
+          lastSavedSourceStorageModel
+            ? cleanModelDisplayName(lastSavedSourceStorageModel.name)
+            : buildDefaultModelName('source', `${scanCsp}-${scanRegion}-storage`)
+        }
+        defaultDescription={
+          lastSavedSourceStorageModel?.description ||
+          `Extracted source object storage model (${sourceBuckets.length} buckets on ${scanCsp.toUpperCase()} ${scanRegion})`
+        }
+        defaultVersion={lastSavedSourceStorageModel?.version || '1.0.0'}
+        defaultOverwriteId={lastSavedSourceStorageModel?.id || null}
+        existingRevisions={userSourceModels.map((m) => ({
+          id: m.id,
+          name: m.name,
+          description: m.description,
+          version: m.version,
+        }))}
+        onSave={handleSaveStep1SourceModel}
       />
 
-      {/* Save Target Model Revision Modal */}
+      {/* Step 2: Save Planning Model Modal */}
+      <SaveRevisionModal
+        isOpen={showSavePlanningModal}
+        onClose={() => setShowSavePlanningModal(false)}
+        title="Save Planning Model"
+        stageKind="planning"
+        defaultName={
+          loadedSourceModel
+            ? loadedSourceModel.stage === 'planning' && !isBuiltInSampleModel(loadedSourceModel)
+              ? cleanModelDisplayName(loadedSourceModel.name)
+              : buildDefaultModelName('planning', loadedSourceModel.name)
+            : buildDefaultModelName('planning', 'storage')
+        }
+        defaultDescription={
+          loadedSourceModel
+            ? loadedSourceModel.stage === 'planning' && !isBuiltInSampleModel(loadedSourceModel)
+              ? loadedSourceModel.description || 'Refined planning object storage model'
+              : `Refined planning object storage model derived from ${cleanModelDisplayName(loadedSourceModel.name)}`
+            : 'Refined planning object storage model'
+        }
+        defaultVersion={
+          loadedSourceModel && loadedSourceModel.stage === 'planning' && !isBuiltInSampleModel(loadedSourceModel)
+            ? loadedSourceModel.version || '1.0.0'
+            : '1.0.0'
+        }
+        defaultOverwriteId={
+          loadedSourceModel && loadedSourceModel.stage === 'planning' && !isBuiltInSampleModel(loadedSourceModel)
+            ? loadedSourceModel.id
+            : null
+        }
+        existingRevisions={userPlanningModels.map((m) => ({
+          id: m.id,
+          name: m.name,
+          description: m.description,
+          version: m.version,
+        }))}
+        onSave={handleSavePlanningStorageModel}
+      />
+
+      {/* Step 3: Save Target Model Modal */}
       <SaveRevisionModal
         isOpen={showSaveTargetModal}
         onClose={() => setShowSaveTargetModal(false)}
-        title="Save Target Storage Model Revision"
-        defaultName="target-storage-model-rev1"
-        defaultDescription="Recommended target cloud object storage model"
-        defaultVersion="1.0.0"
-        existingRevisions={[]}
+        title="Save Target Model"
+        stageKind="target"
+        defaultName={
+          loadedTargetModel && !isBuiltInSampleModel(loadedTargetModel)
+            ? cleanModelDisplayName(loadedTargetModel.name)
+            : buildDefaultModelName(
+                'target',
+                loadedOptSourceModel?.name || loadedSourceModel?.name || 'storage',
+                desiredCsp
+              )
+        }
+        defaultDescription={
+          loadedTargetModel && !isBuiltInSampleModel(loadedTargetModel)
+            ? loadedTargetModel.description || 'Recommended target cloud object storage model'
+            : `Target cloud object storage model on ${desiredCsp.toUpperCase()} (${desiredRegion})`
+        }
+        defaultVersion={
+          loadedTargetModel && !isBuiltInSampleModel(loadedTargetModel)
+            ? loadedTargetModel.version || '1.0.0'
+            : '1.0.0'
+        }
+        defaultOverwriteId={
+          loadedTargetModel && !isBuiltInSampleModel(loadedTargetModel)
+            ? loadedTargetModel.id
+            : null
+        }
+        existingRevisions={userTargetModels.map((m) => ({
+          id: m.id,
+          name: m.name,
+          description: m.description,
+          version: m.version,
+        }))}
         onSave={handleSaveTargetModelRevision}
-        successMessage="Target storage artifact revision saved successfully."
+      />
+
+      {/* Delete Source / Planning Storage Model Modal */}
+      <DeleteModelConfirmModal
+        isOpen={Boolean(deleteSourceModalTarget)}
+        onClose={() => setDeleteSourceModalTarget(null)}
+        title="Delete Model"
+        modelName={deleteSourceModalTarget?.name || ''}
+        onConfirm={async () => {
+          if (!deleteSourceModalTarget) return;
+          const deletedId = deleteSourceModalTarget.id;
+          const deletedName = cleanModelDisplayName(deleteSourceModalTarget.name);
+          await artifactApi.deleteStorageModel(deletedId);
+          setSavedSourceModels((prev) => prev.filter((m) => m.id !== deletedId));
+          const remaining = allSourceModels.filter((m) => m.id !== deletedId);
+          const nextId = remaining[0]?.id || SAMPLE_STORAGE_MODEL.id;
+          if (pendingSourceModelId === deletedId) setPendingSourceModelId(nextId);
+          if (pendingOptSourceModelId === deletedId) setPendingOptSourceModelId(nextId);
+          if (loadedSourceModel?.id === deletedId) {
+            setLoadedSourceModel(null);
+            setIsModelLoaded(false);
+            setActiveRefineStep(1);
+            setHasRefineUnsavedChanges(false);
+          }
+          if (loadedOptSourceModel?.id === deletedId) {
+            setLoadedOptSourceModel(null);
+            setIsOptSourceLoaded(false);
+          }
+          if (lastSavedSourceStorageModel?.id === deletedId) {
+            setLastSavedSourceStorageModel(null);
+          }
+          showToast(`Model "${deletedName}" deleted.`);
+        }}
+      />
+
+      {/* Delete Target Storage Model Modal */}
+      <DeleteModelConfirmModal
+        isOpen={Boolean(deleteTargetModalTarget)}
+        onClose={() => setDeleteTargetModalTarget(null)}
+        title="Delete Model"
+        modelName={deleteTargetModalTarget?.name || ''}
+        onConfirm={async () => {
+          if (!deleteTargetModalTarget) return;
+          const deletedId = deleteTargetModalTarget.id;
+          const deletedName = cleanModelDisplayName(deleteTargetModalTarget.name);
+          await artifactApi.deleteStorageModel(deletedId);
+          setSavedTargetModels((prev) => prev.filter((m) => m.id !== deletedId));
+          const remaining = allTargetModels.filter((m) => m.id !== deletedId);
+          const nextId = remaining[0]?.id || SAMPLE_TARGET_STORAGE_MODEL.id;
+          if (pendingTargetModelId === deletedId) setPendingTargetModelId(nextId);
+          if (selectedTargetModelId === deletedId) setSelectedTargetModelId(nextId);
+          if (loadedTargetModel?.id === deletedId) {
+            setLoadedTargetModel(null);
+            setRecommendationResult(null);
+            setHasTargetUnsavedChanges(false);
+          }
+          showToast(`Model "${deletedName}" deleted.`);
+        }}
+      />
+
+      {/* Unsaved Model Changes Confirmation Modal */}
+      <UnsavedConfirmModal
+        isOpen={Boolean(unsavedNextTarget)}
+        onStay={() => setUnsavedNextTarget(null)}
+        onProceed={() => {
+          const dest = unsavedNextTarget;
+          if (!dest) return;
+          if (dest === 'provision') {
+            if (hasUnsavedTargetDraft) {
+              setSelectedTargetModelId(DRAFT_STORAGE_TARGET_ID);
+            } else if (loadedTargetModel) {
+              setSelectedTargetModelId(loadedTargetModel.id);
+            }
+          }
+          setSubTab(dest);
+        }}
+      />
+
+      <ModelToast
+        message={toastMsg}
+        tone={toastTone}
+        onClose={() => setToastMsg(null)}
       />
 
       {/* CORS Specification & Configuration Rules Guide Modal Popup */}
@@ -3029,19 +3645,52 @@ export const ObjectStorageMigration: React.FC = () => {
             <div className="space-y-4 text-xs font-sans">
               <div>
                 <label className="block text-text-muted font-normal mb-1.5 text-sm">
-                  1. Select Target Cloud Model
+                  1. Select Target Object Storage Model
                 </label>
-                <select
-                  value={selectedTargetModelId}
-                  onChange={(e) => setSelectedTargetModelId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-bold focus:outline-none focus:border-emerald-500 text-xs cursor-pointer"
-                >
-                  {allTargetModels.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name || m.userModelName || 'target-storage-model'} ({(m.csp || desiredCsp).toUpperCase()}) v{m.version || '1.0'}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <select
+                    value={selectedTargetModelId}
+                    onChange={(e) => setSelectedTargetModelId(e.target.value)}
+                    className="flex-1 min-w-[260px] px-3.5 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold focus:outline-none focus:border-emerald-500 text-sm cursor-pointer"
+                  >
+                    {hasUnsavedTargetDraft && draftTargetModelEnvelope && (
+                      <optgroup label="Draft Model">
+                        <option value={DRAFT_STORAGE_TARGET_ID}>
+                          {formatTargetOptionText(draftTargetModelEnvelope, draftTargetModelEnvelope.csp, true)}
+                        </option>
+                      </optgroup>
+                    )}
+                    {userTargetModels.length > 0 && (
+                      <optgroup label="Target Models">
+                        {userTargetModels.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {formatTargetOptionText(m, m.csp)}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    <optgroup label="Sample Models">
+                      {sampleTargetModels.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {formatTargetOptionText(m, m.csp)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                  {(() => {
+                    const isDraftSelected = selectedTargetModelId === DRAFT_STORAGE_TARGET_ID;
+                    const badge = getStageBadgeMeta(
+                      isDraftSelected
+                        ? 'draft'
+                        : resolveModelStageKind(activeSelectedTargetModel, 'target')
+                    );
+                    return (
+                      <span className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border shrink-0 ${badge.className}`}>
+                        {badge.label}
+                      </span>
+                    );
+                  })()}
+                </div>
               </div>
 
               <div className="p-3.5 bg-bg-input/60 border border-border-main/40 rounded-xl space-y-2 font-mono text-xs">
@@ -3134,11 +3783,12 @@ export const ObjectStorageMigration: React.FC = () => {
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => {
                   setShowLaunchModal(false);
                   handleMigrateStorage();
                 }}
-                className="px-5 py-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-600 hover:from-emerald-500 hover:to-blue-700 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-1.5 cursor-pointer"
+                className="px-5 py-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-1.5 cursor-pointer"
               >
                 <Play className="w-4 h-4 text-slate-950" />
                 <span>Launch Migration</span>
@@ -3207,7 +3857,7 @@ export const ObjectStorageMigration: React.FC = () => {
                 type="button"
                 onClick={() => {
                   if (!credAccessKey) {
-                    alert('Please enter Access Key.');
+                    showToast('Please enter Access Key.', 'error');
                     return;
                   }
                   const newProfile = {
@@ -3351,7 +4001,7 @@ export const ObjectStorageMigration: React.FC = () => {
                 type="button"
                 onClick={() => {
                   if (selectedBucketNames.length === 0) {
-                    alert('Please select at least one object storage bucket.');
+                    showToast('Please select at least one object storage bucket.', 'error');
                     return;
                   }
                   const newBuckets: SourceBucket[] = selectedBucketNames.map((name) => {
@@ -3370,6 +4020,7 @@ export const ObjectStorageMigration: React.FC = () => {
                     };
                   });
                   setSourceBuckets(newBuckets);
+                  setHasStep1UnsavedChanges(true);
                   setIsAddModalOpen(false);
                 }}
                 className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center space-x-2 cursor-pointer"

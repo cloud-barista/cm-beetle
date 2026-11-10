@@ -2,6 +2,7 @@ import { create, StateCreator } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty } from '../types/migration';
 import { honeybeeApi, artifactApi, SaveArtifactOptions, beetleApi, tumblebugApi, pickPreferredKoreaRegion } from '../api/client';
+import { isBuiltInSampleModel } from '../utils/modelFormat';
 import recommendedInfraSample from '../data/sampleTargetInfra.json';
 import sampleGpuData from '../data/sampleSourceGpuInfra.json';
 import {
@@ -671,6 +672,9 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
       description: 'Optimized Cloud architecture generated for onpremise cluster.',
       cloudInfraModel: recommendedInfraSample.data[0] as any,
       version: '1.0',
+      stage: 'target',
+      category: 'infra',
+      schemaType: 'RecommendedInfra',
       updatedTime: new Date().toISOString()
     }
   ],
@@ -775,18 +779,21 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
         description: 'Optimized Cloud architecture generated for onpremise cluster.',
         cloudInfraModel: recommendedInfraSample.data[0] as any,
         version: '1.0',
+        stage: 'target',
+        category: 'infra',
+        schemaType: 'RecommendedInfra',
         updatedTime: new Date().toISOString()
       }
     ];
-    const builtInCloudIds = new Set(fallbackCloudModels.map(m => m.id));
     try {
       const models = await artifactApi.getCloudModels();
-      const userModels = models.filter((m: CloudModelEnvelope) => !builtInCloudIds.has(m.id));
+      const userModels = models.filter((m: CloudModelEnvelope) => !isBuiltInSampleModel(m));
       const nextList = [...fallbackCloudModels, ...userModels];
       const curSelected = get().selectedCloudModel;
+      const isCandidateDraft = Boolean(curSelected && String(curSelected.id).startsWith('candidate-'));
       const validSelected =
-        curSelected && nextList.some(m => m.id === curSelected.id)
-          ? curSelected
+        curSelected && (isCandidateDraft || nextList.some(m => m.id === curSelected.id))
+          ? (nextList.find(m => m.id === curSelected.id) || curSelected)
           : null;
       set({
         savedCloudModels: nextList,
@@ -863,14 +870,13 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
 
   clearCustomCloudModels: async () => {
     const current = get().savedCloudModels;
-    const isBuiltIn = (id: string) => id === 'cloud-demo-1' || id === 'sample-cloud-migration-testbed-1';
-    const customModels = current.filter(m => !isBuiltIn(m.id));
+    const customModels = current.filter(m => !isBuiltInSampleModel(m));
     for (const model of customModels) {
       await artifactApi.deleteCloudModel(model.id);
     }
-    const remaining = current.filter(m => isBuiltIn(m.id));
-    const curSelId = get().selectedCloudModel?.id;
-    const isSelectedRemoved = curSelId ? !isBuiltIn(curSelId) : false;
+    const remaining = current.filter(m => isBuiltInSampleModel(m));
+    const curSel = get().selectedCloudModel;
+    const isSelectedRemoved = curSel ? !isBuiltInSampleModel(curSel) : false;
     set({
       savedCloudModels: remaining,
       selectedCloudModel: isSelectedRemoved ? null : get().selectedCloudModel,
