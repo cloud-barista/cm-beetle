@@ -11,6 +11,18 @@ import {
   SAMPLE_MIGRATION_TESTBED_MODEL,
 } from '../../data/sample15NodeInfra';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
+import { ActiveModelBanner } from '../common/ActiveModelBanner';
+import { DeleteModelConfirmModal } from '../common/DeleteModelConfirmModal';
+import { UnsavedConfirmModal } from '../common/UnsavedConfirmModal';
+import { ModelToast } from '../common/ModelToast';
+import {
+  buildDefaultModelName,
+  cleanModelDisplayName,
+  formatSourceOptionText,
+  getStageBadgeMeta,
+  isBuiltInSampleModel,
+  resolveModelStageKind,
+} from '../../utils/modelFormat';
 import { beetleApi } from '../../api/client';
 import {
   RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, Server, Cpu,
@@ -54,14 +66,6 @@ export const SAMPLE_MODEL: OnpremModelEnvelope = {
   updatedTime: new Date().toISOString(),
 };
 
-const BUILTIN_SAMPLE_IDS = new Set([
-  'sample-source-migration-testbed-1',
-  'sample-source-9node-testbed-1',
-  'sample-source-15node-dc-1',
-  'sample-source-gpu-infra-1',
-  'sample-source-infra-1',
-]);
-
 type ClusterGroupFilter = 'all' | 'ai-inference' | 'analytics-compute' | 'backend-db';
 
 // Infer cluster group from explicit field or node hostname/GPU characteristics
@@ -86,6 +90,8 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     fetchSavedSourceModels, saveSourceModel, updateSourceModel, deleteSourceModel,
   } = useMigrationStore();
 
+  const [pendingModelId, setPendingModelId] = useState<string>(selectedSourceModel?.id || '');
+  const [loadedModelId, setLoadedModelId] = useState<string>('');
   const [activeTunedNodeId, setActiveTunedNodeId] = useState<string>('');
   const [tunedNodes, setTunedNodes] = useState<OnpremNode[]>([]);
   const [selectedClusterGroup, setSelectedClusterGroup] = useState<ClusterGroupFilter>('all');
@@ -94,18 +100,17 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   const [newCidr, setNewCidr] = useState('');
   const [activeStep, setActiveStep] = useState<number>(1);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [excludedNodeIds, setExcludedNodeIds] = useState<string[]>([]);
   const [newRuleDir, setNewRuleDir] = useState('inbound');
   const [newRuleProto, setNewRuleProto] = useState('tcp');
   const [newRulePort, setNewRulePort] = useState('');
   const [newRuleCidr, setNewRuleCidr] = useState('0.0.0.0/0');
-  const [tuningSourceSaveSuccess, setTuningSourceSaveSuccess] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [sourceSaveSuccessMsg, setSourceSaveSuccessMsg] = useState('');
+  const [showUnsavedNextModal, setShowUnsavedNextModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [toastTone, setToastTone] = useState<'success' | 'error'>('success');
 
   // Source Infra Summary (POST /beetle/summary/source) state
   const [showSourceSummaryModal, setShowSourceSummaryModal] = useState(false);
@@ -129,14 +134,6 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   const [newNlbBackendName, setNewNlbBackendName] = useState('backend_web');
   const [newNlbServerIp, setNewNlbServerIp] = useState('');
   const [newNlbServerPort, setNewNlbServerPort] = useState('80');
-
-  useEffect(() => {
-    if (selectedSourceModel?.onpremiseInfraModel?.nlbs) {
-      setTunedNlbs(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.nlbs)));
-    } else {
-      setTunedNlbs([]);
-    }
-  }, [selectedSourceModel, isModelLoaded]);
 
   // New Data Disk Form state
   const [newDataDiskLabel, setNewDataDiskLabel] = useState('');
@@ -169,6 +166,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleUpdateNodeCpu = (machineId: string, key: string, value: any) => {
+    setHasUnsavedChanges(true);
     setTunedNodes(prev => prev.map(n => {
       if (n.machineId !== machineId) return n;
       return {
@@ -182,6 +180,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleUpdateNodeMemory = (machineId: string, sizeInGiB: number) => {
+    setHasUnsavedChanges(true);
     setTunedNodes(prev => prev.map(n => {
       if (n.machineId !== machineId) return n;
       return {
@@ -195,6 +194,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleUpdateNodeRootDisk = (machineId: string, key: string, value: any) => {
+    setHasUnsavedChanges(true);
     setTunedNodes(prev => prev.map(n => {
       if (n.machineId !== machineId) return n;
       return {
@@ -210,6 +210,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   const handleAddDataDisk = (machineId: string) => {
     const size = parseInt(newDataDiskSize, 10);
     if (!size || isNaN(size)) return;
+    setHasUnsavedChanges(true);
     const diskLabel = newDataDiskLabel || `data-disk-${((activeNode?.dataDisks || []).length) + 1}`;
     const newDisk = {
       label: diskLabel,
@@ -228,6 +229,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleDeleteDataDisk = (machineId: string, diskIdx: number) => {
+    setHasUnsavedChanges(true);
     setTunedNodes(prev => prev.map(n => {
       if (n.machineId !== machineId) return n;
       return {
@@ -239,6 +241,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
 
   const handleAddGpuCard = (machineId: string) => {
     if (!newGpuModel.trim()) return;
+    setHasUnsavedChanges(true);
     setTunedNodes(prev => prev.map(n => {
       if (n.machineId !== machineId) return n;
       const currentCards = n.gpuCards || [];
@@ -261,6 +264,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleDeleteGpuCard = (machineId: string, idx: number) => {
+    setHasUnsavedChanges(true);
     setTunedNodes(prev => prev.map(n => {
       if (n.machineId !== machineId) return n;
       const filtered = (n.gpuCards || []).filter((_, i) => i !== idx);
@@ -272,6 +276,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleUpdateNodeOs = (machineId: string, key: string, value: string) => {
+    setHasUnsavedChanges(true);
     setTunedNodes(prev => prev.map(n => {
       if (n.machineId !== machineId) return n;
       return {
@@ -285,6 +290,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleUpdateHostname = (machineId: string, hostname: string) => {
+    setHasUnsavedChanges(true);
     setTunedNodes(prev => prev.map(n => {
       if (n.machineId !== machineId) return n;
       return {
@@ -296,6 +302,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
 
   const handleAddNetworkInterface = (machineId: string) => {
     if (!newIfaceName) return;
+    setHasUnsavedChanges(true);
     const newIface = {
       name: newIfaceName,
       state: newIfaceState,
@@ -315,6 +322,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleDeleteNetworkInterface = (machineId: string, ifaceIdx: number) => {
+    setHasUnsavedChanges(true);
     setTunedNodes(prev => prev.map(n => {
       if (n.machineId !== machineId) return n;
       return {
@@ -326,6 +334,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
 
   const handleAddGateway = () => {
     if (!newGwIp || !tunedNetwork) return;
+    setHasUnsavedChanges(true);
     const currentGws = tunedNetwork.ipv4Networks?.defaultGateways || [];
     const newGw = {
       ip: newGwIp,
@@ -345,6 +354,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
 
   const handleDeleteGateway = (gwIdx: number) => {
     if (!tunedNetwork) return;
+    setHasUnsavedChanges(true);
     const currentGws = tunedNetwork.ipv4Networks?.defaultGateways || [];
     const updatedNetwork = {
       ...tunedNetwork,
@@ -357,6 +367,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleUpdateNlbListenerPort = (nlbIdx: number, port: number) => {
+    setHasUnsavedChanges(true);
     setTunedNlbs(prev => prev.map((nlb, idx) => {
       if (idx !== nlbIdx) return nlb;
       return {
@@ -372,6 +383,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   const handleAddNlbServer = (nlbIdx: number) => {
     const cleanIp = newNlbServerIp.trim();
     if (!cleanIp) return;
+    setHasUnsavedChanges(true);
     const srvPort = parseInt(newNlbServerPort, 10) || 80;
     const matchedNode = tunedNodes.find(n =>
       n.interfaces?.some(iface => iface.ipv4CidrBlocks?.some(cidr => cidr.split('/')[0].trim() === cleanIp))
@@ -396,6 +408,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleDeleteNlbServer = (nlbIdx: number, srvIdx: number) => {
+    setHasUnsavedChanges(true);
     setTunedNlbs(prev => prev.map((nlb, idx) => {
       if (idx !== nlbIdx) return nlb;
       return {
@@ -409,6 +422,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleAddNlbInstance = () => {
+    setHasUnsavedChanges(true);
     const port = parseInt(newNlbPort, 10) || 80;
     const newNlb = {
       software: 'haproxy',
@@ -436,43 +450,68 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleDeleteNlbInstance = (nlbIdx: number) => {
+    setHasUnsavedChanges(true);
     setTunedNlbs(prev => prev.filter((_, idx) => idx !== nlbIdx));
   };
 
-  // Ensure built-in sample models are always at the top of the list
-  const allModels: OnpremModelEnvelope[] = [
+  const sampleModels: OnpremModelEnvelope[] = [
     SAMPLE_MIGRATION_TESTBED_MODEL,
     SAMPLE_9_NODE_TESTBED_MODEL,
     SAMPLE_15_NODE_MODEL,
     SAMPLE_MODEL,
     SAMPLE_GPU_MODEL,
-    ...savedSourceModels.filter(m => !BUILTIN_SAMPLE_IDS.has(m.id)),
+  ];
+  const userModels = savedSourceModels.filter(m => !isBuiltInSampleModel(m));
+  const userPlanningModels = userModels.filter(m => m.stage === 'planning');
+  const userSourceModels = userModels.filter(m => m.stage !== 'planning');
+  const allModels: OnpremModelEnvelope[] = [
+    ...userPlanningModels,
+    ...userSourceModels,
+    ...sampleModels,
   ];
 
   useEffect(() => { fetchSavedSourceModels(); }, []);
 
+  useEffect(() => {
+    if (selectedSourceModel?.id) {
+      setPendingModelId(selectedSourceModel.id);
+    }
+  }, [selectedSourceModel?.id]);
+
+  const pendingModel = allModels.find(m => m.id === pendingModelId) || null;
+  const isPendingAlreadyLoaded =
+    isModelLoaded && Boolean(pendingModel) && loadedModelId === pendingModel?.id && !hasUnsavedChanges;
+
   const handleLoadModel = () => {
-    if (!selectedSourceModel || !selectedSourceModel.onpremiseInfraModel) return;
-    setTunedNodes(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.nodes || [])));
-    setTunedNetwork(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
+    if (!pendingModel || !pendingModel.onpremiseInfraModel) return;
+    selectSourceModel(pendingModel);
+    setLoadedModelId(pendingModel.id);
+    setTunedNodes(JSON.parse(JSON.stringify(pendingModel.onpremiseInfraModel.nodes || [])));
+    setTunedNetwork(JSON.parse(JSON.stringify(pendingModel.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
+    setTunedNlbs(
+      pendingModel.onpremiseInfraModel.nlbs
+        ? JSON.parse(JSON.stringify(pendingModel.onpremiseInfraModel.nlbs))
+        : []
+    );
     setExcludedNodeIds([]);
     setSelectedClusterGroup('all');
     setIsModelLoaded(true);
-    setActiveStep(2); // Unlock Step 2: Review and Editing
-    if (selectedSourceModel.onpremiseInfraModel.nodes && selectedSourceModel.onpremiseInfraModel.nodes.length > 0) {
-      setActiveTunedNodeId(selectedSourceModel.onpremiseInfraModel.nodes[0]?.machineId || '');
+    setHasUnsavedChanges(false);
+    setActiveStep(2);
+    if (pendingModel.onpremiseInfraModel.nodes && pendingModel.onpremiseInfraModel.nodes.length > 0) {
+      setActiveTunedNodeId(pendingModel.onpremiseInfraModel.nodes[0]?.machineId || '');
     }
   };
 
   const handleDeleteModel = () => {
-    if (!selectedSourceModel || BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id)) return;
-    setDeleteConfirmText('');
+    if (!pendingModel || isBuiltInSampleModel(pendingModel)) return;
     setShowDeleteConfirm(true);
   };
 
   const activeNode = tunedNodes.find((n) => n.machineId === activeTunedNodeId);
 
   const handleToggleNodeExclude = (machineId: string) => {
+    setHasUnsavedChanges(true);
     setExcludedNodeIds(prev =>
       prev.includes(machineId)
         ? prev.filter(id => id !== machineId)
@@ -481,6 +520,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleDeleteFirewallRule = (machineId: string, ruleIdx: number) => {
+    setHasUnsavedChanges(true);
     setTunedNodes(prev =>
       prev.map(node =>
         node.machineId === machineId
@@ -495,6 +535,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
 
   const handleAddFirewallRule = (machineId: string) => {
     if (!newRulePort) return;
+    setHasUnsavedChanges(true);
     const newRule = {
       action: 'allow',
       direction: newRuleDir,
@@ -549,40 +590,46 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
       ? (selectedSourceModel.lineage?.sourceModelId || selectedSourceModel.id)
       : selectedSourceModel.id;
 
-    if (result.overwriteId) {
-      await updateSourceModel(result.overwriteId, result.name, result.description, result.version, updatedInfra, {
-        stage: 'planning',
-        parentId: resolvedSourceParentId,
-        sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
-      });
-    } else {
-      await saveSourceModel(result.name, result.description, result.version, updatedInfra, {
-        stage: 'planning',
-        parentId: resolvedSourceParentId,
-        sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
-      });
-    }
+    const saved = result.overwriteId
+      ? await updateSourceModel(result.overwriteId, result.name, result.description, result.version, updatedInfra, {
+          stage: 'planning',
+          parentId: resolvedSourceParentId,
+          sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
+        })
+      : await saveSourceModel(result.name, result.description, result.version, updatedInfra, {
+          stage: 'planning',
+          parentId: resolvedSourceParentId,
+          sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
+        });
 
-    try {
-      const isGpu = selectedSourceModel.id === 'sample-source-gpu-infra-1';
-      await beetleApi.saveSourceInfraModelToFile(updatedInfra, isGpu);
-    } catch (e) {
-      console.warn('Failed to overwrite source model to file:', e);
-    }
-
+    setPendingModelId(saved.id);
+    setLoadedModelId(saved.id);
     setTunedNodes(filteredNodes);
     setExcludedNodeIds([]);
-    setTuningSourceSaveSuccess(true);
-    setSourceSaveSuccessMsg('Planning infrastructure artifact saved successfully (stage: planning).');
-    setActiveStep(3); // Advance to Step 3: Desired Cloud Target Specification
-    setTimeout(() => setTuningSourceSaveSuccess(false), 2000);
-    setTimeout(() => setSourceSaveSuccessMsg(''), 4000);
+    setHasUnsavedChanges(false);
+    setActiveStep(3);
+    setToastTone('success');
+    setToastMsg(
+      result.overwriteId
+        ? `Planning model "${saved.name}" (v${saved.version || result.version}) updated successfully.`
+        : `Planning model "${saved.name}" (v${saved.version || result.version}) saved successfully.`
+    );
+  };
+
+  const handleProceedNext = () => {
+    if (!onNext) return;
+    if (isModelLoaded && hasUnsavedChanges) {
+      setShowUnsavedNextModal(true);
+      return;
+    }
+    onNext();
   };
 
   const handleAddCidr = (cidr: string) => {
     if (!cidr || !tunedNetwork) return;
     const currentCidrs = tunedNetwork.ipv4Networks?.cidrBlocks || [];
-    if (currentCidrs.includes(cidr)) return; // prevent duplicate
+    if (currentCidrs.includes(cidr)) return;
+    setHasUnsavedChanges(true);
     const updatedNetwork = {
       ...tunedNetwork,
       ipv4Networks: {
@@ -595,6 +642,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
 
   const handleRemoveCidr = (cidrToRemove: string) => {
     if (!tunedNetwork) return;
+    setHasUnsavedChanges(true);
     const currentCidrs = tunedNetwork.ipv4Networks?.cidrBlocks || [];
     const updatedNetwork = {
       ...tunedNetwork,
@@ -671,43 +719,93 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
           <h3 className="text-base font-extrabold text-text-main">Step 1: Source / Planning Infrastructure Model Selection</h3>
         </div>
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-bold text-text-muted mb-2">Choose Source Model</label>
-            <select
-              value={selectedSourceModel?.id || ''}
-              onChange={(e) => {
-                const m = allModels.find(x => x.id === e.target.value) || null;
-                selectSourceModel(m);
-                setIsModelLoaded(false);
-                setTunedNodes([]);
-                setActiveStep(1);
-              }}
-              className="w-full max-w-md bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer mb-3"
-            >
-              <option value="">-- Choose Source Model --</option>
-              {allModels.map(m => {
-                const stageLabel = m.stage === 'planning' ? '[Planning] ' : '';
-                return (
-                  <option key={m.id} value={m.id}>{stageLabel}{m.name} (v{m.version || '1.0'})</option>
-                );
-              })}
-            </select>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleLoadModel}
-                disabled={!selectedSourceModel}
-                className={`px-5 py-3 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer ${selectedSourceModel
-                  ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/25'
-                  : 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'}`}
+          <div className="max-w-2xl space-y-3">
+            <label className="block text-sm font-normal text-text-muted">Source or Planning Infrastructure Model</label>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <select
+                value={pendingModelId}
+                onChange={(e) => setPendingModelId(e.target.value)}
+                className="flex-1 min-w-[260px] bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
               >
-                <RefreshCw className="w-4 h-4 mr-1.5" /> Load Model
+                <option value="">-- Choose Infrastructure Model --</option>
+                {userPlanningModels.length > 0 && (
+                  <optgroup label="Planning Models">
+                    {userPlanningModels.map(m => (
+                      <option key={m.id} value={m.id}>{formatSourceOptionText(m)}</option>
+                    ))}
+                  </optgroup>
+                )}
+                {userSourceModels.length > 0 && (
+                  <optgroup label="Source Models">
+                    {userSourceModels.map(m => (
+                      <option key={m.id} value={m.id}>{formatSourceOptionText(m)}</option>
+                    ))}
+                  </optgroup>
+                )}
+                <optgroup label="Sample Models">
+                  {sampleModels.map(m => (
+                    <option key={m.id} value={m.id}>{formatSourceOptionText(m)}</option>
+                  ))}
+                </optgroup>
+              </select>
+              {pendingModel && (() => {
+                const badge = getStageBadgeMeta(resolveModelStageKind(pendingModel, 'source'));
+                return (
+                  <span className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border shrink-0 ${badge.className}`}>
+                    {badge.label}
+                  </span>
+                );
+              })()}
+            </div>
+
+            {pendingModel && (
+              <div className="text-xs bg-bg-input/50 border border-border-main/50 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span>
+                  <span className="font-normal text-text-muted">Nodes: </span>
+                  <span className="font-extrabold text-text-main">{pendingModel.onpremiseInfraModel?.nodes?.length || 0}</span>
+                </span>
+                {pendingModel.description && (
+                  <span className="truncate max-w-md">
+                    <span className="font-normal text-text-muted">Info: </span>
+                    <span className="font-extrabold text-text-main">{pendingModel.description}</span>
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <button
+                type="button"
+                onClick={handleLoadModel}
+                disabled={!pendingModel}
+                className={`px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-1.5 transition cursor-pointer ${
+                  !pendingModel
+                    ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                    : isPendingAlreadyLoaded
+                      ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/25'
+                }`}
+              >
+                {isPendingAlreadyLoaded ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Model Loaded</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Load Model</span>
+                  </>
+                )}
               </button>
-              {selectedSourceModel && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id) && (
+              {pendingModel && !isBuiltInSampleModel(pendingModel) && (
                 <button
+                  type="button"
                   onClick={handleDeleteModel}
-                  className="px-5 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer"
+                  className="px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-sm font-extrabold flex items-center gap-1.5 transition cursor-pointer"
                 >
-                  <Trash2 className="w-4 h-4 mr-1.5" /> Delete Model
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete Model</span>
                 </button>
               )}
             </div>
@@ -739,6 +837,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                 Source Summary (POST /summary/source)
               </button>
               <button
+                type="button"
                 onClick={() => setIsJsonOpen(!isJsonOpen)}
                 className="px-3 py-1.5 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-sm font-bold transition cursor-pointer flex items-center text-emerald-600 dark:text-emerald-400"
               >
@@ -749,87 +848,58 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
           )}
         </div>
 
-
-
         {selectedSourceModel && isModelLoaded && (
-          <div className="bg-bg-panel/40 border border-border-main/30 rounded-xl p-3.5 flex flex-col md:flex-row md:items-center justify-between text-sm space-y-2 md:space-y-0 mb-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-text-muted font-normal">Loaded Model:</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-sm">{selectedSourceModel.name}</span>
-              <span className="text-sm text-text-muted font-mono bg-bg-panel px-2 py-0.5 rounded border border-border-main/40">
-                v{selectedSourceModel.version || '1.0'}
-              </span>
-              <span className={`px-2.5 py-0.5 rounded-md text-xs font-extrabold border ${
-                selectedSourceModel.stage === 'planning'
-                  ? 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30'
-                  : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-              }`}>
-                Stage: {selectedSourceModel.stage || 'source'}
-              </span>
-              <span className="px-2.5 py-0.5 rounded-md text-xs bg-bg-panel border border-border-main/50">
-                <span className="font-normal text-text-muted">Nodes: </span>
-                <span className="font-extrabold text-text-main">{filteredPlanningNodes.length}</span>
-              </span>
-              <span className={`px-2.5 py-0.5 rounded-md text-xs border ${
-                totalPlanningGpus > 0
-                  ? 'bg-emerald-500/15 border-emerald-500/30'
-                  : 'bg-bg-panel border-border-main/50'
-              }`}>
-                <span className="font-normal text-text-muted">GPU: </span>
-                <span className={totalPlanningGpus > 0 ? 'font-extrabold text-emerald-600 dark:text-emerald-400' : 'font-extrabold text-text-main'}>
-                  {totalPlanningGpus > 0 ? `${totalPlanningGpus} Card(s)` : 'CPU Only'}
-                </span>
-              </span>
-              <span className={`px-2.5 py-0.5 rounded-md text-xs border ${
-                tunedNlbs.length > 0
-                  ? 'bg-teal-500/15 border-teal-500/30'
-                  : 'bg-bg-panel border-border-main/50'
-              }`}>
-                <span className="font-normal text-text-muted">NLB: </span>
-                <span className={tunedNlbs.length > 0 ? 'font-extrabold text-teal-600 dark:text-teal-400' : 'font-extrabold text-text-main'}>
-                  {tunedNlbs.length > 0 ? `${tunedNlbs.length} Configured` : 'No NLB'}
-                </span>
-              </span>
-              {selectedSourceModel.lineage?.sourceModelId && selectedSourceModel.stage === 'planning' && (
-                <span className="text-xs font-mono text-text-muted bg-bg-panel px-2 py-0.5 rounded border border-border-main/40">
-                  Source Parent: {selectedSourceModel.lineage.sourceModelId}
-                </span>
-              )}
-            </div>
-            {selectedSourceModel.updatedTime && (
-              <div className="text-sm text-text-muted">
-                Last Updated: <span className="text-text-main font-semibold">{new Date(selectedSourceModel.updatedTime).toLocaleString()}</span>
-              </div>
-            )}
+          <div className="mb-4">
+            <ActiveModelBanner
+              mode="loaded"
+              name={selectedSourceModel.name}
+              version={selectedSourceModel.version}
+              stageKind={resolveModelStageKind(selectedSourceModel, 'source')}
+              hasUnsavedChanges={hasUnsavedChanges}
+              updatedTime={selectedSourceModel.updatedTime}
+              metrics={[
+                { label: 'Nodes', value: String(filteredPlanningNodes.length) },
+                {
+                  label: 'GPU',
+                  value: totalPlanningGpus > 0 ? `${totalPlanningGpus} Card(s)` : 'CPU Only',
+                  tone: totalPlanningGpus > 0 ? 'emerald' : 'default',
+                },
+                {
+                  label: 'NLB',
+                  value: tunedNlbs.length > 0 ? `${tunedNlbs.length} Configured` : 'No NLB',
+                  tone: tunedNlbs.length > 0 ? 'teal' : 'default',
+                },
+              ]}
+            />
           </div>
         )}
 
         {isModelLoaded && selectedSourceModel && (
           <div className="space-y-4">
-            <div className="mt-2">
-              {isJsonOpen ? (
-                /* Raw JSON View */
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center bg-bg-input px-3.5 py-2 rounded-xl border border-border-main/50">
-                    <span className="text-sm text-text-muted font-mono">onpremiseInfraModel</span>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(JSON.stringify(effectivePlanningInfra, null, 2));
-                        setIsJsonCopied(true);
-                        setTimeout(() => setIsJsonCopied(false), 2000);
-                      }}
-                      className="px-3 py-1 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-xs font-bold transition flex items-center cursor-pointer text-emerald-600 dark:text-emerald-400"
-                    >
-                      <Copy className="w-3.5 h-3.5 mr-1" /> {isJsonCopied ? 'Copied!' : 'Copy JSON'}
-                    </button>
-                  </div>
-                  <pre className="text-sm font-mono text-slate-800 dark:text-emerald-400 bg-bg-panel p-3.5 rounded-xl border border-border-main overflow-y-auto max-h-[400px] select-text">
-                    {JSON.stringify(effectivePlanningInfra, null, 2)}
-                  </pre>
+            {isJsonOpen && (
+              <div className="space-y-3 mb-4">
+                <div className="flex justify-between items-center bg-bg-input px-3.5 py-2 rounded-xl border border-border-main/50">
+                  <span className="text-sm text-text-muted font-mono">onpremiseInfraModel</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(JSON.stringify(effectivePlanningInfra, null, 2));
+                      setIsJsonCopied(true);
+                      setTimeout(() => setIsJsonCopied(false), 2000);
+                    }}
+                    className="px-3 py-1 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-xs font-bold transition flex items-center cursor-pointer text-emerald-600 dark:text-emerald-400"
+                  >
+                    <Copy className="w-3.5 h-3.5 mr-1" /> {isJsonCopied ? 'Copied!' : 'Copy JSON'}
+                  </button>
                 </div>
-              ) : (
-                /* Structured Hierarchy Spec Editor UI (Vertical 4 Rows: Network -> Server List -> Server Details/Tuning -> NLB) */
-                <div className="space-y-6">
+                <pre className="text-sm font-mono text-slate-800 dark:text-emerald-400 bg-bg-panel p-3.5 rounded-xl border border-border-main overflow-y-auto max-h-[400px] select-text">
+                  {JSON.stringify(effectivePlanningInfra, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            <div className="mt-2">
+              <div className="space-y-6">
 
                   {/* Row 1: Network Configuration */}
                   <div className="space-y-3 p-5 bg-bg-input/40 border border-border-main/50 rounded-xl">
@@ -1014,7 +1084,10 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                         {excludedNodeIds.length > 0 && (
                           <button
                             type="button"
-                            onClick={() => setExcludedNodeIds([])}
+                            onClick={() => {
+                              setHasUnsavedChanges(true);
+                              setExcludedNodeIds([]);
+                            }}
                             className="px-3 py-1.5 rounded-lg text-xs font-extrabold transition cursor-pointer border bg-bg-panel hover:bg-bg-input border-border-main text-text-muted hover:text-text-main"
                             title="Restore all excluded nodes"
                           >
@@ -1891,61 +1964,41 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                     )}
                   </div>
 
-                  {/* Save spec and proceed button at the bottom of Step 1 */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border-main/20 mt-4">
-                    <div className="flex items-center gap-3">
+                  {/* Unified Bottom Action & Navigation Bar */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-border-main/20 mt-4">
+                    {onBack ? (
                       <button
-                        onClick={() => setShowSaveModal(true)}
-                        className="px-5 py-2.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 rounded-xl text-xs font-extrabold flex items-center transition cursor-pointer shadow-md shadow-emerald-500/20 shrink-0"
+                        type="button"
+                        onClick={onBack}
+                        className="w-full sm:w-auto px-4 py-2.5 bg-bg-input border border-border-main hover:bg-bg-main text-text-main font-extrabold text-xs rounded-xl transition cursor-pointer flex items-center justify-center space-x-1.5"
                       >
-                        <Save className="w-3.5 h-3.5 mr-1.5 text-slate-950" />
-                        <span>Save Planning Infra Revision</span>
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>Back to 1. Source Analysis</span>
                       </button>
-                    </div>
+                    ) : <div />}
 
-                    {sourceSaveSuccessMsg && (
-                      <div className="flex items-center gap-2 px-3.5 py-1.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold animate-fade-in">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>{sourceSaveSuccessMsg}</span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center space-x-2 text-xs text-text-muted">
-                      <span className="font-normal">Model:</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{selectedSourceModel.name}</span>
-                      <span className="font-mono bg-bg-panel px-1.5 py-0.5 rounded border border-border-main/40">
-                        v{selectedSourceModel.version || '1.0'}
-                      </span>
-                      <span className="px-2 py-0.5 rounded bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 font-extrabold">
-                        {selectedSourceModel.stage || 'source'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {(onNext || onBack) && (
-                    <div className="flex items-center justify-between pt-4 border-t border-border-main/20 mt-4">
-                      {onBack ? (
-                        <button
-                          onClick={onBack}
-                          className="px-4 py-2 bg-bg-input border border-border-main hover:bg-bg-main text-text-main font-bold text-xs rounded-xl transition cursor-pointer flex items-center space-x-1.5"
-                        >
-                          <ArrowLeft className="w-3.5 h-3.5" />
-                          <span>Back to 1. Source Analysis</span>
-                        </button>
-                      ) : <div />}
+                    <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowSaveModal(true)}
+                        className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md shadow-emerald-500/20"
+                      >
+                        <Save className="w-3.5 h-3.5 text-slate-950" />
+                        <span>Save Planning Model</span>
+                      </button>
                       {onNext && (
                         <button
-                          onClick={onNext}
-                          className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer ml-auto"
+                          type="button"
+                          onClick={handleProceedNext}
+                          className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 cursor-pointer"
                         >
                           <span>Next: Proceed to 3. Target Cloud Optimizer</span>
                           <ArrowRight className="w-4 h-4" />
                         </button>
                       )}
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+              </div>
             </div>
           </div>
         )}
@@ -1954,115 +2007,70 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
       <SaveRevisionModal
         isOpen={showSaveModal}
         onClose={() => setShowSaveModal(false)}
-        title="Save Planning Infra Revision"
+        title="Save Planning Model"
+        stageKind="planning"
         defaultName={
           selectedSourceModel
-            ? selectedSourceModel.stage === 'planning' && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id)
-              ? selectedSourceModel.name
-              : `${selectedSourceModel.name.replace(/^\[Sample\]\s*/i, '').replace(/-planning$/i, '')}-planning`
+            ? selectedSourceModel.stage === 'planning' && !isBuiltInSampleModel(selectedSourceModel)
+              ? cleanModelDisplayName(selectedSourceModel.name)
+              : buildDefaultModelName('planning', selectedSourceModel.name)
             : ''
         }
         defaultDescription={
           selectedSourceModel
-            ? selectedSourceModel.stage === 'planning' && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id)
+            ? selectedSourceModel.stage === 'planning' && !isBuiltInSampleModel(selectedSourceModel)
               ? selectedSourceModel.description || 'Refined planning infrastructure model'
-              : `Refined planning infrastructure model derived from ${selectedSourceModel.name}`
+              : `Refined planning infrastructure model derived from ${cleanModelDisplayName(selectedSourceModel.name)}`
             : ''
         }
         defaultVersion={
-          selectedSourceModel && selectedSourceModel.stage === 'planning' && !BUILTIN_SAMPLE_IDS.has(selectedSourceModel.id)
+          selectedSourceModel && selectedSourceModel.stage === 'planning' && !isBuiltInSampleModel(selectedSourceModel)
             ? selectedSourceModel.version || '1.0.0'
             : '1.0.0'
         }
+        defaultOverwriteId={
+          selectedSourceModel && selectedSourceModel.stage === 'planning' && !isBuiltInSampleModel(selectedSourceModel)
+            ? selectedSourceModel.id
+            : null
+        }
         existingRevisions={savedSourceModels
-          .filter(m => !BUILTIN_SAMPLE_IDS.has(m.id) && m.stage === 'planning')
-          .map(m => ({ id: m.id, name: m.name, version: m.version }))}
+          .filter(m => !isBuiltInSampleModel(m) && m.stage === 'planning')
+          .map(m => ({ id: m.id, name: m.name, description: m.description, version: m.version }))}
         onSave={handleSaveArtifact}
-        successMessage="Planning infrastructure artifact saved successfully."
       />
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && selectedSourceModel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
-          <div className="glass-panel p-6 rounded-2xl w-full max-w-md border border-border-main animate-scale-up">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-base font-bold text-text-main flex items-center gap-2">
-                <Trash2 className="w-4 h-4 text-red-500" /> Delete Model
-              </h3>
-              <button
-                onClick={() => { setShowDeleteConfirm(false); setDeleteError(''); setDeleteConfirmText(''); }}
-                disabled={isDeleting}
-                className="text-text-muted hover:text-text-main transition p-1 hover:bg-bg-input rounded-lg cursor-pointer disabled:opacity-50"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      <DeleteModelConfirmModal
+        isOpen={showDeleteConfirm && Boolean(pendingModel)}
+        onClose={() => setShowDeleteConfirm(false)}
+        title="Delete Model"
+        modelName={pendingModel?.name || ''}
+        onConfirm={async () => {
+          if (!pendingModel) return;
+          const deletedName = cleanModelDisplayName(pendingModel.name);
+          const deletedId = pendingModel.id;
+          await deleteSourceModel(deletedId);
+          const remaining = allModels.filter(m => m.id !== deletedId);
+          setPendingModelId(remaining[0]?.id || '');
+          if (loadedModelId === deletedId || selectedSourceModel?.id === deletedId) {
+            setLoadedModelId('');
+            setIsModelLoaded(false);
+            setTunedNodes([]);
+            setTunedNlbs([]);
+            setHasUnsavedChanges(false);
+            setActiveStep(1);
+          }
+          setToastTone('success');
+          setToastMsg(`Model "${deletedName}" deleted.`);
+        }}
+      />
 
-            <div className="space-y-4">
-              <p className="text-sm text-text-muted leading-relaxed">
-                Are you sure you want to delete the model <strong className="text-text-main">"{selectedSourceModel.name}"</strong>? This action cannot be undone.
-              </p>
-
-              <div className="space-y-1.5 pt-1">
-                <label className="block text-xs font-bold text-text-muted">
-                  To confirm, type <span className="font-mono bg-bg-panel px-1 py-0.5 rounded border border-border-main/60 text-text-main select-all">{selectedSourceModel.name}</span> in the box below:
-                </label>
-                <input
-                  type="text"
-                  value={deleteConfirmText}
-                  onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder="Type the model name to delete"
-                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-red-500 font-bold font-mono"
-                  disabled={isDeleting}
-                />
-              </div>
-
-              {deleteError && (
-                <div className="flex items-center gap-2 bg-red-500/10 text-red-500 px-4 py-3 rounded-xl text-xs font-semibold border border-red-500/20">
-                  <span>{deleteError}</span>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  onClick={() => { setShowDeleteConfirm(false); setDeleteError(''); setDeleteConfirmText(''); }}
-                  disabled={isDeleting}
-                  className="px-4 py-2 bg-bg-panel border border-border-main text-text-main rounded-xl text-sm font-semibold hover:bg-bg-input transition cursor-pointer disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={async () => {
-                    setIsDeleting(true);
-                    setDeleteError('');
-                    try {
-                      await deleteSourceModel(selectedSourceModel.id);
-                      setShowDeleteConfirm(false);
-                      setDeleteConfirmText('');
-                      setIsModelLoaded(false);
-                      setTunedNodes([]);
-                      setActiveStep(1);
-                    } catch (err: any) {
-                      setDeleteError(err.message || 'Failed to delete model');
-                    } finally {
-                      setIsDeleting(false);
-                    }
-                  }}
-                  disabled={isDeleting || deleteConfirmText !== selectedSourceModel.name}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 ${
-                    isDeleting || deleteConfirmText !== selectedSourceModel.name
-                      ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
-                      : 'bg-red-500 hover:bg-red-600 text-white cursor-pointer shadow-md shadow-red-500/20 animate-pulse'
-                  }`}
-                >
-                  {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Confirm Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <UnsavedConfirmModal
+        isOpen={showUnsavedNextModal}
+        onStay={() => setShowUnsavedNextModal(false)}
+        onProceed={() => {
+          if (onNext) onNext();
+        }}
+      />
 
       {/* Source Infrastructure Summary Modal (POST /beetle/summary/source) */}
       {showSourceSummaryModal && (
@@ -2139,13 +2147,11 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
         </div>
       )}
 
-      {/* Toast Notification */}
-      {tuningSourceSaveSuccess && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-950/95 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 px-5 py-4.5 rounded-2xl shadow-2xl shadow-emerald-500/10 animate-fade-in font-bold text-sm backdrop-blur-md">
-          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-          <span>Planning infrastructure model saved. Ready to optimize target cloud architecture.</span>
-        </div>
-      )}
+      <ModelToast
+        message={toastMsg}
+        tone={toastTone}
+        onClose={() => setToastMsg(null)}
+      />
 
     </div>
   );

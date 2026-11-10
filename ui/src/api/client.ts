@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { OnpremInfra, OnpremNlb, OnpremNode, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, CheckSSHReadyResponse, ArtifactLineage } from '../types/migration';
+import { cleanModelDisplayName, isBuiltInSampleModel, normalizeModelVersion } from '../utils/modelFormat';
 
 // Shared Axios client with basic authentication pre-configured (standard Cloud-Barista settings)
 const api = axios.create({
@@ -444,17 +445,48 @@ const sanitizeOnpremInfraIntegers = (infra: OnpremInfra | undefined | null): Onp
   };
 };
 
+export interface StorageSourceModelEnvelope {
+  id: string;
+  name: string;
+  description?: string;
+  version?: string;
+  stage?: 'source' | 'planning' | 'target';
+  category?: 'infra' | 'software' | 'data';
+  schemaType?: string;
+  lineage?: ArtifactLineage;
+  sourceObjectStorages: any[];
+  sourceCloud?: { csp: string; region: string };
+  updatedTime?: string;
+}
+
+export interface StorageTargetModelEnvelope {
+  id: string;
+  name: string;
+  description?: string;
+  version?: string;
+  stage?: 'source' | 'planning' | 'target';
+  category?: 'infra' | 'software' | 'data';
+  schemaType?: string;
+  lineage?: ArtifactLineage;
+  csp: string;
+  region: string;
+  targetObjectStorages: any[];
+  raw: any;
+  updatedTime?: string;
+}
+
 const mapArtifactToSourceEnvelope = (raw: any, fallbackInfra?: OnpremInfra): OnpremModelEnvelope => {
   const m = raw?.data || raw || {};
   let payload = m.payload || m.onpremiseInfraModel || fallbackInfra;
   if (typeof payload === 'string') {
     try { payload = JSON.parse(payload); } catch {}
   }
+  const rawName = m.name || m.userModelName || 'Unnamed Artifact';
   return {
     id: m.id || m.uid || `art-src-${Date.now()}`,
-    name: m.name || m.userModelName || 'Unnamed Artifact',
+    name: rawName === 'Unnamed Artifact' ? rawName : cleanModelDisplayName(rawName, 'Unnamed Artifact'),
     description: m.description || '',
-    version: m.version || m.userModelVersion || '1.0.0',
+    version: normalizeModelVersion(m.version || m.userModelVersion, '1.0.0'),
     stage: m.stage || 'source',
     category: m.category || 'infra',
     schemaType: m.schemaType || 'OnpremInfra',
@@ -470,17 +502,70 @@ const mapArtifactToCloudEnvelope = (raw: any, fallbackInfra?: RecommendedInfra):
   if (typeof payload === 'string') {
     try { payload = JSON.parse(payload); } catch {}
   }
+  const rawName = m.name || m.userModelName || 'Unnamed Design';
   return {
     id: m.id || m.uid || `art-tgt-${Date.now()}`,
-    name: m.name || m.userModelName || 'Unnamed Design',
+    name: rawName === 'Unnamed Design' ? rawName : cleanModelDisplayName(rawName, 'Unnamed Design'),
     description: m.description || '',
-    version: m.version || m.userModelVersion || '1.0.0',
+    version: normalizeModelVersion(m.version || m.userModelVersion, '1.0.0'),
     stage: m.stage || 'target',
     category: m.category || 'infra',
     schemaType: m.schemaType || 'RecommendedInfra',
     lineage: m.lineage,
     cloudInfraModel: payload as RecommendedInfra,
     updatedTime: m.updateTime || m.createTime || m.updatedTime || new Date().toISOString()
+  };
+};
+
+const mapArtifactToStorageSourceEnvelope = (raw: any, fallbackPayload?: any): StorageSourceModelEnvelope => {
+  const m = raw?.data || raw || {};
+  let payload = m.payload || fallbackPayload || {};
+  if (typeof payload === 'string') {
+    try { payload = JSON.parse(payload); } catch {}
+  }
+  const buckets = Array.isArray(payload?.sourceObjectStorages)
+    ? payload.sourceObjectStorages
+    : Array.isArray(payload?.buckets)
+      ? payload.buckets
+      : [];
+  const rawName = m.name || m.userModelName || 'Unnamed Storage Artifact';
+  return {
+    id: m.id || m.uid || `art-stg-src-${Date.now()}`,
+    name: rawName === 'Unnamed Storage Artifact' ? rawName : cleanModelDisplayName(rawName, 'Unnamed Storage Artifact'),
+    description: m.description || payload?.description || '',
+    version: normalizeModelVersion(m.version || m.userModelVersion, '1.0.0'),
+    stage: m.stage || 'source',
+    category: m.category || 'infra',
+    schemaType: m.schemaType || 'SourceObjectStorage',
+    lineage: m.lineage,
+    sourceObjectStorages: buckets,
+    sourceCloud: payload?.sourceCloud,
+    updatedTime: m.updateTime || m.createTime || m.updatedTime || new Date().toISOString(),
+  };
+};
+
+const mapArtifactToStorageTargetEnvelope = (raw: any, fallbackPayload?: any): StorageTargetModelEnvelope => {
+  const m = raw?.data || raw || {};
+  let payload = m.payload || fallbackPayload || {};
+  if (typeof payload === 'string') {
+    try { payload = JSON.parse(payload); } catch {}
+  }
+  const storages = Array.isArray(payload?.targetObjectStorages) ? payload.targetObjectStorages : [];
+  const rawName = m.name || m.userModelName || 'Unnamed Storage Target';
+  return {
+    id: m.id || m.uid || `art-stg-tgt-${Date.now()}`,
+    name: rawName === 'Unnamed Storage Target' ? rawName : cleanModelDisplayName(rawName, 'Unnamed Storage Target'),
+    description: m.description || payload?.description || '',
+    version: normalizeModelVersion(m.version || m.userModelVersion, '1.0.0'),
+    stage: m.stage || 'target',
+    category: m.category || 'infra',
+    schemaType: m.schemaType || 'RecommendedObjectStorage',
+    lineage: m.lineage,
+    csp: payload?.targetCloud?.csp || 'aws',
+    region: payload?.targetCloud?.region || 'ap-northeast-2',
+    targetObjectStorages: storages,
+    raw: payload,
+    updatedTime: m.updateTime || m.createTime || m.updatedTime || new Date().toISOString(),
   };
 };
 
@@ -495,9 +580,9 @@ export const artifactApi = {
   ): Promise<OnpremModelEnvelope> => {
     const sanitizedModel = sanitizeOnpremInfraIntegers(onpremiseInfraModel);
     const response = await api.post('/beetle/artifacts', {
-      name,
+      name: cleanModelDisplayName(name),
       description,
-      version: version || '1.0.0',
+      version: normalizeModelVersion(version, '1.0.0'),
       category: 'infra',
       stage: options?.stage || 'source',
       schemaType: 'OnpremInfra',
@@ -519,9 +604,9 @@ export const artifactApi = {
   ): Promise<OnpremModelEnvelope> => {
     const sanitizedModel = sanitizeOnpremInfraIntegers(onpremiseInfraModel);
     const response = await api.put(`/beetle/artifacts/${id}`, {
-      name,
+      name: cleanModelDisplayName(name),
       description,
-      version: version || '1.0.0',
+      version: normalizeModelVersion(version, '1.0.0'),
       category: 'infra',
       stage: options?.stage,
       schemaType: 'OnpremInfra',
@@ -534,7 +619,7 @@ export const artifactApi = {
 
   // Delete existing source or planning artifact
   deleteSourceModel: async (id: string): Promise<void> => {
-    if (id.startsWith('art-src-') || id.startsWith('art-plan-')) {
+    if (isBuiltInSampleModel(id) || id.startsWith('art-src-') || id.startsWith('art-plan-')) {
       return;
     }
     try {
@@ -571,9 +656,9 @@ export const artifactApi = {
     options?: SaveArtifactOptions
   ): Promise<CloudModelEnvelope> => {
     const response = await api.post('/beetle/artifacts', {
-      name,
+      name: cleanModelDisplayName(name),
       description,
-      version: version || '1.0.0',
+      version: normalizeModelVersion(version, '1.0.0'),
       category: 'infra',
       stage: 'target',
       schemaType: 'RecommendedInfra',
@@ -584,7 +669,7 @@ export const artifactApi = {
     return mapArtifactToCloudEnvelope(response.data, cloudInfraModel);
   },
 
-  // Update existing target cloud design artifact
+  // Update existing target cloud model artifact
   updateCloudModel: async (
     id: string,
     name: string,
@@ -594,9 +679,9 @@ export const artifactApi = {
     options?: SaveArtifactOptions
   ): Promise<CloudModelEnvelope> => {
     const response = await api.put(`/beetle/artifacts/${id}`, {
-      name,
+      name: cleanModelDisplayName(name),
       description,
-      version: version || '1.0.0',
+      version: normalizeModelVersion(version, '1.0.0'),
       category: 'infra',
       stage: 'target',
       schemaType: 'RecommendedInfra',
@@ -607,7 +692,7 @@ export const artifactApi = {
     return mapArtifactToCloudEnvelope(response.data, cloudInfraModel);
   },
 
-  // Get target cloud design artifacts
+  // Get target cloud model artifacts
   getCloudModels: async (): Promise<CloudModelEnvelope[]> => {
     const response = await api.get('/beetle/artifacts?category=infra&stage=target&schemaType=RecommendedInfra');
     const dataList = extractArtifactList(response.data);
@@ -622,7 +707,130 @@ export const artifactApi = {
   },
 
   deleteCloudModel: async (id: string): Promise<void> => {
-    if (id.startsWith('cloud-model-') || id.startsWith('art-tgt-')) {
+    if (isBuiltInSampleModel(id) || id.startsWith('cloud-model-') || id.startsWith('art-tgt-')) {
+      return;
+    }
+    try {
+      await api.delete(`/beetle/artifacts/${id}`);
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        return;
+      }
+      throw err;
+    }
+  },
+
+  // Get all source and planning SourceObjectStorage artifacts
+  getStorageSourceModels: async (): Promise<StorageSourceModelEnvelope[]> => {
+    const response = await api.get('/beetle/artifacts?category=infra&schemaType=SourceObjectStorage');
+    const dataList = extractArtifactList(response.data);
+    return dataList
+      .map((m: any) => mapArtifactToStorageSourceEnvelope(m))
+      .filter((m) => m.name !== 'Unnamed Storage Artifact' && Array.isArray(m.sourceObjectStorages));
+  },
+
+  // Save source or planning SourceObjectStorage artifact
+  saveStorageSourceModel: async (
+    name: string,
+    description: string,
+    payload: { description?: string; sourceCloud?: { csp: string; region: string }; sourceObjectStorages: any[] },
+    version?: string,
+    options?: SaveArtifactOptions
+  ): Promise<StorageSourceModelEnvelope> => {
+    const response = await api.post('/beetle/artifacts', {
+      name: cleanModelDisplayName(name),
+      description,
+      version: normalizeModelVersion(version, '1.0.0'),
+      category: 'infra',
+      stage: options?.stage || 'source',
+      schemaType: 'SourceObjectStorage',
+      parentId: options?.parentId,
+      sourceGroupId: options?.sourceGroupId,
+      payload,
+    });
+    return mapArtifactToStorageSourceEnvelope(response.data, payload);
+  },
+
+  // Update existing source or planning SourceObjectStorage artifact
+  updateStorageSourceModel: async (
+    id: string,
+    name: string,
+    description: string,
+    payload: { description?: string; sourceCloud?: { csp: string; region: string }; sourceObjectStorages: any[] },
+    version?: string,
+    options?: SaveArtifactOptions
+  ): Promise<StorageSourceModelEnvelope> => {
+    const response = await api.put(`/beetle/artifacts/${id}`, {
+      name: cleanModelDisplayName(name),
+      description,
+      version: normalizeModelVersion(version, '1.0.0'),
+      category: 'infra',
+      stage: options?.stage,
+      schemaType: 'SourceObjectStorage',
+      parentId: options?.parentId,
+      sourceGroupId: options?.sourceGroupId,
+      payload,
+    });
+    return mapArtifactToStorageSourceEnvelope(response.data, payload);
+  },
+
+  // Get all target RecommendedObjectStorage artifacts
+  getStorageTargetModels: async (): Promise<StorageTargetModelEnvelope[]> => {
+    const response = await api.get('/beetle/artifacts?category=infra&stage=target&schemaType=RecommendedObjectStorage');
+    const dataList = extractArtifactList(response.data);
+    return dataList
+      .map((m: any) => mapArtifactToStorageTargetEnvelope(m))
+      .filter((m) => m.name !== 'Unnamed Storage Target' && Array.isArray(m.targetObjectStorages));
+  },
+
+  // Save target RecommendedObjectStorage artifact
+  saveStorageTargetModel: async (
+    name: string,
+    description: string,
+    payload: any,
+    version?: string,
+    options?: SaveArtifactOptions
+  ): Promise<StorageTargetModelEnvelope> => {
+    const response = await api.post('/beetle/artifacts', {
+      name: cleanModelDisplayName(name),
+      description,
+      version: normalizeModelVersion(version, '1.0.0'),
+      category: 'infra',
+      stage: 'target',
+      schemaType: 'RecommendedObjectStorage',
+      parentId: options?.parentId,
+      sourceGroupId: options?.sourceGroupId,
+      payload,
+    });
+    return mapArtifactToStorageTargetEnvelope(response.data, payload);
+  },
+
+  // Update existing target RecommendedObjectStorage artifact
+  updateStorageTargetModel: async (
+    id: string,
+    name: string,
+    description: string,
+    payload: any,
+    version?: string,
+    options?: SaveArtifactOptions
+  ): Promise<StorageTargetModelEnvelope> => {
+    const response = await api.put(`/beetle/artifacts/${id}`, {
+      name: cleanModelDisplayName(name),
+      description,
+      version: normalizeModelVersion(version, '1.0.0'),
+      category: 'infra',
+      stage: 'target',
+      schemaType: 'RecommendedObjectStorage',
+      parentId: options?.parentId,
+      sourceGroupId: options?.sourceGroupId,
+      payload,
+    });
+    return mapArtifactToStorageTargetEnvelope(response.data, payload);
+  },
+
+  // Delete object storage artifact by ID
+  deleteStorageModel: async (id: string): Promise<void> => {
+    if (isBuiltInSampleModel(id) || id.startsWith('art-stg-')) {
       return;
     }
     try {
@@ -645,8 +853,6 @@ export const artifactApi = {
 // 3. CM-Beetle Server API Client (Recommendation & Migration Engine)
 // ============================================================================
 let objectStorageSupportCachePromise: Promise<Record<string, { cors: boolean; presignedUrl: boolean; versioning: boolean }>> | null = null;
-let sourceModelCachePromise: Promise<{ success: boolean; sourceModel: any; error?: string }> | null = null;
-let targetModelCachePromise: Promise<{ success: boolean; targetModel: any; error?: string }> | null = null;
 
 export const beetleApi = {
   // Get Cloud Recommendation candidates based on Source model input
@@ -1120,28 +1326,6 @@ export const beetleApi = {
     }
   },
 
-  // Overwrite sampleSourceInfra.json or sampleSourceGpuInfra.json directly on server file system for testing
-  saveSourceInfraModelToFile: async (model: any, isGpu: boolean = false): Promise<{ success: boolean; message?: string; fileName?: string; error?: string }> => {
-    try {
-      const url = isGpu ? '/api/models/source-infra?sample=gpu' : '/api/models/source-infra';
-      const response = await axios.post(url, model);
-      return { success: true, message: response.data?.message || 'Source model saved and overwritten successfully.', fileName: response.data?.fileName };
-    } catch (err: any) {
-      return { success: false, error: err.response?.data?.error || err.message };
-    }
-  },
-
-  // Overwrite sampleTargetInfra.json or sampleTargetGpuInfra.json directly on server file system for testing
-  saveTargetInfraModelToFile: async (model: any, isGpu: boolean = false): Promise<{ success: boolean; message?: string; fileName?: string; error?: string }> => {
-    try {
-      const url = isGpu ? '/api/models/target-infra?sample=gpu' : '/api/models/target-infra';
-      const response = await axios.post(url, model);
-      return { success: true, message: response.data?.message || 'Target model saved and overwritten successfully.', fileName: response.data?.fileName };
-    } catch (err: any) {
-      return { success: false, error: err.response?.data?.error || err.message };
-    }
-  },
-
   // --------------------------------------------------------------------------
   // Object Storage Recommendation & Provisioning APIs
   // --------------------------------------------------------------------------
@@ -1330,147 +1514,6 @@ export const beetleApi = {
       console.warn('Bucket inspect failed:', errorMsg);
       return { success: false, inspectedBuckets: [], error: errorMsg };
     }
-  },
-
-  // Step 7~12: Source & Planning Object Storage Artifact Save & Load
-  saveSourceObjectStorageModel: async (
-    sourceModel: any,
-    options?: {
-      name?: string;
-      description?: string;
-      version?: string;
-      stage?: 'source' | 'planning';
-      parentId?: string;
-      overwriteId?: string | null;
-    }
-  ): Promise<{ success: boolean; modelId: string; stage?: 'source' | 'planning'; lineage?: ArtifactLineage; error?: string }> => {
-    sourceModelCachePromise = null;
-    const payload = sourceModel?.sourceModel || sourceModel;
-    const targetStage = options?.stage || 'source';
-    const reqBody = {
-      name: options?.name || (targetStage === 'planning' ? 'planning-object-storage-model' : 'source-object-storage-model'),
-      description: options?.description || payload?.description || `${targetStage === 'planning' ? 'Refined planning' : 'Source'} object storage artifact`,
-      version: options?.version || '1.0.0',
-      category: 'infra',
-      stage: targetStage,
-      schemaType: 'SourceObjectStorage',
-      parentId: options?.parentId,
-      payload
-    };
-    try {
-      const response = options?.overwriteId
-        ? await api.put(`/beetle/artifacts/${options.overwriteId}`, reqBody)
-        : await api.post('/beetle/artifacts', reqBody);
-      const art = response.data?.data || response.data;
-      try { await axios.post('/api/models/source', sourceModel); } catch {}
-      return {
-        success: true,
-        modelId: art?.id || options?.overwriteId || `src-model-${Date.now()}`,
-        stage: art?.stage || targetStage,
-        lineage: art?.lineage
-      };
-    } catch {
-      try {
-        const response = await axios.post('/api/models/source', sourceModel);
-        return { success: true, modelId: response.data?.modelId || `src-model-${Date.now()}`, stage: targetStage };
-      } catch (err: any) {
-        console.warn('File persistence fallback: saving to local storage', err);
-        return { success: true, modelId: `src-model-${Date.now().toString().slice(-4)}`, stage: targetStage };
-      }
-    }
-  },
-
-  getSourceObjectStorageModel: async (): Promise<{ success: boolean; sourceModel: any; error?: string }> => {
-    if (sourceModelCachePromise) {
-      return sourceModelCachePromise;
-    }
-    sourceModelCachePromise = (async () => {
-      try {
-        const response = await api.get('/beetle/artifacts?category=infra&schemaType=SourceObjectStorage');
-        const list = response.data?.data || response.data;
-        if (Array.isArray(list) && list.length > 0 && list[0]?.payload) {
-          return { success: true, sourceModel: list[0].payload };
-        }
-      } catch {}
-      try {
-        const response = await axios.get('/api/models/source');
-        return { success: true, sourceModel: response.data?.sourceModel };
-      } catch (err: any) {
-        sourceModelCachePromise = null;
-        console.warn('File persistence fallback: fetching source model', err);
-        return { success: false, sourceModel: null };
-      }
-    })();
-    return sourceModelCachePromise;
-  },
-
-  // Step 15~20: Target Object Storage Artifact Save & Load
-  saveTargetObjectStorageModel: async (
-    targetModel: any,
-    options?: {
-      name?: string;
-      description?: string;
-      version?: string;
-      parentId?: string;
-      overwriteId?: string | null;
-    }
-  ): Promise<{ success: boolean; modelId: string; lineage?: ArtifactLineage; error?: string }> => {
-    targetModelCachePromise = null;
-    const payload = targetModel?.targetModel || targetModel?.recommendation || targetModel;
-    const reqBody = {
-      name: options?.name || 'target-object-storage-model',
-      description: options?.description || payload?.description || 'Target object storage artifact',
-      version: options?.version || '1.0.0',
-      category: 'infra',
-      stage: 'target',
-      schemaType: 'RecommendedObjectStorage',
-      parentId: options?.parentId,
-      payload
-    };
-    try {
-      const response = options?.overwriteId
-        ? await api.put(`/beetle/artifacts/${options.overwriteId}`, reqBody)
-        : await api.post('/beetle/artifacts', reqBody);
-      const art = response.data?.data || response.data;
-      try { await axios.post('/api/models/target', targetModel); } catch {}
-      return {
-        success: true,
-        modelId: art?.id || options?.overwriteId || `tgt-model-${Date.now()}`,
-        lineage: art?.lineage
-      };
-    } catch {
-      try {
-        const response = await axios.post('/api/models/target', targetModel);
-        return { success: true, modelId: response.data?.modelId || `tgt-model-${Date.now()}` };
-      } catch (err: any) {
-        console.warn('File persistence fallback: saving target model', err);
-        return { success: true, modelId: `tgt-model-${Date.now().toString().slice(-4)}` };
-      }
-    }
-  },
-
-  getTargetObjectStorageModel: async (): Promise<{ success: boolean; targetModel: any; error?: string }> => {
-    if (targetModelCachePromise) {
-      return targetModelCachePromise;
-    }
-    targetModelCachePromise = (async () => {
-      try {
-        const response = await api.get('/beetle/artifacts?category=infra&stage=target&schemaType=RecommendedObjectStorage');
-        const list = response.data?.data || response.data;
-        if (Array.isArray(list) && list.length > 0 && list[0]?.payload) {
-          return { success: true, targetModel: list[0].payload };
-        }
-      } catch {}
-      try {
-        const response = await axios.get('/api/models/target');
-        return { success: true, targetModel: response.data?.targetModel };
-      } catch (err: any) {
-        targetModelCachePromise = null;
-        console.warn('File persistence fallback: fetching target model', err);
-        return { success: false, targetModel: null };
-      }
-    })();
-    return targetModelCachePromise;
   },
 
   // Execute Target Object Storage Migration (Async-supported API via Prefer: respond-async)

@@ -3,8 +3,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useMigrationStore, calculateJobElapsedSeconds } from '../../store/migrationStore';
 import { beetleApi } from '../../api/client';
-import { CheckSSHReadyResponse, RecommendedInfra } from '../../types/migration';
+import { CheckSSHReadyResponse, CloudModelEnvelope, RecommendedInfra } from '../../types/migration';
 import { MigrationSplitScreen } from './MigrationSplitScreen';
+import {
+  buildDefaultModelName,
+  formatTargetOptionText,
+  getStageBadgeMeta,
+  isBuiltInSampleModel,
+  resolveModelStageKind,
+} from '../../utils/modelFormat';
 import { 
   Play, 
   CheckCircle2, 
@@ -73,13 +80,13 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     refinedSourceInfra,
     savedSourceModels,
     selectedSourceModel,
+    editedCandidate,
     savedCloudModels,
     selectedCloudModel,
     namespaceId,
     nameSeed,
     fetchSavedSourceModels,
     fetchSavedCloudModels,
-    selectCloudModel,
     setActiveTab,
     setTargetOverviewInfraId
   } = useMigrationStore();
@@ -89,6 +96,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
 
   // Launch Modal State (Infra)
   const [showLaunchModal, setShowLaunchModal] = useState(false);
+  const [cachedDraftModel, setCachedDraftModel] = useState<CloudModelEnvelope | null>(null);
   const [customNsId, setCustomNsId] = useState(namespaceId || 'mig01');
   const [customInfraId, setCustomInfraId] = useState('');
   const [customNameSeed, setCustomNameSeed] = useState(nameSeed || '');
@@ -592,9 +600,34 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (selectedCloudModel && String(selectedCloudModel.id).startsWith('candidate-')) {
+      setCachedDraftModel(selectedCloudModel);
+    } else if (editedCandidate && !selectedCloudModel) {
+      const csp = editedCandidate.targetCloud?.csp;
+      const region = editedCandidate.targetCloud?.region || '';
+      setCachedDraftModel({
+        id: 'candidate-draft',
+        name: buildDefaultModelName('target', selectedSourceModel?.name || editedCandidate.targetInfra?.name, csp),
+        description:
+          editedCandidate.description ||
+          `Optimized target cloud model for ${csp?.toUpperCase() || 'Cloud'} (${region})`,
+        cloudInfraModel: editedCandidate,
+        version: '1.0.0',
+        stage: 'target',
+        updatedTime: new Date().toISOString(),
+      });
+    }
+  }, [selectedCloudModel, editedCandidate, selectedSourceModel]);
+
   const handleOpenLaunchModal = () => {
-    if (savedCloudModels.length > 0 && !selectedCloudModel) {
-      selectCloudModel(savedCloudModels[0]);
+    if (!selectedCloudModel) {
+      if (cachedDraftModel) {
+        useMigrationStore.setState({ selectedCloudModel: cachedDraftModel });
+      } else if (savedCloudModels.length > 0) {
+        const preferred = savedCloudModels.find((m) => !isBuiltInSampleModel(m)) || savedCloudModels[0];
+        useMigrationStore.setState({ selectedCloudModel: preferred });
+      }
     }
     setValidationResult(null);
     setNameSeedPreviewData(null);
@@ -914,8 +947,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
         0
       ) ||
       0;
-    const builtInIds = new Set(['sample-source-migration-testbed-1', 'sample-source-9node-testbed-1', 'sample-source-15node-dc-1', 'sample-source-infra-1', 'sample-source-gpu-infra-1', 'sample-9-node-testbed', 'sample-15-node-enterprise', 'demo-model-1', 'demo-gpu-model-1']);
-    const userSavedModels = savedSourceModels.filter((m) => !builtInIds.has(m.id) && m.onpremiseInfraModel?.nodes?.length);
+    const userSavedModels = savedSourceModels.filter((m) => !isBuiltInSampleModel(m) && m.onpremiseInfraModel?.nodes?.length);
     const countMatchedModel =
       userSavedModels.find((m) => m.onpremiseInfraModel.nodes.length === targetNodeCount) ||
       savedSourceModels.find((m) => m.onpremiseInfraModel?.nodes?.length === targetNodeCount);
@@ -1581,23 +1613,72 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
               {/* Target Model Selector */}
               <div className="space-y-1.5">
                 <label className="block text-sm font-extrabold text-teal-600 dark:text-teal-400 font-sans">1. Select Target Cloud Model</label>
-                <select
-                  value={selectedCloudModel?.id || ''}
-                  onChange={(e) => {
-                    const model = savedCloudModels.find(m => m.id === e.target.value) || null;
-                    selectCloudModel(model);
-                    setValidationResult(null);
-                    setNameSeedPreviewData(null);
-                  }}
-                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
-                >
-                  <option value="">-- Choose Recommended Model --</option>
-                  {savedCloudModels.map((m: any) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.cloudInfraModel?.targetCloud?.csp?.toUpperCase() || 'CLOUD'})
-                    </option>
-                  ))}
-                </select>
+                {(() => {
+                  const isUnsavedDraft = Boolean(
+                    selectedCloudModel &&
+                      !savedCloudModels.some((m) => m.id === selectedCloudModel.id)
+                  );
+                  const draftModel = isUnsavedDraft ? selectedCloudModel : cachedDraftModel;
+                  const userTargetModels = savedCloudModels.filter((m) => !isBuiltInSampleModel(m));
+                  const sampleTargetModels = savedCloudModels.filter((m) => isBuiltInSampleModel(m));
+                  const allSelectableModels = draftModel
+                    ? [draftModel, ...savedCloudModels.filter((m) => m.id !== draftModel.id)]
+                    : savedCloudModels;
+                  const badge = selectedCloudModel
+                    ? getStageBadgeMeta(
+                        isUnsavedDraft
+                          ? 'draft'
+                          : resolveModelStageKind(selectedCloudModel, 'target')
+                      )
+                    : null;
+
+                  return (
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <select
+                        value={selectedCloudModel?.id || ''}
+                        onChange={(e) => {
+                          const model = allSelectableModels.find(m => m.id === e.target.value) || null;
+                          useMigrationStore.setState({ selectedCloudModel: model });
+                          setValidationResult(null);
+                          setNameSeedPreviewData(null);
+                        }}
+                        className="flex-1 min-w-[260px] bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+                      >
+                        <option value="">-- Choose Target Cloud Model --</option>
+                        {draftModel && (
+                          <optgroup label="Draft Model">
+                            <option value={draftModel.id}>
+                              {formatTargetOptionText(draftModel, draftModel.cloudInfraModel?.targetCloud?.csp, true)}
+                            </option>
+                          </optgroup>
+                        )}
+                        {userTargetModels.length > 0 && (
+                          <optgroup label="Target Models">
+                            {userTargetModels.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {formatTargetOptionText(m, m.cloudInfraModel?.targetCloud?.csp)}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                        {sampleTargetModels.length > 0 && (
+                          <optgroup label="Sample Models">
+                            {sampleTargetModels.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {formatTargetOptionText(m, m.cloudInfraModel?.targetCloud?.csp)}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                      </select>
+                      {badge && (
+                        <span className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border shrink-0 ${badge.className}`}>
+                          {badge.label}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Model Summary Badge */}

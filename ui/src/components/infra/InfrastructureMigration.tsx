@@ -6,7 +6,7 @@ import { SourceMetadataExtraction } from '@/components/source/SourceMetadataExtr
 import { SourceInfraRefinement } from '@/components/refine/SourceInfraRefinement';
 import { CloudInfraOptimizer } from '@/components/design/CloudInfraOptimizer';
 import { MigrationExecution } from '@/components/center/MigrationExecution';
-import { Database, Sliders, Compass, Play, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Database, Sliders, Compass, Play } from 'lucide-react';
 
 export const InfrastructureMigration: React.FC = () => {
   const { activeTab } = useMigrationStore();
@@ -60,12 +60,20 @@ export const InfrastructureMigration: React.FC = () => {
         </nav>
       </div>
 
-      {/* Sub-step View Render */}
-      <div className="animate-fade-in">
-        {subTab === 'source' && <SourceMetadataExtraction onNext={() => setSubTab('refine')} />}
-        {subTab === 'refine' && <SourceInfraRefinement onNext={() => setSubTab('design')} onBack={() => setSubTab('source')} />}
-        {subTab === 'design' && <CloudInfraOptimizer onNext={() => setSubTab('migrate')} onBack={() => setSubTab('refine')} />}
-        {subTab === 'migrate' && <MigrationExecution onBack={() => setSubTab('design')} />}
+      {/* Sub-step View Render (Keep steps mounted so loaded models and edits persist across Back/Next navigation) */}
+      <div>
+        <div className={subTab === 'source' ? 'block animate-fade-in' : 'hidden'}>
+          <SourceMetadataExtraction onNext={() => setSubTab('refine')} />
+        </div>
+        <div className={subTab === 'refine' ? 'block animate-fade-in' : 'hidden'}>
+          <SourceInfraRefinement onNext={() => setSubTab('design')} onBack={() => setSubTab('source')} />
+        </div>
+        <div className={subTab === 'design' ? 'block animate-fade-in' : 'hidden'}>
+          <CloudInfraOptimizer onNext={() => setSubTab('migrate')} onBack={() => setSubTab('refine')} />
+        </div>
+        <div className={subTab === 'migrate' ? 'block animate-fade-in' : 'hidden'}>
+          <MigrationExecution onBack={() => setSubTab('design')} />
+        </div>
       </div>
     </div>
   );

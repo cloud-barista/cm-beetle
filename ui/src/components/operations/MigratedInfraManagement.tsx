@@ -5,6 +5,7 @@ import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from '../design/TopologyMap';
 import { beetleApi } from '../../api/client';
 import { resolveTargetNodeLineage, parseDiscreteTcpPorts } from '../../utils/nodeLineage';
+import { isBuiltInSampleModel } from '../../utils/modelFormat';
 import { CheckSSHReadyResponse } from '../../types/migration';
 import { ObjectDirectoryTree } from '../storage/ObjectDirectoryTree';
 import { 
@@ -779,14 +780,10 @@ export const MigratedInfraManagement: React.FC = () => {
   // Active infra detail from loadedInfraDetail, completed session jobs, or savedCloudModels
   const activeJobInfra = completedJobs.find(j => j.id === selectedInfraId || j.infraId === selectedInfraId);
   const targetModelIdLabel = loadedInfraDetail?.label?.['cm-target-model-id'];
-  const isBuiltInSampleCloudModel = (m: any) =>
-    m?.id === 'cloud-demo-1' ||
-    m?.id === 'sample-mig-testbed-cloud-1' ||
-    (typeof m?.name === 'string' && m.name.startsWith('[Sample]'));
   const candidateSavedModels =
     selectedInfraId === SAMPLE_INFRA_ID
       ? savedCloudModels
-      : [...savedCloudModels].reverse().filter((m) => !isBuiltInSampleCloudModel(m));
+      : [...savedCloudModels].reverse().filter((m) => !isBuiltInSampleModel(m));
   const activeSavedModel = candidateSavedModels.find(
     (m) =>
       (targetModelIdLabel && m.id === targetModelIdLabel) ||
