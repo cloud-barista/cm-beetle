@@ -25,6 +25,7 @@ import (
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	"github.com/cloud-barista/cm-beetle/imdl/lineage"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/validation"
 	"github.com/cloud-barista/cm-beetle/pkg/csp"
 	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
@@ -52,22 +53,29 @@ type k8sClusterPrereqs struct {
 // rollback deletes the tracked resources in reverse creation order (SGs → SshKey → VNet).
 // Errors during rollback are logged as warnings but do not prevent subsequent deletions.
 func (p *k8sClusterPrereqs) rollback(ctx context.Context) {
+	// Detach parent cancellation while preserving reqId so cleanup succeeds within 5 minutes.
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	rollbackCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Minute)
+	defer cancel()
+
 	for i := len(p.sgIds) - 1; i >= 0; i-- {
-		if _, err := tbclient.NewSession().SetContext(ctx).DeleteSecurityGroup(p.nsId, p.sgIds[i]); err != nil {
+		if _, err := tbclient.NewSession().SetContext(rollbackCtx).DeleteSecurityGroup(p.nsId, p.sgIds[i]); err != nil {
 			log.Warn().Err(err).Str("sgId", p.sgIds[i]).Msg("Rollback: failed to delete SecurityGroup")
 		} else {
 			log.Info().Str("sgId", p.sgIds[i]).Msg("Rollback: SecurityGroup deleted")
 		}
 	}
 	if p.sshKeyId != "" {
-		if _, err := tbclient.NewSession().SetContext(ctx).DeleteSshKey(p.nsId, p.sshKeyId); err != nil {
+		if _, err := tbclient.NewSession().SetContext(rollbackCtx).DeleteSshKey(p.nsId, p.sshKeyId); err != nil {
 			log.Warn().Err(err).Str("sshKeyId", p.sshKeyId).Msg("Rollback: failed to delete SshKey")
 		} else {
 			log.Info().Str("sshKeyId", p.sshKeyId).Msg("Rollback: SshKey deleted")
 		}
 	}
 	if p.vNetId != "" {
-		if _, err := tbclient.NewSession().SetContext(ctx).DeleteVNet(p.nsId, p.vNetId, "withSubnets"); err != nil {
+		if _, err := tbclient.NewSession().SetContext(rollbackCtx).DeleteVNet(p.nsId, p.vNetId, "withSubnets"); err != nil {
 			log.Warn().Err(err).Str("vNetId", p.vNetId).Msg("Rollback: failed to delete VNet")
 		} else {
 			log.Info().Str("vNetId", p.vNetId).Msg("Rollback: VNet deleted")
@@ -146,6 +154,9 @@ func pollK8sClusterActive(ctx context.Context, nsId, clusterId string, maxAttemp
 	for i := 0; i < maxAttempts; i++ {
 		updated, err := tbclient.NewSession().SetContext(ctx).ReadK8sCluster(nsId, clusterId)
 		if err != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return clusterInfo, ctxErr
+			}
 			log.Warn().Err(err).Int("attempt", i+1).Msg("Failed to poll cluster status; retrying")
 		} else {
 			clusterInfo = updated
@@ -155,7 +166,11 @@ func pollK8sClusterActive(ctx context.Context, nsId, clusterId string, maxAttemp
 			}
 			log.Debug().Str("status", string(clusterInfo.Status)).Int("attempt", i+1).Msg("Cluster not yet Active")
 		}
-		time.Sleep(15 * time.Second)
+		if i < maxAttempts-1 {
+			if err := common.SleepWithContext(ctx, 15*time.Second); err != nil {
+				return clusterInfo, err
+			}
+		}
 	}
 	return clusterInfo, fmt.Errorf("K8s cluster %s did not reach Active state after %d attempts (last status: %s)",
 		clusterId, maxAttempts, string(clusterInfo.Status))
@@ -165,9 +180,14 @@ func pollK8sClusterActive(ctx context.Context, nsId, clusterId string, maxAttemp
 func pollK8sNodeGroupsActive(ctx context.Context, nsId, clusterId string, expectedNodeGroups []tbmodel.K8sNodeGroupReq, maxAttempts int) (tbmodel.K8sClusterInfo, error) {
 	var clusterInfo tbmodel.K8sClusterInfo
 	for i := 0; i < maxAttempts; i++ {
-		time.Sleep(15 * time.Second)
+		if err := common.SleepWithContext(ctx, 15*time.Second); err != nil {
+			return clusterInfo, err
+		}
 		updated, err := tbclient.NewSession().SetContext(ctx).ReadK8sCluster(nsId, clusterId)
 		if err != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return clusterInfo, ctxErr
+			}
 			log.Warn().Err(err).Int("attempt", i+1).Msg("Failed to poll cluster node groups; retrying")
 			continue
 		}
@@ -534,11 +554,16 @@ func DeleteK8sCluster(ctx context.Context, nsId, clusterId string) error {
 			continue
 		}
 		// Poll until the nodegroup disappears from the cluster's nodegroup list.
-		const maxNgWait = 80 // 80 × 15 s = 20 min
+		const maxNgWait = 80 // 80 x 15 s = 20 min
 		for i := 0; i < maxNgWait; i++ {
-			time.Sleep(15 * time.Second)
+			if err := common.SleepWithContext(ctx, 15*time.Second); err != nil {
+				return err
+			}
 			updated, err := tbclient.NewSession().SetContext(ctx).ReadK8sCluster(nsId, clusterId)
 			if err != nil {
+				if ctxErr := ctx.Err(); ctxErr != nil {
+					return ctxErr
+				}
 				break // cluster itself is gone; proceed to deletion
 			}
 			stillExists := false

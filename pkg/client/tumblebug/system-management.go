@@ -59,6 +59,27 @@ func (s *Session) IsReady() (bool, *string, error) {
 	return true, &resBody.Message, nil
 }
 
+// CheckReadyz queries Tumblebug GET /readyz and returns readiness and initialization status.
+func (s *Session) CheckReadyz() (tbmodel.ReadyzResponse, error) {
+	var resBody tbmodel.ReadyzResponse
+	resp, err := s.
+		NoCache().
+		SetResult(&resBody).
+		Get("/readyz")
+	if err != nil {
+		return resBody, err
+	}
+	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return resBody, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
+		return resBody, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
+	}
+	return resBody, nil
+}
+
 // TumblebugRequestSummary represents upstream tracking status returned by Tumblebug GET /request/{reqId}.
 type TumblebugRequestSummary struct {
 	StartTime     time.Time `json:"startTime"`

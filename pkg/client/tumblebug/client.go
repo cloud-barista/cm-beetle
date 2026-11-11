@@ -148,8 +148,10 @@ type Session struct {
 
 // NewSession creates a new Session for making requests.
 func (c *TumblebugClient) NewSession() *Session {
+	req := c.restyClient.R()
+	req.SetContext(withSessionAttempt(context.Background(), &sessionSubRequestAttempt{}))
 	return &Session{
-		req: c.restyClient.R(),
+		req: req,
 	}
 }
 
@@ -197,10 +199,19 @@ func (s *Session) SetResult(res any) *Session {
 	return s
 }
 
-// SetContext sets the context for the request.
+// SetContext sets the context for the request while preserving session cache and retry state.
 func (s *Session) SetContext(ctx context.Context) *Session {
 	if ctx == nil {
 		ctx = context.Background()
+	}
+	prev := s.Context()
+	if d, ok := GetCacheDuration(prev); ok {
+		if _, hasNew := GetCacheDuration(ctx); !hasNew {
+			ctx = SetCacheDuration(ctx, d)
+		}
+	}
+	if getSessionAttempt(ctx) == nil {
+		ctx = withSessionAttempt(ctx, getSessionAttempt(prev))
 	}
 	s.req.SetContext(ctx)
 	return s

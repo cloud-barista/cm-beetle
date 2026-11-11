@@ -24,6 +24,7 @@ import (
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 )
 
@@ -197,7 +198,9 @@ func DeleteNlb(ctx context.Context, nsId, infraId, nlbId string) error {
 	// may remain locked until the CSP finishes internal cleanup. Wait before returning.
 	const nlbDeleteSettleTime = 15 * time.Second
 	log.Debug().Str("nlbId", nlbId).Msgf("Waiting %s for CSP-side NLB resource cleanup", nlbDeleteSettleTime)
-	time.Sleep(nlbDeleteSettleTime)
+	if err := common.SleepWithContext(ctx, nlbDeleteSettleTime); err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -326,7 +326,9 @@ func MigrateInfra(ctx context.Context, nsId string, targetInfraModel *cloudmodel
 	temp.InfraInfo = infraInfoConverted
 
 	log.Debug().Msgf("Stabilizing newly created infrastructure (nsId: %s, infraName: %s)...", nsId, infraInfoConverted.Name)
-	time.Sleep(5 * time.Second)
+	if err := common.SleepWithContext(ctx, 5*time.Second); err != nil {
+		return temp, err
+	}
 
 	// Option A: Check SSH readiness for IBM Cloud
 	if strings.ToLower(targetInfraModel.TargetCloud.Csp) == "ibm" {
@@ -464,7 +466,9 @@ func MigrateInfraWithExisting(ctx context.Context, nsId string, targetInfraModel
 	var temp cloudmodel.VmInfraInfo
 	temp.InfraInfo = infraInfoConverted
 	log.Debug().Msgf("Stabilizing newly created infrastructure (nsId: %s, infraName: %s)...", nsId, infraInfoConverted.Name)
-	time.Sleep(5 * time.Second)
+	if err := common.SleepWithContext(ctx, 5*time.Second); err != nil {
+		return temp, err
+	}
 
 	// Option A: Check SSH readiness for IBM Cloud
 	if strings.ToLower(targetInfraModel.TargetCloud.Csp) == "ibm" {
@@ -596,7 +600,9 @@ func DeleteInfra(ctx context.Context, nsId, infraId, option string) (common.Simp
 
 	// Sleep for a while to ensure previous deletions are completed
 	log.Debug().Msgf("Waiting for CSP to complete Infra deletion (nsId: %s)", nsId)
-	time.Sleep(2 * time.Second)
+	if err := common.SleepWithContext(ctx, 2*time.Second); err != nil {
+		return common.SimpleMsg{}, err
+	}
 
 	// 3. Delete security groups
 	// Collect unique security group IDs from all Nodes
@@ -614,6 +620,9 @@ func DeleteInfra(ctx context.Context, nsId, infraId, option string) (common.Simp
 	for sgId := range sgIdMap {
 		var sgErr error
 		for attempt := 1; attempt <= sgDeleteMaxRetries; attempt++ {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return common.SimpleMsg{}, ctxErr
+			}
 			msg, err := tbclient.NewSession().SetContext(ctx).DeleteSecurityGroup(nsId, sgId)
 			if err == nil || strings.Contains(strings.ToLower(err.Error()), "not found") || strings.Contains(strings.ToLower(err.Error()), "does not exist") {
 				log.Debug().Msgf("Security group deleted (nsId: %s, sgId: %s, msg: %s)", nsId, sgId, msg)
@@ -624,7 +633,9 @@ func DeleteInfra(ctx context.Context, nsId, infraId, option string) (common.Simp
 			if attempt < sgDeleteMaxRetries {
 				log.Warn().Err(err).Msgf("Security group deletion failed (nsId: %s, sgId: %s, attempt: %d/%d); retrying in %s...",
 					nsId, sgId, attempt, sgDeleteMaxRetries, sgDeleteRetryInterval)
-				time.Sleep(sgDeleteRetryInterval)
+				if err := common.SleepWithContext(ctx, sgDeleteRetryInterval); err != nil {
+					return common.SimpleMsg{}, err
+				}
 			}
 		}
 		if sgErr != nil {
@@ -634,7 +645,9 @@ func DeleteInfra(ctx context.Context, nsId, infraId, option string) (common.Simp
 
 	// Sleep for a while to ensure previous deletions are completed
 	log.Debug().Msgf("Waiting for CSP to complete security group deletion (nsId: %s)", nsId)
-	time.Sleep(2 * time.Second)
+	if err := common.SleepWithContext(ctx, 2*time.Second); err != nil {
+		return common.SimpleMsg{}, err
+	}
 
 	// 4. Delete SSH Key
 	// Collect unique SSH Key IDs from all Nodes
@@ -646,6 +659,9 @@ func DeleteInfra(ctx context.Context, nsId, infraId, option string) (common.Simp
 
 	// Delete all SSH Key
 	for sshKeyId := range sshKeyIdMap {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return common.SimpleMsg{}, ctxErr
+		}
 		// Delete SSH Key
 		log.Debug().Msgf("Deleting SSH key (nsId: %s, sshKeyId: %s)", nsId, sshKeyId)
 		msg, err := tbclient.NewSession().SetContext(ctx).DeleteSshKey(nsId, sshKeyId)
@@ -659,7 +675,9 @@ func DeleteInfra(ctx context.Context, nsId, infraId, option string) (common.Simp
 
 	// Sleep for a while to ensure previous deletions are completed
 	log.Debug().Msgf("Waiting for CSP to complete SSH key deletion (nsId: %s)", nsId)
-	time.Sleep(2 * time.Second)
+	if err := common.SleepWithContext(ctx, 2*time.Second); err != nil {
+		return common.SimpleMsg{}, err
+	}
 
 	// 5. Delete vNets
 	// Collect unique vNet IDs from all Nodes
@@ -677,6 +695,9 @@ func DeleteInfra(ctx context.Context, nsId, infraId, option string) (common.Simp
 	for vNetId := range vNetIdMap {
 		var deleteErr error
 		for attempt := 1; attempt <= vNetDeleteMaxRetries; attempt++ {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return common.SimpleMsg{}, ctxErr
+			}
 			log.Debug().Msgf("Deleting VNet (nsId: %s, vNetId: %s, attempt: %d/%d)",
 				nsId, vNetId, attempt, vNetDeleteMaxRetries)
 			msg, err := tbclient.NewSession().SetContext(ctx).DeleteVNet(nsId, vNetId, "withsubnets")
@@ -687,10 +708,12 @@ func DeleteInfra(ctx context.Context, nsId, infraId, option string) (common.Simp
 			}
 			deleteErr = err
 			if attempt < vNetDeleteMaxRetries {
-				log.Warn().Err(err).Msgf("VNet deletion failed (nsId: %s, vNetId: %s, attempt: %d/%d) — "+
+				log.Warn().Err(err).Msgf("VNet deletion failed (nsId: %s, vNetId: %s, attempt: %d/%d): "+
 					"CSP may still be releasing subnet dependencies. Retrying in %s...",
 					nsId, vNetId, attempt, vNetDeleteMaxRetries, vNetDeleteRetryInterval)
-				time.Sleep(vNetDeleteRetryInterval)
+				if err := common.SleepWithContext(ctx, vNetDeleteRetryInterval); err != nil {
+					return common.SimpleMsg{}, err
+				}
 			}
 		}
 		if deleteErr != nil {
@@ -1064,6 +1087,9 @@ func CheckSSHReadinessWithDetails(ctx context.Context, nsId string, infraId stri
 	confirmedReady := make(map[string]bool)
 
 	for time.Now().Before(deadline) {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nodeStatusList, ctxErr
+		}
 		attempt++
 		log.Debug().Msgf("SSH readiness check attempt %d/%d (nsId: %s, infraId: %s)",
 			attempt, maxAttempts, nsId, infraId)
@@ -1120,7 +1146,9 @@ func CheckSSHReadinessWithDetails(ctx context.Context, nsId string, infraId stri
 
 		// Wait before next attempt (unless this is the last attempt)
 		if attempt < maxAttempts && time.Now().Add(checkInterval).Before(deadline) {
-			time.Sleep(checkInterval)
+			if err := common.SleepWithContext(ctx, checkInterval); err != nil {
+				return nodeStatusList, err
+			}
 		}
 	}
 

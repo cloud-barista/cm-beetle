@@ -1,51 +1,28 @@
 package middlewares
 
 import (
-	"fmt"
+	"context"
 	"net/http"
+	"sync/atomic"
+	"time"
 
-	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
-	"github.com/cloud-barista/cm-beetle/pkg/config"
+	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
-	"github.com/go-resty/resty/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
 
-var isTbInitalized bool = false
+var isTbInitialized atomic.Bool
 
-// TumblebugInitChecker
+// TumblebugInitChecker verifies that CB-Tumblebug is reachable, ready, and initialized before serving API requests.
 func TumblebugInitChecker(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		log.Debug().Msg("[Middleware] Check and mark Tumblebug initialization status")
 
-		log.Debug().Msg("[Middleware] Check and mark Tumblebug initialization status ")
-
-		if !isTbInitalized {
-			// Initialize resty client with basic auth
-			client := resty.New()
-			apiUser := config.Tumblebug.API.Username
-			apiPass := config.Tumblebug.API.Password
-			client.SetBasicAuth(apiUser, apiPass)
-
-			// set tumblebug rest url
-			epTumblebug := config.Tumblebug.RestUrl
-
-			method := "GET"
-			url := fmt.Sprintf("%s/readyz", epTumblebug)
-
-			tbReq := common.NoBody
-			tbRes := tbmodel.ReadyzResponse{}
-
-			err := common.ExecuteHttpRequest(
-				client,
-				method,
-				url,
-				nil,
-				common.SetUseBody(tbReq),
-				&tbReq,
-				&tbRes,
-				common.VeryShortDuration,
-			)
+		if !isTbInitialized.Load() {
+			readyCtx, cancel := context.WithTimeout(c.Request().Context(), 5*time.Second)
+			tbRes, err := tbclient.NewSession().SetContext(readyCtx).CheckReadyz()
+			cancel()
 
 			if err != nil {
 				log.Warn().Err(err).Msg("Tumblebug is not responding or returned an error.")
@@ -65,7 +42,7 @@ func TumblebugInitChecker(next echo.HandlerFunc) echo.HandlerFunc {
 				return c.JSON(http.StatusServiceUnavailable, res)
 			}
 
-			isTbInitalized = true
+			isTbInitialized.Store(true)
 			log.Info().Msg("Tumblebug is ready and initialized.")
 		}
 

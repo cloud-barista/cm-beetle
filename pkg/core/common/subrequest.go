@@ -53,6 +53,31 @@ func FormatTumblebugSource(reqID string) string {
 	return TumblebugSourcePrefix + reqID
 }
 
+// SleepWithContext pauses for d or returns ctx.Err() immediately when ctx is canceled.
+func SleepWithContext(ctx context.Context, d time.Duration) error {
+	if d <= 0 {
+		if ctx != nil {
+			return ctx.Err()
+		}
+		return nil
+	}
+	if ctx == nil {
+		time.Sleep(d)
+		return nil
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
+}
+
 // SubRequest records one outbound state-changing or recommendation call to CB-Tumblebug.
 type SubRequest struct {
 	Seq              uint64    `json:"seq"`
@@ -123,6 +148,33 @@ func StartSubRequest(parentReqID, method, targetPath, resourceType, resourceHint
 		StartTime:    time.Now(),
 	})
 	return subReqID, seq
+}
+
+// RestartSubRequestAttempt resets an existing sub-request to Handling with a fresh retry ID ("{reqId}-{seq}-r{n}").
+func RestartSubRequestAttempt(parentReqID string, seq uint64, retryAttempt int) string {
+	if parentReqID == "" || seq == 0 {
+		return ""
+	}
+	defaultSubRequestTracker.mu.Lock()
+	defer defaultSubRequestTracker.mu.Unlock()
+
+	parent, ok := defaultSubRequestTracker.entries[parentReqID]
+	if !ok {
+		return ""
+	}
+	subReqID := fmt.Sprintf("%s-%d-r%d", parentReqID, seq, retryAttempt)
+	for i := len(parent.items) - 1; i >= 0; i-- {
+		if parent.items[i].Seq == seq {
+			parent.items[i].SubReqId = subReqID
+			parent.items[i].Status = RequestStatusHandling
+			parent.items[i].StatusCode = 0
+			parent.items[i].EndTime = time.Time{}
+			parent.items[i].DurationMs = 0
+			parent.items[i].ErrorMessage = ""
+			return subReqID
+		}
+	}
+	return ""
 }
 
 // FinishSubRequest updates a recorded sub-request with its final status, HTTP code, and latency.
@@ -204,6 +256,21 @@ func DiscardSubRequests(parentReqID string) {
 func DiscardAllSubRequests() {
 	defaultSubRequestTracker.mu.Lock()
 	defaultSubRequestTracker.entries = make(map[string]*trackedParent)
+	defaultSubRequestTracker.mu.Unlock()
+}
+
+// CleanupStaleSubRequests evicts unfinalized in-memory entries older than maxAge.
+func CleanupStaleSubRequests(maxAge time.Duration) {
+	if maxAge <= 0 {
+		return
+	}
+	cutoff := time.Now().Add(-maxAge)
+	defaultSubRequestTracker.mu.Lock()
+	for parentID, parent := range defaultSubRequestTracker.entries {
+		if parent != nil && parent.createdAt.Before(cutoff) {
+			delete(defaultSubRequestTracker.entries, parentID)
+		}
+	}
 	defaultSubRequestTracker.mu.Unlock()
 }
 

@@ -95,8 +95,8 @@ func TestTransportSubRequestCorrelationAnd429RetryUniqueIDs(t *testing.T) {
 	if len(seenPostReqIDs) != 2 {
 		t.Fatalf("expected 2 POST attempts (429 + 200), got %v", seenPostReqIDs)
 	}
-	if seenPostReqIDs[0] != parentReqID+"-1" || seenPostReqIDs[1] != parentReqID+"-2" {
-		t.Errorf("expected distinct sequential subReqIds [%s-1, %s-2], got %v", parentReqID, parentReqID, seenPostReqIDs)
+	if seenPostReqIDs[0] != parentReqID+"-1" || seenPostReqIDs[1] != parentReqID+"-1-r2" {
+		t.Errorf("expected distinct retry subReqIds [%s-1, %s-1-r2], got %v", parentReqID, parentReqID, seenPostReqIDs)
 	}
 	for _, src := range seenPostSources {
 		if src != wantSource {
@@ -105,10 +105,54 @@ func TestTransportSubRequestCorrelationAnd429RetryUniqueIDs(t *testing.T) {
 	}
 
 	subs, summary := common.FinalizeSubRequests(parentReqID)
-	if len(subs) != 2 || summary == nil || summary.Total != 2 || summary.Success != 1 || summary.Error != 1 {
+	if len(subs) != 1 || summary == nil || summary.Total != 1 || summary.Success != 1 || summary.Error != 0 {
 		t.Fatalf("unexpected finalized subRequests: subs=%+v summary=%+v", subs, summary)
 	}
-	if subs[1].ResourceType != "vNet" || subs[1].ResourceHint != "mig01-vnet" {
-		t.Errorf("unexpected extracted resource metadata: %+v", subs[1])
+	if subs[0].SubReqId != parentReqID+"-1-r2" || subs[0].ResourceType != "vNet" || subs[0].ResourceHint != "mig01-vnet" {
+		t.Errorf("unexpected extracted resource metadata: %+v", subs[0])
+	}
+}
+
+func TestSessionSetContextPreservesCacheDurationAndReadyz(t *testing.T) {
+	var readyCalls atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		call := readyCalls.Add(1)
+		w.WriteHeader(http.StatusOK)
+		if call == 1 {
+			_, _ = w.Write([]byte(`{"message":"initializing","ready":true,"initialized":false}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"message":"ready","ready":true,"initialized":true}`))
+	}))
+	defer srv.Close()
+
+	cli := NewClient(ApiConfig{
+		RestUrl:       srv.URL,
+		Username:      "default",
+		Password:      "default",
+		Timeout:       5 * time.Second,
+		CacheDuration: 5 * time.Second,
+	})
+
+	parentReqID := fmt.Sprintf("cache-ctx-%d", time.Now().UnixNano())
+	ctx := common.WithRequestID(context.Background(), parentReqID)
+
+	sess := cli.NewSession().NoCache().SetContext(ctx)
+	d, ok := GetCacheDuration(sess.Context())
+	if !ok || d != 0 {
+		t.Fatalf("expected NoCache duration 0 to survive SetContext, got d=%v ok=%v", d, ok)
+	}
+	if gotID := common.RequestIDFromContext(sess.Context()); gotID != parentReqID {
+		t.Fatalf("expected reqID %q in session context, got %q", parentReqID, gotID)
+	}
+
+	r1, err := cli.NewSession().SetContext(ctx).CheckReadyz()
+	if err != nil || !r1.Ready || r1.Initialized {
+		t.Fatalf("unexpected first CheckReadyz: %+v err=%v", r1, err)
+	}
+	r2, err := cli.NewSession().SetContext(ctx).CheckReadyz()
+	if err != nil || !r2.Ready || !r2.Initialized {
+		t.Fatalf("expected second CheckReadyz to bypass cache and report initialized=true: %+v err=%v", r2, err)
 	}
 }

@@ -32,13 +32,48 @@ type contextKey string
 
 const cacheDurationKey contextKey = "cacheDuration"
 
+type sessionAttemptKey struct{}
+
+type sessionSubRequestAttempt struct {
+	mu             sync.Mutex
+	seq            uint64
+	attempt        int
+	lastStatusCode int
+	lastMethod     string
+	lastPath       string
+}
+
+func withSessionAttempt(ctx context.Context, state *sessionSubRequestAttempt) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if state == nil {
+		state = &sessionSubRequestAttempt{}
+	}
+	return context.WithValue(ctx, sessionAttemptKey{}, state)
+}
+
+func getSessionAttempt(ctx context.Context) *sessionSubRequestAttempt {
+	if ctx == nil {
+		return nil
+	}
+	state, _ := ctx.Value(sessionAttemptKey{}).(*sessionSubRequestAttempt)
+	return state
+}
+
 // SetCacheDuration adds cache duration to the context
 func SetCacheDuration(ctx context.Context, d time.Duration) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	return context.WithValue(ctx, cacheDurationKey, d)
 }
 
 // GetCacheDuration retrieves cache duration from the context
 func GetCacheDuration(ctx context.Context) (time.Duration, bool) {
+	if ctx == nil {
+		return 0, false
+	}
 	d, ok := ctx.Value(cacheDurationKey).(time.Duration)
 	return d, ok
 }
@@ -163,7 +198,9 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 					log.Debug().Msgf("too many same requests after %d retries: %s", retryLimit, requestKey)
 					return nil, fmt.Errorf("too many same requests: %s", requestKey)
 				}
-				time.Sleep(retryWait)
+				if err := common.SleepWithContext(req.Context(), retryWait); err != nil {
+					return nil, err
+				}
 
 				// Check cache again while waiting
 				if item, found := clientCache.Load(requestKey); found {
@@ -193,17 +230,50 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 	// Inject upstream correlation headers and track mutating/recommendation sub-requests.
 	parentReqID := common.RequestIDFromContext(req.Context())
 	var subSeq uint64
+	attemptTracker := getSessionAttempt(req.Context())
 	if parentReqID != "" {
 		if req.Header.Get("X-Request-Source") == "" {
 			req.Header.Set("X-Request-Source", common.FormatTumblebugSource(parentReqID))
 		}
 		if shouldTrackSubRequest(method, req.URL.Path) {
 			targetPath, resourceType, resourceHint := extractSubRequestTarget(req.URL.Path, bodyBytes)
-			subReqID, seq := common.StartSubRequest(parentReqID, method, targetPath, resourceType, resourceHint)
+			var subReqID string
+			var seq uint64
+			if attemptTracker != nil {
+				attemptTracker.mu.Lock()
+				is429Retry := attemptTracker.seq > 0 &&
+					attemptTracker.lastStatusCode == http.StatusTooManyRequests &&
+					attemptTracker.lastMethod == method &&
+					attemptTracker.lastPath == req.URL.Path &&
+					attemptTracker.attempt <= retryOn429Count
+				if is429Retry {
+					attemptTracker.attempt++
+					subReqID = common.RestartSubRequestAttempt(parentReqID, attemptTracker.seq, attemptTracker.attempt)
+					seq = attemptTracker.seq
+				} else {
+					subReqID, seq = common.StartSubRequest(parentReqID, method, targetPath, resourceType, resourceHint)
+					attemptTracker.seq = seq
+					attemptTracker.attempt = 1
+					attemptTracker.lastStatusCode = 0
+					attemptTracker.lastMethod = method
+					attemptTracker.lastPath = req.URL.Path
+				}
+				attemptTracker.mu.Unlock()
+			} else {
+				subReqID, seq = common.StartSubRequest(parentReqID, method, targetPath, resourceType, resourceHint)
+			}
 			if subReqID != "" {
 				req.Header.Set("X-Request-Id", subReqID)
 				subSeq = seq
 			}
+		}
+	}
+
+	recordAttemptStatus := func(code int) {
+		if attemptTracker != nil && subSeq > 0 {
+			attemptTracker.mu.Lock()
+			attemptTracker.lastStatusCode = code
+			attemptTracker.mu.Unlock()
 		}
 	}
 
@@ -214,6 +284,7 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 
 	if err != nil {
 		if subSeq > 0 {
+			recordAttemptStatus(0)
 			common.FinishSubRequest(parentReqID, subSeq, 0, err.Error())
 		}
 		if method == "GET" {
@@ -228,7 +299,11 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 	respBodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		if subSeq > 0 {
+			recordAttemptStatus(resp.StatusCode)
 			common.FinishSubRequest(parentReqID, subSeq, resp.StatusCode, err.Error())
+		}
+		if method == "GET" {
+			requestDone(requestKey)
 		}
 		return nil, err
 	}
@@ -237,6 +312,7 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 
 	if resp.StatusCode >= 400 {
 		if subSeq > 0 {
+			recordAttemptStatus(resp.StatusCode)
 			common.FinishSubRequest(parentReqID, subSeq, resp.StatusCode, extractUpstreamErrorSummary(respBodyBytes, resp.Status))
 		}
 		if method == "GET" {
@@ -255,6 +331,7 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 	}
 
 	if subSeq > 0 {
+		recordAttemptStatus(resp.StatusCode)
 		common.FinishSubRequest(parentReqID, subSeq, resp.StatusCode, "")
 	}
 

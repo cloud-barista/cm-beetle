@@ -129,3 +129,50 @@ func TestRunAsyncDetachesParentCancellationAndPreservesReqID(t *testing.T) {
 	details, _ := GetRequest(reqID)
 	t.Fatalf("expected Success status, got %+v", details)
 }
+
+func TestSleepWithContextCancelsPromptly(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(15 * time.Millisecond)
+		cancel()
+	}()
+
+	start := time.Now()
+	err := SleepWithContext(ctx, 5*time.Second)
+	if err == nil {
+		t.Fatalf("expected context cancellation error, got nil")
+	}
+	if elapsed := time.Since(start); elapsed > time.Second {
+		t.Fatalf("expected prompt return on cancel, took %v", elapsed)
+	}
+}
+
+func TestRestartSubRequestAttemptAndStaleCleanup(t *testing.T) {
+	parentID := fmt.Sprintf("retry-state-%d", time.Now().UnixNano())
+	defer DiscardSubRequests(parentID)
+
+	subID, seq := StartSubRequest(parentID, "POST", "/ns/mig01/vNet", "vNet", "mig01-vnet")
+	if subID != parentID+"-1" || seq != 1 {
+		t.Fatalf("unexpected initial sub-request: id=%q seq=%d", subID, seq)
+	}
+	FinishSubRequest(parentID, seq, 429, "rate limit exceeded")
+
+	retryID := RestartSubRequestAttempt(parentID, seq, 2)
+	if retryID != parentID+"-1-r2" {
+		t.Fatalf("expected retry subReqId %q, got %q", parentID+"-1-r2", retryID)
+	}
+	FinishSubRequest(parentID, seq, 200, "")
+
+	subs, summary := FinalizeSubRequests(parentID)
+	if len(subs) != 1 || summary == nil || summary.Total != 1 || summary.Success != 1 || summary.Error != 0 {
+		t.Fatalf("expected single succeeded sub-request after retry, got subs=%+v summary=%+v", subs, summary)
+	}
+
+	staleID := fmt.Sprintf("stale-%d", time.Now().UnixNano())
+	StartSubRequest(staleID, "POST", "/ns/mig01/sshKey", "sshKey", "mig01-key")
+	time.Sleep(15 * time.Millisecond)
+	CleanupStaleSubRequests(5 * time.Millisecond)
+	if rem, _ := SnapshotSubRequests(staleID); len(rem) != 0 {
+		t.Fatalf("expected stale sub-request entry to be evicted, got %+v", rem)
+	}
+}

@@ -101,6 +101,9 @@ func RestGetRequest(c echo.Context) error {
 		defer cancel()
 
 		for i := range details.SubRequests {
+			if enrichCtx.Err() != nil {
+				break
+			}
 			subID := details.SubRequests[i].SubReqId
 			if subID == "" {
 				continue
