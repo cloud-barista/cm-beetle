@@ -5,9 +5,11 @@ Documentation site for CM-Beetle, computing infrastructure migration.
 ## Feature Guides
 
 - **Core & System**
-  - [Async Responses](feature-guide/core-async-response.md) – Non-blocking async response model and polling workflow.
-  - [NameSeed: Late Binding for Resource Names](feature-guide/core-naming-rule.md) – Concept, rules, and workflow for deterministic resource naming.
-  - [Validation Guide](feature-guide/core-validation.md) – Pre-flight dry-run validation rules for target infrastructure.
+  - [Async Responses](feature-guide/core-async-response.md) - Non-blocking async response model and polling workflow.
+  - [Request Tracking and Sub-Request Progress](feature-guide/core-request-tracking.md) - `reqId` lifecycle, Transport-AOP CB-Tumblebug sub-request tracking, and lightweight polling projections.
+  - [Migration Lineage and Resource Traceability](feature-guide/core-lineage.md) - `cm-*` metadata labels linking discovery, source/planning/target models, and deployed cloud resources.
+  - [NameSeed: Late Binding for Resource Names](feature-guide/core-naming-rule.md) - Concept, rules, and workflow for deterministic resource naming.
+  - [Validation Guide](feature-guide/core-validation.md) - Pre-flight dry-run validation rules for target infrastructure.
 - **Infrastructure**
   - [Computing Infrastructure](feature-guide/infra-computing.md) - VM, VNet, Subnet, and Security Group migration support and pipeline architecture.
   - [GPU Infrastructure Recommendation & Migration API Guide](feature-guide/gpu-infra-migration-api-guide.md) - End-to-end guide for recommending and migrating GPU infrastructure (`Tesla T4`, etc.) via CM-Beetle REST APIs.

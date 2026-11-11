@@ -17,12 +17,24 @@ The UI is a **standalone Next.js application** served separately from the Beetle
 Next.js API route handlers act as a server-side reverse proxy, forwarding browser requests to each backend service using environment variables for endpoint configuration.
 
 ```
-Browser → Next.js (port 3000)
-             ├── /beetle/*    → BEETLE_ENDPOINT (cm-beetle:8056)
-             ├── /tumblebug/* → TUMBLEBUG_ENDPOINT (cb-tumblebug:1323)
-             ├── /honeybee/*  → HONEYBEE_ENDPOINT (cm-honeybee:8081)
-             └── /spider/*    → SPIDER_ENDPOINT (cb-spider:1024)
+Browser -> Next.js (port 3000)
+             ├── /beetle/*           -> BEETLE_ENDPOINT (cm-beetle:8056)
+             ├── /tumblebug/*        -> TUMBLEBUG_ENDPOINT (cb-tumblebug:1323)
+             ├── /honeybee/*         -> HONEYBEE_ENDPOINT (cm-honeybee:8081)
+             ├── /spider/*           -> SPIDER_ENDPOINT (cb-spider:1024)
+             └── /api/probe/workload -> SSRF-hardened target workload verification probe
 ```
+
+## Key Capabilities
+
+- **4-Stage Guided Migration Pipeline**:
+  1. **Source Extraction**: Import `OnpremInfra` JSON artifacts or fetch live source groups from CM-Honeybee, with GPU model/VRAM and runtime readiness (`NVIDIA Driver`, `CUDA`) badges.
+  2. **Source Infra Refinement**: Inspect and refine heterogeneous multi-tier source nodes (e.g., Web/App CPU tiers + GPU AI tiers) and strategy insights (`rightSizeUp`, `dividing`).
+  3. **2. Target Cloud Optimizer**: Compare multi-cloud candidate specs, pricing, regions, and `postCommands` bootstrap scripts across CSPs.
+  4. **Migration Execution & Data Transfer (`transx`)**: Track live CB-Tumblebug sub-request steps (`GET /beetle/request/{reqId}?brief=true`) alongside per-node status/IP polling, then run encrypted SSH/S3 data transfers with symmetric 4-stage `preCmd` / `postCmd` hooks and automatic source recovery visibility.
+- **Migrated Infra Operations & AI Workload Verification**:
+  - Inspect `cm-*` artifact lineage (`Source Group -> Source Model -> Planning Model -> Target Model -> Deployed Cloud Infra`) and trigger 1-click **Re-Target to Another Cloud** workflows.
+  - Verify migrated AI stacks (`Open WebUI` `:3000/:8080` + `Ollama` `:11434` model catalog, VRAM residency, and live prompt inference) directly from the browser via the SSRF-hardened `/api/probe/workload` route.
 
 ## Getting Started
 

@@ -18,8 +18,8 @@ This document outlines the policies for API response codes, success messages, an
 ## Response Body
 
 ### Success
-- **Resource Return**: Return the requested resource object directly (e.g., `VNetInfo`, `MCI`).
-- **Message Return**: For operations without a specific resource return (e.g., Delete), return a standard success message (e.g., `SimpleMsg`).
+- **Resource Return**: Return the requested resource object wrapped in `model.SuccessResponse(...)` (or directly where legacy resource contracts require it).
+- **Message Return**: For operations without a specific resource payload (e.g., `DELETE /request/{reqId}`, `DELETE /requests`), return `model.SimpleSuccessResponse(...)` (or `SimpleMsg` on resource delete endpoints) consistently.
 
 ### Error
 - **Structure**: Return a standard error message structure (e.g., `SimpleMsg` with a `message` field).
@@ -42,9 +42,7 @@ Some long-running APIs (data/infra migration, recommendation) support an optiona
 - **Opt-in**: send header `Prefer: respond-async`. Without it, the API responds synchronously as usual.
   Only the `respond-async` token is recognized; other `Prefer` tokens (e.g. `wait=N`) are ignored.
 - **Accepted**: `202` with `{reqId, status: "Handling", statusUrl}` and header `Preference-Applied: respond-async`.
-- **Poll**: `GET /request/{reqId}` until `status` is `Success` or `Error`.
+- **Poll**: `GET /request/{reqId}` (or `GET /request/{reqId}?brief=true` during high-frequency polling) until `status` is `Success` or `Error`. Outbound CB-Tumblebug calls are exposed in `subRequestSummary` and `subRequests`, and can be enriched on demand via `?withTumblebug=true` (see [Request Tracking and Sub-Request Progress](feature-guide/core-request-tracking.md)).
 - **At capacity**: `503` if too many async jobs are already running (process-wide limit, currently 20),
   with a `Retry-After` header. The sync path is never affected by this limit.
-- **Implementation**: handlers use `common.RunAsync` (`pkg/core/common/request-manager.go`), which finalizes
-  the request record itself. Middleware skips status finalization for any `202` response — this is why
-  `202` must never be returned for a non-async reason.
+- **Implementation**: handlers use `common.RunAsync(ctx, reqId, fn)` (`pkg/core/common/request-manager.go`), which detaches HTTP cancellation via `context.WithoutCancel(ctx)`, preserves `reqId` in context for downstream sub-request correlation, and finalizes the request record itself. Middleware skips status finalization for any `202` response - this is why `202` must never be returned for a non-async reason.

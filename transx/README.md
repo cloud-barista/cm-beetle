@@ -23,12 +23,16 @@ if err != nil {
     log.Error().Err(err).Msg("Transfer failed")
 }
 
-// Complete migration with optional backup/restore
-err = transx.MigrateData(dataModel)
+// Complete migration with symmetric pre/post hooks and structured result
+result, err := transx.MigrateDataWithResult(dataModel)
 if err != nil {
-    // Rich error context available for logging frameworks
-    log.Error().Err(err).Msg("Migration failed")
+    // Rich error context (and result.SourceRecovered / result.HookOutputs) available
+    log.Error().Err(err).Bool("sourceRecovered", result.SourceRecovered).Msg("Migration failed")
 }
+log.Info().
+    Str("effectiveStrategy", result.EffectiveStrategy).
+    Str("elapsedTime", result.ElapsedTime).
+    Msg(result.Message)
 ```
 
 ## Transfer Methods
@@ -48,12 +52,20 @@ The library implements a **Transfer-Centric Data Migration Model** with the foll
 
 - **Transfer**: Move data between systems using specified transfer methods (rsync, object-storage-api)
 
-**Optional Operations** (when backup/restore commands are provided):
+**Optional Symmetric Hook Lifecycle (`MigrateData` / `MigrateDataWithResult`)**:
 
-- **Backup**: Export data from source systems before transfer
-- **Restore**: Import transferred data into destination systems
+When `PreCmd` or `PostCmd` is specified on `Source` and/or `Destination` (`storageType: "filesystem"`, `accessType: "ssh"`), `transx` executes them in deterministic order around the data transfer:
 
-The transfer operation is the primary focus, with backup and restore serving as optional pre/post-processing steps.
+1. **`Source.PreCmd`**: Quiesce or export data on the source host before transfer (e.g., `docker compose stop && sync`, `mysqldump`).
+2. **`Destination.PreCmd`**: Verify target prerequisites or prepare directories on the destination host before transfer (e.g., `nvidia-smi -L`, `docker --version`).
+3. **`Transfer`**: Execute the planned `rsync` or Object Storage pipeline.
+4. **`Source.PostCmd`**: Resume or unquiesce workloads on the source host immediately after transfer (`docker compose start`).
+5. **`Destination.PostCmd`**: Import data, start containers, or warm up models on the destination host (`docker compose up -d`).
+
+**Automatic `Source.PostCmd` Recovery**:
+
+- If `Source.PreCmd` succeeds, `Source.PostCmd` is configured, and Stage 2 (`Destination.PreCmd`) or Stage 3 (`Transfer`) fails, `transx` automatically runs `Source.PostCmd` so stopped source services are recovered (`MigrationResult.SourceRecovered = true`) while still returning the primary Stage 2/3 `MigrationError`.
+- `MigrateDataWithResult` returns `MigrationResult` (`message`, `elapsedTime`, `requestedStrategy`, `effectiveStrategy`, `sourceRecovered`, and `hookOutputs` with each hook's combined stdout/stderr capped at `MaxHookOutputBytes = 8192`).
 
 ### Transfer Strategies (`DataMigrationModel.Strategy`) & Execution Modes (`TransferMode`)
 

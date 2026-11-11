@@ -82,13 +82,14 @@ Returns a one-time RSA public key bundle. Use this to encrypt sensitive fields b
 
 ### POST `/beetle/migration/data`
 
-Start a data migration. Returns `202 Accepted` immediately; migration runs asynchronously.
+Executes a data migration (`transx.MigrateDataWithResult`). Runs synchronously by default (`200 OK`), or asynchronously (`202 Accepted`) when `Prefer: respond-async` is provided.
 
 **Request headers:**
 
-| Header         | Required | Description                                                        |
-| -------------- | -------- | ------------------------------------------------------------------ |
-| `X-Request-Id` | No       | Custom request ID. Auto-generated if omitted. Used to poll status. |
+| Header         | Required | Description                                                                 |
+| -------------- | -------- | --------------------------------------------------------------------------- |
+| `Prefer`       | No       | Send `respond-async` to return `202 Accepted` immediately and poll status.  |
+| `X-Request-Id` | No       | Custom request ID. Auto-generated if omitted. Used to poll status.          |
 
 **Request body (`DataMigrationModel`):**
 
@@ -101,21 +102,17 @@ Start a data migration. Returns `202 Accepted` immediately; migration runs async
 }
 ```
 
-**Response `202 Accepted`:**
+**Response `202 Accepted` (when `Prefer: respond-async` is sent):**
 
 ```json
 {
-  "success": true,
-  "message": "Migration started. Use GET /request/{reqId} to check status.",
-  "data": {
-    "reqId": "req-xyz789",
-    "status": "Handling",
-    "statusUrl": "/beetle/request/req-xyz789"
-  }
+  "reqId": "req-xyz789",
+  "status": "Handling",
+  "statusUrl": "/beetle/request/req-xyz789"
 }
 ```
 
-**Poll for status:**
+**Poll for status (or synchronous `200 OK` `data` payload):**
 
 ```
 GET /beetle/request/{reqId}
@@ -128,13 +125,21 @@ GET /beetle/request/{reqId}
     "status": "Success",
     "responseData": {
       "message": "Data migrated successfully (4.231s)",
-      "elapsedTime": "4.231s"
+      "elapsedTime": "4.231s",
+      "requestedStrategy": "auto",
+      "effectiveStrategy": "ssh-agent-fwd-push",
+      "hookOutputs": {
+        "sourcePreCmd": "Stopped aimx-webui and aimx-ollama",
+        "destinationPreCmd": "Verified target directory /opt/aimx/ai-service",
+        "sourcePostCmd": "Restarted source containers",
+        "destinationPostCmd": "Started target containers and warmed up gemma4:e2b"
+      }
     }
   }
 }
 ```
 
-Status values: `Handling` → `Success` | `Error`
+Status values: `Handling` -> `Success` | `Error`
 
 ---
 
@@ -364,15 +369,21 @@ Apply glob patterns to control which files are transferred. Filtering is support
 
 ---
 
-## Source & Destination Commands (`preCmd` / `postCmd`)
+## Symmetric 4-Stage Source & Destination Hooks (`preCmd` / `postCmd`)
 
-`POST /beetle/migration/data` executes `transx.MigrateData(dmm)`, which runs optional remote shell commands sequentially around the data transfer:
+`POST /beetle/migration/data` executes `transx.MigrateDataWithResult(dmm)`, supporting optional SSH shell hooks on both `source` and `destination` around the transfer:
 
-1. **Source Command (Before Transfer) - `source.preCmd`**: Executed on the source server via SSH before `rsync` or Object Storage transfer begins. Ideal for stopping stateful containers (`docker compose stop && sync`), flushing databases (`mysqldump`), or adjusting file permissions.
-2. **Data Transfer (`Transfer`)**: Transfers filtered files between Source and Destination (`rsync` over SSH or MinIO S3 SDK). When pushing to a remote SSH filesystem path that does not yet exist (for example, `/opt/aimx/ai-service` on a newly provisioned VM), `transx` automatically creates the target directory and sets user ownership via SSH prior to `rsync`.
-3. **Destination Command (After Transfer) - `destination.postCmd`**: Executed on the destination server via SSH immediately after transfer completes. Ideal for starting containers (`docker compose up -d`), restoring database dumps (`mysql < dump.sql`), or warming up GPU models.
+1. **Stage 1 (`source.preCmd`)**: Executed on the source server via SSH before transfer starts. Ideal for quiescing stateful containers (`docker compose stop && sync`), flushing databases (`mysqldump`), or normalizing permissions.
+2. **Stage 2 (`destination.preCmd`)**: Executed on the destination server via SSH before transfer starts. Ideal for pre-flight runtime checks (`nvidia-smi`, `docker --version`), stopping existing target services, or preparing target directories.
+3. **Stage 3 (`Transfer`)**: Transfers filtered files between Source and Destination (`rsync` over SSH or MinIO S3 SDK). When pushing to a remote SSH filesystem path that does not yet exist (for example, `/opt/aimx/ai-service` on a newly provisioned node), `transx` automatically creates the target directory and sets user ownership via SSH prior to `rsync`.
+4. **Stage 4 (`source.postCmd`)**: Executed on the source server via SSH immediately after transfer completes. Ideal for unquiescing or restarting source services (`docker compose start`) when keeping the source environment online during validation.
+5. **Stage 5 (`destination.postCmd`)**: Executed on the destination server via SSH after `source.postCmd` completes. Ideal for starting target containers (`docker compose up -d`), restoring database dumps (`mysql < dump.sql`), or warming up GPU models.
 
-### Example: AI Service Stack (`Ollama` + `Open WebUI`) Migration with `preCmd` and `postCmd`
+### Automatic `source.postCmd` Failure Recovery
+
+If `source.preCmd` succeeds, `source.postCmd` is configured, and either Stage 2 (`destination.preCmd`) or Stage 3 (`Transfer`) fails, `transx` automatically executes `source.postCmd` as a best-effort recovery step (`sourceRecovered: true` in `MigrationResult`) so paused source workloads are not left stopped. The original Stage 2 or Stage 3 error is preserved as the primary failure reason, and each captured hook output in `hookOutputs` is capped at `8192` bytes (`8 KB`).
+
+### Example: AI Service Stack (`Ollama` + `Open WebUI`) Migration with Symmetric Hooks
 
 ```json
 {
@@ -380,6 +391,7 @@ Apply glob patterns to control which files are transferred. Filtering is support
     "storageType": "filesystem",
     "path": "/opt/aimx/ai-service",
     "preCmd": "cd /opt/aimx/ai-service && sudo docker compose stop && sync && sudo chown -R $USER:$USER /opt/aimx/ai-service && sudo chmod -R u+rwX /opt/aimx/ai-service",
+    "postCmd": "cd /opt/aimx/ai-service && sudo docker compose start",
     "filter": {
       "include": [
         "ollama/models/blobs/**",
@@ -407,6 +419,7 @@ Apply glob patterns to control which files are transferred. Filtering is support
   "destination": {
     "storageType": "filesystem",
     "path": "/opt/aimx/ai-service",
+    "preCmd": "nvidia-smi -L && docker compose version",
     "postCmd": "cd /opt/aimx/ai-service && sudo docker compose up -d && sleep 5 && sudo docker exec aimx-ollama ollama run gemma4:e2b \"Hello\" >/dev/null 2>&1 || true",
     "filesystem": {
       "accessType": "ssh",
@@ -428,15 +441,15 @@ Apply glob patterns to control which files are transferred. Filtering is support
 
 ### `DataLocation`
 
-| Field           | Type   | Required | Description                                            |
-| --------------- | ------ | -------- | ------------------------------------------------------ |
-| `storageType`   | string | ✅       | `filesystem` or `objectstorage`                        |
-| `path`          | string | ✅       | File path (filesystem) or OS ID (objectstorage)        |
-| `filesystem`    | object | —        | Required when `storageType=filesystem`                 |
-| `objectStorage` | object | —        | Required when `storageType=objectstorage`              |
-| `filter`        | object | —        | File filter (include/exclude glob patterns)            |
-| `preCmd`        | string | —        | Shell command to run before transfer (source side)     |
-| `postCmd`       | string | —        | Shell command to run after transfer (destination side) |
+| Field           | Type   | Required | Description                                                          |
+| --------------- | ------ | -------- | -------------------------------------------------------------------- |
+| `storageType`   | string | ✅       | `filesystem` or `objectstorage`                                      |
+| `path`          | string | ✅       | File path (filesystem) or OS ID (objectstorage)                      |
+| `filesystem`    | object | -        | Required when `storageType=filesystem`                               |
+| `objectStorage` | object | -        | Required when `storageType=objectstorage`                            |
+| `filter`        | object | -        | File filter (include/exclude glob patterns)                          |
+| `preCmd`        | string | -        | Shell command to run via SSH before transfer (`source` / `destination`) |
+| `postCmd`       | string | -        | Shell command to run via SSH after transfer (`source` / `destination`)  |
 
 ### `SSHConfig`
 
