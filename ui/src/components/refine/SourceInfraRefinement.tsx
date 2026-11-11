@@ -107,6 +107,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   const [newGpuVendor, setNewGpuVendor] = useState('NVIDIA');
   const [newGpuModel, setNewGpuModel] = useState('Tesla T4');
   const [newGpuVram, setNewGpuVram] = useState('16');
+  const [newGpuDriver, setNewGpuDriver] = useState('535.183.01');
   const [newGpuCuda, setNewGpuCuda] = useState('12.2');
 
   // New Network Interface Form state
@@ -216,6 +217,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
             vendor: newGpuVendor,
             model: newGpuModel.trim(),
             memoryTotalGB: Number(newGpuVram) || 16,
+            driverVersion: newGpuDriver.trim() || undefined,
             cudaVersion: newGpuCuda.trim() || undefined,
             driverIndex: String(currentCards.length)
           }
@@ -1267,8 +1269,11 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                                       <div className="space-y-1.5 max-h-32 overflow-y-auto">
                                         {activeNode.gpuCards.map((g, idx) => (
                                           <div key={idx} className="flex justify-between items-center bg-bg-panel px-3 py-1.5 rounded-lg border border-border-main/30 text-xs">
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex flex-wrap items-center gap-2">
                                               <span className="font-extrabold text-text-main">{g.vendor} {g.model}</span>
+                                              {g.driverVersion && (
+                                                <span className="text-teal-600 dark:text-teal-400 font-mono text-xs font-bold">Driver {g.driverVersion}</span>
+                                              )}
                                               {g.cudaVersion && (
                                                 <span className="text-text-muted font-mono text-xs">CUDA {g.cudaVersion}</span>
                                               )}
@@ -1321,6 +1326,13 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                                         />
                                         <span className="text-xs text-text-muted font-bold">GB</span>
                                       </div>
+                                      <input
+                                        type="text"
+                                        placeholder="Driver (e.g. 535.183)"
+                                        value={newGpuDriver}
+                                        onChange={(e) => setNewGpuDriver(e.target.value)}
+                                        className="w-28 bg-bg-panel border border-border-main/60 rounded-lg px-2 py-1 text-xs text-text-main font-mono"
+                                      />
                                       <input
                                         type="text"
                                         placeholder="CUDA (e.g. 12.2)"
@@ -1510,13 +1522,25 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                                         ? g.model
                                         : `${g.vendor ? `${g.vendor} ` : ''}${g.model || 'GPU'}`;
                                       return (
-                                        <div key={idx} className="flex items-center gap-1.5">
-                                          <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs sm:text-sm">
-                                            {displayName}
-                                          </span>
-                                          <span className="text-text-muted font-medium text-xs">
-                                            ({g.memoryTotalGB || 0}GB VRAM)
-                                          </span>
+                                        <div key={idx} className="flex flex-col items-end gap-0.5">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs sm:text-sm">
+                                              {displayName}
+                                            </span>
+                                            <span className="text-text-muted font-medium text-xs">
+                                              ({g.memoryTotalGB || 0}GB VRAM)
+                                            </span>
+                                          </div>
+                                          {(g.driverVersion || g.cudaVersion) && (
+                                            <span className="text-teal-600 dark:text-teal-400 font-mono text-xs font-bold">
+                                              {[
+                                                g.driverVersion ? `Driver ${g.driverVersion}` : '',
+                                                g.cudaVersion ? `CUDA ${g.cudaVersion}` : ''
+                                              ]
+                                                .filter(Boolean)
+                                                .join(' / ')}
+                                            </span>
+                                          )}
                                         </div>
                                       );
                                     })}
@@ -1536,7 +1560,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-text-muted font-normal">Version:</span>
-                                <span className="text-text-main font-extrabold">{activeNode.os.version || '—'}</span>
+                                <span className="text-text-main font-extrabold">{activeNode.os.version || '-'}</span>
                               </div>
                               {activeNode.os.prettyName && (
                                 <div className="flex justify-between">

@@ -15,6 +15,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -141,8 +142,8 @@ func MigrateObjectStorage(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() (migration.MigratedObjectStorageResult, error) {
-			return migration.CreateObjectStorage(nsId, req.RecommendedObjectStorage, nameSeed)
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) (migration.MigratedObjectStorageResult, error) {
+			return migration.CreateObjectStorage(ctx, nsId, req.RecommendedObjectStorage, nameSeed)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -159,7 +160,7 @@ func MigrateObjectStorage(c echo.Context) error {
 			"Object storage migration started. Use GET /request/{reqId} to check status."))
 	}
 
-	result, err := migration.CreateObjectStorage(nsId, req.RecommendedObjectStorage, nameSeed)
+	result, err := migration.CreateObjectStorage(c.Request().Context(), nsId, req.RecommendedObjectStorage, nameSeed)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -208,8 +209,9 @@ func ListObjectStorages(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
 
+	ctx := c.Request().Context()
 	if option == "id" {
-		idList, err := migration.ListObjectStorageIDs(nsId)
+		idList, err := migration.ListObjectStorageIDs(ctx, nsId)
 		if err != nil {
 			if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 				c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -222,7 +224,7 @@ func ListObjectStorages(c echo.Context) error {
 		return c.JSON(http.StatusOK, model.SuccessResponse(idList))
 	}
 
-	result, err := migration.ListObjectStorages(nsId)
+	result, err := migration.ListObjectStorages(ctx, nsId)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -266,7 +268,7 @@ func GetObjectStorage(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("osId required"))
 	}
 
-	result, err := migration.GetObjectStorage(nsId, osId)
+	result, err := migration.GetObjectStorage(c.Request().Context(), nsId, osId)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -317,7 +319,7 @@ func ExistObjectStorage(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("osId required"))
 	}
 
-	exists, err := migration.ExistObjectStorage(nsId, osId)
+	exists, err := migration.ExistObjectStorage(c.Request().Context(), nsId, osId)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -391,8 +393,8 @@ func DeleteObjectStorage(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() (map[string]any, error) {
-			if err := migration.DeleteObjectStorage(nsId, osId, option); err != nil {
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) (map[string]any, error) {
+			if err := migration.DeleteObjectStorage(ctx, nsId, osId, option); err != nil {
 				return nil, err
 			}
 			if option == "empty" {
@@ -419,7 +421,7 @@ func DeleteObjectStorage(c echo.Context) error {
 			asyncMsg))
 	}
 
-	if err := migration.DeleteObjectStorage(nsId, osId, option); err != nil {
+	if err := migration.DeleteObjectStorage(c.Request().Context(), nsId, osId, option); err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
 			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
@@ -466,7 +468,7 @@ func ListObjectStorageObjects(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("osId required"))
 	}
 
-	result, err := migration.ListObjectStorageObjects(nsId, osId)
+	result, err := migration.ListObjectStorageObjects(c.Request().Context(), nsId, osId)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -527,7 +529,7 @@ func GetStorageObject(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("objectKey required"))
 	}
 
-	result, err := migration.GetStorageObject(nsId, osId, objectKey)
+	result, err := migration.GetStorageObject(c.Request().Context(), nsId, osId, objectKey)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -598,7 +600,7 @@ func DeleteStorageObject(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("objectKey required"))
 	}
 
-	if err := migration.DeleteStorageObject(nsId, osId, objectKey); err != nil {
+	if err := migration.DeleteStorageObject(c.Request().Context(), nsId, osId, objectKey); err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
 			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(

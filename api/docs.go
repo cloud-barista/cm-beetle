@@ -400,7 +400,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Migration completed synchronously",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
+                            "$ref": "#/definitions/model.ApiResponse-transx_MigrationResult"
                         }
                     },
                     "202": {
@@ -4870,6 +4870,15 @@ const docTemplate = `{
                         "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -4877,6 +4886,12 @@ const docTemplate = `{
                         "description": "Successfully recommended object storage",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-storagemodel_RecommendedObjectStorage"
+                        }
+                    },
+                    "202": {
+                        "description": "Recommendation started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
                         }
                     },
                     "400": {
@@ -4887,6 +4902,12 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error during recommendation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -4980,6 +5001,15 @@ const docTemplate = `{
                         "description": "Unique request ID",
                         "name": "X-Request-Id",
                         "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -4987,6 +5017,12 @@ const docTemplate = `{
                         "description": "Successfully recommended managed RDBMS",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-rdbmsmodel_RecommendedRDBMS"
+                        }
+                    },
+                    "202": {
+                        "description": "Recommendation started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
                         }
                     },
                     "400": {
@@ -4997,6 +5033,12 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error during recommendation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -6002,7 +6044,7 @@ const docTemplate = `{
         },
         "/request/{reqId}": {
             "get": {
-                "description": "Retrieves the details of a specific API request tracked by Beetle.\n\n[Note]\n- Request tracking is managed independently by Beetle (not shared with Tumblebug).\n- The reqId corresponds to the X-Request-Id header value from a previous API call.\n- Do NOT call Tumblebug's /request/{reqId} API with this reqId; each system manages its own request tracking.\n\n[Status Values]\n- Handling: Request is currently being processed\n- Success: Request completed successfully\n- Error: Request failed with an error\n\n[Retry Information]\n- retry.retryable: Whether the failed request can be retried (present only for retriable errors)\n- retry.retryAfter: Suggested retry delay in seconds\n- retry.retryReason: Human-readable reason for retry requirement (e.g., \"Rate Limit Exceeded\")",
+                "description": "Retrieves the details of a specific API request tracked by Beetle, including correlated outbound CB-Tumblebug sub-requests.\n\n[Note]\n- Request tracking is managed independently by Beetle using ` + "`" + `reqId` + "`" + ` (from ` + "`" + `X-Request-Id` + "`" + `).\n- Outbound state-changing and recommendation calls to CB-Tumblebug are recorded in ` + "`" + `subRequests[]` + "`" + ` with ` + "`" + `subReqId` + "`" + ` (` + "`" + `{reqId}-{seq}` + "`" + `) and ` + "`" + `tumblebugSource` + "`" + ` (` + "`" + `cm-beetle:{reqId}` + "`" + `).\n- Use ` + "`" + `brief=true` + "`" + ` during high-frequency polling to omit large request/response bodies while still receiving ` + "`" + `status` + "`" + `, ` + "`" + `subRequestSummary` + "`" + `, and ` + "`" + `subRequests` + "`" + `.\n- Set ` + "`" + `withTumblebug=true` + "`" + ` to enrich each ` + "`" + `subRequests[]` + "`" + ` entry with live ` + "`" + `upstreamStatus` + "`" + ` and ` + "`" + `upstreamProgress` + "`" + ` from CB-Tumblebug ` + "`" + `GET /request/{subReqId}` + "`" + `.\n\n[Status Values]\n- Handling: Request is currently being processed\n- Success: Request completed successfully\n- Error: Request failed with an error\n\n[Retry Information]\n- retry.retryable: Whether the failed request can be retried (present only for retriable errors)\n- retry.retryAfter: Suggested retry delay in seconds\n- retry.retryReason: Human-readable reason for retry requirement (e.g., \"Rate Limit Exceeded\")",
                 "consumes": [
                     "application/json"
                 ],
@@ -6021,6 +6063,27 @@ const docTemplate = `{
                         "name": "reqId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Omit requestInfo.body and responseData for lightweight polling (default: false)",
+                        "name": "brief",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Include outbound CB-Tumblebug subRequests list (default: true)",
+                        "name": "withSubRequests",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Enrich subRequests with live upstream status/progress from CB-Tumblebug (default: false)",
+                        "name": "withTumblebug",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -6084,7 +6147,7 @@ const docTemplate = `{
         },
         "/requests": {
             "get": {
-                "description": "Retrieves all API requests tracked by Beetle with optional filters.\n\n[Note]\n- Request tracking is managed independently by Beetle (not shared with Tumblebug).\n- This API only returns requests made to Beetle, not to Tumblebug.\n\n[Status Values]\n- Handling: Request is currently being processed\n- Success: Request completed successfully\n- Error: Request failed with an error\n\n[Retry Information]\n- retry.retryable: Whether the failed request can be retried (present only for retriable errors)\n- retry.retryAfter: Suggested retry delay in seconds\n- retry.retryReason: Human-readable reason for retry requirement (e.g., \"Rate Limit Exceeded\")",
+                "description": "Retrieves API requests tracked by Beetle sorted by ` + "`" + `startTime` + "`" + ` descending (newest first), with optional filters and payload projection.\n\n[Note]\n- Request tracking is managed independently by Beetle.\n- Each entry includes ` + "`" + `tumblebugSource` + "`" + ` (` + "`" + `cm-beetle:{reqId}` + "`" + `) and ` + "`" + `subRequestSummary` + "`" + ` for cross-service correlation with CB-Tumblebug (` + "`" + `GET /tumblebug/requests?source=cm-beetle:{reqId}` + "`" + `).\n\n[Status Values]\n- Handling: Request is currently being processed\n- Success: Request completed successfully\n- Error: Request failed with an error\n\n[Retry Information]\n- retry.retryable: Whether the failed request can be retried (present only for retriable errors)\n- retry.retryAfter: Suggested retry delay in seconds\n- retry.retryReason: Human-readable reason for retry requirement (e.g., \"Rate Limit Exceeded\")",
                 "consumes": [
                     "application/json"
                 ],
@@ -6124,14 +6187,34 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Filter by request URL",
+                        "description": "Filter by request URL substring",
                         "name": "url",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by X-Request-Source header or tumblebugSource substring",
+                        "name": "source",
                         "in": "query"
                     },
                     {
                         "type": "string",
                         "description": "Filter by time in minutes from now (to get recent requests)",
                         "name": "time",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Maximum number of recent requests to return (0 = unlimited)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Omit requestInfo.body and responseData for lightweight listing (default: false)",
+                        "name": "brief",
                         "in": "query"
                     },
                     {
@@ -6150,13 +6233,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/definitions/common.RequestDetails"
-                                }
-                            }
+                            "$ref": "#/definitions/model.ApiResponse-controller_GetAllRequestsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -9627,6 +9716,10 @@ const docTemplate = `{
                     "description": "A message describing any error that occurred during request processing.",
                     "type": "string"
                 },
+                "reqId": {
+                    "description": "Unique Beetle request ID.",
+                    "type": "string"
+                },
                 "requestInfo": {
                     "description": "Extracted information about the request.",
                     "allOf": [
@@ -9652,6 +9745,25 @@ const docTemplate = `{
                 },
                 "status": {
                     "description": "The current status of the request (e.g., \"Handling\", \"Error\", \"Success\").",
+                    "type": "string"
+                },
+                "subRequestSummary": {
+                    "description": "Aggregated sub-request counts and active step.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/common.SubRequestSummary"
+                        }
+                    ]
+                },
+                "subRequests": {
+                    "description": "Ordered list of outbound Tumblebug sub-requests.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.SubRequest"
+                    }
+                },
+                "tumblebugSource": {
+                    "description": "Correlated X-Request-Source value (\"cm-beetle:{reqId}\").",
                     "type": "string"
                 }
             }
@@ -9702,6 +9814,74 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "Any message"
+                }
+            }
+        },
+        "common.SubRequest": {
+            "type": "object",
+            "properties": {
+                "durationMs": {
+                    "type": "integer"
+                },
+                "endTime": {
+                    "type": "string"
+                },
+                "errorMessage": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string"
+                },
+                "resourceHint": {
+                    "type": "string"
+                },
+                "resourceType": {
+                    "type": "string"
+                },
+                "seq": {
+                    "type": "integer"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusCode": {
+                    "type": "integer"
+                },
+                "subReqId": {
+                    "type": "string"
+                },
+                "targetPath": {
+                    "type": "string"
+                },
+                "upstreamError": {
+                    "type": "string"
+                },
+                "upstreamProgress": {},
+                "upstreamStatus": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.SubRequestSummary": {
+            "type": "object",
+            "properties": {
+                "currentAction": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "integer"
+                },
+                "handling": {
+                    "type": "integer"
+                },
+                "success": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
@@ -9760,6 +9940,17 @@ const docTemplate = `{
             "properties": {
                 "onpremiseInfraModel": {
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                }
+            }
+        },
+        "controller.GetAllRequestsResponse": {
+            "type": "object",
+            "properties": {
+                "requests": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.RequestDetails"
+                    }
                 }
             }
         },
@@ -11526,6 +11717,34 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-controller_GetAllRequestsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/controller.GetAllRequestsResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-controller_MigrateInfraResponse": {
             "type": "object",
             "properties": {
@@ -12258,6 +12477,34 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/transx.DataMigrationModel"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-transx_MigrationResult": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.MigrationResult"
                         }
                     ]
                 },
@@ -19255,11 +19502,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "postCmd": {
-                    "description": "Command to run after transfer (destination only)",
+                    "description": "Command to run after transfer",
                     "type": "string"
                 },
                 "preCmd": {
-                    "description": "Hooks for pre/post processing",
+                    "description": "Hooks for pre/post processing on source and destination endpoints",
                     "type": "string"
                 },
                 "storageType": {
@@ -19346,6 +19593,23 @@ const docTemplate = `{
                 }
             }
         },
+        "transx.HookOutputs": {
+            "type": "object",
+            "properties": {
+                "destinationPostCmd": {
+                    "type": "string"
+                },
+                "destinationPreCmd": {
+                    "type": "string"
+                },
+                "sourcePostCmd": {
+                    "type": "string"
+                },
+                "sourcePreCmd": {
+                    "type": "string"
+                }
+            }
+        },
         "transx.JWTAuthConfig": {
             "type": "object",
             "required": [
@@ -19354,6 +19618,29 @@ const docTemplate = `{
             "properties": {
                 "token": {
                     "type": "string"
+                }
+            }
+        },
+        "transx.MigrationResult": {
+            "type": "object",
+            "properties": {
+                "effectiveStrategy": {
+                    "type": "string"
+                },
+                "elapsedTime": {
+                    "type": "string"
+                },
+                "hookOutputs": {
+                    "$ref": "#/definitions/transx.HookOutputs"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "requestedStrategy": {
+                    "type": "string"
+                },
+                "sourceRecovered": {
+                    "type": "boolean"
                 }
             }
         },

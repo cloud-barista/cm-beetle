@@ -58,3 +58,59 @@ func (s *Session) IsReady() (bool, *string, error) {
 	log.Debug().Msg("Tumblebug is ready")
 	return true, &resBody.Message, nil
 }
+
+// CheckReadyz queries Tumblebug GET /readyz and returns readiness and initialization status.
+func (s *Session) CheckReadyz() (tbmodel.ReadyzResponse, error) {
+	var resBody tbmodel.ReadyzResponse
+	resp, err := s.
+		NoCache().
+		SetResult(&resBody).
+		Get("/readyz")
+	if err != nil {
+		return resBody, err
+	}
+	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return resBody, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
+		return resBody, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
+	}
+	return resBody, nil
+}
+
+// TumblebugRequestSummary represents upstream tracking status returned by Tumblebug GET /request/{reqId}.
+type TumblebugRequestSummary struct {
+	StartTime     time.Time `json:"startTime"`
+	EndTime       time.Time `json:"endTime"`
+	Status        string    `json:"status"`
+	ResponseData  any       `json:"responseData,omitempty"`
+	ErrorResponse string    `json:"errorResponse,omitempty"`
+}
+
+// ReadRequest retrieves upstream request tracking details from Tumblebug GET /request/{reqId}.
+func (s *Session) ReadRequest(reqId string) (TumblebugRequestSummary, error) {
+	var resBody TumblebugRequestSummary
+	if reqId == "" {
+		return resBody, fmt.Errorf("request ID is required")
+	}
+
+	url := fmt.Sprintf("/request/%s", reqId)
+	resp, err := s.
+		SetCacheDuration(VeryShortDuration).
+		SetResult(&resBody).
+		Get(url)
+	if err != nil {
+		return resBody, err
+	}
+	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return resBody, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
+		return resBody, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
+	}
+	return resBody, nil
+}

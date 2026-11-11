@@ -1,6 +1,8 @@
 package recommendation
 
 import (
+	"context"
+	"strings"
 	"testing"
 
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
@@ -26,7 +28,11 @@ func TestRecommendVNet_EmptyNetworkInfo(t *testing.T) {
 
 	for _, tc := range csps {
 		t.Run(tc.csp, func(t *testing.T) {
-			vnets, err := RecommendVNet(tc.csp, tc.region, srcInfra)
+			vnets, err := RecommendVNet(context.Background(), tc.csp, tc.region, srcInfra)
+			if err != nil && strings.Contains(err.Error(), "connection refused") {
+				t.Skipf("Skipping live Tumblebug region check (daemon not reachable): %v", err)
+				return
+			}
 			assert.NoError(t, err)
 			assert.NotEmpty(t, vnets)
 			if len(vnets) > 0 {
@@ -61,6 +67,6 @@ func TestRecommendInfraCandidates_NoPanicOnEmptyNetwork(t *testing.T) {
 	}
 
 	assert.NotPanics(t, func() {
-		_, _ = RecommendInfraCandidates("aws", "ap-northeast-2", srcInfra, 1, 0.0)
+		_, _ = RecommendInfraCandidates(context.Background(), "aws", "ap-northeast-2", srcInfra, 1, 0.0)
 	})
 }

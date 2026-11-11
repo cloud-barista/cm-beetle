@@ -141,16 +141,23 @@ func NewDefaultClient() *TumblebugClient {
 }
 
 // Session represents a single request scope.
-// It holds the request-specific configuration (headers, context, etc.).
+// It holds the request-specific configuration (headers, context, cache override, and retry state).
 type Session struct {
-	req *resty.Request
+	req           *resty.Request
+	ctx           context.Context
+	cacheDuration *time.Duration
+	attempt       *sessionSubRequestAttempt
 }
 
 // NewSession creates a new Session for making requests.
 func (c *TumblebugClient) NewSession() *Session {
-	return &Session{
-		req: c.restyClient.R(),
+	s := &Session{
+		req:     c.restyClient.R(),
+		ctx:     context.Background(),
+		attempt: &sessionSubRequestAttempt{},
 	}
+	s.req.SetContext(s.buildContext())
+	return s
 }
 
 // NewSession creates a new Session using the global client.
@@ -197,10 +204,35 @@ func (s *Session) SetResult(res any) *Session {
 	return s
 }
 
-// SetContext sets the context for the request.
+func (s *Session) buildContext() context.Context {
+	ctx := s.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if s.cacheDuration != nil {
+		if _, hasExplicit := GetCacheDuration(ctx); !hasExplicit {
+			ctx = SetCacheDuration(ctx, *s.cacheDuration)
+		}
+	}
+	return withSessionAttempt(ctx, s.attempt)
+}
+
+// SetContext sets the context for the request regardless of method chaining order.
 func (s *Session) SetContext(ctx context.Context) *Session {
-	s.req.SetContext(ctx)
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	s.ctx = ctx
+	s.req.SetContext(s.buildContext())
 	return s
+}
+
+// Context returns the composed request context or context.Background() when unset.
+func (s *Session) Context() context.Context {
+	if s == nil {
+		return context.Background()
+	}
+	return s.buildContext()
 }
 
 // SetQueryParam sets a single query parameter.
@@ -262,11 +294,8 @@ func (s *Session) Head(url string) (*resty.Response, error) {
 
 // SetCacheDuration sets the cache duration for the request.
 func (s *Session) SetCacheDuration(d time.Duration) *Session {
-	ctx := s.req.Context()
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	s.req.SetContext(SetCacheDuration(ctx, d))
+	s.cacheDuration = &d
+	s.req.SetContext(s.buildContext())
 	return s
 }
 

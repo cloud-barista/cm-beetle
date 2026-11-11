@@ -2523,6 +2523,105 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                             </div>
                           </div>
 
+                          {/* Applied Optimization Strategy Insights Banner */}
+                          {(() => {
+                            const srcInfra = selectedSourceModel?.onpremiseInfraModel;
+                            const srcNodes = Array.isArray(srcInfra?.nodes) ? srcInfra.nodes : [];
+                            const srcGpuCards = srcNodes.flatMap((n) => n.gpuCards || []);
+                            const srcCudas = Array.from(new Set(srcGpuCards.map((g) => g.cudaVersion).filter(Boolean)));
+                            const srcDrivers = Array.from(new Set(srcGpuCards.map((g) => g.driverVersion).filter(Boolean)));
+                            const srcNlbs = Array.isArray(srcInfra?.nlbs) ? srcInfra.nlbs : [];
+                            const tgtNgs = editedCandidate.targetInfra?.nodeGroups || [];
+                            const tgtNlbs = editedCandidate.targetNlbList || [];
+                            const hasGpuWorkload = srcGpuCards.length > 0 || candidateGpuSummary.hasGpu;
+                            const hasN1Grouping = srcNodes.length > tgtNgs.length && tgtNgs.length > 0;
+                            const hasNlbWorkload = tgtNlbs.length > 0 || srcNlbs.length > 0;
+                            const hasMultiTierInsight = hasGpuWorkload && (tgtNgs.length >= 2 || hasNlbWorkload);
+
+                            if (!hasGpuWorkload && !hasN1Grouping && !hasNlbWorkload) {
+                              return null;
+                            }
+
+                            return (
+                              <div className="bg-emerald-500/5 border border-emerald-500/25 rounded-xl p-3.5 space-y-2.5">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <span className="text-sm font-extrabold text-text-main flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-emerald-500" />
+                                    Applied Target Cloud Optimization Strategies
+                                  </span>
+                                  <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                                    {editedCandidate.targetCloud?.csp?.toUpperCase()} ({editedCandidate.targetCloud?.region})
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-sm">
+                                  {hasGpuWorkload && (
+                                    <div className="bg-bg-panel/80 border border-border-main/50 rounded-lg px-3 py-2 flex flex-col gap-0.5">
+                                      <span className="font-normal text-text-muted text-xs flex items-center gap-1.5">
+                                        <Cpu className="w-3.5 h-3.5 text-emerald-500" />
+                                        GPU Accelerator Strategy
+                                      </span>
+                                      <span className="font-extrabold text-text-main text-sm">
+                                        6-Stage GPU Hierarchical Matching ({candidateGpuSummary.gpuNodeCount || srcGpuCards.length} GPU Nodes)
+                                      </span>
+                                      {(srcCudas.length > 0 || srcDrivers.length > 0) && (
+                                        <span className="text-xs font-mono text-teal-600 dark:text-teal-400 font-bold">
+                                          Source Runtime: {[
+                                            srcDrivers.length > 0 ? `Driver ${srcDrivers.join(', ')}` : '',
+                                            srcCudas.length > 0 ? `CUDA ${srcCudas.join(', ')} (Target >= ${srcCudas[0]})` : ''
+                                          ]
+                                            .filter(Boolean)
+                                            .join(' / ')}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                  {hasN1Grouping && (
+                                    <div className="bg-bg-panel/80 border border-border-main/50 rounded-lg px-3 py-2 flex flex-col gap-0.5">
+                                      <span className="font-normal text-text-muted text-xs flex items-center gap-1.5">
+                                        <Layers className="w-3.5 h-3.5 text-teal-500" />
+                                        Node Group Consolidation
+                                      </span>
+                                      <span className="font-extrabold text-text-main text-sm">
+                                        {srcNodes.length} Source Nodes -&gt; {tgtNgs.length} Homogeneous Node Groups
+                                      </span>
+                                      <span className="text-xs text-text-muted">
+                                        Preserves source machine lineage via cm-source-machine-ids
+                                      </span>
+                                    </div>
+                                  )}
+                                  {hasNlbWorkload && (
+                                    <div className="bg-bg-panel/80 border border-border-main/50 rounded-lg px-3 py-2 flex flex-col gap-0.5">
+                                      <span className="font-normal text-text-muted text-xs flex items-center gap-1.5">
+                                        <Network className="w-3.5 h-3.5 text-emerald-500" />
+                                        Load Balancer Modernization
+                                      </span>
+                                      <span className="font-extrabold text-text-main text-sm">
+                                        On-Premise Balancer -&gt; {tgtNlbs.length || srcNlbs.length} Managed Cloud NLB
+                                      </span>
+                                      <span className="text-xs text-text-muted">
+                                        Maps backend server pools directly to target Node Groups
+                                      </span>
+                                    </div>
+                                  )}
+                                  {hasMultiTierInsight && (
+                                    <div className="bg-bg-panel/80 border border-border-main/50 rounded-lg px-3 py-2 flex flex-col gap-0.5">
+                                      <span className="font-normal text-text-muted text-xs flex items-center gap-1.5">
+                                        <Target className="w-3.5 h-3.5 text-teal-500" />
+                                        Multi-Tier Sizing Policy (Strategy Insight)
+                                      </span>
+                                      <span className="font-extrabold text-text-main text-sm">
+                                        Tier Isolation (rightSizeUp / dividing)
+                                      </span>
+                                      <span className="text-xs text-text-muted">
+                                        Separates GPU inference and general compute tiers without spec inflation
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
+
                           {/* Resource Oriented Tuning Tabs Header */}
                           <div className="flex flex-wrap gap-1.5 border-b border-border-main/10 pb-2">
                             <button

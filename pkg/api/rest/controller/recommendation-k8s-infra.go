@@ -60,6 +60,7 @@ type RecommendK8sInfraResponse struct {
 // @Failure 500 {object} model.ApiResponse[any]
 // @Router /recommendation/k8sCluster [post]
 func RecommendK8sInfra(c echo.Context) error {
+	ctx := c.Request().Context()
 	desiredProvider := c.QueryParam("desiredProvider")
 	desiredRegion := c.QueryParam("desiredRegion")
 
@@ -84,13 +85,13 @@ func RecommendK8sInfra(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
 	}
 
-	ok, err := recommendation.IsValidCspAndRegion(reqt.Csp, reqt.Region)
+	ok, err := recommendation.IsValidCspAndRegion(ctx, reqt.Csp, reqt.Region)
 	if !ok {
 		log.Error().Err(err).Msg("invalid provider or region")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
 	}
 
-	result, err := recommendation.RecommendK8sInfra(reqt.Csp, reqt.Region, reqt.OnpremiseInfraModel.OnpremiseInfraModel)
+	result, err := recommendation.RecommendK8sInfra(ctx, reqt.Csp, reqt.Region, reqt.OnpremiseInfraModel.OnpremiseInfraModel)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend K8s infra")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))

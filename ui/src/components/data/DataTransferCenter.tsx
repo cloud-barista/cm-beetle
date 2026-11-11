@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useMigrationStore, calculateJobElapsedSeconds } from '@/store/migrationStore';
+import { useMigrationStore, calculateJobElapsedSeconds, DataMigrationJob } from '@/store/migrationStore';
 import { beetleApi, tumblebugApi, honeybeeApi } from '@/api/client';
+import { AiStackLayerStatus } from '@/types/migration';
 import { resolveTargetNodeLineage } from '@/utils/nodeLineage';
 import { CspCredentialForm } from '../common/CspCredentialForm';
 import { DirectoryTreeExplorer } from './DirectoryTreeExplorer';
@@ -32,36 +33,16 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
-  Upload
+  Upload,
+  Cpu
 } from 'lucide-react';
-
-interface DataMigrationJob {
-  id: string;
-  reqId: string;
-  sourceBucket: string;
-  targetStorage: string;
-  nsId: string;
-  csp: string;
-  region: string;
-  strategy: string;
-  status: 'Handling' | 'Success' | 'Failed';
-  startTime: string;
-  createdAtMs?: number;
-  elapsedSeconds: number;
-  encryptionKeyId: string;
-  isSample?: boolean;
-  logs: string[];
-  sourcePreCmd?: string;
-  destinationPostCmd?: string;
-  includeFilter?: string;
-  excludeFilter?: string;
-}
 
 export const DataTransferCenter: React.FC = () => {
   const {
     namespaceId,
     refinedSourceInfra,
     savedCloudModels,
+    jobs,
     dataJobs,
     setDataJobs,
     addDataJob,
@@ -224,11 +205,145 @@ export const DataTransferCenter: React.FC = () => {
   const [excludeFilter, setExcludeFilter] = useState('');
   const [showCommandsSection, setShowCommandsSection] = useState(false);
   const [sourcePreCmd, setSourcePreCmd] = useState('');
+  const [destinationPreCmd, setDestinationPreCmd] = useState('');
+  const [sourcePostCmd, setSourcePostCmd] = useState('');
   const [destinationPostCmd, setDestinationPostCmd] = useState('');
   const [isEncryptingAndLaunching, setIsEncryptingAndLaunching] = useState(false);
   const [preferAsync, setPreferAsync] = useState(true);
   const [modalError, setModalError] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // 4-Layer AI Stack Live Verification (Before vs. After) state
+  const [probeSourceHost, setProbeSourceHost] = useState('10.0.1.11');
+  const [probeTargetHost, setProbeTargetHost] = useState('');
+  const [probeModelName, setProbeModelName] = useState('gemma4:e2b');
+  const [isProbingStack, setIsProbingStack] = useState(false);
+  const [sourceStackStatus, setSourceStackStatus] = useState<AiStackLayerStatus | null>(null);
+  const [targetStackStatus, setTargetStackStatus] = useState<AiStackLayerStatus | null>(null);
+  const [probeError, setProbeError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (sourceSshHost.trim()) {
+      setProbeSourceHost(sourceSshHost.trim());
+    }
+  }, [sourceSshHost]);
+
+  useEffect(() => {
+    if (targetSshHost.trim()) {
+      setProbeTargetHost(targetSshHost.trim());
+      return;
+    }
+    if (!probeTargetHost && Array.isArray(jobs)) {
+      const completedRealJob = jobs.find((j) => !j.isSample && j.status === 'Success' && Array.isArray(j.vms) && j.vms.length > 0);
+      if (completedRealJob?.vms) {
+        const gpuVm =
+          completedRealJob.vms.find((v) => /g4dn|g5|g6|g2-|p3|p4|a2-|a3-|gpu/i.test(`${v.specId} ${v.name}`)) ||
+          completedRealJob.vms[0];
+        const candidateIp =
+          gpuVm?.publicIp && gpuVm.publicIp !== 'N/A' && gpuVm.publicIp !== 'Allocating...'
+            ? gpuVm.publicIp
+            : gpuVm?.privateIp && gpuVm.privateIp !== 'N/A'
+            ? gpuVm.privateIp
+            : '';
+        if (candidateIp) {
+          setProbeTargetHost(candidateIp);
+        }
+      }
+    }
+  }, [targetSshHost, jobs, probeTargetHost]);
+
+  const handleVerifyAiStack = async (mode: 'both' | 'source' | 'target' = 'both') => {
+    if (isProbingStack) return;
+    const srcIp = probeSourceHost.trim();
+    const tgtIp = probeTargetHost.trim();
+    if ((mode === 'both' || mode === 'source') && !srcIp) {
+      setProbeError('Enter the Source AI node IPv4 address (e.g., 10.0.1.11).');
+      return;
+    }
+    if ((mode === 'both' || mode === 'target') && !tgtIp) {
+      setProbeError('Enter the Target Cloud GPU node IPv4 address.');
+      return;
+    }
+    setProbeError(null);
+    setIsProbingStack(true);
+    try {
+      const model = probeModelName.trim() || 'gemma4:e2b';
+      if (mode === 'both') {
+        const [srcRes, tgtRes] = await Promise.all([
+          beetleApi.verifyAiStackEndpoint(srcIp, model),
+          beetleApi.verifyAiStackEndpoint(tgtIp, model)
+        ]);
+        setSourceStackStatus(srcRes);
+        setTargetStackStatus(tgtRes);
+      } else if (mode === 'source') {
+        const srcRes = await beetleApi.verifyAiStackEndpoint(srcIp, model);
+        setSourceStackStatus(srcRes);
+      } else {
+        const tgtRes = await beetleApi.verifyAiStackEndpoint(tgtIp, model);
+        setTargetStackStatus(tgtRes);
+      }
+    } catch (err: any) {
+      setProbeError(err?.message || 'Failed to probe AI Stack endpoints.');
+    } finally {
+      setIsProbingStack(false);
+    }
+  };
+
+  const handleLoadSampleVerification = () => {
+    const nowIso = new Date().toISOString();
+    const sampleDigest = 'sha256:9f84b6e12a4d0c7e51a33f90b4c18d7e62f1a8c45b9e3012d7c8a6b41e90f231';
+    const srcHost = probeSourceHost.trim() || '10.0.1.11';
+    const tgtHost = probeTargetHost.trim() || '52.78.142.88';
+    setProbeError(null);
+    setSourceStackStatus({
+      host: srcHost,
+      checkedAt: nowIso,
+      isSample: true,
+      openWebUi: { ok: true, httpStatus: 200, latencyMs: 18, version: '0.6.5' },
+      ollamaTags: {
+        ok: true,
+        latencyMs: 14,
+        modelName: 'gemma4:e2b',
+        sizeBytes: 3180000000,
+        digest: sampleDigest,
+        parameterSize: '2.6B',
+        quantizationLevel: 'Q4_K_M',
+        totalModels: 1
+      },
+      ollamaPs: { ok: true, vramBytes: 3420000000, activeModel: 'gemma4:e2b', gpuAccelerated: true },
+      inference: {
+        ok: true,
+        latencyMs: 412,
+        tokensPerSec: 64.2,
+        evalCount: 24,
+        responseSnippet: 'Source GPU inference ready.'
+      }
+    });
+    setTargetStackStatus({
+      host: tgtHost,
+      checkedAt: nowIso,
+      isSample: true,
+      openWebUi: { ok: true, httpStatus: 200, latencyMs: 22, version: '0.6.5' },
+      ollamaTags: {
+        ok: true,
+        latencyMs: 17,
+        modelName: 'gemma4:e2b',
+        sizeBytes: 3180000000,
+        digest: sampleDigest,
+        parameterSize: '2.6B',
+        quantizationLevel: 'Q4_K_M',
+        totalModels: 1
+      },
+      ollamaPs: { ok: true, vramBytes: 3420000000, activeModel: 'gemma4:e2b', gpuAccelerated: true },
+      inference: {
+        ok: true,
+        latencyMs: 389,
+        tokensPerSec: 68.5,
+        evalCount: 24,
+        responseSnippet: 'Target cloud GPU inference ready.'
+      }
+    });
+  };
 
   const isBothRemoteSsh = sourceAccessType === 'remote-ssh' && targetAccessType === 'remote-ssh';
   const hasAnyRemoteSsh = sourceAccessType === 'remote-ssh' || targetAccessType === 'remote-ssh';
@@ -369,6 +484,8 @@ export const DataTransferCenter: React.FC = () => {
     setIncludeFilter('ollama/models/blobs/**, ollama/models/manifests/**, open-webui/webui.db, docker-compose.yml');
     setExcludeFilter('open-webui/cache/**, *.log, *.tmp, __pycache__/**');
     setSourcePreCmd('cd /opt/aimx/ai-service && sudo docker compose stop && sync && sudo chown -R $USER:$USER /opt/aimx/ai-service && sudo chmod -R u+rwX /opt/aimx/ai-service');
+    setDestinationPreCmd('sudo mkdir -p /opt/aimx/ai-service && sudo chown -R $USER:$USER /opt/aimx/ai-service && chmod 755 /opt/aimx/ai-service');
+    setSourcePostCmd('cd /opt/aimx/ai-service && sudo docker compose up -d');
     setDestinationPostCmd(
       [
         'export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a',
@@ -422,6 +539,8 @@ export const DataTransferCenter: React.FC = () => {
     setIncludeFilter('');
     setExcludeFilter('');
     setSourcePreCmd('');
+    setDestinationPreCmd('');
+    setSourcePostCmd('');
     setDestinationPostCmd('');
     setShowDirectoryTree(false);
     setShowCommandsSection(false);
@@ -438,8 +557,10 @@ export const DataTransferCenter: React.FC = () => {
     if (!hasAnyRemoteSsh) return;
     if (isSourceRemoteSsh) {
       setSourcePreCmd('mkdir -p /tmp/db_backup && mysqldump -u root --all-databases --single-transaction > /tmp/db_backup/dump.sql');
+      setSourcePostCmd('rm -f /tmp/db_backup/dump.sql');
     }
     if (isTargetRemoteSsh) {
+      setDestinationPreCmd('mkdir -p /tmp/db_backup');
       setDestinationPostCmd('mysql -u root < /tmp/db_backup/dump.sql');
     }
     setShowCommandsSection(true);
@@ -889,6 +1010,8 @@ export const DataTransferCenter: React.FC = () => {
 
       // Step 2: Build Plaintext DataMigrationModel matching pkg/api/rest/controller/migration-data.go & transx specification
       const trimmedSourcePreCmd = isSourceRemoteSsh ? sourcePreCmd.trim() : '';
+      const trimmedDestinationPreCmd = isTargetRemoteSsh ? destinationPreCmd.trim() : '';
+      const trimmedSourcePostCmd = isSourceRemoteSsh ? sourcePostCmd.trim() : '';
       const trimmedDestinationPostCmd = isTargetRemoteSsh ? destinationPostCmd.trim() : '';
       const effectiveStrategy = !isBothRemoteSsh && ['direct', 'ssh-agent-fwd-push', 'ssh-agent-fwd-pull'].includes(dataStrategy)
         ? 'auto'
@@ -899,6 +1022,7 @@ export const DataTransferCenter: React.FC = () => {
           path: fullSourcePath,
           ...(filterConfig ? { filter: filterConfig } : {}),
           ...(trimmedSourcePreCmd ? { preCmd: trimmedSourcePreCmd } : {}),
+          ...(trimmedSourcePostCmd ? { postCmd: trimmedSourcePostCmd } : {}),
           ...(sourceAccessType === 'object-storage' ? {
             objectStorage: {
               accessType: 'minio',
@@ -929,6 +1053,7 @@ export const DataTransferCenter: React.FC = () => {
         destination: {
           storageType: targetAccessType === 'object-storage' ? 'objectstorage' : 'filesystem',
           path: fullTargetPath,
+          ...(trimmedDestinationPreCmd ? { preCmd: trimmedDestinationPreCmd } : {}),
           ...(trimmedDestinationPostCmd ? { postCmd: trimmedDestinationPostCmd } : {}),
           ...(targetAccessType === 'object-storage' ? {
             objectStorage: {
@@ -1002,6 +1127,8 @@ export const DataTransferCenter: React.FC = () => {
 
       const reqId = res.reqId || `req-data-${Date.now().toString().slice(-6)}`;
       const nowMs = Date.now();
+      const syncResult = !preferAsync ? (res.data?.data || res.data?.result || res.data) : undefined;
+      const initialStatus: 'Handling' | 'Success' = preferAsync ? 'Handling' : 'Success';
       const newJob: DataMigrationJob = {
         id: reqId,
         reqId,
@@ -1011,22 +1138,31 @@ export const DataTransferCenter: React.FC = () => {
         csp: dataCsp.toUpperCase(),
         region: dataRegion,
         strategy: dataStrategy,
-        status: 'Handling',
+        status: initialStatus,
         startTime: new Date(nowMs).toISOString(),
         createdAtMs: nowMs,
         elapsedSeconds: 0,
         encryptionKeyId: usedKeyId,
         sourcePreCmd: trimmedSourcePreCmd || undefined,
+        destinationPreCmd: trimmedDestinationPreCmd || undefined,
+        sourcePostCmd: trimmedSourcePostCmd || undefined,
         destinationPostCmd: trimmedDestinationPostCmd || undefined,
+        hookOutputs: syncResult?.hookOutputs,
+        sourceRecovered: Boolean(syncResult?.sourceRecovered),
+        effectiveStrategy: syncResult?.effectiveStrategy,
         includeFilter: includeFilter.trim() || undefined,
         excludeFilter: excludeFilter.trim() || undefined,
         logs: [
           `GET /beetle/migration/data/encryptionKey -> Issued KeyID: ${usedKeyId}`,
           `Constructed Beetle DataLocation.Path -> Source: "${displaySourceLabel}" | Target: "${displayTargetLabel}"`,
-          ...(trimmedSourcePreCmd ? [`Configured Source Command (preCmd): ${trimmedSourcePreCmd}`] : []),
-          ...(trimmedDestinationPostCmd ? [`Configured Destination Command (postCmd): ${trimmedDestinationPostCmd}`] : []),
+          ...(trimmedSourcePreCmd ? [`Configured Hook [1/4 source.preCmd]: ${trimmedSourcePreCmd}`] : []),
+          ...(trimmedDestinationPreCmd ? [`Configured Hook [2/4 destination.preCmd]: ${trimmedDestinationPreCmd}`] : []),
+          ...(trimmedSourcePostCmd ? [`Configured Hook [3/4 source.postCmd]: ${trimmedSourcePostCmd}`] : []),
+          ...(trimmedDestinationPostCmd ? [`Configured Hook [4/4 destination.postCmd]: ${trimmedDestinationPostCmd}`] : []),
           `Encrypting sensitive credentials (${sourceAccessType === 'object-storage' ? 'AccessKeyId, SecretAccessKey' : 'SSH Private Key'}) via RSA-OAEP-256...`,
-          `POST /beetle/migration/data -> 202 Accepted (ReqID: ${reqId}, Status: Handling)`
+          preferAsync
+            ? `POST /beetle/migration/data -> 202 Accepted (ReqID: ${reqId}, Status: Handling)`
+            : `POST /beetle/migration/data -> 200 OK (ReqID: ${reqId}, Status: Success${syncResult?.elapsedTime ? `, Elapsed: ${syncResult.elapsedTime}` : ''})`
         ]
       };
 
@@ -1057,13 +1193,14 @@ export const DataTransferCenter: React.FC = () => {
     if (!job?.reqId || job.isSample || isRefreshingJobStatus) return;
     setIsRefreshingJobStatus(true);
     try {
-      const reqDetails = await beetleApi.getRequestDetails(job.reqId);
+      const reqDetails = await beetleApi.getRequestDetails(job.reqId, { brief: false });
       const status = reqDetails?.status;
       const dur = calculateJobElapsedSeconds(job);
       if (status === 'Completed' || status === 'Succeeded' || status === 'Success') {
-        const detailMsg = reqDetails?.responseData?.message
-          ? ` - ${reqDetails.responseData.message}`
-          : '';
+        const resData = reqDetails?.responseData || {};
+        const migResult = resData?.data || resData?.result || resData;
+        const summaryMsg = migResult?.message || resData?.message;
+        const detailMsg = summaryMsg ? ` - ${summaryMsg}` : '';
         setDataJobs((prevJobs) =>
           prevJobs.map((j) =>
             j.id === job.id
@@ -1071,6 +1208,11 @@ export const DataTransferCenter: React.FC = () => {
                   ...j,
                   status: 'Success',
                   elapsedSeconds: dur,
+                  hookOutputs: migResult?.hookOutputs || j.hookOutputs,
+                  sourceRecovered: Boolean(migResult?.sourceRecovered ?? j.sourceRecovered),
+                  effectiveStrategy: migResult?.effectiveStrategy || j.effectiveStrategy,
+                  bytesTransferred: typeof migResult?.bytesTransferred === 'number' ? migResult.bytesTransferred : j.bytesTransferred,
+                  filesTransferred: typeof migResult?.filesTransferred === 'number' ? migResult.filesTransferred : j.filesTransferred,
                   logs: [
                     ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
                     `GET /beetle/request/${job.reqId} -> Status: Success${detailMsg} (Duration: ${dur}s)`
@@ -1080,6 +1222,10 @@ export const DataTransferCenter: React.FC = () => {
           )
         );
       } else if (status === 'Failed' || status === 'Error') {
+        const resData = reqDetails?.responseData || {};
+        const migResult = resData?.data || resData?.result || resData;
+        const errMsg = reqDetails?.errorResponse || 'Execution Error';
+        const recovered = errMsg.includes('source unquiesced via postCmd');
         setDataJobs((prevJobs) =>
           prevJobs.map((j) =>
             j.id === job.id
@@ -1087,9 +1233,12 @@ export const DataTransferCenter: React.FC = () => {
                   ...j,
                   status: 'Failed',
                   elapsedSeconds: dur,
+                  hookOutputs: migResult?.hookOutputs || j.hookOutputs,
+                  sourceRecovered: Boolean(migResult?.sourceRecovered ?? (recovered || j.sourceRecovered)),
+                  effectiveStrategy: migResult?.effectiveStrategy || j.effectiveStrategy,
                   logs: [
                     ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
-                    `GET /beetle/request/${job.reqId} -> Status: Failed (${reqDetails?.errorResponse || 'Execution Error'}) (Duration: ${dur}s)`
+                    `GET /beetle/request/${job.reqId} -> Status: Failed (${errMsg}) (Duration: ${dur}s)`
                   ]
                 }
               : j
@@ -1122,16 +1271,17 @@ export const DataTransferCenter: React.FC = () => {
   const runningJobsCount = dataJobs.filter(j => j.status === 'Handling').length;
   const completedJobsCount = dataJobs.filter(j => j.status === 'Success').length;
 
-  // Live Duration Timer (1s local UI clock; API status polling is handled every 15s in useGlobalJobPolling)
+  // Live Duration Timer (1s local UI clock; API status polling runs >= 10s in useGlobalJobPolling)
+  const hasRunningDataJob = dataJobs.some((j) => j.status === 'Handling');
   useEffect(() => {
-    const hasRunning = dataJobs.some((j) => j.status === 'Handling');
-    if (!hasRunning) return;
+    if (!hasRunningDataJob) return;
 
     const intervalId = setInterval(() => {
       setDataJobs((prevJobs) =>
         prevJobs.map((job) => {
           if (job.status === 'Handling') {
-            return { ...job, elapsedSeconds: calculateJobElapsedSeconds(job) };
+            const realElapsed = calculateJobElapsedSeconds(job);
+            return job.elapsedSeconds === realElapsed ? job : { ...job, elapsedSeconds: realElapsed };
           }
           return job;
         })
@@ -1139,7 +1289,7 @@ export const DataTransferCenter: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [dataJobs, setDataJobs]);
+  }, [hasRunningDataJob, setDataJobs]);
 
   return (
     <div className="space-y-6 animate-fade-in font-sans">
@@ -1354,31 +1504,92 @@ export const DataTransferCenter: React.FC = () => {
             </div>
           </div>
 
-          {(activeJob.sourcePreCmd || activeJob.destinationPostCmd) && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="p-3.5 bg-bg-input/60 border border-border-main/50 rounded-xl space-y-1.5">
-                <span className="block font-normal text-text-muted text-sm">
-                  Source Command (Before Transfer) - <code className="font-mono text-xs text-emerald-500">source.preCmd</code>
-                </span>
-                <pre className="text-xs font-mono font-extrabold text-text-main whitespace-pre-wrap break-all bg-bg-panel/80 p-2.5 rounded-lg border border-border-main/40">
-                  {activeJob.sourcePreCmd || '(None)'}
-                </pre>
+          {(activeJob.sourcePreCmd || activeJob.destinationPreCmd || activeJob.sourcePostCmd || activeJob.destinationPostCmd || activeJob.hookOutputs) && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-extrabold text-text-main flex items-center gap-2">
+                    <Terminal className="w-4 h-4 text-emerald-500" />
+                    Symmetric 4-Stage Hook Lifecycle (transx)
+                  </span>
+                  {activeJob.effectiveStrategy && (
+                    <span className="px-2 py-0.5 rounded-lg bg-teal-500/15 border border-teal-500/30 text-teal-600 dark:text-teal-400 text-xs font-mono font-extrabold">
+                      Strategy: {activeJob.effectiveStrategy}
+                    </span>
+                  )}
+                  {activeJob.sourceRecovered && (
+                    <span className="px-2 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-extrabold">
+                      Source Auto-Unquiesced via postCmd
+                    </span>
+                  )}
+                </div>
+                {(typeof activeJob.filesTransferred === 'number' || typeof activeJob.bytesTransferred === 'number') && (
+                  <span className="text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                    Transferred: {activeJob.filesTransferred ?? 0} files / {Math.round(((activeJob.bytesTransferred ?? 0) / (1024 * 1024)) * 10) / 10} MiB
+                  </span>
+                )}
               </div>
-              <div className="p-3.5 bg-bg-input/60 border border-border-main/50 rounded-xl space-y-1.5">
-                <span className="block font-normal text-text-muted text-sm">
-                  Destination Command (After Transfer) - <code className="font-mono text-xs text-teal-500">destination.postCmd</code>
-                </span>
-                <pre className="text-xs font-mono font-extrabold text-text-main whitespace-pre-wrap break-all bg-bg-panel/80 p-2.5 rounded-lg border border-border-main/40">
-                  {activeJob.destinationPostCmd || '(None)'}
-                </pre>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="p-3.5 bg-bg-input/60 border border-border-main/50 rounded-xl space-y-1.5">
+                  <span className="block font-normal text-text-muted text-sm">
+                    1. Source Pre-Command - <code className="font-mono text-xs text-emerald-500">source.preCmd</code>
+                  </span>
+                  <pre className="text-xs font-mono font-extrabold text-text-main whitespace-pre-wrap break-all bg-bg-panel/80 p-2.5 rounded-lg border border-border-main/40">
+                    {activeJob.sourcePreCmd || '(None)'}
+                  </pre>
+                  {(activeJob.hookOutputs?.sourcePreCmd || activeJob.hookOutputs?.['source.preCmd']) && (
+                    <pre className="text-xs font-mono text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap break-all bg-emerald-500/5 p-2 rounded-lg border border-emerald-500/20 max-h-28 overflow-y-auto">
+                      {activeJob.hookOutputs?.sourcePreCmd || activeJob.hookOutputs?.['source.preCmd']}
+                    </pre>
+                  )}
+                </div>
+                <div className="p-3.5 bg-bg-input/60 border border-border-main/50 rounded-xl space-y-1.5">
+                  <span className="block font-normal text-text-muted text-sm">
+                    2. Destination Pre-Command - <code className="font-mono text-xs text-teal-500">destination.preCmd</code>
+                  </span>
+                  <pre className="text-xs font-mono font-extrabold text-text-main whitespace-pre-wrap break-all bg-bg-panel/80 p-2.5 rounded-lg border border-border-main/40">
+                    {activeJob.destinationPreCmd || '(None)'}
+                  </pre>
+                  {(activeJob.hookOutputs?.destinationPreCmd || activeJob.hookOutputs?.['destination.preCmd']) && (
+                    <pre className="text-xs font-mono text-teal-600 dark:text-teal-400 whitespace-pre-wrap break-all bg-teal-500/5 p-2 rounded-lg border border-teal-500/20 max-h-28 overflow-y-auto">
+                      {activeJob.hookOutputs?.destinationPreCmd || activeJob.hookOutputs?.['destination.preCmd']}
+                    </pre>
+                  )}
+                </div>
+                <div className="p-3.5 bg-bg-input/60 border border-border-main/50 rounded-xl space-y-1.5">
+                  <span className="block font-normal text-text-muted text-sm">
+                    3. Source Post-Command (Auto-Unquiesce) - <code className="font-mono text-xs text-emerald-500">source.postCmd</code>
+                  </span>
+                  <pre className="text-xs font-mono font-extrabold text-text-main whitespace-pre-wrap break-all bg-bg-panel/80 p-2.5 rounded-lg border border-border-main/40">
+                    {activeJob.sourcePostCmd || '(None)'}
+                  </pre>
+                  {(activeJob.hookOutputs?.sourcePostCmd || activeJob.hookOutputs?.['source.postCmd'] || activeJob.hookOutputs?.['source.postCmd.recovery']) && (
+                    <pre className="text-xs font-mono text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap break-all bg-emerald-500/5 p-2 rounded-lg border border-emerald-500/20 max-h-28 overflow-y-auto">
+                      {activeJob.hookOutputs?.sourcePostCmd || activeJob.hookOutputs?.['source.postCmd'] || activeJob.hookOutputs?.['source.postCmd.recovery']}
+                    </pre>
+                  )}
+                </div>
+                <div className="p-3.5 bg-bg-input/60 border border-border-main/50 rounded-xl space-y-1.5">
+                  <span className="block font-normal text-text-muted text-sm">
+                    4. Destination Post-Command - <code className="font-mono text-xs text-teal-500">destination.postCmd</code>
+                  </span>
+                  <pre className="text-xs font-mono font-extrabold text-text-main whitespace-pre-wrap break-all bg-bg-panel/80 p-2.5 rounded-lg border border-border-main/40">
+                    {activeJob.destinationPostCmd || '(None)'}
+                  </pre>
+                  {(activeJob.hookOutputs?.destinationPostCmd || activeJob.hookOutputs?.['destination.postCmd']) && (
+                    <pre className="text-xs font-mono text-teal-600 dark:text-teal-400 whitespace-pre-wrap break-all bg-teal-500/5 p-2 rounded-lg border border-teal-500/20 max-h-28 overflow-y-auto">
+                      {activeJob.hookOutputs?.destinationPostCmd || activeJob.hookOutputs?.['destination.postCmd']}
+                    </pre>
+                  )}
+                </div>
               </div>
             </div>
           )}
 
           {/* REST API REQUEST & RESPONSE LOG */}
           <div className="space-y-2">
-            <h4 className="text-sm font-bold text-text-muted font-mono uppercase">
-              REST API REQUEST &amp; RESPONSE LOG
+            <h4 className="text-sm font-bold text-text-muted font-mono">
+              REST API Request and Response Log
             </h4>
             <div className="bg-bg-input p-4 rounded-xl border border-border-main/40 font-mono text-sm text-text-muted space-y-1.5 max-h-48 overflow-y-auto">
               {activeJob.logs.map((log, idx) => (
@@ -1394,6 +1605,206 @@ export const DataTransferCenter: React.FC = () => {
 
         </div>
       )}
+
+      {/* SECTION 3: 4-Layer AI Stack Live Verification (Before vs. After) */}
+      <div className="glass-panel p-6 rounded-2xl border border-border-main space-y-5 animate-fade-in">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-main/30 pb-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              <Cpu className="w-5 h-5 text-emerald-500" />
+              <h3 className="text-base font-extrabold text-text-main">
+                4-Layer AI Stack Live Verification (Before vs. After)
+              </h3>
+              {(sourceStackStatus?.isSample || targetStackStatus?.isSample) && (
+                <span className="px-2 py-0.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-500 text-xs font-extrabold font-mono">
+                  [Sample]
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-text-muted">
+              Verifies Service UI (:3000), Ollama Runtime (:11434), SHA-256 Model Weights Digest, and GPU VRAM Inference Decode Speed across Source and Target nodes.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleVerifyAiStack('both')}
+              disabled={isProbingStack}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-sm font-extrabold transition flex items-center gap-2 cursor-pointer"
+            >
+              <Activity className={`w-4 h-4 ${isProbingStack ? 'animate-spin' : ''}`} />
+              <span>{isProbingStack ? 'Probing 4-Layer Stack...' : 'Verify Source & Target AI Stack'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleLoadSampleVerification}
+              disabled={isProbingStack}
+              className="px-3 py-2 bg-bg-panel hover:bg-emerald-500/10 border border-border-main hover:border-emerald-500/30 text-text-muted hover:text-text-main rounded-xl text-xs font-bold transition cursor-pointer"
+            >
+              Load Sample Result
+            </button>
+          </div>
+        </div>
+
+        {/* Probe Target Inputs */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="space-y-1">
+            <label className="block text-sm font-normal text-text-muted">Source AI Node IPv4</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={probeSourceHost}
+                onChange={(e) => setProbeSourceHost(e.target.value)}
+                placeholder="10.0.1.11"
+                className="flex-1 px-3 py-2 bg-bg-input border border-border-main rounded-xl text-sm font-mono font-extrabold text-text-main"
+              />
+              <button
+                type="button"
+                onClick={() => handleVerifyAiStack('source')}
+                disabled={isProbingStack}
+                className="px-3 py-2 bg-bg-panel hover:bg-emerald-500/10 border border-border-main text-xs font-extrabold text-emerald-600 dark:text-emerald-400 rounded-xl transition cursor-pointer shrink-0"
+              >
+                Probe Source
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-sm font-normal text-text-muted">Target Cloud GPU Node IPv4</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={probeTargetHost}
+                onChange={(e) => setProbeTargetHost(e.target.value)}
+                placeholder="Target GPU Public / Private IPv4"
+                className="flex-1 px-3 py-2 bg-bg-input border border-border-main rounded-xl text-sm font-mono font-extrabold text-text-main"
+              />
+              <button
+                type="button"
+                onClick={() => handleVerifyAiStack('target')}
+                disabled={isProbingStack}
+                className="px-3 py-2 bg-bg-panel hover:bg-teal-500/10 border border-border-main text-xs font-extrabold text-teal-600 dark:text-teal-400 rounded-xl transition cursor-pointer shrink-0"
+              >
+                Probe Target
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-sm font-normal text-text-muted">Verification Model Tag</label>
+            <input
+              type="text"
+              value={probeModelName}
+              onChange={(e) => setProbeModelName(e.target.value)}
+              placeholder="gemma4:e2b"
+              className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-xl text-sm font-mono font-extrabold text-text-main"
+            />
+          </div>
+        </div>
+
+        {probeError && (
+          <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-500 font-mono flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{probeError}</span>
+          </div>
+        )}
+
+        {(sourceStackStatus || targetStackStatus) && (() => {
+          const srcDigest = sourceStackStatus?.ollamaTags?.digest || '';
+          const tgtDigest = targetStackStatus?.ollamaTags?.digest || '';
+          const digestMatched = Boolean(srcDigest && tgtDigest && srcDigest === tgtDigest);
+
+          const renderEndpointColumn = (title: string, badgeTone: 'emerald' | 'teal', st: AiStackLayerStatus | null) => {
+            if (!st) {
+              return (
+                <div className="p-4 rounded-xl bg-bg-input/40 border border-border-main/50 text-sm text-text-muted italic flex items-center justify-center min-h-40">
+                  Not probed yet
+                </div>
+              );
+            }
+            const vramGiB = st.ollamaPs.vramBytes ? Math.round((st.ollamaPs.vramBytes / (1024 ** 3)) * 10) / 10 : 0;
+            const sizeGiB = st.ollamaTags.sizeBytes ? Math.round((st.ollamaTags.sizeBytes / (1024 ** 3)) * 10) / 10 : 0;
+            const accentClass = badgeTone === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : 'text-teal-600 dark:text-teal-400';
+
+            return (
+              <div className="p-4 rounded-xl bg-bg-input/60 border border-border-main/60 space-y-3">
+                <div className="flex items-center justify-between border-b border-border-main/30 pb-2">
+                  <span className="text-sm font-extrabold text-text-main">{title}</span>
+                  <span className={`text-xs font-mono font-extrabold ${accentClass}`}>{st.host}</span>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-normal text-text-muted">Layer 4 - Service UI (:{st.openWebUi.port || 3000}):</span>
+                    <span className={`font-extrabold font-mono ${st.openWebUi.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+                      {st.openWebUi.ok
+                        ? `HTTP ${st.openWebUi.httpStatus} (${st.openWebUi.version || 'Open WebUI'}, ${st.openWebUi.latencyMs}ms)`
+                        : st.openWebUi.error || 'Unreachable'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-normal text-text-muted">Layer 3 - Inference Engine (:11434):</span>
+                    <span className={`font-extrabold font-mono ${st.inference.ok ? 'text-text-main' : 'text-amber-500'}`}>
+                      {st.inference.ok
+                        ? `${st.inference.tokensPerSec ?? '-'} tok/s (${st.inference.latencyMs}ms)`
+                        : st.inference.error || 'Idle'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-normal text-text-muted">Layer 2 - Model Weights:</span>
+                    <span className="font-extrabold font-mono text-text-main">
+                      {st.ollamaTags.ok && st.ollamaTags.modelName
+                        ? `${st.ollamaTags.modelName} (${sizeGiB} GiB${st.ollamaTags.quantizationLevel ? `, ${st.ollamaTags.quantizationLevel}` : ''})`
+                        : st.ollamaTags.error || 'No model found'}
+                    </span>
+                  </div>
+
+                  {st.ollamaTags.digest && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-normal text-text-muted">SHA-256 Digest:</span>
+                      <span className="font-extrabold font-mono text-xs text-text-main truncate max-w-[260px]" title={st.ollamaTags.digest}>
+                        {st.ollamaTags.digest.slice(0, 26)}...
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-normal text-text-muted">Layer 1 - GPU VRAM Runtime:</span>
+                    <span className={`font-extrabold font-mono ${st.ollamaPs.gpuAccelerated ? 'text-emerald-600 dark:text-emerald-400' : 'text-text-muted'}`}>
+                      {st.ollamaPs.gpuAccelerated ? `GPU Active (${vramGiB} GiB VRAM)` : st.ollamaPs.ok ? 'Standby (0 GiB VRAM)' : 'Unavailable'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          };
+
+          return (
+            <div className="space-y-3">
+              {digestMatched && (
+                <div className="px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
+                      Identical Model Weights Digest Verified (Zero Corruption)
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono font-extrabold text-text-main">
+                    {srcDigest.slice(0, 32)}...
+                  </span>
+                </div>
+              )}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {renderEndpointColumn('Before Migration (Source AI Node)', 'emerald', sourceStackStatus)}
+                {renderEndpointColumn('After Migration (Target Cloud GPU Node)', 'teal', targetStackStatus)}
+              </div>
+            </div>
+          );
+        })()}
+      </div>
 
       {/* Full Width Data Migration Launch Modal (max-w-[98vw] / w-[96vw]) */}
       {showLaunchModal && (
@@ -2892,11 +3303,11 @@ export const DataTransferCenter: React.FC = () => {
                   >
                     <Terminal className="w-4 h-4 text-emerald-500 shrink-0" />
                     <span className="text-sm font-extrabold text-text-main group-hover:text-emerald-500 transition">
-                      Source &amp; Destination Commands (Optional)
+                      Symmetric 4-Stage Commands (Optional)
                     </span>
                     <span className="text-xs font-normal text-text-muted">
                       {hasAnyRemoteSsh
-                        ? '(Executes preCmd on Source SSH before transfer and postCmd on Destination SSH after transfer)'
+                        ? '(source.preCmd -> destination.preCmd -> Transfer -> source.postCmd -> destination.postCmd)'
                         : '(Disabled: Object Storage does not support remote shell command execution)'}
                     </span>
                     {hasAnyRemoteSsh && (
@@ -2925,11 +3336,13 @@ export const DataTransferCenter: React.FC = () => {
                     >
                       + Preset: MySQL Dump &amp; Restore
                     </button>
-                    {(sourcePreCmd || destinationPostCmd) && (
+                    {(sourcePreCmd || destinationPreCmd || sourcePostCmd || destinationPostCmd) && (
                       <button
                         type="button"
                         onClick={() => {
                           setSourcePreCmd('');
+                          setDestinationPreCmd('');
+                          setSourcePostCmd('');
                           setDestinationPostCmd('');
                         }}
                         className="px-2 py-1 bg-bg-panel hover:bg-red-500/10 border border-border-main text-text-muted hover:text-red-400 text-xs font-bold rounded-lg transition cursor-pointer"
@@ -2945,48 +3358,88 @@ export const DataTransferCenter: React.FC = () => {
                     <div className={`space-y-1.5 ${!isSourceRemoteSsh ? 'opacity-50' : ''}`}>
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-normal text-text-muted">
-                          Source Command (Before Transfer)
+                          1. Source Pre-Command (Quiesce Before Transfer)
                         </label>
                         <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
                           {isSourceRemoteSsh ? 'source.preCmd' : 'source.preCmd (SSH Only)'}
                         </span>
                       </div>
                       <textarea
-                        rows={3}
+                        rows={2}
                         disabled={!isSourceRemoteSsh}
                         value={sourcePreCmd}
                         onChange={(e) => setSourcePreCmd(e.target.value)}
-                        placeholder={isSourceRemoteSsh ? 'e.g., cd /opt/aimx/ai-service && sudo docker compose stop && sync' : 'Disabled: Source is Object Storage (SSH endpoint required for preCmd)'}
-                        className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono text-xs font-extrabold focus:outline-none focus:border-emerald-500 resize-y disabled:cursor-not-allowed"
+                        placeholder={isSourceRemoteSsh ? 'e.g., cd /opt/aimx/ai-service && sudo docker compose stop && sync' : 'Disabled: Source is Object Storage (SSH endpoint required)'}
+                        className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono text-xs font-extrabold focus:outline-none focus:border-emerald-500 resize-y disabled:cursor-not-allowed"
                       />
                       <p className="text-xs text-text-muted">
-                        {isSourceRemoteSsh
-                          ? 'Runs on the Source server via SSH before rsync / S3 transfer begins (e.g., stop containers, flush DB, fix file ownership).'
-                          : 'Not available when Source is Object Storage.'}
+                        Runs first on Source SSH to pause containers or flush writes before transfer.
                       </p>
                     </div>
 
                     <div className={`space-y-1.5 ${!isTargetRemoteSsh ? 'opacity-50' : ''}`}>
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-normal text-text-muted">
-                          Destination Command (After Transfer)
+                          2. Destination Pre-Command (Prepare Target)
+                        </label>
+                        <span className="text-xs font-mono font-bold text-teal-600 dark:text-teal-400">
+                          {isTargetRemoteSsh ? 'destination.preCmd' : 'destination.preCmd (SSH Only)'}
+                        </span>
+                      </div>
+                      <textarea
+                        rows={2}
+                        disabled={!isTargetRemoteSsh}
+                        value={destinationPreCmd}
+                        onChange={(e) => setDestinationPreCmd(e.target.value)}
+                        placeholder={isTargetRemoteSsh ? 'e.g., sudo mkdir -p /opt/aimx/ai-service && sudo chown -R $USER:$USER /opt/aimx/ai-service' : 'Disabled: Destination is Object Storage (SSH endpoint required)'}
+                        className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono text-xs font-extrabold focus:outline-none focus:border-teal-500 resize-y disabled:cursor-not-allowed"
+                      />
+                      <p className="text-xs text-text-muted">
+                        Runs on Destination SSH before transfer to create target directories and set permissions.
+                      </p>
+                    </div>
+
+                    <div className={`space-y-1.5 ${!isSourceRemoteSsh ? 'opacity-50' : ''}`}>
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-normal text-text-muted">
+                          3. Source Post-Command (Resume / Failure Recovery)
+                        </label>
+                        <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                          {isSourceRemoteSsh ? 'source.postCmd' : 'source.postCmd (SSH Only)'}
+                        </span>
+                      </div>
+                      <textarea
+                        rows={2}
+                        disabled={!isSourceRemoteSsh}
+                        value={sourcePostCmd}
+                        onChange={(e) => setSourcePostCmd(e.target.value)}
+                        placeholder={isSourceRemoteSsh ? 'e.g., cd /opt/aimx/ai-service && sudo docker compose up -d' : 'Disabled: Source is Object Storage (SSH endpoint required)'}
+                        className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono text-xs font-extrabold focus:outline-none focus:border-emerald-500 resize-y disabled:cursor-not-allowed"
+                      />
+                      <p className="text-xs text-text-muted">
+                        Runs immediately after transfer (and automatically on Stage 2/3 failure) to resume Source workloads.
+                      </p>
+                    </div>
+
+                    <div className={`space-y-1.5 ${!isTargetRemoteSsh ? 'opacity-50' : ''}`}>
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-normal text-text-muted">
+                          4. Destination Post-Command (Start Target Service)
                         </label>
                         <span className="text-xs font-mono font-bold text-teal-600 dark:text-teal-400">
                           {isTargetRemoteSsh ? 'destination.postCmd' : 'destination.postCmd (SSH Only)'}
                         </span>
                       </div>
                       <textarea
-                        rows={3}
+                        rows={2}
                         disabled={!isTargetRemoteSsh}
                         value={destinationPostCmd}
                         onChange={(e) => setDestinationPostCmd(e.target.value)}
-                        placeholder={isTargetRemoteSsh ? 'e.g., cd /opt/aimx/ai-service && sudo docker compose up -d' : 'Disabled: Destination is Object Storage (SSH endpoint required for postCmd)'}
-                        className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono text-xs font-extrabold focus:outline-none focus:border-teal-500 resize-y disabled:cursor-not-allowed"
+                        placeholder={isTargetRemoteSsh ? 'e.g., cd /opt/aimx/ai-service && sudo docker compose up -d' : 'Disabled: Destination is Object Storage (SSH endpoint required)'}
+                        className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono text-xs font-extrabold focus:outline-none focus:border-teal-500 resize-y disabled:cursor-not-allowed"
                       />
                       <p className="text-xs text-text-muted">
-                        {isTargetRemoteSsh
-                          ? 'Runs on the Destination server via SSH immediately after data transfer completes (e.g., docker compose up -d, GPU model pre-warmup).'
-                          : 'Not available when Destination is Object Storage.'}
+                        Runs on Destination SSH after transfer completes (e.g., Docker Compose startup and GPU model warmup).
                       </p>
                     </div>
                   </div>

@@ -15,6 +15,7 @@ limitations under the License.
 package recommendation
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"regexp"
@@ -31,7 +32,7 @@ import (
 )
 
 // RecommendK8sInfra builds a complete K8s infra recommendation from on-premise infra data.
-func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedInfra, error) {
+func RecommendK8sInfra(ctx context.Context, provider, region string, onpremInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedInfra, error) {
 	emptyRet := cloudmodel.RecommendedInfra{}
 
 	if onpremInfra.K8sCluster == nil {
@@ -46,11 +47,11 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 	// Read everything the target cloud declares before any per-worker work begins. Keeping the
 	// lookups here — rather than inside the helpers that consume them — is what makes the rest of
 	// this function, and those helpers, free of hidden I/O.
-	profile := getTargetProfile(provider, region)
+	profile := getTargetProfile(ctx, provider, region)
 
 	// Versions come from a different endpoint than the K8s asset, so they are read separately
 	// rather than folded into the profile: the L0 APIs need the profile but not the versions.
-	available, err := tbclient.NewSession().GetAvailableK8sVersions(provider, region)
+	available, err := tbclient.NewSession().SetContext(ctx).GetAvailableK8sVersions(provider, region)
 	if err != nil {
 		return emptyRet, fmt.Errorf("failed to fetch available K8s versions from Tumblebug: %w", err)
 	}
@@ -80,7 +81,10 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 	// sortK8sSpecsByProximity sorting a one-element slice — so the two APIs could recommend
 	// different specs for the same worker whenever the cheapest candidate in range is not the
 	// closest one.
-	groups, failed := recommendNodeGroups(profile, normalizeWorkers(workerNodes), GetDefaultSpecsLimit())
+	groups, failed := recommendNodeGroups(ctx, profile, normalizeWorkers(workerNodes), GetDefaultSpecsLimit())
+	if err := ctx.Err(); err != nil {
+		return emptyRet, err
+	}
 	logExcludedWorkers(failed)
 	if len(groups) == 0 {
 		return emptyRet, fmt.Errorf("no K8s worker node group could be recommended: %s", summarizeFailures(failed))
@@ -96,9 +100,12 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 		includedWorkers += len(g.nodes)
 	}
 
-	vNetReq := buildK8sVNetReq(profile, connectionName, onpremInfra)
+	vNetReq := buildK8sVNetReq(ctx, profile, connectionName, onpremInfra)
 	sshKeyReq := buildK8sSshKeyReq(connectionName)
-	sgReqList := buildK8sSecurityGroupReqList(connectionName, provider, region, vNetReq.CidrBlock, workerNodes, onpremInfra.K8sCluster)
+	sgReqList := buildK8sSecurityGroupReqList(ctx, connectionName, provider, region, vNetReq.CidrBlock, workerNodes, onpremInfra.K8sCluster)
+	if err := ctx.Err(); err != nil {
+		return emptyRet, err
+	}
 
 	clusterReq := cloudmodel.K8sClusterReq{
 		ConnectionName: connectionName,
@@ -294,7 +301,7 @@ func (t workerTarget) specId() string {
 //
 // The memo lives for one call, during which limit is fixed, so limit is not part of the key. Add
 // it if a future caller varies limit per worker.
-func recommendSpecsAndImages(p targetProfile, reqs []workerRequirement, limit int) (candidates, failed []workerTarget) {
+func recommendSpecsAndImages(ctx context.Context, p targetProfile, reqs []workerRequirement, limit int) (candidates, failed []workerTarget) {
 
 	memo := make(map[string]workerTarget, len(reqs))
 	targets := make([]workerTarget, 0, len(reqs))
@@ -307,7 +314,7 @@ func recommendSpecsAndImages(p targetProfile, reqs []workerRequirement, limit in
 			// workers can share a key and still have been floored from different source sizes.
 			t.node, t.upscaleNote = req.node, req.upscaleNote
 		} else {
-			t = resolveWorkerTarget(p, req, limit)
+			t = resolveWorkerTarget(ctx, p, req, limit)
 			memo[key] = t
 		}
 		targets = append(targets, t)
@@ -332,10 +339,10 @@ func splitResolved(targets []workerTarget) (candidates, failed []workerTarget) {
 // resolveWorkerTarget searches for one worker's spec candidates and node image. A non-nil err on
 // the result means this worker could not be resolved; it is never returned as a Go error because
 // the caller keeps going with the workers that did resolve.
-func resolveWorkerTarget(p targetProfile, req workerRequirement, limit int) workerTarget {
+func resolveWorkerTarget(ctx context.Context, p targetProfile, req workerRequirement, limit int) workerTarget {
 	t := workerTarget{node: req.node, upscaleNote: req.upscaleNote}
 
-	specs, err := RecommendK8sNodeSpecs(p.provider, p.region, req, limit)
+	specs, err := RecommendK8sNodeSpecs(ctx, p.provider, p.region, req, limit)
 	switch {
 	case err != nil:
 		// Keep machine IDs out of the error text: failures are grouped by cause and the
@@ -429,8 +436,8 @@ func groupWorkersIntoNodeGroups(candidates []workerTarget) []nodeGroupAccum {
 // sites is what stops RecommendK8sInfra and the L0 spec API from ending up with different node
 // group breakdowns for the same input — they used to derive groups independently and could
 // disagree.
-func recommendNodeGroups(p targetProfile, reqs []workerRequirement, limit int) ([]nodeGroupAccum, []workerTarget) {
-	candidates, failed := recommendSpecsAndImages(p, reqs, limit) // find specs and images     (I/O)
+func recommendNodeGroups(ctx context.Context, p targetProfile, reqs []workerRequirement, limit int) ([]nodeGroupAccum, []workerTarget) {
+	candidates, failed := recommendSpecsAndImages(ctx, p, reqs, limit) // find specs and images     (I/O)
 	groups := groupWorkersIntoNodeGroups(candidates)              // workers -> node groups    (pure)
 	return mergeNodeGroupsByUpsizing(groups), failed              // node groups -> fewer ones (pure)
 }
@@ -840,7 +847,7 @@ const (
 // RecommendVNet, then checks that the chosen CIDR does not overlap with the cluster's
 // PodCIDR or ServiceCIDR. If network data is absent or recommendation fails, it falls
 // back to the hardcoded 10.10.0.0/16 default so recommendation remains resilient.
-func buildK8sVNetReq(p targetProfile, connectionName string, srcInfra onpremmodel.OnpremInfra) cloudmodel.VNetReq {
+func buildK8sVNetReq(ctx context.Context, p targetProfile, connectionName string, srcInfra onpremmodel.OnpremInfra) cloudmodel.VNetReq {
 	const fallbackCIDR = "10.10.0.0/16"
 
 	provider, region := p.provider, p.region
@@ -870,7 +877,7 @@ func buildK8sVNetReq(p targetProfile, connectionName string, srcInfra onpremmode
 
 	// Try dynamic recommendation when source network data is available.
 	if len(srcInfra.Network.IPv4Networks.CidrBlocks) > 0 || len(srcInfra.Network.IPv4Networks.DefaultGateways) > 0 {
-		if recommended, err := RecommendVNet(provider, region, srcInfra); err == nil && len(recommended) > 0 {
+		if recommended, err := RecommendVNet(ctx, provider, region, srcInfra); err == nil && len(recommended) > 0 {
 			vpcCIDR := recommended[0].CidrBlock
 			// Check for CIDR overlap with K8s internal networks.
 			if srcInfra.K8sCluster != nil {
@@ -938,8 +945,8 @@ func defaultRequiredSubnetCount(provider string) int {
 //
 // This stays a lookup of its own rather than joining the K8s asset read: it hits a different
 // endpoint, and only multi-subnet CSPs need it at all.
-func getRegionZones(provider, region string) []string {
-	info, err := tbclient.NewSession().ReadRegionInfo(provider, region)
+func getRegionZones(ctx context.Context, provider, region string) []string {
+	info, err := tbclient.NewSession().SetContext(ctx).ReadRegionInfo(provider, region)
 	if err != nil || len(info.Zones) == 0 {
 		fallback := []string{region + "a", region + "b"}
 		log.Warn().Err(err).Str("provider", provider).Str("region", region).
@@ -972,10 +979,10 @@ type targetProfile struct {
 //
 // It does not fail. Each field falls back to what the individual lookups used before, so a
 // Tumblebug hiccup degrades the recommendation instead of aborting it.
-func getTargetProfile(provider, region string) targetProfile {
+func getTargetProfile(ctx context.Context, provider, region string) targetProfile {
 	p := targetProfile{provider: provider, region: region, rootDiskType: "default"}
 
-	profile, err := tbclient.NewSession().GetK8sClusterProfile(provider, region)
+	profile, err := tbclient.NewSession().SetContext(ctx).GetK8sClusterProfile(provider, region)
 	if err != nil {
 		log.Warn().Err(err).Str("provider", provider).Str("region", region).
 			Msg("Failed to read K8s cluster info; using per-field defaults")
@@ -998,7 +1005,7 @@ func getTargetProfile(provider, region string) targetProfile {
 	}
 
 	if p.requiredSubnetCount > 1 {
-		p.regionZones = getRegionZones(provider, region)
+		p.regionZones = getRegionZones(ctx, provider, region)
 	}
 	return p
 }
@@ -1020,7 +1027,7 @@ func buildK8sSshKeyReq(connectionName string) cloudmodel.SshKeyReq {
 // is absent (e.g., honeybee mergeK8sNodes bug), it falls back to a minimal fixed rule set.
 //
 // Note: VNetId is intentionally empty here; migration logic fills it after VNet creation.
-func buildK8sSecurityGroupReqList(connectionName, provider, region, vpcCIDR string, workers []onpremmodel.NodeProperty, k8sCluster *onpremmodel.K8sClusterProperty) []cloudmodel.SecurityGroupReq {
+func buildK8sSecurityGroupReqList(ctx context.Context, connectionName, provider, region, vpcCIDR string, workers []onpremmodel.NodeProperty, k8sCluster *onpremmodel.K8sClusterProperty) []cloudmodel.SecurityGroupReq {
 	const k8sKubeletPort = "10250"
 	const k8sApiServerPort = "6443"
 	nodePortRange := "30000-32767"
@@ -1058,7 +1065,7 @@ func buildK8sSecurityGroupReqList(connectionName, provider, region, vpcCIDR stri
 	}
 
 	if len(workerWithFirewall) > 0 {
-		sgList, err := RecommendSecurityGroups(provider, region, workerWithFirewall)
+		sgList, err := RecommendSecurityGroups(ctx, provider, region, workerWithFirewall)
 		if err == nil && len(sgList.TargetSecurityGroupList) > 0 {
 			// Take the first recommended SG and augment with K8s-specific ports.
 			sg := sgList.TargetSecurityGroupList[0].TargetSecurityGroup

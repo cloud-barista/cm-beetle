@@ -15,6 +15,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -103,8 +104,8 @@ func MigrateK8sInfra(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() (tbmodel.K8sClusterInfo, error) {
-			return migration.CreateK8sInfra(nsId, &infraToMigrate, req.Lineage)
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) (tbmodel.K8sClusterInfo, error) {
+			return migration.CreateK8sInfra(ctx, nsId, &infraToMigrate, req.Lineage)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -121,7 +122,8 @@ func MigrateK8sInfra(c echo.Context) error {
 			"K8s infra migration started. Use GET /request/{reqId} to check status."))
 	}
 
-	clusterInfo, err := migration.CreateK8sInfra(nsId, &infraToMigrate, req.Lineage)
+	// Detach HTTP client cancellation so sync K8s provisioning continues if client disconnects.
+	clusterInfo, err := migration.CreateK8sInfra(context.WithoutCancel(c.Request().Context()), nsId, &infraToMigrate, req.Lineage)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Msg("failed to migrate K8s infra")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
@@ -160,8 +162,9 @@ func ListK8sClusters(c echo.Context) error {
 			fmt.Sprintf("Invalid option: %s (only 'id' is supported)", option)))
 	}
 
+	ctx := c.Request().Context()
 	if option == "id" {
-		idList, err := migration.ListK8sClusterIds(nsId)
+		idList, err := migration.ListK8sClusterIds(ctx, nsId)
 		if err != nil {
 			log.Error().Err(err).Str("nsId", nsId).Msg("failed to list K8s cluster IDs")
 			return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
@@ -169,7 +172,7 @@ func ListK8sClusters(c echo.Context) error {
 		return c.JSON(http.StatusOK, model.SuccessResponse(idList))
 	}
 
-	clusters, err := migration.ListK8sClusters(nsId)
+	clusters, err := migration.ListK8sClusters(ctx, nsId)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Msg("failed to list K8s clusters")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
@@ -200,7 +203,7 @@ func GetK8sCluster(c echo.Context) error {
 			fmt.Sprintf("Namespace ID and K8s cluster ID required (nsId=%s, k8sClusterId=%s)", nsId, k8sClusterId)))
 	}
 
-	clusterInfo, err := migration.GetK8sCluster(nsId, k8sClusterId)
+	clusterInfo, err := migration.GetK8sCluster(c.Request().Context(), nsId, k8sClusterId)
 	if err != nil {
 		log.Error().Err(err).Str("k8sClusterId", k8sClusterId).Msg("failed to get K8s cluster")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
@@ -230,7 +233,8 @@ func DeleteK8sCluster(c echo.Context) error {
 			fmt.Sprintf("Namespace ID and K8s cluster ID required (nsId=%s, k8sClusterId=%s)", nsId, k8sClusterId)))
 	}
 
-	if err := migration.DeleteK8sCluster(nsId, k8sClusterId); err != nil {
+	// Detach HTTP client cancellation so multi-step node group and cluster deletion completes cleanly.
+	if err := migration.DeleteK8sCluster(context.WithoutCancel(c.Request().Context()), nsId, k8sClusterId); err != nil {
 		log.Error().Err(err).Str("k8sClusterId", k8sClusterId).Msg("failed to delete K8s cluster")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}

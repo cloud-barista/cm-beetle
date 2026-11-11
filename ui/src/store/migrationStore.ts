@@ -1,6 +1,6 @@
 import { create, StateCreator } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty } from '../types/migration';
+import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, SubRequestItem, SubRequestSummary, DataHookOutputs } from '../types/migration';
 import { honeybeeApi, artifactApi, SaveArtifactOptions, beetleApi, tumblebugApi, pickPreferredKoreaRegion } from '../api/client';
 import { isBuiltInSampleModel } from '../utils/modelFormat';
 import recommendedInfraSample from '../data/sampleTargetInfra.json';
@@ -257,6 +257,7 @@ interface MigrationState {
   nameSeed: string;
   isDeploying: boolean;
   activeDeploymentId: string;
+  activeDeploymentReqId: string;
   deploymentStatus: any | null;
   liveReportHtml: string;
   targetOverviewInfraId: string;
@@ -323,6 +324,9 @@ export interface MigrationJob {
   nlbReqId?: string;
   nlbStatus?: 'Idle' | 'Provisioning' | 'Success' | 'Failed';
   nlbHealth?: { healthy: boolean; status: string; checkedAt: string };
+  tumblebugSource?: string;
+  subRequestSummary?: SubRequestSummary;
+  subRequests?: SubRequestItem[];
 }
 
 export interface ObjectStorageJobCard {
@@ -363,7 +367,14 @@ export interface DataMigrationJob {
   logs: string[];
   isSample?: boolean;
   sourcePreCmd?: string;
+  destinationPreCmd?: string;
+  sourcePostCmd?: string;
   destinationPostCmd?: string;
+  hookOutputs?: DataHookOutputs;
+  sourceRecovered?: boolean;
+  effectiveStrategy?: string;
+  bytesTransferred?: number;
+  filesTransferred?: number;
   includeFilter?: string;
   excludeFilter?: string;
 }
@@ -910,6 +921,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   nameSeed: '',
   isDeploying: false,
   activeDeploymentId: '',
+  activeDeploymentReqId: '',
   deploymentStatus: null,
   liveReportHtml: '',
   targetOverviewInfraId: '',
@@ -935,13 +947,15 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
       // Direct live REST API request to Beetle for physical provisioning
       const lineage = get().selectedCloudModel?.lineage;
       const res = await beetleApi.executeMigration(nsId, nameSeed, cloudModel, true, lineage);
-      if (res.success && res.data) {
+      if (res.success) {
         const trimmedSeed = (nameSeed || '').trim();
         const baseName = cloudModel.targetInfra?.name || '';
         const composedName = trimmedSeed && baseName ? `${trimmedSeed}-${baseName}` : baseName;
-        const infraId = res.data.name || composedName;
-        set({ activeDeploymentId: infraId });
-        await get().fetchDeploymentStatus();
+        const infraId = res.data?.name || composedName;
+        set({ activeDeploymentId: infraId, activeDeploymentReqId: res.reqId || '' });
+        if (res.reqId) {
+          await get().fetchDeploymentStatus();
+        }
       } else {
         set({ isDeploying: false, deploymentStatus: { status: 'Failed', error: res.error } });
       }
@@ -953,11 +967,11 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   fetchDeploymentStatus: async () => {
-    const reqId = get().activeDeploymentId;
+    const reqId = get().activeDeploymentReqId;
     if (!reqId) return;
 
     try {
-      const statusData = await beetleApi.getRequestDetails(reqId);
+      const statusData = await beetleApi.getRequestDetails(reqId, { brief: true });
       set({ deploymentStatus: statusData });
       
       if (statusData && (statusData.status === 'Success' || statusData.status === 'Error')) {
@@ -1092,7 +1106,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
   pollStorageTeardownStatus: async (nsId: string, storageId: string, reqId: string) => {
     try {
-      const reqDetails = await beetleApi.getRequestDetails(reqId);
+      const reqDetails = await beetleApi.getRequestDetails(reqId, { brief: true });
       const reqStatus = reqDetails?.status;
       if (reqStatus === 'Completed' || reqStatus === 'Succeeded' || reqStatus === 'Success') {
         get().removeStorageTeardown(storageId);
@@ -1110,7 +1124,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
 
   pollInfraTeardownStatus: async (nsId: string, infraId: string, reqId: string) => {
     try {
-      const reqDetails = await beetleApi.getRequestDetails(reqId);
+      const reqDetails = await beetleApi.getRequestDetails(reqId, { brief: true });
       const reqStatus = reqDetails.status;
       if (reqStatus === 'Completed' || reqStatus === 'Succeeded' || reqStatus === 'Success') {
         get().removeInfraTeardown(infraId);

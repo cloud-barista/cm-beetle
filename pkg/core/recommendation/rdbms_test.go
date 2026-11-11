@@ -1,6 +1,7 @@
 package recommendation
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -217,19 +218,19 @@ func TestRecommendRDBMS_ValidationFailures(t *testing.T) {
 	}
 
 	// Missing CSP
-	_, err := RecommendRDBMS("", "ap-northeast-2", validSource, true)
+	_, err := RecommendRDBMS(context.Background(), "", "ap-northeast-2", validSource, true)
 	if err == nil || !strings.Contains(err.Error(), "desiredCsp and desiredRegion are required") {
 		t.Errorf("expected error for missing CSP, got %v", err)
 	}
 
 	// Missing Region
-	_, err = RecommendRDBMS("aws", "", validSource, true)
+	_, err = RecommendRDBMS(context.Background(), "aws", "", validSource, true)
 	if err == nil || !strings.Contains(err.Error(), "desiredCsp and desiredRegion are required") {
 		t.Errorf("expected error for missing Region, got %v", err)
 	}
 
 	// Invalid Source (empty sources)
-	_, err = RecommendRDBMS("aws", "ap-northeast-2", []rdbmsmodel.SourceRDBMSProperty{}, true)
+	_, err = RecommendRDBMS(context.Background(), "aws", "ap-northeast-2", []rdbmsmodel.SourceRDBMSProperty{}, true)
 	if err == nil || !strings.Contains(err.Error(), "at least one source RDBMS instance is required") {
 		t.Errorf("expected error for empty sources, got %v", err)
 	}
@@ -393,7 +394,7 @@ func TestRecommendRDBMS_AutoFillVsStrictValidationFlag(t *testing.T) {
 	}
 
 	// 1. When autoFillSourceDefaults = false, strict ValidateSourceRDBMS must fail immediately
-	_, err := RecommendRDBMS("aws", "ap-northeast-2", zeroSpecSource, false)
+	_, err := RecommendRDBMS(context.Background(), "aws", "ap-northeast-2", zeroSpecSource, false)
 	if err == nil {
 		t.Fatalf("expected validation error when autoFillSourceDefaults is false, got nil")
 	}
@@ -404,7 +405,7 @@ func TestRecommendRDBMS_AutoFillVsStrictValidationFlag(t *testing.T) {
 
 	// 2. When autoFillSourceDefaults = true, validation does not fail with "vcpu must be greater than 0"
 	// (it proceeds past source validation to Tumblebug network call or capability lookup)
-	_, err = RecommendRDBMS("aws", "ap-northeast-2", zeroSpecSource, true)
+	_, err = RecommendRDBMS(context.Background(), "aws", "ap-northeast-2", zeroSpecSource, true)
 	// If it fails, it must NOT be a SourceRDBMS validation failure (such as "vcpu must be greater than 0")
 	if err != nil && (strings.Contains(err.Error(), "effective vcpu must be greater than 0") ||
 		strings.Contains(err.Error(), "engineVersion is required")) {

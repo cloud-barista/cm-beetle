@@ -15,6 +15,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -101,8 +102,8 @@ func MigrateNlbs(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() (cloudmodel.MigratedNlbResult, error) {
-			return migration.CreateNlbs(nsId, infraId, req, useExisting)
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) (cloudmodel.MigratedNlbResult, error) {
+			return migration.CreateNlbs(ctx, nsId, infraId, req, useExisting)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -119,7 +120,7 @@ func MigrateNlbs(c echo.Context) error {
 			"NLB migration started. Use GET /request/{reqId} to check status."))
 	}
 
-	result, err := migration.CreateNlbs(nsId, infraId, req, useExisting)
+	result, err := migration.CreateNlbs(c.Request().Context(), nsId, infraId, req, useExisting)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -167,7 +168,7 @@ func ListNlbs(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("infraId required"))
 	}
 
-	infos, err := migration.ListNlbs(nsId, infraId)
+	infos, err := migration.ListNlbs(c.Request().Context(), nsId, infraId)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -216,7 +217,7 @@ func GetNlb(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nlbId required"))
 	}
 
-	info, err := migration.GetNlb(nsId, infraId, nlbId)
+	info, err := migration.GetNlb(c.Request().Context(), nsId, infraId, nlbId)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -270,7 +271,7 @@ func GetNlbHealth(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nlbId required"))
 	}
 
-	info, err := migration.GetNlbHealth(nsId, infraId, nlbId)
+	info, err := migration.GetNlbHealth(c.Request().Context(), nsId, infraId, nlbId)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -333,8 +334,8 @@ func DeleteNlb(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() (map[string]any, error) {
-			if err := migration.DeleteNlb(nsId, infraId, nlbId); err != nil {
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) (map[string]any, error) {
+			if err := migration.DeleteNlb(ctx, nsId, infraId, nlbId); err != nil {
 				return nil, err
 			}
 			return map[string]any{"message": fmt.Sprintf("NLB '%s' deleted successfully", nlbId)}, nil
@@ -354,7 +355,7 @@ func DeleteNlb(c echo.Context) error {
 			"NLB deletion started. Use GET /request/{reqId} to check status."))
 	}
 
-	if err := migration.DeleteNlb(nsId, infraId, nlbId); err != nil {
+	if err := migration.DeleteNlb(c.Request().Context(), nsId, infraId, nlbId); err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
 			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(

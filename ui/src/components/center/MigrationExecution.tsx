@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useMigrationStore, calculateJobElapsedSeconds } from '../../store/migrationStore';
+import { useMigrationStore, calculateJobElapsedSeconds, MigrationJob } from '../../store/migrationStore';
 import { beetleApi } from '../../api/client';
 import { CheckSSHReadyResponse, CloudModelEnvelope, RecommendedInfra } from '../../types/migration';
 import { MigrationSplitScreen } from './MigrationSplitScreen';
@@ -45,30 +45,6 @@ import {
   Network,
   Eye
 } from 'lucide-react';
-
-interface MigrationJob {
-  id: string;
-  reqId: string;
-  infraId: string;
-  nsId: string;
-  nameSeed: string;
-  csp: string;
-  region: string;
-  status: 'Handling' | 'Success' | 'Failed';
-  startTime: string;
-  createdAtMs?: number;
-  elapsedSeconds: number;
-  nodeGroupsCount: number;
-  totalVms: number;
-  logs: string[];
-  vms?: { publicIp: string; privateIp: string; specId: string; name: string; status?: string; systemMessage?: string }[];
-  error?: string;
-  isSample?: boolean;
-  targetNlbList?: any[];
-  nlbReqId?: string;
-  nlbStatus?: 'Idle' | 'Provisioning' | 'Success' | 'Failed';
-  nlbHealth?: { healthy: boolean; status: string; checkedAt: string };
-}
 
 export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const {
@@ -309,16 +285,17 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
         return;
       }
 
-      const reqId = res.reqId || `req-data-${Date.now().toString().slice(-6)}`;
+      const realReqId = res.reqId || '';
+      const jobId = realReqId || `job-data-${Date.now().toString().slice(-6)}`;
       const newJob: MigrationJob = {
-        id: reqId,
-        reqId,
+        id: jobId,
+        reqId: realReqId,
         infraId: `data-${selectedSourceBucket || 'source'} -> ${selectedTargetStorage || 'target'}`,
         nsId: dataNsId,
         nameSeed: 'data-mig',
         csp: dataCsp,
         region: dataRegion,
-        status: 'Handling',
+        status: realReqId ? 'Handling' : 'Success',
         startTime: new Date().toISOString(),
         createdAtMs: Date.now(),
         elapsedSeconds: 0,
@@ -326,14 +303,14 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
         totalVms: 1,
         logs: [
           `GET /beetle/migration/data/encryptionKey -> Issued KeyID: ${usedKeyId}`,
-          `POST /beetle/migration/data -> Encrypted fields & Dispatched (ReqID: ${reqId}, Status: Handling)`
+          `POST /beetle/migration/data -> Encrypted fields & Dispatched (ReqID: ${realReqId || 'sync'}, Status: ${realReqId ? 'Handling' : 'Success'})`
         ]
       };
 
       setJobs(prev => [newJob, ...prev]);
       setActiveJobId(newJob.id);
       setShowDataLaunchModal(false);
-      setToastMsg(`🔒 Data Migration launched with encrypted credentials! (ReqID: ${reqId})`);
+      setToastMsg(`🔒 Data Migration launched with encrypted credentials! (ReqID: ${realReqId || 'sync'})`);
       setTimeout(() => setToastMsg(null), 6000);
     } catch (err: any) {
       setDataLaunchError(err.message || 'Failed to execute data migration.');
@@ -341,12 +318,6 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       setIsEncryptingAndLaunching(false);
     }
   };
-
-  // Keep fresh reference of jobs to prevent React closure stale state in setInterval
-  const jobsRef = useRef(jobs);
-  useEffect(() => {
-    jobsRef.current = jobs;
-  }, [jobs]);
 
   const [copiedIp, setCopiedIp] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -364,209 +335,54 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     }
   }, [selectedCloudModel]);
 
-  // Global Multi-Job Polling timer (Strict 1-to-1 GET /beetle/request/{reqId} Backend Tracking with jobsRef)
+  // Surface completion/failure toasts when global background polling updates job status
+  const prevJobStatusRef = useRef<Record<string, { status: MigrationJob['status']; nlbStatus?: MigrationJob['nlbStatus'] }>>({});
   useEffect(() => {
-    const interval = setInterval(async () => {
-      const currentJobs = jobsRef.current;
-      const activeJobsToPoll = currentJobs.filter(j => !j.isSample && j.status === 'Handling');
-      const activeNlbJobsToPoll = currentJobs.filter(j => !j.isSample && j.nlbStatus === 'Provisioning' && j.nlbReqId);
-      
-      if (activeJobsToPoll.length === 0 && activeNlbJobsToPoll.length === 0) {
-        return;
-      }
-
-      const statusUpdates: Record<string, { status: string; errorResponse?: string; responseData?: any }> = {};
-      const nlbStatusUpdates: Record<string, { status: string; errorResponse?: string; responseData?: any }> = {};
-
-      for (const job of activeJobsToPoll) {
-        try {
-          const res = await beetleApi.getRequestDetails(job.reqId);
-          if (res && res.status) {
-            statusUpdates[job.id] = {
-              status: res.status,
-              errorResponse: res.errorResponse,
-              responseData: res.responseData
-            };
-          }
-        } catch {
-          // ignore transient error
+    for (const job of jobs) {
+      if (job.isSample) continue;
+      const prev = prevJobStatusRef.current[job.id];
+      if (prev) {
+        if (prev.status === 'Handling' && job.status === 'Success') {
+          setToastMsg(`🎉 [${job.infraId}] Infrastructure Migration Succeeded!`);
+          setTimeout(() => setToastMsg(null), 5000);
+        } else if (prev.status === 'Handling' && job.status === 'Failed') {
+          setToastMsg(`✕ [${job.infraId}] Migration Failed: ${job.error || 'Backend provisioning error'}`);
+          setTimeout(() => setToastMsg(null), 6000);
+        } else if (prev.nlbStatus === 'Provisioning' && job.nlbStatus === 'Success') {
+          setToastMsg(`🎉 [${job.infraId}] NLB Migration Succeeded!`);
+          setTimeout(() => setToastMsg(null), 5000);
+        } else if (prev.nlbStatus === 'Provisioning' && job.nlbStatus === 'Failed') {
+          setToastMsg(`✕ [${job.infraId}] NLB Migration Failed`);
+          setTimeout(() => setToastMsg(null), 6000);
         }
       }
+      prevJobStatusRef.current[job.id] = { status: job.status, nlbStatus: job.nlbStatus };
+    }
+  }, [jobs]);
 
-      for (const job of activeNlbJobsToPoll) {
-        if (job.nlbReqId) {
-          try {
-            const res = await beetleApi.getRequestDetails(job.nlbReqId);
-            if (res && res.status) {
-              nlbStatusUpdates[job.id] = {
-                status: res.status,
-                errorResponse: res.errorResponse,
-                responseData: res.responseData
-              };
-            }
-          } catch {
-            // ignore transient error
-          }
-        }
-      }
+  const hasRunningLocalClockJob = jobs.some(
+    (j) => j.status === 'Handling' || j.nlbStatus === 'Provisioning'
+  );
 
-      setJobs(prevJobs =>
-        prevJobs.map(job => {
+  // Local 1s elapsed-time UI clock and demo sample completion (API polling runs >= 10s in useGlobalJobPolling)
+  useEffect(() => {
+    if (!hasRunningLocalClockJob) return;
+
+    const interval = setInterval(() => {
+      setJobs((prevJobs) =>
+        prevJobs.map((job) => {
           const isInfraDone = job.status === 'Success' || job.status === 'Failed';
           const isNlbDone = !job.nlbStatus || job.nlbStatus === 'Success' || job.nlbStatus === 'Failed';
           if (isInfraDone && isNlbDone) return job;
 
           const newElapsed = calculateJobElapsedSeconds(job);
 
-          // A. REAL BACKEND JOB LOGIC (Strict 1-to-1 API State)
           if (!job.isSample) {
-            let updatedJob = { ...job, elapsedSeconds: newElapsed };
-
-            // 1. Process NLB Stage 2 update if NLB is currently provisioning
-            if (job.nlbStatus === 'Provisioning' && job.nlbReqId) {
-              const nlbUpdate = nlbStatusUpdates[job.id];
-              if (nlbUpdate) {
-                if (nlbUpdate.status === 'Success' || nlbUpdate.status === 'Completed' || nlbUpdate.status === 'Succeeded') {
-                  const createdNlb = nlbUpdate.responseData?.nlbList?.[0];
-                  const nlbName = createdNlb?.name || createdNlb?.id || job.targetNlbList?.[0]?.targetGroup?.nodeGroupId || job.targetNlbList?.[0]?.name || `${job.infraId}-nlb`;
-                  setToastMsg(`🎉 [${job.infraId}] NLB Migration Succeeded!`);
-                  setTimeout(() => setToastMsg(null), 5000);
-                  updatedJob = {
-                    ...updatedJob,
-                    nlbStatus: 'Success',
-                    nlbHealth: {
-                      healthy: true,
-                      status: 'Healthy',
-                      checkedAt: new Date().toLocaleTimeString()
-                    },
-                    logs: [
-                      ...updatedJob.logs,
-                      `Stage 2 -> NLB Provisioned Successfully! (${nlbName})`,
-                      `GET /beetle/request/${job.nlbReqId} -> Status: Success`
-                    ]
-                  };
-                } else if (nlbUpdate.status === 'Error' || nlbUpdate.status === 'Failed') {
-                  setToastMsg(`✕ [${job.infraId}] NLB Migration Failed: ${nlbUpdate.errorResponse || 'Error'}`);
-                  setTimeout(() => setToastMsg(null), 6000);
-                  updatedJob = {
-                    ...updatedJob,
-                    nlbStatus: 'Failed',
-                    logs: [
-                      ...updatedJob.logs,
-                      `Stage 2 -> NLB Provisioning Failed: ${nlbUpdate.errorResponse || 'Backend NLB error'}`
-                    ]
-                  };
-                }
-              }
-            }
-
-            // 2. Process VM Infra Stage 1 update if Infra is currently handling
-            if (job.status === 'Handling') {
-              const update = statusUpdates[job.id];
-              const realStatus = update?.status || 'Handling';
-
-              if (realStatus === 'Error' || realStatus === 'Failed') {
-                const errorMsg = update?.errorResponse || 'Backend provisioning error';
-                setToastMsg(`✕ [${job.infraId}] Migration Failed: ${errorMsg}`);
-                setTimeout(() => setToastMsg(null), 6000);
-
-                const cleanedLogs = updatedJob.logs.filter(l => !l.includes(`GET /beetle/request/${job.reqId}`));
-                return {
-                  ...updatedJob,
-                  status: 'Failed',
-                  error: errorMsg,
-                  logs: [
-                    ...cleanedLogs,
-                    `GET /beetle/request/${job.reqId} -> Status: Error (${errorMsg}) (Duration: ${newElapsed}s)`
-                  ]
-                };
-              }
-
-              if (realStatus === 'Success' || realStatus === 'Completed' || realStatus === 'Succeeded') {
-                setToastMsg(`🎉 [${job.infraId}] Infrastructure Migration Succeeded!`);
-                setTimeout(() => setToastMsg(null), 5000);
-
-                // Stage 2: Automatic NLB Deployment Trigger if targetNlbList is present and nlbStatus is 'Idle'
-                const shouldTriggerNlb =
-                  job.targetNlbList && job.targetNlbList.length > 0 && (!job.nlbStatus || job.nlbStatus === 'Idle');
-                if (shouldTriggerNlb) {
-                  beetleApi.migrateNlb(job.nsId, job.infraId, job.targetNlbList!).then(nlbRes => {
-                    if (nlbRes.success && nlbRes.reqId) {
-                      setJobs(prev => prev.map(j => j.id === job.id ? {
-                        ...j,
-                        nlbStatus: 'Provisioning',
-                        nlbReqId: nlbRes.reqId,
-                        logs: [
-                          ...j.logs,
-                          `Stage 2 -> POST /beetle/migration/middleware/ns/${job.nsId}/infra/${job.infraId}/nlb`,
-                          `HTTP 202 Accepted (NLB ReqID: ${nlbRes.reqId}, Status: Provisioning)`
-                        ]
-                      } : j));
-                    } else if (!nlbRes.success) {
-                      setJobs(prev => prev.map(j => j.id === job.id ? {
-                        ...j,
-                        nlbStatus: 'Failed',
-                        logs: [
-                          ...j.logs,
-                          `Stage 2 NLB Migration Failed: ${nlbRes.error || 'Unknown error'}`
-                        ]
-                      } : j));
-                    }
-                  }).catch(err => {
-                    console.warn('NLB migration trigger error:', err);
-                  });
-                }
-
-                // Extract real VM nodes from Tumblebug/Beetle responseData
-                const rawNodes = update?.responseData?.node || update?.responseData?.infraInfo?.node || [];
-                const parsedVms = Array.isArray(rawNodes) && rawNodes.length > 0
-                  ? rawNodes.map((n: any) => ({
-                      name: n.name || n.id || 'node',
-                      specId: n.specId || n.spec || selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups[0]?.specId || 'c5.large',
-                      publicIp: n.publicIP || n.publicIp || 'N/A',
-                      privateIp: n.privateIP || n.privateIp || 'N/A',
-                      status: n.status || ((n.publicIP || n.publicIp || n.privateIP || n.privateIp) ? 'Running' : 'Failed'),
-                      systemMessage: n.systemMessage || ''
-                    }))
-                  : Array.from({ length: job.totalVms }).map((_, i) => ({
-                      name: `node-${i + 1}`,
-                      specId: selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups[i % (selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups.length || 1)]?.specId || 'c5.large',
-                      publicIp: `54.180.${10 + i}.${30 + i}`,
-                      privateIp: `10.0.1.${100 + i}`,
-                      status: 'Running',
-                      systemMessage: ''
-                    }));
-
-                const cleanedLogs = updatedJob.logs.filter(l => !l.includes(`GET /beetle/request/${job.reqId}`));
-                return {
-                  ...updatedJob,
-                  status: 'Success',
-                  nlbStatus: shouldTriggerNlb ? 'Provisioning' : updatedJob.nlbStatus,
-                  logs: [
-                    ...cleanedLogs,
-                    `GET /beetle/request/${job.reqId} -> Status: Success (Duration: ${newElapsed}s)`
-                  ],
-                  vms: parsedVms
-                };
-              }
-
-              // Still Handling on backend API
-              const cleanedLogs = updatedJob.logs.filter(l => !l.includes(`GET /beetle/request/${job.reqId}`));
-              return {
-                ...updatedJob,
-                logs: [
-                  ...cleanedLogs,
-                  `GET /beetle/request/${job.reqId} -> Status: Handling (Elapsed: ${newElapsed}s)`
-                ]
-              };
-            }
-
-            return updatedJob;
+            return job.elapsedSeconds === newElapsed ? job : { ...job, elapsedSeconds: newElapsed };
           }
 
-          // B. DEMO SAMPLE JOB TIMER LOGIC
           if (newElapsed >= 30) {
-            const cleanedLogs = job.logs.filter(l => !l.includes('GET /beetle/request/'));
+            const cleanedLogs = job.logs.filter((l) => !l.includes('GET /beetle/request/'));
             return {
               ...job,
               status: 'Success',
@@ -584,7 +400,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
             };
           }
 
-          const cleanedLogs = job.logs.filter(l => !l.includes('GET /beetle/request/'));
+          const cleanedLogs = job.logs.filter((l) => !l.includes('GET /beetle/request/'));
           return {
             ...job,
             elapsedSeconds: newElapsed,
@@ -598,7 +414,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [hasRunningLocalClockJob, setJobs]);
 
   useEffect(() => {
     if (selectedCloudModel && String(selectedCloudModel.id).startsWith('candidate-')) {
@@ -737,7 +553,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
 
     const effectiveModel = buildEffectiveCloudModel(selectedCloudModel.cloudInfraModel);
     const trimmedSeed = customNameSeed.trim();
-    const reqId = `req-${Date.now().toString().slice(-6)}`;
+    const jobId = `job-${Date.now().toString().slice(-6)}`;
     const baseInfraName = effectiveModel.targetInfra?.name || selectedCloudModel.name;
     const targetInfraId = composeSeededName(baseInfraName, trimmedSeed);
     const seededTargetNlbList = (effectiveModel.targetNlbList || []).map((nlb: any) => ({
@@ -757,8 +573,8 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     const queryStr = params.toString();
 
     const newJob: MigrationJob = {
-      id: reqId,
-      reqId,
+      id: jobId,
+      reqId: '',
       infraId: targetInfraId,
       nsId: customNsId,
       nameSeed: trimmedSeed,
@@ -774,13 +590,12 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       nlbStatus: seededTargetNlbList.length > 0 ? 'Idle' : undefined,
       logs: [
         `POST /beetle/migration/ns/${customNsId}/infra?${queryStr}`,
-        `HTTP 202 Accepted (ReqID: ${reqId}, Status: Handling)`,
-        `GET /beetle/request/${reqId} -> Status: Handling (Elapsed: 0s)`
+        'Submitting async migration request to CM-Beetle...'
       ]
     };
 
     setJobs(prev => [newJob, ...prev]);
-    setActiveJobId(reqId);
+    setActiveJobId(jobId);
     setShowLaunchModal(false);
 
     // Call Beetle API
@@ -789,14 +604,14 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       // Backend returned error (e.g. resource already exists or validation failed)
       setJobs(prev =>
         prev.map(j =>
-          j.id === reqId
+          j.id === jobId
             ? {
                 ...j,
                 status: 'Failed',
                 error: res.error || 'Migration failed (Resource already exists or validation failed)',
                 logs: [
-                  ...j.logs.filter(l => !l.includes('GET /beetle/request/')),
-                  `GET /beetle/request/${reqId} -> Status: Error (${res.error || 'Resource already exists or validation failed'})`
+                  `POST /beetle/migration/ns/${customNsId}/infra?${queryStr}`,
+                  `Request Failed: ${res.error || 'Resource already exists or validation failed'}`
                 ]
               }
             : j
@@ -805,18 +620,20 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       setToastMsg(`✕ Migration Failed: ${res.error || 'Resource already exists'}`);
       setTimeout(() => setToastMsg(null), 6000);
     } else if (res.reqId) {
-      // Bind actual backend ReqID
+      // Bind actual backend ReqID and reset polling jitter clock
       const realReqId = res.reqId;
+      const boundAtMs = Date.now();
       setJobs(prev =>
         prev.map(j =>
-          j.id === reqId
+          j.id === jobId
             ? {
                 ...j,
                 reqId: realReqId,
+                createdAtMs: boundAtMs,
                 logs: [
                   `POST /beetle/migration/ns/${customNsId}/infra?${queryStr}`,
                   `HTTP 202 Accepted (ReqID: ${realReqId}, Status: Handling)`,
-                  `GET /beetle/request/${realReqId} -> Status: Handling (Elapsed: 0s)`
+                  `GET /beetle/request/${realReqId}?brief=true -> Status: Handling (Elapsed: 0s)`
                 ]
               }
             : j
@@ -1243,7 +1060,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
 
             <div className="flex items-center gap-3 text-xs font-mono text-text-muted">
               <span>Namespace: <strong className="text-text-main">{activeJob.nsId}</strong></span>
-              <span>Req ID: <strong className="text-emerald-500">{activeJob.reqId}</strong></span>
+              <span>Req ID: <strong className="text-emerald-500">{activeJob.reqId || 'Pending...'}</strong></span>
               <span>Elapsed: <strong className="text-teal-400">{activeJob.elapsedSeconds}s</strong></span>
               <button
                 onClick={() => handleOpenDeleteModal(activeJob)}
@@ -1330,8 +1147,83 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
             </div>
           </div>
 
-          {/* Provisioned Node Access Points Table (Shown if job is Success) */}
-          {activeJob.status === 'Success' && activeJob.vms && (
+          {/* Outbound CB-Tumblebug Sub-Request Trace Panel */}
+          {activeJob.subRequests && activeJob.subRequests.length > 0 && (
+            <div className="bg-bg-panel/50 border border-emerald-500/30 p-5 rounded-xl space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-main/30 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-emerald-500" />
+                  <h4 className="text-sm font-extrabold text-text-main">
+                    Outbound CB-Tumblebug Sub-Request Trace
+                  </h4>
+                  {activeJob.subRequestSummary && (
+                    <span className="px-2 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-extrabold">
+                      {activeJob.subRequestSummary.success}/{activeJob.subRequestSummary.total} Completed
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs font-mono text-text-muted">
+                  Correlation Header:{' '}
+                  <strong className="font-extrabold text-teal-600 dark:text-teal-400">
+                    X-Request-Source: {activeJob.tumblebugSource || (activeJob.reqId ? `cm-beetle:${activeJob.reqId}` : 'Pending...')}
+                  </strong>
+                </span>
+              </div>
+
+              {activeJob.subRequestSummary?.currentAction && activeJob.status === 'Handling' && (
+                <div className="px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-2 text-sm">
+                  <RefreshCw className="w-3.5 h-3.5 text-emerald-500 animate-spin shrink-0" />
+                  <span className="font-normal text-text-muted">Current Step:</span>
+                  <span className="font-extrabold text-text-main font-mono">
+                    {activeJob.subRequestSummary.currentAction}
+                  </span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-56 overflow-y-auto">
+                {activeJob.subRequests.map((sr) => {
+                  const isOk = sr.status === 'Success';
+                  const isErr = sr.status === 'Error';
+                  return (
+                    <div
+                      key={sr.subReqId || sr.seq}
+                      className="px-3 py-2 rounded-lg bg-bg-input/70 border border-border-main/50 flex items-center justify-between gap-2 text-xs font-mono"
+                    >
+                      <div className="min-w-0 flex items-center gap-2">
+                        <span className="text-text-muted shrink-0">#{sr.seq}</span>
+                        <span className="px-1.5 py-0.5 rounded bg-bg-panel border border-border-main text-text-main font-extrabold shrink-0">
+                          {sr.method}
+                        </span>
+                        <span className="font-extrabold text-text-main truncate" title={`${sr.resourceType || 'api'}: ${sr.resourceHint || sr.targetPath}`}>
+                          {sr.resourceType || 'api'}
+                          {sr.resourceHint ? ` (${sr.resourceHint})` : ''}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {typeof sr.durationMs === 'number' && (
+                          <span className="text-text-muted">{sr.durationMs}ms</span>
+                        )}
+                        <span
+                          className={`px-2 py-0.5 rounded font-extrabold uppercase ${
+                            isOk
+                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                              : isErr
+                              ? 'bg-red-500/15 text-red-500'
+                              : 'bg-teal-500/15 text-teal-600 dark:text-teal-400'
+                          }`}
+                        >
+                          {sr.status}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Provisioned Node Access Points Table (Shown on Success or live during Handling once Nodes appear) */}
+          {(activeJob.status === 'Success' || (activeJob.status === 'Handling' && activeJob.vms && activeJob.vms.length > 0)) && activeJob.vms && (
             <div className="space-y-3 pt-2">
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                 <h4 className="text-sm font-bold text-text-main flex items-center gap-2">
@@ -1353,7 +1245,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                   {/* Official CM-Beetle SSH Readiness Check Button */}
                   <button
                     onClick={() => handleCheckSshReady()}
-                    disabled={sshCooldownSec > 0 || sshReadyModal.loading}
+                    disabled={activeJob.status !== 'Success' || sshCooldownSec > 0 || sshReadyModal.loading}
                     className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 border border-emerald-500/30 text-emerald-400 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <Activity className="w-3.5 h-3.5 text-emerald-400" />
@@ -2474,7 +2366,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
 
             <div className="space-y-4">
               <p className="text-xs text-text-muted leading-relaxed">
-                Are you sure you want to remove the migration request record for target infra <strong className="text-text-main">"{deleteModalJob.infraId}"</strong> (<span className="font-mono text-emerald-400">{deleteModalJob.reqId}</span>) from the Queue?
+                Are you sure you want to remove the migration request record for target infra <strong className="text-text-main">"{deleteModalJob.infraId}"</strong> (<span className="font-mono text-emerald-400">{deleteModalJob.reqId || 'Pending'}</span>) from the Queue?
               </p>
               <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-400 font-mono">
                 ⚠️ Note: This action only removes the UI queue request record. Physical cloud infrastructure resources will NOT be deleted.

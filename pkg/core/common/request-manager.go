@@ -25,6 +25,7 @@ import (
 	"io"
 	"net/http"
 	"runtime/debug"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -52,13 +53,17 @@ type RequestInfo struct {
 
 // RequestDetails contains detailed information about an HTTP request and its processing status.
 type RequestDetails struct {
-	StartTime     time.Time      `json:"startTime"`               // The time when the request was received by the server.
-	EndTime       time.Time      `json:"endTime"`                 // The time when the request was fully processed.
-	Status        string         `json:"status"`                  // The current status of the request (e.g., "Handling", "Error", "Success").
-	RequestInfo   RequestInfo    `json:"requestInfo"`             // Extracted information about the request.
-	ResponseData  any            `json:"responseData,omitempty"`  // The data sent back in response to the request.
-	ErrorResponse string         `json:"errorResponse,omitempty"` // A message describing any error that occurred during request processing.
-	Retry         *RetryProperty `json:"retry,omitempty"`         // Retry information (present only for retriable errors).
+	ReqId             string             `json:"reqId,omitempty"`             // Unique Beetle request ID.
+	StartTime         time.Time          `json:"startTime"`                   // The time when the request was received by the server.
+	EndTime           time.Time          `json:"endTime"`                     // The time when the request was fully processed.
+	Status            string             `json:"status"`                      // The current status of the request (e.g., "Handling", "Error", "Success").
+	TumblebugSource   string             `json:"tumblebugSource,omitempty"`   // Correlated X-Request-Source value ("cm-beetle:{reqId}").
+	RequestInfo       RequestInfo        `json:"requestInfo"`                 // Extracted information about the request.
+	ResponseData      any                `json:"responseData,omitempty"`      // The data sent back in response to the request.
+	ErrorResponse     string             `json:"errorResponse,omitempty"`     // A message describing any error that occurred during request processing.
+	Retry             *RetryProperty     `json:"retry,omitempty"`             // Retry information (present only for retriable errors).
+	SubRequestSummary *SubRequestSummary `json:"subRequestSummary,omitempty"` // Aggregated sub-request counts and active step.
+	SubRequests       []SubRequest       `json:"subRequests,omitempty"`       // Ordered list of outbound Tumblebug sub-requests.
 }
 
 // RetryProperty contains retry-related information for a failed request.
@@ -114,12 +119,21 @@ type RequestFilter struct {
 	Status string    // Filter by status (Handling, Success, Error)
 	Method string    // Filter by HTTP method
 	URL    string    // Filter by URL (partial match)
+	Source string    // Filter by X-Request-Source header or TumblebugSource
 	Since  time.Time // Filter by start time (requests after this time)
+	Limit  int       // Maximum number of recent requests to return (0 = unlimited)
+	Brief  bool      // Omit requestInfo.body and responseData for lightweight polling
 }
 
 // SetRequest stores request details with the given request ID.
 // It uses lkvstore for persistence across server restarts.
 func SetRequest(reqID string, details RequestDetails) error {
+	if details.ReqId == "" {
+		details.ReqId = reqID
+	}
+	if details.TumblebugSource == "" {
+		details.TumblebugSource = FormatTumblebugSource(reqID)
+	}
 	return lkvstore.Put(requestKeyPrefix+reqID, details)
 }
 
@@ -131,7 +145,49 @@ func GetRequest(reqID string) (RequestDetails, bool) {
 		return RequestDetails{}, false
 	}
 
-	return convertToRequestDetails(value)
+	details, ok := convertToRequestDetails(value)
+	if !ok {
+		return RequestDetails{}, false
+	}
+	enrichRequestDetails(&details, reqID)
+	return details, true
+}
+
+// enrichRequestDetails backfills correlation metadata and overlays live sub-request snapshots.
+func enrichRequestDetails(details *RequestDetails, reqID string) {
+	if details == nil {
+		return
+	}
+	if details.ReqId == "" {
+		details.ReqId = reqID
+	}
+	if details.TumblebugSource == "" && details.ReqId != "" {
+		details.TumblebugSource = FormatTumblebugSource(details.ReqId)
+	}
+	if len(details.SubRequests) == 0 && details.ReqId != "" {
+		if liveSubs, liveSummary := SnapshotSubRequests(details.ReqId); len(liveSubs) > 0 {
+			details.SubRequests = liveSubs
+			details.SubRequestSummary = liveSummary
+			return
+		}
+	}
+	if len(details.SubRequests) > 0 && details.SubRequestSummary == nil {
+		details.SubRequestSummary = SummarizeSubRequests(details.SubRequests)
+	}
+}
+
+// ApplyRequestProjection trims payload bodies or sub-request lists according to query options.
+func ApplyRequestProjection(details *RequestDetails, brief bool, withSubRequests bool) {
+	if details == nil {
+		return
+	}
+	if brief {
+		details.RequestInfo.Body = nil
+		details.ResponseData = nil
+	}
+	if !withSubRequests {
+		details.SubRequests = nil
+	}
 }
 
 // HasRequest checks if a request with the given ID exists.
@@ -142,11 +198,13 @@ func HasRequest(reqID string) bool {
 
 // RemoveRequest deletes request details by request ID.
 func RemoveRequest(reqID string) {
+	DiscardSubRequests(reqID)
 	lkvstore.Delete(requestKeyPrefix + reqID)
 }
 
 // RemoveAllRequests deletes all request tracking records.
 func RemoveAllRequests() {
+	DiscardAllSubRequests()
 	requests, ok := lkvstore.GetKvWithPrefix(requestKeyPrefix)
 	if !ok {
 		return
@@ -164,6 +222,8 @@ const DefaultRequestRetentionPeriod = 7 * 24 * time.Hour // 1 week
 // Requests with "Handling" status are not removed regardless of age.
 // Returns the number of removed requests.
 func CleanupOldRequests(maxAge time.Duration) int {
+	CleanupStaleSubRequests(maxAge)
+
 	kvList, ok := lkvstore.GetKvWithPrefix(requestKeyPrefix)
 	if !ok {
 		return 0
@@ -191,6 +251,7 @@ func CleanupOldRequests(maxAge time.Duration) int {
 		}
 
 		if now.Sub(referenceTime) > maxAge {
+			DiscardSubRequests(strings.TrimPrefix(kv.Key, requestKeyPrefix))
 			lkvstore.Delete(kv.Key)
 			removedCount++
 			log.Debug().
@@ -254,6 +315,8 @@ func GetAllRequests(filter *RequestFilter) []RequestDetails {
 		if !ok {
 			continue
 		}
+		reqID := strings.TrimPrefix(kv.Key, requestKeyPrefix)
+		enrichRequestDetails(&details, reqID)
 
 		// Apply filters if provided
 		if filter != nil {
@@ -266,12 +329,38 @@ func GetAllRequests(filter *RequestFilter) []RequestDetails {
 			if filter.URL != "" && !strings.Contains(strings.ToLower(details.RequestInfo.URL), strings.ToLower(filter.URL)) {
 				continue
 			}
+			if filter.Source != "" {
+				inboundSource := details.RequestInfo.Header["X-Request-Source"]
+				if !strings.Contains(strings.ToLower(inboundSource), strings.ToLower(filter.Source)) &&
+					!strings.Contains(strings.ToLower(details.TumblebugSource), strings.ToLower(filter.Source)) {
+					continue
+				}
+			}
 			if !filter.Since.IsZero() && details.StartTime.Before(filter.Since) {
 				continue
 			}
 		}
 
 		results = append(results, details)
+	}
+
+	// Sort requests by StartTime descending so newest requests appear first.
+	sort.Slice(results, func(i, j int) bool {
+		if results[i].StartTime.Equal(results[j].StartTime) {
+			return results[i].ReqId > results[j].ReqId
+		}
+		return results[i].StartTime.After(results[j].StartTime)
+	})
+
+	if filter != nil {
+		if filter.Limit > 0 && len(results) > filter.Limit {
+			results = results[:filter.Limit]
+		}
+		if filter.Brief {
+			for i := range results {
+				ApplyRequestProjection(&results[i], true, true)
+			}
+		}
 	}
 
 	return results
@@ -380,16 +469,20 @@ const maxConcurrentAsyncJobs = 20
 var asyncJobSemaphore = make(chan struct{}, maxConcurrentAsyncJobs)
 
 // RunAsync runs work in the background, recovers panics, and finalizes the request record.
-// Returns false at capacity — caller must respond 503, not spawn anyway.
+// Returns false at capacity: caller must respond 503, not spawn anyway.
 //
 // See docs/api-response-policy.md ("Async Responses") for the client-facing contract
 // (Prefer: respond-async -> 202 -> poll GET /request/{reqId}).
-func RunAsync[T any](reqID string, work func() (T, error)) bool {
+func RunAsync[T any](ctx context.Context, reqID string, work func(context.Context) (T, error)) bool {
 	select {
 	case asyncJobSemaphore <- struct{}{}:
 	default:
 		return false
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	bgCtx := WithRequestID(context.WithoutCancel(ctx), reqID)
 	go func() {
 		defer func() { <-asyncJobSemaphore }()
 		defer func() {
@@ -399,23 +492,36 @@ func RunAsync[T any](reqID string, work func() (T, error)) bool {
 				finalizeError(reqID, fmt.Errorf("internal error (panic): %v", r))
 			}
 		}()
-		result, err := work()
+		result, err := work(bgCtx)
 		finalizeRequest(reqID, result, err)
 	}()
 	return true
+}
+
+// ErrorResultPreserver is implemented by result types that expose partial diagnostics on error.
+type ErrorResultPreserver interface {
+	PreserveOnError() bool
 }
 
 // finalizeRequest updates a request's status to Success or Error and stores the result or error message.
 func finalizeRequest[T any](reqID string, result T, err error) {
 	details, ok := GetRequest(reqID)
 	if !ok {
+		DiscardSubRequests(reqID)
 		log.Error().Str("reqId", reqID).Msg("Failed to get request details for status update")
 		return
+	}
+	if subs, summary := FinalizeSubRequests(reqID); len(subs) > 0 {
+		details.SubRequests = subs
+		details.SubRequestSummary = summary
 	}
 	details.EndTime = time.Now()
 	if err != nil {
 		details.Status = RequestStatusError
 		details.ErrorResponse = err.Error()
+		if preserver, ok := any(result).(ErrorResultPreserver); ok && preserver.PreserveOnError() {
+			details.ResponseData = result
+		}
 
 		// Extract retry information from rate limit errors
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {

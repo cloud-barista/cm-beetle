@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -21,20 +20,12 @@ import (
 // has finished writing the response.
 //
 // Flow:
-//  1. Request arrives → request-id middleware sets status to "Handling"
+//  1. Request arrives -> request-id middleware sets status to "Handling"
 //  2. Echo handler processes the request and writes response
-//  3. BodyDump Handler is called (this middleware) → status updated to "Success" or "Error"
+//  3. BodyDump Handler is called (this middleware) -> status updated to "Success" or "Error"
 func ResponseBodyDump() echo.MiddlewareFunc {
 	return middleware.BodyDumpWithConfig(middleware.BodyDumpConfig{
-		Skipper: func(c echo.Context) bool {
-			// Skip request tracking for API documentation paths
-			if strings.HasPrefix(c.Path(), "/beetle/api") ||
-				strings.HasPrefix(c.Path(), "/beetle/docs") ||
-				strings.HasPrefix(c.Path(), "/beetle/swagger.json") {
-				return true
-			}
-			return false
-		},
+		Skipper: ShouldSkipRequestTracking,
 		Handler: func(c echo.Context, reqBody, resBody []byte) {
 			// log.Debug().Msg("Start - BodyDump() middleware")
 
@@ -59,10 +50,14 @@ func ResponseBodyDump() echo.MiddlewareFunc {
 			// Load the request details by ID
 			details, ok := common.GetRequest(reqID)
 			if !ok {
+				common.DiscardSubRequests(reqID)
 				log.Error().Msg("Request ID not found")
 				return
 			}
-			// log.Trace().Msg("OK, common.GetRequest(reqID)")
+			if subs, summary := common.FinalizeSubRequests(reqID); len(subs) > 0 {
+				details.SubRequests = subs
+				details.SubRequestSummary = summary
+			}
 			details.EndTime = time.Now()
 
 			details.Status = common.RequestStatusSuccess
@@ -120,6 +115,9 @@ func ResponseBodyDump() echo.MiddlewareFunc {
 					// Final fallback
 					if details.ErrorResponse == "" {
 						details.ErrorResponse = "No error message found"
+					}
+					if dataVal, exists := lastResData["data"]; exists && dataVal != nil {
+						details.ResponseData = dataVal
 					}
 					break processResponse
 				}

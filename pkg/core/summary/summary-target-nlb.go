@@ -15,6 +15,7 @@ limitations under the License.
 package summary
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -24,8 +25,8 @@ import (
 )
 
 // collectNlbResources retrieves and converts active NLBs for the specified target infrastructure
-func collectNlbResources(nsId, infraId string) ([]SummaryNlbInfo, error) {
-	nlbListResp, err := tbclient.NewSession().ListNlbs(nsId, infraId)
+func collectNlbResources(ctx context.Context, nsId, infraId string) ([]SummaryNlbInfo, error) {
+	nlbListResp, err := tbclient.NewSession().SetContext(ctx).ListNlbs(nsId, infraId)
 	if err != nil {
 		if isNlbNotFoundError(err) {
 			return []SummaryNlbInfo{}, nil

@@ -1408,6 +1408,22 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
               const cards = n.gpuCards || n.gpus || [];
               return cards.map((g: any) => `${g.vendor || 'GPU'} ${g.model || ''} ${g.memoryTotalGB ? `${g.memoryTotalGB}GB` : ''}`.trim());
             });
+            const gpuRuntimeBadges = Array.from(
+              new Set(
+                gpuNodes.flatMap((n: any) => {
+                  const cards = n.gpuCards || n.gpus || [];
+                  return cards
+                    .map((g: any) => {
+                      const parts = [
+                        g.driverVersion ? `Driver ${g.driverVersion}` : '',
+                        g.cudaVersion ? `CUDA ${g.cudaVersion}` : ''
+                      ].filter(Boolean);
+                      return parts.join(' / ');
+                    })
+                    .filter(Boolean);
+                })
+              )
+            );
             const uniqueOsList = Array.from(
               new Set(
                 nodes.map((n: any) => n.os?.prettyName || (n.os?.name ? `${n.os.name} ${n.os.versionId || ''}`.trim() : 'Ubuntu 22.04 LTS'))
@@ -1517,9 +1533,14 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                         <div className="text-base font-extrabold text-text-main">
                           {gpuNodes.length > 0 ? `${gpuSummaryBadges.length} GPU (${gpuNodes.length} Node)` : 'None (CPU Only)'}
                         </div>
-                        <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 truncate">
+                        <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 truncate" title={gpuSummaryBadges.join(', ')}>
                           {gpuSummaryBadges.length > 0 ? gpuSummaryBadges.join(', ') : 'Standard x86_64 Compute'}
                         </div>
+                        {gpuRuntimeBadges.length > 0 && (
+                          <div className="text-xs text-teal-600 dark:text-teal-400 font-mono font-bold mt-0.5 truncate" title={gpuRuntimeBadges.join(', ')}>
+                            {gpuRuntimeBadges.join(', ')}
+                          </div>
+                        )}
                       </div>
 
                       <div className="p-3.5 rounded-xl bg-bg-input/60 border border-border-main">
@@ -1596,9 +1617,29 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
                                 </td>
                                 <td className="py-2.5 px-3">
                                   {gpus.length > 0 ? (
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                                      {gpus.map((g: any) => `${g.vendor || 'NVIDIA'} ${g.model || 'GPU'} (${g.memoryTotalGB || 16}GB)`).join(', ')}
-                                    </span>
+                                    <div className="flex flex-col items-start gap-1">
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                                        {gpus.map((g: any) => `${g.vendor || 'NVIDIA'} ${g.model || 'GPU'} (${g.memoryTotalGB || 16}GB)`).join(', ')}
+                                      </span>
+                                      {gpus.some((g: any) => g.driverVersion || g.cudaVersion) && (
+                                        <span className="text-xs font-mono font-bold text-teal-600 dark:text-teal-400">
+                                          {Array.from(
+                                            new Set(
+                                              gpus
+                                                .map((g: any) =>
+                                                  [
+                                                    g.driverVersion ? `Driver ${g.driverVersion}` : '',
+                                                    g.cudaVersion ? `CUDA ${g.cudaVersion}` : ''
+                                                  ]
+                                                    .filter(Boolean)
+                                                    .join(' / ')
+                                                )
+                                                .filter(Boolean)
+                                            )
+                                          ).join(', ')}
+                                        </span>
+                                      )}
+                                    </div>
                                   ) : (
                                     <span className="text-xs text-text-muted">-</span>
                                   )}

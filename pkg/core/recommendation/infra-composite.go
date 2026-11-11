@@ -2,6 +2,7 @@
 package recommendation
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"strings"
@@ -94,6 +95,7 @@ func ClassifyBackendHardware(members []onpremmodel.NodeProperty) HardwareCase {
 // RecommendCompositeInfraCandidates recommends high-level multi-cloud infrastructure candidates.
 // It handles all 5 hardware cases and strict 1:1 Managed NLB to NodeGroup invariants.
 func RecommendCompositeInfraCandidates(
+	ctx context.Context,
 	desiredCsp, desiredRegion string,
 	srcInfra onpremmodel.OnpremInfra,
 	sizingPolicy string,
@@ -172,7 +174,7 @@ func RecommendCompositeInfraCandidates(
 		},
 	}
 
-	recommendedVNetList, err := RecommendVNet(csp, region, srcInfra)
+	recommendedVNetList, err := RecommendVNet(ctx, csp, region, srcInfra)
 	if err != nil || len(recommendedVNetList) == 0 {
 		log.Warn().Err(err).Msg("failed to recommend vNet for composite infra")
 	}
@@ -213,7 +215,7 @@ func RecommendCompositeInfraCandidates(
 		hwCase := ClassifyBackendHardware(memberNodes)
 		log.Info().Str("backend", rnlb.sourceNlb.Backend.Name).Str("case", hwCase.String()).Str("policy", sizingPolicy).Msg("Classified backend hardware")
 
-		bps, nlbs, sgs, genErr := buildCaseBlueprints(csp, region, connectionName, firstSubnetId, skeleton, rnlb, memberNodes, nodeByMachineId, hwCase, sizingPolicy)
+		bps, nlbs, sgs, genErr := buildCaseBlueprints(ctx, csp, region, connectionName, firstSubnetId, skeleton, rnlb, memberNodes, nodeByMachineId, hwCase, sizingPolicy)
 		if genErr != nil {
 			return nil, genErr
 		}
@@ -244,10 +246,16 @@ func RecommendCompositeInfraCandidates(
 	}
 
 	for i, node := range expandedUnrelatedNodes {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		ngName, origMachineId := buildNodeGroupNameAndLineage(node, shortIds, usedNames)
 
-		sg, sgErr := RecommendSecurityGroup(csp, region, node)
+		sg, sgErr := RecommendSecurityGroup(ctx, csp, region, node)
 		if sgErr != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(sgErr).Str("machineId", node.MachineId).Msg("failed to recommend SG")
 		}
 		exists, _, existingSg := containSg(deduplicatedSgList, sg)
@@ -292,12 +300,21 @@ func RecommendCompositeInfraCandidates(
 	// Phase 5: query catalog for compatible spec-image pairs
 	pairsByGroup := make([][]CompatibleSpecImagePair, len(ngBlueprints))
 	for ngIdx, bp := range ngBlueprints {
-		specList, _, specErr := RecommendNodeSpecs(csp, region, bp.representativeNode, limitSpecs)
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		specList, _, specErr := RecommendNodeSpecs(ctx, csp, region, bp.representativeNode, limitSpecs)
 		if specErr != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(specErr).Str("machineId", bp.representativeNode.MachineId).Msg("failed to recommend specs")
 		}
-		imageList, imgErr := RecommendVmOsImages(csp, region, bp.representativeNode, limitImages)
+		imageList, imgErr := RecommendVmOsImages(ctx, csp, region, bp.representativeNode, limitImages)
 		if imgErr != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(imgErr).Str("machineId", bp.representativeNode.MachineId).Msg("failed to recommend images")
 		}
 
@@ -360,7 +377,7 @@ func RecommendCompositeInfraCandidates(
 			selectedImage := selectedPair.Image
 
 			precheck, prefErr := PreflightCheckCspProvisioning(
-				selectedSpec.Id, selectedImage.Id, selectedImage.CspImageName, "",
+				ctx, selectedSpec.Id, selectedImage.Id, selectedImage.CspImageName, "",
 			)
 			if prefErr == nil {
 				if precheck.SuggestedSystemDisk != "" {
@@ -433,6 +450,7 @@ func RecommendCompositeInfraCandidates(
 
 // buildCaseBlueprints generates NodeGroups and NLB mappings based on hardware case and policy.
 func buildCaseBlueprints(
+	ctx context.Context,
 	csp, region, connectionName, subnetId string,
 	skeleton cloudmodel.RecommendedInfra,
 	rnlb resolvedNlb,
@@ -453,32 +471,33 @@ func buildCaseBlueprints(
 			)
 		}
 		// Dividing mode partitions by GPU vendor.
-		return buildDividedVendorBlueprints(csp, region, connectionName, subnetId, skeleton, rnlb, memberNodes, nodeByMachineId)
+		return buildDividedVendorBlueprints(ctx, csp, region, connectionName, subnetId, skeleton, rnlb, memberNodes, nodeByMachineId)
 
 	case CaseMixedCpuGpu:
 		if sizingPolicy == SizingPolicyDividing {
 			// Dividing mode partitions into CPU-only group and GPU group.
-			return buildDividedCpuGpuBlueprints(csp, region, connectionName, subnetId, skeleton, rnlb, memberNodes, nodeByMachineId)
+			return buildDividedCpuGpuBlueprints(ctx, csp, region, connectionName, subnetId, skeleton, rnlb, memberNodes, nodeByMachineId)
 		}
 		// Default rightSizeUp upsizes CPU members to GPU NodeGroup.
-		return buildSingleConsolidatedBlueprint(csp, region, connectionName, subnetId, skeleton, rnlb, rnlb.memberMachineIds, nodeByMachineId, backendName)
+		return buildSingleConsolidatedBlueprint(ctx, csp, region, connectionName, subnetId, skeleton, rnlb, rnlb.memberMachineIds, nodeByMachineId, backendName)
 
 	case CaseHeteroGpuModel:
 		if sizingPolicy == SizingPolicyDividing {
 			// Dividing mode partitions by GPU model.
-			return buildDividedModelBlueprints(csp, region, connectionName, subnetId, skeleton, rnlb, memberNodes, nodeByMachineId)
+			return buildDividedModelBlueprints(ctx, csp, region, connectionName, subnetId, skeleton, rnlb, memberNodes, nodeByMachineId)
 		}
 		// Default rightSizeUp upsizes to highest VRAM and accelerator count.
-		return buildSingleConsolidatedBlueprint(csp, region, connectionName, subnetId, skeleton, rnlb, rnlb.memberMachineIds, nodeByMachineId, backendName)
+		return buildSingleConsolidatedBlueprint(ctx, csp, region, connectionName, subnetId, skeleton, rnlb, rnlb.memberMachineIds, nodeByMachineId, backendName)
 
 	default:
 		// CasePureCpu and CaseHomoGpuModel produce a single NodeGroup in both modes.
-		return buildSingleConsolidatedBlueprint(csp, region, connectionName, subnetId, skeleton, rnlb, rnlb.memberMachineIds, nodeByMachineId, backendName)
+		return buildSingleConsolidatedBlueprint(ctx, csp, region, connectionName, subnetId, skeleton, rnlb, rnlb.memberMachineIds, nodeByMachineId, backendName)
 	}
 }
 
 // buildSingleConsolidatedBlueprint creates one 1:1 pair of (Managed NLB : NodeGroup).
 func buildSingleConsolidatedBlueprint(
+	ctx context.Context,
 	csp, region, connectionName, subnetId string,
 	skeleton cloudmodel.RecommendedInfra,
 	rnlb resolvedNlb,
@@ -494,7 +513,7 @@ func buildSingleConsolidatedBlueprint(
 	// Supplement inbound firewall rules for NLB health check and proxy traffic.
 	repNodeWithFirewall = supplementFirewallNlbToNode(repNodeWithFirewall, rnlb, csp, skeleton)
 
-	sg, err := RecommendSecurityGroup(csp, region, repNodeWithFirewall)
+	sg, err := RecommendSecurityGroup(ctx, csp, region, repNodeWithFirewall)
 	if err != nil {
 		log.Warn().Err(err).Str("nodeGroup", ngName).Msg("failed to recommend SG for consolidated group")
 	}
@@ -533,6 +552,7 @@ func buildSingleConsolidatedBlueprint(
 
 // buildDividedCpuGpuBlueprints creates separate pairs for CPU and GPU nodes.
 func buildDividedCpuGpuBlueprints(
+	ctx context.Context,
 	csp, region, connectionName, subnetId string,
 	skeleton cloudmodel.RecommendedInfra,
 	rnlb resolvedNlb,
@@ -553,7 +573,7 @@ func buildDividedCpuGpuBlueprints(
 	var sgs []cloudmodel.SecurityGroupReq
 
 	if len(cpuIds) > 0 {
-		b, n, s, err := buildSingleConsolidatedBlueprint(csp, region, connectionName, subnetId, skeleton, rnlb, cpuIds, nodeByMachineId, rnlb.sourceNlb.Backend.Name+"-cpu")
+		b, n, s, err := buildSingleConsolidatedBlueprint(ctx, csp, region, connectionName, subnetId, skeleton, rnlb, cpuIds, nodeByMachineId, rnlb.sourceNlb.Backend.Name+"-cpu")
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -563,7 +583,7 @@ func buildDividedCpuGpuBlueprints(
 	}
 
 	if len(gpuIds) > 0 {
-		b, n, s, err := buildSingleConsolidatedBlueprint(csp, region, connectionName, subnetId, skeleton, rnlb, gpuIds, nodeByMachineId, rnlb.sourceNlb.Backend.Name+"-gpu")
+		b, n, s, err := buildSingleConsolidatedBlueprint(ctx, csp, region, connectionName, subnetId, skeleton, rnlb, gpuIds, nodeByMachineId, rnlb.sourceNlb.Backend.Name+"-gpu")
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -577,6 +597,7 @@ func buildDividedCpuGpuBlueprints(
 
 // buildDividedVendorBlueprints creates separate pairs for each GPU vendor.
 func buildDividedVendorBlueprints(
+	ctx context.Context,
 	csp, region, connectionName, subnetId string,
 	skeleton cloudmodel.RecommendedInfra,
 	rnlb resolvedNlb,
@@ -608,7 +629,7 @@ func buildDividedVendorBlueprints(
 	for _, vendor := range vendors {
 		ids := vendorMap[vendor]
 		groupSuffix := fmt.Sprintf("%s-%s", rnlb.sourceNlb.Backend.Name, vendor)
-		b, n, s, err := buildSingleConsolidatedBlueprint(csp, region, connectionName, subnetId, skeleton, rnlb, ids, nodeByMachineId, groupSuffix)
+		b, n, s, err := buildSingleConsolidatedBlueprint(ctx, csp, region, connectionName, subnetId, skeleton, rnlb, ids, nodeByMachineId, groupSuffix)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -622,6 +643,7 @@ func buildDividedVendorBlueprints(
 
 // buildDividedModelBlueprints creates separate pairs for each GPU model.
 func buildDividedModelBlueprints(
+	ctx context.Context,
 	csp, region, connectionName, subnetId string,
 	skeleton cloudmodel.RecommendedInfra,
 	rnlb resolvedNlb,
@@ -651,7 +673,7 @@ func buildDividedModelBlueprints(
 	for _, key := range keys {
 		ids := modelMap[key]
 		groupSuffix := fmt.Sprintf("%s-%s", rnlb.sourceNlb.Backend.Name, key)
-		b, n, s, err := buildSingleConsolidatedBlueprint(csp, region, connectionName, subnetId, skeleton, rnlb, ids, nodeByMachineId, groupSuffix)
+		b, n, s, err := buildSingleConsolidatedBlueprint(ctx, csp, region, connectionName, subnetId, skeleton, rnlb, ids, nodeByMachineId, groupSuffix)
 		if err != nil {
 			return nil, nil, nil, err
 		}

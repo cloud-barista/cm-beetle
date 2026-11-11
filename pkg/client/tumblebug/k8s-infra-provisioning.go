@@ -276,8 +276,8 @@ func (s *Session) CreateK8sCluster(nsId string, reqBody tbmodel.K8sClusterReq) (
 
 	emptyRet := tbmodel.K8sClusterInfo{}
 
-	// EKS creation can take 10-20 minutes; use a generous timeout.
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+	// Derive 30-minute timeout from session context to preserve reqID and trace info.
+	ctx, cancel := context.WithTimeout(s.Context(), 30*time.Minute)
 	defer cancel()
 
 	url := fmt.Sprintf("/ns/%s/k8sCluster", nsId)
@@ -308,8 +308,8 @@ func (s *Session) AddK8sNodeGroup(nsId, clusterId string, reqBody tbmodel.K8sNod
 
 	emptyRet := tbmodel.K8sClusterInfo{}
 
-	// Node group creation can also take several minutes.
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
+	// Derive 20-minute timeout from session context to preserve reqID and trace info.
+	ctx, cancel := context.WithTimeout(s.Context(), 20*time.Minute)
 	defer cancel()
 
 	url := fmt.Sprintf("/ns/%s/k8sCluster/%s/k8sNodeGroup", nsId, clusterId)

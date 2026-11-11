@@ -14,6 +14,7 @@ limitations under the License.
 package validation
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"net/http"
@@ -430,7 +431,7 @@ func TestValidateTargetInfra(t *testing.T) {
 				}
 			}
 
-			result := ValidateTargetInfra(testNsId, target, tc.useExisting)
+			result := ValidateTargetInfra(context.Background(), testNsId, target, tc.useExisting)
 
 			if result.Valid != tc.wantValid {
 				t.Fatalf("Valid = %v, want %v; issues: %+v", result.Valid, tc.wantValid, result.Issues)

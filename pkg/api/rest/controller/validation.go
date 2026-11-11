@@ -96,7 +96,7 @@ func ValidateInfra(c echo.Context) error {
 	}
 
 	// [Process]
-	result := validation.ValidateTargetInfra(nsId, &req.RecommendedInfra, useExisting)
+	result := validation.ValidateTargetInfra(c.Request().Context(), nsId, &req.RecommendedInfra, useExisting)
 
 	// [Output]
 	return c.JSON(http.StatusOK, model.SuccessResponse(result))
@@ -143,7 +143,7 @@ func ValidateK8sInfra(c echo.Context) error {
 	}
 
 	// [Process]
-	result := validation.ValidateTargetK8sInfra(nsId, &req.RecommendedInfra)
+	result := validation.ValidateTargetK8sInfra(c.Request().Context(), nsId, &req.RecommendedInfra)
 
 	// [Output]
 	return c.JSON(http.StatusOK, model.SuccessResponse(result))

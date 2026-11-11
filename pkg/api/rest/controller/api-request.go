@@ -14,15 +14,17 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
-	// "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/labstack/echo/v4"
@@ -54,12 +56,13 @@ func CheckHTTPVersion(c echo.Context) error {
 // RestGetRequest godoc
 // @ID GetRequest
 // @Summary Get request details
-// @Description Retrieves the details of a specific API request tracked by Beetle.
+// @Description Retrieves the details of a specific API request tracked by Beetle, including correlated outbound CB-Tumblebug sub-requests.
 // @Description
 // @Description [Note]
-// @Description - Request tracking is managed independently by Beetle (not shared with Tumblebug).
-// @Description - The reqId corresponds to the X-Request-Id header value from a previous API call.
-// @Description - Do NOT call Tumblebug's /request/{reqId} API with this reqId; each system manages its own request tracking.
+// @Description - Request tracking is managed independently by Beetle using `reqId` (from `X-Request-Id`).
+// @Description - Outbound state-changing and recommendation calls to CB-Tumblebug are recorded in `subRequests[]` with `subReqId` (`{reqId}-{seq}`) and `tumblebugSource` (`cm-beetle:{reqId}`).
+// @Description - Use `brief=true` during high-frequency polling to omit large request/response bodies while still receiving `status`, `subRequestSummary`, and `subRequests`.
+// @Description - Set `withTumblebug=true` to enrich each `subRequests[]` entry with live `upstreamStatus` and `upstreamProgress` from CB-Tumblebug `GET /request/{subReqId}`.
 // @Description
 // @Description [Status Values]
 // @Description - Handling: Request is currently being processed
@@ -74,6 +77,9 @@ func CheckHTTPVersion(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param reqId path string true "Request ID (from X-Request-Id header of a previous Beetle API call)"
+// @Param brief query bool false "Omit requestInfo.body and responseData for lightweight polling (default: false)" default(false)
+// @Param withSubRequests query bool false "Include outbound CB-Tumblebug subRequests list (default: true)" default(true)
+// @Param withTumblebug query bool false "Enrich subRequests with live upstream status/progress from CB-Tumblebug (default: false)" default(false)
 // @Success 200 {object} model.ApiResponse[common.RequestDetails]
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
@@ -81,21 +87,62 @@ func CheckHTTPVersion(c echo.Context) error {
 func RestGetRequest(c echo.Context) error {
 	reqId := c.Param("reqId")
 
-	if details, ok := common.GetRequest(reqId); ok {
-		return c.JSON(http.StatusOK, model.SuccessResponse(details))
+	details, ok := common.GetRequest(reqId)
+	if !ok {
+		return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Request ID not found"))
 	}
 
-	return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Request ID not found"))
+	brief := c.QueryParam("brief") == "true"
+	withSubRequests := c.QueryParam("withSubRequests") != "false"
+	withTumblebug := c.QueryParam("withTumblebug") == "true"
+
+	if withTumblebug && withSubRequests && len(details.SubRequests) > 0 {
+		enrichCtx, cancel := context.WithTimeout(c.Request().Context(), 3*time.Second)
+		defer cancel()
+
+		for i := range details.SubRequests {
+			if enrichCtx.Err() != nil {
+				break
+			}
+			subID := details.SubRequests[i].SubReqId
+			if subID == "" {
+				continue
+			}
+			tbReq, err := tbclient.NewSession().SetContext(enrichCtx).ReadRequest(subID)
+			if err != nil {
+				continue
+			}
+			details.SubRequests[i].UpstreamStatus = tbReq.Status
+			details.SubRequests[i].UpstreamError = tbReq.ErrorResponse
+			if strings.EqualFold(tbReq.Status, common.RequestStatusHandling) && tbReq.ResponseData != nil {
+				details.SubRequests[i].UpstreamProgress = tbReq.ResponseData
+			}
+		}
+	}
+
+	common.ApplyRequestProjection(&details, brief, withSubRequests)
+	return c.JSON(http.StatusOK, model.SuccessResponse(details))
+}
+
+// GetAllRequestsResponse wraps tracked requests under the "requests" key aligned with CB-Tumblebug.
+type GetAllRequestsResponse struct {
+	Requests []common.RequestDetails `json:"requests"`
+}
+
+// SaveRequestsFileResult holds metadata returned when savefile=true writes request logs to disk.
+type SaveRequestsFileResult struct {
+	FilePath string `json:"file_path"`
+	Count    int    `json:"count"`
 }
 
 // RestGetAllRequests godoc
 // @ID GetAllRequests
 // @Summary Get all requests
-// @Description Retrieves all API requests tracked by Beetle with optional filters.
+// @Description Retrieves API requests tracked by Beetle sorted by `startTime` descending (newest first), with optional filters and payload projection.
 // @Description
 // @Description [Note]
-// @Description - Request tracking is managed independently by Beetle (not shared with Tumblebug).
-// @Description - This API only returns requests made to Beetle, not to Tumblebug.
+// @Description - Request tracking is managed independently by Beetle.
+// @Description - Each entry includes `tumblebugSource` (`cm-beetle:{reqId}`) and `subRequestSummary` for cross-service correlation with CB-Tumblebug (`GET /tumblebug/requests?source=cm-beetle:{reqId}`).
 // @Description
 // @Description [Status Values]
 // @Description - Handling: Request is currently being processed
@@ -111,26 +158,43 @@ func RestGetRequest(c echo.Context) error {
 // @Produce  json
 // @Param status query string false "Filter by request status" Enums(Handling, Success, Error) default()
 // @Param method query string false "Filter by HTTP method (GET, POST, PUT, DELETE, etc.)" Enums(GET, POST, PUT, DELETE) default()
-// @Param url query string false "Filter by request URL"
+// @Param url query string false "Filter by request URL substring"
+// @Param source query string false "Filter by X-Request-Source header or tumblebugSource substring"
 // @Param time query string false "Filter by time in minutes from now (to get recent requests)"
+// @Param limit query int false "Maximum number of recent requests to return (0 = unlimited)" default(0)
+// @Param brief query bool false "Omit requestInfo.body and responseData for lightweight listing (default: false)" default(false)
 // @Param savefile query string false "Option to save the results to a file (set 'true' to activate)" Enums(true,false) default(false)
-// @Success 200 {object} map[string][]common.RequestDetails
+// @Success 200 {object} model.ApiResponse[GetAllRequestsResponse]
+// @Failure 400 {object} model.ApiResponse[any]
+// @Failure 500 {object} model.ApiResponse[any]
 // @Router /requests [get]
 func RestGetAllRequests(c echo.Context) error {
-	// Filter parameters
 	statusFilter := c.QueryParam("status")
 	methodFilter := c.QueryParam("method")
 	urlFilter := c.QueryParam("url")
-	timeFilter := c.QueryParam("time") // in minutes
+	sourceFilter := c.QueryParam("source")
+	timeFilter := c.QueryParam("time")
+	brief := c.QueryParam("brief") == "true"
+	limitFilter := c.QueryParam("limit")
 
-	// Build filter
-	var filter *common.RequestFilter
-	if statusFilter != "" || methodFilter != "" || urlFilter != "" || timeFilter != "" {
-		filter = &common.RequestFilter{
-			Status: statusFilter,
-			Method: methodFilter,
-			URL:    urlFilter,
+	limit := 0
+	if limitFilter != "" {
+		parsedLimit, err := strconv.Atoi(limitFilter)
+		if err != nil || parsedLimit < 0 {
+			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("limit must be a non-negative integer"))
 		}
+		limit = parsedLimit
+	}
+
+	filter := &common.RequestFilter{
+		Status: statusFilter,
+		Method: methodFilter,
+		URL:    urlFilter,
+		Source: sourceFilter,
+		Limit:  limit,
+		Brief:  brief,
+	}
+	if timeFilter != "" {
 		if minutes, err := strconv.Atoi(timeFilter); err == nil {
 			filter.Since = time.Now().Add(-time.Duration(minutes) * time.Minute)
 		}
@@ -171,16 +235,18 @@ func RestGetAllRequests(c echo.Context) error {
 
 		log.Info().Msgf("Filtered request log saved to: %s", logPath)
 
-		// Return only the file path when savefile is requested
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"message":   "Filtered requests saved successfully",
-			"file_path": logPath,
-			"count":     len(allRequests),
-		})
+		// Return the saved file metadata wrapped in standard ApiResponse
+		return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(
+			SaveRequestsFileResult{
+				FilePath: logPath,
+				Count:    len(allRequests),
+			},
+			"Filtered requests saved successfully",
+		))
 	}
 
 	// Return the filtered requests data when savefile is not requested
-	return c.JSON(http.StatusOK, model.SuccessResponse(map[string][]common.RequestDetails{"requests": allRequests}))
+	return c.JSON(http.StatusOK, model.SuccessResponse(GetAllRequestsResponse{Requests: allRequests}))
 }
 
 // RestDeleteRequest godoc
@@ -203,7 +269,7 @@ func RestDeleteRequest(c echo.Context) error {
 
 	if common.HasRequest(reqId) {
 		common.RemoveRequest(reqId)
-		return c.JSON(http.StatusOK, model.SimpleErrorResponse("Request deleted successfully"))
+		return c.JSON(http.StatusOK, model.SimpleSuccessResponse("Request deleted successfully"))
 	}
 
 	return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Request ID not found"))

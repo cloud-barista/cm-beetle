@@ -14,6 +14,8 @@ go 1.26.2
 
 replace github.com/cloud-barista/cm-beetle/imdl => ./imdl
 
+replace github.com/cloud-barista/cm-beetle/transx => ./transx
+
 require (
 	github.com/cloud-barista/cb-tumblebug v0.13.8
 	github.com/cloud-barista/cm-beetle/imdl v0.1.20

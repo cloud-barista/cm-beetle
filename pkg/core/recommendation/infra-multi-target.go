@@ -1,6 +1,7 @@
 package recommendation
 
 import (
+	"context"
 	"strings"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
@@ -28,27 +29,27 @@ const (
 // singleTargetRecommender is the shape shared by RecommendInfraCandidates and
 // RecommendInfraWithNlbCandidates. Letting the multi-target orchestrator take either as a
 // parameter avoids duplicating validation, sequencing, or sentinel-item logic per variant.
-type singleTargetRecommender func(desiredCsp, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error)
+type singleTargetRecommender func(ctx context.Context, desiredCsp, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error)
 
 // RecommendMultiInfraCandidates recommends the single best-match infrastructure candidate for
 // each target CSP/region pair, for cross-CSP comparison. Composes RecommendInfraCandidates or
 // RecommendGpuInfraCandidates based on GPU presence; no matching/ranking logic is duplicated here.
-func RecommendMultiInfraCandidates(pairs []cloudmodel.CloudProperty, srcInfra onpremmodel.OnpremInfra, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error) {
+func RecommendMultiInfraCandidates(ctx context.Context, pairs []cloudmodel.CloudProperty, srcInfra onpremmodel.OnpremInfra, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error) {
 	srcInfra = SanitizeSourceInfra(srcInfra)
 
 	recommender := RecommendInfraCandidates
 	if HasAnyGpu(srcInfra) {
 		recommender = RecommendGpuInfraCandidates
 	}
-	return recommendPerTarget(pairs, srcInfra, minMatchRate, recommender)
+	return recommendPerTarget(ctx, pairs, srcInfra, minMatchRate, recommender)
 }
 
 // RecommendMultiInfraWithNlbCandidates is the NLB-aware counterpart of
 // RecommendMultiInfraCandidates, composing RecommendInfraWithNlbCandidates per target.
-func RecommendMultiInfraWithNlbCandidates(pairs []cloudmodel.CloudProperty, srcInfra onpremmodel.OnpremInfra, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error) {
+func RecommendMultiInfraWithNlbCandidates(ctx context.Context, pairs []cloudmodel.CloudProperty, srcInfra onpremmodel.OnpremInfra, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error) {
 	srcInfra = SanitizeSourceInfra(srcInfra)
 
-	return recommendPerTarget(pairs, srcInfra, minMatchRate, RecommendInfraWithNlbCandidates)
+	return recommendPerTarget(ctx, pairs, srcInfra, minMatchRate, RecommendInfraWithNlbCandidates)
 }
 
 // recommendPerTarget runs recommend once per target pair, sequentially. Tumblebug calls share
@@ -56,21 +57,30 @@ func RecommendMultiInfraWithNlbCandidates(pairs []cloudmodel.CloudProperty, srcI
 // only risk 429s. Every pair yields exactly one result item — the top candidate on success, or
 // a sentinel "failed"/"nothing-to-recommend" item otherwise — so len(result) == len(pairs)
 // always holds, giving callers a predictable, index-free way to match results back to targets.
-func recommendPerTarget(pairs []cloudmodel.CloudProperty, srcInfra onpremmodel.OnpremInfra, minMatchRate float64, recommend singleTargetRecommender) ([]cloudmodel.RecommendedInfra, error) {
+func recommendPerTarget(ctx context.Context, pairs []cloudmodel.CloudProperty, srcInfra onpremmodel.OnpremInfra, minMatchRate float64, recommend singleTargetRecommender) ([]cloudmodel.RecommendedInfra, error) {
 	results := make([]cloudmodel.RecommendedInfra, 0, len(pairs))
 
 	for _, pair := range pairs {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		csp := strings.ToLower(pair.Csp)
 		region := strings.ToLower(pair.Region)
 
-		if ok, err := IsValidCspAndRegion(csp, region); !ok {
+		if ok, err := IsValidCspAndRegion(ctx, csp, region); !ok {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(err).Str("csp", csp).Str("region", region).Msg("skipping invalid target in multi-target recommendation")
 			results = append(results, failedTargetResult(csp, region, err))
 			continue
 		}
 
-		candidates, err := recommend(csp, region, srcInfra, multiInfraCandidatesPerTarget, minMatchRate)
+		candidates, err := recommend(ctx, csp, region, srcInfra, multiInfraCandidatesPerTarget, minMatchRate)
 		if err != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(err).Str("csp", csp).Str("region", region).Msg("recommendation failed for target")
 			results = append(results, failedTargetResult(csp, region, err))
 			continue

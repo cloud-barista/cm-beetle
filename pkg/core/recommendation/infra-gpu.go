@@ -1,6 +1,7 @@
 package recommendation
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -86,6 +87,7 @@ func DecomposeOnpremNodes(nodes []onpremmodel.NodeProperty) []onpremmodel.NodePr
 // It adheres to the Go Single Responsibility Principle by encapsulating heterogeneous GPU decomposition,
 // shared intra-node networking, and GPU-aware infrastructure assembly.
 func RecommendGpuInfraCandidates(
+	ctx context.Context,
 	desiredCsp string,
 	desiredRegion string,
 	srcInfra onpremmodel.OnpremInfra,
@@ -111,7 +113,7 @@ func RecommendGpuInfraCandidates(
 	}
 
 	// 1. Recommend vNet and subnets
-	recommendedVNetInfoList, err := RecommendVNet(csp, region, srcInfra)
+	recommendedVNetInfoList, err := RecommendVNet(ctx, csp, region, srcInfra)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to recommend a virtual network for GPU infrastructure")
 	}
@@ -167,6 +169,9 @@ func RecommendGpuInfraCandidates(
 	usedNames := make(map[string]bool, len(expandedNodes))
 
 	for i, node := range expandedNodes {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		minDisk := getCspMinRootDiskSizeGB(csp)
 		if hasGpu(node) && minDisk < gpuMinRootDiskSizeGB {
 			minDisk = gpuMinRootDiskSizeGB
@@ -174,8 +179,11 @@ func RecommendGpuInfraCandidates(
 		rootDiskSize := max(int(node.RootDisk.TotalSize), minDisk)
 
 		// Recommend security group for the node
-		recommendedSg, sgErr := RecommendSecurityGroup(csp, region, node)
+		recommendedSg, sgErr := RecommendSecurityGroup(ctx, csp, region, node)
 		if sgErr != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(sgErr).Msgf("failed to recommend security group for GPU node %s", node.MachineId)
 		}
 
@@ -217,13 +225,22 @@ func RecommendGpuInfraCandidates(
 	compatiblePairsForEachNode := make([][]CompatibleSpecImagePair, len(expandedNodes))
 
 	for i, node := range expandedNodes {
-		specList, _, specErr := RecommendNodeSpecs(csp, region, node, limitSpecs)
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		specList, _, specErr := RecommendNodeSpecs(ctx, csp, region, node, limitSpecs)
 		if specErr != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(specErr).Msgf("failed to recommend specs for GPU node %s", node.MachineId)
 		}
 
-		imageList, imgErr := RecommendVmOsImages(csp, region, node, limitImages)
+		imageList, imgErr := RecommendVmOsImages(ctx, csp, region, node, limitImages)
 		if imgErr != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(imgErr).Msgf("failed to recommend images for GPU node %s", node.MachineId)
 		}
 
@@ -284,7 +301,7 @@ func RecommendGpuInfraCandidates(
 
 			// Resolve the latest CSP image name and confirm available system disk
 			precheck, reviewErr := PreflightCheckCspProvisioning(
-				selectedPair.Spec.Id, selectedPair.Image.Id, selectedPair.Image.CspImageName, "",
+				ctx, selectedPair.Spec.Id, selectedPair.Image.Id, selectedPair.Image.CspImageName, "",
 			)
 			if reviewErr != nil {
 				log.Warn().Err(reviewErr).Msgf("preflight check failed for node %s; using cached image", expandedNodes[nodeIdx].MachineId)

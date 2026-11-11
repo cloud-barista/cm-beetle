@@ -1,6 +1,7 @@
 package recommendation
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -49,7 +50,7 @@ func filterNcpKvmTbSpecs(region string, specs []tbmodel.SpecInfo) []tbmodel.Spec
 // It delegates to specialized recommendation pipelines based on GPU presence:
 // - recommendGpuNodeSpec for nodes with GPU accelerators
 // - recommendCpuNodeSpec for general-purpose CPU nodes
-func RecommendNodeSpecs(csp string, region string, node onpremmodel.NodeProperty, limit int) (vmSpecList []cloudmodel.SpecInfo, length int, err error) {
+func RecommendNodeSpecs(ctx context.Context, csp string, region string, node onpremmodel.NodeProperty, limit int) (vmSpecList []cloudmodel.SpecInfo, length int, err error) {
 	node = SanitizeSourceNode(node)
 
 	if limit <= 0 {
@@ -58,14 +59,14 @@ func RecommendNodeSpecs(csp string, region string, node onpremmodel.NodeProperty
 	}
 
 	if hasGpu(node) {
-		return recommendGpuNodeSpec(csp, region, node, limit)
+		return recommendGpuNodeSpec(ctx, csp, region, node, limit)
 	}
 
-	return recommendCpuNodeSpec(csp, region, node, limit)
+	return recommendCpuNodeSpec(ctx, csp, region, node, limit)
 }
 
 // recommendCpuNodeSpec recommends appropriate general-purpose CPU node specs for the given node.
-func recommendCpuNodeSpec(csp string, region string, node onpremmodel.NodeProperty, limit int) (vmSpecList []cloudmodel.SpecInfo, length int, err error) {
+func recommendCpuNodeSpec(ctx context.Context, csp string, region string, node onpremmodel.NodeProperty, limit int) (vmSpecList []cloudmodel.SpecInfo, length int, err error) {
 	var emptyResp = []cloudmodel.SpecInfo{}
 
 	// Extract node specifications from source computing environment
@@ -118,7 +119,7 @@ func recommendCpuNodeSpec(csp string, region string, node onpremmodel.NodeProper
 
 		// Call Tumblebug API to get recommended node specs
 		var err error
-		nodeSpecInfoList, err = tbclient.NewSession().InfraRecommendSpec(planToSearchProperNode)
+		nodeSpecInfoList, err = tbclient.NewSession().SetContext(ctx).InfraRecommendSpec(planToSearchProperNode)
 		if err != nil {
 			log.Error().Err(err).
 				Str("machineId", node.MachineId).

@@ -350,3 +350,99 @@ export interface CheckSSHReadyResponse {
   nextAllowedTime?: string;
 }
 
+// Outbound CB-Tumblebug sub-request tracking types (GET /beetle/request/{reqId})
+export interface TumblebugRequestSnapshot {
+  reqId: string;
+  status: string;
+  method: string;
+  url: string;
+  startTime?: string;
+  endTime?: string;
+  elapsedTime?: number;
+  errorResponse?: string;
+}
+
+export interface SubRequestItem {
+  seq: number;
+  subReqId: string;
+  method: string;
+  targetPath: string;
+  resourceType?: string;
+  resourceHint?: string;
+  status: string;
+  statusCode?: number;
+  startTime: string;
+  endTime?: string;
+  durationMs?: number;
+  errorMessage?: string;
+  upstreamStatus?: string;
+  upstreamProgress?: any;
+  upstreamError?: string;
+}
+
+export interface SubRequestSummary {
+  total: number;
+  handling: number;
+  success: number;
+  error: number;
+  currentAction?: string;
+}
+
+export interface DataHookOutputs {
+  sourcePreCmd?: string;
+  destinationPreCmd?: string;
+  sourcePostCmd?: string;
+  destinationPostCmd?: string;
+  [key: string]: string | undefined;
+}
+
+export interface RequestDetailsResult {
+  status: string;
+  errorResponse?: string;
+  responseData?: any;
+  tumblebugSource?: string;
+  subRequestSummary?: SubRequestSummary;
+  subRequests?: SubRequestItem[];
+}
+
+export interface AiStackLayerStatus {
+  host: string;
+  checkedAt: string;
+  isSample?: boolean;
+  openWebUi: {
+    ok: boolean;
+    port?: number;
+    httpStatus: number;
+    latencyMs?: number;
+    version?: string;
+    error?: string;
+  };
+  ollamaTags: {
+    ok: boolean;
+    latencyMs?: number;
+    modelName?: string;
+    sizeBytes?: number;
+    digest?: string;
+    parameterSize?: string;
+    quantizationLevel?: string;
+    totalModels?: number;
+    error?: string;
+  };
+  ollamaPs: {
+    ok: boolean;
+    vramBytes?: number;
+    activeModel?: string;
+    gpuAccelerated?: boolean;
+    error?: string;
+  };
+  inference: {
+    ok: boolean;
+    latencyMs?: number;
+    tokensPerSec?: number;
+    evalCount?: number;
+    responseSnippet?: string;
+    error?: string;
+  };
+}
+
+

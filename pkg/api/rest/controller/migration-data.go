@@ -15,6 +15,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -119,7 +120,7 @@ func GetDataMigrationEncryptionKey(c echo.Context) error {
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used as reqId for tracking migration status."
 // @Param Prefer header string false "Set to 'respond-async' to run this migration asynchronously (RFC 7240)" Enums(respond-async)
 // @Param reqBody body transx.DataMigrationModel true "Data migration request (supports plaintext or encrypted with encryptionKeyId)"
-// @Success 200 {object} model.ApiResponse[any] "Migration completed synchronously"
+// @Success 200 {object} model.ApiResponse[transx.MigrationResult] "Migration completed synchronously"
 // @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Migration started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters or decryption failed"
 // @Failure 500 {object} model.ApiResponse[any] "Migration failed"
@@ -188,7 +189,7 @@ func MigrateData(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() (map[string]any, error) {
+		started := common.RunAsync(c.Request().Context(), reqID, func(_ context.Context) (transx.MigrationResult, error) {
 			return runDataMigration(*req)
 		})
 		if !started {
@@ -218,6 +219,13 @@ func MigrateData(c echo.Context) error {
 				"Too many requests to the underlying infrastructure provider; retry after the given time"))
 		}
 		log.Error().Err(err).Msg("Data migration failed")
+		if result.PreserveOnError() {
+			return c.JSON(http.StatusInternalServerError, model.ApiResponse[transx.MigrationResult]{
+				Success: false,
+				Error:   err.Error(),
+				Data:    result,
+			})
+		}
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
 	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(result, "Data migrated successfully"))
@@ -234,28 +242,23 @@ func preferRespondAsync(c echo.Context) bool {
 	return false
 }
 
-// runDataMigration performs the data migration workflow (PreCmd, Transfer, PostCmd) and returns a summary.
-func runDataMigration(req transx.DataMigrationModel) (map[string]any, error) {
+// runDataMigration performs the data migration workflow (PreCmd, Transfer, PostCmd) and returns a structured result.
+func runDataMigration(req transx.DataMigrationModel) (transx.MigrationResult, error) {
 	start := time.Now()
-	pipeline, err := transx.MigrateDataWithPipeline(req)
+	result, err := transx.MigrateDataWithResult(req)
 	if err != nil {
-		return nil, fmt.Errorf("data migration failed: %w (%s)", err, time.Since(start).Round(time.Millisecond))
-	}
-	elapsed := time.Since(start).Round(time.Millisecond)
-	effectiveStrategy := req.Strategy
-	if pipeline != nil && pipeline.EffectiveStrategy != "" {
-		effectiveStrategy = pipeline.EffectiveStrategy
+		if result.SourceRecovered {
+			return result, fmt.Errorf("data migration failed (source unquiesced via postCmd): %w (%s)", err, time.Since(start).Round(time.Millisecond))
+		}
+		return result, fmt.Errorf("data migration failed: %w (%s)", err, time.Since(start).Round(time.Millisecond))
 	}
 	log.Info().
-		Str("requestedStrategy", req.Strategy).
-		Str("effectiveStrategy", effectiveStrategy).
-		Str("elapsedTime", elapsed.String()).
+		Str("requestedStrategy", result.RequestedStrategy).
+		Str("effectiveStrategy", result.EffectiveStrategy).
+		Str("elapsedTime", result.ElapsedTime).
+		Bool("hasHookOutputs", result.HookOutputs != nil).
 		Msg("Data migration completed")
-	return map[string]any{
-		"message":           fmt.Sprintf("Data migrated successfully (%s)", elapsed),
-		"elapsedTime":       elapsed.String(),
-		"effectiveStrategy": effectiveStrategy,
-	}, nil
+	return result, nil
 }
 
 // ============================================================================

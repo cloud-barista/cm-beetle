@@ -15,6 +15,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -105,7 +106,7 @@ func RecommendInfraWithDefaults(c echo.Context) error {
 	}
 	sourceInfra := reqt.OnpremiseInfraModel
 
-	ok, err := recommendation.IsValidCspAndRegion(csp, region)
+	ok, err := recommendation.IsValidCspAndRegion(c.Request().Context(), csp, region)
 	if !ok {
 		log.Error().Err(err).Msg("failed to validate CSP and region")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
@@ -113,8 +114,8 @@ func RecommendInfraWithDefaults(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() (cloudmodel.RecommendedInfraDynamicList, error) {
-			return recommendation.RecommendInfraWithDefaults(csp, region, sourceInfra)
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) (cloudmodel.RecommendedInfraDynamicList, error) {
+			return recommendation.RecommendInfraWithDefaults(ctx, csp, region, sourceInfra)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -132,7 +133,7 @@ func RecommendInfraWithDefaults(c echo.Context) error {
 	}
 
 	// [Process]
-	recommendedInfraInfoList, err := recommendation.RecommendInfraWithDefaults(csp, region, sourceInfra)
+	recommendedInfraInfoList, err := recommendation.RecommendInfraWithDefaults(c.Request().Context(), csp, region, sourceInfra)
 	// recommendedInfraInfoList.TargetInfra.Name = "mci101"
 
 	// [Ouput]
@@ -248,7 +249,7 @@ func RecommendInfraCandidates(c echo.Context) error {
 	}
 	sourceInfra := reqt.OnpremiseInfraModel
 
-	ok, err := recommendation.IsValidCspAndRegion(csp, region)
+	ok, err := recommendation.IsValidCspAndRegion(c.Request().Context(), csp, region)
 	if !ok {
 		log.Error().Err(err).Msg("failed to validate CSP and region")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
@@ -264,8 +265,8 @@ func RecommendInfraCandidates(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() ([]cloudmodel.RecommendedInfra, error) {
-			return recommender(csp, region, sourceInfra, limit, minMatchRate)
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) ([]cloudmodel.RecommendedInfra, error) {
+			return recommender(ctx, csp, region, sourceInfra, limit, minMatchRate)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -283,7 +284,7 @@ func RecommendInfraCandidates(c echo.Context) error {
 	}
 
 	// [Process]
-	recommendedInfraCandidates, err := recommender(csp, region, sourceInfra, limit, minMatchRate)
+	recommendedInfraCandidates, err := recommender(c.Request().Context(), csp, region, sourceInfra, limit, minMatchRate)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -411,7 +412,7 @@ func RecommendInfraWithNlbCandidates(c echo.Context) error {
 			"sourceInfra.nlbs is required for infraWithNlb; use /recommendation/infra for NLB-free recommendation"))
 	}
 
-	if ok, err := recommendation.IsValidCspAndRegion(req.DesiredCsp, req.DesiredRegion); !ok {
+	if ok, err := recommendation.IsValidCspAndRegion(c.Request().Context(), req.DesiredCsp, req.DesiredRegion); !ok {
 		log.Error().Err(err).Msg("failed to validate CSP and region")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
 	}
@@ -427,9 +428,9 @@ func RecommendInfraWithNlbCandidates(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() ([]cloudmodel.RecommendedInfra, error) {
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) ([]cloudmodel.RecommendedInfra, error) {
 			return recommendation.RecommendInfraWithNlbCandidates(
-				req.DesiredCsp, req.DesiredRegion, req.SourceInfra, limit, minMatchRate,
+				ctx, req.DesiredCsp, req.DesiredRegion, req.SourceInfra, limit, minMatchRate,
 			)
 		})
 		if !started {
@@ -449,7 +450,7 @@ func RecommendInfraWithNlbCandidates(c echo.Context) error {
 
 	// [Process]
 	candidates, err := recommendation.RecommendInfraWithNlbCandidates(
-		req.DesiredCsp, req.DesiredRegion, req.SourceInfra, limit, minMatchRate,
+		c.Request().Context(), req.DesiredCsp, req.DesiredRegion, req.SourceInfra, limit, minMatchRate,
 	)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {

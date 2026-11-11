@@ -14,6 +14,7 @@ limitations under the License.
 package validation
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -31,7 +32,7 @@ const (
 )
 
 // ValidateTargetK8sInfra checks whether target K8s infra model is valid and can be provisioned.
-func ValidateTargetK8sInfra(nsId string, target *cloudmodel.RecommendedInfra) ValidationResult {
+func ValidateTargetK8sInfra(ctx context.Context, nsId string, target *cloudmodel.RecommendedInfra) ValidationResult {
 	if target == nil {
 		return newResult([]ValidationIssue{{
 			Code:     CodeRequiredFieldMissing,
@@ -134,7 +135,7 @@ func ValidateTargetK8sInfra(nsId string, target *cloudmodel.RecommendedInfra) Va
 	region := strings.ToLower(strings.Join(connParts[1:], "-"))
 
 	// Resolve provider and region from Tumblebug connection configuration if available
-	connConfig, connErr := tbclient.NewSession().GetConnConfig(connectionName)
+	connConfig, connErr := tbclient.NewSession().SetContext(ctx).GetConnConfig(connectionName)
 	if connErr == nil {
 		if connConfig.ProviderName != "" {
 			provider = strings.ToLower(connConfig.ProviderName)
@@ -145,7 +146,7 @@ func ValidateTargetK8sInfra(nsId string, target *cloudmodel.RecommendedInfra) Va
 	}
 
 	// Check if K8s cluster already exists in the namespace
-	clusterInfo, err := tbclient.NewSession().ReadK8sCluster(nsId, cluster.Name)
+	clusterInfo, err := tbclient.NewSession().SetContext(ctx).ReadK8sCluster(nsId, cluster.Name)
 	if err == nil && clusterInfo.Id != "" {
 		issues = append(issues, ValidationIssue{
 			Code:     CodeResourceAlreadyExists,
@@ -157,7 +158,7 @@ func ValidateTargetK8sInfra(nsId string, target *cloudmodel.RecommendedInfra) Va
 
 	// Validate K8s version compatibility
 	if cluster.Version != "" {
-		availableVersions, err := tbclient.NewSession().GetAvailableK8sVersions(provider, region)
+		availableVersions, err := tbclient.NewSession().SetContext(ctx).GetAvailableK8sVersions(provider, region)
 		if err == nil && len(availableVersions) > 0 {
 			versionMatch := false
 			for _, av := range availableVersions {
@@ -183,7 +184,7 @@ func ValidateTargetK8sInfra(nsId string, target *cloudmodel.RecommendedInfra) Va
 	}
 
 	// Validate CSP K8s profile constraints
-	profile, profileErr := tbclient.NewSession().GetK8sClusterProfile(provider, region)
+	profile, profileErr := tbclient.NewSession().SetContext(ctx).GetK8sClusterProfile(provider, region)
 	if profileErr == nil {
 		// Check subnet count requirement
 		subnetCount := len(cluster.SubnetIds)
@@ -298,7 +299,7 @@ func ValidateTargetK8sInfra(nsId string, target *cloudmodel.RecommendedInfra) Va
 
 			// Validate spec size viability and spec naming rule
 			if ng.SpecId != "" {
-				specInfo, err := tbclient.NewSession().ReadVmSpec("system", ng.SpecId)
+				specInfo, err := tbclient.NewSession().SetContext(ctx).ReadVmSpec("system", ng.SpecId)
 				if err == nil {
 					if specInfo.VCPU < minViableWorkerVcpu || specInfo.MemoryGiB < minViableWorkerMemGiB {
 						issues = append(issues, ValidationIssue{
@@ -325,7 +326,7 @@ func ValidateTargetK8sInfra(nsId string, target *cloudmodel.RecommendedInfra) Va
 
 	// Validate fresh creation companion resources do not collide
 	if target.TargetVNet.Name != "" {
-		if vnetInfo, err := tbclient.NewSession().ReadVNet(nsId, target.TargetVNet.Name); err == nil && vnetInfo.Id != "" {
+		if vnetInfo, err := tbclient.NewSession().SetContext(ctx).ReadVNet(nsId, target.TargetVNet.Name); err == nil && vnetInfo.Id != "" {
 			issues = append(issues, ValidationIssue{
 				Code:     CodeResourceAlreadyExists,
 				Severity: SeverityError,
@@ -336,7 +337,7 @@ func ValidateTargetK8sInfra(nsId string, target *cloudmodel.RecommendedInfra) Va
 	}
 
 	if target.TargetSshKey.Name != "" {
-		if sshKeyInfo, err := tbclient.NewSession().ReadSshKey(nsId, target.TargetSshKey.Name); err == nil && sshKeyInfo.Id != "" {
+		if sshKeyInfo, err := tbclient.NewSession().SetContext(ctx).ReadSshKey(nsId, target.TargetSshKey.Name); err == nil && sshKeyInfo.Id != "" {
 			issues = append(issues, ValidationIssue{
 				Code:     CodeResourceAlreadyExists,
 				Severity: SeverityError,
@@ -350,7 +351,7 @@ func ValidateTargetK8sInfra(nsId string, target *cloudmodel.RecommendedInfra) Va
 		if sg.Name == "" {
 			continue
 		}
-		if sgInfo, err := tbclient.NewSession().ReadSecurityGroup(nsId, sg.Name); err == nil && sgInfo.Id != "" {
+		if sgInfo, err := tbclient.NewSession().SetContext(ctx).ReadSecurityGroup(nsId, sg.Name); err == nil && sgInfo.Id != "" {
 			issues = append(issues, ValidationIssue{
 				Code:     CodeResourceAlreadyExists,
 				Severity: SeverityError,

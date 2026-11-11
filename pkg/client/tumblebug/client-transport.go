@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 )
 
@@ -31,11 +32,17 @@ const cacheDurationKey contextKey = "cacheDuration"
 
 // SetCacheDuration adds cache duration to the context
 func SetCacheDuration(ctx context.Context, d time.Duration) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	return context.WithValue(ctx, cacheDurationKey, d)
 }
 
 // GetCacheDuration retrieves cache duration from the context
 func GetCacheDuration(ctx context.Context) (time.Duration, bool) {
+	if ctx == nil {
+		return 0, false
+	}
 	d, ok := ctx.Value(cacheDurationKey).(time.Duration)
 	return d, ok
 }
@@ -160,16 +167,13 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 					log.Debug().Msgf("too many same requests after %d retries: %s", retryLimit, requestKey)
 					return nil, fmt.Errorf("too many same requests: %s", requestKey)
 				}
-				time.Sleep(retryWait)
+				if err := common.SleepWithContext(req.Context(), retryWait); err != nil {
+					return nil, err
+				}
 
-				// Check cache again while waiting
+				// Return newly populated cache entry if an in-flight request completed while waiting.
 				if item, found := clientCache.Load(requestKey); found {
 					if cachedItem, ok := item.(CacheItem); ok {
-						requestDone(requestKey) // Release the count we tried to acquire? No, limitConcurrentRequests returns false if not acquired.
-						// Wait, limitConcurrentRequests increments if successful. If false, it didn't increment.
-						// But if we are waiting, someone else is running.
-						// If we find cache, we return it.
-
 						log.Debug().Msg("Got the cached result while waiting")
 						resp := &http.Response{
 							StatusCode: cachedItem.StatusCode,
@@ -187,15 +191,20 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 		}
 	}
 
+	finishSubReq := beginSubRequestTrace(req, bodyBytes)
+
 	// Execute Request
 	start := time.Now()
 	resp, err := transport.RoundTrip(req)
 	duration := time.Since(start)
 
 	if err != nil {
+		finishSubReq(0, nil, err)
 		if method == "GET" {
 			requestDone(requestKey)
-			recordCircuitBreakerFailure(requestKey)
+			if req.Context().Err() == nil {
+				recordCircuitBreakerFailure(requestKey)
+			}
 		}
 		log.Error().Err(err).Str("method", method).Str("url", url).Dur("latency", duration).Msg("Internal Call Failed")
 		return nil, err
@@ -204,12 +213,17 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 	// Read response body for caching and logging
 	respBodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
+		finishSubReq(resp.StatusCode, nil, err)
+		if method == "GET" {
+			requestDone(requestKey)
+		}
 		return nil, err
 	}
 	resp.Body.Close()
 	resp.Body = io.NopCloser(bytes.NewBuffer(respBodyBytes))
 
 	if resp.StatusCode >= 400 {
+		finishSubReq(resp.StatusCode, respBodyBytes, nil)
 		if method == "GET" {
 			requestDone(requestKey)
 			if resp.StatusCode != http.StatusNotFound {
@@ -224,6 +238,8 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 		// We still return the response so the caller can handle the error body
 		return resp, nil
 	}
+
+	finishSubReq(resp.StatusCode, nil, nil)
 
 	// Success
 	if method == "GET" {

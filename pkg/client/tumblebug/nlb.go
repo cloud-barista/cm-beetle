@@ -20,6 +20,7 @@ import (
 	"time"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/rs/zerolog/log"
 )
@@ -78,6 +79,9 @@ func (s *Session) ListNlbs(nsId, infraId string) (NLBListResponse, error) {
 			Get(fmt.Sprintf("/ns/%s/infra/%s/nlb", nsId, infraId))
 
 		if err != nil {
+			if ctxErr := s.Context().Err(); ctxErr != nil {
+				return NLBListResponse{}, ctxErr
+			}
 			lastErr = err
 			log.Warn().Err(err).Str("nsId", nsId).Str("infraId", infraId).Int("attempt", attempt).Msg("Failed to list NLBs")
 		} else if resp.IsError() {
@@ -98,7 +102,9 @@ func (s *Session) ListNlbs(nsId, infraId string) (NLBListResponse, error) {
 		}
 
 		if attempt < maxAttempts {
-			time.Sleep(retryInterval)
+			if err := common.SleepWithContext(s.Context(), retryInterval); err != nil {
+				return NLBListResponse{}, err
+			}
 		}
 	}
 

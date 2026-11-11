@@ -15,6 +15,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -44,7 +45,7 @@ var _ = rdbmsmodel.RDBMSCapabilityResponse{}
 func GetRDBMSSupport(c echo.Context) error {
 	providerName := c.QueryParam("providerName")
 
-	result, err := recommendation.GetRDBMSSupport(providerName)
+	result, err := recommendation.GetRDBMSSupport(c.Request().Context(), providerName)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get RDBMS support matrix")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to get RDBMS support matrix: %v", err)))
@@ -77,7 +78,7 @@ func GetRDBMSCapability(c echo.Context) error {
 		optionalEngine = append(optionalEngine, dbEngine)
 	}
 
-	result, err := recommendation.GetRDBMSCapability(connectionName, optionalEngine...)
+	result, err := recommendation.GetRDBMSCapability(c.Request().Context(), connectionName, optionalEngine...)
 	if err != nil {
 		log.Warn().Err(err).Str("connectionName", connectionName).Msg("Failed to get RDBMS capability")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(fmt.Sprintf("Failed to get RDBMS capability: %v", err)))
@@ -112,7 +113,7 @@ func ValidateRDBMS(c echo.Context) error {
 	}
 
 	req.AutoFillDefaults = false
-	validated, err := recommendation.ValidateRDBMS(nsId, req)
+	validated, err := recommendation.ValidateRDBMS(c.Request().Context(), nsId, req)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to validate RDBMS configuration")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(fmt.Sprintf("Validation failed: %v", err)))
@@ -153,9 +154,12 @@ type RecommendRDBMSRequest struct {
 // @Param desiredCsp query string false "CSP (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,tencent,ibm,openstack,ncp,nhn) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID"
+// @Param Prefer header string false "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 200 {object} model.ApiResponse[rdbmsmodel.RecommendedRDBMS] "Successfully recommended managed RDBMS"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Recommendation started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
 // @Router /recommendation/middleware/rdbms [post]
 func RecommendRDBMS(c echo.Context) error {
 	// [Input]
@@ -197,8 +201,30 @@ func RecommendRDBMS(c echo.Context) error {
 		Bool("autoFillSourceDefaults", autoFill).
 		Msg("Processing managed RDBMS recommendation request")
 
+	sources := req.SourceRDBMSInstances
+	prefs := req.TargetPreferences
+	if preferRespondAsync(c) {
+		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) (rdbmsmodel.RecommendedRDBMS, error) {
+			return recommendation.RecommendRDBMS(ctx, desiredCsp, desiredRegion, sources, autoFill, prefs)
+		})
+		if !started {
+			c.Response().Header().Set("Retry-After", "5")
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many async jobs in progress; retry shortly, or retry without Prefer: respond-async"))
+		}
+		c.Response().Header().Set("Preference-Applied", "respond-async")
+		return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+			model.AsyncJobResponse{
+				ReqID:     reqID,
+				Status:    common.RequestStatusHandling,
+				StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+			},
+			"Recommendation started. Use GET /request/{reqId} to check status."))
+	}
+
 	// [Process]
-	recommended, err := recommendation.RecommendRDBMS(desiredCsp, desiredRegion, req.SourceRDBMSInstances, autoFill, req.TargetPreferences)
+	recommended, err := recommendation.RecommendRDBMS(c.Request().Context(), desiredCsp, desiredRegion, sources, autoFill, prefs)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to recommend managed RDBMS")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))

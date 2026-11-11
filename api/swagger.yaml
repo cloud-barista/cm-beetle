@@ -2264,6 +2264,9 @@ definitions:
       errorResponse:
         description: A message describing any error that occurred during request processing.
         type: string
+      reqId:
+        description: Unique Beetle request ID.
+        type: string
       requestInfo:
         allOf:
         - $ref: '#/definitions/common.RequestInfo'
@@ -2280,6 +2283,18 @@ definitions:
       status:
         description: The current status of the request (e.g., "Handling", "Error",
           "Success").
+        type: string
+      subRequestSummary:
+        allOf:
+        - $ref: '#/definitions/common.SubRequestSummary'
+        description: Aggregated sub-request counts and active step.
+      subRequests:
+        description: Ordered list of outbound Tumblebug sub-requests.
+        items:
+          $ref: '#/definitions/common.SubRequest'
+        type: array
+      tumblebugSource:
+        description: Correlated X-Request-Source value ("cm-beetle:{reqId}").
         type: string
     type: object
   common.RequestInfo:
@@ -2317,6 +2332,51 @@ definitions:
       message:
         example: Any message
         type: string
+    type: object
+  common.SubRequest:
+    properties:
+      durationMs:
+        type: integer
+      endTime:
+        type: string
+      errorMessage:
+        type: string
+      method:
+        type: string
+      resourceHint:
+        type: string
+      resourceType:
+        type: string
+      seq:
+        type: integer
+      startTime:
+        type: string
+      status:
+        type: string
+      statusCode:
+        type: integer
+      subReqId:
+        type: string
+      targetPath:
+        type: string
+      upstreamError:
+        type: string
+      upstreamProgress: {}
+      upstreamStatus:
+        type: string
+    type: object
+  common.SubRequestSummary:
+    properties:
+      currentAction:
+        type: string
+      error:
+        type: integer
+      handling:
+        type: integer
+      success:
+        type: integer
+      total:
+        type: integer
     type: object
   controller.CheckSSHReadyResponse:
     properties:
@@ -2357,6 +2417,13 @@ definitions:
         $ref: '#/definitions/onpremisemodel.OnpremInfra'
     required:
     - onpremiseInfraModel
+    type: object
+  controller.GetAllRequestsResponse:
+    properties:
+      requests:
+        items:
+          $ref: '#/definitions/common.RequestDetails'
+        type: array
     type: object
   controller.InspectObjectStorageRequest:
     properties:
@@ -3661,6 +3728,25 @@ definitions:
         example: true
         type: boolean
     type: object
+  model.ApiResponse-controller_GetAllRequestsResponse:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/controller.GetAllRequestsResponse'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
   model.ApiResponse-controller_MigrateInfraResponse:
     properties:
       data:
@@ -4159,6 +4245,25 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/transx.DataMigrationModel'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-transx_MigrationResult:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/transx.MigrationResult'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -9176,10 +9281,10 @@ definitions:
           For ObjectStorage: Bucket/Key (e.g., "my-bucket/my-key")
         type: string
       postCmd:
-        description: Command to run after transfer (destination only)
+        description: Command to run after transfer
         type: string
       preCmd:
-        description: Hooks for pre/post processing
+        description: Hooks for pre/post processing on source and destination endpoints
         type: string
       storageType:
         description: |-
@@ -9250,12 +9355,38 @@ definitions:
           type: string
         type: array
     type: object
+  transx.HookOutputs:
+    properties:
+      destinationPostCmd:
+        type: string
+      destinationPreCmd:
+        type: string
+      sourcePostCmd:
+        type: string
+      sourcePreCmd:
+        type: string
+    type: object
   transx.JWTAuthConfig:
     properties:
       token:
         type: string
     required:
     - token
+    type: object
+  transx.MigrationResult:
+    properties:
+      effectiveStrategy:
+        type: string
+      elapsedTime:
+        type: string
+      hookOutputs:
+        $ref: '#/definitions/transx.HookOutputs'
+      message:
+        type: string
+      requestedStrategy:
+        type: string
+      sourceRecovered:
+        type: boolean
     type: object
   transx.ObjectStorageAccess:
     properties:
@@ -9754,7 +9885,7 @@ paths:
         "200":
           description: Migration completed synchronously
           schema:
-            $ref: '#/definitions/model.ApiResponse-any'
+            $ref: '#/definitions/model.ApiResponse-transx_MigrationResult'
         "202":
           description: Migration started asynchronously - use GET /request/{reqId}
             to check status
@@ -13229,6 +13360,13 @@ paths:
         in: header
         name: X-Request-Id
         type: string
+      - description: Set to 'respond-async' to run this recommendation asynchronously
+          (RFC 7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
       produces:
       - application/json
       responses:
@@ -13236,12 +13374,22 @@ paths:
           description: Successfully recommended object storage
           schema:
             $ref: '#/definitions/model.ApiResponse-storagemodel_RecommendedObjectStorage'
+        "202":
+          description: Recommendation started asynchronously - use GET /request/{reqId}
+            to check status
+          schema:
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "400":
           description: Invalid request parameters
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error during recommendation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend an object storage for cloud migration
@@ -13315,6 +13463,13 @@ paths:
         in: header
         name: X-Request-Id
         type: string
+      - description: Set to 'respond-async' to run this recommendation asynchronously
+          (RFC 7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
       produces:
       - application/json
       responses:
@@ -13322,12 +13477,22 @@ paths:
           description: Successfully recommended managed RDBMS
           schema:
             $ref: '#/definitions/model.ApiResponse-rdbmsmodel_RecommendedRDBMS'
+        "202":
+          description: Recommendation started asynchronously - use GET /request/{reqId}
+            to check status
+          schema:
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "400":
           description: Invalid request parameters
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error during recommendation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend Managed RDBMS (RDS) for cloud migration
@@ -14176,12 +14341,13 @@ paths:
       consumes:
       - application/json
       description: |-
-        Retrieves the details of a specific API request tracked by Beetle.
+        Retrieves the details of a specific API request tracked by Beetle, including correlated outbound CB-Tumblebug sub-requests.
 
         [Note]
-        - Request tracking is managed independently by Beetle (not shared with Tumblebug).
-        - The reqId corresponds to the X-Request-Id header value from a previous API call.
-        - Do NOT call Tumblebug's /request/{reqId} API with this reqId; each system manages its own request tracking.
+        - Request tracking is managed independently by Beetle using `reqId` (from `X-Request-Id`).
+        - Outbound state-changing and recommendation calls to CB-Tumblebug are recorded in `subRequests[]` with `subReqId` (`{reqId}-{seq}`) and `tumblebugSource` (`cm-beetle:{reqId}`).
+        - Use `brief=true` during high-frequency polling to omit large request/response bodies while still receiving `status`, `subRequestSummary`, and `subRequests`.
+        - Set `withTumblebug=true` to enrich each `subRequests[]` entry with live `upstreamStatus` and `upstreamProgress` from CB-Tumblebug `GET /request/{subReqId}`.
 
         [Status Values]
         - Handling: Request is currently being processed
@@ -14200,6 +14366,23 @@ paths:
         name: reqId
         required: true
         type: string
+      - default: false
+        description: 'Omit requestInfo.body and responseData for lightweight polling
+          (default: false)'
+        in: query
+        name: brief
+        type: boolean
+      - default: true
+        description: 'Include outbound CB-Tumblebug subRequests list (default: true)'
+        in: query
+        name: withSubRequests
+        type: boolean
+      - default: false
+        description: 'Enrich subRequests with live upstream status/progress from CB-Tumblebug
+          (default: false)'
+        in: query
+        name: withTumblebug
+        type: boolean
       produces:
       - application/json
       responses:
@@ -14243,11 +14426,11 @@ paths:
       consumes:
       - application/json
       description: |-
-        Retrieves all API requests tracked by Beetle with optional filters.
+        Retrieves API requests tracked by Beetle sorted by `startTime` descending (newest first), with optional filters and payload projection.
 
         [Note]
-        - Request tracking is managed independently by Beetle (not shared with Tumblebug).
-        - This API only returns requests made to Beetle, not to Tumblebug.
+        - Request tracking is managed independently by Beetle.
+        - Each entry includes `tumblebugSource` (`cm-beetle:{reqId}`) and `subRequestSummary` for cross-service correlation with CB-Tumblebug (`GET /tumblebug/requests?source=cm-beetle:{reqId}`).
 
         [Status Values]
         - Handling: Request is currently being processed
@@ -14279,14 +14462,29 @@ paths:
         in: query
         name: method
         type: string
-      - description: Filter by request URL
+      - description: Filter by request URL substring
         in: query
         name: url
+        type: string
+      - description: Filter by X-Request-Source header or tumblebugSource substring
+        in: query
+        name: source
         type: string
       - description: Filter by time in minutes from now (to get recent requests)
         in: query
         name: time
         type: string
+      - default: 0
+        description: Maximum number of recent requests to return (0 = unlimited)
+        in: query
+        name: limit
+        type: integer
+      - default: false
+        description: 'Omit requestInfo.body and responseData for lightweight listing
+          (default: false)'
+        in: query
+        name: brief
+        type: boolean
       - default: "false"
         description: Option to save the results to a file (set 'true' to activate)
         enum:
@@ -14301,11 +14499,15 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              items:
-                $ref: '#/definitions/common.RequestDetails'
-              type: array
-            type: object
+            $ref: '#/definitions/model.ApiResponse-controller_GetAllRequestsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Get all requests
       tags:
       - '[Admin] API Request Management'

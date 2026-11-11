@@ -1,6 +1,7 @@
 package migration_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -37,7 +38,7 @@ func TestMigrateRDBMS_Validation(t *testing.T) {
 			},
 		}
 
-		err := migration.CreateRDBMS("mig01", req, "test")
+		err := migration.CreateRDBMS(context.Background(), "mig01", req, "test")
 		if err == nil {
 			t.Fatal("expected error when adminUserPassword is empty, got nil")
 		}
@@ -70,7 +71,7 @@ func TestMigrateRDBMS_Validation(t *testing.T) {
 		}
 
 		// Should attempt connection to tumblebug; fails gracefully on offline TB
-		err := migration.CreateRDBMS("mig01", req, "test")
+		err := migration.CreateRDBMS(context.Background(), "mig01", req, "test")
 		if err == nil {
 			t.Log("CreateRDBMS succeeded (live TB)")
 		} else {

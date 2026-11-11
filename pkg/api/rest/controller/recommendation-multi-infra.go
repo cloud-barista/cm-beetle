@@ -14,6 +14,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -134,8 +135,8 @@ func RecommendMultiInfraCandidates(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() ([]cloudmodel.RecommendedInfra, error) {
-			return recommendation.RecommendMultiInfraCandidates(pairs, sourceInfra, minMatchRate)
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) ([]cloudmodel.RecommendedInfra, error) {
+			return recommendation.RecommendMultiInfraCandidates(ctx, pairs, sourceInfra, minMatchRate)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -153,7 +154,7 @@ func RecommendMultiInfraCandidates(c echo.Context) error {
 	}
 
 	// [Process]
-	results, err := recommendation.RecommendMultiInfraCandidates(pairs, sourceInfra, minMatchRate)
+	results, err := recommendation.RecommendMultiInfraCandidates(c.Request().Context(), pairs, sourceInfra, minMatchRate)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend multi-target infrastructure candidates")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Recommendation failed"))
@@ -235,8 +236,8 @@ func RecommendMultiInfraWithNlbCandidates(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() ([]cloudmodel.RecommendedInfra, error) {
-			return recommendation.RecommendMultiInfraWithNlbCandidates(pairs, sourceInfra, minMatchRate)
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) ([]cloudmodel.RecommendedInfra, error) {
+			return recommendation.RecommendMultiInfraWithNlbCandidates(ctx, pairs, sourceInfra, minMatchRate)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -254,7 +255,7 @@ func RecommendMultiInfraWithNlbCandidates(c echo.Context) error {
 	}
 
 	// [Process]
-	results, err := recommendation.RecommendMultiInfraWithNlbCandidates(pairs, sourceInfra, minMatchRate)
+	results, err := recommendation.RecommendMultiInfraWithNlbCandidates(c.Request().Context(), pairs, sourceInfra, minMatchRate)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend multi-target NLB-aware infrastructure candidates")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Recommendation failed"))

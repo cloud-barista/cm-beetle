@@ -14,6 +14,7 @@ limitations under the License.
 package validation
 
 import (
+	"context"
 	"reflect"
 	"strings"
 	"testing"
@@ -84,7 +85,7 @@ func TestCheckNetworkAvailability(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			needsCreate, issue := CheckNetworkAvailability(testNsId, tc.req, tc.creationReq)
+			needsCreate, issue := CheckNetworkAvailability(context.Background(), testNsId, tc.req, tc.creationReq)
 			assertAvailability(t, needsCreate, issue, tc.wantNeedsCreate, tc.wantIssueCode)
 		})
 	}
@@ -123,7 +124,7 @@ func TestCheckSshKeyAvailability(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			needsCreate, issue := CheckSshKeyAvailability(testNsId, tc.req, tc.creationReq)
+			needsCreate, issue := CheckSshKeyAvailability(context.Background(), testNsId, tc.req, tc.creationReq)
 			assertAvailability(t, needsCreate, issue, tc.wantNeedsCreate, tc.wantIssueCode)
 		})
 	}
@@ -197,7 +198,7 @@ func TestCheckSecurityGroupAvailability(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			needsCreate, issue := CheckSecurityGroupAvailability(testNsId, tc.req, tc.creationReqList)
+			needsCreate, issue := CheckSecurityGroupAvailability(context.Background(), testNsId, tc.req, tc.creationReqList)
 			assertAvailability(t, needsCreate, issue, tc.wantNeedsCreate, tc.wantIssueCode)
 		})
 	}

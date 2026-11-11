@@ -1,6 +1,8 @@
 package recommendation
 
 import (
+	"context"
+
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/rs/zerolog/log"
@@ -22,10 +24,10 @@ type CspProvisioningPrecheck struct {
 
 // PreflightCheckCspProvisioning calls POST /specImagePairReview and returns image availability,
 // the resolved latest CSP image name, and the suggested system disk for the spec+zone.
-func PreflightCheckCspProvisioning(specId, imageId, currentCspImageName, rootDiskType string) (CspProvisioningPrecheck, error) {
+func PreflightCheckCspProvisioning(ctx context.Context, specId, imageId, currentCspImageName, rootDiskType string) (CspProvisioningPrecheck, error) {
 	empty := CspProvisioningPrecheck{ResolvedCspImageName: currentCspImageName}
 
-	result, err := tbclient.NewSession().ReviewSpecImagePair(tbmodel.SpecImagePairReviewReq{
+	result, err := tbclient.NewSession().SetContext(ctx).ReviewSpecImagePair(tbmodel.SpecImagePairReviewReq{
 		SpecId:       specId,
 		ImageId:      imageId,
 		RootDiskType: rootDiskType,
