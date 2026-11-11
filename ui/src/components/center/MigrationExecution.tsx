@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useMigrationStore, calculateJobElapsedSeconds } from '../../store/migrationStore';
 import { beetleApi } from '../../api/client';
-import { CheckSSHReadyResponse, CloudModelEnvelope, RecommendedInfra } from '../../types/migration';
+import { CheckSSHReadyResponse, CloudModelEnvelope, RecommendedInfra, RequestDetailsResult } from '../../types/migration';
 import { MigrationSplitScreen } from './MigrationSplitScreen';
 import {
   buildDefaultModelName,
@@ -364,6 +364,8 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     }
   }, [selectedCloudModel]);
 
+  const lastInfraNodePollRef = useRef<Record<string, number>>({});
+
   // Global Multi-Job Polling timer (Strict 1-to-1 GET /beetle/request/{reqId} Backend Tracking with jobsRef)
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -375,18 +377,35 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
         return;
       }
 
-      const statusUpdates: Record<string, { status: string; errorResponse?: string; responseData?: any }> = {};
-      const nlbStatusUpdates: Record<string, { status: string; errorResponse?: string; responseData?: any }> = {};
+      const statusUpdates: Record<string, RequestDetailsResult> = {};
+      const liveNodeUpdates: Record<string, any[]> = {};
+      const nlbStatusUpdates: Record<string, RequestDetailsResult> = {};
+      const nowMs = Date.now();
 
       for (const job of activeJobsToPoll) {
         try {
-          const res = await beetleApi.getRequestDetails(job.reqId);
+          let res = await beetleApi.getRequestDetails(job.reqId, { brief: true });
+          const isTerminalSuccess =
+            res?.status === 'Success' || res?.status === 'Completed' || res?.status === 'Succeeded';
+          if (isTerminalSuccess && res.responseData === undefined) {
+            res = await beetleApi.getRequestDetails(job.reqId, { brief: false });
+          }
           if (res && res.status) {
-            statusUpdates[job.id] = {
-              status: res.status,
-              errorResponse: res.errorResponse,
-              responseData: res.responseData
-            };
+            statusUpdates[job.id] = res;
+          }
+          const infraStepActive =
+            res?.status === 'Handling' &&
+            Array.isArray(res.subRequests) &&
+            res.subRequests.some((sr) => sr.resourceType === 'infra' && sr.method === 'POST');
+          if (infraStepActive && job.nsId && job.infraId) {
+            const lastPoll = lastInfraNodePollRef.current[job.id] || 0;
+            if (nowMs - lastPoll >= 5000) {
+              lastInfraNodePollRef.current[job.id] = nowMs;
+              const liveDetail = await beetleApi.getMigratedInfraDetail(job.nsId, job.infraId);
+              if (liveDetail && Array.isArray(liveDetail.node) && liveDetail.node.length > 0) {
+                liveNodeUpdates[job.id] = liveDetail.node;
+              }
+            }
           }
         } catch {
           // ignore transient error
@@ -396,13 +415,14 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       for (const job of activeNlbJobsToPoll) {
         if (job.nlbReqId) {
           try {
-            const res = await beetleApi.getRequestDetails(job.nlbReqId);
+            let res = await beetleApi.getRequestDetails(job.nlbReqId, { brief: true });
+            const isTerminalSuccess =
+              res?.status === 'Success' || res?.status === 'Completed' || res?.status === 'Succeeded';
+            if (isTerminalSuccess && res.responseData === undefined) {
+              res = await beetleApi.getRequestDetails(job.nlbReqId, { brief: false });
+            }
             if (res && res.status) {
-              nlbStatusUpdates[job.id] = {
-                status: res.status,
-                errorResponse: res.errorResponse,
-                responseData: res.responseData
-              };
+              nlbStatusUpdates[job.id] = res;
             }
           } catch {
             // ignore transient error
@@ -464,8 +484,29 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
             if (job.status === 'Handling') {
               const update = statusUpdates[job.id];
               const realStatus = update?.status || 'Handling';
+              if (update?.tumblebugSource) {
+                updatedJob.tumblebugSource = update.tumblebugSource;
+              }
+              if (update?.subRequestSummary) {
+                updatedJob.subRequestSummary = update.subRequestSummary;
+              }
+              if (update?.subRequests) {
+                updatedJob.subRequests = update.subRequests;
+              }
+              const liveNodes = liveNodeUpdates[job.id];
+              if (Array.isArray(liveNodes) && liveNodes.length > 0) {
+                updatedJob.vms = liveNodes.map((n: any) => ({
+                  name: n.name || n.id || 'node',
+                  specId: n.specId || n.spec || selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups[0]?.specId || 'c5.large',
+                  publicIp: n.publicIP || n.publicIp || 'Allocating...',
+                  privateIp: n.privateIP || n.privateIp || 'Allocating...',
+                  status: n.status || 'Creating',
+                  systemMessage: n.systemMessage || ''
+                }));
+              }
 
               if (realStatus === 'Error' || realStatus === 'Failed') {
+                delete lastInfraNodePollRef.current[job.id];
                 const errorMsg = update?.errorResponse || 'Backend provisioning error';
                 setToastMsg(`✕ [${job.infraId}] Migration Failed: ${errorMsg}`);
                 setTimeout(() => setToastMsg(null), 6000);
@@ -477,12 +518,13 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                   error: errorMsg,
                   logs: [
                     ...cleanedLogs,
-                    `GET /beetle/request/${job.reqId} -> Status: Error (${errorMsg}) (Duration: ${newElapsed}s)`
+                    `GET /beetle/request/${job.reqId}?brief=true -> Status: Error (${errorMsg}) (Duration: ${newElapsed}s)`
                   ]
                 };
               }
 
               if (realStatus === 'Success' || realStatus === 'Completed' || realStatus === 'Succeeded') {
+                delete lastInfraNodePollRef.current[job.id];
                 setToastMsg(`🎉 [${job.infraId}] Infrastructure Migration Succeeded!`);
                 setTimeout(() => setToastMsg(null), 5000);
 
@@ -528,6 +570,8 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                       status: n.status || ((n.publicIP || n.publicIp || n.privateIP || n.privateIp) ? 'Running' : 'Failed'),
                       systemMessage: n.systemMessage || ''
                     }))
+                  : updatedJob.vms && updatedJob.vms.length > 0
+                  ? updatedJob.vms
                   : Array.from({ length: job.totalVms }).map((_, i) => ({
                       name: `node-${i + 1}`,
                       specId: selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups[i % (selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups.length || 1)]?.specId || 'c5.large',
@@ -551,12 +595,15 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
               }
 
               // Still Handling on backend API
+              const stepProgress = updatedJob.subRequestSummary
+                ? ` [${updatedJob.subRequestSummary.succeeded}/${updatedJob.subRequestSummary.total} steps${updatedJob.subRequestSummary.currentAction ? `: ${updatedJob.subRequestSummary.currentAction}` : ''}]`
+                : '';
               const cleanedLogs = updatedJob.logs.filter(l => !l.includes(`GET /beetle/request/${job.reqId}`));
               return {
                 ...updatedJob,
                 logs: [
                   ...cleanedLogs,
-                  `GET /beetle/request/${job.reqId} -> Status: Handling (Elapsed: ${newElapsed}s)`
+                  `GET /beetle/request/${job.reqId}?brief=true -> Status: Handling${stepProgress} (Elapsed: ${newElapsed}s)`
                 ]
               };
             }
@@ -1330,8 +1377,83 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
             </div>
           </div>
 
-          {/* Provisioned Node Access Points Table (Shown if job is Success) */}
-          {activeJob.status === 'Success' && activeJob.vms && (
+          {/* Outbound CB-Tumblebug Sub-Request Trace Panel */}
+          {activeJob.subRequests && activeJob.subRequests.length > 0 && (
+            <div className="bg-bg-panel/50 border border-emerald-500/30 p-5 rounded-xl space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-main/30 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-emerald-500" />
+                  <h4 className="text-sm font-extrabold text-text-main">
+                    Outbound CB-Tumblebug Sub-Request Trace
+                  </h4>
+                  {activeJob.subRequestSummary && (
+                    <span className="px-2 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-extrabold">
+                      {activeJob.subRequestSummary.succeeded}/{activeJob.subRequestSummary.total} Completed
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs font-mono text-text-muted">
+                  Correlation Header:{' '}
+                  <strong className="font-extrabold text-teal-600 dark:text-teal-400">
+                    X-Request-Source: {activeJob.tumblebugSource || `cm-beetle:${activeJob.reqId}`}
+                  </strong>
+                </span>
+              </div>
+
+              {activeJob.subRequestSummary?.currentAction && activeJob.status === 'Handling' && (
+                <div className="px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-2 text-sm">
+                  <RefreshCw className="w-3.5 h-3.5 text-emerald-500 animate-spin shrink-0" />
+                  <span className="font-normal text-text-muted">Current Step:</span>
+                  <span className="font-extrabold text-text-main font-mono">
+                    {activeJob.subRequestSummary.currentAction}
+                  </span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-56 overflow-y-auto">
+                {activeJob.subRequests.map((sr) => {
+                  const isOk = sr.status === 'Success';
+                  const isErr = sr.status === 'Error';
+                  return (
+                    <div
+                      key={sr.subReqId || sr.seq}
+                      className="px-3 py-2 rounded-lg bg-bg-input/70 border border-border-main/50 flex items-center justify-between gap-2 text-xs font-mono"
+                    >
+                      <div className="min-w-0 flex items-center gap-2">
+                        <span className="text-text-muted shrink-0">#{sr.seq}</span>
+                        <span className="px-1.5 py-0.5 rounded bg-bg-panel border border-border-main text-text-main font-extrabold shrink-0">
+                          {sr.method}
+                        </span>
+                        <span className="font-extrabold text-text-main truncate" title={`${sr.resourceType || 'api'}: ${sr.resourceName || sr.url}`}>
+                          {sr.resourceType || 'api'}
+                          {sr.resourceName ? ` (${sr.resourceName})` : ''}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {typeof sr.durationMs === 'number' && (
+                          <span className="text-text-muted">{sr.durationMs}ms</span>
+                        )}
+                        <span
+                          className={`px-2 py-0.5 rounded font-extrabold uppercase ${
+                            isOk
+                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                              : isErr
+                              ? 'bg-red-500/15 text-red-500'
+                              : 'bg-teal-500/15 text-teal-600 dark:text-teal-400'
+                          }`}
+                        >
+                          {sr.status}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Provisioned Node Access Points Table (Shown on Success or live during Handling once Nodes appear) */}
+          {(activeJob.status === 'Success' || (activeJob.status === 'Handling' && activeJob.vms && activeJob.vms.length > 0)) && activeJob.vms && (
             <div className="space-y-3 pt-2">
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                 <h4 className="text-sm font-bold text-text-main flex items-center gap-2">
@@ -1353,7 +1475,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                   {/* Official CM-Beetle SSH Readiness Check Button */}
                   <button
                     onClick={() => handleCheckSshReady()}
-                    disabled={sshCooldownSec > 0 || sshReadyModal.loading}
+                    disabled={activeJob.status !== 'Success' || sshCooldownSec > 0 || sshReadyModal.loading}
                     className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 border border-emerald-500/30 text-emerald-400 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <Activity className="w-3.5 h-3.5 text-emerald-400" />

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { OnpremInfra, OnpremNlb, OnpremNode, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, CheckSSHReadyResponse, ArtifactLineage } from '../types/migration';
+import { OnpremInfra, OnpremNlb, OnpremNode, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, CheckSSHReadyResponse, ArtifactLineage, RequestDetailsResult, AiStackLayerStatus } from '../types/migration';
 import { cleanModelDisplayName, isBuiltInSampleModel, normalizeModelVersion } from '../utils/modelFormat';
 
 // Shared Axios client with basic authentication pre-configured (standard Cloud-Barista settings)
@@ -1204,15 +1204,32 @@ export const beetleApi = {
     }
   },
 
-  // Poll async request details by ReqID
-  getRequestDetails: async (reqId: string): Promise<{ status: string; errorResponse?: string; responseData?: any }> => {
+  // Poll async request details by ReqID (supports brief projection, subRequests, and Tumblebug enrichment)
+  getRequestDetails: async (
+    reqId: string,
+    options?: { brief?: boolean; withSubRequests?: boolean; withTumblebug?: boolean }
+  ): Promise<RequestDetailsResult> => {
     try {
-      const response = await api.get(`/beetle/request/${reqId}`);
+      const params = new URLSearchParams();
+      if (options?.brief !== undefined) {
+        params.set('brief', String(options.brief));
+      }
+      if (options?.withSubRequests !== undefined) {
+        params.set('withSubRequests', String(options.withSubRequests));
+      }
+      if (options?.withTumblebug !== undefined) {
+        params.set('withTumblebug', String(options.withTumblebug));
+      }
+      const query = params.toString() ? `?${params.toString()}` : '';
+      const response = await api.get(`/beetle/request/${encodeURIComponent(reqId)}${query}`);
       const details = response.data?.data || response.data;
       return {
         status: details?.status || 'Handling',
         errorResponse: details?.errorResponse,
-        responseData: details?.responseData
+        responseData: details?.responseData,
+        tumblebugSource: details?.tumblebugSource,
+        subRequestSummary: details?.subRequestSummary,
+        subRequests: Array.isArray(details?.subRequests) ? details.subRequests : undefined
       };
     } catch (err: any) {
       // 404 Not Found means request is still initializing or in-flight - treat as Handling, NOT Error!
@@ -1492,6 +1509,91 @@ export const beetleApi = {
     } catch (err: any) {
       return { success: false, error: err.response?.data?.error || err.message };
     }
+  },
+
+  probeWorkload: async (params: {
+    host: string;
+    port: 80 | 443 | 3000 | 8080 | 11434;
+    path: '/' | '/api/config' | '/api/tags' | '/api/ps' | '/api/generate';
+    method?: 'GET' | 'POST';
+    model?: string;
+    prompt?: string;
+  }): Promise<any> => {
+    const response = await axios.post('/api/probe/workload', params, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  },
+
+  verifyAiStackEndpoint: async (host: string, preferredModel: string = 'gemma4:e2b'): Promise<AiStackLayerStatus> => {
+    const cleanHost = host.trim();
+    const [webUiRes, tagsRes, psRes] = await Promise.all([
+      beetleApi.probeWorkload({ host: cleanHost, port: 3000, path: '/api/config', method: 'GET' }).catch((e) => ({ ok: false, error: e.message })),
+      beetleApi.probeWorkload({ host: cleanHost, port: 11434, path: '/api/tags', method: 'GET' }).catch((e) => ({ ok: false, error: e.message })),
+      beetleApi.probeWorkload({ host: cleanHost, port: 11434, path: '/api/ps', method: 'GET' }).catch((e) => ({ ok: false, error: e.message }))
+    ]);
+
+    const models: any[] = Array.isArray(tagsRes?.models) ? tagsRes.models : [];
+    const matchedModel =
+      models.find((m) => String(m.name || '').toLowerCase() === preferredModel.toLowerCase()) ||
+      models.find((m) => String(m.name || '').toLowerCase().includes(preferredModel.split(':')[0].toLowerCase())) ||
+      models[0];
+    const targetModelName = matchedModel?.name || preferredModel;
+
+    const genRes = tagsRes?.ok
+      ? await beetleApi
+          .probeWorkload({
+            host: cleanHost,
+            port: 11434,
+            path: '/api/generate',
+            method: 'POST',
+            model: targetModelName,
+            prompt: 'Reply in five words confirming GPU inference readiness.'
+          })
+          .catch((e) => ({ ok: false, error: e.message }))
+      : { ok: false, error: tagsRes?.error || 'Ollama runtime not reachable on :11434' };
+
+    const runningModels: any[] = Array.isArray(psRes?.runningModels) ? psRes.runningModels : [];
+    const activePs =
+      runningModels.find((m) => String(m.name || '').toLowerCase() === targetModelName.toLowerCase()) || runningModels[0];
+
+    return {
+      host: cleanHost,
+      checkedAt: new Date().toISOString(),
+      openWebUi: {
+        ok: Boolean(webUiRes?.ok),
+        httpStatus: Number(webUiRes?.httpStatus || 0),
+        latencyMs: webUiRes?.latencyMs,
+        version: webUiRes?.openWebUi?.version,
+        error: webUiRes?.error
+      },
+      ollamaTags: {
+        ok: Boolean(tagsRes?.ok),
+        latencyMs: tagsRes?.latencyMs,
+        modelName: matchedModel?.name,
+        sizeBytes: matchedModel?.sizeBytes,
+        digest: matchedModel?.digest,
+        parameterSize: matchedModel?.parameterSize,
+        quantizationLevel: matchedModel?.quantizationLevel,
+        totalModels: models.length,
+        error: tagsRes?.error
+      },
+      ollamaPs: {
+        ok: Boolean(psRes?.ok),
+        vramBytes: activePs?.sizeVramBytes,
+        activeModel: activePs?.name,
+        gpuAccelerated: Number(activePs?.sizeVramBytes || 0) > 0,
+        error: psRes?.error
+      },
+      inference: {
+        ok: Boolean(genRes?.ok && genRes?.inference),
+        latencyMs: genRes?.latencyMs,
+        tokensPerSec: genRes?.inference?.tokensPerSec,
+        evalCount: genRes?.inference?.evalCount,
+        responseSnippet: genRes?.inference?.responseSnippet,
+        error: genRes?.error
+      }
+    };
   },
 
   // --------------------------------------------------------------------------

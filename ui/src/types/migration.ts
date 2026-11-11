@@ -350,3 +350,89 @@ export interface CheckSSHReadyResponse {
   nextAllowedTime?: string;
 }
 
+// Outbound CB-Tumblebug sub-request tracking types (GET /beetle/request/{reqId})
+export interface TumblebugRequestSnapshot {
+  reqId: string;
+  status: string;
+  method: string;
+  url: string;
+  startTime?: string;
+  endTime?: string;
+  elapsedTime?: number;
+  errorResponse?: string;
+}
+
+export interface SubRequestItem {
+  seq: number;
+  subReqId: string;
+  method: string;
+  url: string;
+  resourceType?: string;
+  resourceName?: string;
+  status: string;
+  httpStatus?: number;
+  startTime: string;
+  endTime?: string;
+  durationMs?: number;
+  errorMessage?: string;
+  tumblebugRequest?: TumblebugRequestSnapshot;
+}
+
+export interface SubRequestSummary {
+  total: number;
+  succeeded: number;
+  failed: number;
+  inProgress: number;
+  currentAction?: string;
+  lastUpdated?: string;
+}
+
+export interface RequestDetailsResult {
+  status: string;
+  errorResponse?: string;
+  responseData?: any;
+  tumblebugSource?: string;
+  subRequestSummary?: SubRequestSummary;
+  subRequests?: SubRequestItem[];
+}
+
+export interface AiStackLayerStatus {
+  host: string;
+  checkedAt: string;
+  isSample?: boolean;
+  openWebUi: {
+    ok: boolean;
+    httpStatus: number;
+    latencyMs?: number;
+    version?: string;
+    error?: string;
+  };
+  ollamaTags: {
+    ok: boolean;
+    latencyMs?: number;
+    modelName?: string;
+    sizeBytes?: number;
+    digest?: string;
+    parameterSize?: string;
+    quantizationLevel?: string;
+    totalModels?: number;
+    error?: string;
+  };
+  ollamaPs: {
+    ok: boolean;
+    vramBytes?: number;
+    activeModel?: string;
+    gpuAccelerated?: boolean;
+    error?: string;
+  };
+  inference: {
+    ok: boolean;
+    latencyMs?: number;
+    tokensPerSec?: number;
+    evalCount?: number;
+    responseSnippet?: string;
+    error?: string;
+  };
+}
+
+

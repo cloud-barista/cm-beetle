@@ -1,6 +1,6 @@
 import { create, StateCreator } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty } from '../types/migration';
+import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, SubRequestItem, SubRequestSummary } from '../types/migration';
 import { honeybeeApi, artifactApi, SaveArtifactOptions, beetleApi, tumblebugApi, pickPreferredKoreaRegion } from '../api/client';
 import { isBuiltInSampleModel } from '../utils/modelFormat';
 import recommendedInfraSample from '../data/sampleTargetInfra.json';
@@ -323,6 +323,9 @@ export interface MigrationJob {
   nlbReqId?: string;
   nlbStatus?: 'Idle' | 'Provisioning' | 'Success' | 'Failed';
   nlbHealth?: { healthy: boolean; status: string; checkedAt: string };
+  tumblebugSource?: string;
+  subRequestSummary?: SubRequestSummary;
+  subRequests?: SubRequestItem[];
 }
 
 export interface ObjectStorageJobCard {
@@ -363,7 +366,12 @@ export interface DataMigrationJob {
   logs: string[];
   isSample?: boolean;
   sourcePreCmd?: string;
+  destinationPreCmd?: string;
+  sourcePostCmd?: string;
   destinationPostCmd?: string;
+  hookOutputs?: Record<string, string>;
+  bytesTransferred?: number;
+  filesTransferred?: number;
   includeFilter?: string;
   excludeFilter?: string;
 }

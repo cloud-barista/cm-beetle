@@ -20,7 +20,9 @@ import {
 import {
   OnpremNode,
   CloudModelEnvelope,
-  CheckSSHReadyResponse
+  CheckSSHReadyResponse,
+  SubRequestItem,
+  SubRequestSummary
 } from '../../types/migration';
 
 export interface SplitViewMigrationJob {
@@ -42,6 +44,9 @@ export interface SplitViewMigrationJob {
   isSample?: boolean;
   targetNlbList?: any[];
   nlbStatus?: 'Idle' | 'Provisioning' | 'Success' | 'Failed';
+  tumblebugSource?: string;
+  subRequestSummary?: SubRequestSummary;
+  subRequests?: SubRequestItem[];
 }
 
 interface MigrationSplitScreenProps {
@@ -154,9 +159,6 @@ export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
 
   const getStageState = (stageIndex: number): 'completed' | 'active' | 'pending' | 'failed' => {
     if (!activeJob) return 'pending';
-    if (activeJob.status === 'Failed') {
-      return stageIndex <= 4 ? 'failed' : 'pending';
-    }
     if (activeJob.status === 'Success') {
       if (stageIndex === 6) {
         if (nlbCount === 0) return 'pending';
@@ -166,7 +168,52 @@ export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
       }
       return 'completed';
     }
-    // Handling state: animate progression across stages 1..5 based on elapsedSeconds
+
+    const subs = !activeJob.isSample && Array.isArray(activeJob.subRequests) ? activeJob.subRequests : [];
+    if (subs.length > 0) {
+      const resourceOrder = ['vNet', 'securityGroup', 'sshKey', 'infra', 'nlb'];
+      const targetResource =
+        stageIndex === 1 || stageIndex === 2
+          ? 'vNet'
+          : stageIndex === 3
+          ? 'securityGroup'
+          : stageIndex === 4
+          ? 'sshKey'
+          : stageIndex === 5
+          ? 'infra'
+          : 'nlb';
+      if (stageIndex === 6 && nlbCount === 0) {
+        return 'pending';
+      }
+
+      const matching = subs.filter((sr) => sr.resourceType === targetResource);
+      const mutating = matching.filter((sr) => sr.method === 'POST' || sr.method === 'PUT');
+      const relevant = mutating.length > 0 ? mutating : matching;
+      const targetOrderIdx = resourceOrder.indexOf(targetResource);
+      const laterStageStarted = subs.some((sr) => resourceOrder.indexOf(sr.resourceType || '') > targetOrderIdx);
+
+      if (relevant.some((sr) => sr.status === 'Error')) {
+        return 'failed';
+      }
+      if (relevant.some((sr) => sr.status === 'Handling')) {
+        return 'active';
+      }
+      if (relevant.length > 0 && relevant.every((sr) => sr.status === 'Success')) {
+        return 'completed';
+      }
+      if (laterStageStarted) {
+        return 'completed';
+      }
+      if (activeJob.status === 'Failed' && stageIndex === 1 && subs.every((sr) => !sr.resourceType)) {
+        return 'failed';
+      }
+      return 'pending';
+    }
+
+    if (activeJob.status === 'Failed') {
+      return stageIndex <= 4 ? 'failed' : 'pending';
+    }
+    // Sample/fallback Handling state: animate progression across stages 1..5 based on elapsedSeconds
     const elapsed = activeJob.elapsedSeconds || 0;
     if (stageIndex === 1) return elapsed >= 2 ? 'completed' : 'active';
     if (stageIndex === 2) return elapsed >= 4 ? 'completed' : elapsed >= 2 ? 'active' : 'pending';
@@ -241,7 +288,21 @@ export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {activeJob?.subRequestSummary && activeJob.subRequestSummary.total > 0 && (
+            <div className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs font-mono flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5 text-emerald-500" />
+              <span className="font-normal text-text-muted">Tumblebug Steps:</span>
+              <span className="font-extrabold text-emerald-500">
+                {activeJob.subRequestSummary.succeeded}/{activeJob.subRequestSummary.total}
+              </span>
+              {activeJob.subRequestSummary.currentAction && activeJob.status === 'Handling' && (
+                <span className="text-text-main font-bold truncate max-w-[240px]">
+                  ({activeJob.subRequestSummary.currentAction})
+                </span>
+              )}
+            </div>
+          )}
           {activeJob && (
             <div className="px-3 py-1.5 bg-bg-panel border border-border-main rounded-xl text-xs font-mono flex items-center gap-2">
               <Clock className="w-3.5 h-3.5 text-emerald-500" />

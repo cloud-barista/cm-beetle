@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useMigrationStore, calculateJobElapsedSeconds } from '../store/migrationStore';
 import { beetleApi } from '../api/client';
+import { RequestDetailsResult } from '../types/migration';
 
 export function useGlobalJobPolling() {
   const {
@@ -18,6 +19,7 @@ export function useGlobalJobPolling() {
   const objectStorageJobsRef = useRef(objectStorageJobs);
   const dataJobsRef = useRef(dataJobs);
   const lastDataPollAtRef = useRef<Record<string, number>>({});
+  const lastInfraNodePollAtRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     jobsRef.current = jobs;
@@ -53,18 +55,35 @@ export function useGlobalJobPolling() {
 
       // 1. Poll Active Infrastructure Migration Jobs & NLB Stage 2 Jobs
       if (activeInfraJobs.length > 0 || activeNlbJobs.length > 0) {
-        const statusUpdates: Record<string, { status: string; errorResponse?: string; responseData?: any }> = {};
-        const nlbStatusUpdates: Record<string, { status: string; errorResponse?: string; responseData?: any }> = {};
+        const statusUpdates: Record<string, RequestDetailsResult> = {};
+        const liveNodeUpdates: Record<string, any[]> = {};
+        const nlbStatusUpdates: Record<string, RequestDetailsResult> = {};
+        const nowMs = Date.now();
 
         for (const job of activeInfraJobs) {
           try {
-            const res = await beetleApi.getRequestDetails(job.reqId);
+            let res = await beetleApi.getRequestDetails(job.reqId, { brief: true });
+            const isTerminalSuccess =
+              res?.status === 'Success' || res?.status === 'Completed' || res?.status === 'Succeeded';
+            if (isTerminalSuccess && res.responseData === undefined) {
+              res = await beetleApi.getRequestDetails(job.reqId, { brief: false });
+            }
             if (res && res.status) {
-              statusUpdates[job.id] = {
-                status: res.status,
-                errorResponse: res.errorResponse,
-                responseData: res.responseData
-              };
+              statusUpdates[job.id] = res;
+            }
+            const infraStepActive =
+              res?.status === 'Handling' &&
+              Array.isArray(res.subRequests) &&
+              res.subRequests.some((sr) => sr.resourceType === 'infra' && sr.method === 'POST');
+            if (infraStepActive && job.nsId && job.infraId) {
+              const lastNodePoll = lastInfraNodePollAtRef.current[job.id] || 0;
+              if (nowMs - lastNodePoll >= 5000) {
+                lastInfraNodePollAtRef.current[job.id] = nowMs;
+                const liveDetail = await beetleApi.getMigratedInfraDetail(job.nsId, job.infraId);
+                if (liveDetail && Array.isArray(liveDetail.node) && liveDetail.node.length > 0) {
+                  liveNodeUpdates[job.id] = liveDetail.node;
+                }
+              }
             }
           } catch (err) {
             console.warn('Poll error for infra job request', job.reqId, err);
@@ -74,13 +93,14 @@ export function useGlobalJobPolling() {
         for (const job of activeNlbJobs) {
           if (!job.nlbReqId) continue;
           try {
-            const res = await beetleApi.getRequestDetails(job.nlbReqId);
+            let res = await beetleApi.getRequestDetails(job.nlbReqId, { brief: true });
+            const isTerminalSuccess =
+              res?.status === 'Success' || res?.status === 'Completed' || res?.status === 'Succeeded';
+            if (isTerminalSuccess && res.responseData === undefined) {
+              res = await beetleApi.getRequestDetails(job.nlbReqId, { brief: false });
+            }
             if (res && res.status) {
-              nlbStatusUpdates[job.id] = {
-                status: res.status,
-                errorResponse: res.errorResponse,
-                responseData: res.responseData
-              };
+              nlbStatusUpdates[job.id] = res;
             }
           } catch (err) {
             console.warn('Poll error for NLB job request', job.nlbReqId, err);
@@ -139,8 +159,29 @@ export function useGlobalJobPolling() {
               if (job.status === 'Handling') {
                 const update = statusUpdates[job.id];
                 const realStatus = update?.status || 'Handling';
+                if (update?.tumblebugSource) {
+                  updatedJob.tumblebugSource = update.tumblebugSource;
+                }
+                if (update?.subRequestSummary) {
+                  updatedJob.subRequestSummary = update.subRequestSummary;
+                }
+                if (update?.subRequests) {
+                  updatedJob.subRequests = update.subRequests;
+                }
+                const liveNodes = liveNodeUpdates[job.id];
+                if (Array.isArray(liveNodes) && liveNodes.length > 0) {
+                  updatedJob.vms = liveNodes.map((n: any) => ({
+                    name: n.name || n.id || 'node',
+                    specId: n.specId || n.spec || 'c5.large',
+                    publicIp: n.publicIP || n.publicIp || 'Allocating...',
+                    privateIp: n.privateIP || n.privateIp || 'Allocating...',
+                    status: n.status || 'Creating',
+                    systemMessage: n.systemMessage || ''
+                  }));
+                }
 
                 if (realStatus === 'Error' || realStatus === 'Failed') {
+                  delete lastInfraNodePollAtRef.current[job.id];
                   const errorMsg = update?.errorResponse || 'Backend provisioning error';
                   const cleanedLogs = updatedJob.logs.filter((l) => !l.includes(`GET /beetle/request/${job.reqId}`));
                   return {
@@ -149,12 +190,13 @@ export function useGlobalJobPolling() {
                     error: errorMsg,
                     logs: [
                       ...cleanedLogs,
-                      `GET /beetle/request/${job.reqId} -> Status: Error (${errorMsg}) (Duration: ${newElapsed}s)`
+                      `GET /beetle/request/${job.reqId}?brief=true -> Status: Error (${errorMsg}) (Duration: ${newElapsed}s)`
                     ]
                   };
                 }
 
                 if (realStatus === 'Success' || realStatus === 'Completed' || realStatus === 'Succeeded') {
+                  delete lastInfraNodePollAtRef.current[job.id];
                   const shouldTriggerNlb =
                     job.targetNlbList && job.targetNlbList.length > 0 && (!job.nlbStatus || job.nlbStatus === 'Idle');
                   if (shouldTriggerNlb) {
@@ -212,7 +254,7 @@ export function useGlobalJobPolling() {
                             n.status || ((n.publicIP || n.publicIp || n.privateIP || n.privateIp) ? 'Running' : 'Failed'),
                           systemMessage: n.systemMessage || ''
                         }))
-                      : job.vms;
+                      : updatedJob.vms;
 
                   const cleanedLogs = updatedJob.logs.filter((l) => !l.includes(`GET /beetle/request/${job.reqId}`));
                   return {
@@ -227,11 +269,14 @@ export function useGlobalJobPolling() {
                   };
                 }
 
+                const stepProgress = updatedJob.subRequestSummary
+                  ? ` [${updatedJob.subRequestSummary.succeeded}/${updatedJob.subRequestSummary.total} steps${updatedJob.subRequestSummary.currentAction ? `: ${updatedJob.subRequestSummary.currentAction}` : ''}]`
+                  : '';
                 return {
                   ...updatedJob,
                   logs: [
                     ...updatedJob.logs.filter((l) => !l.includes(`GET /beetle/request/${job.reqId}`)),
-                    `GET /beetle/request/${job.reqId} -> Status: Handling (Elapsed: ${newElapsed}s)`
+                    `GET /beetle/request/${job.reqId}?brief=true -> Status: Handling${stepProgress} (Elapsed: ${newElapsed}s)`
                   ]
                 };
               }
@@ -248,7 +293,7 @@ export function useGlobalJobPolling() {
         for (const job of activeOsJobs) {
           if (!job.reqId || job.isSample) continue;
           try {
-            const reqDetails = await beetleApi.getRequestDetails(job.reqId);
+            const reqDetails = await beetleApi.getRequestDetails(job.reqId, { brief: true });
             const status = reqDetails?.status;
             if (status === 'Completed' || status === 'Succeeded' || status === 'Success') {
               setObjectStorageJobs((prevJobs) =>
@@ -297,32 +342,38 @@ export function useGlobalJobPolling() {
         }
       }
 
-      // 3. Poll Active Data Migration Jobs (Every 15 seconds per job)
+      // 3. Poll Active Data Migration Jobs (Every 5 seconds per job using lightweight brief=true)
       if (activeDataJobs.length > 0) {
         const now = Date.now();
         for (const job of activeDataJobs) {
           if (!job.reqId || job.isSample) continue;
           const lastPolled = lastDataPollAtRef.current[job.id] ?? job.createdAtMs ?? 0;
-          if (now - lastPolled < 15000) {
+          if (now - lastPolled < 5000) {
             continue;
           }
           lastDataPollAtRef.current[job.id] = now;
           try {
-            const reqDetails = await beetleApi.getRequestDetails(job.reqId);
+            let reqDetails = await beetleApi.getRequestDetails(job.reqId, { brief: true });
             const status = reqDetails?.status;
             if (status === 'Completed' || status === 'Succeeded' || status === 'Success') {
               delete lastDataPollAtRef.current[job.id];
+              if (reqDetails.responseData === undefined) {
+                reqDetails = await beetleApi.getRequestDetails(job.reqId, { brief: false });
+              }
+              const resData = reqDetails?.responseData || {};
+              const migResult = resData?.result || resData;
               setDataJobs((prevJobs) =>
                 prevJobs.map((j) => {
                   if (j.id === job.id) {
                     const dur = calculateJobElapsedSeconds(j);
-                    const detailMsg = reqDetails?.responseData?.message
-                      ? ` - ${reqDetails.responseData.message}`
-                      : '';
+                    const detailMsg = resData?.message ? ` - ${resData.message}` : '';
                     return {
                       ...j,
                       status: 'Success',
                       elapsedSeconds: dur,
+                      hookOutputs: migResult?.hookOutputs || j.hookOutputs,
+                      bytesTransferred: typeof migResult?.bytesTransferred === 'number' ? migResult.bytesTransferred : j.bytesTransferred,
+                      filesTransferred: typeof migResult?.filesTransferred === 'number' ? migResult.filesTransferred : j.filesTransferred,
                       logs: [
                         ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
                         `GET /beetle/request/${job.reqId} -> Status: Success${detailMsg} (Duration: ${dur}s)`
@@ -361,7 +412,7 @@ export function useGlobalJobPolling() {
                       elapsedSeconds: dur,
                       logs: [
                         ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
-                        `GET /beetle/request/${job.reqId} -> Status: Handling (Elapsed: ${dur}s)`
+                        `GET /beetle/request/${job.reqId}?brief=true -> Status: Handling (Elapsed: ${dur}s)`
                       ]
                     };
                   }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '@/store/migrationStore';
 import { SourceMetadataExtraction } from '@/components/source/SourceMetadataExtraction';
 import { SourceInfraRefinement } from '@/components/refine/SourceInfraRefinement';
@@ -16,6 +16,12 @@ export const InfrastructureMigration: React.FC = () => {
     }
     return 'source';
   });
+
+  useEffect(() => {
+    if (['source', 'refine', 'design', 'migrate'].includes(activeTab)) {
+      setSubTab(activeTab as 'source' | 'refine' | 'design' | 'migrate');
+    }
+  }, [activeTab]);
 
   const subSteps = [
     { id: 'source', label: '1. Source Analysis', icon: Database, desc: 'Register hosts & extract metadata' },

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from '../design/TopologyMap';
-import { beetleApi } from '../../api/client';
+import { beetleApi, artifactApi } from '../../api/client';
 import { resolveTargetNodeLineage, parseDiscreteTcpPorts } from '../../utils/nodeLineage';
 import { isBuiltInSampleModel } from '../../utils/modelFormat';
 import { CheckSSHReadyResponse } from '../../types/migration';
@@ -36,7 +36,10 @@ import {
   Zap,
   Activity,
   FileText,
-  ExternalLink
+  ExternalLink,
+  GitBranch,
+  ArrowRight,
+  Compass
 } from 'lucide-react';
 
 const SAMPLE_INFRA_ID = 'sample-aws-infra-01';
@@ -196,10 +199,15 @@ export const MigratedInfraManagement: React.FC = () => {
     editedCandidate,
     recommendationCandidates,
     selectedCandidateIndex,
+    savedSourceModels,
     selectedSourceModel,
     refinedSourceInfra,
+    fetchSavedSourceModels,
+    selectSourceModel,
     fetchSavedCloudModels,
     selectCloudModel,
+    setRecommendationMode,
+    setActiveTab,
     namespaceId,
     liveReportHtml,
     fetchMigrationReport,
@@ -251,7 +259,7 @@ export const MigratedInfraManagement: React.FC = () => {
 
   const handleOpenStorageDeleteModal = (sName: string) => {
     if (sName === SAMPLE_STORAGE_ID) {
-      alert('Sample object storage is protected and cannot be deleted.');
+      setStorageDeleteError('Sample object storage is protected and cannot be deleted.');
       return;
     }
     setTargetStorageToDelete(sName);
@@ -791,6 +799,97 @@ export const MigratedInfraManagement: React.FC = () => {
       m.name === selectedInfraId ||
       m.cloudInfraModel?.targetInfra?.name === selectedInfraId
   );
+
+  // Resolve 4-stage artifact lineage (cm-source-group-id -> cm-source-model-id -> cm-planning-model-id -> cm-target-model-id)
+  const [lineageGraph, setLineageGraph] = useState<any | null>(null);
+  const [isReTargeting, setIsReTargeting] = useState<boolean>(false);
+
+  const resolvedSourceGroupId =
+    loadedInfraDetail?.label?.['cm-source-group-id'] ||
+    lineageGraph?.sourceGroupId ||
+    activeSavedModel?.lineage?.sourceGroupId ||
+    selectedSourceModel?.lineage?.sourceGroupId ||
+    '';
+  const resolvedSourceModelId =
+    loadedInfraDetail?.label?.['cm-source-model-id'] ||
+    lineageGraph?.sourceArtifact?.id ||
+    activeSavedModel?.lineage?.sourceModelId ||
+    selectedSourceModel?.lineage?.sourceModelId ||
+    '';
+  const resolvedPlanningModelId =
+    loadedInfraDetail?.label?.['cm-planning-model-id'] ||
+    lineageGraph?.planningArtifact?.id ||
+    activeSavedModel?.lineage?.planningModelId ||
+    '';
+  const resolvedTargetModelId =
+    targetModelIdLabel ||
+    lineageGraph?.targetArtifact?.id ||
+    activeSavedModel?.lineage?.targetModelId ||
+    activeSavedModel?.id ||
+    '';
+
+  const lineageLookupSeedId = resolvedTargetModelId || resolvedPlanningModelId || resolvedSourceModelId;
+
+  useEffect(() => {
+    fetchSavedSourceModels();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (
+      !lineageLookupSeedId ||
+      lineageLookupSeedId.startsWith('sample-') ||
+      lineageLookupSeedId.startsWith('cloud-model-') ||
+      isBuiltInSampleModel(lineageLookupSeedId)
+    ) {
+      setLineageGraph(null);
+      return;
+    }
+    artifactApi
+      .getArtifactLineage(lineageLookupSeedId)
+      .then((graph) => {
+        if (!cancelled && graph) {
+          setLineageGraph(graph);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLineageGraph(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [lineageLookupSeedId]);
+
+  const handleReTargetToAnotherCloud = async () => {
+    if (isReTargeting) return;
+    setIsReTargeting(true);
+    try {
+      const candidateArtifactId = resolvedPlanningModelId || resolvedSourceModelId;
+      let modelToLoad =
+        savedSourceModels.find((m) => candidateArtifactId && m.id === candidateArtifactId) || null;
+      if (
+        !modelToLoad &&
+        candidateArtifactId &&
+        !candidateArtifactId.startsWith('sample-') &&
+        !isBuiltInSampleModel(candidateArtifactId)
+      ) {
+        modelToLoad = await artifactApi.getSourceModel(candidateArtifactId).catch(() => null);
+      }
+      if (!modelToLoad) {
+        modelToLoad = selectedSourceModel || savedSourceModels[0] || null;
+      }
+      if (modelToLoad) {
+        selectSourceModel(modelToLoad);
+      }
+      selectCloudModel(null);
+      setRecommendationMode('multi');
+      setActiveTab('design');
+    } finally {
+      setIsReTargeting(false);
+    }
+  };
 
   // Extract real VNet, Subnet, Security Groups, SSH Key from loadedInfraDetail
   const liveNodes = loadedInfraDetail?.node || [];
@@ -1432,6 +1531,94 @@ export const MigratedInfraManagement: React.FC = () => {
 
       {selectedInfraId || (migratedInfraIds.length > 0) || loadedInfraDetail ? (
         <div className="space-y-6">
+
+          {/* End-to-End Migration Lineage Chain & Multi-Cloud Re-Targeting Bar */}
+          <div className="glass-panel p-5 rounded-2xl border border-emerald-500/30 space-y-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <GitBranch className="w-5 h-5 text-emerald-500 shrink-0" />
+                <div>
+                  <h3 className="text-base font-extrabold text-text-main">
+                    End-to-End Migration Artifact Lineage
+                  </h3>
+                  <p className="text-sm text-text-muted">
+                    Traces provisioned cloud infrastructure back to its canonical imdl Source, Planning, and Target artifacts for repeatable Multi-Cloud re-targeting.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleReTargetToAnotherCloud}
+                disabled={isReTargeting}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-sm font-extrabold transition flex items-center gap-2 cursor-pointer shrink-0 shadow-sm"
+                title="Load the linked Planning or Source artifact into 2. Target Cloud Optimizer to deploy onto another CSP"
+              >
+                <Compass className={`w-4 h-4 ${isReTargeting ? 'animate-spin' : ''}`} />
+                <span>{isReTargeting ? 'Loading Artifact...' : 'Re-Target to Another Cloud'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 text-sm">
+              <div className="p-3 rounded-xl bg-bg-input/60 border border-border-main/60 space-y-0.5">
+                <span className="block text-xs font-normal text-text-muted">1. Source Group</span>
+                <span className="block font-extrabold font-mono text-text-main truncate" title={resolvedSourceGroupId || 'On-Premise Group'}>
+                  {resolvedSourceGroupId || 'onprem-source-group'}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-bg-input/60 border border-border-main/60 space-y-0.5">
+                <span className="block text-xs font-normal text-text-muted">2. Source Model (imdl)</span>
+                <span
+                  className="block font-extrabold font-mono text-emerald-600 dark:text-emerald-400 truncate"
+                  title={lineageGraph?.sourceArtifact?.name || resolvedSourceModelId || selectedSourceModel?.name || 'Source Artifact'}
+                >
+                  {lineageGraph?.sourceArtifact?.name ||
+                    savedSourceModels.find((m) => m.id === resolvedSourceModelId)?.name ||
+                    resolvedSourceModelId ||
+                    selectedSourceModel?.name ||
+                    'OnpremInfra (source)'}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-bg-input/60 border border-border-main/60 space-y-0.5">
+                <span className="block text-xs font-normal text-text-muted">3. Planning Model</span>
+                <span
+                  className="block font-extrabold font-mono text-teal-600 dark:text-teal-400 truncate"
+                  title={lineageGraph?.planningArtifact?.name || resolvedPlanningModelId || 'Direct from Source'}
+                >
+                  {lineageGraph?.planningArtifact?.name ||
+                    savedSourceModels.find((m) => m.id === resolvedPlanningModelId)?.name ||
+                    resolvedPlanningModelId ||
+                    'Direct Source Plan'}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-bg-input/60 border border-border-main/60 space-y-0.5">
+                <span className="block text-xs font-normal text-text-muted">4. Target Cloud Model</span>
+                <span
+                  className="block font-extrabold font-mono text-emerald-600 dark:text-emerald-400 truncate"
+                  title={lineageGraph?.targetArtifact?.name || activeSavedModel?.name || resolvedTargetModelId || 'RecommendedInfra'}
+                >
+                  {lineageGraph?.targetArtifact?.name ||
+                    activeSavedModel?.name ||
+                    resolvedTargetModelId ||
+                    'RecommendedInfra'}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-0.5">
+                <span className="block text-xs font-normal text-text-muted">5. Provisioned Cloud Infra</span>
+                <span
+                  className="block font-extrabold font-mono text-text-main truncate"
+                  title={`${currentCloudModel.name} (${currentCloudModel.targetCloud?.csp?.toUpperCase()} / ${currentCloudModel.targetCloud?.region})`}
+                >
+                  {currentCloudModel.name} ({currentCloudModel.targetCloud?.csp?.toUpperCase()})
+                </span>
+              </div>
+            </div>
+          </div>
 
           {/* Infrastructure Metrics & Resources Cards Bar (5 Resource Cards) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
