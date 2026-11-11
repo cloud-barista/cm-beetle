@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
+import { MIN_BEETLE_POLL_INTERVAL_MS } from '../../hooks/useGlobalJobPolling';
 import { TopologyMap } from '../design/TopologyMap';
 import { beetleApi, artifactApi } from '../../api/client';
 import { resolveTargetNodeLineage, parseDiscreteTcpPorts } from '../../utils/nodeLineage';
@@ -394,65 +395,78 @@ export const MigratedInfraManagement: React.FC = () => {
     }
   };
 
-  // Persistent teardown polling effect (runs across tab navigation and triggers catalog refresh on completion!)
+  const infraTeardownInFlightRef = useRef(false);
+  const storageTeardownInFlightRef = useRef(false);
+
+  // Persistent teardown polling effect (minimum 10s interval across tab navigation)
   useEffect(() => {
     const activeDeletingEntries = Object.entries(deletingInfrasMap);
     if (activeDeletingEntries.length === 0) return;
 
     const intervalId = setInterval(async () => {
-      const ns = namespaceId || 'mig01';
-      for (const [infraId, info] of Object.entries(deletingInfrasMap)) {
-        if (!info.reqId) continue;
-        const res = await pollInfraTeardownStatus(ns, infraId, info.reqId);
-        if (res.completed) {
-          if (res.success) {
-            setDeleteSuccessMsg(`Target infrastructure "${infraId}" was completely terminated and removed.`);
-            // Clean up any lingering job for this infra in store
-            jobs.filter(j => j.infraId === infraId).forEach(j => removeJob(j.id));
-          } else {
-            if (res.error?.includes('does not exist') || res.error?.includes('not found')) {
-              setDeleteSuccessMsg(`Target infrastructure "${infraId}" does not exist or was already deleted.`);
+      if (infraTeardownInFlightRef.current) return;
+      infraTeardownInFlightRef.current = true;
+      try {
+        const ns = namespaceId || 'mig01';
+        for (const [infraId, info] of Object.entries(deletingInfrasMap)) {
+          if (!info.reqId) continue;
+          const res = await pollInfraTeardownStatus(ns, infraId, info.reqId);
+          if (res.completed) {
+            if (res.success) {
+              setDeleteSuccessMsg(`Target infrastructure "${infraId}" was completely terminated and removed.`);
               jobs.filter(j => j.infraId === infraId).forEach(j => removeJob(j.id));
             } else {
-              setDeleteError(`Infrastructure "${infraId}" deletion failed: ${res.error || 'Unknown error'}`);
+              if (res.error?.includes('does not exist') || res.error?.includes('not found')) {
+                setDeleteSuccessMsg(`Target infrastructure "${infraId}" does not exist or was already deleted.`);
+                jobs.filter(j => j.infraId === infraId).forEach(j => removeJob(j.id));
+              } else {
+                setDeleteError(`Infrastructure "${infraId}" deletion failed: ${res.error || 'Unknown error'}`);
+              }
+            }
+            await fetchMigratedInfraIds();
+            if (selectedInfraId === infraId) {
+              setSelectedInfraId(SAMPLE_INFRA_ID);
+              setLoadedInfraDetail(SAMPLE_INFRA_DETAIL);
             }
           }
-          // Refresh list from server after teardown completes!
-          await fetchMigratedInfraIds();
-          if (selectedInfraId === infraId) {
-            setSelectedInfraId(SAMPLE_INFRA_ID);
-            setLoadedInfraDetail(SAMPLE_INFRA_DETAIL);
-          }
         }
+      } finally {
+        infraTeardownInFlightRef.current = false;
       }
-    }, 3000);
+    }, MIN_BEETLE_POLL_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
   }, [deletingInfrasMap, namespaceId, selectedInfraId, jobs, removeJob]);
 
-  // Persistent Object Storage teardown polling effect (runs across tab navigation!)
+  // Persistent Object Storage teardown polling effect (minimum 10s interval across tab navigation)
   useEffect(() => {
     const activeDeletingEntries = Object.entries(deletingStoragesMap);
     if (activeDeletingEntries.length === 0) return;
 
     const intervalId = setInterval(async () => {
-      const ns = namespaceId || 'mig01';
-      for (const [storageId, info] of Object.entries(deletingStoragesMap)) {
-        if (!info.reqId) continue;
-        const res = await pollStorageTeardownStatus(ns, storageId, info.reqId);
-        if (res.completed) {
-          if (res.success) {
-            setDeleteSuccessMsg(`Object storage "${storageId}" was completely deleted.`);
-          } else {
-            setDeleteError(`Object storage "${storageId}" deletion failed: ${res.error || 'Unknown error'}`);
-          }
-          await loadMigratedStorages();
-          if (selectedStorageId === storageId) {
-            setSelectedStorageId('');
+      if (storageTeardownInFlightRef.current) return;
+      storageTeardownInFlightRef.current = true;
+      try {
+        const ns = namespaceId || 'mig01';
+        for (const [storageId, info] of Object.entries(deletingStoragesMap)) {
+          if (!info.reqId) continue;
+          const res = await pollStorageTeardownStatus(ns, storageId, info.reqId);
+          if (res.completed) {
+            if (res.success) {
+              setDeleteSuccessMsg(`Object storage "${storageId}" was completely deleted.`);
+            } else {
+              setDeleteError(`Object storage "${storageId}" deletion failed: ${res.error || 'Unknown error'}`);
+            }
+            await loadMigratedStorages();
+            if (selectedStorageId === storageId) {
+              setSelectedStorageId('');
+            }
           }
         }
+      } finally {
+        storageTeardownInFlightRef.current = false;
       }
-    }, 3000);
+    }, MIN_BEETLE_POLL_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
   }, [deletingStoragesMap, namespaceId, selectedStorageId]);

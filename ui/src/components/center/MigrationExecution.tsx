@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useMigrationStore, calculateJobElapsedSeconds } from '../../store/migrationStore';
+import { useMigrationStore, calculateJobElapsedSeconds, MigrationJob } from '../../store/migrationStore';
 import { beetleApi } from '../../api/client';
-import { CheckSSHReadyResponse, CloudModelEnvelope, RecommendedInfra, RequestDetailsResult } from '../../types/migration';
+import { CheckSSHReadyResponse, CloudModelEnvelope, RecommendedInfra } from '../../types/migration';
 import { MigrationSplitScreen } from './MigrationSplitScreen';
 import {
   buildDefaultModelName,
@@ -45,30 +45,6 @@ import {
   Network,
   Eye
 } from 'lucide-react';
-
-interface MigrationJob {
-  id: string;
-  reqId: string;
-  infraId: string;
-  nsId: string;
-  nameSeed: string;
-  csp: string;
-  region: string;
-  status: 'Handling' | 'Success' | 'Failed';
-  startTime: string;
-  createdAtMs?: number;
-  elapsedSeconds: number;
-  nodeGroupsCount: number;
-  totalVms: number;
-  logs: string[];
-  vms?: { publicIp: string; privateIp: string; specId: string; name: string; status?: string; systemMessage?: string }[];
-  error?: string;
-  isSample?: boolean;
-  targetNlbList?: any[];
-  nlbReqId?: string;
-  nlbStatus?: 'Idle' | 'Provisioning' | 'Success' | 'Failed';
-  nlbHealth?: { healthy: boolean; status: string; checkedAt: string };
-}
 
 export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const {
@@ -342,12 +318,6 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     }
   };
 
-  // Keep fresh reference of jobs to prevent React closure stale state in setInterval
-  const jobsRef = useRef(jobs);
-  useEffect(() => {
-    jobsRef.current = jobs;
-  }, [jobs]);
-
   const [copiedIp, setCopiedIp] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -364,256 +334,54 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     }
   }, [selectedCloudModel]);
 
-  const lastInfraNodePollRef = useRef<Record<string, number>>({});
-
-  // Global Multi-Job Polling timer (Strict 1-to-1 GET /beetle/request/{reqId} Backend Tracking with jobsRef)
+  // Surface completion/failure toasts when global background polling updates job status
+  const prevJobStatusRef = useRef<Record<string, { status: MigrationJob['status']; nlbStatus?: MigrationJob['nlbStatus'] }>>({});
   useEffect(() => {
-    const interval = setInterval(async () => {
-      const currentJobs = jobsRef.current;
-      const activeJobsToPoll = currentJobs.filter(j => !j.isSample && j.status === 'Handling');
-      const activeNlbJobsToPoll = currentJobs.filter(j => !j.isSample && j.nlbStatus === 'Provisioning' && j.nlbReqId);
-      
-      if (activeJobsToPoll.length === 0 && activeNlbJobsToPoll.length === 0) {
-        return;
-      }
-
-      const statusUpdates: Record<string, RequestDetailsResult> = {};
-      const liveNodeUpdates: Record<string, any[]> = {};
-      const nlbStatusUpdates: Record<string, RequestDetailsResult> = {};
-      const nowMs = Date.now();
-
-      for (const job of activeJobsToPoll) {
-        try {
-          let res = await beetleApi.getRequestDetails(job.reqId, { brief: true });
-          const isTerminalSuccess =
-            res?.status === 'Success' || res?.status === 'Completed' || res?.status === 'Succeeded';
-          if (isTerminalSuccess && res.responseData === undefined) {
-            res = await beetleApi.getRequestDetails(job.reqId, { brief: false });
-          }
-          if (res && res.status) {
-            statusUpdates[job.id] = res;
-          }
-          const infraStepActive =
-            res?.status === 'Handling' &&
-            Array.isArray(res.subRequests) &&
-            res.subRequests.some((sr) => sr.resourceType === 'infra' && sr.method === 'POST');
-          if (infraStepActive && job.nsId && job.infraId) {
-            const lastPoll = lastInfraNodePollRef.current[job.id] || 0;
-            if (nowMs - lastPoll >= 5000) {
-              lastInfraNodePollRef.current[job.id] = nowMs;
-              const liveDetail = await beetleApi.getMigratedInfraDetail(job.nsId, job.infraId);
-              if (liveDetail && Array.isArray(liveDetail.node) && liveDetail.node.length > 0) {
-                liveNodeUpdates[job.id] = liveDetail.node;
-              }
-            }
-          }
-        } catch {
-          // ignore transient error
+    for (const job of jobs) {
+      if (job.isSample) continue;
+      const prev = prevJobStatusRef.current[job.id];
+      if (prev) {
+        if (prev.status === 'Handling' && job.status === 'Success') {
+          setToastMsg(`🎉 [${job.infraId}] Infrastructure Migration Succeeded!`);
+          setTimeout(() => setToastMsg(null), 5000);
+        } else if (prev.status === 'Handling' && job.status === 'Failed') {
+          setToastMsg(`✕ [${job.infraId}] Migration Failed: ${job.error || 'Backend provisioning error'}`);
+          setTimeout(() => setToastMsg(null), 6000);
+        } else if (prev.nlbStatus === 'Provisioning' && job.nlbStatus === 'Success') {
+          setToastMsg(`🎉 [${job.infraId}] NLB Migration Succeeded!`);
+          setTimeout(() => setToastMsg(null), 5000);
+        } else if (prev.nlbStatus === 'Provisioning' && job.nlbStatus === 'Failed') {
+          setToastMsg(`✕ [${job.infraId}] NLB Migration Failed`);
+          setTimeout(() => setToastMsg(null), 6000);
         }
       }
+      prevJobStatusRef.current[job.id] = { status: job.status, nlbStatus: job.nlbStatus };
+    }
+  }, [jobs]);
 
-      for (const job of activeNlbJobsToPoll) {
-        if (job.nlbReqId) {
-          try {
-            let res = await beetleApi.getRequestDetails(job.nlbReqId, { brief: true });
-            const isTerminalSuccess =
-              res?.status === 'Success' || res?.status === 'Completed' || res?.status === 'Succeeded';
-            if (isTerminalSuccess && res.responseData === undefined) {
-              res = await beetleApi.getRequestDetails(job.nlbReqId, { brief: false });
-            }
-            if (res && res.status) {
-              nlbStatusUpdates[job.id] = res;
-            }
-          } catch {
-            // ignore transient error
-          }
-        }
-      }
+  const hasRunningLocalClockJob = jobs.some(
+    (j) => j.status === 'Handling' || j.nlbStatus === 'Provisioning'
+  );
 
-      setJobs(prevJobs =>
-        prevJobs.map(job => {
+  // Local 1s elapsed-time UI clock and demo sample completion (API polling runs >= 10s in useGlobalJobPolling)
+  useEffect(() => {
+    if (!hasRunningLocalClockJob) return;
+
+    const interval = setInterval(() => {
+      setJobs((prevJobs) =>
+        prevJobs.map((job) => {
           const isInfraDone = job.status === 'Success' || job.status === 'Failed';
           const isNlbDone = !job.nlbStatus || job.nlbStatus === 'Success' || job.nlbStatus === 'Failed';
           if (isInfraDone && isNlbDone) return job;
 
           const newElapsed = calculateJobElapsedSeconds(job);
 
-          // A. REAL BACKEND JOB LOGIC (Strict 1-to-1 API State)
           if (!job.isSample) {
-            let updatedJob = { ...job, elapsedSeconds: newElapsed };
-
-            // 1. Process NLB Stage 2 update if NLB is currently provisioning
-            if (job.nlbStatus === 'Provisioning' && job.nlbReqId) {
-              const nlbUpdate = nlbStatusUpdates[job.id];
-              if (nlbUpdate) {
-                if (nlbUpdate.status === 'Success' || nlbUpdate.status === 'Completed' || nlbUpdate.status === 'Succeeded') {
-                  const createdNlb = nlbUpdate.responseData?.nlbList?.[0];
-                  const nlbName = createdNlb?.name || createdNlb?.id || job.targetNlbList?.[0]?.targetGroup?.nodeGroupId || job.targetNlbList?.[0]?.name || `${job.infraId}-nlb`;
-                  setToastMsg(`🎉 [${job.infraId}] NLB Migration Succeeded!`);
-                  setTimeout(() => setToastMsg(null), 5000);
-                  updatedJob = {
-                    ...updatedJob,
-                    nlbStatus: 'Success',
-                    nlbHealth: {
-                      healthy: true,
-                      status: 'Healthy',
-                      checkedAt: new Date().toLocaleTimeString()
-                    },
-                    logs: [
-                      ...updatedJob.logs,
-                      `Stage 2 -> NLB Provisioned Successfully! (${nlbName})`,
-                      `GET /beetle/request/${job.nlbReqId} -> Status: Success`
-                    ]
-                  };
-                } else if (nlbUpdate.status === 'Error' || nlbUpdate.status === 'Failed') {
-                  setToastMsg(`✕ [${job.infraId}] NLB Migration Failed: ${nlbUpdate.errorResponse || 'Error'}`);
-                  setTimeout(() => setToastMsg(null), 6000);
-                  updatedJob = {
-                    ...updatedJob,
-                    nlbStatus: 'Failed',
-                    logs: [
-                      ...updatedJob.logs,
-                      `Stage 2 -> NLB Provisioning Failed: ${nlbUpdate.errorResponse || 'Backend NLB error'}`
-                    ]
-                  };
-                }
-              }
-            }
-
-            // 2. Process VM Infra Stage 1 update if Infra is currently handling
-            if (job.status === 'Handling') {
-              const update = statusUpdates[job.id];
-              const realStatus = update?.status || 'Handling';
-              if (update?.tumblebugSource) {
-                updatedJob.tumblebugSource = update.tumblebugSource;
-              }
-              if (update?.subRequestSummary) {
-                updatedJob.subRequestSummary = update.subRequestSummary;
-              }
-              if (update?.subRequests) {
-                updatedJob.subRequests = update.subRequests;
-              }
-              const liveNodes = liveNodeUpdates[job.id];
-              if (Array.isArray(liveNodes) && liveNodes.length > 0) {
-                updatedJob.vms = liveNodes.map((n: any) => ({
-                  name: n.name || n.id || 'node',
-                  specId: n.specId || n.spec || selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups[0]?.specId || 'c5.large',
-                  publicIp: n.publicIP || n.publicIp || 'Allocating...',
-                  privateIp: n.privateIP || n.privateIp || 'Allocating...',
-                  status: n.status || 'Creating',
-                  systemMessage: n.systemMessage || ''
-                }));
-              }
-
-              if (realStatus === 'Error' || realStatus === 'Failed') {
-                delete lastInfraNodePollRef.current[job.id];
-                const errorMsg = update?.errorResponse || 'Backend provisioning error';
-                setToastMsg(`✕ [${job.infraId}] Migration Failed: ${errorMsg}`);
-                setTimeout(() => setToastMsg(null), 6000);
-
-                const cleanedLogs = updatedJob.logs.filter(l => !l.includes(`GET /beetle/request/${job.reqId}`));
-                return {
-                  ...updatedJob,
-                  status: 'Failed',
-                  error: errorMsg,
-                  logs: [
-                    ...cleanedLogs,
-                    `GET /beetle/request/${job.reqId}?brief=true -> Status: Error (${errorMsg}) (Duration: ${newElapsed}s)`
-                  ]
-                };
-              }
-
-              if (realStatus === 'Success' || realStatus === 'Completed' || realStatus === 'Succeeded') {
-                delete lastInfraNodePollRef.current[job.id];
-                setToastMsg(`🎉 [${job.infraId}] Infrastructure Migration Succeeded!`);
-                setTimeout(() => setToastMsg(null), 5000);
-
-                // Stage 2: Automatic NLB Deployment Trigger if targetNlbList is present and nlbStatus is 'Idle'
-                const shouldTriggerNlb =
-                  job.targetNlbList && job.targetNlbList.length > 0 && (!job.nlbStatus || job.nlbStatus === 'Idle');
-                if (shouldTriggerNlb) {
-                  beetleApi.migrateNlb(job.nsId, job.infraId, job.targetNlbList!).then(nlbRes => {
-                    if (nlbRes.success && nlbRes.reqId) {
-                      setJobs(prev => prev.map(j => j.id === job.id ? {
-                        ...j,
-                        nlbStatus: 'Provisioning',
-                        nlbReqId: nlbRes.reqId,
-                        logs: [
-                          ...j.logs,
-                          `Stage 2 -> POST /beetle/migration/middleware/ns/${job.nsId}/infra/${job.infraId}/nlb`,
-                          `HTTP 202 Accepted (NLB ReqID: ${nlbRes.reqId}, Status: Provisioning)`
-                        ]
-                      } : j));
-                    } else if (!nlbRes.success) {
-                      setJobs(prev => prev.map(j => j.id === job.id ? {
-                        ...j,
-                        nlbStatus: 'Failed',
-                        logs: [
-                          ...j.logs,
-                          `Stage 2 NLB Migration Failed: ${nlbRes.error || 'Unknown error'}`
-                        ]
-                      } : j));
-                    }
-                  }).catch(err => {
-                    console.warn('NLB migration trigger error:', err);
-                  });
-                }
-
-                // Extract real VM nodes from Tumblebug/Beetle responseData
-                const rawNodes = update?.responseData?.node || update?.responseData?.infraInfo?.node || [];
-                const parsedVms = Array.isArray(rawNodes) && rawNodes.length > 0
-                  ? rawNodes.map((n: any) => ({
-                      name: n.name || n.id || 'node',
-                      specId: n.specId || n.spec || selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups[0]?.specId || 'c5.large',
-                      publicIp: n.publicIP || n.publicIp || 'N/A',
-                      privateIp: n.privateIP || n.privateIp || 'N/A',
-                      status: n.status || ((n.publicIP || n.publicIp || n.privateIP || n.privateIp) ? 'Running' : 'Failed'),
-                      systemMessage: n.systemMessage || ''
-                    }))
-                  : updatedJob.vms && updatedJob.vms.length > 0
-                  ? updatedJob.vms
-                  : Array.from({ length: job.totalVms }).map((_, i) => ({
-                      name: `node-${i + 1}`,
-                      specId: selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups[i % (selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups.length || 1)]?.specId || 'c5.large',
-                      publicIp: `54.180.${10 + i}.${30 + i}`,
-                      privateIp: `10.0.1.${100 + i}`,
-                      status: 'Running',
-                      systemMessage: ''
-                    }));
-
-                const cleanedLogs = updatedJob.logs.filter(l => !l.includes(`GET /beetle/request/${job.reqId}`));
-                return {
-                  ...updatedJob,
-                  status: 'Success',
-                  nlbStatus: shouldTriggerNlb ? 'Provisioning' : updatedJob.nlbStatus,
-                  logs: [
-                    ...cleanedLogs,
-                    `GET /beetle/request/${job.reqId} -> Status: Success (Duration: ${newElapsed}s)`
-                  ],
-                  vms: parsedVms
-                };
-              }
-
-              // Still Handling on backend API
-              const stepProgress = updatedJob.subRequestSummary
-                ? ` [${updatedJob.subRequestSummary.success}/${updatedJob.subRequestSummary.total} steps${updatedJob.subRequestSummary.currentAction ? `: ${updatedJob.subRequestSummary.currentAction}` : ''}]`
-                : '';
-              const cleanedLogs = updatedJob.logs.filter(l => !l.includes(`GET /beetle/request/${job.reqId}`));
-              return {
-                ...updatedJob,
-                logs: [
-                  ...cleanedLogs,
-                  `GET /beetle/request/${job.reqId}?brief=true -> Status: Handling${stepProgress} (Elapsed: ${newElapsed}s)`
-                ]
-              };
-            }
-
-            return updatedJob;
+            return job.elapsedSeconds === newElapsed ? job : { ...job, elapsedSeconds: newElapsed };
           }
 
-          // B. DEMO SAMPLE JOB TIMER LOGIC
           if (newElapsed >= 30) {
-            const cleanedLogs = job.logs.filter(l => !l.includes('GET /beetle/request/'));
+            const cleanedLogs = job.logs.filter((l) => !l.includes('GET /beetle/request/'));
             return {
               ...job,
               status: 'Success',
@@ -631,7 +399,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
             };
           }
 
-          const cleanedLogs = job.logs.filter(l => !l.includes('GET /beetle/request/'));
+          const cleanedLogs = job.logs.filter((l) => !l.includes('GET /beetle/request/'));
           return {
             ...job,
             elapsedSeconds: newElapsed,
@@ -645,7 +413,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [hasRunningLocalClockJob, setJobs]);
 
   useEffect(() => {
     if (selectedCloudModel && String(selectedCloudModel.id).startsWith('candidate-')) {

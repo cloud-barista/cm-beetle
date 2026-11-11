@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useMigrationStore, calculateJobElapsedSeconds } from '@/store/migrationStore';
+import { useMigrationStore, calculateJobElapsedSeconds, DataMigrationJob } from '@/store/migrationStore';
 import { beetleApi, tumblebugApi, honeybeeApi } from '@/api/client';
-import { AiStackLayerStatus, DataHookOutputs } from '@/types/migration';
+import { AiStackLayerStatus } from '@/types/migration';
 import { resolveTargetNodeLineage } from '@/utils/nodeLineage';
 import { CspCredentialForm } from '../common/CspCredentialForm';
 import { DirectoryTreeExplorer } from './DirectoryTreeExplorer';
@@ -36,35 +36,6 @@ import {
   Upload,
   Cpu
 } from 'lucide-react';
-
-interface DataMigrationJob {
-  id: string;
-  reqId: string;
-  sourceBucket: string;
-  targetStorage: string;
-  nsId: string;
-  csp: string;
-  region: string;
-  strategy: string;
-  status: 'Handling' | 'Success' | 'Failed';
-  startTime: string;
-  createdAtMs?: number;
-  elapsedSeconds: number;
-  encryptionKeyId: string;
-  isSample?: boolean;
-  logs: string[];
-  sourcePreCmd?: string;
-  destinationPreCmd?: string;
-  sourcePostCmd?: string;
-  destinationPostCmd?: string;
-  hookOutputs?: DataHookOutputs;
-  sourceRecovered?: boolean;
-  effectiveStrategy?: string;
-  bytesTransferred?: number;
-  filesTransferred?: number;
-  includeFilter?: string;
-  excludeFilter?: string;
-}
 
 export const DataTransferCenter: React.FC = () => {
   const {
@@ -1296,16 +1267,17 @@ export const DataTransferCenter: React.FC = () => {
   const runningJobsCount = dataJobs.filter(j => j.status === 'Handling').length;
   const completedJobsCount = dataJobs.filter(j => j.status === 'Success').length;
 
-  // Live Duration Timer (1s local UI clock; API status polling is handled every 15s in useGlobalJobPolling)
+  // Live Duration Timer (1s local UI clock; API status polling runs >= 10s in useGlobalJobPolling)
+  const hasRunningDataJob = dataJobs.some((j) => j.status === 'Handling');
   useEffect(() => {
-    const hasRunning = dataJobs.some((j) => j.status === 'Handling');
-    if (!hasRunning) return;
+    if (!hasRunningDataJob) return;
 
     const intervalId = setInterval(() => {
       setDataJobs((prevJobs) =>
         prevJobs.map((job) => {
           if (job.status === 'Handling') {
-            return { ...job, elapsedSeconds: calculateJobElapsedSeconds(job) };
+            const realElapsed = calculateJobElapsedSeconds(job);
+            return job.elapsedSeconds === realElapsed ? job : { ...job, elapsedSeconds: realElapsed };
           }
           return job;
         })
@@ -1313,7 +1285,7 @@ export const DataTransferCenter: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [dataJobs, setDataJobs]);
+  }, [hasRunningDataJob, setDataJobs]);
 
   return (
     <div className="space-y-6 animate-fade-in font-sans">

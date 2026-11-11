@@ -20,34 +20,11 @@ import {
 import {
   OnpremNode,
   CloudModelEnvelope,
-  CheckSSHReadyResponse,
-  SubRequestItem,
-  SubRequestSummary
+  CheckSSHReadyResponse
 } from '../../types/migration';
+import type { MigrationJob } from '../../store/migrationStore';
 
-export interface SplitViewMigrationJob {
-  id: string;
-  reqId: string;
-  infraId: string;
-  nsId: string;
-  nameSeed: string;
-  csp: string;
-  region: string;
-  status: 'Handling' | 'Success' | 'Failed';
-  startTime: string;
-  elapsedSeconds: number;
-  nodeGroupsCount: number;
-  totalVms: number;
-  logs: string[];
-  vms?: { publicIp: string; privateIp: string; specId: string; name: string; status?: string; systemMessage?: string }[];
-  error?: string;
-  isSample?: boolean;
-  targetNlbList?: any[];
-  nlbStatus?: 'Idle' | 'Provisioning' | 'Success' | 'Failed';
-  tumblebugSource?: string;
-  subRequestSummary?: SubRequestSummary;
-  subRequests?: SubRequestItem[];
-}
+export type SplitViewMigrationJob = MigrationJob;
 
 interface MigrationSplitScreenProps {
   sourceNodes: OnpremNode[];

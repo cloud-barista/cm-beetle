@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useMigrationStore, calculateJobElapsedSeconds } from '@/store/migrationStore';
+import { useMigrationStore, calculateJobElapsedSeconds, ObjectStorageJobCard } from '@/store/migrationStore';
 import {
   artifactApi,
   beetleApi,
@@ -165,25 +165,7 @@ const SAMPLE_TARGET_STORAGE_MODEL: StorageTargetModelEnvelope = {
 
 const DRAFT_STORAGE_TARGET_ID = '__draft_target_storage__';
 
-export interface ObjectStorageJobCard {
-  id: string;
-  reqId: string;
-  name: string;
-  csp: string;
-  region: string;
-  status: 'Handling' | 'Success' | 'Failed';
-  startTime: string;
-  elapsedSeconds: number;
-  buckets: {
-    name: string;
-    targetClass: string;
-    cors: string;
-    versioning: string;
-  }[];
-  logs: string[];
-  isSample?: boolean;
-  error?: string;
-}
+export type { ObjectStorageJobCard };
 
 export const ObjectStorageMigration: React.FC = () => {
   const {
@@ -396,72 +378,26 @@ export const ObjectStorageMigration: React.FC = () => {
     openstack: { cors: false, presignedUrl: true, versioning: false }
   });
 
-  // Live Duration Timer & Status Polling Effect for Object Storage Jobs Queue
-  useEffect(() => {
-    const runningJobs = objectStorageJobs.filter((j) => j.status === 'Handling');
-    if (runningJobs.length === 0) return;
+  const hasRunningOsJob = objectStorageJobs.some((j) => j.status === 'Handling');
 
-    const intervalId = setInterval(async () => {
+  // Local 1s elapsed-time UI clock (API status polling runs >= 10s in useGlobalJobPolling)
+  useEffect(() => {
+    if (!hasRunningOsJob) return;
+
+    const intervalId = setInterval(() => {
       setObjectStorageJobs((prevJobs) =>
         prevJobs.map((job) => {
           if (job.status === 'Handling') {
             const realElapsed = calculateJobElapsedSeconds(job);
-            return { ...job, elapsedSeconds: realElapsed };
+            return job.elapsedSeconds === realElapsed ? job : { ...job, elapsedSeconds: realElapsed };
           }
           return job;
         })
       );
-
-      for (const job of runningJobs) {
-        if (!job.reqId || job.isSample) continue;
-        try {
-          const reqDetails = await beetleApi.getRequestDetails(job.reqId);
-          const status = reqDetails?.status;
-          if (status === 'Completed' || status === 'Succeeded' || status === 'Success') {
-            setObjectStorageJobs((prevJobs) =>
-              prevJobs.map((j) => {
-                if (j.id === job.id) {
-                  const dur = calculateJobElapsedSeconds(j);
-                  return {
-                    ...j,
-                    status: 'Success',
-                    elapsedSeconds: dur,
-                    logs: [
-                      ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
-                      `GET /beetle/request/${job.reqId} -> Status: Success (Duration: ${dur}s)`
-                    ]
-                  };
-                }
-                return j;
-              })
-            );
-          } else if (status === 'Failed' || status === 'Error') {
-            setObjectStorageJobs((prevJobs) =>
-              prevJobs.map((j) => {
-                if (j.id === job.id) {
-                  const dur = calculateJobElapsedSeconds(j);
-                  return {
-                    ...j,
-                    status: 'Failed',
-                    elapsedSeconds: dur,
-                    logs: [
-                      ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
-                      `GET /beetle/request/${job.reqId} -> Status: Failed (${reqDetails?.errorResponse || 'Execution Error'}) (Duration: ${dur}s)`
-                    ]
-                  };
-                }
-                return j;
-              })
-            );
-          }
-        } catch (err) {
-          console.warn('Poll error for object storage job request', job.reqId, err);
-        }
-      }
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [objectStorageJobs, setObjectStorageJobs]);
+  }, [hasRunningOsJob, setObjectStorageJobs]);
 
   const fetchSavedStorageModels = async () => {
     try {
@@ -1192,6 +1128,7 @@ export const ObjectStorageMigration: React.FC = () => {
         region: targetReg,
         status: res.success ? 'Handling' : 'Failed',
         startTime: new Date().toISOString(),
+        createdAtMs: Date.now(),
         elapsedSeconds: 0,
         buckets: payloadTargetStorages.map((b: any) => ({
           name: b.bucketName,
