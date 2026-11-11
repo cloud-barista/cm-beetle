@@ -282,6 +282,9 @@ func RecommendInfra(ctx context.Context, desiredCsp string, desiredRegion string
 	// 1. Recommend vNet and subnets (Note: vNet can be a VPC or a VNet depending on the CSP)
 	recommendedVNetInfoList, err := RecommendVNet(ctx, csp, region, srcInfra)
 	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return cloudmodel.RecommendedInfra{}, ctxErr
+		}
 		log.Warn().Err(err).Msg("failed to recommend a virtual network for the source computing infrastructure")
 	}
 
@@ -579,6 +582,9 @@ func RecommendInfraCandidates(ctx context.Context, desiredCsp string, desiredReg
 	// 1. Recommend vNet and subnets (Note: vNet can be a VPC or a VNet depending on the CSP)
 	recommendedVNetInfoList, err := RecommendVNet(ctx, csp, region, srcInfra)
 	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
 		log.Warn().Err(err).Msg("failed to recommend a virtual network for the source computing infrastructure")
 	}
 
@@ -658,10 +664,16 @@ func RecommendInfraCandidates(ctx context.Context, desiredCsp string, desiredReg
 	// and set the recommended security groups to the skeleton NodeGroup List
 	var deduplicatedSecurityGroupList = []cloudmodel.SecurityGroupReq{}
 	for i, node := range srcInfra.Nodes {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 
 		// Generete security group from the node's firewall rules (or firewall table)
 		recommendedSg, err := RecommendSecurityGroup(ctx, csp, region, node)
 		if err != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Msgf("failed to recommend security group for node %s: %v", node.MachineId, err)
 		}
 
@@ -696,16 +708,25 @@ func RecommendInfraCandidates(ctx context.Context, desiredCsp string, desiredReg
 
 	// Find compatible pairs of VM specs and OS images for servers
 	for i, node := range srcInfra.Nodes {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 
 		// Lookup the appropriate VM specs for the node
 		recommendedVmSpecInfoList, _, err := RecommendNodeSpecs(ctx, csp, region, node, limitSpecs)
 		if err != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Msgf("failed to recommend VM specs for node %s: %v", node.MachineId, err)
 		}
 
 		// Lookup the appropriate VM OS images for the node
 		recommendedVmOsImageInfoList, err := RecommendVmOsImages(ctx, csp, region, node, limitImages)
 		if err != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Msgf("failed to recommend VM OS images for node %s: %v", node.MachineId, err)
 		}
 

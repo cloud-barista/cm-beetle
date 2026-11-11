@@ -82,6 +82,9 @@ func RecommendK8sInfra(ctx context.Context, provider, region string, onpremInfra
 	// different specs for the same worker whenever the cheapest candidate in range is not the
 	// closest one.
 	groups, failed := recommendNodeGroups(ctx, profile, normalizeWorkers(workerNodes), GetDefaultSpecsLimit())
+	if err := ctx.Err(); err != nil {
+		return emptyRet, err
+	}
 	logExcludedWorkers(failed)
 	if len(groups) == 0 {
 		return emptyRet, fmt.Errorf("no K8s worker node group could be recommended: %s", summarizeFailures(failed))
@@ -100,6 +103,9 @@ func RecommendK8sInfra(ctx context.Context, provider, region string, onpremInfra
 	vNetReq := buildK8sVNetReq(ctx, profile, connectionName, onpremInfra)
 	sshKeyReq := buildK8sSshKeyReq(connectionName)
 	sgReqList := buildK8sSecurityGroupReqList(ctx, connectionName, provider, region, vNetReq.CidrBlock, workerNodes, onpremInfra.K8sCluster)
+	if err := ctx.Err(); err != nil {
+		return emptyRet, err
+	}
 
 	clusterReq := cloudmodel.K8sClusterReq{
 		ConnectionName: connectionName,

@@ -1,13 +1,17 @@
 package middlewares
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/labstack/echo/v4"
 )
 
-// ShouldSkipRequestTracking returns true for management, docs, health, UI, and proxy paths.
+// ShouldSkipRequestTracking returns true for preflight, management, docs, health, UI, and proxy paths.
 func ShouldSkipRequestTracking(c echo.Context) bool {
+	if c.Request().Method == http.MethodOptions {
+		return true
+	}
 	p := c.Request().URL.Path
 	if p == "" {
 		p = c.Path()

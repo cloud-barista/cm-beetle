@@ -46,8 +46,8 @@ REST Controller / Middleware (pkg/api/rest/...)
 Core Domain Functions (pkg/core/{recommendation,migration,...})
    │  ctx passed as 1st parameter -> tbclient.NewSession().SetContext(ctx)
    ▼
-Tumblebug Resty Hooks (pkg/client/tumblebug/client.go)
-   │  OnBeforeRequest / OnAfterResponse / OnError
+Tumblebug HTTP Transport (pkg/client/tumblebug/client-transport.go & client-subrequest.go)
+   │  TumblebugTransport.RoundTrip -> beginSubRequestTrace
    ▼
 In-Memory Sub-Request Tracker (pkg/core/common/subrequest.go)
 ```
@@ -65,7 +65,7 @@ Whenever `tbclient.NewSession().SetContext(ctx)` executes an HTTP request with a
 | Outbound Header | When Sent | Format | Purpose |
 | --- | --- | --- | --- |
 | `X-Request-Source` | Every outbound CB-Tumblebug call | `cm-beetle:{reqId}` | Groups all Tumblebug calls triggered by one Beetle request (`GET /tumblebug/requests?source=cm-beetle:{reqId}`) |
-| `X-Request-Id` | Mutating / action calls (`POST`, `PUT`, `DELETE`) | `{reqId}-{seq}` (e.g., `abc123-1`, `abc123-2`) | Assigns a deterministic sub-request ID in CB-Tumblebug (`GET /tumblebug/request/{reqId}-{seq}`) |
+| `X-Request-Id` | Mutating / action calls (`POST`, `PUT`, `DELETE`) | `{reqId}-{seq}` (e.g., `abc123-1`, or `abc123-1-r2` on `429` retry) | Assigns a deterministic sub-request ID in CB-Tumblebug (`GET /tumblebug/request/{subReqId}`) |
 
 ---
 
@@ -169,8 +169,8 @@ Returns `{ "success": true, "data": { "requests": [...] } }` sorted by `startTim
 ## Recommended Polling Pattern for Portals (Beetle UX Lab / CM-Butterfly)
 
 1. **Submit with Async Preference**: Send `Prefer: respond-async` and capture `{ reqId }` from the `202 Accepted` response.
-2. **Lightweight Progress Polling**: Poll `GET /beetle/request/{reqId}?brief=true` every 1-2 seconds while `status == "Handling"`. Render step transitions directly from `subRequestSummary` and `subRequests` (`vNet` -> `securityGroup` -> `sshKey` -> `infra` -> `nlb`).
-3. **Node-Level Live Status (Optional)**: While a `subRequests` item with `resourceType == "infra"` is in `Handling`, poll `GET /beetle/migration/ns/{nsId}/infra/{infraId}` every 4-5 seconds to display individual node provisioning states and public/private IP allocation.
+2. **Lightweight Progress Polling**: Poll `GET /beetle/request/{reqId}?brief=true` at an interval of at least 10 seconds (`>= 10s`) while `status == "Handling"`. Render step transitions directly from `subRequestSummary` and `subRequests` (`vNet` -> `securityGroup` -> `sshKey` -> `infra` -> `nlb`), while using a local client clock for elapsed seconds.
+3. **Node-Level Live Status (Optional)**: While a `subRequests` item with `resourceType == "infra"` is in `Handling`, poll `GET /beetle/migration/ns/{nsId}/infra/{infraId}` at an interval of at least 10 seconds (`>= 10s`) to display individual node provisioning states and public/private IP allocation.
 4. **Final Result Fetch**: Once `status` becomes `Success` or `Error`, fetch `GET /beetle/request/{reqId}` (without `brief=true`) once to retrieve the complete `responseData` or `errorResponse` (and pass `?withTumblebug=true` when diagnosing upstream Tumblebug errors).
 
 ---

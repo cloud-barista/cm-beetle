@@ -16,11 +16,9 @@ package tbclient
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -31,35 +29,6 @@ import (
 type contextKey string
 
 const cacheDurationKey contextKey = "cacheDuration"
-
-type sessionAttemptKey struct{}
-
-type sessionSubRequestAttempt struct {
-	mu             sync.Mutex
-	seq            uint64
-	attempt        int
-	lastStatusCode int
-	lastMethod     string
-	lastPath       string
-}
-
-func withSessionAttempt(ctx context.Context, state *sessionSubRequestAttempt) context.Context {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	if state == nil {
-		state = &sessionSubRequestAttempt{}
-	}
-	return context.WithValue(ctx, sessionAttemptKey{}, state)
-}
-
-func getSessionAttempt(ctx context.Context) *sessionSubRequestAttempt {
-	if ctx == nil {
-		return nil
-	}
-	state, _ := ctx.Value(sessionAttemptKey{}).(*sessionSubRequestAttempt)
-	return state
-}
 
 // SetCacheDuration adds cache duration to the context
 func SetCacheDuration(ctx context.Context, d time.Duration) context.Context {
@@ -202,14 +171,9 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 					return nil, err
 				}
 
-				// Check cache again while waiting
+				// Return newly populated cache entry if an in-flight request completed while waiting.
 				if item, found := clientCache.Load(requestKey); found {
 					if cachedItem, ok := item.(CacheItem); ok {
-						requestDone(requestKey) // Release the count we tried to acquire? No, limitConcurrentRequests returns false if not acquired.
-						// Wait, limitConcurrentRequests increments if successful. If false, it didn't increment.
-						// But if we are waiting, someone else is running.
-						// If we find cache, we return it.
-
 						log.Debug().Msg("Got the cached result while waiting")
 						resp := &http.Response{
 							StatusCode: cachedItem.StatusCode,
@@ -227,55 +191,7 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 		}
 	}
 
-	// Inject upstream correlation headers and track mutating/recommendation sub-requests.
-	parentReqID := common.RequestIDFromContext(req.Context())
-	var subSeq uint64
-	attemptTracker := getSessionAttempt(req.Context())
-	if parentReqID != "" {
-		if req.Header.Get("X-Request-Source") == "" {
-			req.Header.Set("X-Request-Source", common.FormatTumblebugSource(parentReqID))
-		}
-		if shouldTrackSubRequest(method, req.URL.Path) {
-			targetPath, resourceType, resourceHint := extractSubRequestTarget(req.URL.Path, bodyBytes)
-			var subReqID string
-			var seq uint64
-			if attemptTracker != nil {
-				attemptTracker.mu.Lock()
-				is429Retry := attemptTracker.seq > 0 &&
-					attemptTracker.lastStatusCode == http.StatusTooManyRequests &&
-					attemptTracker.lastMethod == method &&
-					attemptTracker.lastPath == req.URL.Path &&
-					attemptTracker.attempt <= retryOn429Count
-				if is429Retry {
-					attemptTracker.attempt++
-					subReqID = common.RestartSubRequestAttempt(parentReqID, attemptTracker.seq, attemptTracker.attempt)
-					seq = attemptTracker.seq
-				} else {
-					subReqID, seq = common.StartSubRequest(parentReqID, method, targetPath, resourceType, resourceHint)
-					attemptTracker.seq = seq
-					attemptTracker.attempt = 1
-					attemptTracker.lastStatusCode = 0
-					attemptTracker.lastMethod = method
-					attemptTracker.lastPath = req.URL.Path
-				}
-				attemptTracker.mu.Unlock()
-			} else {
-				subReqID, seq = common.StartSubRequest(parentReqID, method, targetPath, resourceType, resourceHint)
-			}
-			if subReqID != "" {
-				req.Header.Set("X-Request-Id", subReqID)
-				subSeq = seq
-			}
-		}
-	}
-
-	recordAttemptStatus := func(code int) {
-		if attemptTracker != nil && subSeq > 0 {
-			attemptTracker.mu.Lock()
-			attemptTracker.lastStatusCode = code
-			attemptTracker.mu.Unlock()
-		}
-	}
+	finishSubReq := beginSubRequestTrace(req, bodyBytes)
 
 	// Execute Request
 	start := time.Now()
@@ -283,13 +199,12 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 	duration := time.Since(start)
 
 	if err != nil {
-		if subSeq > 0 {
-			recordAttemptStatus(0)
-			common.FinishSubRequest(parentReqID, subSeq, 0, err.Error())
-		}
+		finishSubReq(0, nil, err)
 		if method == "GET" {
 			requestDone(requestKey)
-			recordCircuitBreakerFailure(requestKey)
+			if req.Context().Err() == nil {
+				recordCircuitBreakerFailure(requestKey)
+			}
 		}
 		log.Error().Err(err).Str("method", method).Str("url", url).Dur("latency", duration).Msg("Internal Call Failed")
 		return nil, err
@@ -298,10 +213,7 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 	// Read response body for caching and logging
 	respBodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		if subSeq > 0 {
-			recordAttemptStatus(resp.StatusCode)
-			common.FinishSubRequest(parentReqID, subSeq, resp.StatusCode, err.Error())
-		}
+		finishSubReq(resp.StatusCode, nil, err)
 		if method == "GET" {
 			requestDone(requestKey)
 		}
@@ -311,10 +223,7 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 	resp.Body = io.NopCloser(bytes.NewBuffer(respBodyBytes))
 
 	if resp.StatusCode >= 400 {
-		if subSeq > 0 {
-			recordAttemptStatus(resp.StatusCode)
-			common.FinishSubRequest(parentReqID, subSeq, resp.StatusCode, extractUpstreamErrorSummary(respBodyBytes, resp.Status))
-		}
+		finishSubReq(resp.StatusCode, respBodyBytes, nil)
 		if method == "GET" {
 			requestDone(requestKey)
 			if resp.StatusCode != http.StatusNotFound {
@@ -330,10 +239,7 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 		return resp, nil
 	}
 
-	if subSeq > 0 {
-		recordAttemptStatus(resp.StatusCode)
-		common.FinishSubRequest(parentReqID, subSeq, resp.StatusCode, "")
-	}
+	finishSubReq(resp.StatusCode, nil, nil)
 
 	// Success
 	if method == "GET" {
@@ -440,142 +346,4 @@ func requestDone(requestKey string) {
 	if currentCount > 0 {
 		clientRequestCounter.Store(requestKey, currentCount-1)
 	}
-}
-
-// shouldTrackSubRequest returns true for mutating or recommendation methods aligned with Tumblebug RequestMap.
-func shouldTrackSubRequest(method, urlPath string) bool {
-	switch method {
-	case http.MethodPost, http.MethodPut, http.MethodDelete:
-	default:
-		return false
-	}
-	normalized := strings.TrimPrefix(urlPath, "/tumblebug")
-	if normalized == "/readyz" || normalized == "/request" || strings.HasPrefix(normalized, "/request/") || normalized == "/requests" {
-		return false
-	}
-	return true
-}
-
-// extractSubRequestTarget derives normalized path, resource category, and name/id hint.
-func extractSubRequestTarget(urlPath string, bodyBytes []byte) (string, string, string) {
-	targetPath := strings.TrimPrefix(urlPath, "/tumblebug")
-	if targetPath == "" {
-		targetPath = "/"
-	}
-
-	var hint string
-	if len(bodyBytes) > 0 {
-		var meta struct {
-			Name string `json:"name"`
-			Id   string `json:"id"`
-		}
-		if err := json.Unmarshal(bodyBytes, &meta); err == nil {
-			if strings.TrimSpace(meta.Name) != "" {
-				hint = strings.TrimSpace(meta.Name)
-			} else if strings.TrimSpace(meta.Id) != "" {
-				hint = strings.TrimSpace(meta.Id)
-			}
-		}
-	}
-
-	parts := strings.Split(strings.Trim(targetPath, "/"), "/")
-	resourceType := classifySubRequestResource(parts)
-	if hint == "" {
-		hint = extractPathResourceHint(parts)
-	}
-	return targetPath, resourceType, hint
-}
-
-func classifySubRequestResource(parts []string) string {
-	if len(parts) == 0 || parts[0] == "" {
-		return ""
-	}
-	if parts[0] == "recommendSpec" {
-		return "recommendSpec"
-	}
-	if parts[0] == "k8sClusterRecommendNode" {
-		return "k8sNodeSpec"
-	}
-	if parts[0] == "reviewSpecImagePair" {
-		return "specImageReview"
-	}
-	if parts[0] == "ns" && len(parts) >= 3 {
-		switch parts[2] {
-		case "vNet":
-			return "vNet"
-		case "sshKey":
-			return "sshKey"
-		case "securityGroup":
-			return "securityGroup"
-		case "infra", "infraDynamic":
-			if len(parts) >= 5 && parts[4] == "nlb" {
-				return "nlb"
-			}
-			return "infra"
-		case "nlb":
-			return "nlb"
-		case "cmd":
-			return "remoteCommand"
-		case "k8sCluster":
-			for _, seg := range parts[3:] {
-				if seg == "k8sNodeGroup" {
-					return "k8sNodeGroup"
-				}
-			}
-			return "k8sCluster"
-		case "os", "objectStorage":
-			return "objectStorage"
-		case "resources":
-			if len(parts) >= 4 {
-				return parts[3]
-			}
-		default:
-			return parts[2]
-		}
-	}
-	return parts[len(parts)-1]
-}
-
-func extractPathResourceHint(parts []string) string {
-	if len(parts) >= 4 && parts[0] == "ns" {
-		if parts[2] == "resources" && len(parts) >= 5 {
-			return parts[4]
-		}
-		if parts[2] == "k8sCluster" && len(parts) >= 6 && parts[4] == "k8sNodeGroup" {
-			return parts[5]
-		}
-		if parts[2] != "resources" && parts[2] != "cmd" {
-			return parts[3]
-		}
-	}
-	return ""
-}
-
-func extractUpstreamErrorSummary(respBody []byte, fallbackStatus string) string {
-	if len(respBody) > 0 {
-		var msgObj struct {
-			Message string `json:"message"`
-			Error   string `json:"error"`
-		}
-		if err := json.Unmarshal(respBody, &msgObj); err == nil {
-			if strings.TrimSpace(msgObj.Error) != "" {
-				return truncateString(strings.TrimSpace(msgObj.Error), 512)
-			}
-			if strings.TrimSpace(msgObj.Message) != "" {
-				return truncateString(strings.TrimSpace(msgObj.Message), 512)
-			}
-		}
-		trimmed := strings.TrimSpace(string(respBody))
-		if trimmed != "" {
-			return truncateString(trimmed, 512)
-		}
-	}
-	return fallbackStatus
-}
-
-func truncateString(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	return s[:maxLen] + "..."
 }

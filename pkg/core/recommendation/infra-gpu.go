@@ -169,6 +169,9 @@ func RecommendGpuInfraCandidates(
 	usedNames := make(map[string]bool, len(expandedNodes))
 
 	for i, node := range expandedNodes {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		minDisk := getCspMinRootDiskSizeGB(csp)
 		if hasGpu(node) && minDisk < gpuMinRootDiskSizeGB {
 			minDisk = gpuMinRootDiskSizeGB
@@ -178,6 +181,9 @@ func RecommendGpuInfraCandidates(
 		// Recommend security group for the node
 		recommendedSg, sgErr := RecommendSecurityGroup(ctx, csp, region, node)
 		if sgErr != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(sgErr).Msgf("failed to recommend security group for GPU node %s", node.MachineId)
 		}
 
@@ -219,13 +225,22 @@ func RecommendGpuInfraCandidates(
 	compatiblePairsForEachNode := make([][]CompatibleSpecImagePair, len(expandedNodes))
 
 	for i, node := range expandedNodes {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		specList, _, specErr := RecommendNodeSpecs(ctx, csp, region, node, limitSpecs)
 		if specErr != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(specErr).Msgf("failed to recommend specs for GPU node %s", node.MachineId)
 		}
 
 		imageList, imgErr := RecommendVmOsImages(ctx, csp, region, node, limitImages)
 		if imgErr != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(imgErr).Msgf("failed to recommend images for GPU node %s", node.MachineId)
 		}
 

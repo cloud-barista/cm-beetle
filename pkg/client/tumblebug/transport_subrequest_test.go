@@ -147,6 +147,15 @@ func TestSessionSetContextPreservesCacheDurationAndReadyz(t *testing.T) {
 		t.Fatalf("expected reqID %q in session context, got %q", parentReqID, gotID)
 	}
 
+	reverseSess := cli.NewSession().SetContext(ctx).NoCache()
+	rd, rok := GetCacheDuration(reverseSess.Context())
+	if !rok || rd != 0 {
+		t.Fatalf("expected NoCache duration 0 after SetContext, got d=%v ok=%v", rd, rok)
+	}
+	if gotID := common.RequestIDFromContext(reverseSess.Context()); gotID != parentReqID {
+		t.Fatalf("expected reqID %q in reverse session context, got %q", parentReqID, gotID)
+	}
+
 	r1, err := cli.NewSession().SetContext(ctx).CheckReadyz()
 	if err != nil || !r1.Ready || r1.Initialized {
 		t.Fatalf("unexpected first CheckReadyz: %+v err=%v", r1, err)
@@ -154,5 +163,43 @@ func TestSessionSetContextPreservesCacheDurationAndReadyz(t *testing.T) {
 	r2, err := cli.NewSession().SetContext(ctx).CheckReadyz()
 	if err != nil || !r2.Ready || !r2.Initialized {
 		t.Fatalf("expected second CheckReadyz to bypass cache and report initialized=true: %+v err=%v", r2, err)
+	}
+}
+
+func TestCanceledContextDoesNotTripCircuitBreaker(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-r.Context().Done():
+			return
+		case <-time.After(50 * time.Millisecond):
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"message":"ready","ready":true,"initialized":true}`))
+		}
+	}))
+	defer srv.Close()
+
+	cli := NewClient(ApiConfig{
+		RestUrl:       srv.URL,
+		Username:      "default",
+		Password:      "default",
+		Timeout:       5 * time.Second,
+		CacheDuration: 0,
+	})
+
+	// Cancel more GET calls than circuitBreakerFailureThreshold (10).
+	for i := 0; i < circuitBreakerFailureThreshold+2; i++ {
+		cancelCtx, cancel := context.WithCancel(context.Background())
+		cancel()
+		_, err := cli.NewSession().SetContext(cancelCtx).CheckReadyz()
+		if err == nil {
+			t.Fatalf("expected canceled CheckReadyz call %d to fail", i+1)
+		}
+	}
+
+	// Subsequent healthy GET call must succeed without circuit breaker rejection.
+	res, err := cli.NewSession().SetContext(context.Background()).CheckReadyz()
+	if err != nil || !res.Ready {
+		t.Fatalf("expected healthy CheckReadyz after caller cancellations, got res=%+v err=%v", res, err)
 	}
 }

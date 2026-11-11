@@ -61,10 +61,16 @@ func recommendPerTarget(ctx context.Context, pairs []cloudmodel.CloudProperty, s
 	results := make([]cloudmodel.RecommendedInfra, 0, len(pairs))
 
 	for _, pair := range pairs {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		csp := strings.ToLower(pair.Csp)
 		region := strings.ToLower(pair.Region)
 
 		if ok, err := IsValidCspAndRegion(ctx, csp, region); !ok {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(err).Str("csp", csp).Str("region", region).Msg("skipping invalid target in multi-target recommendation")
 			results = append(results, failedTargetResult(csp, region, err))
 			continue
@@ -72,6 +78,9 @@ func recommendPerTarget(ctx context.Context, pairs []cloudmodel.CloudProperty, s
 
 		candidates, err := recommend(ctx, csp, region, srcInfra, multiInfraCandidatesPerTarget, minMatchRate)
 		if err != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(err).Str("csp", csp).Str("region", region).Msg("recommendation failed for target")
 			results = append(results, failedTargetResult(csp, region, err))
 			continue

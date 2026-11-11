@@ -141,18 +141,23 @@ func NewDefaultClient() *TumblebugClient {
 }
 
 // Session represents a single request scope.
-// It holds the request-specific configuration (headers, context, etc.).
+// It holds the request-specific configuration (headers, context, cache override, and retry state).
 type Session struct {
-	req *resty.Request
+	req           *resty.Request
+	ctx           context.Context
+	cacheDuration *time.Duration
+	attempt       *sessionSubRequestAttempt
 }
 
 // NewSession creates a new Session for making requests.
 func (c *TumblebugClient) NewSession() *Session {
-	req := c.restyClient.R()
-	req.SetContext(withSessionAttempt(context.Background(), &sessionSubRequestAttempt{}))
-	return &Session{
-		req: req,
+	s := &Session{
+		req:     c.restyClient.R(),
+		ctx:     context.Background(),
+		attempt: &sessionSubRequestAttempt{},
 	}
+	s.req.SetContext(s.buildContext())
+	return s
 }
 
 // NewSession creates a new Session using the global client.
@@ -199,30 +204,35 @@ func (s *Session) SetResult(res any) *Session {
 	return s
 }
 
-// SetContext sets the context for the request while preserving session cache and retry state.
+func (s *Session) buildContext() context.Context {
+	ctx := s.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if s.cacheDuration != nil {
+		if _, hasExplicit := GetCacheDuration(ctx); !hasExplicit {
+			ctx = SetCacheDuration(ctx, *s.cacheDuration)
+		}
+	}
+	return withSessionAttempt(ctx, s.attempt)
+}
+
+// SetContext sets the context for the request regardless of method chaining order.
 func (s *Session) SetContext(ctx context.Context) *Session {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	prev := s.Context()
-	if d, ok := GetCacheDuration(prev); ok {
-		if _, hasNew := GetCacheDuration(ctx); !hasNew {
-			ctx = SetCacheDuration(ctx, d)
-		}
-	}
-	if getSessionAttempt(ctx) == nil {
-		ctx = withSessionAttempt(ctx, getSessionAttempt(prev))
-	}
-	s.req.SetContext(ctx)
+	s.ctx = ctx
+	s.req.SetContext(s.buildContext())
 	return s
 }
 
-// Context returns the request context or context.Background() when unset.
+// Context returns the composed request context or context.Background() when unset.
 func (s *Session) Context() context.Context {
-	if s != nil && s.req != nil && s.req.Context() != nil {
-		return s.req.Context()
+	if s == nil {
+		return context.Background()
 	}
-	return context.Background()
+	return s.buildContext()
 }
 
 // SetQueryParam sets a single query parameter.
@@ -284,7 +294,8 @@ func (s *Session) Head(url string) (*resty.Response, error) {
 
 // SetCacheDuration sets the cache duration for the request.
 func (s *Session) SetCacheDuration(d time.Duration) *Session {
-	s.req.SetContext(SetCacheDuration(s.Context(), d))
+	s.cacheDuration = &d
+	s.req.SetContext(s.buildContext())
 	return s
 }
 

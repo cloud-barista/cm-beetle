@@ -246,10 +246,16 @@ func RecommendCompositeInfraCandidates(
 	}
 
 	for i, node := range expandedUnrelatedNodes {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		ngName, origMachineId := buildNodeGroupNameAndLineage(node, shortIds, usedNames)
 
 		sg, sgErr := RecommendSecurityGroup(ctx, csp, region, node)
 		if sgErr != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(sgErr).Str("machineId", node.MachineId).Msg("failed to recommend SG")
 		}
 		exists, _, existingSg := containSg(deduplicatedSgList, sg)
@@ -294,12 +300,21 @@ func RecommendCompositeInfraCandidates(
 	// Phase 5: query catalog for compatible spec-image pairs
 	pairsByGroup := make([][]CompatibleSpecImagePair, len(ngBlueprints))
 	for ngIdx, bp := range ngBlueprints {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		specList, _, specErr := RecommendNodeSpecs(ctx, csp, region, bp.representativeNode, limitSpecs)
 		if specErr != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(specErr).Str("machineId", bp.representativeNode.MachineId).Msg("failed to recommend specs")
 		}
 		imageList, imgErr := RecommendVmOsImages(ctx, csp, region, bp.representativeNode, limitImages)
 		if imgErr != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return nil, ctxErr
+			}
 			log.Warn().Err(imgErr).Str("machineId", bp.representativeNode.MachineId).Msg("failed to recommend images")
 		}
 

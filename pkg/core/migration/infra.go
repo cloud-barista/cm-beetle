@@ -327,7 +327,8 @@ func MigrateInfra(ctx context.Context, nsId string, targetInfraModel *cloudmodel
 
 	log.Debug().Msgf("Stabilizing newly created infrastructure (nsId: %s, infraName: %s)...", nsId, infraInfoConverted.Name)
 	if err := common.SleepWithContext(ctx, 5*time.Second); err != nil {
-		return temp, err
+		log.Warn().Err(err).Msgf("Post-creation stabilization sleep interrupted; returning created infrastructure (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
+		return temp, nil
 	}
 
 	// Option A: Check SSH readiness for IBM Cloud
@@ -467,7 +468,8 @@ func MigrateInfraWithExisting(ctx context.Context, nsId string, targetInfraModel
 	temp.InfraInfo = infraInfoConverted
 	log.Debug().Msgf("Stabilizing newly created infrastructure (nsId: %s, infraName: %s)...", nsId, infraInfoConverted.Name)
 	if err := common.SleepWithContext(ctx, 5*time.Second); err != nil {
-		return temp, err
+		log.Warn().Err(err).Msgf("Post-creation stabilization sleep interrupted; returning created infrastructure (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
+		return temp, nil
 	}
 
 	// Option A: Check SSH readiness for IBM Cloud
