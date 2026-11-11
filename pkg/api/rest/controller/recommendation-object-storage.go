@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	storagemodel "github.com/cloud-barista/cm-beetle/imdl/storage-model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -29,7 +31,7 @@ var _ = tbmodel.ObjectStorageSupportResponse{}
 func GetObjectStorageSupport(c echo.Context) error {
 	providerName := c.QueryParam("providerName")
 
-	result, err := tbclient.NewSession().GetObjectStorageSupport(providerName)
+	result, err := tbclient.NewSession().SetContext(c.Request().Context()).GetObjectStorageSupport(providerName)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get object storage support matrix")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to get object storage support matrix: %v", err)))
@@ -69,9 +71,12 @@ type RecommendObjectStorageRequest struct {
 // @Param desiredCsp query string false "CSP (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,tencent,ibm,openstack,ncp,nhn,kt) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Param Prefer header string false "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 200 {object} model.ApiResponse[storagemodel.RecommendedObjectStorage] "Successfully recommended object storage"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Recommendation started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
 // @Router /recommendation/middleware/objectStorage [post]
 func RecommendObjectStorage(c echo.Context) error {
 
@@ -111,8 +116,40 @@ func RecommendObjectStorage(c echo.Context) error {
 		Int("sourceBuckets", len(req.SourceObjectStorages)).
 		Msg("Processing object storage recommendation request")
 
+	sources := req.SourceObjectStorages
+	if preferRespondAsync(c) {
+		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) (storagemodel.RecommendedObjectStorage, error) {
+			return buildObjectStorageRecommendation(ctx, desiredCsp, desiredRegion, sources), nil
+		})
+		if !started {
+			c.Response().Header().Set("Retry-After", "5")
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many async jobs in progress; retry shortly, or retry without Prefer: respond-async"))
+		}
+		c.Response().Header().Set("Preference-Applied", "respond-async")
+		return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+			model.AsyncJobResponse{
+				ReqID:     reqID,
+				Status:    common.RequestStatusHandling,
+				StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+			},
+			"Recommendation started. Use GET /request/{reqId} to check status."))
+	}
+
+	objectStorageInfo := buildObjectStorageRecommendation(c.Request().Context(), desiredCsp, desiredRegion, sources)
+
+	// [Output]
+	successMsg := fmt.Sprintf("Recommended %d object storage(s) for %s %s",
+		len(objectStorageInfo.TargetObjectStorages), desiredCsp, desiredRegion)
+	res := model.SuccessResponseWithMessage(objectStorageInfo, successMsg)
+
+	return c.JSON(http.StatusOK, res)
+}
+
+func buildObjectStorageRecommendation(ctx context.Context, desiredCsp, desiredRegion string, sources []storagemodel.SourceObjectStorageProperty) storagemodel.RecommendedObjectStorage {
 	// Fetch CSP feature support from Tumblebug using normalized lowercase CSP name.
-	supportResp, err := tbclient.NewSession().GetObjectStorageSupport(desiredCsp)
+	supportResp, err := tbclient.NewSession().SetContext(ctx).GetObjectStorageSupport(desiredCsp)
 	if err != nil {
 		log.Warn().Err(err).Str("csp", desiredCsp).Msg("Failed to fetch CSP object storage support info; proceeding without support check")
 	}
@@ -132,16 +169,16 @@ func RecommendObjectStorage(c echo.Context) error {
 		Msg("CSP object storage feature support")
 
 	var warnings []string
-	targetObjectStorages := make([]storagemodel.TargetObjectStorage, 0, len(req.SourceObjectStorages))
+	targetObjectStorages := make([]storagemodel.TargetObjectStorage, 0, len(sources))
 
-	for i, source := range req.SourceObjectStorages {
+	for i, source := range sources {
 		targetBucketName := fmt.Sprintf("os-%02d", i+1)
 
 		versioningEnabled := source.VersioningEnabled
 		corsEnabled := source.CORSEnabled
 		corsRule := source.CORSRule
 
-		// Adjust based on CSP support and emit warnings
+		// Adjust based on CSP support and emit warnings.
 		if source.VersioningEnabled && !versioningSupported {
 			versioningEnabled = false
 			msg := fmt.Sprintf("Bucket '%s': versioning disabled (not supported on %s)", source.BucketName, desiredCsp)
@@ -167,28 +204,11 @@ func RecommendObjectStorage(c echo.Context) error {
 		}
 
 		targetObjectStorages = append(targetObjectStorages, target)
-
-		log.Debug().
-			Str("sourceBucket", source.BucketName).
-			Str("targetBucket", targetBucketName).
-			Bool("versioning", versioningEnabled).
-			Bool("cors", corsEnabled).
-			Msg("Generated target object storage recommendation")
 	}
 
-	// Determine overall status
 	status := "success"
 	if len(warnings) > 0 {
 		status = "partial"
-	}
-
-	// Build response
-	objectStorageInfo := storagemodel.RecommendedObjectStorage{
-		Status:               status,
-		Description:          fmt.Sprintf("Successfully recommended %d object storage configuration(s)", len(targetObjectStorages)),
-		Warnings:             warnings,
-		TargetCloud:          storagemodel.CloudProperty{Csp: desiredCsp, Region: desiredRegion},
-		TargetObjectStorages: targetObjectStorages,
 	}
 
 	log.Info().
@@ -197,10 +217,11 @@ func RecommendObjectStorage(c echo.Context) error {
 		Int("targetBuckets", len(targetObjectStorages)).
 		Msg("Object storage recommendation completed successfully")
 
-	// [Output]
-	successMsg := fmt.Sprintf("Recommended %d object storage(s) for %s %s",
-		len(targetObjectStorages), desiredCsp, desiredRegion)
-	res := model.SuccessResponseWithMessage(objectStorageInfo, successMsg)
-
-	return c.JSON(http.StatusOK, res)
+	return storagemodel.RecommendedObjectStorage{
+		Status:               status,
+		Description:          fmt.Sprintf("Successfully recommended %d object storage configuration(s)", len(targetObjectStorages)),
+		Warnings:             warnings,
+		TargetCloud:          storagemodel.CloudProperty{Csp: desiredCsp, Region: desiredRegion},
+		TargetObjectStorages: targetObjectStorages,
+	}
 }

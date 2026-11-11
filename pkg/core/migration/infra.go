@@ -95,7 +95,7 @@ const (
 const DefaultSystemLabel string = "Managed by CM-Beetle"
 
 // CreateInfraWithDefaults Create an infrastructure with defaults for the computing infra migration
-func CreateInfraWithDefaults(nsId string, infraModel *cloudmodel.InfraDynamicReq) (cloudmodel.VmInfraInfo, error) {
+func CreateInfraWithDefaults(ctx context.Context, nsId string, infraModel *cloudmodel.InfraDynamicReq) (cloudmodel.VmInfraInfo, error) {
 	log.Info().Msg("Creating an infrastructure with defaults")
 
 	// Convert the request model from 'cloudmodel.InfraDynamicReq' to 'tbmodel.InfraDynamicReq'
@@ -105,7 +105,7 @@ func CreateInfraWithDefaults(nsId string, infraModel *cloudmodel.InfraDynamicReq
 		return cloudmodel.VmInfraInfo{}, err
 	}
 
-	infraInfo, err := tbclient.NewSession().CreateInfraDynamic(nsId, infraModelConverted)
+	infraInfo, err := tbclient.NewSession().SetContext(ctx).CreateInfraDynamic(nsId, infraModelConverted)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to migrate the infrastructure (nsId: %s)", nsId)
 		return cloudmodel.VmInfraInfo{}, err
@@ -124,7 +124,7 @@ func CreateInfraWithDefaults(nsId string, infraModel *cloudmodel.InfraDynamicReq
 }
 
 // MigrateInfra migrates an on-premise infrastructure to target cloud by creating fresh resources (useExisting=false)
-func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, lin ...lineage.MigrationLineage) (cloudmodel.VmInfraInfo, error) {
+func MigrateInfra(ctx context.Context, nsId string, targetInfraModel *cloudmodel.RecommendedInfra, lin ...lineage.MigrationLineage) (cloudmodel.VmInfraInfo, error) {
 	log.Info().Msg("Creating an infrastructure")
 
 	emptyRet := cloudmodel.VmInfraInfo{}
@@ -133,7 +133,7 @@ func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, li
 	 * [Input] Receive and validate the target infrastructure model
 	 */
 
-	err := validation.ValidateTargetInfra(nsId, targetInfraModel, false).Err()
+	err := validation.ValidateTargetInfra(ctx, nsId, targetInfraModel, false).Err()
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to validate the target infrastructure model (nsId: %s)", nsId)
 		return emptyRet, err
@@ -141,7 +141,7 @@ func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, li
 	log.Info().Msgf("the target infrastructure model is valid (nsId: %s)", nsId)
 
 	// Preflight: resolve the latest CSP image and confirm available system disk per nodegroup.
-	err = preflightCheckCspProvisioning(nsId, targetInfraModel.TargetInfra.NodeGroups)
+	err = preflightCheckCspProvisioning(ctx, nsId, targetInfraModel.TargetInfra.NodeGroups)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to run preflight check for CSP provisioning (nsId: %s)", nsId)
 		return emptyRet, err
@@ -155,7 +155,7 @@ func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, li
 	 */
 	// 1. Check if the namespace exists
 	log.Debug().Msgf("Checking if the namespace exists (nsId: %s)", nsId)
-	_, err = tbclient.NewSession().ReadNamespace(nsId)
+	_, err = tbclient.NewSession().SetContext(ctx).ReadNamespace(nsId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to read the namespace (nsId: %s)", nsId)
 		return emptyRet, err
@@ -180,7 +180,7 @@ func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, li
 		return emptyRet, err
 	}
 
-	vNetInfo, err := tbclient.NewSession().CreateVNet(nsId, tbVNetReq)
+	vNetInfo, err := tbclient.NewSession().SetContext(ctx).CreateVNet(nsId, tbVNetReq)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to create the vNet (nsId: %s)", nsId)
 		return emptyRet, err
@@ -201,7 +201,7 @@ func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, li
 		return emptyRet, err
 	}
 
-	sshKeyInfo, err := tbclient.NewSession().CreateSshKey(nsId, tbSshKeyReq)
+	sshKeyInfo, err := tbclient.NewSession().SetContext(ctx).CreateSshKey(nsId, tbSshKeyReq)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to create the SSH key (nsId: %s)", nsId)
 		return emptyRet, err
@@ -242,7 +242,7 @@ func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, li
 			return emptyRet, err
 		}
 
-		sgInfo, err := createSecurityGroup(nsId, targetInfraModel.TargetCloud.Csp, tbSgReq)
+		sgInfo, err := createSecurityGroup(ctx, nsId, targetInfraModel.TargetCloud.Csp, tbSgReq)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to create the security group (nsId: %s)", nsId)
 			return emptyRet, err
@@ -300,7 +300,7 @@ func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, li
 	}
 
 	// Create multi-cloud infrastructure
-	infraInfo, err := tbclient.NewSession().CreateInfra(nsId, tbInfraReq)
+	infraInfo, err := tbclient.NewSession().SetContext(ctx).CreateInfra(nsId, tbInfraReq)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to create the multi-cloud infrastructure (nsId: %s)", nsId)
 
@@ -335,7 +335,7 @@ func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, li
 		const maxWaitTime = 3 * time.Minute
 		const checkInterval = 10 * time.Second
 
-		if _, err := CheckSSHReadinessWithDetails(nsId, infraInfoConverted.Id, maxWaitTime, checkInterval); err != nil {
+		if _, err := CheckSSHReadinessWithDetails(ctx, nsId, infraInfoConverted.Id, maxWaitTime, checkInterval); err != nil {
 			log.Warn().Err(err).Msgf("SSH readiness check incomplete - Nodes may need additional time (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
 			// Warning only - migration itself succeeded
 		} else {
@@ -348,14 +348,14 @@ func MigrateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, li
 }
 
 // MigrateInfraWithExisting migrates an on-premise infrastructure by reusing/ensuring existing resources (useExisting=true)
-func MigrateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, lin ...lineage.MigrationLineage) (cloudmodel.VmInfraInfo, error) {
+func MigrateInfraWithExisting(ctx context.Context, nsId string, targetInfraModel *cloudmodel.RecommendedInfra, lin ...lineage.MigrationLineage) (cloudmodel.VmInfraInfo, error) {
 	log.Info().Msg("Creating infrastructure with existing resources")
 	emptyRet := cloudmodel.VmInfraInfo{}
 
 	/*
 	 * [Input] Receive and validate the target infrastructure model
 	 */
-	err := validation.ValidateTargetInfra(nsId, targetInfraModel, true).Err()
+	err := validation.ValidateTargetInfra(ctx, nsId, targetInfraModel, true).Err()
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to validate the target infrastructure model (nsId: %s)", nsId)
 		return emptyRet, err
@@ -363,7 +363,7 @@ func MigrateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommen
 	log.Info().Msgf("the target infrastructure model is valid (nsId: %s)", nsId)
 
 	// Preflight: resolve the latest CSP image and confirm available system disk per nodegroup.
-	err = preflightCheckCspProvisioning(nsId, targetInfraModel.TargetInfra.NodeGroups)
+	err = preflightCheckCspProvisioning(ctx, nsId, targetInfraModel.TargetInfra.NodeGroups)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to run preflight check for CSP provisioning (nsId: %s)", nsId)
 		return emptyRet, err
@@ -374,7 +374,7 @@ func MigrateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommen
 	 */
 	// 1. Check if the namespace exists
 	log.Debug().Msgf("Checking if the namespace exists (nsId: %s)", nsId)
-	_, err = tbclient.NewSession().ReadNamespace(nsId)
+	_, err = tbclient.NewSession().SetContext(ctx).ReadNamespace(nsId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to read the namespace (nsId: %s)", nsId)
 		return emptyRet, err
@@ -389,7 +389,7 @@ func MigrateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommen
 	// 4. Use/Create virtual networks (vNet, Subnets)
 	netRequirements := validation.DeriveNetworkRequirements(targetInfraModel.TargetInfra.NodeGroups)
 	for _, netRequirement := range netRequirements {
-		err = useOrCreateNetwork(nsId, netRequirement, targetInfraModel.TargetVNet)
+		err = useOrCreateNetwork(ctx, nsId, netRequirement, targetInfraModel.TargetVNet)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to use or create virtual network %s (nsId: %s)", netRequirement.VNetId, nsId)
 			return emptyRet, err
@@ -399,7 +399,7 @@ func MigrateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommen
 	// 5. Use/Create SSH key pairs (sshKey)
 	sshKeyRequirements := validation.DeriveSshKeyRequirements(targetInfraModel.TargetInfra.NodeGroups)
 	for _, sshKeyRequirement := range sshKeyRequirements {
-		err = useOrCreateSshKey(nsId, sshKeyRequirement, targetInfraModel.TargetSshKey)
+		err = useOrCreateSshKey(ctx, nsId, sshKeyRequirement, targetInfraModel.TargetSshKey)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to use or create SSH key %s (nsId: %s)", sshKeyRequirement.SshKeyId, nsId)
 			return emptyRet, err
@@ -409,7 +409,7 @@ func MigrateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommen
 	// 6. Use/Create security groups (sg)
 	sgRequirements := validation.DeriveSecurityGroupRequirements(targetInfraModel.TargetInfra.NodeGroups)
 	for _, sgRequirement := range sgRequirements {
-		err = useOrCreateSecurityGroup(nsId, targetInfraModel.TargetCloud.Csp, sgRequirement, targetInfraModel.TargetSecurityGroupList)
+		err = useOrCreateSecurityGroup(ctx, nsId, targetInfraModel.TargetCloud.Csp, sgRequirement, targetInfraModel.TargetSecurityGroupList)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to use or create security group %s (nsId: %s)", sgRequirement.SecurityGroupId, nsId)
 			return emptyRet, err
@@ -448,7 +448,7 @@ func MigrateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommen
 		}
 	}
 
-	infraInfo, err := tbclient.NewSession().CreateInfra(nsId, tbInfraReq)
+	infraInfo, err := tbclient.NewSession().SetContext(ctx).CreateInfra(nsId, tbInfraReq)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to create the infrastructure (nsId: %s)", nsId)
 		return emptyRet, err
@@ -473,7 +473,7 @@ func MigrateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommen
 		const maxWaitTime = 3 * time.Minute
 		const checkInterval = 10 * time.Second
 
-		if _, err := CheckSSHReadinessWithDetails(nsId, infraInfoConverted.Id, maxWaitTime, checkInterval); err != nil {
+		if _, err := CheckSSHReadinessWithDetails(ctx, nsId, infraInfoConverted.Id, maxWaitTime, checkInterval); err != nil {
 			log.Warn().Err(err).Msgf("SSH readiness check incomplete - Nodes may need additional time (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
 			// Warning only - migration itself succeeded
 		} else {
@@ -486,14 +486,14 @@ func MigrateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommen
 }
 
 // List all migrated infrastructures
-func ListAllInfraInfo(nsId string) (cloudmodel.InfraInfoList, error) {
+func ListAllInfraInfo(ctx context.Context, nsId string) (cloudmodel.InfraInfoList, error) {
 	log.Info().Msg("Listing all migrated infrastructures")
 
 	var emptyRet cloudmodel.InfraInfoList
 	// var infraInfoList cloudmodel.InfraInfoList
 
 	// Initialize Tumblebug session
-	tbSess := tbclient.NewSession()
+	tbSess := tbclient.NewSession().SetContext(ctx)
 
 	infraInfoList, err := tbSess.ReadAllInfra(nsId)
 	if err != nil {
@@ -513,7 +513,7 @@ func ListAllInfraInfo(nsId string) (cloudmodel.InfraInfoList, error) {
 }
 
 // Get all migrated infrastructures
-func ListInfraIDs(nsId string, option string) (cloudmodel.IdList, error) {
+func ListInfraIDs(ctx context.Context, nsId string, option string) (cloudmodel.IdList, error) {
 	log.Info().Msg("Listing all migrated infrastructure IDs")
 
 	var emptyRet cloudmodel.IdList
@@ -530,7 +530,7 @@ func ListInfraIDs(nsId string, option string) (cloudmodel.IdList, error) {
 	}
 
 	// Initialize Tumblebug session
-	tbSess := tbclient.NewSession()
+	tbSess := tbclient.NewSession().SetContext(ctx)
 	infraIdList, err := tbSess.ReadInfraIDs(nsId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to get the infrastructure IDs (nsId: %s)", nsId)
@@ -545,11 +545,11 @@ func ListInfraIDs(nsId string, option string) (cloudmodel.IdList, error) {
 }
 
 // Get the migrated infrastructure
-func GetInfra(nsId, infraId string) (cloudmodel.InfraInfo, error) {
+func GetInfra(ctx context.Context, nsId, infraId string) (cloudmodel.InfraInfo, error) {
 	log.Info().Msgf("Retrieving the migrated infrastructure (nsId: %s, infraId: %s)", nsId, infraId)
 
 	// Initialize Tumblebug session
-	tbSess := tbclient.NewSession()
+	tbSess := tbclient.NewSession().SetContext(ctx)
 	infraInfo, err := tbSess.ReadInfra(nsId, infraId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to get the infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
@@ -568,12 +568,12 @@ func GetInfra(nsId, infraId string) (cloudmodel.InfraInfo, error) {
 }
 
 // Delete the migrated infrastructure
-func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
+func DeleteInfra(ctx context.Context, nsId, infraId, option string) (common.SimpleMsg, error) {
 	log.Info().Msgf("Deleting the migrated infrastructure (nsId: %s, infraId: %s)", nsId, infraId)
 
 	// 1. Read Infra info. This call is paced by the client-side TB rate limiter
 	// (pkg/client/tumblebug); deletion tolerates a longer wait than interactive reads.
-	readCtx, cancelRead := context.WithTimeout(context.Background(), 30*time.Second)
+	readCtx, cancelRead := context.WithTimeout(ctx, 30*time.Second)
 	defer cancelRead()
 	infraInfo, err := tbclient.NewSession().SetContext(readCtx).ReadInfra(nsId, infraId)
 	if err != nil {
@@ -587,7 +587,7 @@ func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	}
 
 	// 2. Delete Infra
-	idList, err := tbclient.NewSession().DeleteInfra(nsId, infraId, option)
+	idList, err := tbclient.NewSession().SetContext(ctx).DeleteInfra(nsId, infraId, option)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to delete the infrastructure (nsId: %s, infraId: %s)", nsId, infraId)
 		return common.SimpleMsg{}, err
@@ -614,7 +614,7 @@ func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	for sgId := range sgIdMap {
 		var sgErr error
 		for attempt := 1; attempt <= sgDeleteMaxRetries; attempt++ {
-			msg, err := tbclient.NewSession().DeleteSecurityGroup(nsId, sgId)
+			msg, err := tbclient.NewSession().SetContext(ctx).DeleteSecurityGroup(nsId, sgId)
 			if err == nil || strings.Contains(strings.ToLower(err.Error()), "not found") || strings.Contains(strings.ToLower(err.Error()), "does not exist") {
 				log.Debug().Msgf("Security group deleted (nsId: %s, sgId: %s, msg: %s)", nsId, sgId, msg)
 				sgErr = nil
@@ -648,7 +648,7 @@ func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	for sshKeyId := range sshKeyIdMap {
 		// Delete SSH Key
 		log.Debug().Msgf("Deleting SSH key (nsId: %s, sshKeyId: %s)", nsId, sshKeyId)
-		msg, err := tbclient.NewSession().DeleteSshKey(nsId, sshKeyId)
+		msg, err := tbclient.NewSession().SetContext(ctx).DeleteSshKey(nsId, sshKeyId)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to delete SSH key (nsId: %s, sshKeyId: %s)", nsId, sshKeyId)
 			// Continue deleting other resources even if this fails
@@ -679,7 +679,7 @@ func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 		for attempt := 1; attempt <= vNetDeleteMaxRetries; attempt++ {
 			log.Debug().Msgf("Deleting VNet (nsId: %s, vNetId: %s, attempt: %d/%d)",
 				nsId, vNetId, attempt, vNetDeleteMaxRetries)
-			msg, err := tbclient.NewSession().DeleteVNet(nsId, vNetId, "withsubnets")
+			msg, err := tbclient.NewSession().SetContext(ctx).DeleteVNet(nsId, vNetId, "withsubnets")
 			if err == nil {
 				log.Debug().Msgf("VNet deleted (nsId: %s, vNetId: %s, msg: %s)", nsId, vNetId, msg)
 				deleteErr = nil
@@ -713,12 +713,12 @@ func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 }
 
 // preflightCheckCspProvisioning resolves the latest CSP image and confirms available system disk per nodegroup
-func preflightCheckCspProvisioning(nsId string, nodeGroups []cloudmodel.CreateNodeGroupReq) error {
+func preflightCheckCspProvisioning(ctx context.Context, nsId string, nodeGroups []cloudmodel.CreateNodeGroupReq) error {
 	log.Info().Msgf("running preflight check for all nodegroups (nsId: %s)", nsId)
 	for i := range nodeGroups {
 		ng := &nodeGroups[i]
 		precheck, reviewErr := recommendation.PreflightCheckCspProvisioning(
-			ng.SpecId, ng.ImageId, ng.CspImageName, ng.RootDiskType,
+			ctx, ng.SpecId, ng.ImageId, ng.CspImageName, ng.RootDiskType,
 		)
 		if reviewErr != nil {
 			log.Warn().Err(reviewErr).Msgf("preflight check failed for nodegroup %s (specId: %s, imageId: %s); proceeding with cached image",
@@ -743,8 +743,8 @@ func preflightCheckCspProvisioning(nsId string, nodeGroups []cloudmodel.CreateNo
 }
 
 // useOrCreateNetwork checks if VNet and required subnets exist, and creates them from the creation request if missing
-func useOrCreateNetwork(nsId string, netRequirement validation.NetworkRequirement, vNetCreationReq cloudmodel.VNetReq) error {
-	needsCreate, issue := validation.CheckNetworkAvailability(nsId, netRequirement, vNetCreationReq)
+func useOrCreateNetwork(ctx context.Context, nsId string, netRequirement validation.NetworkRequirement, vNetCreationReq cloudmodel.VNetReq) error {
+	needsCreate, issue := validation.CheckNetworkAvailability(ctx, nsId, netRequirement, vNetCreationReq)
 	if issue != nil {
 		return fmt.Errorf("%s", issue.Message)
 	}
@@ -780,7 +780,7 @@ func useOrCreateNetwork(nsId string, netRequirement validation.NetworkRequiremen
 		return err
 	}
 
-	_, err = tbclient.NewSession().CreateVNet(nsId, tbVNetReq)
+	_, err = tbclient.NewSession().SetContext(ctx).CreateVNet(nsId, tbVNetReq)
 	if err != nil {
 		return err
 	}
@@ -790,8 +790,8 @@ func useOrCreateNetwork(nsId string, netRequirement validation.NetworkRequiremen
 }
 
 // useOrCreateSshKey checks if SSH key exists, and creates it from the creation request if missing
-func useOrCreateSshKey(nsId string, sshKeyRequirement validation.SshKeyRequirement, sshKeyCreationReq cloudmodel.SshKeyReq) error {
-	needsCreate, issue := validation.CheckSshKeyAvailability(nsId, sshKeyRequirement, sshKeyCreationReq)
+func useOrCreateSshKey(ctx context.Context, nsId string, sshKeyRequirement validation.SshKeyRequirement, sshKeyCreationReq cloudmodel.SshKeyReq) error {
+	needsCreate, issue := validation.CheckSshKeyAvailability(ctx, nsId, sshKeyRequirement, sshKeyCreationReq)
 	if issue != nil {
 		return fmt.Errorf("%s", issue.Message)
 	}
@@ -812,7 +812,7 @@ func useOrCreateSshKey(nsId string, sshKeyRequirement validation.SshKeyRequireme
 		return err
 	}
 
-	_, err = tbclient.NewSession().CreateSshKey(nsId, tbSshKeyReq)
+	_, err = tbclient.NewSession().SetContext(ctx).CreateSshKey(nsId, tbSshKeyReq)
 	if err != nil {
 		return err
 	}
@@ -821,23 +821,23 @@ func useOrCreateSshKey(nsId string, sshKeyRequirement validation.SshKeyRequireme
 }
 
 // createSecurityGroup creates a SecurityGroup via Tumblebug, splitting rules for Tencent Cloud.
-func createSecurityGroup(nsId, provider string, tbSgReq tbmodel.SecurityGroupReq) (tbmodel.SecurityGroupInfo, error) {
+func createSecurityGroup(ctx context.Context, nsId, provider string, tbSgReq tbmodel.SecurityGroupReq) (tbmodel.SecurityGroupInfo, error) {
 	if provider == "" && tbSgReq.ConnectionName != "" {
 		provider = strings.Split(tbSgReq.ConnectionName, "-")[0]
 	}
 	if !strings.EqualFold(provider, csp.Tencent) {
-		return tbclient.NewSession().CreateSecurityGroup(nsId, tbSgReq, "")
+		return tbclient.NewSession().SetContext(ctx).CreateSecurityGroup(nsId, tbSgReq, "")
 	}
 
 	// Split inbound and outbound rules for Tencent Cloud where combined rules are rejected at creation
 	inbound, outbound := splitFirewallRulesByDirection(tbSgReq.FirewallRules)
 	tbSgReq.FirewallRules = &inbound
-	info, err := tbclient.NewSession().CreateSecurityGroup(nsId, tbSgReq, "")
+	info, err := tbclient.NewSession().SetContext(ctx).CreateSecurityGroup(nsId, tbSgReq, "")
 	if err != nil {
 		return info, err
 	}
 	if len(outbound) > 0 {
-		if _, err := tbclient.NewSession().AddFirewallRules(nsId, info.Id, outbound); err != nil {
+		if _, err := tbclient.NewSession().SetContext(ctx).AddFirewallRules(nsId, info.Id, outbound); err != nil {
 			return info, fmt.Errorf("created SecurityGroup %s but failed to add outbound rules: %w", info.Id, err)
 		}
 	}
@@ -845,8 +845,8 @@ func createSecurityGroup(nsId, provider string, tbSgReq tbmodel.SecurityGroupReq
 }
 
 // useOrCreateSecurityGroup checks if security group exists, and creates it from the creation request list if missing
-func useOrCreateSecurityGroup(nsId, provider string, sgRequirement validation.SecurityGroupRequirement, sgCreationReqList []cloudmodel.SecurityGroupReq) error {
-	needsCreate, issue := validation.CheckSecurityGroupAvailability(nsId, sgRequirement, sgCreationReqList)
+func useOrCreateSecurityGroup(ctx context.Context, nsId, provider string, sgRequirement validation.SecurityGroupRequirement, sgCreationReqList []cloudmodel.SecurityGroupReq) error {
+	needsCreate, issue := validation.CheckSecurityGroupAvailability(ctx, nsId, sgRequirement, sgCreationReqList)
 	if issue != nil {
 		return fmt.Errorf("%s", issue.Message)
 	}
@@ -897,7 +897,7 @@ func useOrCreateSecurityGroup(nsId, provider string, sgRequirement validation.Se
 		return err
 	}
 
-	_, err = createSecurityGroup(nsId, provider, tbSgReq)
+	_, err = createSecurityGroup(ctx, nsId, provider, tbSgReq)
 	if err != nil {
 		return err
 	}
@@ -1050,7 +1050,7 @@ type NodeSSHStatusDetail struct {
 // Returns:
 //   - []NodeSSHStatusDetail: Detailed status for each node
 //   - error: nil if all Nodes are SSH-ready, or error describing the issue
-func CheckSSHReadinessWithDetails(nsId string, infraId string, maxWaitTime time.Duration, checkInterval time.Duration) ([]NodeSSHStatusDetail, error) {
+func CheckSSHReadinessWithDetails(ctx context.Context, nsId string, infraId string, maxWaitTime time.Duration, checkInterval time.Duration) ([]NodeSSHStatusDetail, error) {
 	log.Info().Msgf("Starting SSH readiness check (nsId: %s, infraId: %s, maxWait: %v, interval: %v)",
 		nsId, infraId, maxWaitTime, checkInterval)
 
@@ -1069,7 +1069,7 @@ func CheckSSHReadinessWithDetails(nsId string, infraId string, maxWaitTime time.
 			attempt, maxAttempts, nsId, infraId)
 
 		// Get current infra status from Tumblebug
-		infraInfo, err := tbclient.NewSession().ReadInfra(nsId, infraId)
+		infraInfo, err := tbclient.NewSession().SetContext(ctx).ReadInfra(nsId, infraId)
 		if err != nil {
 			log.Error().Err(err).Msgf("Failed to read infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
 			return nil, fmt.Errorf("failed to read infrastructure info: %w", err)
@@ -1096,7 +1096,7 @@ func CheckSSHReadinessWithDetails(nsId string, infraId string, maxWaitTime time.
 			case confirmedReady[node.Id]:
 				nodeStatus.SSHReady = true
 				readyNodes++
-			case probeNodeSSHReachability(nsId, infraId, node.Id):
+			case probeNodeSSHReachability(ctx, nsId, infraId, node.Id):
 				nodeStatus.SSHReady = true
 				confirmedReady[node.Id] = true
 				readyNodes++
@@ -1131,10 +1131,10 @@ func CheckSSHReadinessWithDetails(nsId string, infraId string, maxWaitTime time.
 // command on it via Tumblebug's remote command API, scoped to that Node only (nodeId), instead of
 // connecting to the node directly or targeting the whole Infra (which would make Tumblebug re-run
 // the command against every Node, including ones already confirmed ready or not running yet).
-func probeNodeSSHReachability(nsId, infraId, nodeId string) bool {
+func probeNodeSSHReachability(ctx context.Context, nsId, infraId, nodeId string) bool {
 	cmdReq := tbmodel.InfraCmdReq{Command: []string{"echo ready"}, TimeoutMinutes: 1}
 
-	result, err := tbclient.NewSession().RemoteCommandToInfra(nsId, infraId, "", nodeId, cmdReq)
+	result, err := tbclient.NewSession().SetContext(ctx).RemoteCommandToInfra(nsId, infraId, "", nodeId, cmdReq)
 	if err != nil {
 		log.Debug().Err(err).Msgf("SSH reachability probe failed (nsId: %s, infraId: %s, nodeId: %s)", nsId, infraId, nodeId)
 		return false

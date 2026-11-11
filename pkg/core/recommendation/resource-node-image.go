@@ -1,6 +1,7 @@
 package recommendation
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -27,11 +28,11 @@ func GetDefaultImagesLimit() int {
 
 
 // RecommendVmOsImage recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImage(csp string, region string, node onpremmodel.NodeProperty) (cloudmodel.ImageInfo, error) {
+func RecommendVmOsImage(ctx context.Context, csp string, region string, node onpremmodel.NodeProperty) (cloudmodel.ImageInfo, error) {
 
 	var emptyRes cloudmodel.ImageInfo
 
-	imageList, err := RecommendVmOsImages(csp, region, node, 20)
+	imageList, err := RecommendVmOsImages(ctx, csp, region, node, 20)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to recommend VM OS images")
 		return emptyRes, err
@@ -50,9 +51,9 @@ func RecommendVmOsImage(csp string, region string, node onpremmodel.NodeProperty
 }
 
 // RecommendVmOsImageId recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImageId(csp string, region string, node onpremmodel.NodeProperty) (string, error) {
+func RecommendVmOsImageId(ctx context.Context, csp string, region string, node onpremmodel.NodeProperty) (string, error) {
 
-	imageList, err := RecommendVmOsImages(csp, region, node, 20)
+	imageList, err := RecommendVmOsImages(ctx, csp, region, node, 20)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to recommend VM OS images")
 		return "", err
@@ -70,7 +71,7 @@ func RecommendVmOsImageId(csp string, region string, node onpremmodel.NodeProper
 }
 
 // RecommendVmOsImages recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImages(csp string, region string, node onpremmodel.NodeProperty, limit int) ([]cloudmodel.ImageInfo, error) {
+func RecommendVmOsImages(ctx context.Context, csp string, region string, node onpremmodel.NodeProperty, limit int) ([]cloudmodel.ImageInfo, error) {
 
 	var emptyRes = []cloudmodel.ImageInfo{}
 	var vmOsImageInfoList = []cloudmodel.ImageInfo{}
@@ -136,7 +137,7 @@ func RecommendVmOsImages(csp string, region string, node onpremmodel.NodePropert
 
 	log.Debug().Msgf("searchImageReq: %+v", searchImageReq)
 
-	resSearchImage, err := tbclient.NewSession().SearchVmOsImage(nsId, searchImageReq)
+	resSearchImage, err := tbclient.NewSession().SetContext(ctx).SearchVmOsImage(nsId, searchImageReq)
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return emptyRes, err
@@ -159,7 +160,7 @@ func RecommendVmOsImages(csp string, region string, node onpremmodel.NodePropert
 
 		log.Debug().Msgf("Retry searchImageReq: %+v", searchImageReq)
 
-		resSearchImage, err = tbclient.NewSession().SearchVmOsImage(nsId, searchImageReq)
+		resSearchImage, err = tbclient.NewSession().SetContext(ctx).SearchVmOsImage(nsId, searchImageReq)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to retry image search with OS ID only")
 			return emptyRes, err
@@ -189,7 +190,7 @@ func RecommendVmOsImages(csp string, region string, node onpremmodel.NodePropert
 		searchImageReq.IsGPUImage = &trueValue
 		searchImageReq.OSType = osType
 
-		resSearchImage, err = tbclient.NewSession().SearchVmOsImage(nsId, searchImageReq)
+		resSearchImage, err = tbclient.NewSession().SetContext(ctx).SearchVmOsImage(nsId, searchImageReq)
 		if err == nil {
 			for _, img := range resSearchImage.ImageList {
 				if strings.Contains(strings.ToLower(img.CspImageName), "uefi") {
@@ -202,7 +203,7 @@ func RecommendVmOsImages(csp string, region string, node onpremmodel.NodePropert
 		// Fallback retry with OS ID only for GPU images
 		if len(filteredImages) == 0 {
 			searchImageReq.OSType = node.OS.ID
-			resSearchImage, err = tbclient.NewSession().SearchVmOsImage(nsId, searchImageReq)
+			resSearchImage, err = tbclient.NewSession().SetContext(ctx).SearchVmOsImage(nsId, searchImageReq)
 			if err == nil {
 				for _, img := range resSearchImage.ImageList {
 					if strings.Contains(strings.ToLower(img.CspImageName), "uefi") {

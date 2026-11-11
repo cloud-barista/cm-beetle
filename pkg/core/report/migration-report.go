@@ -15,6 +15,7 @@ limitations under the License.
 package report
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -25,7 +26,7 @@ import (
 )
 
 // GenerateMigrationReport generates a comprehensive migration report
-func GenerateMigrationReport(nsId, infraId string, sourceInfra onpremmodel.OnpremInfra) (*MigrationReport, error) {
+func GenerateMigrationReport(ctx context.Context, nsId, infraId string, sourceInfra onpremmodel.OnpremInfra) (*MigrationReport, error) {
 	log.Info().Msgf("Generating migration report (nsId: %s, infraId: %s)", nsId, infraId)
 
 	// Step 1: Generate source infrastructure summary
@@ -37,7 +38,7 @@ func GenerateMigrationReport(nsId, infraId string, sourceInfra onpremmodel.Onpre
 	}
 
 	// Step 2: Generate target infrastructure summary
-	targetSummary, err := summary.GenerateInfraSummary(nsId, infraId)
+	targetSummary, err := summary.GenerateInfraSummary(ctx, nsId, infraId)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate target infrastructure summary")
 		return nil, fmt.Errorf("failed to generate target infrastructure summary: %w", err)

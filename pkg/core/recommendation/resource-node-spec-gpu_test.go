@@ -1,6 +1,7 @@
 package recommendation
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -596,7 +597,7 @@ func TestRecommendGpuNodeSpec_LiveTumblebug(t *testing.T) {
 		},
 	}
 
-	specs, count, err := RecommendNodeSpecs("aws", "ap-northeast-2", node, 3)
+	specs, count, err := RecommendNodeSpecs(context.Background(), "aws", "ap-northeast-2", node, 3)
 	if err != nil {
 		t.Skipf("Skipping live Tumblebug test (daemon not reachable or error): %v", err)
 		return

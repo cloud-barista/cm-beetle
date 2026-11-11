@@ -1,6 +1,7 @@
 package recommendation
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strings"
@@ -63,7 +64,7 @@ type nodeGroupBlueprint struct {
 //  5. Find ranked spec-image pairs per NodeGroup (sizingPolicy = upsizing)
 //  6. Build target NLB list — identical for all candidates
 //  7. Assemble candidates: candidate i assigns the i-th ranked pair to each NodeGroup
-func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error) {
+func RecommendInfraWithNlbCandidates(ctx context.Context, desiredCsp, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error) {
 	srcInfra = SanitizeSourceInfra(srcInfra)
 
 	if len(srcInfra.NLBs) == 0 {
@@ -156,7 +157,7 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 		},
 	}
 
-	recommendedVNetList, err := RecommendVNet(csp, region, srcInfra)
+	recommendedVNetList, err := RecommendVNet(ctx, csp, region, srcInfra)
 	if err != nil || len(recommendedVNetList) == 0 {
 		log.Warn().Err(err).Msg("failed to recommend vNet for NLB-aware infra")
 	}
@@ -205,7 +206,7 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 		// Supplement inbound firewall rules for NLB health check and proxy traffic.
 		nodeWithMergedFirewallRules = supplementFirewallNlbToNode(nodeWithMergedFirewallRules, rnlb, csp, skeleton)
 
-		sg, sgErr := RecommendSecurityGroup(csp, region, nodeWithMergedFirewallRules)
+		sg, sgErr := RecommendSecurityGroup(ctx, csp, region, nodeWithMergedFirewallRules)
 		if sgErr != nil {
 			log.Warn().Err(sgErr).Str("backend", backendName).Msg("failed to recommend SG for NLB NodeGroup")
 		}
@@ -252,7 +253,7 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 
 		ngName, origMachineId := buildNodeGroupNameAndLineage(node, shortIds, usedNames)
 
-		sg, sgErr := RecommendSecurityGroup(csp, region, node)
+		sg, sgErr := RecommendSecurityGroup(ctx, csp, region, node)
 		if sgErr != nil {
 			log.Warn().Err(sgErr).Str("machineId", node.MachineId).Msg("failed to recommend SG")
 		}
@@ -296,11 +297,11 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 	// TODO: pass sizingPolicy as a user-configurable parameter when RecommendVmSpecs supports it.
 	pairsByGroup := make([][]CompatibleSpecImagePair, len(ngBlueprints))
 	for ngIdx, bp := range ngBlueprints {
-		specList, _, specErr := RecommendNodeSpecs(csp, region, bp.representativeNode, limitSpecs)
+		specList, _, specErr := RecommendNodeSpecs(ctx, csp, region, bp.representativeNode, limitSpecs)
 		if specErr != nil {
 			log.Warn().Err(specErr).Str("machineId", bp.representativeNode.MachineId).Str("sizingPolicy", sizingPolicy).Msg("failed to recommend VM specs")
 		}
-		imageList, imageErr := RecommendVmOsImages(csp, region, bp.representativeNode, limitImages)
+		imageList, imageErr := RecommendVmOsImages(ctx, csp, region, bp.representativeNode, limitImages)
 		if imageErr != nil {
 			log.Warn().Err(imageErr).Str("machineId", bp.representativeNode.MachineId).Msg("failed to recommend OS images")
 		}
@@ -395,7 +396,7 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 
 			// Preflight check: resolve latest CSP image name and suggest disk type
 			precheck, prefErr := PreflightCheckCspProvisioning(
-				selectedSpec.Id, selectedImage.Id, selectedImage.CspImageName, "",
+				ctx, selectedSpec.Id, selectedImage.Id, selectedImage.CspImageName, "",
 			)
 			if prefErr != nil {
 				log.Warn().Err(prefErr).Str("machineId", bp.representativeNode.MachineId).Msg("preflight check failed; using cached image")

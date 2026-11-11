@@ -15,6 +15,7 @@ limitations under the License.
 package recommendation
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"sort"
@@ -29,22 +30,22 @@ import (
 )
 
 // GetRDBMSSupport retrieves CSP support matrix for managed RDBMS via CB-Tumblebug.
-func GetRDBMSSupport(providerName string) (rdbmsmodel.RDBMSSupportResponse, error) {
+func GetRDBMSSupport(ctx context.Context, providerName string) (rdbmsmodel.RDBMSSupportResponse, error) {
 	log.Debug().Str("providerName", providerName).Msg("Fetching RDBMS support matrix via CB-Tumblebug")
-	return tbclient.NewSession().GetRDBMSSupport(providerName)
+	return tbclient.NewSession().SetContext(ctx).GetRDBMSSupport(providerName)
 }
 
 // GetRDBMSCapability retrieves real-time capability information for a connection and optional dbEngine via CB-Tumblebug.
-func GetRDBMSCapability(connectionName string, optionalEngine ...string) (rdbmsmodel.RDBMSCapabilityResponse, error) {
+func GetRDBMSCapability(ctx context.Context, connectionName string, optionalEngine ...string) (rdbmsmodel.RDBMSCapabilityResponse, error) {
 	log.Debug().Str("connectionName", connectionName).Msg("Fetching RDBMS capability via CB-Tumblebug")
-	return tbclient.NewSession().GetRDBMSCapability(connectionName, optionalEngine...)
+	return tbclient.NewSession().SetContext(ctx).GetRDBMSCapability(connectionName, optionalEngine...)
 }
 
 // ValidateRDBMS performs dry-run validation and default autofill for an RDBMS create request.
 // It executes a two-stage validation pipeline:
 //  1. Beetle Deep Validation: Referential & cross-connection integrity checks (e.g. verifying VNet/SG connection matches target RDBMS connection)
 //  2. Tumblebug Infra Validation: Dry-run check against CSP capability & API constraints via CB-Tumblebug.
-func ValidateRDBMS(nsId string, req rdbmsmodel.RDBMSCreateRequest) (rdbmsmodel.RDBMSCreateRequest, error) {
+func ValidateRDBMS(ctx context.Context, nsId string, req rdbmsmodel.RDBMSCreateRequest) (rdbmsmodel.RDBMSCreateRequest, error) {
 	var emptyRes rdbmsmodel.RDBMSCreateRequest
 
 	nsId = strings.TrimSpace(nsId)
@@ -56,7 +57,7 @@ func ValidateRDBMS(nsId string, req rdbmsmodel.RDBMSCreateRequest) (rdbmsmodel.R
 		return emptyRes, fmt.Errorf("connectionName is required")
 	}
 
-	tbSess := tbclient.NewSession()
+	tbSess := tbclient.NewSession().SetContext(ctx)
 
 	// 1. Referential & Cross-connection check for VNet
 	if req.VNetId != "" {
@@ -361,7 +362,7 @@ type TargetPreferences struct {
 // If autoFillSourceDefaults is true (default), missing/zero compute and storage values in sources are
 // automatically populated with operational baseline defaults and recorded in warnings.
 // If autoFillSourceDefaults is false, strict validation is enforced via ValidateSourceRDBMS.
-func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.SourceRDBMSProperty, autoFillSourceDefaults bool, prefs ...*TargetPreferences) (rdbmsmodel.RecommendedRDBMS, error) {
+func RecommendRDBMS(ctx context.Context, desiredCsp, desiredRegion string, sources []rdbmsmodel.SourceRDBMSProperty, autoFillSourceDefaults bool, prefs ...*TargetPreferences) (rdbmsmodel.RecommendedRDBMS, error) {
 	var emptyRes rdbmsmodel.RecommendedRDBMS
 
 	desiredCsp = strings.ToLower(strings.TrimSpace(desiredCsp))
@@ -449,7 +450,8 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 	}
 
 	// 2. Fetch CSP support info from Tumblebug & Validate CSP support
-	supportResp, err := tbclient.NewSession().GetRDBMSSupport(desiredCsp)
+	tbSess := tbclient.NewSession().SetContext(ctx)
+	supportResp, err := tbSess.GetRDBMSSupport(desiredCsp)
 	if err != nil {
 		log.Warn().Err(err).Str("csp", desiredCsp).Msg("Failed to fetch CSP RDBMS support info from Tumblebug")
 		return emptyRes, fmt.Errorf("failed to fetch RDBMS support info for CSP '%s': %w", desiredCsp, err)
@@ -485,7 +487,7 @@ func RecommendRDBMS(desiredCsp, desiredRegion string, sources []rdbmsmodel.Sourc
 
 		// Fetch engine-specific live capability from Tumblebug
 		connName := fmt.Sprintf("%s-%s", desiredCsp, desiredRegion)
-		capaResp, capErr := tbclient.NewSession().GetRDBMSCapability(connName, targetEngine)
+		capaResp, capErr := tbSess.GetRDBMSCapability(connName, targetEngine)
 		if capErr != nil {
 			log.Warn().Err(capErr).Str("connectionName", connName).Str("engine", targetEngine).Msg("Failed to fetch live RDBMS capability from Tumblebug")
 			return emptyRes, fmt.Errorf("failed to retrieve live RDBMS capability for connection '%s' and engine '%s': %w", connName, targetEngine, capErr)

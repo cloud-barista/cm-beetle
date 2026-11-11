@@ -15,6 +15,7 @@ limitations under the License.
 package summary
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -28,11 +29,11 @@ import (
 
 // GenerateInfraSummary generates a comprehensive infrastructure summary
 // Note: This function does NOT modify existing tbmodel structs, only reads from them
-func GenerateInfraSummary(nsId, infraId string) (*TargetInfraSummary, error) {
+func GenerateInfraSummary(ctx context.Context, nsId, infraId string) (*TargetInfraSummary, error) {
 	log.Info().Msgf("Generating infrastructure summary for Infra (nsId: %s, infraId: %s)", nsId, infraId)
 
 	// Step 1: Collect Infra information
-	infraInfo, err := tbclient.NewSession().ReadInfra(nsId, infraId)
+	infraInfo, err := tbclient.NewSession().SetContext(ctx).ReadInfra(nsId, infraId)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve Infra information")
 		return nil, fmt.Errorf("failed to retrieve Infra information: %w", err)
@@ -49,12 +50,12 @@ func GenerateInfraSummary(nsId, infraId string) (*TargetInfraSummary, error) {
 		len(uniqueVNetIds), len(uniqueSshKeyIds), len(uniqueSecurityGroupIds), len(uniqueSpecIds), len(uniqueImageIds))
 
 	// Step 3: Collect network resources
-	networkResources, err := collectNetworkResources(nsId, uniqueVNetIds)
+	networkResources, err := collectNetworkResources(ctx, nsId, uniqueVNetIds)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to collect some network resources")
 	}
 
-	nlbResources, err := collectNlbResources(nsId, infraId)
+	nlbResources, err := collectNlbResources(ctx, nsId, infraId)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("infraId", infraId).Msg("Failed to collect NLB resources")
 		return nil, err
@@ -62,13 +63,13 @@ func GenerateInfraSummary(nsId, infraId string) (*TargetInfraSummary, error) {
 	networkResources.NLBs = nlbResources
 
 	// Step 4: Collect security resources
-	securityResources, err := collectSecurityResources(nsId, uniqueSshKeyIds, uniqueSecurityGroupIds)
+	securityResources, err := collectSecurityResources(ctx, nsId, uniqueSshKeyIds, uniqueSecurityGroupIds)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to collect some security resources")
 	}
 
 	// Step 5: Collect compute resources
-	computeResources, err := collectComputeResources(nsId, &infraInfo, uniqueSpecIds, uniqueImageIds)
+	computeResources, err := collectComputeResources(ctx, nsId, &infraInfo, uniqueSpecIds, uniqueImageIds)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to collect some compute resources")
 	}
@@ -189,12 +190,12 @@ func extractUniqueImageIds(nodes []tbmodel.NodeInfo) []string {
 }
 
 // collectNetworkResources collects VNet and Subnet information
-func collectNetworkResources(nsId string, vnetIds []string) (SummaryNetworkResources, error) {
+func collectNetworkResources(ctx context.Context, nsId string, vnetIds []string) (SummaryNetworkResources, error) {
 	var resources SummaryNetworkResources
 	resources.VNets = []SummaryVNetInfo{}
 
 	for _, vnetId := range vnetIds {
-		vnetInfo, err := tbclient.NewSession().ReadVNet(nsId, vnetId)
+		vnetInfo, err := tbclient.NewSession().SetContext(ctx).ReadVNet(nsId, vnetId)
 		if err != nil {
 			log.Warn().Err(err).Msgf("Failed to retrieve VNet: %s", vnetId)
 			continue
@@ -228,14 +229,14 @@ func collectNetworkResources(nsId string, vnetIds []string) (SummaryNetworkResou
 }
 
 // collectSecurityResources collects SSH Key and Security Group information
-func collectSecurityResources(nsId string, sshKeyIds, securityGroupIds []string) (SummarySecurityResources, error) {
+func collectSecurityResources(ctx context.Context, nsId string, sshKeyIds, securityGroupIds []string) (SummarySecurityResources, error) {
 	var resources SummarySecurityResources
 	resources.SshKeys = []SummarySshKeyInfo{}
 	resources.SecurityGroups = []SummarySecurityGroupInfo{}
 
 	// Collect SSH Keys
 	for _, sshKeyId := range sshKeyIds {
-		sshKeyInfo, err := tbclient.NewSession().ReadSshKey(nsId, sshKeyId)
+		sshKeyInfo, err := tbclient.NewSession().SetContext(ctx).ReadSshKey(nsId, sshKeyId)
 		if err != nil {
 			log.Warn().Err(err).Msgf("Failed to retrieve SSH Key: %s", sshKeyId)
 			continue
@@ -260,7 +261,7 @@ func collectSecurityResources(nsId string, sshKeyIds, securityGroupIds []string)
 
 	// Collect Security Groups
 	for _, sgId := range securityGroupIds {
-		sgInfo, err := tbclient.NewSession().ReadSecurityGroup(nsId, sgId)
+		sgInfo, err := tbclient.NewSession().SetContext(ctx).ReadSecurityGroup(nsId, sgId)
 		if err != nil {
 			log.Warn().Err(err).Msgf("Failed to retrieve Security Group: %s", sgId)
 			continue
@@ -298,7 +299,7 @@ func collectSecurityResources(nsId string, sshKeyIds, securityGroupIds []string)
 }
 
 // collectComputeResources collects Spec, Image, and Node information
-func collectComputeResources(nsId string, infraInfo *tbmodel.InfraInfo, specIds, imageIds []string) (SummaryComputeResources, error) {
+func collectComputeResources(ctx context.Context, nsId string, infraInfo *tbmodel.InfraInfo, specIds, imageIds []string) (SummaryComputeResources, error) {
 	var resources SummaryComputeResources
 
 	// Collect specs with usage count
@@ -307,7 +308,7 @@ func collectComputeResources(nsId string, infraInfo *tbmodel.InfraInfo, specIds,
 
 	for _, specId := range specIds {
 		// Specs are stored in system namespace
-		specInfo, err := tbclient.NewSession().ReadVmSpec("system", specId)
+		specInfo, err := tbclient.NewSession().SetContext(ctx).ReadVmSpec("system", specId)
 		if err != nil {
 			log.Warn().Err(err).Msgf("Failed to retrieve Spec: %s", specId)
 			continue
@@ -321,7 +322,7 @@ func collectComputeResources(nsId string, infraInfo *tbmodel.InfraInfo, specIds,
 
 	for _, imageId := range imageIds {
 		// Images are stored in system namespace
-		imageInfo, err := tbclient.NewSession().ReadVmOsImage("system", imageId)
+		imageInfo, err := tbclient.NewSession().SetContext(ctx).ReadVmOsImage("system", imageId)
 		if err != nil {
 			log.Warn().Err(err).Msgf("Failed to retrieve Image: %s", imageId)
 			continue

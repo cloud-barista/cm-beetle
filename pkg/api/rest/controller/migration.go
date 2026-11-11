@@ -15,6 +15,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -87,8 +88,8 @@ func MigrateInfraWithDefaults(c echo.Context) error {
 	// [Process]
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() (cloudmodel.VmInfraInfo, error) {
-			return migration.CreateInfraWithDefaults(nsId, &req.InfraDynamicReq)
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) (cloudmodel.VmInfraInfo, error) {
+			return migration.CreateInfraWithDefaults(ctx, nsId, &req.InfraDynamicReq)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -106,7 +107,7 @@ func MigrateInfraWithDefaults(c echo.Context) error {
 	}
 
 	// Create the infrastructure for migration
-	infraInfo, err := migration.CreateInfraWithDefaults(nsId, &req.InfraDynamicReq)
+	infraInfo, err := migration.CreateInfraWithDefaults(c.Request().Context(), nsId, &req.InfraDynamicReq)
 
 	log.Debug().Msgf("infraInfo: %v", infraInfo)
 
@@ -206,11 +207,11 @@ func MigrateInfra(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() (cloudmodel.VmInfraInfo, error) {
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) (cloudmodel.VmInfraInfo, error) {
 			if useExisting {
-				return migration.MigrateInfraWithExisting(nsId, &infraToMigrate, req.Lineage)
+				return migration.MigrateInfraWithExisting(ctx, nsId, &infraToMigrate, req.Lineage)
 			}
-			return migration.MigrateInfra(nsId, &infraToMigrate, req.Lineage)
+			return migration.MigrateInfra(ctx, nsId, &infraToMigrate, req.Lineage)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -230,10 +231,11 @@ func MigrateInfra(c echo.Context) error {
 	// Create the infrastructure for migration
 	var mciInfo cloudmodel.VmInfraInfo
 	var err error
+	ctx := c.Request().Context()
 	if useExisting {
-		mciInfo, err = migration.MigrateInfraWithExisting(nsId, &infraToMigrate, req.Lineage)
+		mciInfo, err = migration.MigrateInfraWithExisting(ctx, nsId, &infraToMigrate, req.Lineage)
 	} else {
-		mciInfo, err = migration.MigrateInfra(nsId, &infraToMigrate, req.Lineage)
+		mciInfo, err = migration.MigrateInfra(ctx, nsId, &infraToMigrate, req.Lineage)
 	}
 
 	log.Debug().Msgf("mciInfo: %+v", mciInfo)
@@ -294,9 +296,10 @@ func ListInfra(c echo.Context) error {
 	}
 
 	// [Process] List the migrated multi-cloud infrastructures as the option
+	ctx := c.Request().Context()
 	switch option {
 	case "id":
-		idList, err := migration.ListInfraIDs(nsId, option)
+		idList, err := migration.ListInfraIDs(ctx, nsId, option)
 		if err != nil {
 			// Pacer backpressure, not a server error; the pacer already logged it as a warning.
 			if retryAfter, ok := ratelimit.RetryAfter(err); ok {
@@ -311,7 +314,7 @@ func ListInfra(c echo.Context) error {
 
 		return c.JSON(http.StatusOK, model.SuccessResponse(idList))
 	default:
-		infraInfoList, err := migration.ListAllInfraInfo(nsId)
+		infraInfoList, err := migration.ListAllInfraInfo(ctx, nsId)
 		if err != nil {
 			// Pacer backpressure, not a server error; the pacer already logged it as a warning.
 			if retryAfter, ok := ratelimit.RetryAfter(err); ok {
@@ -367,7 +370,7 @@ func GetInfra(c echo.Context) error {
 	}
 
 	// [Process]
-	infraInfo, err := migration.GetInfra(nsId, infraId)
+	infraInfo, err := migration.GetInfra(c.Request().Context(), nsId, infraId)
 	if err != nil {
 		// Pacer backpressure, not a server error; the pacer already logged it as a warning.
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
@@ -443,8 +446,8 @@ func DeleteInfra(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() (common.SimpleMsg, error) {
-			return migration.DeleteInfra(nsId, infraId, option)
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) (common.SimpleMsg, error) {
+			return migration.DeleteInfra(ctx, nsId, infraId, option)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -462,7 +465,7 @@ func DeleteInfra(c echo.Context) error {
 	}
 
 	// [Process]
-	retMsg, err := migration.DeleteInfra(nsId, infraId, option)
+	retMsg, err := migration.DeleteInfra(c.Request().Context(), nsId, infraId, option)
 
 	if err != nil {
 		// Pacer backpressure, not a server error; the pacer already logged it as a warning.
@@ -576,7 +579,7 @@ func CheckSSHReady(c echo.Context) error {
 	const checkTimeout = 30 * time.Second
 	const checkInterval = 10 * time.Second
 
-	nodeStatusList, err := migration.CheckSSHReadinessWithDetails(nsId, infraId, checkTimeout, checkInterval)
+	nodeStatusList, err := migration.CheckSSHReadinessWithDetails(c.Request().Context(), nsId, infraId, checkTimeout, checkInterval)
 
 	// Convert internal status to API response format
 	apiNodeStatus := make([]NodeSSHStatus, len(nodeStatusList))

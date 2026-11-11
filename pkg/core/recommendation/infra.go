@@ -1,6 +1,7 @@
 package recommendation
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -76,7 +77,7 @@ func getCspMinRootDiskSizeGB(cspName string) int {
 	}
 }
 
-func IsValidCspAndRegion(cspName string, region string) (bool, error) {
+func IsValidCspAndRegion(ctx context.Context, cspName string, region string) (bool, error) {
 
 	isValid := false
 	cspLower := strings.ToLower(cspName)
@@ -90,7 +91,7 @@ func IsValidCspAndRegion(cspName string, region string) (bool, error) {
 	}
 
 	// Check if the region is valid for the specified CSP
-	_, err := tbclient.NewSession().ReadRegionInfo(cspLower, regionName)
+	_, err := tbclient.NewSession().SetContext(ctx).ReadRegionInfo(cspLower, regionName)
 	if err != nil {
 		log.Warn().Msgf("failed to read region info for CSP %s and region %s: %v", cspLower, regionName, err)
 		return isValid, err
@@ -102,7 +103,7 @@ func IsValidCspAndRegion(cspName string, region string) (bool, error) {
 }
 
 // RecommendInfraWithDefaults recommends an appropriate target infrastructure for cloud migration using defaults
-func RecommendInfraWithDefaults(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedInfraDynamicList, error) {
+func RecommendInfraWithDefaults(ctx context.Context, desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedInfraDynamicList, error) {
 	srcInfra = SanitizeSourceInfra(srcInfra)
 
 	// var emptyResp RecommendedVmInfraInfoList
@@ -145,7 +146,7 @@ func RecommendInfraWithDefaults(desiredCsp string, desiredRegion string, srcInfr
 	for _, node := range srcInfra.Nodes {
 
 		// Lookup the appropriate VM specs for the node
-		vmSpecList, _, err := RecommendNodeSpecs(desiredCsp, desiredRegion, node, defaultSpecsLimit)
+		vmSpecList, _, err := RecommendNodeSpecs(ctx, desiredCsp, desiredRegion, node, defaultSpecsLimit)
 		if err != nil {
 			log.Warn().Msgf("failed to recommend VM specs for node %s: %v", node.MachineId, err)
 			continue
@@ -154,7 +155,7 @@ func RecommendInfraWithDefaults(desiredCsp string, desiredRegion string, srcInfr
 		// Lookup the appropriate VM OS images for the node
 		vmOsImageIdList := []string{}
 		for range vmSpecList {
-			osImgId, err := RecommendVmOsImageId(desiredCsp, desiredRegion, node)
+			osImgId, err := RecommendVmOsImageId(ctx, desiredCsp, desiredRegion, node)
 			if err != nil {
 				log.Warn().Msgf("failed to recommend VM OS image for node %s: %v", node.MachineId, err)
 				vmOsImageIdList = append(vmOsImageIdList, "")
@@ -246,7 +247,7 @@ func RecommendInfraWithDefaults(desiredCsp string, desiredRegion string, srcInfr
 }
 
 // RecommendInfra recommends an appropriate target infrastructure for cloud migration
-func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedInfra, error) {
+func RecommendInfra(ctx context.Context, desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedInfra, error) {
 	srcInfra = SanitizeSourceInfra(srcInfra)
 
 	// var emptyResp RecommendedVmInfra
@@ -279,7 +280,7 @@ func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmode
 	 */
 
 	// 1. Recommend vNet and subnets (Note: vNet can be a VPC or a VNet depending on the CSP)
-	recommendedVNetInfoList, err := RecommendVNet(csp, region, srcInfra)
+	recommendedVNetInfoList, err := RecommendVNet(ctx, csp, region, srcInfra)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to recommend a virtual network for the source computing infrastructure")
 	}
@@ -328,20 +329,20 @@ func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmode
 		 */
 
 		// Lookup the appropriate VM specs for the node
-		recommendedVmSpecInfoList, _, err := RecommendNodeSpecs(csp, region, node, limitSpecs)
+		recommendedVmSpecInfoList, _, err := RecommendNodeSpecs(ctx, csp, region, node, limitSpecs)
 		if err != nil {
 			log.Warn().Msgf("failed to recommend VM specs for node %s: %v", node.MachineId, err)
 		}
 
 		// Lookup the appropriate VM OS images for the node
 		// recommendedVmOsImageInfo, err := RecommendVmOsImage(csp, region, node)
-		recommendedVmOsImageInfoList, err := RecommendVmOsImages(csp, region, node, limitImages)
+		recommendedVmOsImageInfoList, err := RecommendVmOsImages(ctx, csp, region, node, limitImages)
 		if err != nil {
 			log.Warn().Msgf("failed to recommend VM OS images for node %s: %v", node.MachineId, err)
 		}
 
 		// Generete security group from the node's firewall rules (or firewall table)
-		recommendedSg, err := RecommendSecurityGroup(csp, region, node)
+		recommendedSg, err := RecommendSecurityGroup(ctx, csp, region, node)
 		if err != nil {
 			log.Warn().Msgf("failed to recommend security group for node %s: %v", node.MachineId, err)
 		}
@@ -380,7 +381,7 @@ func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmode
 
 				// Resolve the latest CSP image name and confirm available system disk.
 				precheck, reviewErr := PreflightCheckCspProvisioning(
-					selectedVmSpec.Id, selectedVmOsImage.Id, selectedVmOsImage.CspImageName, "",
+					ctx, selectedVmSpec.Id, selectedVmOsImage.Id, selectedVmOsImage.CspImageName, "",
 				)
 				if reviewErr != nil {
 					log.Warn().Err(reviewErr).Msgf("preflight check failed for node %s; using cached image", node.MachineId)
@@ -538,7 +539,7 @@ func RecommendInfra(desiredCsp string, desiredRegion string, srcInfra onpremmode
 }
 
 // RecommendInfraCandidates recommends appropriate target infrastructure candidates for cloud migration
-func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error) {
+func RecommendInfraCandidates(ctx context.Context, desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error) {
 	srcInfra = SanitizeSourceInfra(srcInfra)
 
 	// * To recommend multiple infra candidates (i.e., multiple VM spec and OS image combinations),
@@ -576,7 +577,7 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 	 */
 
 	// 1. Recommend vNet and subnets (Note: vNet can be a VPC or a VNet depending on the CSP)
-	recommendedVNetInfoList, err := RecommendVNet(csp, region, srcInfra)
+	recommendedVNetInfoList, err := RecommendVNet(ctx, csp, region, srcInfra)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to recommend a virtual network for the source computing infrastructure")
 	}
@@ -659,7 +660,7 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 	for i, node := range srcInfra.Nodes {
 
 		// Generete security group from the node's firewall rules (or firewall table)
-		recommendedSg, err := RecommendSecurityGroup(csp, region, node)
+		recommendedSg, err := RecommendSecurityGroup(ctx, csp, region, node)
 		if err != nil {
 			log.Warn().Msgf("failed to recommend security group for node %s: %v", node.MachineId, err)
 		}
@@ -697,13 +698,13 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 	for i, node := range srcInfra.Nodes {
 
 		// Lookup the appropriate VM specs for the node
-		recommendedVmSpecInfoList, _, err := RecommendNodeSpecs(csp, region, node, limitSpecs)
+		recommendedVmSpecInfoList, _, err := RecommendNodeSpecs(ctx, csp, region, node, limitSpecs)
 		if err != nil {
 			log.Warn().Msgf("failed to recommend VM specs for node %s: %v", node.MachineId, err)
 		}
 
 		// Lookup the appropriate VM OS images for the node
-		recommendedVmOsImageInfoList, err := RecommendVmOsImages(csp, region, node, limitImages)
+		recommendedVmOsImageInfoList, err := RecommendVmOsImages(ctx, csp, region, node, limitImages)
 		if err != nil {
 			log.Warn().Msgf("failed to recommend VM OS images for node %s: %v", node.MachineId, err)
 		}
@@ -890,7 +891,7 @@ func RecommendInfraCandidates(desiredCsp string, desiredRegion string, srcInfra 
 
 			// Resolve the latest CSP image name and confirm available system disk.
 			precheck, reviewErr := PreflightCheckCspProvisioning(
-				selectedVmSpec.Id, selectedVmOsImage.Id, selectedVmOsImage.CspImageName, "",
+				ctx, selectedVmSpec.Id, selectedVmOsImage.Id, selectedVmOsImage.CspImageName, "",
 			)
 			if reviewErr != nil {
 				log.Warn().Err(reviewErr).Msgf("preflight check failed for node %s; using cached image", node.MachineId)

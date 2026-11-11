@@ -85,7 +85,7 @@ func TestTracing(c echo.Context) error {
 	// [OpenTelemetry & Fallback]
 	// Use SetTraceInfo(ctx) to propagate trace context.
 	// It handles both OTel (future) and manual propagation (current fallback).
-	session := tbclient.NewSession().SetTraceInfo(ctx)
+	session := tbclient.NewSession().SetContext(ctx).SetTraceInfo(ctx)
 
 	// Propagate X-Request-Id for log correlation
 	if reqID := c.Response().Header().Get(echo.HeaderXRequestID); reqID != "" {

@@ -1,6 +1,7 @@
 package recommendation
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -9,13 +10,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func RecommendSecurityGroup(csp string, region string, node onpremmodel.NodeProperty) (cloudmodel.SecurityGroupReq, error) {
+func RecommendSecurityGroup(ctx context.Context, csp string, region string, node onpremmodel.NodeProperty) (cloudmodel.SecurityGroupReq, error) {
 
 	var emptyRes = cloudmodel.SecurityGroupReq{}
 	var recommendedSecurityGroup = cloudmodel.SecurityGroupReq{}
 
 	// [Input]
-	ok, err := IsValidCspAndRegion(csp, region)
+	ok, err := IsValidCspAndRegion(ctx, csp, region)
 	if !ok {
 		log.Error().Err(err).Msgf("invalid provider (%s) or region (%s)", csp, region)
 		return emptyRes, err
@@ -77,13 +78,13 @@ func RecommendSecurityGroup(csp string, region string, node onpremmodel.NodeProp
 	return recommendedSecurityGroup, nil
 }
 
-func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.NodeProperty) (cloudmodel.RecommendedSecurityGroupList, error) {
+func RecommendSecurityGroups(ctx context.Context, csp string, region string, servers []onpremmodel.NodeProperty) (cloudmodel.RecommendedSecurityGroupList, error) {
 
 	var emptyRet = cloudmodel.RecommendedSecurityGroupList{}
 	var recommendedSecurityGroupList = cloudmodel.RecommendedSecurityGroupList{}
 
 	// [Input]
-	ok, err := IsValidCspAndRegion(csp, region)
+	ok, err := IsValidCspAndRegion(ctx, csp, region)
 	if !ok {
 		log.Error().Err(err).Msgf("invalid provider (%s) or region (%s)", csp, region)
 		return emptyRet, err
@@ -95,7 +96,7 @@ func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.No
 
 	for _, node := range servers {
 		// Recommend a security group for the node
-		recommendedTargetSg, err := RecommendSecurityGroup(csp, region, node)
+		recommendedTargetSg, err := RecommendSecurityGroup(ctx, csp, region, node)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to recommend security group for node: %+v", node)
 			recommendedTargetSg.Description = fmt.Sprintf("Failed to recommend security group for %s", node.MachineId) // Set MachineId to identify the source node

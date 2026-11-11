@@ -96,7 +96,7 @@ func GenerateTargetInfraSummary(c echo.Context) error {
 	log.Info().Msgf("Generating infrastructure summary (nsId: %s, infraId: %s, format: %s, download: %s)", nsId, infraId, format, download)
 
 	// Generate the infrastructure summary
-	infraSum, err := summary.GenerateInfraSummary(nsId, infraId)
+	infraSum, err := summary.GenerateInfraSummary(c.Request().Context(), nsId, infraId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate infrastructure summary")
 
@@ -214,7 +214,7 @@ func GenerateTargetK8sInfraSummary(c echo.Context) error {
 	log.Info().Msgf("Generating K8s infrastructure summary (nsId: %s, clusterId: %s, format: %s, download: %s)", nsId, clusterId, format, download)
 
 	// Generate target K8s infrastructure summary
-	k8sSummary, err := summary.GenerateTargetK8sInfraSummary(nsId, clusterId)
+	k8sSummary, err := summary.GenerateTargetK8sInfraSummary(c.Request().Context(), nsId, clusterId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate K8s infrastructure summary")
 

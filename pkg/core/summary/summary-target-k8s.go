@@ -15,6 +15,7 @@ limitations under the License.
 package summary
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -27,11 +28,11 @@ import (
 )
 
 // GenerateTargetK8sInfraSummary generates a comprehensive K8s infrastructure summary.
-func GenerateTargetK8sInfraSummary(nsId, clusterId string) (*TargetK8sInfraSummary, error) {
+func GenerateTargetK8sInfraSummary(ctx context.Context, nsId, clusterId string) (*TargetK8sInfraSummary, error) {
 	log.Info().Msgf("Generating K8s infrastructure summary (nsId: %s, clusterId: %s)", nsId, clusterId)
 
 	// Step 1: Collect K8s cluster information
-	clusterInfo, err := tbclient.NewSession().ReadK8sCluster(nsId, clusterId)
+	clusterInfo, err := tbclient.NewSession().SetContext(ctx).ReadK8sCluster(nsId, clusterId)
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed to retrieve K8s cluster: %s", clusterId)
 		return nil, fmt.Errorf("failed to retrieve K8s cluster: %w", err)
@@ -42,20 +43,20 @@ func GenerateTargetK8sInfraSummary(nsId, clusterId string) (*TargetK8sInfraSumma
 	if clusterInfo.Network.VNetId != "" {
 		vnetIds = append(vnetIds, clusterInfo.Network.VNetId)
 	}
-	networkResources, err := collectNetworkResources(nsId, vnetIds)
+	networkResources, err := collectNetworkResources(ctx, nsId, vnetIds)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to collect network resources for K8s cluster")
 	}
 
 	// Step 3: Collect security resources
 	uniqueSshKeyIds := extractUniqueK8sSshKeyIds(clusterInfo.K8sNodeGroupList)
-	securityResources, err := collectSecurityResources(nsId, uniqueSshKeyIds, clusterInfo.Network.SecurityGroupIds)
+	securityResources, err := collectSecurityResources(ctx, nsId, uniqueSshKeyIds, clusterInfo.Network.SecurityGroupIds)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to collect security resources for K8s cluster")
 	}
 
 	// Step 4: Collect node groups and compute overview
-	nodeGroupList, computeOverview, totalHourlyCost := collectK8sNodeGroupResources(&clusterInfo)
+	nodeGroupList, computeOverview, totalHourlyCost := collectK8sNodeGroupResources(ctx, &clusterInfo)
 
 	// Step 5: Build cost estimation
 	costEstimation := buildK8sCostEstimation(&clusterInfo, totalHourlyCost, nodeGroupList)
@@ -88,7 +89,7 @@ func GenerateTargetK8sInfraSummary(nsId, clusterId string) (*TargetK8sInfraSumma
 }
 
 // collectK8sNodeGroupResources gathers node group specs, nodes, compute metrics, and costs.
-func collectK8sNodeGroupResources(clusterInfo *tbmodel.K8sClusterInfo) ([]SummaryNodeGroupInfo, K8sComputeOverview, float64) {
+func collectK8sNodeGroupResources(ctx context.Context, clusterInfo *tbmodel.K8sClusterInfo) ([]SummaryNodeGroupInfo, K8sComputeOverview, float64) {
 	var ngList []SummaryNodeGroupInfo
 	var compute K8sComputeOverview
 	var totalHourlyCost float64
@@ -99,7 +100,7 @@ func collectK8sNodeGroupResources(clusterInfo *tbmodel.K8sClusterInfo) ([]Summar
 		var hourlyCostPerNode float64
 
 		if ng.SpecId != "" {
-			specInfo, err := tbclient.NewSession().ReadVmSpec("system", ng.SpecId)
+			specInfo, err := tbclient.NewSession().SetContext(ctx).ReadVmSpec("system", ng.SpecId)
 			if err == nil {
 				vcpu = int(specInfo.VCPU)
 				memGib = float64(specInfo.MemoryGiB)

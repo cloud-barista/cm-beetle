@@ -68,8 +68,8 @@ func (s *Session) CreateInfraDynamic(nsId string, reqBody tbmodel.InfraDynamicRe
 
 	emptyRet := tbmodel.InfraInfo{}
 
-	// Increased timeout to 45 minutes for all operations
-	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Minute)
+	// Derive 45-minute timeout from session context to preserve reqID and trace info.
+	ctx, cancel := context.WithTimeout(s.Context(), 45*time.Minute)
 	defer cancel()
 
 	url := fmt.Sprintf("/ns/%s/infraDynamic", nsId)
@@ -260,8 +260,8 @@ func (s *Session) ReadInfraIDs(nsId string) (tbmodel.IdList, error) {
 func (s *Session) DeleteInfra(nsId, infraId, option string) (tbmodel.IdList, error) {
 	log.Debug().Msg("Deleting Infra")
 
-	// Increased timeout to 45 minutes for all operations
-	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Minute)
+	// Derive 45-minute timeout from session context to preserve reqID and trace info.
+	ctx, cancel := context.WithTimeout(s.Context(), 45*time.Minute)
 	defer cancel()
 
 	emptyRet := tbmodel.IdList{}

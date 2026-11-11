@@ -3,7 +3,6 @@ package middlewares
 import (
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -17,49 +16,50 @@ import (
 // and initializes the request tracking with "Handling" status.
 //
 // Flow:
-//  1. Request arrives → this middleware sets status to "Handling"
+//  1. Request arrives -> this middleware sets status to "Handling"
 //  2. Calls next(c) to pass control to Echo handler
 //  3. Echo handler processes the request and writes response
 //  4. ResponseBodyDump middleware updates status to "Success" or "Error"
 func RequestIdAndDetailsIssuer(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// log.Debug().Msg("Start - Request ID middleware")
-
-		// Skip request tracking for API documentation paths
-		if strings.HasPrefix(c.Path(), "/beetle/api") {
+		// Skip request tracking for management, docs, health, UI, and proxy paths.
+		if ShouldSkipRequestTracking(c) {
 			return next(c)
 		}
 
-		// Make X-Request-Id and Preference-Applied visible to browser-based clients
+		// Make X-Request-Id and Preference-Applied visible to browser-based clients.
 		c.Response().Header().Set("Access-Control-Expose-Headers", echo.HeaderXRequestID+", Preference-Applied")
 
-		// Get or generate Request ID
+		// Get or generate Request ID.
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
 		if reqID == "" {
 			reqID = fmt.Sprintf("%d", time.Now().UnixNano())
 			c.Request().Header.Set(echo.HeaderXRequestID, reqID)
 		}
 
-		//log.Trace().Msgf("(Request ID middleware) Request ID: %s", reqID)
 		if common.HasRequest(reqID) {
 			return echo.NewHTTPError(http.StatusConflict,
 				fmt.Sprintf("the X-Request-Id '%s' is already in use; "+
 					"use DELETE /beetle/request/{reqId} to remove it, or omit the header to auto-generate a new one", reqID))
 		}
 
-		// Set "X-Request-Id" in response header
+		// Attach reqID to request context for downstream Tumblebug Transport-AOP correlation.
+		ctx := common.WithRequestID(c.Request().Context(), reqID)
+		c.SetRequest(c.Request().WithContext(ctx))
+
+		// Set "X-Request-Id" in response header.
 		c.Response().Header().Set(echo.HeaderXRequestID, reqID)
 
 		details := common.RequestDetails{
-			StartTime:   time.Now(),
-			Status:      common.RequestStatusHandling,
-			RequestInfo: common.ExtractRequestInfo(c.Request()),
+			ReqId:           reqID,
+			StartTime:       time.Now(),
+			Status:          common.RequestStatusHandling,
+			TumblebugSource: common.FormatTumblebugSource(reqID),
+			RequestInfo:     common.ExtractRequestInfo(c.Request()),
 		}
 		if err := common.SetRequest(reqID, details); err != nil {
 			return fmt.Errorf("failed to store request details: %w", err)
 		}
-
-		// log.Debug().Msg("End - Request ID middleware")
 
 		return next(c)
 	}

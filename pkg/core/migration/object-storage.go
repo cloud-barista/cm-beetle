@@ -15,6 +15,7 @@ limitations under the License.
 package migration
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"slices"
@@ -43,10 +44,10 @@ func isNotFoundErr(err error) bool {
 // ============================================================================
 
 // GenerateConnectionName builds and validates a connection name from csp and region.
-func GenerateConnectionName(csp, region string) (string, error) {
+func GenerateConnectionName(ctx context.Context, csp, region string) (string, error) {
 	connectionName := strings.ToLower(fmt.Sprintf("%s-%s", csp, region))
 
-	_, err := tbclient.NewSession().GetConnConfig(connectionName)
+	_, err := tbclient.NewSession().SetContext(ctx).GetConnConfig(connectionName)
 	if err != nil {
 		log.Error().Err(err).Str("connectionName", connectionName).Msg("Failed to get connection config")
 		return "", err
@@ -132,7 +133,7 @@ func toStorageModelObjectStorageInfo(src tbmodel.ObjectStorageInfo) storagemodel
 
 // CreateObjectStorage migrates object storages to the target cloud.
 // Each target bucket is attempted independently; partial failures or skipped features are recorded in Warnings.
-func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage, seed string) (MigratedObjectStorageResult, error) {
+func CreateObjectStorage(ctx context.Context, nsId string, req storagemodel.RecommendedObjectStorage, seed string) (MigratedObjectStorageResult, error) {
 	log.Info().
 		Str("nsId", nsId).
 		Str("csp", req.TargetCloud.Csp).
@@ -141,7 +142,7 @@ func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage,
 		Msg("Starting object storage migration")
 
 	// Validate target cloud connection before attempting bucket creation.
-	connName, err := GenerateConnectionName(req.TargetCloud.Csp, req.TargetCloud.Region)
+	connName, err := GenerateConnectionName(ctx, req.TargetCloud.Csp, req.TargetCloud.Region)
 	if err != nil {
 		wrappedErr := fmt.Errorf("invalid cloud configuration (%s %s): %w", req.TargetCloud.Csp, req.TargetCloud.Region, err)
 		return MigratedObjectStorageResult{
@@ -186,7 +187,7 @@ func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage,
 			ConnectionName: connName,
 			Description:    "Created by CM-Beetle",
 		}
-		info, err := tbclient.NewSession().CreateObjectStorage(nsId, createReq)
+		info, err := tbclient.NewSession().SetContext(ctx).CreateObjectStorage(nsId, createReq)
 		if err != nil {
 			log.Error().Err(err).Str("bucketName", target.BucketName).Msg("Failed to create object storage")
 			msg := fmt.Sprintf("Bucket '%s': failed to create object storage: %v", target.BucketName, err)
@@ -224,7 +225,7 @@ func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage,
 	}
 
 	if needsFeatureConfig {
-		supportResp, supportErr := tbclient.NewSession().GetObjectStorageSupport(cspKey)
+		supportResp, supportErr := tbclient.NewSession().SetContext(ctx).GetObjectStorageSupport(cspKey)
 		if supportErr != nil {
 			log.Warn().Err(supportErr).Str("csp", cspKey).
 				Msg("Failed to fetch CSP support info; skipping versioning and CORS configuration")
@@ -245,7 +246,7 @@ func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage,
 						warnings = append(warnings, msg)
 					} else {
 						verReq := tbmodel.ObjectStorageSetVersioningRequest{Status: "Enabled"}
-						if err := tbclient.NewSession().SetObjectStorageVersioning(nsId, bucketId, verReq); err != nil {
+						if err := tbclient.NewSession().SetContext(ctx).SetObjectStorageVersioning(nsId, bucketId, verReq); err != nil {
 							msg := fmt.Sprintf("Bucket '%s': failed to enable versioning: %v", bucketId, err)
 							log.Error().Err(err).Str("bucket", bucketId).Msg("Failed to enable versioning; continuing")
 							warnings = append(warnings, msg)
@@ -273,7 +274,7 @@ func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage,
 							})
 						}
 						corsReq := tbmodel.ObjectStorageSetCorsRequest{CorsRule: corsRules}
-						if err := tbclient.NewSession().SetObjectStorageCORS(nsId, bucketId, corsReq); err != nil {
+						if err := tbclient.NewSession().SetContext(ctx).SetObjectStorageCORS(nsId, bucketId, corsReq); err != nil {
 							msg := fmt.Sprintf("Bucket '%s': failed to configure CORS: %v", bucketId, err)
 							log.Error().Err(err).Str("bucket", bucketId).Msg("Failed to set CORS; continuing")
 							warnings = append(warnings, msg)
@@ -311,10 +312,10 @@ func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage,
 }
 
 // ListObjectStorages returns all migrated object storages in the namespace.
-func ListObjectStorages(nsId string) (storagemodel.ObjectStorageListResponse, error) {
+func ListObjectStorages(ctx context.Context, nsId string) (storagemodel.ObjectStorageListResponse, error) {
 	log.Info().Str("nsId", nsId).Msg("Listing object storages")
 
-	result, err := tbclient.NewSession().ListObjectStorages(nsId, "", "", "")
+	result, err := tbclient.NewSession().SetContext(ctx).ListObjectStorages(nsId, "", "", "")
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Msg("Failed to list object storages")
 		return storagemodel.ObjectStorageListResponse{}, err
@@ -332,10 +333,10 @@ func ListObjectStorages(nsId string) (storagemodel.ObjectStorageListResponse, er
 }
 
 // ListObjectStorageIDs returns all migrated object storage IDs in the namespace.
-func ListObjectStorageIDs(nsId string) (storagemodel.IdList, error) {
+func ListObjectStorageIDs(ctx context.Context, nsId string) (storagemodel.IdList, error) {
 	log.Info().Str("nsId", nsId).Msg("Listing object storage IDs")
 
-	result, err := tbclient.NewSession().ListObjectStorageIDs(nsId)
+	result, err := tbclient.NewSession().SetContext(ctx).ListObjectStorageIDs(nsId)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Msg("Failed to list object storage IDs")
 		return storagemodel.IdList{}, err
@@ -346,10 +347,10 @@ func ListObjectStorageIDs(nsId string) (storagemodel.IdList, error) {
 }
 
 // GetObjectStorage returns details of a specific migrated object storage.
-func GetObjectStorage(nsId, osId string) (storagemodel.ObjectStorageInfo, error) {
+func GetObjectStorage(ctx context.Context, nsId, osId string) (storagemodel.ObjectStorageInfo, error) {
 	log.Info().Str("nsId", nsId).Str("osId", osId).Msg("Getting object storage")
 
-	result, err := tbclient.NewSession().GetObjectStorage(nsId, osId)
+	result, err := tbclient.NewSession().SetContext(ctx).GetObjectStorage(nsId, osId)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to get object storage")
 		return storagemodel.ObjectStorageInfo{}, err
@@ -360,10 +361,10 @@ func GetObjectStorage(nsId, osId string) (storagemodel.ObjectStorageInfo, error)
 }
 
 // ExistObjectStorage checks whether a specific object storage exists.
-func ExistObjectStorage(nsId, osId string) (bool, error) {
+func ExistObjectStorage(ctx context.Context, nsId, osId string) (bool, error) {
 	log.Info().Str("nsId", nsId).Str("osId", osId).Msg("Checking object storage existence")
 
-	exists, err := tbclient.NewSession().ExistObjectStorage(nsId, osId)
+	exists, err := tbclient.NewSession().SetContext(ctx).ExistObjectStorage(nsId, osId)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to check object storage existence")
 		return false, err
@@ -375,10 +376,10 @@ func ExistObjectStorage(nsId, osId string) (bool, error) {
 
 // DeleteObjectStorage deletes or empties a specific object storage according to option.
 // Options: "" (standard delete), "empty" (empty objects only, keep bucket), "force" (empty and force-delete).
-func DeleteObjectStorage(nsId, osId, option string) error {
+func DeleteObjectStorage(ctx context.Context, nsId, osId, option string) error {
 	log.Info().Str("nsId", nsId).Str("osId", osId).Str("option", option).Msg("Deleting object storage")
 
-	err := tbclient.NewSession().DeleteObjectStorage(nsId, osId, option)
+	err := tbclient.NewSession().SetContext(ctx).DeleteObjectStorage(nsId, osId, option)
 	if err != nil {
 		if option != "empty" && isNotFoundErr(err) {
 			log.Info().Str("nsId", nsId).Str("osId", osId).Msg("Object storage not found; treating as already deleted")
@@ -397,10 +398,10 @@ func DeleteObjectStorage(nsId, osId, option string) error {
 }
 
 // ListObjectStorageObjects returns the list of objects stored in a specific object storage bucket.
-func ListObjectStorageObjects(nsId, osId string) (StorageObjectListResponse, error) {
+func ListObjectStorageObjects(ctx context.Context, nsId, osId string) (StorageObjectListResponse, error) {
 	log.Info().Str("nsId", nsId).Str("osId", osId).Msg("Listing objects in object storage")
 
-	result, err := tbclient.NewSession().ListObjectStorageObjects(nsId, osId)
+	result, err := tbclient.NewSession().SetContext(ctx).ListObjectStorageObjects(nsId, osId)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to list objects in object storage")
 		return StorageObjectListResponse{}, err
@@ -428,10 +429,10 @@ func ListObjectStorageObjects(nsId, osId string) (StorageObjectListResponse, err
 }
 
 // GetStorageObject retrieves metadata of a specific object from an object storage bucket.
-func GetStorageObject(nsId, osId, objectKey string) (StorageObjectMetadata, error) {
+func GetStorageObject(ctx context.Context, nsId, osId, objectKey string) (StorageObjectMetadata, error) {
 	log.Info().Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Getting object metadata")
 
-	obj, err := tbclient.NewSession().GetStorageObject(nsId, osId, objectKey)
+	obj, err := tbclient.NewSession().SetContext(ctx).GetStorageObject(nsId, osId, objectKey)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Failed to get object metadata")
 		return StorageObjectMetadata{}, err
@@ -450,10 +451,10 @@ func GetStorageObject(nsId, osId, objectKey string) (StorageObjectMetadata, erro
 }
 
 // DeleteStorageObject deletes a specific object from an object storage bucket.
-func DeleteStorageObject(nsId, osId, objectKey string) error {
+func DeleteStorageObject(ctx context.Context, nsId, osId, objectKey string) error {
 	log.Info().Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Deleting object from object storage")
 
-	if err := tbclient.NewSession().DeleteStorageObject(nsId, osId, objectKey); err != nil {
+	if err := tbclient.NewSession().SetContext(ctx).DeleteStorageObject(nsId, osId, objectKey); err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Failed to delete object")
 		return err
 	}

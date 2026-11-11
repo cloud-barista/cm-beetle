@@ -14,6 +14,7 @@ limitations under the License.
 package recommendation
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -36,7 +37,7 @@ import (
 // If NodeImageDesignation=false for the provider, "default" is returned for every group.
 // If arm64 designation is required but no ARM image is available in the curated list, an
 // error is returned so the limitation surfaces at recommendation time.
-func RecommendK8sNodeGroupImages(provider, region string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedOsImageList, error) {
+func RecommendK8sNodeGroupImages(ctx context.Context, provider, region string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedOsImageList, error) {
 
 	ret := cloudmodel.RecommendedOsImageList{}
 
@@ -45,7 +46,7 @@ func RecommendK8sNodeGroupImages(provider, region string, srcInfra onpremmodel.O
 		return ret, fmt.Errorf("no worker nodes found in source infra (nodes with role=worker are required)")
 	}
 
-	profile := getTargetProfile(provider, region)
+	profile := getTargetProfile(ctx, provider, region)
 
 	for i, g := range groupWorkersByArch(workers) {
 		members := machineIdsOf(g.nodes)

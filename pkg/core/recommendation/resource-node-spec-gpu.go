@@ -1,6 +1,7 @@
 package recommendation
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"sort"
@@ -513,6 +514,7 @@ func rightSizeUpGpuCount(count uint32) uint32 {
 // It executes a targeted, single-shot query with discrete VRAM and topology right-sizing up,
 // followed by multi-dimensional proximity ranking (Vendor > Count > VRAM > Model > Host L1 > Cost).
 func recommendGpuNodeSpec(
+	ctx context.Context,
 	csp string,
 	region string,
 	node onpremmodel.NodeProperty,
@@ -592,7 +594,7 @@ func recommendGpuNodeSpec(
 		Str("architecture", architecture).
 		Msg("Querying Tumblebug for GPU node spec recommendations")
 
-	rawSpecs, err := tbclient.NewSession().InfraRecommendSpec(plan)
+	rawSpecs, err := tbclient.NewSession().SetContext(ctx).InfraRecommendSpec(plan)
 	if err != nil {
 		log.Error().Err(err).
 			Str("machineId", node.MachineId).

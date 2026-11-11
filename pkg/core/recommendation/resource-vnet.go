@@ -1,6 +1,7 @@
 package recommendation
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"net"
@@ -36,13 +37,13 @@ func buildDefaultVNet(csp, region string) cloudmodel.VNetReq {
 }
 
 // RecommendVNet recommends virtual network configurations based on source infrastructure
-func RecommendVNet(csp string, region string, srcInfra onpremmodel.OnpremInfra) ([]cloudmodel.VNetReq, error) {
+func RecommendVNet(ctx context.Context, csp string, region string, srcInfra onpremmodel.OnpremInfra) ([]cloudmodel.VNetReq, error) {
 
 	var emptyRes []cloudmodel.VNetReq
 	var recommendedVNets []cloudmodel.VNetReq
 
 	// [Input]
-	ok, err := IsValidCspAndRegion(csp, region)
+	ok, err := IsValidCspAndRegion(ctx, csp, region)
 	if !ok {
 		log.Error().Err(err).Msgf("invalid csp (%s) or region (%s)", csp, region)
 		return emptyRes, err

@@ -15,6 +15,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -114,8 +115,8 @@ func MigrateRDBMS(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() (map[string]any, error) {
-			if err := migration.CreateRDBMS(nsId, req.RecommendedRDBMS, nameSeed); err != nil {
+		started := common.RunAsync(c.Request().Context(), reqID, func(ctx context.Context) (map[string]any, error) {
+			if err := migration.CreateRDBMS(ctx, nsId, req.RecommendedRDBMS, nameSeed); err != nil {
 				return nil, err
 			}
 			return map[string]any{"message": "Managed RDBMS instances created successfully"}, nil
@@ -135,7 +136,7 @@ func MigrateRDBMS(c echo.Context) error {
 			"Managed RDBMS migration started. Use GET /request/{reqId} to check status."))
 	}
 
-	if err := migration.CreateRDBMS(nsId, req.RecommendedRDBMS, nameSeed); err != nil {
+	if err := migration.CreateRDBMS(c.Request().Context(), nsId, req.RecommendedRDBMS, nameSeed); err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
 			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
@@ -177,7 +178,7 @@ func ValidateMigrateRDBMS(c echo.Context) error {
 	}
 
 	req.AutoFillDefaults = false
-	validated, err := recommendation.ValidateRDBMS(nsId, req)
+	validated, err := recommendation.ValidateRDBMS(c.Request().Context(), nsId, req)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to validate RDBMS configuration")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(fmt.Sprintf("Validation failed: %v", err)))
@@ -204,7 +205,7 @@ func ListRDBMS(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId required"))
 	}
 
-	res, err := migration.ListRDBMS(nsId)
+	res, err := migration.ListRDBMS(c.Request().Context(), nsId)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Msg("Failed to list managed RDBMS instances")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
@@ -233,7 +234,7 @@ func GetRDBMS(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId and rdbmsId required"))
 	}
 
-	res, err := migration.GetRDBMS(nsId, rdbmsId)
+	res, err := migration.GetRDBMS(c.Request().Context(), nsId, rdbmsId)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to get managed RDBMS details")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
@@ -265,7 +266,7 @@ func DeleteRDBMS(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId and rdbmsId required"))
 	}
 
-	if err := migration.DeleteRDBMS(nsId, rdbmsId, option); err != nil {
+	if err := migration.DeleteRDBMS(c.Request().Context(), nsId, rdbmsId, option); err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to delete managed RDBMS instance")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
@@ -311,7 +312,7 @@ func CreateRDBMSDatabase(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
-	if err := migration.CreateRDBMSDatabase(nsId, rdbmsId, adminUser, adminPass, req); err != nil {
+	if err := migration.CreateRDBMSDatabase(c.Request().Context(), nsId, rdbmsId, adminUser, adminPass, req); err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to create logical database")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
@@ -347,7 +348,7 @@ func ListRDBMSDatabases(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("X-Admin-User-Name and X-Admin-User-Password headers required"))
 	}
 
-	res, err := migration.ListRDBMSDatabases(nsId, rdbmsId, adminUser, adminPass)
+	res, err := migration.ListRDBMSDatabases(c.Request().Context(), nsId, rdbmsId, adminUser, adminPass)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to list logical databases")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
@@ -386,8 +387,8 @@ func DeleteRDBMSDatabase(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("X-Admin-User-Name and X-Admin-User-Password headers required"))
 	}
 
-	if err := migration.DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminUser, adminPass); err != nil {
-		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Str("dbName", dbName).Msg("Failed to delete logical database")
+	if err := migration.DeleteRDBMSDatabase(c.Request().Context(), nsId, rdbmsId, dbName, adminUser, adminPass); err != nil {
+		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to delete logical database")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
 
@@ -422,7 +423,7 @@ func GetRDBMSSecureTransport(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("X-Admin-User-Name and X-Admin-User-Password headers required"))
 	}
 
-	res, err := migration.GetRDBMSSecureTransport(nsId, rdbmsId, adminUser, adminPass)
+	res, err := migration.GetRDBMSSecureTransport(c.Request().Context(), nsId, rdbmsId, adminUser, adminPass)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to get secure transport info")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))

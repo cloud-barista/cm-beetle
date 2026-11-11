@@ -15,6 +15,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -188,7 +189,7 @@ func MigrateData(c echo.Context) error {
 
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
-		started := common.RunAsync(reqID, func() (transx.MigrationResult, error) {
+		started := common.RunAsync(c.Request().Context(), reqID, func(_ context.Context) (transx.MigrationResult, error) {
 			return runDataMigration(*req)
 		})
 		if !started {

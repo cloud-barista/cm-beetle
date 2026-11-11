@@ -16,12 +16,15 @@ package tbclient
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 )
 
@@ -187,12 +190,32 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 		}
 	}
 
+	// Inject upstream correlation headers and track mutating/recommendation sub-requests.
+	parentReqID := common.RequestIDFromContext(req.Context())
+	var subSeq uint64
+	if parentReqID != "" {
+		if req.Header.Get("X-Request-Source") == "" {
+			req.Header.Set("X-Request-Source", common.FormatTumblebugSource(parentReqID))
+		}
+		if shouldTrackSubRequest(method, req.URL.Path) {
+			targetPath, resourceType, resourceHint := extractSubRequestTarget(req.URL.Path, bodyBytes)
+			subReqID, seq := common.StartSubRequest(parentReqID, method, targetPath, resourceType, resourceHint)
+			if subReqID != "" {
+				req.Header.Set("X-Request-Id", subReqID)
+				subSeq = seq
+			}
+		}
+	}
+
 	// Execute Request
 	start := time.Now()
 	resp, err := transport.RoundTrip(req)
 	duration := time.Since(start)
 
 	if err != nil {
+		if subSeq > 0 {
+			common.FinishSubRequest(parentReqID, subSeq, 0, err.Error())
+		}
 		if method == "GET" {
 			requestDone(requestKey)
 			recordCircuitBreakerFailure(requestKey)
@@ -204,12 +227,18 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 	// Read response body for caching and logging
 	respBodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
+		if subSeq > 0 {
+			common.FinishSubRequest(parentReqID, subSeq, resp.StatusCode, err.Error())
+		}
 		return nil, err
 	}
 	resp.Body.Close()
 	resp.Body = io.NopCloser(bytes.NewBuffer(respBodyBytes))
 
 	if resp.StatusCode >= 400 {
+		if subSeq > 0 {
+			common.FinishSubRequest(parentReqID, subSeq, resp.StatusCode, extractUpstreamErrorSummary(respBodyBytes, resp.Status))
+		}
 		if method == "GET" {
 			requestDone(requestKey)
 			if resp.StatusCode != http.StatusNotFound {
@@ -223,6 +252,10 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 		}
 		// We still return the response so the caller can handle the error body
 		return resp, nil
+	}
+
+	if subSeq > 0 {
+		common.FinishSubRequest(parentReqID, subSeq, resp.StatusCode, "")
 	}
 
 	// Success
@@ -330,4 +363,142 @@ func requestDone(requestKey string) {
 	if currentCount > 0 {
 		clientRequestCounter.Store(requestKey, currentCount-1)
 	}
+}
+
+// shouldTrackSubRequest returns true for mutating or recommendation methods aligned with Tumblebug RequestMap.
+func shouldTrackSubRequest(method, urlPath string) bool {
+	switch method {
+	case http.MethodPost, http.MethodPut, http.MethodDelete:
+	default:
+		return false
+	}
+	normalized := strings.TrimPrefix(urlPath, "/tumblebug")
+	if normalized == "/readyz" || normalized == "/request" || strings.HasPrefix(normalized, "/request/") || normalized == "/requests" {
+		return false
+	}
+	return true
+}
+
+// extractSubRequestTarget derives normalized path, resource category, and name/id hint.
+func extractSubRequestTarget(urlPath string, bodyBytes []byte) (string, string, string) {
+	targetPath := strings.TrimPrefix(urlPath, "/tumblebug")
+	if targetPath == "" {
+		targetPath = "/"
+	}
+
+	var hint string
+	if len(bodyBytes) > 0 {
+		var meta struct {
+			Name string `json:"name"`
+			Id   string `json:"id"`
+		}
+		if err := json.Unmarshal(bodyBytes, &meta); err == nil {
+			if strings.TrimSpace(meta.Name) != "" {
+				hint = strings.TrimSpace(meta.Name)
+			} else if strings.TrimSpace(meta.Id) != "" {
+				hint = strings.TrimSpace(meta.Id)
+			}
+		}
+	}
+
+	parts := strings.Split(strings.Trim(targetPath, "/"), "/")
+	resourceType := classifySubRequestResource(parts)
+	if hint == "" {
+		hint = extractPathResourceHint(parts)
+	}
+	return targetPath, resourceType, hint
+}
+
+func classifySubRequestResource(parts []string) string {
+	if len(parts) == 0 || parts[0] == "" {
+		return ""
+	}
+	if parts[0] == "recommendSpec" {
+		return "recommendSpec"
+	}
+	if parts[0] == "k8sClusterRecommendNode" {
+		return "k8sNodeSpec"
+	}
+	if parts[0] == "reviewSpecImagePair" {
+		return "specImageReview"
+	}
+	if parts[0] == "ns" && len(parts) >= 3 {
+		switch parts[2] {
+		case "vNet":
+			return "vNet"
+		case "sshKey":
+			return "sshKey"
+		case "securityGroup":
+			return "securityGroup"
+		case "infra", "infraDynamic":
+			if len(parts) >= 5 && parts[4] == "nlb" {
+				return "nlb"
+			}
+			return "infra"
+		case "nlb":
+			return "nlb"
+		case "cmd":
+			return "remoteCommand"
+		case "k8sCluster":
+			for _, seg := range parts[3:] {
+				if seg == "k8sNodeGroup" {
+					return "k8sNodeGroup"
+				}
+			}
+			return "k8sCluster"
+		case "os", "objectStorage":
+			return "objectStorage"
+		case "resources":
+			if len(parts) >= 4 {
+				return parts[3]
+			}
+		default:
+			return parts[2]
+		}
+	}
+	return parts[len(parts)-1]
+}
+
+func extractPathResourceHint(parts []string) string {
+	if len(parts) >= 4 && parts[0] == "ns" {
+		if parts[2] == "resources" && len(parts) >= 5 {
+			return parts[4]
+		}
+		if parts[2] == "k8sCluster" && len(parts) >= 6 && parts[4] == "k8sNodeGroup" {
+			return parts[5]
+		}
+		if parts[2] != "resources" && parts[2] != "cmd" {
+			return parts[3]
+		}
+	}
+	return ""
+}
+
+func extractUpstreamErrorSummary(respBody []byte, fallbackStatus string) string {
+	if len(respBody) > 0 {
+		var msgObj struct {
+			Message string `json:"message"`
+			Error   string `json:"error"`
+		}
+		if err := json.Unmarshal(respBody, &msgObj); err == nil {
+			if strings.TrimSpace(msgObj.Error) != "" {
+				return truncateString(strings.TrimSpace(msgObj.Error), 512)
+			}
+			if strings.TrimSpace(msgObj.Message) != "" {
+				return truncateString(strings.TrimSpace(msgObj.Message), 512)
+			}
+		}
+		trimmed := strings.TrimSpace(string(respBody))
+		if trimmed != "" {
+			return truncateString(trimmed, 512)
+		}
+	}
+	return fallbackStatus
+}
+
+func truncateString(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
 }

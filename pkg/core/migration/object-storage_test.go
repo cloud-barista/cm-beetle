@@ -1,6 +1,7 @@
 package migration_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -108,7 +109,7 @@ func TestCreateObjectStorage_IndependentBucketsAndSupportLookup(t *testing.T) {
 			},
 		}
 
-		res, err := migration.CreateObjectStorage("mig01", req, "dev")
+		res, err := migration.CreateObjectStorage(context.Background(), "mig01", req, "dev")
 		require.NoError(t, err)
 		assert.Equal(t, "created", res.Status)
 		assert.Empty(t, res.Warnings)
@@ -166,7 +167,7 @@ func TestCreateObjectStorage_IndependentBucketsAndSupportLookup(t *testing.T) {
 			},
 		}
 
-		res, err := migration.CreateObjectStorage("mig01", req, "")
+		res, err := migration.CreateObjectStorage(context.Background(), "mig01", req, "")
 		require.NoError(t, err)
 		assert.Equal(t, "partial", res.Status)
 		require.Len(t, res.ObjectStorage, 1)
@@ -195,7 +196,7 @@ func TestCreateObjectStorage_IndependentBucketsAndSupportLookup(t *testing.T) {
 			},
 		}
 
-		res, err := migration.CreateObjectStorage("mig01", req, "")
+		res, err := migration.CreateObjectStorage(context.Background(), "mig01", req, "")
 		require.Error(t, err)
 		assert.Equal(t, "failed", res.Status)
 		assert.Contains(t, err.Error(), "409")
@@ -209,8 +210,8 @@ func TestDeleteObjectStorage_NotFoundSemantics(t *testing.T) {
 			_, _ = w.Write([]byte(`{"message":"not found"}`))
 		})
 
-		require.NoError(t, migration.DeleteObjectStorage("mig01", "os-01", ""))
-		require.NoError(t, migration.DeleteObjectStorage("mig01", "os-01", "force"))
+		require.NoError(t, migration.DeleteObjectStorage(context.Background(), "mig01", "os-01", ""))
+		require.NoError(t, migration.DeleteObjectStorage(context.Background(), "mig01", "os-01", "force"))
 	})
 
 	t.Run("Empty option propagates 404 error when bucket does not exist", func(t *testing.T) {
@@ -219,7 +220,7 @@ func TestDeleteObjectStorage_NotFoundSemantics(t *testing.T) {
 			_, _ = w.Write([]byte(`{"message":"object storage not found"}`))
 		})
 
-		err := migration.DeleteObjectStorage("mig01", "os-01", "empty")
+		err := migration.DeleteObjectStorage(context.Background(), "mig01", "os-01", "empty")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "404")
 	})
@@ -230,7 +231,7 @@ func TestDeleteObjectStorage_NotFoundSemantics(t *testing.T) {
 			_, _ = w.Write([]byte(`{"message":"internal failure on bucket os-404"}`))
 		})
 
-		err := migration.DeleteObjectStorage("mig01", "os-404", "")
+		err := migration.DeleteObjectStorage(context.Background(), "mig01", "os-404", "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "500")
 	})

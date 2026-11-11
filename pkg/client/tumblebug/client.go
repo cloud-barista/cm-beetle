@@ -199,8 +199,19 @@ func (s *Session) SetResult(res any) *Session {
 
 // SetContext sets the context for the request.
 func (s *Session) SetContext(ctx context.Context) *Session {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	s.req.SetContext(ctx)
 	return s
+}
+
+// Context returns the request context or context.Background() when unset.
+func (s *Session) Context() context.Context {
+	if s != nil && s.req != nil && s.req.Context() != nil {
+		return s.req.Context()
+	}
+	return context.Background()
 }
 
 // SetQueryParam sets a single query parameter.
@@ -262,11 +273,7 @@ func (s *Session) Head(url string) (*resty.Response, error) {
 
 // SetCacheDuration sets the cache duration for the request.
 func (s *Session) SetCacheDuration(d time.Duration) *Session {
-	ctx := s.req.Context()
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	s.req.SetContext(SetCacheDuration(ctx, d))
+	s.req.SetContext(SetCacheDuration(s.Context(), d))
 	return s
 }
 

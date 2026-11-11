@@ -15,6 +15,7 @@ limitations under the License.
 package report
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"strings"
@@ -26,7 +27,7 @@ import (
 )
 
 // GenerateK8sMigrationReport generates a comprehensive migration report for K8s infrastructure.
-func GenerateK8sMigrationReport(nsId, clusterId string, sourceInfra onpremmodel.OnpremInfra) (*K8sMigrationReport, error) {
+func GenerateK8sMigrationReport(ctx context.Context, nsId, clusterId string, sourceInfra onpremmodel.OnpremInfra) (*K8sMigrationReport, error) {
 	log.Info().Msgf("Generating K8s migration report (nsId: %s, clusterId: %s)", nsId, clusterId)
 
 	// Step 1: Generate source infrastructure summary
@@ -41,7 +42,7 @@ func GenerateK8sMigrationReport(nsId, clusterId string, sourceInfra onpremmodel.
 	}
 
 	// Step 2: Generate target K8s infrastructure summary
-	targetSummary, err := summary.GenerateTargetK8sInfraSummary(nsId, clusterId)
+	targetSummary, err := summary.GenerateTargetK8sInfraSummary(ctx, nsId, clusterId)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate target K8s infrastructure summary for report")
 		return nil, fmt.Errorf("failed to generate target K8s infrastructure summary: %w", err)

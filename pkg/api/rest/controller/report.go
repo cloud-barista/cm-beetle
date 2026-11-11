@@ -107,7 +107,7 @@ func GenerateMigrationReport(c echo.Context) error {
 		Str("download", download).
 		Msg("Generating migration report")
 
-	migrationReport, err := report.GenerateMigrationReport(nsId, infraId, req.OnpremiseInfraModel)
+	migrationReport, err := report.GenerateMigrationReport(c.Request().Context(), nsId, infraId, req.OnpremiseInfraModel)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate migration report")
 
@@ -233,7 +233,7 @@ func GenerateK8sMigrationReport(c echo.Context) error {
 		Str("download", download).
 		Msg("Generating K8s migration report")
 
-	k8sReport, err := report.GenerateK8sMigrationReport(nsId, clusterId, req.OnpremiseInfraModel)
+	k8sReport, err := report.GenerateK8sMigrationReport(c.Request().Context(), nsId, clusterId, req.OnpremiseInfraModel)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate K8s migration report")
 

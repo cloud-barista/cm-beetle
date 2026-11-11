@@ -74,7 +74,7 @@ func RecommendVNet(c echo.Context) error {
 	}
 
 	// [Process]
-	ret, err := recommendation.RecommendVNet(desiredProvider, desiredRegion, req.OnpremiseInfraModel)
+	ret, err := recommendation.RecommendVNet(c.Request().Context(), desiredProvider, desiredRegion, req.OnpremiseInfraModel)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -152,7 +152,7 @@ func RecommendSecurityGroups(c echo.Context) error {
 	}
 
 	// [Process]
-	ret, err := recommendation.RecommendSecurityGroups(desiredProvider, desiredRegion, req.OnpremiseInfraModel.Nodes)
+	ret, err := recommendation.RecommendSecurityGroups(c.Request().Context(), desiredProvider, desiredRegion, req.OnpremiseInfraModel.Nodes)
 	if err != nil {
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
 			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
@@ -258,7 +258,7 @@ func RecommendVmSpecs(c echo.Context) error {
 
 		specsLimit := recommendation.GetDefaultSpecsLimit()
 		// Recommend VM specs for the node
-		specList, count, err := recommendation.RecommendNodeSpecs(desiredProvider, desiredRegion, node, specsLimit)
+		specList, count, err := recommendation.RecommendNodeSpecs(c.Request().Context(), desiredProvider, desiredRegion, node, specsLimit)
 
 		// Handle errors and empty recommendations
 		if err != nil {
@@ -414,7 +414,7 @@ func RecommendVmOsImages(c echo.Context) error {
 	for i, node := range req.OnpremiseInfraModel.Nodes {
 
 		imagesLimit := recommendation.GetDefaultImagesLimit()
-		vmOsImageList, err := recommendation.RecommendVmOsImages(desiredProvider, desiredRegion, node, imagesLimit)
+		vmOsImageList, err := recommendation.RecommendVmOsImages(c.Request().Context(), desiredProvider, desiredRegion, node, imagesLimit)
 
 		// Handle errors and empty recommendations
 		if err != nil {
@@ -572,7 +572,7 @@ func RecommendK8sNodeGroupSpecs(c echo.Context) error {
 		log.Warn().Msg("desiredRegion is required")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
 	}
-	if ok, err := recommendation.IsValidCspAndRegion(reqt.Csp, reqt.Region); !ok {
+	if ok, err := recommendation.IsValidCspAndRegion(c.Request().Context(), reqt.Csp, reqt.Region); !ok {
 		log.Error().Err(err).Msg("failed to validate provider and region")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
 	}
@@ -581,7 +581,7 @@ func RecommendK8sNodeGroupSpecs(c echo.Context) error {
 	// The loop over node groups lives in the core: grouping produces an unexported type, so
 	// iterating here would mean exporting internal representation to the API layer.
 	recommendedSpecList, err := recommendation.RecommendK8sNodeGroupSpecs(
-		reqt.Csp, reqt.Region, reqt.OnpremiseInfraModel, limit)
+		c.Request().Context(), reqt.Csp, reqt.Region, reqt.OnpremiseInfraModel, limit)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend K8s worker node specs")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
@@ -641,14 +641,14 @@ func RecommendK8sNodeGroupImages(c echo.Context) error {
 		log.Warn().Msg("desiredRegion is required")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
 	}
-	if ok, err := recommendation.IsValidCspAndRegion(reqt.Csp, reqt.Region); !ok {
+	if ok, err := recommendation.IsValidCspAndRegion(c.Request().Context(), reqt.Csp, reqt.Region); !ok {
 		log.Error().Err(err).Msg("failed to validate provider and region")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
 	}
 
 	// [Process]
 	recommendedImageList, err := recommendation.RecommendK8sNodeGroupImages(
-		reqt.Csp, reqt.Region, reqt.OnpremiseInfraModel)
+		c.Request().Context(), reqt.Csp, reqt.Region, reqt.OnpremiseInfraModel)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend K8s worker node images")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))

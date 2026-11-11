@@ -14,6 +14,7 @@ limitations under the License.
 package validation
 
 import (
+	"context"
 	"fmt"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
@@ -73,8 +74,8 @@ func DeriveNetworkRequirements(nodeGroups []cloudmodel.CreateNodeGroupReq) []Net
 // CheckNetworkAvailability reports whether the required vNet and subnets already
 // exist, or - if not - whether vNetCreationReq carries enough data to create them.
 // It performs reads only; no resource is created or modified.
-func CheckNetworkAvailability(nsId string, netRequirement NetworkRequirement, vNetCreationReq cloudmodel.VNetReq) (needsCreate bool, issue *ValidationIssue) {
-	vNetInfo, err := tbclient.NewSession().ReadVNet(nsId, netRequirement.VNetId)
+func CheckNetworkAvailability(ctx context.Context, nsId string, netRequirement NetworkRequirement, vNetCreationReq cloudmodel.VNetReq) (needsCreate bool, issue *ValidationIssue) {
+	vNetInfo, err := tbclient.NewSession().SetContext(ctx).ReadVNet(nsId, netRequirement.VNetId)
 	vNetExists := err == nil && vNetInfo.Id != ""
 
 	// Existing by ID is not enough: Tumblebug only guarantees the ID is unique,
@@ -148,8 +149,8 @@ func DeriveSshKeyRequirements(nodeGroups []cloudmodel.CreateNodeGroupReq) []SshK
 // CheckSshKeyAvailability reports whether the required SSH key already exists,
 // or - if not - whether sshKeyCreationReq carries enough data to create it.
 // It performs reads only; no resource is created or modified.
-func CheckSshKeyAvailability(nsId string, sshKeyRequirement SshKeyRequirement, sshKeyCreationReq cloudmodel.SshKeyReq) (needsCreate bool, issue *ValidationIssue) {
-	sshKeyInfo, err := tbclient.NewSession().ReadSshKey(nsId, sshKeyRequirement.SshKeyId)
+func CheckSshKeyAvailability(ctx context.Context, nsId string, sshKeyRequirement SshKeyRequirement, sshKeyCreationReq cloudmodel.SshKeyReq) (needsCreate bool, issue *ValidationIssue) {
+	sshKeyInfo, err := tbclient.NewSession().SetContext(ctx).ReadSshKey(nsId, sshKeyRequirement.SshKeyId)
 	if err == nil && sshKeyInfo.Id != "" {
 		// Existing by ID is not enough: verify it was provisioned under the
 		// requested CSP/region (Tumblebug's ConnectionName), not just that an
@@ -209,8 +210,8 @@ func DeriveSecurityGroupRequirements(nodeGroups []cloudmodel.CreateNodeGroupReq)
 // exists, or - if not - whether sgCreationReqList carries enough data (a matching
 // entry with ConnectionName and VNetId resolvable) to create it.
 // It performs reads only; no resource is created or modified.
-func CheckSecurityGroupAvailability(nsId string, sgRequirement SecurityGroupRequirement, sgCreationReqList []cloudmodel.SecurityGroupReq) (needsCreate bool, issue *ValidationIssue) {
-	sgInfo, err := tbclient.NewSession().ReadSecurityGroup(nsId, sgRequirement.SecurityGroupId)
+func CheckSecurityGroupAvailability(ctx context.Context, nsId string, sgRequirement SecurityGroupRequirement, sgCreationReqList []cloudmodel.SecurityGroupReq) (needsCreate bool, issue *ValidationIssue) {
+	sgInfo, err := tbclient.NewSession().SetContext(ctx).ReadSecurityGroup(nsId, sgRequirement.SecurityGroupId)
 	if err == nil && sgInfo.Id != "" {
 		// Existing by ID is not enough: verify it was provisioned under the
 		// requested CSP/region (Tumblebug's ConnectionName), not just that a

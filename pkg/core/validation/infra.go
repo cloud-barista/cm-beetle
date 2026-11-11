@@ -14,6 +14,7 @@ limitations under the License.
 package validation
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -44,7 +45,7 @@ import (
 // All applicable checks run to completion and their issues are accumulated,
 // rather than stopping at the first failure, so a caller (e.g. a Portal UI) can
 // surface every problem found in a single call.
-func ValidateTargetInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra, useExisting bool) ValidationResult {
+func ValidateTargetInfra(ctx context.Context, nsId string, targetInfraModel *cloudmodel.RecommendedInfra, useExisting bool) ValidationResult {
 	if targetInfraModel == nil {
 		return newResult([]ValidationIssue{{
 			Code:     CodeRequiredFieldMissing,
@@ -73,23 +74,23 @@ func ValidateTargetInfra(nsId string, targetInfraModel *cloudmodel.RecommendedIn
 	// 2. Mode-specific required fields + resource existence/availability.
 	if useExisting {
 		issues = append(issues, validateNodeGroupIdsPresent(targetInfraModel.TargetInfra.NodeGroups)...)
-		issues = append(issues, checkAvailabilityForExisting(nsId, targetInfraModel)...)
+		issues = append(issues, checkAvailabilityForExisting(ctx, nsId, targetInfraModel)...)
 	} else {
 		issues = append(issues, validateFreshCreationNamesPresent(*targetInfraModel)...)
-		issues = append(issues, checkNotAlreadyExistsForFreshCreation(nsId, *targetInfraModel)...)
+		issues = append(issues, checkNotAlreadyExistsForFreshCreation(ctx, nsId, *targetInfraModel)...)
 	}
 
 	// 3. Spec/Image compatibility - required in both modes.
 	for i, ng := range targetInfraModel.TargetInfra.NodeGroups {
 		path := fmt.Sprintf("targetInfra.nodeGroups[%d]", i)
-		if issue := checkSpecImageCompatibility(ng, path); issue != nil {
+		if issue := checkSpecImageCompatibility(ctx, ng, path); issue != nil {
 			issues = append(issues, *issue)
 		}
 	}
 
 	// 4. Infra (MCI) name collision - must not already exist, regardless of mode.
 	if targetInfraModel.TargetInfra.Name != "" {
-		infraInfo, err := tbclient.NewSession().ReadInfra(nsId, targetInfraModel.TargetInfra.Name)
+		infraInfo, err := tbclient.NewSession().SetContext(ctx).ReadInfra(nsId, targetInfraModel.TargetInfra.Name)
 		if err == nil && infraInfo.Id != "" {
 			issues = append(issues, ValidationIssue{
 				Code:     CodeResourceAlreadyExists,
@@ -129,11 +130,11 @@ func validateFreshCreationNamesPresent(target cloudmodel.RecommendedInfra) []Val
 
 // checkNotAlreadyExistsForFreshCreation ensures the resources MigrateInfra is about
 // to create do not already exist in the namespace.
-func checkNotAlreadyExistsForFreshCreation(nsId string, target cloudmodel.RecommendedInfra) []ValidationIssue {
+func checkNotAlreadyExistsForFreshCreation(ctx context.Context, nsId string, target cloudmodel.RecommendedInfra) []ValidationIssue {
 	var issues []ValidationIssue
 
 	if target.TargetVNet.Name != "" {
-		if vNetInfo, err := tbclient.NewSession().ReadVNet(nsId, target.TargetVNet.Name); err == nil && vNetInfo.Id != "" {
+		if vNetInfo, err := tbclient.NewSession().SetContext(ctx).ReadVNet(nsId, target.TargetVNet.Name); err == nil && vNetInfo.Id != "" {
 			issues = append(issues, ValidationIssue{
 				Code: CodeResourceAlreadyExists, Severity: SeverityError, Path: "targetVNet.name",
 				Message: fmt.Sprintf("vNet '%s' already exists in namespace '%s'", target.TargetVNet.Name, nsId),
@@ -142,7 +143,7 @@ func checkNotAlreadyExistsForFreshCreation(nsId string, target cloudmodel.Recomm
 	}
 
 	if target.TargetSshKey.Name != "" {
-		if sshKeyInfo, err := tbclient.NewSession().ReadSshKey(nsId, target.TargetSshKey.Name); err == nil && sshKeyInfo.Id != "" {
+		if sshKeyInfo, err := tbclient.NewSession().SetContext(ctx).ReadSshKey(nsId, target.TargetSshKey.Name); err == nil && sshKeyInfo.Id != "" {
 			issues = append(issues, ValidationIssue{
 				Code: CodeResourceAlreadyExists, Severity: SeverityError, Path: "targetSshKey.name",
 				Message: fmt.Sprintf("SSH key '%s' already exists in namespace '%s'", target.TargetSshKey.Name, nsId),
@@ -154,7 +155,7 @@ func checkNotAlreadyExistsForFreshCreation(nsId string, target cloudmodel.Recomm
 		if sg.Name == "" {
 			continue
 		}
-		if sgInfo, err := tbclient.NewSession().ReadSecurityGroup(nsId, sg.Name); err == nil && sgInfo.Id != "" {
+		if sgInfo, err := tbclient.NewSession().SetContext(ctx).ReadSecurityGroup(nsId, sg.Name); err == nil && sgInfo.Id != "" {
 			issues = append(issues, ValidationIssue{
 				Code: CodeResourceAlreadyExists, Severity: SeverityError, Path: fmt.Sprintf("targetSecurityGroupList[%d].name", i),
 				Message: fmt.Sprintf("security group '%s' already exists in namespace '%s'", sg.Name, nsId),
@@ -188,21 +189,21 @@ func validateNodeGroupIdsPresent(nodeGroups []cloudmodel.CreateNodeGroupReq) []V
 // creating anything: it is an error only when a required resource is missing
 // AND the accompanying creation data needed to fall back to creating it is
 // also missing or invalid.
-func checkAvailabilityForExisting(nsId string, target *cloudmodel.RecommendedInfra) []ValidationIssue {
+func checkAvailabilityForExisting(ctx context.Context, nsId string, target *cloudmodel.RecommendedInfra) []ValidationIssue {
 	var issues []ValidationIssue
 
 	for _, netRequirement := range DeriveNetworkRequirements(target.TargetInfra.NodeGroups) {
-		if _, issue := CheckNetworkAvailability(nsId, netRequirement, target.TargetVNet); issue != nil {
+		if _, issue := CheckNetworkAvailability(ctx, nsId, netRequirement, target.TargetVNet); issue != nil {
 			issues = append(issues, *issue)
 		}
 	}
 	for _, sshKeyRequirement := range DeriveSshKeyRequirements(target.TargetInfra.NodeGroups) {
-		if _, issue := CheckSshKeyAvailability(nsId, sshKeyRequirement, target.TargetSshKey); issue != nil {
+		if _, issue := CheckSshKeyAvailability(ctx, nsId, sshKeyRequirement, target.TargetSshKey); issue != nil {
 			issues = append(issues, *issue)
 		}
 	}
 	for _, sgRequirement := range DeriveSecurityGroupRequirements(target.TargetInfra.NodeGroups) {
-		if _, issue := CheckSecurityGroupAvailability(nsId, sgRequirement, target.TargetSecurityGroupList); issue != nil {
+		if _, issue := CheckSecurityGroupAvailability(ctx, nsId, sgRequirement, target.TargetSecurityGroupList); issue != nil {
 			issues = append(issues, *issue)
 		}
 	}
@@ -212,7 +213,7 @@ func checkAvailabilityForExisting(nsId string, target *cloudmodel.RecommendedInf
 
 // checkSpecImageCompatibility validates that a NodeGroup's spec and image are
 // well-formed and compatible with each other on their CSP.
-func checkSpecImageCompatibility(ng cloudmodel.CreateNodeGroupReq, path string) *ValidationIssue {
+func checkSpecImageCompatibility(ctx context.Context, ng cloudmodel.CreateNodeGroupReq, path string) *ValidationIssue {
 	specId := strings.TrimSpace(ng.SpecId)
 	imageId := strings.TrimSpace(ng.ImageId)
 	connectionName := strings.TrimSpace(ng.ConnectionName)
@@ -236,7 +237,7 @@ func checkSpecImageCompatibility(ng cloudmodel.CreateNodeGroupReq, path string) 
 	}
 	csp := connectionParts[0]
 
-	specInfo, err := tbclient.NewSession().ReadVmSpec("system", specId)
+	specInfo, err := tbclient.NewSession().SetContext(ctx).ReadVmSpec("system", specId)
 	if err != nil {
 		return &ValidationIssue{
 			Code: CodeSpecOrImageLookupFailed, Severity: SeverityError, Path: path + ".specId",
@@ -250,7 +251,7 @@ func checkSpecImageCompatibility(ng cloudmodel.CreateNodeGroupReq, path string) 
 	if !strings.Contains(imageKey, "+") {
 		imageKey = fmt.Sprintf("%s+%s", csp, imageId)
 	}
-	imageInfo, err := tbclient.NewSession().ReadVmOsImage("system", imageKey)
+	imageInfo, err := tbclient.NewSession().SetContext(ctx).ReadVmOsImage("system", imageKey)
 	if err != nil {
 		return &ValidationIssue{
 			Code: CodeSpecOrImageLookupFailed, Severity: SeverityError, Path: path + ".imageId",

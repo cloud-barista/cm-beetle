@@ -15,6 +15,7 @@ limitations under the License.
 package migration
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -35,7 +36,7 @@ import (
 // All NLBs are attempted; individual failures are recorded in the result.
 // If useExisting is true (default) and an NLB with the same nodeGroupId already exists, it is reused.
 // (Tumblebug sets NLB Id = nodeGroupId, so GetNlb(nodeGroupId) is used for the existence check.)
-func CreateNlbs(nsId, infraId string, req cloudmodel.RecommendedNlb, useExisting bool) (cloudmodel.MigratedNlbResult, error) {
+func CreateNlbs(ctx context.Context, nsId, infraId string, req cloudmodel.RecommendedNlb, useExisting bool) (cloudmodel.MigratedNlbResult, error) {
 	log.Info().
 		Str("nsId", nsId).
 		Str("infraId", infraId).
@@ -65,7 +66,7 @@ func CreateNlbs(nsId, infraId string, req cloudmodel.RecommendedNlb, useExisting
 		// If useExisting is true, check if an NLB with the same nodeGroupId already exists and reuse it.
 		// Tumblebug sets NLB Id = nodeGroupId, so GetNlb(nodeGroupId) is the correct existence check.
 		if useExisting {
-			existingInfo, getErr := tbclient.NewSession().GetNlb(nsId, infraId, target.TargetGroup.NodeGroupId)
+			existingInfo, getErr := tbclient.NewSession().SetContext(ctx).GetNlb(nsId, infraId, target.TargetGroup.NodeGroupId)
 			if getErr == nil && existingInfo.Id != "" {
 				log.Info().
 					Str("nlbId", existingInfo.Id).
@@ -78,7 +79,7 @@ func CreateNlbs(nsId, infraId string, req cloudmodel.RecommendedNlb, useExisting
 
 		// NLB does not exist (or useExisting=false) — create it
 		tbReq := toTumblebugNLBReq(target)
-		info, err := tbclient.NewSession().CreateNlb(nsId, infraId, tbReq)
+		info, err := tbclient.NewSession().SetContext(ctx).CreateNlb(nsId, infraId, tbReq)
 		if err != nil {
 			msg := fmt.Sprintf("NLB[%d] (listenerPort=%s, nodeGroupId=%s): %v",
 				i, target.Listener.Port, target.TargetGroup.NodeGroupId, err)
@@ -129,10 +130,10 @@ func CreateNlbs(nsId, infraId string, req cloudmodel.RecommendedNlb, useExisting
 }
 
 // ListNlbs returns all NLBs in the specified infra.
-func ListNlbs(nsId, infraId string) ([]cloudmodel.NLBInfo, error) {
+func ListNlbs(ctx context.Context, nsId, infraId string) ([]cloudmodel.NLBInfo, error) {
 	log.Info().Str("nsId", nsId).Str("infraId", infraId).Msg("Listing NLBs")
 
-	resp, err := tbclient.NewSession().ListNlbs(nsId, infraId)
+	resp, err := tbclient.NewSession().SetContext(ctx).ListNlbs(nsId, infraId)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("infraId", infraId).Msg("Failed to list NLBs")
 		return nil, err
@@ -148,10 +149,10 @@ func ListNlbs(nsId, infraId string) ([]cloudmodel.NLBInfo, error) {
 }
 
 // GetNlb returns details of a specific NLB.
-func GetNlb(nsId, infraId, nlbId string) (cloudmodel.NLBInfo, error) {
+func GetNlb(ctx context.Context, nsId, infraId, nlbId string) (cloudmodel.NLBInfo, error) {
 	log.Info().Str("nsId", nsId).Str("infraId", infraId).Str("nlbId", nlbId).Msg("Getting NLB")
 
-	info, err := tbclient.NewSession().GetNlb(nsId, infraId, nlbId)
+	info, err := tbclient.NewSession().SetContext(ctx).GetNlb(nsId, infraId, nlbId)
 	if err != nil {
 		log.Error().Err(err).Str("nlbId", nlbId).Msg("Failed to get NLB")
 		return cloudmodel.NLBInfo{}, err
@@ -163,10 +164,10 @@ func GetNlb(nsId, infraId, nlbId string) (cloudmodel.NLBInfo, error) {
 
 // GetNlbHealth performs a live health check on NLB targets via CSP.
 // Unlike GetNlb (which returns cached state), this call reaches out to the CSP to get current health status.
-func GetNlbHealth(nsId, infraId, nlbId string) (cloudmodel.NLBInfo, error) {
+func GetNlbHealth(ctx context.Context, nsId, infraId, nlbId string) (cloudmodel.NLBInfo, error) {
 	log.Info().Str("nsId", nsId).Str("infraId", infraId).Str("nlbId", nlbId).Msg("Getting NLB health")
 
-	info, err := tbclient.NewSession().GetNlbHealth(nsId, infraId, nlbId)
+	info, err := tbclient.NewSession().SetContext(ctx).GetNlbHealth(nsId, infraId, nlbId)
 	if err != nil {
 		log.Error().Err(err).Str("nlbId", nlbId).Msg("Failed to get NLB health")
 		return cloudmodel.NLBInfo{}, err
@@ -177,10 +178,10 @@ func GetNlbHealth(nsId, infraId, nlbId string) (cloudmodel.NLBInfo, error) {
 }
 
 // DeleteNlb deletes a specific NLB. Treats 404 as already deleted (idempotent).
-func DeleteNlb(nsId, infraId, nlbId string) error {
+func DeleteNlb(ctx context.Context, nsId, infraId, nlbId string) error {
 	log.Info().Str("nsId", nsId).Str("infraId", infraId).Str("nlbId", nlbId).Msg("Deleting NLB")
 
-	err := tbclient.NewSession().DeleteNlb(nsId, infraId, nlbId)
+	err := tbclient.NewSession().SetContext(ctx).DeleteNlb(nsId, infraId, nlbId)
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			log.Info().Str("nlbId", nlbId).Msg("NLB not found; treating as already deleted")

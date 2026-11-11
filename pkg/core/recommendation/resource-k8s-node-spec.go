@@ -14,6 +14,7 @@ limitations under the License.
 package recommendation
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -38,7 +39,7 @@ const maxK8sSpecRangeWeight = 5
 //
 // Unlike RecommendK8sInfra, this does NOT require srcInfra.K8sCluster — spec recommendation only
 // needs worker nodes. Cluster info is a version-selection input, not a spec input.
-func RecommendK8sNodeGroupSpecs(provider, region string, srcInfra onpremmodel.OnpremInfra, limit int) (cloudmodel.RecommendedSpecList, error) {
+func RecommendK8sNodeGroupSpecs(ctx context.Context, provider, region string, srcInfra onpremmodel.OnpremInfra, limit int) (cloudmodel.RecommendedSpecList, error) {
 
 	ret := cloudmodel.RecommendedSpecList{}
 
@@ -54,7 +55,7 @@ func RecommendK8sNodeGroupSpecs(provider, region string, srcInfra onpremmodel.On
 
 	// Share the node group pipeline with RecommendK8sInfra so both APIs report the same breakdown
 	// for the same input. They used to derive groups independently, which let them disagree.
-	groups, failed := recommendNodeGroups(getTargetProfile(provider, region), normalizeWorkers(workers), specsLimit)
+	groups, failed := recommendNodeGroups(ctx, getTargetProfile(ctx, provider, region), normalizeWorkers(workers), specsLimit)
 	logExcludedWorkers(failed)
 
 	for i, g := range groups {
@@ -121,7 +122,7 @@ func RecommendK8sNodeGroupSpecs(provider, region string, srcInfra onpremmodel.On
 // The request goes to Tumblebug's K8s endpoint, whose validateK8sMinimumRequirements enforces the
 // K8s node minimums; the requirement's floor keeps the lower bounds at or above those minimums so
 // the request passes validation instead of being rejected.
-func RecommendK8sNodeSpecs(provider, region string, req workerRequirement, limit int) ([]cloudmodel.SpecInfo, error) {
+func RecommendK8sNodeSpecs(ctx context.Context, provider, region string, req workerRequirement, limit int) ([]cloudmodel.SpecInfo, error) {
 
 	if limit <= 0 {
 		limit = GetDefaultSpecsLimit()
@@ -160,7 +161,7 @@ func RecommendK8sNodeSpecs(provider, region string, req workerRequirement, limit
 			Str("arch", arch).Int("rangeWeight", rangeWeight).
 			Msg("Searching K8s worker specs")
 
-		found, err := tbclient.NewSession().K8sClusterRecommendNode(req)
+		found, err := tbclient.NewSession().SetContext(ctx).K8sClusterRecommendNode(req)
 		if err != nil {
 			return nil, fmt.Errorf("K8s worker spec search failed: %w", err)
 		}

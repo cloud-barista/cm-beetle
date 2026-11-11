@@ -1,6 +1,7 @@
 package recommendation
 
 import (
+	"context"
 	"testing"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
@@ -120,7 +121,7 @@ func TestBuildCaseBlueprints_Case0_PureCpu(t *testing.T) {
 	}
 	memberNodes := []onpremmodel.NodeProperty{nodeByMachineId["cpu-1"], nodeByMachineId["cpu-2"]}
 
-	bps, nlbs, sgs, err := buildCaseBlueprints("aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CasePureCpu, SizingPolicyRightSizeUp)
+	bps, nlbs, sgs, err := buildCaseBlueprints(context.Background(), "aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CasePureCpu, SizingPolicyRightSizeUp)
 	require.NoError(t, err)
 	require.Len(t, bps, 1)
 	require.Len(t, nlbs, 1)
@@ -158,7 +159,7 @@ func TestBuildCaseBlueprints_Case1_MixedCpuGpu(t *testing.T) {
 	memberNodes := []onpremmodel.NodeProperty{nodeByMachineId["cpu-1"], nodeByMachineId["gpu-1"]}
 
 	// Mode 1: rightSizeUp consolidates into 1 GPU NodeGroup (Size = 2) and 1 NLB
-	bps1, nlbs1, _, err1 := buildCaseBlueprints("aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseMixedCpuGpu, SizingPolicyRightSizeUp)
+	bps1, nlbs1, _, err1 := buildCaseBlueprints(context.Background(), "aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseMixedCpuGpu, SizingPolicyRightSizeUp)
 	require.NoError(t, err1)
 	require.Len(t, bps1, 1)
 	require.Len(t, nlbs1, 1)
@@ -167,7 +168,7 @@ func TestBuildCaseBlueprints_Case1_MixedCpuGpu(t *testing.T) {
 	assert.Equal(t, bps1[0].skeleton.Name, nlbs1[0].TargetGroup.NodeGroupId)
 
 	// Mode 2: dividing splits into 2 pairs of (NLB : NodeGroup)
-	bps2, nlbs2, _, err2 := buildCaseBlueprints("aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseMixedCpuGpu, SizingPolicyDividing)
+	bps2, nlbs2, _, err2 := buildCaseBlueprints(context.Background(), "aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseMixedCpuGpu, SizingPolicyDividing)
 	require.NoError(t, err2)
 	require.Len(t, bps2, 2)
 	require.Len(t, nlbs2, 2)
@@ -207,12 +208,12 @@ func TestBuildCaseBlueprints_Case2_CrossVendorGpu(t *testing.T) {
 	memberNodes := []onpremmodel.NodeProperty{nodeByMachineId["nvidia-1"], nodeByMachineId["amd-1"]}
 
 	// Mode 1: rightSizeUp MUST fail-fast with explicit error
-	_, _, _, err1 := buildCaseBlueprints("aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseCrossVendorGpu, SizingPolicyRightSizeUp)
+	_, _, _, err1 := buildCaseBlueprints(context.Background(), "aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseCrossVendorGpu, SizingPolicyRightSizeUp)
 	require.Error(t, err1)
 	assert.Contains(t, err1.Error(), "cross-vendor GPUs")
 
 	// Mode 2: dividing splits into 2 pairs of (NLB : NodeGroup)
-	bps2, nlbs2, _, err2 := buildCaseBlueprints("aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseCrossVendorGpu, SizingPolicyDividing)
+	bps2, nlbs2, _, err2 := buildCaseBlueprints(context.Background(), "aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseCrossVendorGpu, SizingPolicyDividing)
 	require.NoError(t, err2)
 	require.Len(t, bps2, 2)
 	require.Len(t, nlbs2, 2)
@@ -250,7 +251,7 @@ func TestBuildCaseBlueprints_Case3_HeteroGpuModel(t *testing.T) {
 	memberNodes := []onpremmodel.NodeProperty{nodeByMachineId["a100-40"], nodeByMachineId["a100-80"]}
 
 	// Mode 1: rightSizeUp creates 1 NodeGroup (Size = 2) and 1 NLB
-	bps1, nlbs1, _, err1 := buildCaseBlueprints("aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseHeteroGpuModel, SizingPolicyRightSizeUp)
+	bps1, nlbs1, _, err1 := buildCaseBlueprints(context.Background(), "aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseHeteroGpuModel, SizingPolicyRightSizeUp)
 	require.NoError(t, err1)
 	require.Len(t, bps1, 1)
 	require.Len(t, nlbs1, 1)
@@ -258,7 +259,7 @@ func TestBuildCaseBlueprints_Case3_HeteroGpuModel(t *testing.T) {
 	assert.Equal(t, bps1[0].skeleton.Name, nlbs1[0].TargetGroup.NodeGroupId)
 
 	// Mode 2: dividing creates 2 pairs of (NLB : NodeGroup)
-	bps2, nlbs2, _, err2 := buildCaseBlueprints("aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseHeteroGpuModel, SizingPolicyDividing)
+	bps2, nlbs2, _, err2 := buildCaseBlueprints(context.Background(), "aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseHeteroGpuModel, SizingPolicyDividing)
 	require.NoError(t, err2)
 	require.Len(t, bps2, 2)
 	require.Len(t, nlbs2, 2)
@@ -296,14 +297,14 @@ func TestBuildCaseBlueprints_Case4_HomoGpuModel(t *testing.T) {
 	memberNodes := []onpremmodel.NodeProperty{nodeByMachineId["a100-1"], nodeByMachineId["a100-2"]}
 
 	// Mode 1: rightSizeUp creates 1 NodeGroup and 1 NLB
-	bps1, nlbs1, _, err1 := buildCaseBlueprints("aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseHomoGpuModel, SizingPolicyRightSizeUp)
+	bps1, nlbs1, _, err1 := buildCaseBlueprints(context.Background(), "aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseHomoGpuModel, SizingPolicyRightSizeUp)
 	require.NoError(t, err1)
 	require.Len(t, bps1, 1)
 	require.Len(t, nlbs1, 1)
 	assert.Equal(t, 2, bps1[0].skeleton.NodeGroupSize)
 
 	// Mode 2: dividing also creates 1 NodeGroup and 1 NLB because models are already homogeneous
-	bps2, nlbs2, _, err2 := buildCaseBlueprints("aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseHomoGpuModel, SizingPolicyDividing)
+	bps2, nlbs2, _, err2 := buildCaseBlueprints(context.Background(), "aws", "us-east-1", "aws-us-east-1", "mig-subnet-01", skeleton, rnlb, memberNodes, nodeByMachineId, CaseHomoGpuModel, SizingPolicyDividing)
 	require.NoError(t, err2)
 	require.Len(t, bps2, 1)
 	require.Len(t, nlbs2, 1)

@@ -15,6 +15,7 @@ limitations under the License.
 package migration
 
 import (
+	"context"
 	"fmt"
 	"maps"
 	"strings"
@@ -50,23 +51,23 @@ type k8sClusterPrereqs struct {
 
 // rollback deletes the tracked resources in reverse creation order (SGs → SshKey → VNet).
 // Errors during rollback are logged as warnings but do not prevent subsequent deletions.
-func (p *k8sClusterPrereqs) rollback() {
+func (p *k8sClusterPrereqs) rollback(ctx context.Context) {
 	for i := len(p.sgIds) - 1; i >= 0; i-- {
-		if _, err := tbclient.NewSession().DeleteSecurityGroup(p.nsId, p.sgIds[i]); err != nil {
+		if _, err := tbclient.NewSession().SetContext(ctx).DeleteSecurityGroup(p.nsId, p.sgIds[i]); err != nil {
 			log.Warn().Err(err).Str("sgId", p.sgIds[i]).Msg("Rollback: failed to delete SecurityGroup")
 		} else {
 			log.Info().Str("sgId", p.sgIds[i]).Msg("Rollback: SecurityGroup deleted")
 		}
 	}
 	if p.sshKeyId != "" {
-		if _, err := tbclient.NewSession().DeleteSshKey(p.nsId, p.sshKeyId); err != nil {
+		if _, err := tbclient.NewSession().SetContext(ctx).DeleteSshKey(p.nsId, p.sshKeyId); err != nil {
 			log.Warn().Err(err).Str("sshKeyId", p.sshKeyId).Msg("Rollback: failed to delete SshKey")
 		} else {
 			log.Info().Str("sshKeyId", p.sshKeyId).Msg("Rollback: SshKey deleted")
 		}
 	}
 	if p.vNetId != "" {
-		if _, err := tbclient.NewSession().DeleteVNet(p.nsId, p.vNetId, "withSubnets"); err != nil {
+		if _, err := tbclient.NewSession().SetContext(ctx).DeleteVNet(p.nsId, p.vNetId, "withSubnets"); err != nil {
 			log.Warn().Err(err).Str("vNetId", p.vNetId).Msg("Rollback: failed to delete VNet")
 		} else {
 			log.Info().Str("vNetId", p.vNetId).Msg("Rollback: VNet deleted")
@@ -85,9 +86,9 @@ var cspRejectsCombinedIngressEgress = map[string]bool{csp.Tencent: true}
 // reject combined ingress/egress in one request, it creates with the inbound rules first, then
 // adds the outbound rules via a separate call. It returns the create error unchanged so callers
 // can still detect the "already exists" idempotency case.
-func (p *k8sClusterPrereqs) createSecurityGroup(provider string, sgReq tbmodel.SecurityGroupReq) (tbmodel.SecurityGroupInfo, error) {
+func (p *k8sClusterPrereqs) createSecurityGroup(ctx context.Context, provider string, sgReq tbmodel.SecurityGroupReq) (tbmodel.SecurityGroupInfo, error) {
 	if !cspRejectsCombinedIngressEgress[strings.ToLower(provider)] {
-		info, err := tbclient.NewSession().CreateSecurityGroup(p.nsId, sgReq, "")
+		info, err := tbclient.NewSession().SetContext(ctx).CreateSecurityGroup(p.nsId, sgReq, "")
 		if err != nil {
 			return info, err
 		}
@@ -98,13 +99,13 @@ func (p *k8sClusterPrereqs) createSecurityGroup(provider string, sgReq tbmodel.S
 	// Split path: create with inbound rules, then add outbound rules separately.
 	inbound, outbound := splitFirewallRulesByDirection(sgReq.FirewallRules)
 	sgReq.FirewallRules = &inbound
-	info, err := tbclient.NewSession().CreateSecurityGroup(p.nsId, sgReq, "")
+	info, err := tbclient.NewSession().SetContext(ctx).CreateSecurityGroup(p.nsId, sgReq, "")
 	if err != nil {
 		return info, err
 	}
 	p.sgIds = append(p.sgIds, info.Id) // track before adding outbound so rollback covers it
 	if len(outbound) > 0 {
-		if _, err := tbclient.NewSession().AddFirewallRules(p.nsId, info.Id, outbound); err != nil {
+		if _, err := tbclient.NewSession().SetContext(ctx).AddFirewallRules(p.nsId, info.Id, outbound); err != nil {
 			return info, fmt.Errorf("created SecurityGroup %s with inbound rules but failed to add outbound rules: %w", info.Id, err)
 		}
 	}
@@ -140,10 +141,10 @@ func splitFirewallRulesByDirection(rules *[]tbmodel.FirewallRuleReq) (inbound, o
 // up to maxAttempts times. It returns the latest cluster info regardless of the final status.
 // If the cluster does not become Active within the timeout, a non-nil error is returned together
 // with the last known cluster info so the caller can decide how to handle the partial state.
-func pollK8sClusterActive(nsId, clusterId string, maxAttempts int) (tbmodel.K8sClusterInfo, error) {
+func pollK8sClusterActive(ctx context.Context, nsId, clusterId string, maxAttempts int) (tbmodel.K8sClusterInfo, error) {
 	var clusterInfo tbmodel.K8sClusterInfo
 	for i := 0; i < maxAttempts; i++ {
-		updated, err := tbclient.NewSession().ReadK8sCluster(nsId, clusterId)
+		updated, err := tbclient.NewSession().SetContext(ctx).ReadK8sCluster(nsId, clusterId)
 		if err != nil {
 			log.Warn().Err(err).Int("attempt", i+1).Msg("Failed to poll cluster status; retrying")
 		} else {
@@ -161,11 +162,11 @@ func pollK8sClusterActive(nsId, clusterId string, maxAttempts int) (tbmodel.K8sC
 }
 
 // pollK8sNodeGroupsActive waits until all added node groups reach Active status and desired size.
-func pollK8sNodeGroupsActive(nsId, clusterId string, expectedNodeGroups []tbmodel.K8sNodeGroupReq, maxAttempts int) (tbmodel.K8sClusterInfo, error) {
+func pollK8sNodeGroupsActive(ctx context.Context, nsId, clusterId string, expectedNodeGroups []tbmodel.K8sNodeGroupReq, maxAttempts int) (tbmodel.K8sClusterInfo, error) {
 	var clusterInfo tbmodel.K8sClusterInfo
 	for i := 0; i < maxAttempts; i++ {
 		time.Sleep(15 * time.Second)
-		updated, err := tbclient.NewSession().ReadK8sCluster(nsId, clusterId)
+		updated, err := tbclient.NewSession().SetContext(ctx).ReadK8sCluster(nsId, clusterId)
 		if err != nil {
 			log.Warn().Err(err).Int("attempt", i+1).Msg("Failed to poll cluster node groups; retrying")
 			continue
@@ -207,9 +208,9 @@ const (
 // validateNodeGroupSpecs rejects node groups whose worker spec is below the minimum viable
 // size. It resolves each spec via Tumblebug so the check works on any request (not only ones
 // produced by this service's recommender).
-func validateNodeGroupSpecs(nodeGroups []cloudmodel.K8sNodeGroupReq) error {
+func validateNodeGroupSpecs(ctx context.Context, nodeGroups []cloudmodel.K8sNodeGroupReq) error {
 	for _, ng := range nodeGroups {
-		spec, err := tbclient.NewSession().ReadVmSpec("system", ng.SpecId)
+		spec, err := tbclient.NewSession().SetContext(ctx).ReadVmSpec("system", ng.SpecId)
 		if err != nil {
 			return fmt.Errorf("failed to look up spec %q for node group %q: %w", ng.SpecId, ng.Name, err)
 		}
@@ -246,7 +247,7 @@ func buildK8sClusterLabels(base map[string]string, migratedAt time.Time, lin ...
 //
 // Both paths poll until the cluster is Active before returning, ensuring a consistent response.
 // The cluster is labeled with the migration timestamp and, when given, the migration lineage.
-func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra, lin ...lineage.MigrationLineage) (tbmodel.K8sClusterInfo, error) {
+func CreateK8sInfra(ctx context.Context, nsId string, req *cloudmodel.RecommendedInfra, lin ...lineage.MigrationLineage) (tbmodel.K8sClusterInfo, error) {
 	log.Info().Str("nsId", nsId).Msg("Creating K8s infra")
 
 	emptyRet := tbmodel.K8sClusterInfo{}
@@ -260,14 +261,14 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra, lin ...lineag
 	connectionName := req.TargetK8sCluster.ConnectionName
 
 	// 1. Verify namespace exists
-	_, err := tbclient.NewSession().ReadNamespace(nsId)
+	_, err := tbclient.NewSession().SetContext(ctx).ReadNamespace(nsId)
 	if err != nil {
 		return emptyRet, fmt.Errorf("namespace not found (nsId: %s): %w", nsId, err)
 	}
 
 	// 1b. Reject node groups below the minimum viable worker spec before creating any resources.
 	// The recommender already floors specs; this guards against manually-crafted or stale requests.
-	if err := validateNodeGroupSpecs(req.TargetK8sCluster.K8sNodeGroupList); err != nil {
+	if err := validateNodeGroupSpecs(ctx, req.TargetK8sCluster.K8sNodeGroupList); err != nil {
 		return emptyRet, err
 	}
 
@@ -280,7 +281,7 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra, lin ...lineag
 	// An existing resource with the same name may belong to a different CSP/region, in which
 	// case reusing it would attach the cluster to the wrong cloud. The VM migration path guards
 	// against this with validation.Check*Availability; K8s uses the same gate.
-	if _, issue := validation.CheckNetworkAvailability(nsId, validation.NetworkRequirement{
+	if _, issue := validation.CheckNetworkAvailability(ctx, nsId, validation.NetworkRequirement{
 		VNetId:         req.TargetVNet.Name,
 		SubnetIds:      subnetNamesOf(req.TargetVNet),
 		ConnectionName: connectionName,
@@ -288,11 +289,11 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra, lin ...lineag
 		return emptyRet, fmt.Errorf("%s", issue.Message)
 	}
 
-	vNetInfo, err := tbclient.NewSession().CreateVNet(nsId, tbVNetReq)
+	vNetInfo, err := tbclient.NewSession().SetContext(ctx).CreateVNet(nsId, tbVNetReq)
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			log.Info().Str("vNetId", tbVNetReq.Name).Msg("VNet already exists, reading existing resource")
-			vNetInfo, err = tbclient.NewSession().ReadVNet(nsId, tbVNetReq.Name)
+			vNetInfo, err = tbclient.NewSession().SetContext(ctx).ReadVNet(nsId, tbVNetReq.Name)
 			if err != nil {
 				return emptyRet, fmt.Errorf("VNet already exists but failed to read it: %w", err)
 			}
@@ -313,29 +314,29 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra, lin ...lineag
 	// 3. Create SSH Key
 	tbSshKeyReq, err := modelconv.ConvertWithValidation[cloudmodel.SshKeyReq, tbmodel.SshKeyReq](req.TargetSshKey)
 	if err != nil {
-		prereqs.rollback()
+		prereqs.rollback(ctx)
 		return emptyRet, fmt.Errorf("failed to convert SshKey request: %w", err)
 	}
 
-	if _, issue := validation.CheckSshKeyAvailability(nsId, validation.SshKeyRequirement{
+	if _, issue := validation.CheckSshKeyAvailability(ctx, nsId, validation.SshKeyRequirement{
 		SshKeyId:       req.TargetSshKey.Name,
 		ConnectionName: connectionName,
 	}, req.TargetSshKey); issue != nil {
-		prereqs.rollback()
+		prereqs.rollback(ctx)
 		return emptyRet, fmt.Errorf("%s", issue.Message)
 	}
 
-	sshKeyInfo, err := tbclient.NewSession().CreateSshKey(nsId, tbSshKeyReq)
+	sshKeyInfo, err := tbclient.NewSession().SetContext(ctx).CreateSshKey(nsId, tbSshKeyReq)
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			log.Info().Str("sshKeyId", tbSshKeyReq.Name).Msg("SshKey already exists, reading existing resource")
-			sshKeyInfo, err = tbclient.NewSession().ReadSshKey(nsId, tbSshKeyReq.Name)
+			sshKeyInfo, err = tbclient.NewSession().SetContext(ctx).ReadSshKey(nsId, tbSshKeyReq.Name)
 			if err != nil {
-				prereqs.rollback()
+				prereqs.rollback(ctx)
 				return emptyRet, fmt.Errorf("SshKey already exists but failed to read it: %w", err)
 			}
 		} else {
-			prereqs.rollback()
+			prereqs.rollback(ctx)
 			return emptyRet, fmt.Errorf("failed to create SSH key: %w", err)
 		}
 	} else {
@@ -350,30 +351,30 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra, lin ...lineag
 
 		tbSgReq, err := modelconv.ConvertWithValidation[cloudmodel.SecurityGroupReq, tbmodel.SecurityGroupReq](sg)
 		if err != nil {
-			prereqs.rollback()
+			prereqs.rollback(ctx)
 			return emptyRet, fmt.Errorf("failed to convert SecurityGroup request: %w", err)
 		}
 
-		if _, issue := validation.CheckSecurityGroupAvailability(nsId, validation.SecurityGroupRequirement{
+		if _, issue := validation.CheckSecurityGroupAvailability(ctx, nsId, validation.SecurityGroupRequirement{
 			SecurityGroupId: sg.Name,
 			VNetId:          vNetInfo.Id,
 			ConnectionName:  connectionName,
 		}, req.TargetSecurityGroupList); issue != nil {
-			prereqs.rollback()
+			prereqs.rollback(ctx)
 			return emptyRet, fmt.Errorf("%s", issue.Message)
 		}
 
-		sgInfo, err := prereqs.createSecurityGroup(req.TargetCloud.Csp, tbSgReq)
+		sgInfo, err := prereqs.createSecurityGroup(ctx, req.TargetCloud.Csp, tbSgReq)
 		if err != nil {
 			if strings.Contains(err.Error(), "already exists") {
 				log.Info().Str("sgId", sg.Name).Msg("SecurityGroup already exists, reading existing resource")
-				sgInfo, err = tbclient.NewSession().ReadSecurityGroup(nsId, sg.Name)
+				sgInfo, err = tbclient.NewSession().SetContext(ctx).ReadSecurityGroup(nsId, sg.Name)
 				if err != nil {
-					prereqs.rollback()
+					prereqs.rollback(ctx)
 					return emptyRet, fmt.Errorf("SecurityGroup already exists but failed to read it: %w", err)
 				}
 			} else {
-				prereqs.rollback()
+				prereqs.rollback(ctx)
 				return emptyRet, fmt.Errorf("failed to create security group %s: %w", sg.Name, err)
 			}
 		}
@@ -385,7 +386,7 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra, lin ...lineag
 	// Some CSPs (Azure, GCP, NHN, NCP, IBM) require NodeGroups to be included in the
 	// cluster creation request. Others (AWS, Alibaba, Tencent) require separate addition.
 	provider := req.TargetCloud.Csp
-	nodeGroupsOnCreation, err := tbclient.NewSession().CheckK8sNodeGroupsOnCreation(provider)
+	nodeGroupsOnCreation, err := tbclient.NewSession().SetContext(ctx).CheckK8sNodeGroupsOnCreation(provider)
 	if err != nil {
 		log.Warn().Err(err).Str("provider", provider).
 			Msg("Failed to check nodeGroupsOnCreation; defaulting to separate NodeGroup creation")
@@ -429,9 +430,9 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra, lin ...lineag
 	}
 
 	// 7. Create K8s cluster.
-	clusterInfo, err := tbclient.NewSession().CreateK8sCluster(nsId, tbClusterReq)
+	clusterInfo, err := tbclient.NewSession().SetContext(ctx).CreateK8sCluster(nsId, tbClusterReq)
 	if err != nil {
-		prereqs.rollback()
+		prereqs.rollback(ctx)
 		return emptyRet, fmt.Errorf("failed to create K8s cluster: %w", err)
 	}
 	log.Info().Str("clusterId", clusterInfo.Id).Str("status", string(clusterInfo.Status)).Msg("K8s cluster created")
@@ -447,7 +448,7 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra, lin ...lineag
 	if string(clusterInfo.Status) != "Active" {
 		log.Info().Str("clusterId", clusterInfo.Id).Str("provider", provider).Msg("Waiting for K8s cluster to become Active")
 		var pollErr error
-		clusterInfo, pollErr = pollK8sClusterActive(nsId, clusterInfo.Id, maxPollAttempts)
+		clusterInfo, pollErr = pollK8sClusterActive(ctx, nsId, clusterInfo.Id, maxPollAttempts)
 		if pollErr != nil {
 			log.Warn().Err(pollErr).Str("clusterId", clusterInfo.Id).Msg("Cluster polling timed out; returning partial info")
 			return clusterInfo, pollErr
@@ -461,7 +462,7 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra, lin ...lineag
 	}
 
 	for _, tbNgReq := range tbNodeGroupReqs {
-		updatedClusterInfo, err := tbclient.NewSession().AddK8sNodeGroup(nsId, clusterInfo.Id, tbNgReq)
+		updatedClusterInfo, err := tbclient.NewSession().SetContext(ctx).AddK8sNodeGroup(nsId, clusterInfo.Id, tbNgReq)
 		if err != nil {
 			// K8s cluster already exists; return it so the caller knows which cluster to clean up if needed.
 			return clusterInfo, fmt.Errorf("K8s cluster %s created but node group %s failed — delete the cluster if worker nodes are not needed: %w", clusterInfo.Id, tbNgReq.Name, err)
@@ -472,7 +473,7 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra, lin ...lineag
 
 	// Wait until all separately added node groups become Active with matching desired size.
 	const maxNodeGroupPollAttempts = 40
-	if readyClusterInfo, err := pollK8sNodeGroupsActive(nsId, clusterInfo.Id, tbNodeGroupReqs, maxNodeGroupPollAttempts); err != nil {
+	if readyClusterInfo, err := pollK8sNodeGroupsActive(ctx, nsId, clusterInfo.Id, tbNodeGroupReqs, maxNodeGroupPollAttempts); err != nil {
 		log.Warn().Err(err).Str("clusterId", clusterInfo.Id).Msg("Node group polling timed out; returning cluster info")
 	} else {
 		clusterInfo = readyClusterInfo
@@ -483,8 +484,8 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra, lin ...lineag
 }
 
 // ListK8sClusters returns all K8s clusters in the namespace.
-func ListK8sClusters(nsId string) ([]tbmodel.K8sClusterInfo, error) {
-	list, err := tbclient.NewSession().ReadAllK8sClusters(nsId)
+func ListK8sClusters(ctx context.Context, nsId string) ([]tbmodel.K8sClusterInfo, error) {
+	list, err := tbclient.NewSession().SetContext(ctx).ReadAllK8sClusters(nsId)
 	if err != nil {
 		return nil, err
 	}
@@ -497,10 +498,10 @@ func ListK8sClusters(nsId string) ([]tbmodel.K8sClusterInfo, error) {
 // ListK8sClusterIds returns only the IDs of the K8s clusters in the namespace. Callers that
 // merely need to know which clusters exist should prefer this over ListK8sClusters, whose
 // cost grows with the cluster count because Tumblebug refreshes each one through Spider.
-func ListK8sClusterIds(nsId string) (cloudmodel.IdList, error) {
+func ListK8sClusterIds(ctx context.Context, nsId string) (cloudmodel.IdList, error) {
 	idList := cloudmodel.IdList{IdList: []string{}}
 
-	list, err := tbclient.NewSession().ReadK8sClusterIds(nsId)
+	list, err := tbclient.NewSession().SetContext(ctx).ReadK8sClusterIds(nsId)
 	if err != nil {
 		return idList, err
 	}
@@ -511,15 +512,15 @@ func ListK8sClusterIds(nsId string) (cloudmodel.IdList, error) {
 }
 
 // GetK8sCluster returns the K8s cluster info for the given ID.
-func GetK8sCluster(nsId, clusterId string) (tbmodel.K8sClusterInfo, error) {
-	return tbclient.NewSession().ReadK8sCluster(nsId, clusterId)
+func GetK8sCluster(ctx context.Context, nsId, clusterId string) (tbmodel.K8sClusterInfo, error) {
+	return tbclient.NewSession().SetContext(ctx).ReadK8sCluster(nsId, clusterId)
 }
 
 // DeleteK8sCluster deletes the K8s cluster after removing all node groups.
 // AWS EKS requires node groups to be deleted before the cluster can be deleted.
-func DeleteK8sCluster(nsId, clusterId string) error {
+func DeleteK8sCluster(ctx context.Context, nsId, clusterId string) error {
 	// Read the cluster to get its node groups.
-	clusterInfo, err := tbclient.NewSession().ReadK8sCluster(nsId, clusterId)
+	clusterInfo, err := tbclient.NewSession().SetContext(ctx).ReadK8sCluster(nsId, clusterId)
 	if err != nil {
 		return fmt.Errorf("failed to read K8s cluster before deletion: %w", err)
 	}
@@ -528,7 +529,7 @@ func DeleteK8sCluster(nsId, clusterId string) error {
 	// EKS rejects cluster deletion while nodegroups are in any state other than deleted.
 	for _, ng := range clusterInfo.K8sNodeGroupList {
 		log.Info().Str("clusterId", clusterId).Str("nodeGroup", ng.Id).Msg("Deleting node group before cluster")
-		if err := tbclient.NewSession().DeleteK8sNodeGroup(nsId, clusterId, ng.Id); err != nil {
+		if err := tbclient.NewSession().SetContext(ctx).DeleteK8sNodeGroup(nsId, clusterId, ng.Id); err != nil {
 			log.Warn().Err(err).Str("nodeGroup", ng.Id).Msg("Node group deletion failed (may already be gone); continuing")
 			continue
 		}
@@ -536,7 +537,7 @@ func DeleteK8sCluster(nsId, clusterId string) error {
 		const maxNgWait = 80 // 80 × 15 s = 20 min
 		for i := 0; i < maxNgWait; i++ {
 			time.Sleep(15 * time.Second)
-			updated, err := tbclient.NewSession().ReadK8sCluster(nsId, clusterId)
+			updated, err := tbclient.NewSession().SetContext(ctx).ReadK8sCluster(nsId, clusterId)
 			if err != nil {
 				break // cluster itself is gone; proceed to deletion
 			}
@@ -555,5 +556,5 @@ func DeleteK8sCluster(nsId, clusterId string) error {
 		}
 	}
 
-	return tbclient.NewSession().DeleteK8sCluster(nsId, clusterId)
+	return tbclient.NewSession().SetContext(ctx).DeleteK8sCluster(nsId, clusterId)
 }
