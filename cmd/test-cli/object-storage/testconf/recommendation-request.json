@@ -1,5 +1,4 @@
 {
-  "nameSeed": "my",
   "sourceObjectStorages": [
     {
       "bucketName": "source-bucket-01",

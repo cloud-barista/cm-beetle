@@ -8,6 +8,14 @@ type MigratedObjectStorageInfo = storagemodel.ObjectStorageInfo
 // MigratedObjectStorageListResponse is the list response for migrated object storages.
 type MigratedObjectStorageListResponse = storagemodel.ObjectStorageListResponse
 
+// MigratedObjectStorageResult represents the migration outcome for target object storages.
+type MigratedObjectStorageResult struct {
+	Status        string                           `json:"status"`             // "created", "partial", or "failed"
+	Description   string                           `json:"description"`        // Human-readable migration summary
+	Warnings      []string                         `json:"warnings,omitempty"` // Skipped or failed bucket or configuration details
+	ObjectStorage []storagemodel.ObjectStorageInfo `json:"objectStorage"`      // Provisioned object storage buckets
+}
+
 // StorageObjectInfo represents a single object in an object storage bucket.
 type StorageObjectInfo struct {
 	Key          string `json:"key"`                    // Object key (relative path within the bucket)

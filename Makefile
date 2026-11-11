@@ -141,6 +141,10 @@ test-os: ## Run the object storage migration test CLI for all CSP-Region pairs
 		cp cmd/test-cli/object-storage/testconf/template-test-config.yaml cmd/test-cli/object-storage/testconf/test-config.yaml; \
 		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
 	fi
+	@if [ ! -f cmd/test-cli/object-storage/testconf/auth-config.json ]; then \
+		cp cmd/test-cli/object-storage/testconf/template-auth-config.json cmd/test-cli/object-storage/testconf/auth-config.json; \
+		echo "Created testconf/auth-config.json from template. Edit credentials before running if authentication is enabled."; \
+	fi
 	@cd cmd/test-cli/object-storage && $(GO) run main.go -config testconf/test-config.yaml
 
 test-data: ## Run the data migration test CLI for all CSP-Region pairs

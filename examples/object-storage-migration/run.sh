@@ -24,10 +24,10 @@ echo "Recommendation saved to: ${SCRIPT_DIR}/object-storage-migration-request.js
 
 echo ""
 echo "=== [2] Provision target Object Storage (Bucket) with nameSeed='${NAME_SEED}' ==="
-curl -s -i -X POST "${BEETLE_URL}/migration/middleware/ns/${NS_ID}/objectStorage?nameSeed=${NAME_SEED}" \
+curl -s -X POST "${BEETLE_URL}/migration/middleware/ns/${NS_ID}/objectStorage?nameSeed=${NAME_SEED}" \
   -H "Content-Type: application/json" \
   -u "${AUTH}" \
-  -d @"${SCRIPT_DIR}/object-storage-migration-request.json"
+  -d @"${SCRIPT_DIR}/object-storage-migration-request.json" | jq .
 
 echo ""
 echo "=== [3] List migrated Object Storage Buckets in namespace '${NS_ID}' ==="
@@ -36,5 +36,7 @@ curl -s -X GET "${BEETLE_URL}/migration/middleware/ns/${NS_ID}/objectStorage" \
 
 echo ""
 echo "=== [4] Clean up (Delete test bucket '${NAME_SEED}-os-01') ==="
-echo "To delete the test bucket, run the following command:"
-echo "curl -s -X DELETE \"${BEETLE_URL}/migration/middleware/ns/${NS_ID}/objectStorage/${NAME_SEED}-os-01\" -u \"${AUTH}\""
+echo "To delete an empty test bucket (returns HTTP 204 No Content):"
+echo "  curl -i -X DELETE \"${BEETLE_URL}/migration/middleware/ns/${NS_ID}/objectStorage/${NAME_SEED}-os-01\" -u \"${AUTH}\""
+echo "To force-empty and delete a non-empty test bucket (returns HTTP 204 No Content):"
+echo "  curl -i -X DELETE \"${BEETLE_URL}/migration/middleware/ns/${NS_ID}/objectStorage/${NAME_SEED}-os-01?option=force\" -u \"${AUTH}\""

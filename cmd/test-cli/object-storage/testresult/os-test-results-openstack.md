@@ -7,17 +7,17 @@
 
 ### Environment
 
-- CM-Beetle: v0.5.2+ (1c7e6cd)
-- CB-Tumblebug: v0.12.19
+- CM-Beetle: v0.6.4+ (95cc61d)
+- CB-Tumblebug: v0.13.8
 - Target CSP: OPENSTACK
 - Target Region: regionone
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Name Seed: my
 - Test CLI: Custom automated testing tool
-- Test Date: June 24, 2026
-- Test Time: 19:47:21 KST
-- Test Execution: 2026-06-24 19:47:21 KST
+- Test Date: November 11, 2026
+- Test Time: 13:03:16 KST
+- Test Execution: 2026-11-11 13:03:16 KST
 
 ### Scenario
 
@@ -37,18 +37,18 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 5ms | Pass |
-| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 19.157s | Pass |
-| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 7ms | Pass |
-| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 40ms | Pass |
-| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 65ms | Pass |
-| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 6.382s | Pass |
+| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 3ms | Pass |
+| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 20.952s | Pass |
+| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 5ms | Pass |
+| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 72ms | Pass |
+| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 190ms | Pass |
+| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 6.871s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 30.661093607s
+**Total Duration**: 33.098707116s
 
-*Test executed on June 24, 2026 at 19:47:21 KST (2026-06-24 19:47:21 KST) using CM-Beetle automated test CLI*
+*Test executed on November 11, 2026 at 13:03:16 KST (2026-11-11 13:03:16 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -73,7 +73,10 @@
 
 ```json
 {
-  "nameSeed": "my",
+  "desiredCloud": {
+    "csp": "openstack",
+    "region": "regionone"
+  },
   "sourceObjectStorages": [
     {
       "bucketName": "source-bucket-01",
@@ -313,6 +316,132 @@
 - **Status**: ✅ **SUCCESS**
 - **Response**: Object storages created successfully
 
+**Response Body**:
+
+<details>
+  <summary> <ins>Click to see the response body</ins> </summary>
+
+```json
+{
+  "data": {
+    "description": "Successfully created 2 object storage(s)",
+    "objectStorage": [
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T04:03:20Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T04:03:20Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "openstack-regionone",
+          "credentialHolder": "admin",
+          "credentialName": "openstack",
+          "driverName": "openstack-driver-v1.0.so",
+          "providerName": "openstack",
+          "regionDetail": {
+            "description": "Korea Daejeon (Internal)",
+            "location": {
+              "display": "South Korea (Daejeon)",
+              "latitude": 36.3804,
+              "longitude": 127.365
+            },
+            "regionId": "RegionOne",
+            "regionName": "regionone",
+            "zones": [
+              "nova"
+            ]
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "RegionOne",
+            "assignedZone": "nova"
+          },
+          "regionZoneInfoName": "openstack-regionone",
+          "verified": true
+        },
+        "connectionName": "openstack-regionone",
+        "cspResourceId": "tboelfb4sdrrve9vuk3b",
+        "cspResourceName": "tboelfb4sdrrve9vuk3b",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-01",
+        "maxKeys": 1000,
+        "name": "my-os-01",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tboelfb4sdrrve9vuk3b"
+      },
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T04:03:21Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T04:03:21Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "openstack-regionone",
+          "credentialHolder": "admin",
+          "credentialName": "openstack",
+          "driverName": "openstack-driver-v1.0.so",
+          "providerName": "openstack",
+          "regionDetail": {
+            "description": "Korea Daejeon (Internal)",
+            "location": {
+              "display": "South Korea (Daejeon)",
+              "latitude": 36.3804,
+              "longitude": 127.365
+            },
+            "regionId": "RegionOne",
+            "regionName": "regionone",
+            "zones": [
+              "nova"
+            ]
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "RegionOne",
+            "assignedZone": "nova"
+          },
+          "regionZoneInfoName": "openstack-regionone",
+          "verified": true
+        },
+        "connectionName": "openstack-regionone",
+        "cspResourceId": "tbeuuhut0hmkev4cooek",
+        "cspResourceName": "tbeuuhut0hmkev4cooek",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-02",
+        "maxKeys": 1000,
+        "name": "my-os-02",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tbeuuhut0hmkev4cooek"
+      }
+    ],
+    "status": "created"
+  },
+  "message": "Successfully created 2 object storage(s)",
+  "success": true
+}
+```
+
+</details>
+
 ### Test Case 3: List object storages
 
 #### 3.1 API Request Information
@@ -331,7 +460,18 @@
 ```json
 {
   "data": {
-    "objectStorage": null
+    "objectStorage": [
+      {
+        "connectionName": "openstack-regionone",
+        "id": "my-os-01",
+        "name": "my-os-01"
+      },
+      {
+        "connectionName": "openstack-regionone",
+        "id": "my-os-02",
+        "name": "my-os-02"
+      }
+    ]
   },
   "success": true
 }
@@ -371,11 +511,57 @@
 ```json
 {
   "data": {
+    "conditions": [
+      {
+        "lastTransitionTime": "2026-11-11T04:03:20Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Ready"
+      },
+      {
+        "lastTransitionTime": "2026-11-11T04:03:20Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Synced"
+      }
+    ],
+    "connectionConfig": {
+      "configName": "openstack-regionone",
+      "credentialHolder": "admin",
+      "credentialName": "openstack",
+      "driverName": "openstack-driver-v1.0.so",
+      "providerName": "openstack",
+      "regionDetail": {
+        "description": "Korea Daejeon (Internal)",
+        "location": {
+          "display": "South Korea (Daejeon)",
+          "latitude": 36.3804,
+          "longitude": 127.365
+        },
+        "regionId": "RegionOne",
+        "regionName": "regionone",
+        "zones": [
+          "nova"
+        ]
+      },
+      "regionRepresentative": true,
+      "regionZoneInfo": {
+        "assignedRegion": "RegionOne",
+        "assignedZone": "nova"
+      },
+      "regionZoneInfoName": "openstack-regionone",
+      "verified": true
+    },
     "connectionName": "openstack-regionone",
+    "cspResourceId": "tboelfb4sdrrve9vuk3b",
+    "cspResourceName": "tboelfb4sdrrve9vuk3b",
     "description": "Created by CM-Beetle",
     "id": "my-os-01",
+    "maxKeys": 1000,
     "name": "my-os-01",
-    "status": "Available"
+    "resourceType": "objectStorage",
+    "status": "Available",
+    "uid": "tboelfb4sdrrve9vuk3b"
   },
   "success": true
 }

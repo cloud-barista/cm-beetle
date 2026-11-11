@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	storagemodel "github.com/cloud-barista/cm-beetle/imdl/storage-model"
@@ -50,19 +51,16 @@ type RecommendObjectStorageRequest struct {
 // RecommendObjectStorage godoc
 // @ID RecommendObjectStorage
 // @Summary Recommend an object storage for cloud migration
-// @Description Recommend an appropriate object storage for cloud migration
+// @Description Recommend an appropriate object storage configuration for cloud migration.
 // @Description
 // @Description [Note] `desiredCsp` and `desiredRegion` are required.
-// @Description - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
+// @Description - `desiredCsp` and `desiredRegion` can be provided via query parameters or `desiredCloud` in the request body.
+// @Description - Query parameters take precedence over `desiredCloud` values in the request body when both are set.
 // @Description
-// @Description - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
-// @Description
-// @Description [Note] The recommended bucket name uses a default pattern (`mig-bucket-01`, `mig-bucket-02`, ...).
-// @Description - Bucket names must be globally unique across all accounts in the target cloud provider.
-// @Description - CB-Tumblebug internally generates a uid and uses it as the actual bucket name in the cloud.
-// @Description - The `bucketName` field in the recommendation result represents the intended name, not the final cloud resource name.
-// @Description
-// @Description [Note] To apply a naming prefix, use the `nameSeed` query parameter on the migration API (`POST /migration/.../objectStorage?nameSeed=xxx`).
+// @Description [Note] The recommended bucket name uses the default base pattern (`os-01`, `os-02`, ...).
+// @Description - `bucketName` becomes the CB-Tumblebug `osId` (`name`) within the target namespace.
+// @Description - CB-Tumblebug internally generates a globally unique `uid` (`cspResourceName`) as the actual cloud bucket name.
+// @Description - To apply a deployment prefix via late binding, pass the `nameSeed` query parameter to `POST /migration/middleware/ns/{nsId}/objectStorage?nameSeed=xxx`.
 // @Description
 // @Tags [Recommendation] Managed Object Storage
 // @Accept json
@@ -77,33 +75,31 @@ type RecommendObjectStorageRequest struct {
 // @Router /recommendation/middleware/objectStorage [post]
 func RecommendObjectStorage(c echo.Context) error {
 
-	// [Input]
-	// Extract request body
+	// Extract request body.
 	var req RecommendObjectStorageRequest
 	if err := c.Bind(&req); err != nil {
 		log.Error().Err(err).Msg("Failed to bind request")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
-	// Get csp and region from query params (higher priority)
-	desiredCsp := c.QueryParam("desiredCsp")
-	desiredRegion := c.QueryParam("desiredRegion")
+	// Read desired CSP and region from query params first, falling back to request body.
+	desiredCsp := strings.ToLower(strings.TrimSpace(c.QueryParam("desiredCsp")))
+	desiredRegion := strings.TrimSpace(c.QueryParam("desiredRegion"))
 
-	// Fallback to request body if query params are not provided
 	if desiredCsp == "" {
-		desiredCsp = req.DesiredCloud.Csp
+		desiredCsp = strings.ToLower(strings.TrimSpace(req.DesiredCloud.Csp))
 	}
 	if desiredRegion == "" {
-		desiredRegion = req.DesiredCloud.Region
+		desiredRegion = strings.TrimSpace(req.DesiredCloud.Region)
 	}
 
-	// Validate required parameters
+	// Validate required target cloud parameters.
 	if desiredCsp == "" || desiredRegion == "" {
 		log.Warn().Msg("desiredCsp and desiredRegion are required (via query params or request body)")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("CSP and region required"))
 	}
 
-	// Validate source object storages
+	// Validate source object storages.
 	if len(req.SourceObjectStorages) == 0 {
 		log.Warn().Msg("At least one source object storage must be provided")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one source bucket required"))
@@ -115,8 +111,7 @@ func RecommendObjectStorage(c echo.Context) error {
 		Int("sourceBuckets", len(req.SourceObjectStorages)).
 		Msg("Processing object storage recommendation request")
 
-	// [Process]
-	// Fetch CSP feature support from Tumblebug
+	// Fetch CSP feature support from Tumblebug using normalized lowercase CSP name.
 	supportResp, err := tbclient.NewSession().GetObjectStorageSupport(desiredCsp)
 	if err != nil {
 		log.Warn().Err(err).Str("csp", desiredCsp).Msg("Failed to fetch CSP object storage support info; proceeding without support check")

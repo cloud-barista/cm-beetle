@@ -7,17 +7,17 @@
 
 ### Environment
 
-- CM-Beetle: v0.5.2+ (1c7e6cd)
-- CB-Tumblebug: v0.12.19
+- CM-Beetle: v0.6.4+ (95cc61d)
+- CB-Tumblebug: v0.13.8
 - Target CSP: ALIBABA
 - Target Region: ap-northeast-2
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Name Seed: my
 - Test CLI: Custom automated testing tool
-- Test Date: June 24, 2026
-- Test Time: 19:41:41 KST
-- Test Execution: 2026-06-24 19:41:41 KST
+- Test Date: November 11, 2026
+- Test Time: 12:58:50 KST
+- Test Execution: 2026-11-11 12:58:50 KST
 
 ### Scenario
 
@@ -37,18 +37,18 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 6ms | Pass |
-| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 23.31s | Pass |
-| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 8ms | Pass |
-| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 465ms | Pass |
-| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 529ms | Pass |
-| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 9.162s | Pass |
+| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 3ms | Pass |
+| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 23.539s | Pass |
+| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 16ms | Pass |
+| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 368ms | Pass |
+| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 457ms | Pass |
+| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 9.117s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 38.487483568s
+**Total Duration**: 38.506483799s
 
-*Test executed on June 24, 2026 at 19:41:41 KST (2026-06-24 19:41:41 KST) using CM-Beetle automated test CLI*
+*Test executed on November 11, 2026 at 12:58:50 KST (2026-11-11 12:58:50 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -73,7 +73,10 @@
 
 ```json
 {
-  "nameSeed": "my",
+  "desiredCloud": {
+    "csp": "alibaba",
+    "region": "ap-northeast-2"
+  },
   "sourceObjectStorages": [
     {
       "bucketName": "source-bucket-01",
@@ -307,6 +310,134 @@
 - **Status**: ✅ **SUCCESS**
 - **Response**: Object storages created successfully
 
+**Response Body**:
+
+<details>
+  <summary> <ins>Click to see the response body</ins> </summary>
+
+```json
+{
+  "data": {
+    "description": "Successfully created 2 object storage(s)",
+    "objectStorage": [
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T03:58:56Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T03:58:56Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "alibaba-ap-northeast-2",
+          "credentialHolder": "admin",
+          "credentialName": "alibaba",
+          "driverName": "alibaba-driver-v1.0.so",
+          "providerName": "alibaba",
+          "regionDetail": {
+            "description": "South Korea (Seoul)",
+            "location": {
+              "display": "South Korea (Seoul)",
+              "latitude": 37.36,
+              "longitude": 126.78
+            },
+            "regionId": "ap-northeast-2",
+            "regionName": "ap-northeast-2",
+            "zones": [
+              "ap-northeast-2a",
+              "ap-northeast-2b"
+            ]
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "ap-northeast-2",
+            "assignedZone": "ap-northeast-2a"
+          },
+          "regionZoneInfoName": "alibaba-ap-northeast-2",
+          "verified": true
+        },
+        "connectionName": "alibaba-ap-northeast-2",
+        "cspResourceId": "tbmhqo1jq0jrc2rmqfj3",
+        "cspResourceName": "tbmhqo1jq0jrc2rmqfj3",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-01",
+        "maxKeys": 1000,
+        "name": "my-os-01",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tbmhqo1jq0jrc2rmqfj3"
+      },
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T03:58:58Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T03:58:58Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "alibaba-ap-northeast-2",
+          "credentialHolder": "admin",
+          "credentialName": "alibaba",
+          "driverName": "alibaba-driver-v1.0.so",
+          "providerName": "alibaba",
+          "regionDetail": {
+            "description": "South Korea (Seoul)",
+            "location": {
+              "display": "South Korea (Seoul)",
+              "latitude": 37.36,
+              "longitude": 126.78
+            },
+            "regionId": "ap-northeast-2",
+            "regionName": "ap-northeast-2",
+            "zones": [
+              "ap-northeast-2a",
+              "ap-northeast-2b"
+            ]
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "ap-northeast-2",
+            "assignedZone": "ap-northeast-2a"
+          },
+          "regionZoneInfoName": "alibaba-ap-northeast-2",
+          "verified": true
+        },
+        "connectionName": "alibaba-ap-northeast-2",
+        "cspResourceId": "tbou39gd0qv8p8h6098h",
+        "cspResourceName": "tbou39gd0qv8p8h6098h",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-02",
+        "maxKeys": 1000,
+        "name": "my-os-02",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tbou39gd0qv8p8h6098h"
+      }
+    ],
+    "status": "created"
+  },
+  "message": "Successfully created 2 object storage(s)",
+  "success": true
+}
+```
+
+</details>
+
 ### Test Case 3: List object storages
 
 #### 3.1 API Request Information
@@ -325,7 +456,18 @@
 ```json
 {
   "data": {
-    "objectStorage": null
+    "objectStorage": [
+      {
+        "connectionName": "alibaba-ap-northeast-2",
+        "id": "my-os-01",
+        "name": "my-os-01"
+      },
+      {
+        "connectionName": "alibaba-ap-northeast-2",
+        "id": "my-os-02",
+        "name": "my-os-02"
+      }
+    ]
   },
   "success": true
 }
@@ -365,11 +507,58 @@
 ```json
 {
   "data": {
+    "conditions": [
+      {
+        "lastTransitionTime": "2026-11-11T03:58:56Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Ready"
+      },
+      {
+        "lastTransitionTime": "2026-11-11T03:58:56Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Synced"
+      }
+    ],
+    "connectionConfig": {
+      "configName": "alibaba-ap-northeast-2",
+      "credentialHolder": "admin",
+      "credentialName": "alibaba",
+      "driverName": "alibaba-driver-v1.0.so",
+      "providerName": "alibaba",
+      "regionDetail": {
+        "description": "South Korea (Seoul)",
+        "location": {
+          "display": "South Korea (Seoul)",
+          "latitude": 37.36,
+          "longitude": 126.78
+        },
+        "regionId": "ap-northeast-2",
+        "regionName": "ap-northeast-2",
+        "zones": [
+          "ap-northeast-2a",
+          "ap-northeast-2b"
+        ]
+      },
+      "regionRepresentative": true,
+      "regionZoneInfo": {
+        "assignedRegion": "ap-northeast-2",
+        "assignedZone": "ap-northeast-2a"
+      },
+      "regionZoneInfoName": "alibaba-ap-northeast-2",
+      "verified": true
+    },
     "connectionName": "alibaba-ap-northeast-2",
+    "cspResourceId": "tbmhqo1jq0jrc2rmqfj3",
+    "cspResourceName": "tbmhqo1jq0jrc2rmqfj3",
     "description": "Created by CM-Beetle",
     "id": "my-os-01",
+    "maxKeys": 1000,
     "name": "my-os-01",
-    "status": "Available"
+    "resourceType": "objectStorage",
+    "status": "Available",
+    "uid": "tbmhqo1jq0jrc2rmqfj3"
   },
   "success": true
 }

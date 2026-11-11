@@ -1073,7 +1073,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Migrate object storages to cloud based on recommendation results\n\n[Note]\n- This API creates object storages (buckets) in the target cloud within the specified namespace\n- Input should be the output from RecommendObjectStorage API\n- Connection name is automatically generated from CSP and region in the request body\n\n[Note] ` + "`" + `nameSeed` + "`" + ` enables dynamic naming via **Late Binding**.\n- If ` + "`" + `nameSeed` + "`" + ` query param is set (e.g., ` + "`" + `?nameSeed=my` + "`" + `), bucket names are prefixed at migration time: ` + "`" + `my-os-01` + "`" + `.\n- If ` + "`" + `nameSeed` + "`" + ` is omitted, bucket names are used as-is from the recommendation result.\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.",
+                "description": "Migrate object storages (buckets) to the target cloud based on recommendation results.\n\n[Provisioning \u0026 Partial Success Behavior]\n- Each bucket in ` + "`" + `targetObjectStorages` + "`" + ` is attempted independently (input should be the ` + "`" + `RecommendObjectStorage` + "`" + ` output).\n- Connection name is derived automatically from ` + "`" + `targetCloud.csp` + "`" + ` and ` + "`" + `targetCloud.region` + "`" + `.\n- If at least one bucket is created, returns ` + "`" + `201 Created` + "`" + ` with ` + "`" + `MigratedObjectStorageResult` + "`" + ` (` + "`" + `status: \"created\"` + "`" + ` when all buckets and Versioning/CORS settings succeed, or ` + "`" + `status: \"partial\"` + "`" + ` with ` + "`" + `warnings` + "`" + ` if any bucket or feature configuration was skipped or failed).\n- If all target buckets fail (for example, ` + "`" + `409 Conflict` + "`" + ` when a bucket with the same ` + "`" + `osId` + "`" + `/` + "`" + `name` + "`" + ` already exists in the namespace), the corresponding error status code is returned.\n\n[Late-Binding Naming (` + "`" + `nameSeed` + "`" + `)]\n- If ` + "`" + `nameSeed` + "`" + ` query param is set (e.g., ` + "`" + `?nameSeed=my` + "`" + `), bucket names are prefixed at migration time (` + "`" + `my-os-01` + "`" + `).\n- If ` + "`" + `nameSeed` + "`" + ` is omitted, bucket names from ` + "`" + `targetObjectStorages` + "`" + ` are used as-is.\n\n[Day-2 Operations Scope]\n- CM-Beetle covers target bucket provisioning, initial Versioning/CORS setup, and post-migration verification.\n- For post-creation configuration updates (CORS, Versioning), presigned URLs, or metadata reconcile/prune operations, use CB-Tumblebug (` + "`" + `/tumblebug/ns/{nsId}/resources/objectStorage/...` + "`" + `).\n\n[Async Mode]\n- Send header ` + "`" + `Prefer: respond-async` + "`" + ` to execute asynchronously (` + "`" + `202 Accepted` + "`" + ` with ` + "`" + `reqId` + "`" + `, then poll ` + "`" + `GET /request/{reqId}` + "`" + `).",
                 "consumes": [
                     "application/json"
                 ],
@@ -1096,7 +1096,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Optional prefix for bucket names (e.g., 'my' → 'my-os-01'). Applied at migration time.",
+                        "description": "Optional prefix for bucket names (e.g., 'my' -\u003e 'my-os-01'). Applied at migration time.",
                         "name": "nameSeed",
                         "in": "query"
                     },
@@ -1127,7 +1127,10 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created - Object storages created successfully"
+                        "description": "Created - Object storages provisioned (status: created or partial)",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-migration_MigratedObjectStorageResult"
+                        }
                     },
                     "202": {
                         "description": "Migration started asynchronously - use GET /request/{reqId} to check status",
@@ -1136,7 +1139,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request parameters",
+                        "description": "Invalid request parameters or cloud configuration",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Target namespace not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "409": {
+                        "description": "Object storage with the same name already exists in the namespace",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -1239,7 +1254,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a specific object storage (bucket).\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously (RFC 7240). Check progress via GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.\n\nDeletion behavior is controlled by the ` + "`" + `option` + "`" + ` query parameter (mutually exclusive):\n- (none): Standard delete — fails if the bucket is not empty.\n- ` + "`" + `empty` + "`" + `: Empty the bucket first, then delete.\n- ` + "`" + `force` + "`" + `: Force-delete with all contents (passed to Spider as force=true).\n- ` + "`" + `reconcile` + "`" + `: Remove only Tumblebug metadata without calling the CSP delete API.",
+                "description": "Delete a specific object storage (bucket) or empty all objects inside it.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously (RFC 7240). Check progress via ` + "`" + `GET /request/{reqId}` + "`" + `\n(status flow: Handling -\u003e Success / Error). Only the ` + "`" + `\"respond-async\"` + "`" + ` token is recognized.\n\nBehavior is controlled by the ` + "`" + `option` + "`" + ` query parameter (mutually exclusive):\n- (omitted): Standard delete (fails if the bucket is not empty; returns 204 if already deleted).\n- ` + "`" + `empty` + "`" + `: Empty all objects in the bucket while keeping the bucket itself (returns 404 if the bucket does not exist).\n- ` + "`" + `force` + "`" + `: Empty all objects and force-delete the bucket and its metadata (passed to Spider as ` + "`" + `force=true` + "`" + `; returns 204 if already deleted).",
                 "consumes": [
                     "application/json"
                 ],
@@ -1249,7 +1264,7 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Managed Object Storage"
                 ],
-                "summary": "Delete object storage (bucket)",
+                "summary": "Delete or empty object storage (bucket)",
                 "operationId": "DeleteObjectStorage",
                 "parameters": [
                     {
@@ -1270,11 +1285,10 @@ const docTemplate = `{
                     {
                         "enum": [
                             "empty",
-                            "force",
-                            "reconcile"
+                            "force"
                         ],
                         "type": "string",
-                        "description": "Delete option",
+                        "description": "Delete or empty option",
                         "name": "option",
                         "in": "query"
                     },
@@ -1283,7 +1297,7 @@ const docTemplate = `{
                             "respond-async"
                         ],
                         "type": "string",
-                        "description": "Set to 'respond-async' to run this deletion asynchronously (RFC 7240)",
+                        "description": "Set to 'respond-async' to run this operation asynchronously (RFC 7240)",
                         "name": "Prefer",
                         "in": "header"
                     },
@@ -1296,22 +1310,28 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "202": {
-                        "description": "Object storage deletion started asynchronously - use GET /request/{reqId} to check status",
+                        "description": "Operation started asynchronously - use GET /request/{reqId} to check status",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
                         }
                     },
                     "204": {
-                        "description": "Object storage deleted successfully (synchronous)"
+                        "description": "Object storage deleted (or emptied when option=empty) successfully"
                     },
                     "400": {
-                        "description": "Invalid request parameters",
+                        "description": "Invalid request parameters or unsupported option",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "404": {
-                        "description": "Object storage not found",
+                        "description": "Object storage not found (when option=empty)",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "409": {
+                        "description": "Bucket is not empty (use option=force to delete with contents)",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -1337,7 +1357,7 @@ const docTemplate = `{
                 }
             },
             "head": {
-                "description": "Check if a specific object storage (bucket) exists\n\n[Note]\n- Returns 200 OK if the bucket exists, 404 Not Found if it doesn't exist",
+                "description": "Check if a specific object storage (bucket) exists\n\n[Note]\n- Returns 200 OK if the bucket exists, 404 Not Found if it does not exist",
                 "consumes": [
                     "application/json"
                 ],
@@ -1411,7 +1431,7 @@ const docTemplate = `{
         },
         "/migration/middleware/ns/{nsId}/objectStorage/{osId}/object": {
             "get": {
-                "description": "List all objects stored in a specific object storage bucket by proxying Tumblebug GET /ns/{nsId}/resources/objectStorage/{osId}/object",
+                "description": "List objects stored in a specific object storage bucket for post-migration verification (proxies Tumblebug GET /ns/{nsId}/resources/objectStorage/{osId}/object).",
                 "consumes": [
                     "application/json"
                 ],
@@ -1488,7 +1508,7 @@ const docTemplate = `{
         },
         "/migration/middleware/ns/{nsId}/objectStorage/{osId}/object/{objectKey}": {
             "delete": {
-                "description": "Delete a specific object from an object storage bucket\nby proxying Tumblebug DELETE /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}.\nNote: URL-encode the objectKey if it contains slashes (e.g., folder%2Ffile.txt).",
+                "description": "Delete a specific object from an object storage bucket\nby proxying Tumblebug ` + "`" + `DELETE /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}` + "`" + `.\nNote: URL-encode ` + "`" + `objectKey` + "`" + ` when it contains slashes (e.g., ` + "`" + `folder%2Ffile.txt` + "`" + `).",
                 "consumes": [
                     "application/json"
                 ],
@@ -1567,7 +1587,7 @@ const docTemplate = `{
                 }
             },
             "head": {
-                "description": "Retrieve metadata (key, size, ETag, last-modified, storage class) of a specific object\nby proxying Tumblebug HEAD /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}.\nNote: URL-encode the objectKey if it contains slashes (e.g., folder%2Ffile.txt).",
+                "description": "Retrieve metadata of a specific object via HTTP response headers (` + "`" + `ETag` + "`" + `, ` + "`" + `Last-Modified` + "`" + `, ` + "`" + `Content-Length` + "`" + `, ` + "`" + `X-Storage-Class` + "`" + `)\nby proxying Tumblebug ` + "`" + `HEAD /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}` + "`" + `.\nNote: URL-encode ` + "`" + `objectKey` + "`" + ` when it contains slashes (e.g., ` + "`" + `folder%2Ffile.txt` + "`" + `).",
                 "consumes": [
                     "application/json"
                 ],
@@ -1611,9 +1631,24 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Object metadata retrieved",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-migration_StorageObjectMetadata"
+                        "description": "OK - Object metadata returned in response headers (ETag, Last-Modified, Content-Length, X-Storage-Class)",
+                        "headers": {
+                            "Content-Length": {
+                                "type": "string",
+                                "description": "Object size in bytes (when provided by upstream)"
+                            },
+                            "ETag": {
+                                "type": "string",
+                                "description": "Entity tag (content hash) of the object"
+                            },
+                            "Last-Modified": {
+                                "type": "string",
+                                "description": "Last modified timestamp of the object"
+                            },
+                            "X-Storage-Class": {
+                                "type": "string",
+                                "description": "Storage class of the object (when provided by upstream)"
+                            }
                         }
                     },
                     "400": {
@@ -2227,7 +2262,7 @@ const docTemplate = `{
         },
         "/migration/middleware/objectStorage/inspect": {
             "post": {
-                "description": "Deeply inspect and extract feature/usage metadata (totalSizeBytes, objectCount, versioning, encryption, CORS, policy, tags, creationDate) from selected cloud object storage buckets.\n\n[Note] Extracted fields strictly conform to Beetle's Recommendation API input specification (` + "`" + `SourceObjectStorage` + "`" + `).\n- Versioning: Extracted via ` + "`" + `GetBucketVersioning` + "`" + `. If versioning is disabled or error occurs, ` + "`" + `versioningEnabled` + "`" + ` is false.\n- Encryption: Extracted via ` + "`" + `GetBucketEncryption` + "`" + `. If encryption rules are absent or error occurs, ` + "`" + `encryptionEnabled` + "`" + ` is false.\n- CORS: Extracted via ` + "`" + `GetBucketCors` + "`" + `. If CORS rules are absent or error occurs, ` + "`" + `corsEnabled` + "`" + ` is false and ` + "`" + `corsRule` + "`" + ` is nil.\n- Public Access: Extracted via ` + "`" + `GetBucketPolicy` + "`" + `. If wildcard public policy statement is detected, ` + "`" + `isPublic` + "`" + ` is true, otherwise false.\n- Tags: Extracted via ` + "`" + `GetBucketTagging` + "`" + `. If tags are not set, ` + "`" + `tags` + "`" + ` is nil/empty map.\n- CreationDate: Extracted via bucket listing creation timestamp formatted in RFC 3339 format.\n- AccessFrequency: Defaults to ` + "`" + `\"frequent\"` + "`" + ` (Standard storage tier baseline for recommendation).",
+                "description": "[WARNING - NON-PRODUCTION TEST HELPER] This endpoint is provided strictly for local testing, evaluation, and Beetle UX Lab prototyping.\nDo NOT send cloud credentials to this endpoint in production workflows; production clients must inspect source S3 buckets directly on the client side and submit the resulting ` + "`" + `SourceObjectStorage` + "`" + ` model to ` + "`" + `POST /recommendation/middleware/objectStorage` + "`" + `.\n\nDeeply inspects and extracts feature and usage metadata (totalSizeBytes, objectCount, versioning, encryption, CORS rules, policy, tags, creationDate) from selected buckets (supported CSPs: ` + "`" + `aws` + "`" + `, ` + "`" + `gcp` + "`" + `, ` + "`" + `alibaba` + "`" + `, ` + "`" + `tencent` + "`" + `, ` + "`" + `ibm` + "`" + `, ` + "`" + `ncp` + "`" + `).\n\n[Note] Extracted fields conform to Beetle's Recommendation API input specification (` + "`" + `SourceObjectStorage` + "`" + `):\n- Versioning: Extracted via ` + "`" + `GetBucketVersioning` + "`" + `. If disabled or unavailable, ` + "`" + `versioningEnabled` + "`" + ` is false.\n- Encryption: Extracted via ` + "`" + `GetBucketEncryption` + "`" + `. If rules are absent or unavailable, ` + "`" + `encryptionEnabled` + "`" + ` is false.\n- CORS: Extracted via ` + "`" + `GetBucketCors` + "`" + `. Active rules are mapped into ` + "`" + `corsRule` + "`" + `; otherwise ` + "`" + `corsEnabled` + "`" + ` is false and ` + "`" + `corsRule` + "`" + ` is nil.\n- Public Access: Extracted via ` + "`" + `GetBucketPolicy` + "`" + `. If a wildcard public principal statement is detected, ` + "`" + `isPublic` + "`" + ` is true.\n- Tags: Extracted via ` + "`" + `GetBucketTagging` + "`" + `.\n- CreationDate: Extracted via bucket listing creation timestamp formatted in RFC 3339.\n- AccessFrequency: Defaults to ` + "`" + `\"frequent\"` + "`" + ` (Standard storage tier baseline for recommendation).",
                 "consumes": [
                     "application/json"
                 ],
@@ -2235,9 +2270,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Minimal Test]"
+                    "[Test] Client Helper (Non-Production)"
                 ],
-                "summary": "(CM-Beetle) Collect deep metadata from selected source object storage buckets",
+                "summary": "[TEST ONLY] Collect deep metadata from selected source object storage buckets",
                 "operationId": "InspectObjectStorage",
                 "parameters": [
                     {
@@ -2264,7 +2299,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request parameters or missing credentials",
+                        "description": "Invalid request parameters, unsupported CSP, or missing credentials",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -2280,7 +2315,7 @@ const docTemplate = `{
         },
         "/migration/middleware/objectStorage/scan": {
             "post": {
-                "description": "Scan and list all object storage buckets in the specified cloud provider account using provided CSP access credentials via MinIO S3 SDK.",
+                "description": "[WARNING - NON-PRODUCTION TEST HELPER] This endpoint is provided strictly for local testing, evaluation, and Beetle UX Lab prototyping.\nDo NOT send cloud credentials to this endpoint in production workflows; production clients must scan S3 buckets directly on the client side.\n\nScans and lists object storage buckets in the specified cloud provider account and region via the MinIO S3 SDK (supported CSPs: ` + "`" + `aws` + "`" + `, ` + "`" + `gcp` + "`" + `, ` + "`" + `alibaba` + "`" + `, ` + "`" + `tencent` + "`" + `, ` + "`" + `ibm` + "`" + `, ` + "`" + `ncp` + "`" + `).",
                 "consumes": [
                     "application/json"
                 ],
@@ -2288,9 +2323,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Minimal Test]"
+                    "[Test] Client Helper (Non-Production)"
                 ],
-                "summary": "(CB-Tumblebug) Scan cloud account object storage buckets",
+                "summary": "[TEST ONLY] Scan cloud account object storage buckets",
                 "operationId": "ScanObjectStorage",
                 "parameters": [
                     {
@@ -2317,7 +2352,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request parameters or missing credentials",
+                        "description": "Invalid request parameters, unsupported CSP, or missing credentials",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -4056,7 +4091,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a specific migrated virtual network in the namespace. Action options: withsubnets (delete with subnets), reconcile (sync metadata with CSP state), force (force-delete on CSP)",
+                "description": "Delete a specific migrated virtual network in the namespace. Action options: withsubnets (delete with subnets), force (force-delete on CSP)",
                 "consumes": [
                     "application/json"
                 ],
@@ -4088,7 +4123,6 @@ const docTemplate = `{
                     {
                         "enum": [
                             "withsubnets",
-                            "reconcile",
                             "force"
                         ],
                         "type": "string",
@@ -4128,7 +4162,7 @@ const docTemplate = `{
         },
         "/migration/security/publicKey": {
             "get": {
-                "description": "Generate and return a one-time RSA public key bundle for encrypting sensitive CSP access credentials (accessKey, secretKey, tokens) before scanning or sending across web clients.",
+                "description": "[WARNING - NON-PRODUCTION TEST HELPER] This endpoint is provided strictly for local testing, evaluation, and Beetle UX Lab prototyping.\nDo NOT rely on this helper flow in production systems; production clients must discover source buckets client-side and encrypt data migration credentials via ` + "`" + `/migration/data/encryptionKey` + "`" + ` and the ` + "`" + `transx/fieldsec` + "`" + ` package.\n\nGenerates and returns a one-time RSA public key bundle for encrypting sensitive CSP access credentials before calling the test-only ` + "`" + `/scan` + "`" + ` or ` + "`" + `/inspect` + "`" + ` helper endpoints.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4136,9 +4170,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Minimal Test]"
+                    "[Test] Client Helper (Non-Production)"
                 ],
-                "summary": "(CM-Beetle) Get RSA public key for credential encryption",
+                "summary": "[TEST ONLY] Get RSA public key for credential encryption",
                 "operationId": "GetSecurityPublicKey",
                 "parameters": [
                     {
@@ -4783,7 +4817,7 @@ const docTemplate = `{
         },
         "/recommendation/middleware/objectStorage": {
             "post": {
-                "description": "Recommend an appropriate object storage for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.\n\n[Note] The recommended bucket name uses a default pattern (` + "`" + `mig-bucket-01` + "`" + `, ` + "`" + `mig-bucket-02` + "`" + `, ...).\n- Bucket names must be globally unique across all accounts in the target cloud provider.\n- CB-Tumblebug internally generates a uid and uses it as the actual bucket name in the cloud.\n- The ` + "`" + `bucketName` + "`" + ` field in the recommendation result represents the intended name, not the final cloud resource name.\n\n[Note] To apply a naming prefix, use the ` + "`" + `nameSeed` + "`" + ` query parameter on the migration API (` + "`" + `POST /migration/.../objectStorage?nameSeed=xxx` + "`" + `).\n",
+                "description": "Recommend an appropriate object storage configuration for cloud migration.\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can be provided via query parameters or ` + "`" + `desiredCloud` + "`" + ` in the request body.\n- Query parameters take precedence over ` + "`" + `desiredCloud` + "`" + ` values in the request body when both are set.\n\n[Note] The recommended bucket name uses the default base pattern (` + "`" + `os-01` + "`" + `, ` + "`" + `os-02` + "`" + `, ...).\n- ` + "`" + `bucketName` + "`" + ` becomes the CB-Tumblebug ` + "`" + `osId` + "`" + ` (` + "`" + `name` + "`" + `) within the target namespace.\n- CB-Tumblebug internally generates a globally unique ` + "`" + `uid` + "`" + ` (` + "`" + `cspResourceName` + "`" + `) as the actual cloud bucket name.\n- To apply a deployment prefix via late binding, pass the ` + "`" + `nameSeed` + "`" + ` query parameter to ` + "`" + `POST /migration/middleware/ns/{nsId}/objectStorage?nameSeed=xxx` + "`" + `.\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -10898,6 +10932,33 @@ const docTemplate = `{
                 "type": "string"
             }
         },
+        "migration.MigratedObjectStorageResult": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Human-readable migration summary",
+                    "type": "string"
+                },
+                "objectStorage": {
+                    "description": "Provisioned object storage buckets",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/storagemodel.ObjectStorageInfo"
+                    }
+                },
+                "status": {
+                    "description": "\"created\", \"partial\", or \"failed\"",
+                    "type": "string"
+                },
+                "warnings": {
+                    "description": "Skipped or failed bucket or configuration details",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "migration.StorageObjectInfo": {
             "type": "object",
             "properties": {
@@ -10939,31 +11000,6 @@ const docTemplate = `{
                 },
                 "osId": {
                     "description": "Object storage ID",
-                    "type": "string"
-                }
-            }
-        },
-        "migration.StorageObjectMetadata": {
-            "type": "object",
-            "properties": {
-                "eTag": {
-                    "description": "Entity tag (content hash)",
-                    "type": "string"
-                },
-                "key": {
-                    "description": "Object key",
-                    "type": "string"
-                },
-                "lastModified": {
-                    "description": "Last modified timestamp",
-                    "type": "string"
-                },
-                "size": {
-                    "description": "Size in bytes",
-                    "type": "integer"
-                },
-                "storageClass": {
-                    "description": "Storage class",
                     "type": "string"
                 }
             }
@@ -11658,14 +11694,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ApiResponse-migration_StorageObjectListResponse": {
+        "model.ApiResponse-migration_MigratedObjectStorageResult": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "Contains the actual response data (single object, list, or page)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/migration.StorageObjectListResponse"
+                            "$ref": "#/definitions/migration.MigratedObjectStorageResult"
                         }
                     ]
                 },
@@ -11686,14 +11722,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ApiResponse-migration_StorageObjectMetadata": {
+        "model.ApiResponse-migration_StorageObjectListResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "Contains the actual response data (single object, list, or page)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/migration.StorageObjectMetadata"
+                            "$ref": "#/definitions/migration.StorageObjectListResponse"
                         }
                     ]
                 },

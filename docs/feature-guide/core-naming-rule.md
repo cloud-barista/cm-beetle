@@ -2,17 +2,17 @@
 
 ## What is NameSeed?
 
-`nameSeed` is a short prefix that CM-Beetle applies to **all resource names at the moment of migration** — not during recommendation.
+`nameSeed` is a short prefix that CM-Beetle applies to **all resource names at the moment of migration**, not during recommendation.
 
 ```
-nameSeed=blue  +  base name vnet-01  →  blue-vnet-01
+nameSeed=blue  +  base name vnet-01  ->  blue-vnet-01
 ```
 
 It is passed exclusively as a **query parameter** on migration APIs:
 
 ```
 POST /beetle/migration/ns/{nsId}/infra?nameSeed=blue
-POST /beetle/migration/ns/{nsId}/objectStorage?nameSeed=blue
+POST /beetle/migration/middleware/ns/{nsId}/objectStorage?nameSeed=blue
 ```
 
 ---
@@ -38,7 +38,7 @@ Pinning a final deployment identity at the last moment keeps the model reusable 
 | A field in the request body                | It is a query parameter only                              |
 | Stored in the recommendation model         | The model always holds base names; seed is never persisted |
 | A resource ID or namespace                 | It is a pure name prefix                                  |
-| Required                                   | Optional — omitting it leaves base names unchanged        |
+| Required                                   | Optional: omitting it leaves base names unchanged         |
 
 ---
 
@@ -92,5 +92,5 @@ Use the **Preview** step to verify names before committing to resource creation.
 
 ## Related
 
-- [Align Names API Guide](../api-guide-align-names.md) — rename a resource and propagate references
-- [Object Storage Feature Guide](middleware-object-storage.md) — NameSeed usage for object storage
+- [Align Names API Guide](../api-guide-align-names.md) - rename a resource and propagate references
+- [Object Storage Feature Guide](middleware-object-storage.md) - NameSeed usage for object storage

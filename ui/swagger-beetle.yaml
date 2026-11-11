@@ -3246,6 +3246,25 @@ definitions:
     additionalProperties:
       type: string
     type: object
+  migration.MigratedObjectStorageResult:
+    properties:
+      description:
+        description: Human-readable migration summary
+        type: string
+      objectStorage:
+        description: Provisioned object storage buckets
+        items:
+          $ref: '#/definitions/storagemodel.ObjectStorageInfo'
+        type: array
+      status:
+        description: '"created", "partial", or "failed"'
+        type: string
+      warnings:
+        description: Skipped or failed bucket or configuration details
+        items:
+          type: string
+        type: array
+    type: object
   migration.StorageObjectInfo:
     properties:
       eTag:
@@ -3276,24 +3295,6 @@ definitions:
         type: array
       osId:
         description: Object storage ID
-        type: string
-    type: object
-  migration.StorageObjectMetadata:
-    properties:
-      eTag:
-        description: Entity tag (content hash)
-        type: string
-      key:
-        description: Object key
-        type: string
-      lastModified:
-        description: Last modified timestamp
-        type: string
-      size:
-        description: Size in bytes
-        type: integer
-      storageClass:
-        description: Storage class
         type: string
     type: object
   model.ApiResponse-any:
@@ -3774,11 +3775,11 @@ definitions:
         example: true
         type: boolean
     type: object
-  model.ApiResponse-migration_StorageObjectListResponse:
+  model.ApiResponse-migration_MigratedObjectStorageResult:
     properties:
       data:
         allOf:
-        - $ref: '#/definitions/migration.StorageObjectListResponse'
+        - $ref: '#/definitions/migration.MigratedObjectStorageResult'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -3793,11 +3794,11 @@ definitions:
         example: true
         type: boolean
     type: object
-  model.ApiResponse-migration_StorageObjectMetadata:
+  model.ApiResponse-migration_StorageObjectListResponse:
     properties:
       data:
         allOf:
-        - $ref: '#/definitions/migration.StorageObjectMetadata'
+        - $ref: '#/definitions/migration.StorageObjectListResponse'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -10294,23 +10295,24 @@ paths:
       consumes:
       - application/json
       description: |-
-        Migrate object storages to cloud based on recommendation results
+        Migrate object storages (buckets) to the target cloud based on recommendation results.
 
-        [Note]
-        - This API creates object storages (buckets) in the target cloud within the specified namespace
-        - Input should be the output from RecommendObjectStorage API
-        - Connection name is automatically generated from CSP and region in the request body
+        [Provisioning & Partial Success Behavior]
+        - Each bucket in `targetObjectStorages` is attempted independently (input should be the `RecommendObjectStorage` output).
+        - Connection name is derived automatically from `targetCloud.csp` and `targetCloud.region`.
+        - If at least one bucket is created, returns `201 Created` with `MigratedObjectStorageResult` (`status: "created"` when all buckets and Versioning/CORS settings succeed, or `status: "partial"` with `warnings` if any bucket or feature configuration was skipped or failed).
+        - If all target buckets fail (for example, `409 Conflict` when a bucket with the same `osId`/`name` already exists in the namespace), the corresponding error status code is returned.
 
-        [Note] `nameSeed` enables dynamic naming via **Late Binding**.
-        - If `nameSeed` query param is set (e.g., `?nameSeed=my`), bucket names are prefixed at migration time: `my-os-01`.
-        - If `nameSeed` is omitted, bucket names are used as-is from the recommendation result.
+        [Late-Binding Naming (`nameSeed`)]
+        - If `nameSeed` query param is set (e.g., `?nameSeed=my`), bucket names are prefixed at migration time (`my-os-01`).
+        - If `nameSeed` is omitted, bucket names from `targetObjectStorages` are used as-is.
 
-        [Examples]
-        * Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
+        [Day-2 Operations Scope]
+        - CM-Beetle covers target bucket provisioning, initial Versioning/CORS setup, and post-migration verification.
+        - For post-creation configuration updates (CORS, Versioning), presigned URLs, or metadata reconcile/prune operations, use CB-Tumblebug (`/tumblebug/ns/{nsId}/resources/objectStorage/...`).
 
-        By default this API runs synchronously. Send header `Prefer: respond-async` to run it
-        asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
-        (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
+        [Async Mode]
+        - Send header `Prefer: respond-async` to execute asynchronously (`202 Accepted` with `reqId`, then poll `GET /request/{reqId}`).
       operationId: MigrateObjectStorage
       parameters:
       - default: mig01
@@ -10319,8 +10321,8 @@ paths:
         name: nsId
         required: true
         type: string
-      - description: Optional prefix for bucket names (e.g., 'my' → 'my-os-01'). Applied
-          at migration time.
+      - description: Optional prefix for bucket names (e.g., 'my' -> 'my-os-01').
+          Applied at migration time.
         in: query
         name: nameSeed
         type: string
@@ -10347,14 +10349,25 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created - Object storages created successfully
+          description: 'Created - Object storages provisioned (status: created or
+            partial)'
+          schema:
+            $ref: '#/definitions/model.ApiResponse-migration_MigratedObjectStorageResult'
         "202":
           description: Migration started asynchronously - use GET /request/{reqId}
             to check status
           schema:
             $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "400":
-          description: Invalid request parameters
+          description: Invalid request parameters or cloud configuration
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: Target namespace not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "409":
+          description: Object storage with the same name already exists in the namespace
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
@@ -10377,17 +10390,16 @@ paths:
       consumes:
       - application/json
       description: |-
-        Delete a specific object storage (bucket).
+        Delete a specific object storage (bucket) or empty all objects inside it.
 
         By default this API runs synchronously. Send header `Prefer: respond-async` to run it
-        asynchronously (RFC 7240). Check progress via GET /request/{reqId}
-        (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
+        asynchronously (RFC 7240). Check progress via `GET /request/{reqId}`
+        (status flow: Handling -> Success / Error). Only the `"respond-async"` token is recognized.
 
-        Deletion behavior is controlled by the `option` query parameter (mutually exclusive):
-        - (none): Standard delete — fails if the bucket is not empty.
-        - `empty`: Empty the bucket first, then delete.
-        - `force`: Force-delete with all contents (passed to Spider as force=true).
-        - `reconcile`: Remove only Tumblebug metadata without calling the CSP delete API.
+        Behavior is controlled by the `option` query parameter (mutually exclusive):
+        - (omitted): Standard delete (fails if the bucket is not empty; returns 204 if already deleted).
+        - `empty`: Empty all objects in the bucket while keeping the bucket itself (returns 404 if the bucket does not exist).
+        - `force`: Empty all objects and force-delete the bucket and its metadata (passed to Spider as `force=true`; returns 204 if already deleted).
       operationId: DeleteObjectStorage
       parameters:
       - default: mig01
@@ -10401,15 +10413,14 @@ paths:
         name: osId
         required: true
         type: string
-      - description: Delete option
+      - description: Delete or empty option
         enum:
         - empty
         - force
-        - reconcile
         in: query
         name: option
         type: string
-      - description: Set to 'respond-async' to run this deletion asynchronously (RFC
+      - description: Set to 'respond-async' to run this operation asynchronously (RFC
           7240)
         enum:
         - respond-async
@@ -10425,18 +10436,22 @@ paths:
       - application/json
       responses:
         "202":
-          description: Object storage deletion started asynchronously - use GET /request/{reqId}
+          description: Operation started asynchronously - use GET /request/{reqId}
             to check status
           schema:
             $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "204":
-          description: Object storage deleted successfully (synchronous)
+          description: Object storage deleted (or emptied when option=empty) successfully
         "400":
-          description: Invalid request parameters
+          description: Invalid request parameters or unsupported option
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "404":
-          description: Object storage not found
+          description: Object storage not found (when option=empty)
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "409":
+          description: Bucket is not empty (use option=force to delete with contents)
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
@@ -10451,7 +10466,7 @@ paths:
               type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Delete object storage (bucket)
+      summary: Delete or empty object storage (bucket)
       tags:
       - '[Migration] Managed Object Storage'
     get:
@@ -10513,7 +10528,7 @@ paths:
         Check if a specific object storage (bucket) exists
 
         [Note]
-        - Returns 200 OK if the bucket exists, 404 Not Found if it doesn't exist
+        - Returns 200 OK if the bucket exists, 404 Not Found if it does not exist
       operationId: ExistObjectStorage
       parameters:
       - default: mig01
@@ -10564,8 +10579,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: List all objects stored in a specific object storage bucket by
-        proxying Tumblebug GET /ns/{nsId}/resources/objectStorage/{osId}/object
+      description: List objects stored in a specific object storage bucket for post-migration
+        verification (proxies Tumblebug GET /ns/{nsId}/resources/objectStorage/{osId}/object).
       operationId: ListObjectStorageObjects
       parameters:
       - default: mig01
@@ -10620,8 +10635,8 @@ paths:
       - application/json
       description: |-
         Delete a specific object from an object storage bucket
-        by proxying Tumblebug DELETE /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}.
-        Note: URL-encode the objectKey if it contains slashes (e.g., folder%2Ffile.txt).
+        by proxying Tumblebug `DELETE /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}`.
+        Note: URL-encode `objectKey` when it contains slashes (e.g., `folder%2Ffile.txt`).
       operationId: DeleteStorageObject
       parameters:
       - default: mig01
@@ -10677,9 +10692,9 @@ paths:
       consumes:
       - application/json
       description: |-
-        Retrieve metadata (key, size, ETag, last-modified, storage class) of a specific object
-        by proxying Tumblebug HEAD /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}.
-        Note: URL-encode the objectKey if it contains slashes (e.g., folder%2Ffile.txt).
+        Retrieve metadata of a specific object via HTTP response headers (`ETag`, `Last-Modified`, `Content-Length`, `X-Storage-Class`)
+        by proxying Tumblebug `HEAD /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}`.
+        Note: URL-encode `objectKey` when it contains slashes (e.g., `folder%2Ffile.txt`).
       operationId: GetStorageObject
       parameters:
       - default: mig01
@@ -10707,9 +10722,21 @@ paths:
       - application/json
       responses:
         "200":
-          description: Object metadata retrieved
-          schema:
-            $ref: '#/definitions/model.ApiResponse-migration_StorageObjectMetadata'
+          description: OK - Object metadata returned in response headers (ETag, Last-Modified,
+            Content-Length, X-Storage-Class)
+          headers:
+            Content-Length:
+              description: Object size in bytes (when provided by upstream)
+              type: string
+            ETag:
+              description: Entity tag (content hash) of the object
+              type: string
+            Last-Modified:
+              description: Last modified timestamp of the object
+              type: string
+            X-Storage-Class:
+              description: Storage class of the object (when provided by upstream)
+              type: string
         "400":
           description: Invalid request parameters
           schema:
@@ -11152,15 +11179,18 @@ paths:
       consumes:
       - application/json
       description: |-
-        Deeply inspect and extract feature/usage metadata (totalSizeBytes, objectCount, versioning, encryption, CORS, policy, tags, creationDate) from selected cloud object storage buckets.
+        [WARNING - NON-PRODUCTION TEST HELPER] This endpoint is provided strictly for local testing, evaluation, and Beetle UX Lab prototyping.
+        Do NOT send cloud credentials to this endpoint in production workflows; production clients must inspect source S3 buckets directly on the client side and submit the resulting `SourceObjectStorage` model to `POST /recommendation/middleware/objectStorage`.
 
-        [Note] Extracted fields strictly conform to Beetle's Recommendation API input specification (`SourceObjectStorage`).
-        - Versioning: Extracted via `GetBucketVersioning`. If versioning is disabled or error occurs, `versioningEnabled` is false.
-        - Encryption: Extracted via `GetBucketEncryption`. If encryption rules are absent or error occurs, `encryptionEnabled` is false.
-        - CORS: Extracted via `GetBucketCors`. If CORS rules are absent or error occurs, `corsEnabled` is false and `corsRule` is nil.
-        - Public Access: Extracted via `GetBucketPolicy`. If wildcard public policy statement is detected, `isPublic` is true, otherwise false.
-        - Tags: Extracted via `GetBucketTagging`. If tags are not set, `tags` is nil/empty map.
-        - CreationDate: Extracted via bucket listing creation timestamp formatted in RFC 3339 format.
+        Deeply inspects and extracts feature and usage metadata (totalSizeBytes, objectCount, versioning, encryption, CORS rules, policy, tags, creationDate) from selected buckets (supported CSPs: `aws`, `gcp`, `alibaba`, `tencent`, `ibm`, `ncp`).
+
+        [Note] Extracted fields conform to Beetle's Recommendation API input specification (`SourceObjectStorage`):
+        - Versioning: Extracted via `GetBucketVersioning`. If disabled or unavailable, `versioningEnabled` is false.
+        - Encryption: Extracted via `GetBucketEncryption`. If rules are absent or unavailable, `encryptionEnabled` is false.
+        - CORS: Extracted via `GetBucketCors`. Active rules are mapped into `corsRule`; otherwise `corsEnabled` is false and `corsRule` is nil.
+        - Public Access: Extracted via `GetBucketPolicy`. If a wildcard public principal statement is detected, `isPublic` is true.
+        - Tags: Extracted via `GetBucketTagging`.
+        - CreationDate: Extracted via bucket listing creation timestamp formatted in RFC 3339.
         - AccessFrequency: Defaults to `"frequent"` (Standard storage tier baseline for recommendation).
       operationId: InspectObjectStorage
       parameters:
@@ -11184,23 +11214,26 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-storagemodel_SourceObjectStorage'
         "400":
-          description: Invalid request parameters or missing credentials
+          description: Invalid request parameters, unsupported CSP, or missing credentials
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Failed to inspect object storage buckets
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: (CM-Beetle) Collect deep metadata from selected source object storage
-        buckets
+      summary: '[TEST ONLY] Collect deep metadata from selected source object storage
+        buckets'
       tags:
-      - '[Minimal Test]'
+      - '[Test] Client Helper (Non-Production)'
   /migration/middleware/objectStorage/scan:
     post:
       consumes:
       - application/json
-      description: Scan and list all object storage buckets in the specified cloud
-        provider account using provided CSP access credentials via MinIO S3 SDK.
+      description: |-
+        [WARNING - NON-PRODUCTION TEST HELPER] This endpoint is provided strictly for local testing, evaluation, and Beetle UX Lab prototyping.
+        Do NOT send cloud credentials to this endpoint in production workflows; production clients must scan S3 buckets directly on the client side.
+
+        Scans and lists object storage buckets in the specified cloud provider account and region via the MinIO S3 SDK (supported CSPs: `aws`, `gcp`, `alibaba`, `tencent`, `ibm`, `ncp`).
       operationId: ScanObjectStorage
       parameters:
       - description: CSP credentials and target cloud information for bucket scanning
@@ -11221,16 +11254,16 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-array_controller_ScannedBucketSummary'
         "400":
-          description: Invalid request parameters or missing credentials
+          description: Invalid request parameters, unsupported CSP, or missing credentials
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Failed to list buckets from S3 API
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: (CB-Tumblebug) Scan cloud account object storage buckets
+      summary: '[TEST ONLY] Scan cloud account object storage buckets'
       tags:
-      - '[Minimal Test]'
+      - '[Test] Client Helper (Non-Production)'
   /migration/ns/{nsId}/infra:
     get:
       consumes:
@@ -12493,8 +12526,7 @@ paths:
       consumes:
       - application/json
       description: 'Delete a specific migrated virtual network in the namespace. Action
-        options: withsubnets (delete with subnets), reconcile (sync metadata with
-        CSP state), force (force-delete on CSP)'
+        options: withsubnets (delete with subnets), force (force-delete on CSP)'
       operationId: DeleteMigratedVNet
       parameters:
       - default: mig01
@@ -12513,7 +12545,6 @@ paths:
         description: Action
         enum:
         - withsubnets
-        - reconcile
         - force
         in: query
         name: action
@@ -12590,9 +12621,11 @@ paths:
     get:
       consumes:
       - application/json
-      description: Generate and return a one-time RSA public key bundle for encrypting
-        sensitive CSP access credentials (accessKey, secretKey, tokens) before scanning
-        or sending across web clients.
+      description: |-
+        [WARNING - NON-PRODUCTION TEST HELPER] This endpoint is provided strictly for local testing, evaluation, and Beetle UX Lab prototyping.
+        Do NOT rely on this helper flow in production systems; production clients must discover source buckets client-side and encrypt data migration credentials via `/migration/data/encryptionKey` and the `transx/fieldsec` package.
+
+        Generates and returns a one-time RSA public key bundle for encrypting sensitive CSP access credentials before calling the test-only `/scan` or `/inspect` helper endpoints.
       operationId: GetSecurityPublicKey
       parameters:
       - description: Unique request ID
@@ -12611,9 +12644,9 @@ paths:
           description: Key generation failed
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: (CM-Beetle) Get RSA public key for credential encryption
+      summary: '[TEST ONLY] Get RSA public key for credential encryption'
       tags:
-      - '[Minimal Test]'
+      - '[Test] Client Helper (Non-Production)'
   /naming/alignment:
     post:
       consumes:
@@ -13152,19 +13185,16 @@ paths:
       consumes:
       - application/json
       description: |
-        Recommend an appropriate object storage for cloud migration
+        Recommend an appropriate object storage configuration for cloud migration.
 
         [Note] `desiredCsp` and `desiredRegion` are required.
-        - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
+        - `desiredCsp` and `desiredRegion` can be provided via query parameters or `desiredCloud` in the request body.
+        - Query parameters take precedence over `desiredCloud` values in the request body when both are set.
 
-        - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
-
-        [Note] The recommended bucket name uses a default pattern (`mig-bucket-01`, `mig-bucket-02`, ...).
-        - Bucket names must be globally unique across all accounts in the target cloud provider.
-        - CB-Tumblebug internally generates a uid and uses it as the actual bucket name in the cloud.
-        - The `bucketName` field in the recommendation result represents the intended name, not the final cloud resource name.
-
-        [Note] To apply a naming prefix, use the `nameSeed` query parameter on the migration API (`POST /migration/.../objectStorage?nameSeed=xxx`).
+        [Note] The recommended bucket name uses the default base pattern (`os-01`, `os-02`, ...).
+        - `bucketName` becomes the CB-Tumblebug `osId` (`name`) within the target namespace.
+        - CB-Tumblebug internally generates a globally unique `uid` (`cspResourceName`) as the actual cloud bucket name.
+        - To apply a deployment prefix via late binding, pass the `nameSeed` query parameter to `POST /migration/middleware/ns/{nsId}/objectStorage?nameSeed=xxx`.
       operationId: RecommendObjectStorage
       parameters:
       - description: Specify the your object storage to be migrated

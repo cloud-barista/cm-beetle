@@ -139,7 +139,7 @@ func RunServer(port string) {
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{allowedOrigins},
-		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPost, http.MethodDelete},
 	}))
 
 	// Conditions to prevent abnormal operation due to typos (e.g., ture, falss, etc.)
@@ -451,7 +451,7 @@ func RunServer(port string) {
 	gMigration.POST("/data/test/encrypt", controller.TestEncryptData)
 	gMigration.POST("/data/test/decrypt", controller.TestDecryptData)
 
-	// Minimal Test APIs (Isolated in controller/minimal-test-api.go for easy future removal)
+	// Test-only client helper APIs (isolated in controller/test-client-helper.go; non-production)
 	gMigration.GET("/security/publicKey", controller.GetSecurityPublicKey)
 
 	/*
@@ -459,7 +459,7 @@ func RunServer(port string) {
 	 */
 	gMigrationMiddleware := gMigration.Group("/middleware")
 
-	// Minimal Test API: Object Storage Scan & Inspect
+	// Test-only client helper APIs for source Object Storage scan and inspect (non-production)
 	gMigrationMiddleware.POST("/objectStorage/scan", controller.ScanObjectStorage)
 	gMigrationMiddleware.POST("/objectStorage/inspect", controller.InspectObjectStorage)
 

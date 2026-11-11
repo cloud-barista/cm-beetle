@@ -7,17 +7,17 @@
 
 ### Environment
 
-- CM-Beetle: v0.5.2+ (1c7e6cd)
-- CB-Tumblebug: v0.12.19
+- CM-Beetle: v0.6.4+ (95cc61d)
+- CB-Tumblebug: v0.13.8
 - Target CSP: AWS
 - Target Region: ap-northeast-2
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Name Seed: my
 - Test CLI: Custom automated testing tool
-- Test Date: June 24, 2026
-- Test Time: 19:40:00 KST
-- Test Execution: 2026-06-24 19:40:00 KST
+- Test Date: November 11, 2026
+- Test Time: 12:57:29 KST
+- Test Execution: 2026-11-11 12:57:29 KST
 
 ### Scenario
 
@@ -37,18 +37,18 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 11ms | Pass |
-| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 23.225s | Pass |
-| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 6ms | Pass |
-| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 153ms | Pass |
-| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 252ms | Pass |
-| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 8.053s | Pass |
+| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 14ms | Pass |
+| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 23.263s | Pass |
+| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 18ms | Pass |
+| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 213ms | Pass |
+| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 366ms | Pass |
+| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 8.684s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 36.706331916s
+**Total Duration**: 37.563747248s
 
-*Test executed on June 24, 2026 at 19:40:00 KST (2026-06-24 19:40:00 KST) using CM-Beetle automated test CLI*
+*Test executed on November 11, 2026 at 12:57:29 KST (2026-11-11 12:57:29 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -73,7 +73,10 @@
 
 ```json
 {
-  "nameSeed": "my",
+  "desiredCloud": {
+    "csp": "aws",
+    "region": "ap-northeast-2"
+  },
   "sourceObjectStorages": [
     {
       "bucketName": "source-bucket-01",
@@ -307,6 +310,138 @@
 - **Status**: ✅ **SUCCESS**
 - **Response**: Object storages created successfully
 
+**Response Body**:
+
+<details>
+  <summary> <ins>Click to see the response body</ins> </summary>
+
+```json
+{
+  "data": {
+    "description": "Successfully created 2 object storage(s)",
+    "objectStorage": [
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T03:57:33Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T03:57:33Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "aws-ap-northeast-2",
+          "credentialHolder": "admin",
+          "credentialName": "aws",
+          "driverName": "aws-driver-v1.0.so",
+          "providerName": "aws",
+          "regionDetail": {
+            "description": "Asia Pacific (Seoul)",
+            "location": {
+              "display": "South Korea (Seoul)",
+              "latitude": 37.36,
+              "longitude": 126.78
+            },
+            "regionId": "ap-northeast-2",
+            "regionName": "ap-northeast-2",
+            "zones": [
+              "ap-northeast-2a",
+              "ap-northeast-2b",
+              "ap-northeast-2c",
+              "ap-northeast-2d"
+            ]
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "ap-northeast-2",
+            "assignedZone": "ap-northeast-2a"
+          },
+          "regionZoneInfoName": "aws-ap-northeast-2",
+          "verified": true
+        },
+        "connectionName": "aws-ap-northeast-2",
+        "cspResourceId": "tb2f67716sdl61spo0s2",
+        "cspResourceName": "tb2f67716sdl61spo0s2",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-01",
+        "maxKeys": 1000,
+        "name": "my-os-01",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tb2f67716sdl61spo0s2"
+      },
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T03:57:34Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T03:57:34Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "aws-ap-northeast-2",
+          "credentialHolder": "admin",
+          "credentialName": "aws",
+          "driverName": "aws-driver-v1.0.so",
+          "providerName": "aws",
+          "regionDetail": {
+            "description": "Asia Pacific (Seoul)",
+            "location": {
+              "display": "South Korea (Seoul)",
+              "latitude": 37.36,
+              "longitude": 126.78
+            },
+            "regionId": "ap-northeast-2",
+            "regionName": "ap-northeast-2",
+            "zones": [
+              "ap-northeast-2a",
+              "ap-northeast-2b",
+              "ap-northeast-2c",
+              "ap-northeast-2d"
+            ]
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "ap-northeast-2",
+            "assignedZone": "ap-northeast-2a"
+          },
+          "regionZoneInfoName": "aws-ap-northeast-2",
+          "verified": true
+        },
+        "connectionName": "aws-ap-northeast-2",
+        "cspResourceId": "tbcn8dv6fs7fipk3dcv1",
+        "cspResourceName": "tbcn8dv6fs7fipk3dcv1",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-02",
+        "maxKeys": 1000,
+        "name": "my-os-02",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tbcn8dv6fs7fipk3dcv1"
+      }
+    ],
+    "status": "created"
+  },
+  "message": "Successfully created 2 object storage(s)",
+  "success": true
+}
+```
+
+</details>
+
 ### Test Case 3: List object storages
 
 #### 3.1 API Request Information
@@ -325,7 +460,18 @@
 ```json
 {
   "data": {
-    "objectStorage": null
+    "objectStorage": [
+      {
+        "connectionName": "aws-ap-northeast-2",
+        "id": "my-os-01",
+        "name": "my-os-01"
+      },
+      {
+        "connectionName": "aws-ap-northeast-2",
+        "id": "my-os-02",
+        "name": "my-os-02"
+      }
+    ]
   },
   "success": true
 }
@@ -365,11 +511,60 @@
 ```json
 {
   "data": {
+    "conditions": [
+      {
+        "lastTransitionTime": "2026-11-11T03:57:33Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Ready"
+      },
+      {
+        "lastTransitionTime": "2026-11-11T03:57:33Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Synced"
+      }
+    ],
+    "connectionConfig": {
+      "configName": "aws-ap-northeast-2",
+      "credentialHolder": "admin",
+      "credentialName": "aws",
+      "driverName": "aws-driver-v1.0.so",
+      "providerName": "aws",
+      "regionDetail": {
+        "description": "Asia Pacific (Seoul)",
+        "location": {
+          "display": "South Korea (Seoul)",
+          "latitude": 37.36,
+          "longitude": 126.78
+        },
+        "regionId": "ap-northeast-2",
+        "regionName": "ap-northeast-2",
+        "zones": [
+          "ap-northeast-2a",
+          "ap-northeast-2b",
+          "ap-northeast-2c",
+          "ap-northeast-2d"
+        ]
+      },
+      "regionRepresentative": true,
+      "regionZoneInfo": {
+        "assignedRegion": "ap-northeast-2",
+        "assignedZone": "ap-northeast-2a"
+      },
+      "regionZoneInfoName": "aws-ap-northeast-2",
+      "verified": true
+    },
     "connectionName": "aws-ap-northeast-2",
+    "cspResourceId": "tb2f67716sdl61spo0s2",
+    "cspResourceName": "tb2f67716sdl61spo0s2",
     "description": "Created by CM-Beetle",
     "id": "my-os-01",
+    "maxKeys": 1000,
     "name": "my-os-01",
-    "status": "Available"
+    "resourceType": "objectStorage",
+    "status": "Available",
+    "uid": "tb2f67716sdl61spo0s2"
   },
   "success": true
 }

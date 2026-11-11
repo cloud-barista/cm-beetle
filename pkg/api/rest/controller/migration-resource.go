@@ -181,13 +181,13 @@ func CreateVNet(c echo.Context) error {
 // DeleteMigratedVNet godoc
 // @ID DeleteMigratedVNet
 // @Summary Delete a migrated virtual network
-// @Description Delete a specific migrated virtual network in the namespace. Action options: withsubnets (delete with subnets), reconcile (sync metadata with CSP state), force (force-delete on CSP)
+// @Description Delete a specific migrated virtual network in the namespace. Action options: withsubnets (delete with subnets), force (force-delete on CSP)
 // @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param vNetId path string true "Virtual Network ID" default(mig-vnet-01)
-// @Param action query string false "Action" Enums(withsubnets,reconcile,force) default(withsubnets)
+// @Param action query string false "Action" Enums(withsubnets,force) default(withsubnets)
 // @Param x-request-id header string false "Custom request ID for tracking"
 // @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
 // @Success 200 {object} tbmodel.SimpleMsg

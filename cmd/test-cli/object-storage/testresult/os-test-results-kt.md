@@ -7,17 +7,17 @@
 
 ### Environment
 
-- CM-Beetle: v0.5.2+ (1c7e6cd)
-- CB-Tumblebug: v0.12.19
+- CM-Beetle: v0.6.4+ (95cc61d)
+- CB-Tumblebug: v0.13.8
 - Target CSP: KT
 - Target Region: kr1
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Name Seed: my
 - Test CLI: Custom automated testing tool
-- Test Date: June 24, 2026
-- Test Time: 19:48:19 KST
-- Test Execution: 2026-06-24 19:48:19 KST
+- Test Date: November 11, 2026
+- Test Time: 13:04:11 KST
+- Test Execution: 2026-11-11 13:04:11 KST
 
 ### Scenario
 
@@ -37,18 +37,18 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 13ms | Pass |
-| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 20.713s | Pass |
-| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 4ms | Pass |
-| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 111ms | Pass |
-| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 228ms | Pass |
-| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 7.065s | Pass |
+| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 3ms | Pass |
+| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 20.866s | Pass |
+| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 6ms | Pass |
+| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 199ms | Pass |
+| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 580ms | Pass |
+| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 8.734s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 33.139505849s
+**Total Duration**: 35.396807248s
 
-*Test executed on June 24, 2026 at 19:48:19 KST (2026-06-24 19:48:19 KST) using CM-Beetle automated test CLI*
+*Test executed on November 11, 2026 at 13:04:11 KST (2026-11-11 13:04:11 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -73,7 +73,10 @@
 
 ```json
 {
-  "nameSeed": "my",
+  "desiredCloud": {
+    "csp": "kt",
+    "region": "kr1"
+  },
   "sourceObjectStorages": [
     {
       "bucketName": "source-bucket-01",
@@ -307,6 +310,132 @@
 - **Status**: ✅ **SUCCESS**
 - **Response**: Object storages created successfully
 
+**Response Body**:
+
+<details>
+  <summary> <ins>Click to see the response body</ins> </summary>
+
+```json
+{
+  "data": {
+    "description": "Successfully created 2 object storage(s)",
+    "objectStorage": [
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T04:04:15Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T04:04:15Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "kt-kr1",
+          "credentialHolder": "admin",
+          "credentialName": "kt",
+          "driverName": "kt-driver-v1.0.so",
+          "providerName": "kt",
+          "regionDetail": {
+            "description": "Mok-dong - Seoul (South Korea)",
+            "location": {
+              "display": "Mok-dong - Seoul (South Korea)",
+              "latitude": 37.536726,
+              "longitude": 126.874278
+            },
+            "regionId": "KR1",
+            "regionName": "kr1",
+            "zones": [
+              "DX-M1"
+            ]
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "KR1",
+            "assignedZone": "DX-M1"
+          },
+          "regionZoneInfoName": "kt-kr1",
+          "verified": true
+        },
+        "connectionName": "kt-kr1",
+        "cspResourceId": "tbv3mkuplp70lr4b1s6g",
+        "cspResourceName": "tbv3mkuplp70lr4b1s6g",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-01",
+        "maxKeys": 1000,
+        "name": "my-os-01",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tbv3mkuplp70lr4b1s6g"
+      },
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T04:04:15Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T04:04:15Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "kt-kr1",
+          "credentialHolder": "admin",
+          "credentialName": "kt",
+          "driverName": "kt-driver-v1.0.so",
+          "providerName": "kt",
+          "regionDetail": {
+            "description": "Mok-dong - Seoul (South Korea)",
+            "location": {
+              "display": "Mok-dong - Seoul (South Korea)",
+              "latitude": 37.536726,
+              "longitude": 126.874278
+            },
+            "regionId": "KR1",
+            "regionName": "kr1",
+            "zones": [
+              "DX-M1"
+            ]
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "KR1",
+            "assignedZone": "DX-M1"
+          },
+          "regionZoneInfoName": "kt-kr1",
+          "verified": true
+        },
+        "connectionName": "kt-kr1",
+        "cspResourceId": "tbcv17kn49kiagbt7d7d",
+        "cspResourceName": "tbcv17kn49kiagbt7d7d",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-02",
+        "maxKeys": 1000,
+        "name": "my-os-02",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tbcv17kn49kiagbt7d7d"
+      }
+    ],
+    "status": "created"
+  },
+  "message": "Successfully created 2 object storage(s)",
+  "success": true
+}
+```
+
+</details>
+
 ### Test Case 3: List object storages
 
 #### 3.1 API Request Information
@@ -325,7 +454,18 @@
 ```json
 {
   "data": {
-    "objectStorage": null
+    "objectStorage": [
+      {
+        "connectionName": "kt-kr1",
+        "id": "my-os-01",
+        "name": "my-os-01"
+      },
+      {
+        "connectionName": "kt-kr1",
+        "id": "my-os-02",
+        "name": "my-os-02"
+      }
+    ]
   },
   "success": true
 }
@@ -365,11 +505,57 @@
 ```json
 {
   "data": {
+    "conditions": [
+      {
+        "lastTransitionTime": "2026-11-11T04:04:15Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Ready"
+      },
+      {
+        "lastTransitionTime": "2026-11-11T04:04:15Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Synced"
+      }
+    ],
+    "connectionConfig": {
+      "configName": "kt-kr1",
+      "credentialHolder": "admin",
+      "credentialName": "kt",
+      "driverName": "kt-driver-v1.0.so",
+      "providerName": "kt",
+      "regionDetail": {
+        "description": "Mok-dong - Seoul (South Korea)",
+        "location": {
+          "display": "Mok-dong - Seoul (South Korea)",
+          "latitude": 37.536726,
+          "longitude": 126.874278
+        },
+        "regionId": "KR1",
+        "regionName": "kr1",
+        "zones": [
+          "DX-M1"
+        ]
+      },
+      "regionRepresentative": true,
+      "regionZoneInfo": {
+        "assignedRegion": "KR1",
+        "assignedZone": "DX-M1"
+      },
+      "regionZoneInfoName": "kt-kr1",
+      "verified": true
+    },
     "connectionName": "kt-kr1",
+    "cspResourceId": "tbv3mkuplp70lr4b1s6g",
+    "cspResourceName": "tbv3mkuplp70lr4b1s6g",
     "description": "Created by CM-Beetle",
     "id": "my-os-01",
+    "maxKeys": 1000,
     "name": "my-os-01",
-    "status": "Available"
+    "resourceType": "objectStorage",
+    "status": "Available",
+    "uid": "tbv3mkuplp70lr4b1s6g"
   },
   "success": true
 }
