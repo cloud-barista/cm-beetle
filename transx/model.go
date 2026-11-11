@@ -145,9 +145,38 @@ type DataLocation struct {
 	// Filter defines file filtering options
 	Filter *FilterOption `json:"filter,omitempty"`
 
-	// Hooks for pre/post processing
-	PreCmd  string `json:"preCmd,omitempty"`  // Command to run before transfer (source only)
-	PostCmd string `json:"postCmd,omitempty"` // Command to run after transfer (destination only)
+	// Hooks for pre/post processing on source and destination endpoints
+	PreCmd  string `json:"preCmd,omitempty"`  // Command to run before transfer
+	PostCmd string `json:"postCmd,omitempty"` // Command to run after transfer
+}
+
+// MaxHookOutputBytes caps each captured hook output to keep API responses bounded.
+const MaxHookOutputBytes = 8192
+
+// HookOutputs holds truncated combined stdout/stderr captured from pre/post commands.
+type HookOutputs struct {
+	SourcePreCmd       string `json:"sourcePreCmd,omitempty"`
+	DestinationPreCmd  string `json:"destinationPreCmd,omitempty"`
+	SourcePostCmd      string `json:"sourcePostCmd,omitempty"`
+	DestinationPostCmd string `json:"destinationPostCmd,omitempty"`
+}
+
+// IsEmpty returns true when no hook command produced output.
+func (h HookOutputs) IsEmpty() bool {
+	return h.SourcePreCmd == "" &&
+		h.DestinationPreCmd == "" &&
+		h.SourcePostCmd == "" &&
+		h.DestinationPostCmd == ""
+}
+
+// MigrationResult summarizes a completed or failed data migration run.
+type MigrationResult struct {
+	Message           string       `json:"message"`
+	ElapsedTime       string       `json:"elapsedTime"`
+	RequestedStrategy string       `json:"requestedStrategy,omitempty"`
+	EffectiveStrategy string       `json:"effectiveStrategy,omitempty"`
+	HookOutputs       *HookOutputs `json:"hookOutputs,omitempty"`
+	SourceRecovered   bool         `json:"sourceRecovered,omitempty"`
 }
 
 // ============================================================================

@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
@@ -41,53 +42,170 @@ func TransferWithPipeline(dmm DataMigrationModel) (*Pipeline, error) {
 
 // MigrateData manages the complete data migration workflow (PreCmd, Transfer, PostCmd).
 func MigrateData(dmm DataMigrationModel) error {
-	_, err := MigrateDataWithPipeline(dmm)
+	_, err := MigrateDataWithResult(dmm)
 	return err
 }
 
 // MigrateDataWithPipeline manages the complete data migration workflow and returns the executed Pipeline.
 func MigrateDataWithPipeline(dmm DataMigrationModel) (*Pipeline, error) {
-	if strings.TrimSpace(dmm.Source.PreCmd) != "" {
-		if err := executePreCommand(dmm.Source); err != nil {
-			return nil, &MigrationError{Stage: StageBackup, Err: err}
+	pipeline, _, err := migrateDataInternal(dmm)
+	return pipeline, err
+}
+
+// MigrateDataWithResult executes symmetric pre/post hooks around transfer and returns a MigrationResult.
+func MigrateDataWithResult(dmm DataMigrationModel) (MigrationResult, error) {
+	_, result, err := migrateDataInternal(dmm)
+	return result, err
+}
+
+// migrateDataInternal runs: 1) Source.PreCmd, 2) Destination.PreCmd, 3) Transfer, 4) Source.PostCmd, 5) Destination.PostCmd.
+func migrateDataInternal(dmm DataMigrationModel) (*Pipeline, MigrationResult, error) {
+	start := time.Now()
+	requestedStrategy := strings.TrimSpace(dmm.Strategy)
+	if requestedStrategy == "" {
+		requestedStrategy = StrategyAuto
+	}
+
+	result := MigrationResult{
+		RequestedStrategy: requestedStrategy,
+	}
+
+	if err := Validate(dmm); err != nil {
+		result.ElapsedTime = time.Since(start).Round(time.Millisecond).String()
+		return nil, result, &MigrationError{Stage: StageTransfer, Err: fmt.Errorf("validation failed: %w", err)}
+	}
+
+	hooks := &HookOutputs{}
+	sourcePreSucceeded := false
+
+	finalizeResult := func(pipeline *Pipeline) {
+		elapsed := time.Since(start).Round(time.Millisecond)
+		result.ElapsedTime = elapsed.String()
+		if pipeline != nil && pipeline.EffectiveStrategy != "" {
+			result.EffectiveStrategy = pipeline.EffectiveStrategy
+		}
+		if !hooks.IsEmpty() {
+			result.HookOutputs = hooks
 		}
 	}
 
+	recoverSource := func(primaryErr error) error {
+		if !sourcePreSucceeded || strings.TrimSpace(dmm.Source.PostCmd) == "" {
+			return primaryErr
+		}
+		out, recErr := executeHookCommand(dmm.Source.PostCmd, dmm.Source, OperationPostCmd, true)
+		hooks.SourcePostCmd = out
+		if recErr != nil {
+			return fmt.Errorf("%w (source post-command recovery failed: %v)", primaryErr, recErr)
+		}
+		result.SourceRecovered = true
+		return primaryErr
+	}
+
+	// Step 1: Run Source.PreCmd to quiesce or snapshot source state before transfer.
+	if strings.TrimSpace(dmm.Source.PreCmd) != "" {
+		out, err := executeHookCommand(dmm.Source.PreCmd, dmm.Source, OperationPreCmd, true)
+		hooks.SourcePreCmd = out
+		if err != nil {
+			finalizeResult(nil)
+			return nil, result, &MigrationError{Stage: StageBackup, Err: err}
+		}
+		sourcePreSucceeded = true
+	}
+
+	// Step 2: Run Destination.PreCmd to prepare target directories or stop conflicting services.
+	if strings.TrimSpace(dmm.Destination.PreCmd) != "" {
+		out, err := executeHookCommand(dmm.Destination.PreCmd, dmm.Destination, OperationPreCmd, false)
+		hooks.DestinationPreCmd = out
+		if err != nil {
+			migErr := recoverSource(&MigrationError{Stage: StageBackup, Err: err})
+			finalizeResult(nil)
+			return nil, result, migErr
+		}
+	}
+
+	// Step 3: Plan and execute data transfer pipeline.
 	pipeline, err := TransferWithPipeline(dmm)
 	if err != nil {
-		return pipeline, &MigrationError{Stage: StageTransfer, Err: err}
+		migErr := recoverSource(&MigrationError{Stage: StageTransfer, Err: err})
+		finalizeResult(pipeline)
+		return pipeline, result, migErr
 	}
 
-	if strings.TrimSpace(dmm.Destination.PostCmd) != "" {
-		if err := executePostCommand(dmm.Destination); err != nil {
-			return pipeline, &MigrationError{Stage: StageRestore, Err: err}
+	// Step 4: Run Source.PostCmd to unquiesce source services after transfer completes.
+	if strings.TrimSpace(dmm.Source.PostCmd) != "" {
+		out, err := executeHookCommand(dmm.Source.PostCmd, dmm.Source, OperationPostCmd, true)
+		hooks.SourcePostCmd = out
+		if err != nil {
+			finalizeResult(pipeline)
+			return pipeline, result, &MigrationError{Stage: StageRestore, Err: err}
 		}
 	}
 
-	return pipeline, nil
+	// Step 5: Run Destination.PostCmd to verify integrity and start target services.
+	if strings.TrimSpace(dmm.Destination.PostCmd) != "" {
+		out, err := executeHookCommand(dmm.Destination.PostCmd, dmm.Destination, OperationPostCmd, false)
+		hooks.DestinationPostCmd = out
+		if err != nil {
+			finalizeResult(pipeline)
+			return pipeline, result, &MigrationError{Stage: StageRestore, Err: err}
+		}
+	}
+
+	finalizeResult(pipeline)
+	if result.EffectiveStrategy == "" {
+		result.EffectiveStrategy = requestedStrategy
+	}
+	result.Message = fmt.Sprintf("Data migrated successfully (%s)", result.ElapsedTime)
+	return pipeline, result, nil
 }
 
 // ============================================================================
 // Command Execution
 // ============================================================================
 
+// executeHookCommand runs a pre/post command on a location and returns truncated output.
+func executeHookCommand(command string, loc DataLocation, operation string, isSource bool) (string, error) {
+	output, err := executeCommand(command, loc)
+	truncated := truncateHookOutput(output)
+	if err != nil {
+		opErr := &OperationError{
+			Operation: operation,
+			Command:   command,
+			Output:    truncated,
+			Err:       err,
+		}
+		if isSource {
+			opErr.Source = buildLocationPath(loc)
+		} else {
+			opErr.Destination = buildLocationPath(loc)
+		}
+		return truncated, opErr
+	}
+	return truncated, nil
+}
+
+// truncateHookOutput trims trailing newlines and bounds hook output to MaxHookOutputBytes.
+func truncateHookOutput(raw []byte) string {
+	const suffix = "\n...(truncated)"
+	s := strings.TrimRight(string(raw), "\r\n")
+	if len(s) <= MaxHookOutputBytes {
+		return s
+	}
+	limit := MaxHookOutputBytes - len(suffix)
+	for limit > 0 && !utf8.ValidString(s[:limit]) {
+		limit--
+	}
+	return s[:limit] + suffix
+}
+
 // executePreCommand executes the PreCmd defined in the source DataLocation.
 func executePreCommand(src DataLocation) error {
 	if strings.TrimSpace(src.PreCmd) == "" {
 		return fmt.Errorf("pre-command not defined")
 	}
-
-	output, err := executeCommand(src.PreCmd, src)
-	if err != nil {
-		return &OperationError{
-			Operation: OperationPreCmd,
-			Source:    buildLocationPath(src),
-			Command:   src.PreCmd,
-			Output:    string(output),
-			Err:       err,
-		}
-	}
-	return nil
+	_, err := executeHookCommand(src.PreCmd, src, OperationPreCmd, true)
+	return err
 }
 
 // executePostCommand executes the PostCmd defined in the destination DataLocation.
@@ -95,18 +213,8 @@ func executePostCommand(dest DataLocation) error {
 	if strings.TrimSpace(dest.PostCmd) == "" {
 		return fmt.Errorf("post-command not defined")
 	}
-
-	output, err := executeCommand(dest.PostCmd, dest)
-	if err != nil {
-		return &OperationError{
-			Operation:   OperationPostCmd,
-			Destination: buildLocationPath(dest),
-			Command:     dest.PostCmd,
-			Output:      string(output),
-			Err:         err,
-		}
-	}
-	return nil
+	_, err := executeHookCommand(dest.PostCmd, dest, OperationPostCmd, false)
+	return err
 }
 
 // ============================================================================
