@@ -1223,13 +1223,42 @@ export const beetleApi = {
       const query = params.toString() ? `?${params.toString()}` : '';
       const response = await api.get(`/beetle/request/${encodeURIComponent(reqId)}${query}`);
       const details = response.data?.data || response.data;
+      const rawSummary = details?.subRequestSummary;
+      const normalizedSummary = rawSummary
+        ? {
+            total: Number(rawSummary.total ?? 0),
+            handling: Number(rawSummary.handling ?? rawSummary.inProgress ?? 0),
+            success: Number(rawSummary.success ?? rawSummary.succeeded ?? 0),
+            error: Number(rawSummary.error ?? rawSummary.failed ?? 0),
+            currentAction: rawSummary.currentAction
+          }
+        : undefined;
+      const normalizedSubs = Array.isArray(details?.subRequests)
+        ? details.subRequests.map((sr: any) => ({
+            seq: Number(sr.seq ?? 0),
+            subReqId: String(sr.subReqId || ''),
+            method: String(sr.method || ''),
+            targetPath: String(sr.targetPath || sr.url || ''),
+            resourceType: sr.resourceType,
+            resourceHint: sr.resourceHint || sr.resourceName,
+            status: String(sr.status || 'Handling'),
+            statusCode: typeof sr.statusCode === 'number' ? sr.statusCode : sr.httpStatus,
+            startTime: String(sr.startTime || ''),
+            endTime: sr.endTime,
+            durationMs: sr.durationMs,
+            errorMessage: sr.errorMessage,
+            upstreamStatus: sr.upstreamStatus,
+            upstreamProgress: sr.upstreamProgress,
+            upstreamError: sr.upstreamError
+          }))
+        : undefined;
       return {
         status: details?.status || 'Handling',
         errorResponse: details?.errorResponse,
         responseData: details?.responseData,
         tumblebugSource: details?.tumblebugSource,
-        subRequestSummary: details?.subRequestSummary,
-        subRequests: Array.isArray(details?.subRequests) ? details.subRequests : undefined
+        subRequestSummary: normalizedSummary,
+        subRequests: normalizedSubs
       };
     } catch (err: any) {
       // 404 Not Found means request is still initializing or in-flight - treat as Handling, NOT Error!
@@ -1527,8 +1556,24 @@ export const beetleApi = {
 
   verifyAiStackEndpoint: async (host: string, preferredModel: string = 'gemma4:e2b'): Promise<AiStackLayerStatus> => {
     const cleanHost = host.trim();
+    const probeOpenWebUi = async () => {
+      const primary = await beetleApi
+        .probeWorkload({ host: cleanHost, port: 3000, path: '/api/config', method: 'GET' })
+        .catch((e) => ({ ok: false, error: e.message }));
+      if (primary?.ok) {
+        return { ...primary, port: 3000 };
+      }
+      const fallback = await beetleApi
+        .probeWorkload({ host: cleanHost, port: 8080, path: '/api/config', method: 'GET' })
+        .catch((e) => ({ ok: false, error: e.message }));
+      if (fallback?.ok) {
+        return { ...fallback, port: 8080 };
+      }
+      return { ...primary, port: 3000 };
+    };
+
     const [webUiRes, tagsRes, psRes] = await Promise.all([
-      beetleApi.probeWorkload({ host: cleanHost, port: 3000, path: '/api/config', method: 'GET' }).catch((e) => ({ ok: false, error: e.message })),
+      probeOpenWebUi(),
       beetleApi.probeWorkload({ host: cleanHost, port: 11434, path: '/api/tags', method: 'GET' }).catch((e) => ({ ok: false, error: e.message })),
       beetleApi.probeWorkload({ host: cleanHost, port: 11434, path: '/api/ps', method: 'GET' }).catch((e) => ({ ok: false, error: e.message }))
     ]);
@@ -1562,6 +1607,7 @@ export const beetleApi = {
       checkedAt: new Date().toISOString(),
       openWebUi: {
         ok: Boolean(webUiRes?.ok),
+        port: Number(webUiRes?.port || 3000),
         httpStatus: Number(webUiRes?.httpStatus || 0),
         latencyMs: webUiRes?.latencyMs,
         version: webUiRes?.openWebUi?.version,

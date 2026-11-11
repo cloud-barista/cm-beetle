@@ -294,7 +294,7 @@ export const MigrationSplitScreen: React.FC<MigrationSplitScreenProps> = ({
               <Zap className="w-3.5 h-3.5 text-emerald-500" />
               <span className="font-normal text-text-muted">Tumblebug Steps:</span>
               <span className="font-extrabold text-emerald-500">
-                {activeJob.subRequestSummary.succeeded}/{activeJob.subRequestSummary.total}
+                {activeJob.subRequestSummary.success}/{activeJob.subRequestSummary.total}
               </span>
               {activeJob.subRequestSummary.currentAction && activeJob.status === 'Handling' && (
                 <span className="text-text-main font-bold truncate max-w-[240px]">

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore, calculateJobElapsedSeconds } from '@/store/migrationStore';
 import { beetleApi, tumblebugApi, honeybeeApi } from '@/api/client';
-import { AiStackLayerStatus } from '@/types/migration';
+import { AiStackLayerStatus, DataHookOutputs } from '@/types/migration';
 import { resolveTargetNodeLineage } from '@/utils/nodeLineage';
 import { CspCredentialForm } from '../common/CspCredentialForm';
 import { DirectoryTreeExplorer } from './DirectoryTreeExplorer';
@@ -57,7 +57,9 @@ interface DataMigrationJob {
   destinationPreCmd?: string;
   sourcePostCmd?: string;
   destinationPostCmd?: string;
-  hookOutputs?: Record<string, string>;
+  hookOutputs?: DataHookOutputs;
+  sourceRecovered?: boolean;
+  effectiveStrategy?: string;
   bytesTransferred?: number;
   filesTransferred?: number;
   includeFilter?: string;
@@ -1154,6 +1156,8 @@ export const DataTransferCenter: React.FC = () => {
 
       const reqId = res.reqId || `req-data-${Date.now().toString().slice(-6)}`;
       const nowMs = Date.now();
+      const syncResult = !preferAsync ? (res.data?.data || res.data?.result || res.data) : undefined;
+      const initialStatus: 'Handling' | 'Success' = preferAsync ? 'Handling' : 'Success';
       const newJob: DataMigrationJob = {
         id: reqId,
         reqId,
@@ -1163,7 +1167,7 @@ export const DataTransferCenter: React.FC = () => {
         csp: dataCsp.toUpperCase(),
         region: dataRegion,
         strategy: dataStrategy,
-        status: 'Handling',
+        status: initialStatus,
         startTime: new Date(nowMs).toISOString(),
         createdAtMs: nowMs,
         elapsedSeconds: 0,
@@ -1172,6 +1176,9 @@ export const DataTransferCenter: React.FC = () => {
         destinationPreCmd: trimmedDestinationPreCmd || undefined,
         sourcePostCmd: trimmedSourcePostCmd || undefined,
         destinationPostCmd: trimmedDestinationPostCmd || undefined,
+        hookOutputs: syncResult?.hookOutputs,
+        sourceRecovered: Boolean(syncResult?.sourceRecovered),
+        effectiveStrategy: syncResult?.effectiveStrategy,
         includeFilter: includeFilter.trim() || undefined,
         excludeFilter: excludeFilter.trim() || undefined,
         logs: [
@@ -1182,7 +1189,9 @@ export const DataTransferCenter: React.FC = () => {
           ...(trimmedSourcePostCmd ? [`Configured Hook [3/4 source.postCmd]: ${trimmedSourcePostCmd}`] : []),
           ...(trimmedDestinationPostCmd ? [`Configured Hook [4/4 destination.postCmd]: ${trimmedDestinationPostCmd}`] : []),
           `Encrypting sensitive credentials (${sourceAccessType === 'object-storage' ? 'AccessKeyId, SecretAccessKey' : 'SSH Private Key'}) via RSA-OAEP-256...`,
-          `POST /beetle/migration/data -> 202 Accepted (ReqID: ${reqId}, Status: Handling)`
+          preferAsync
+            ? `POST /beetle/migration/data -> 202 Accepted (ReqID: ${reqId}, Status: Handling)`
+            : `POST /beetle/migration/data -> 200 OK (ReqID: ${reqId}, Status: Success${syncResult?.elapsedTime ? `, Elapsed: ${syncResult.elapsedTime}` : ''})`
         ]
       };
 
@@ -1218,10 +1227,9 @@ export const DataTransferCenter: React.FC = () => {
       const dur = calculateJobElapsedSeconds(job);
       if (status === 'Completed' || status === 'Succeeded' || status === 'Success') {
         const resData = reqDetails?.responseData || {};
-        const migResult = resData?.result || resData;
-        const detailMsg = resData?.message
-          ? ` - ${resData.message}`
-          : '';
+        const migResult = resData?.data || resData?.result || resData;
+        const summaryMsg = migResult?.message || resData?.message;
+        const detailMsg = summaryMsg ? ` - ${summaryMsg}` : '';
         setDataJobs((prevJobs) =>
           prevJobs.map((j) =>
             j.id === job.id
@@ -1230,6 +1238,8 @@ export const DataTransferCenter: React.FC = () => {
                   status: 'Success',
                   elapsedSeconds: dur,
                   hookOutputs: migResult?.hookOutputs || j.hookOutputs,
+                  sourceRecovered: Boolean(migResult?.sourceRecovered ?? j.sourceRecovered),
+                  effectiveStrategy: migResult?.effectiveStrategy || j.effectiveStrategy,
                   bytesTransferred: typeof migResult?.bytesTransferred === 'number' ? migResult.bytesTransferred : j.bytesTransferred,
                   filesTransferred: typeof migResult?.filesTransferred === 'number' ? migResult.filesTransferred : j.filesTransferred,
                   logs: [
@@ -1241,6 +1251,8 @@ export const DataTransferCenter: React.FC = () => {
           )
         );
       } else if (status === 'Failed' || status === 'Error') {
+        const errMsg = reqDetails?.errorResponse || 'Execution Error';
+        const recovered = errMsg.includes('source unquiesced via postCmd');
         setDataJobs((prevJobs) =>
           prevJobs.map((j) =>
             j.id === job.id
@@ -1248,9 +1260,10 @@ export const DataTransferCenter: React.FC = () => {
                   ...j,
                   status: 'Failed',
                   elapsedSeconds: dur,
+                  sourceRecovered: recovered || j.sourceRecovered,
                   logs: [
                     ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
-                    `GET /beetle/request/${job.reqId} -> Status: Failed (${reqDetails?.errorResponse || 'Execution Error'}) (Duration: ${dur}s)`
+                    `GET /beetle/request/${job.reqId} -> Status: Failed (${errMsg}) (Duration: ${dur}s)`
                   ]
                 }
               : j
@@ -1518,10 +1531,22 @@ export const DataTransferCenter: React.FC = () => {
           {(activeJob.sourcePreCmd || activeJob.destinationPreCmd || activeJob.sourcePostCmd || activeJob.destinationPostCmd) && (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-sm font-extrabold text-text-main flex items-center gap-2">
-                  <Terminal className="w-4 h-4 text-emerald-500" />
-                  Symmetric 4-Stage Hook Lifecycle (transx)
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-extrabold text-text-main flex items-center gap-2">
+                    <Terminal className="w-4 h-4 text-emerald-500" />
+                    Symmetric 4-Stage Hook Lifecycle (transx)
+                  </span>
+                  {activeJob.effectiveStrategy && (
+                    <span className="px-2 py-0.5 rounded-lg bg-teal-500/15 border border-teal-500/30 text-teal-600 dark:text-teal-400 text-xs font-mono font-extrabold">
+                      Strategy: {activeJob.effectiveStrategy}
+                    </span>
+                  )}
+                  {activeJob.sourceRecovered && (
+                    <span className="px-2 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-extrabold">
+                      Source Auto-Unquiesced via postCmd
+                    </span>
+                  )}
+                </div>
                 {(typeof activeJob.filesTransferred === 'number' || typeof activeJob.bytesTransferred === 'number') && (
                   <span className="text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
                     Transferred: {activeJob.filesTransferred ?? 0} files / {Math.round(((activeJob.bytesTransferred ?? 0) / (1024 * 1024)) * 10) / 10} MiB
@@ -1536,9 +1561,9 @@ export const DataTransferCenter: React.FC = () => {
                   <pre className="text-xs font-mono font-extrabold text-text-main whitespace-pre-wrap break-all bg-bg-panel/80 p-2.5 rounded-lg border border-border-main/40">
                     {activeJob.sourcePreCmd || '(None)'}
                   </pre>
-                  {activeJob.hookOutputs?.['source.preCmd'] && (
+                  {(activeJob.hookOutputs?.sourcePreCmd || activeJob.hookOutputs?.['source.preCmd']) && (
                     <pre className="text-xs font-mono text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap break-all bg-emerald-500/5 p-2 rounded-lg border border-emerald-500/20 max-h-28 overflow-y-auto">
-                      {activeJob.hookOutputs['source.preCmd']}
+                      {activeJob.hookOutputs?.sourcePreCmd || activeJob.hookOutputs?.['source.preCmd']}
                     </pre>
                   )}
                 </div>
@@ -1549,9 +1574,9 @@ export const DataTransferCenter: React.FC = () => {
                   <pre className="text-xs font-mono font-extrabold text-text-main whitespace-pre-wrap break-all bg-bg-panel/80 p-2.5 rounded-lg border border-border-main/40">
                     {activeJob.destinationPreCmd || '(None)'}
                   </pre>
-                  {activeJob.hookOutputs?.['destination.preCmd'] && (
+                  {(activeJob.hookOutputs?.destinationPreCmd || activeJob.hookOutputs?.['destination.preCmd']) && (
                     <pre className="text-xs font-mono text-teal-600 dark:text-teal-400 whitespace-pre-wrap break-all bg-teal-500/5 p-2 rounded-lg border border-teal-500/20 max-h-28 overflow-y-auto">
-                      {activeJob.hookOutputs['destination.preCmd']}
+                      {activeJob.hookOutputs?.destinationPreCmd || activeJob.hookOutputs?.['destination.preCmd']}
                     </pre>
                   )}
                 </div>
@@ -1562,9 +1587,9 @@ export const DataTransferCenter: React.FC = () => {
                   <pre className="text-xs font-mono font-extrabold text-text-main whitespace-pre-wrap break-all bg-bg-panel/80 p-2.5 rounded-lg border border-border-main/40">
                     {activeJob.sourcePostCmd || '(None)'}
                   </pre>
-                  {(activeJob.hookOutputs?.['source.postCmd'] || activeJob.hookOutputs?.['source.postCmd.recovery']) && (
+                  {(activeJob.hookOutputs?.sourcePostCmd || activeJob.hookOutputs?.['source.postCmd'] || activeJob.hookOutputs?.['source.postCmd.recovery']) && (
                     <pre className="text-xs font-mono text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap break-all bg-emerald-500/5 p-2 rounded-lg border border-emerald-500/20 max-h-28 overflow-y-auto">
-                      {activeJob.hookOutputs?.['source.postCmd'] || activeJob.hookOutputs?.['source.postCmd.recovery']}
+                      {activeJob.hookOutputs?.sourcePostCmd || activeJob.hookOutputs?.['source.postCmd'] || activeJob.hookOutputs?.['source.postCmd.recovery']}
                     </pre>
                   )}
                 </div>
@@ -1575,9 +1600,9 @@ export const DataTransferCenter: React.FC = () => {
                   <pre className="text-xs font-mono font-extrabold text-text-main whitespace-pre-wrap break-all bg-bg-panel/80 p-2.5 rounded-lg border border-border-main/40">
                     {activeJob.destinationPostCmd || '(None)'}
                   </pre>
-                  {activeJob.hookOutputs?.['destination.postCmd'] && (
+                  {(activeJob.hookOutputs?.destinationPostCmd || activeJob.hookOutputs?.['destination.postCmd']) && (
                     <pre className="text-xs font-mono text-teal-600 dark:text-teal-400 whitespace-pre-wrap break-all bg-teal-500/5 p-2 rounded-lg border border-teal-500/20 max-h-28 overflow-y-auto">
-                      {activeJob.hookOutputs['destination.postCmd']}
+                      {activeJob.hookOutputs?.destinationPostCmd || activeJob.hookOutputs?.['destination.postCmd']}
                     </pre>
                   )}
                 </div>
@@ -1735,7 +1760,7 @@ export const DataTransferCenter: React.FC = () => {
 
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-normal text-text-muted">Layer 4 - Service UI (:3000):</span>
+                    <span className="font-normal text-text-muted">Layer 4 - Service UI (:{st.openWebUi.port || 3000}):</span>
                     <span className={`font-extrabold font-mono ${st.openWebUi.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
                       {st.openWebUi.ok
                         ? `HTTP ${st.openWebUi.httpStatus} (${st.openWebUi.version || 'Open WebUI'}, ${st.openWebUi.latencyMs}ms)`

@@ -366,25 +366,34 @@ export interface SubRequestItem {
   seq: number;
   subReqId: string;
   method: string;
-  url: string;
+  targetPath: string;
   resourceType?: string;
-  resourceName?: string;
+  resourceHint?: string;
   status: string;
-  httpStatus?: number;
+  statusCode?: number;
   startTime: string;
   endTime?: string;
   durationMs?: number;
   errorMessage?: string;
-  tumblebugRequest?: TumblebugRequestSnapshot;
+  upstreamStatus?: string;
+  upstreamProgress?: any;
+  upstreamError?: string;
 }
 
 export interface SubRequestSummary {
   total: number;
-  succeeded: number;
-  failed: number;
-  inProgress: number;
+  handling: number;
+  success: number;
+  error: number;
   currentAction?: string;
-  lastUpdated?: string;
+}
+
+export interface DataHookOutputs {
+  sourcePreCmd?: string;
+  destinationPreCmd?: string;
+  sourcePostCmd?: string;
+  destinationPostCmd?: string;
+  [key: string]: string | undefined;
 }
 
 export interface RequestDetailsResult {
@@ -402,6 +411,7 @@ export interface AiStackLayerStatus {
   isSample?: boolean;
   openWebUi: {
     ok: boolean;
+    port?: number;
     httpStatus: number;
     latencyMs?: number;
     version?: string;

@@ -1,6 +1,6 @@
 import { create, StateCreator } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, SubRequestItem, SubRequestSummary } from '../types/migration';
+import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, SubRequestItem, SubRequestSummary, DataHookOutputs } from '../types/migration';
 import { honeybeeApi, artifactApi, SaveArtifactOptions, beetleApi, tumblebugApi, pickPreferredKoreaRegion } from '../api/client';
 import { isBuiltInSampleModel } from '../utils/modelFormat';
 import recommendedInfraSample from '../data/sampleTargetInfra.json';
@@ -369,7 +369,9 @@ export interface DataMigrationJob {
   destinationPreCmd?: string;
   sourcePostCmd?: string;
   destinationPostCmd?: string;
-  hookOutputs?: Record<string, string>;
+  hookOutputs?: DataHookOutputs;
+  sourceRecovered?: boolean;
+  effectiveStrategy?: string;
   bytesTransferred?: number;
   filesTransferred?: number;
   includeFilter?: string;

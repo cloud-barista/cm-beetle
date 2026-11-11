@@ -270,7 +270,7 @@ export function useGlobalJobPolling() {
                 }
 
                 const stepProgress = updatedJob.subRequestSummary
-                  ? ` [${updatedJob.subRequestSummary.succeeded}/${updatedJob.subRequestSummary.total} steps${updatedJob.subRequestSummary.currentAction ? `: ${updatedJob.subRequestSummary.currentAction}` : ''}]`
+                  ? ` [${updatedJob.subRequestSummary.success}/${updatedJob.subRequestSummary.total} steps${updatedJob.subRequestSummary.currentAction ? `: ${updatedJob.subRequestSummary.currentAction}` : ''}]`
                   : '';
                 return {
                   ...updatedJob,
@@ -361,17 +361,20 @@ export function useGlobalJobPolling() {
                 reqDetails = await beetleApi.getRequestDetails(job.reqId, { brief: false });
               }
               const resData = reqDetails?.responseData || {};
-              const migResult = resData?.result || resData;
+              const migResult = resData?.data || resData?.result || resData;
               setDataJobs((prevJobs) =>
                 prevJobs.map((j) => {
                   if (j.id === job.id) {
                     const dur = calculateJobElapsedSeconds(j);
-                    const detailMsg = resData?.message ? ` - ${resData.message}` : '';
+                    const summaryMsg = migResult?.message || resData?.message;
+                    const detailMsg = summaryMsg ? ` - ${summaryMsg}` : '';
                     return {
                       ...j,
                       status: 'Success',
                       elapsedSeconds: dur,
                       hookOutputs: migResult?.hookOutputs || j.hookOutputs,
+                      sourceRecovered: Boolean(migResult?.sourceRecovered ?? j.sourceRecovered),
+                      effectiveStrategy: migResult?.effectiveStrategy || j.effectiveStrategy,
                       bytesTransferred: typeof migResult?.bytesTransferred === 'number' ? migResult.bytesTransferred : j.bytesTransferred,
                       filesTransferred: typeof migResult?.filesTransferred === 'number' ? migResult.filesTransferred : j.filesTransferred,
                       logs: [
@@ -385,6 +388,8 @@ export function useGlobalJobPolling() {
               );
             } else if (status === 'Failed' || status === 'Error') {
               delete lastDataPollAtRef.current[job.id];
+              const errMsg = reqDetails?.errorResponse || 'Execution Error';
+              const recovered = errMsg.includes('source unquiesced via postCmd');
               setDataJobs((prevJobs) =>
                 prevJobs.map((j) => {
                   if (j.id === job.id) {
@@ -393,9 +398,10 @@ export function useGlobalJobPolling() {
                       ...j,
                       status: 'Failed',
                       elapsedSeconds: dur,
+                      sourceRecovered: recovered || j.sourceRecovered,
                       logs: [
                         ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
-                        `GET /beetle/request/${job.reqId} -> Status: Failed (${reqDetails?.errorResponse || 'Execution Error'}) (Duration: ${dur}s)`
+                        `GET /beetle/request/${job.reqId} -> Status: Failed (${errMsg}) (Duration: ${dur}s)`
                       ]
                     };
                   }

@@ -596,7 +596,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
 
               // Still Handling on backend API
               const stepProgress = updatedJob.subRequestSummary
-                ? ` [${updatedJob.subRequestSummary.succeeded}/${updatedJob.subRequestSummary.total} steps${updatedJob.subRequestSummary.currentAction ? `: ${updatedJob.subRequestSummary.currentAction}` : ''}]`
+                ? ` [${updatedJob.subRequestSummary.success}/${updatedJob.subRequestSummary.total} steps${updatedJob.subRequestSummary.currentAction ? `: ${updatedJob.subRequestSummary.currentAction}` : ''}]`
                 : '';
               const cleanedLogs = updatedJob.logs.filter(l => !l.includes(`GET /beetle/request/${job.reqId}`));
               return {
@@ -1388,7 +1388,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                   </h4>
                   {activeJob.subRequestSummary && (
                     <span className="px-2 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-extrabold">
-                      {activeJob.subRequestSummary.succeeded}/{activeJob.subRequestSummary.total} Completed
+                      {activeJob.subRequestSummary.success}/{activeJob.subRequestSummary.total} Completed
                     </span>
                   )}
                 </div>
@@ -1424,9 +1424,9 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                         <span className="px-1.5 py-0.5 rounded bg-bg-panel border border-border-main text-text-main font-extrabold shrink-0">
                           {sr.method}
                         </span>
-                        <span className="font-extrabold text-text-main truncate" title={`${sr.resourceType || 'api'}: ${sr.resourceName || sr.url}`}>
+                        <span className="font-extrabold text-text-main truncate" title={`${sr.resourceType || 'api'}: ${sr.resourceHint || sr.targetPath}`}>
                           {sr.resourceType || 'api'}
-                          {sr.resourceName ? ` (${sr.resourceName})` : ''}
+                          {sr.resourceHint ? ` (${sr.resourceHint})` : ''}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
