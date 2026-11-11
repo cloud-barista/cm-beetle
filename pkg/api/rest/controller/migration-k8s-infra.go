@@ -122,7 +122,8 @@ func MigrateK8sInfra(c echo.Context) error {
 			"K8s infra migration started. Use GET /request/{reqId} to check status."))
 	}
 
-	clusterInfo, err := migration.CreateK8sInfra(c.Request().Context(), nsId, &infraToMigrate, req.Lineage)
+	// Detach HTTP client cancellation so sync K8s provisioning continues if client disconnects.
+	clusterInfo, err := migration.CreateK8sInfra(context.WithoutCancel(c.Request().Context()), nsId, &infraToMigrate, req.Lineage)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Msg("failed to migrate K8s infra")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
@@ -232,7 +233,8 @@ func DeleteK8sCluster(c echo.Context) error {
 			fmt.Sprintf("Namespace ID and K8s cluster ID required (nsId=%s, k8sClusterId=%s)", nsId, k8sClusterId)))
 	}
 
-	if err := migration.DeleteK8sCluster(c.Request().Context(), nsId, k8sClusterId); err != nil {
+	// Detach HTTP client cancellation so multi-step node group and cluster deletion completes cleanly.
+	if err := migration.DeleteK8sCluster(context.WithoutCancel(c.Request().Context()), nsId, k8sClusterId); err != nil {
 		log.Error().Err(err).Str("k8sClusterId", k8sClusterId).Msg("failed to delete K8s cluster")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}

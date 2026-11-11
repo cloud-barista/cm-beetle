@@ -9,6 +9,10 @@ import { RequestDetailsResult } from '../types/migration';
 export const MIN_BEETLE_POLL_INTERVAL_MS = 10_000;
 const INITIAL_POLL_JITTER_GUARD_MS = MIN_BEETLE_POLL_INTERVAL_MS - 250;
 
+// Excludes unbound empty IDs and legacy client-side placeholder IDs from backend polling.
+const isPollableReqId = (reqId?: string): reqId is string =>
+  Boolean(reqId && !/^req-(?:\d{6}|data-\d{6})$/.test(reqId));
+
 export function useGlobalJobPolling() {
   const {
     jobs,
@@ -40,7 +44,7 @@ export function useGlobalJobPolling() {
   }, [dataJobs]);
 
   const hasActivePollingWork =
-    jobs.some((j) => !j.isSample && (j.status === 'Handling' || (j.nlbStatus === 'Provisioning' && Boolean(j.nlbReqId)))) ||
+    jobs.some((j) => !j.isSample && (j.status === 'Handling' || j.nlbStatus === 'Provisioning')) ||
     objectStorageJobs.some((j) => !j.isSample && j.status === 'Handling') ||
     dataJobs.some((j) => !j.isSample && j.status === 'Handling');
 
@@ -71,7 +75,7 @@ export function useGlobalJobPolling() {
                   : j
               )
             );
-          } else if (!nlbRes.success) {
+          } else {
             setJobs((prev) =>
               prev.map((j) =>
                 j.id === job.id
@@ -80,7 +84,7 @@ export function useGlobalJobPolling() {
                       nlbStatus: 'Failed',
                       logs: [
                         ...j.logs,
-                        `Stage 2 NLB Migration Failed: ${nlbRes.error || 'Unknown error'}`
+                        `Stage 2 NLB Migration Failed: ${nlbRes.error || 'Missing async NLB request ID'}`
                       ]
                     }
                   : j
@@ -90,6 +94,20 @@ export function useGlobalJobPolling() {
         })
         .catch((err) => {
           console.warn('NLB migration trigger error:', err);
+          setJobs((prev) =>
+            prev.map((j) =>
+              j.id === job.id
+                ? {
+                    ...j,
+                    nlbStatus: 'Failed',
+                    logs: [
+                      ...j.logs,
+                      `Stage 2 NLB Migration Failed: ${err?.message || 'Network error'}`
+                    ]
+                  }
+                : j
+            )
+          );
         });
     };
 
@@ -128,6 +146,9 @@ export function useGlobalJobPolling() {
           const jobsToTriggerNlb: MigrationJob[] = [];
 
           for (const job of activeInfraJobs) {
+            if (!isPollableReqId(job.reqId)) {
+              continue;
+            }
             if (job.createdAtMs && nowMs - job.createdAtMs < INITIAL_POLL_JITTER_GUARD_MS) {
               continue;
             }
@@ -171,7 +192,7 @@ export function useGlobalJobPolling() {
           }
 
           for (const job of activeNlbJobs) {
-            if (!job.nlbReqId) continue;
+            if (!isPollableReqId(job.nlbReqId)) continue;
             try {
               let res = await beetleApi.getRequestDetails(job.nlbReqId, { brief: true });
               const isTerminalSuccess =
@@ -206,6 +227,9 @@ export function useGlobalJobPolling() {
                 if (job.nlbStatus === 'Provisioning' && job.nlbReqId) {
                   const nlbUpdate = nlbStatusUpdates[job.id];
                   if (nlbUpdate) {
+                    const cleanedNlbLogs = updatedJob.logs.filter(
+                      (l) => !l.includes(`GET /beetle/request/${job.nlbReqId}`)
+                    );
                     if (
                       nlbUpdate.status === 'Success' ||
                       nlbUpdate.status === 'Completed' ||
@@ -227,7 +251,7 @@ export function useGlobalJobPolling() {
                           checkedAt: new Date().toLocaleTimeString()
                         },
                         logs: [
-                          ...updatedJob.logs,
+                          ...cleanedNlbLogs,
                           `Stage 2 -> NLB Provisioned Successfully! (${nlbName})`,
                           `GET /beetle/request/${job.nlbReqId} -> Status: Success`
                         ]
@@ -237,8 +261,25 @@ export function useGlobalJobPolling() {
                         ...updatedJob,
                         nlbStatus: 'Failed',
                         logs: [
-                          ...updatedJob.logs,
+                          ...cleanedNlbLogs,
                           `Stage 2 -> NLB Provisioning Failed: ${nlbUpdate.errorResponse || 'Backend NLB error'}`
+                        ]
+                      };
+                    } else {
+                      if (nlbUpdate.subRequestSummary) {
+                        updatedJob.subRequestSummary = nlbUpdate.subRequestSummary;
+                      }
+                      if (nlbUpdate.subRequests) {
+                        updatedJob.subRequests = nlbUpdate.subRequests;
+                      }
+                      const nlbStepProgress = nlbUpdate.subRequestSummary
+                        ? ` [${nlbUpdate.subRequestSummary.success}/${nlbUpdate.subRequestSummary.total} steps${nlbUpdate.subRequestSummary.currentAction ? `: ${nlbUpdate.subRequestSummary.currentAction}` : ''}]`
+                        : '';
+                      updatedJob = {
+                        ...updatedJob,
+                        logs: [
+                          ...cleanedNlbLogs,
+                          `GET /beetle/request/${job.nlbReqId}?brief=true -> Stage 2 NLB Status: Handling${nlbStepProgress} (Elapsed: ${newElapsed}s)`
                         ]
                       };
                     }
@@ -343,7 +384,7 @@ export function useGlobalJobPolling() {
         // 2. Poll Active Object Storage Jobs (every >= 10s)
         if (activeOsJobs.length > 0) {
           for (const job of activeOsJobs) {
-            if (!job.reqId || job.isSample) continue;
+            if (!isPollableReqId(job.reqId) || job.isSample) continue;
             if (job.createdAtMs && nowMs - job.createdAtMs < INITIAL_POLL_JITTER_GUARD_MS) {
               continue;
             }
@@ -387,6 +428,9 @@ export function useGlobalJobPolling() {
                   })
                 );
               } else {
+                const osStepProgress = reqDetails?.subRequestSummary
+                  ? ` [${reqDetails.subRequestSummary.success}/${reqDetails.subRequestSummary.total} steps${reqDetails.subRequestSummary.currentAction ? `: ${reqDetails.subRequestSummary.currentAction}` : ''}]`
+                  : '';
                 setObjectStorageJobs((prevJobs) =>
                   prevJobs.map((j) => {
                     if (j.id === job.id) {
@@ -396,7 +440,7 @@ export function useGlobalJobPolling() {
                         elapsedSeconds: dur,
                         logs: [
                           ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
-                          `GET /beetle/request/${job.reqId}?brief=true -> Status: Handling (Elapsed: ${dur}s)`
+                          `GET /beetle/request/${job.reqId}?brief=true -> Status: Handling${osStepProgress} (Elapsed: ${dur}s)`
                         ]
                       };
                     }
@@ -413,7 +457,7 @@ export function useGlobalJobPolling() {
         // 3. Poll Active Data Migration Jobs (every >= 10s using lightweight brief=true)
         if (activeDataJobs.length > 0) {
           for (const job of activeDataJobs) {
-            if (!job.reqId || job.isSample) continue;
+            if (!isPollableReqId(job.reqId) || job.isSample) continue;
             const lastPolled = lastDataPollAtRef.current[job.id] ?? job.createdAtMs ?? 0;
             if (nowMs - lastPolled < INITIAL_POLL_JITTER_GUARD_MS) {
               continue;
@@ -461,6 +505,11 @@ export function useGlobalJobPolling() {
                 );
               } else if (status === 'Failed' || status === 'Error') {
                 delete lastDataPollAtRef.current[job.id];
+                if (reqDetails.responseData === undefined) {
+                  reqDetails = await beetleApi.getRequestDetails(job.reqId, { brief: false });
+                }
+                const resData = reqDetails?.responseData || {};
+                const migResult = resData?.data || resData?.result || resData;
                 const errMsg = reqDetails?.errorResponse || 'Execution Error';
                 const recovered = errMsg.includes('source unquiesced via postCmd');
                 setDataJobs((prevJobs) =>
@@ -471,7 +520,11 @@ export function useGlobalJobPolling() {
                         ...j,
                         status: 'Failed',
                         elapsedSeconds: dur,
-                        sourceRecovered: recovered || j.sourceRecovered,
+                        hookOutputs: migResult?.hookOutputs || j.hookOutputs,
+                        sourceRecovered: Boolean(
+                          migResult?.sourceRecovered ?? (recovered || j.sourceRecovered)
+                        ),
+                        effectiveStrategy: migResult?.effectiveStrategy || j.effectiveStrategy,
                         logs: [
                           ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
                           `GET /beetle/request/${job.reqId} -> Status: Failed (${errMsg}) (Duration: ${dur}s)`

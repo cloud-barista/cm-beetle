@@ -219,6 +219,13 @@ func MigrateData(c echo.Context) error {
 				"Too many requests to the underlying infrastructure provider; retry after the given time"))
 		}
 		log.Error().Err(err).Msg("Data migration failed")
+		if result.PreserveOnError() {
+			return c.JSON(http.StatusInternalServerError, model.ApiResponse[transx.MigrationResult]{
+				Success: false,
+				Error:   err.Error(),
+				Data:    result,
+			})
+		}
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
 	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(result, "Data migrated successfully"))

@@ -176,3 +176,72 @@ func TestRestartSubRequestAttemptAndStaleCleanup(t *testing.T) {
 		t.Fatalf("expected stale sub-request entry to be evicted, got %+v", rem)
 	}
 }
+
+type testPreservedHookResult struct {
+	HookOutputs     map[string]string `json:"hookOutputs,omitempty"`
+	SourceRecovered bool              `json:"sourceRecovered,omitempty"`
+	ElapsedTime     string            `json:"elapsedTime,omitempty"`
+}
+
+func (r testPreservedHookResult) PreserveOnError() bool {
+	return len(r.HookOutputs) > 0 || r.SourceRecovered
+}
+
+func TestFinalizeRequestErrorResultPreserver(t *testing.T) {
+	type nonPreserverResult struct {
+		Status      string `json:"status"`
+		Description string `json:"description"`
+	}
+
+	reqWithHooks := fmt.Sprintf("req-err-hooks-%d", time.Now().UnixNano())
+	defer RemoveRequest(reqWithHooks)
+	if err := SetRequest(reqWithHooks, RequestDetails{ReqId: reqWithHooks, Status: RequestStatusHandling}); err != nil {
+		t.Fatalf("SetRequest failed: %v", err)
+	}
+
+	finalizeRequest(reqWithHooks, testPreservedHookResult{
+		HookOutputs:     map[string]string{"sourcePreCmd": "quiesced ok"},
+		SourceRecovered: true,
+		ElapsedTime:     "12ms",
+	}, fmt.Errorf("transfer failed after preCmd"))
+
+	got, ok := GetRequest(reqWithHooks)
+	if !ok {
+		t.Fatalf("expected request %s to exist", reqWithHooks)
+	}
+	if got.Status != RequestStatusError || got.ErrorResponse == "" {
+		t.Fatalf("expected error status and message, got %+v", got)
+	}
+	preserved, ok := got.ResponseData.(map[string]any)
+	if !ok || preserved["sourceRecovered"] != true {
+		t.Fatalf("expected partial hook result in ResponseData, got %#v", got.ResponseData)
+	}
+	hookMap, ok := preserved["hookOutputs"].(map[string]any)
+	if !ok || hookMap["sourcePreCmd"] != "quiesced ok" {
+		t.Fatalf("expected hookOutputs.sourcePreCmd in ResponseData, got %#v", preserved["hookOutputs"])
+	}
+
+	reqNoHooks := fmt.Sprintf("req-err-nohooks-%d", time.Now().UnixNano())
+	defer RemoveRequest(reqNoHooks)
+	if err := SetRequest(reqNoHooks, RequestDetails{ReqId: reqNoHooks, Status: RequestStatusHandling}); err != nil {
+		t.Fatalf("SetRequest failed: %v", err)
+	}
+
+	finalizeRequest(reqNoHooks, testPreservedHookResult{ElapsedTime: "5ms"}, fmt.Errorf("connect failed"))
+	gotNoHooks, ok := GetRequest(reqNoHooks)
+	if !ok || gotNoHooks.ResponseData != nil {
+		t.Fatalf("expected nil ResponseData when PreserveOnError is false, got %#v", gotNoHooks.ResponseData)
+	}
+
+	reqOtherType := fmt.Sprintf("req-err-other-%d", time.Now().UnixNano())
+	defer RemoveRequest(reqOtherType)
+	if err := SetRequest(reqOtherType, RequestDetails{ReqId: reqOtherType, Status: RequestStatusHandling}); err != nil {
+		t.Fatalf("SetRequest failed: %v", err)
+	}
+
+	finalizeRequest(reqOtherType, nonPreserverResult{Status: "failed", Description: "all failed"}, fmt.Errorf("nlb failed"))
+	gotOther, ok := GetRequest(reqOtherType)
+	if !ok || gotOther.ResponseData != nil {
+		t.Fatalf("expected nil ResponseData for types not implementing ErrorResultPreserver, got %#v", gotOther.ResponseData)
+	}
+}

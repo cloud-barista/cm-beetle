@@ -152,7 +152,7 @@ func splitFirewallRulesByDirection(rules *[]tbmodel.FirewallRuleReq) (inbound, o
 func pollK8sClusterActive(ctx context.Context, nsId, clusterId string, maxAttempts int) (tbmodel.K8sClusterInfo, error) {
 	var clusterInfo tbmodel.K8sClusterInfo
 	for i := 0; i < maxAttempts; i++ {
-		updated, err := tbclient.NewSession().SetContext(ctx).ReadK8sCluster(nsId, clusterId)
+		updated, err := tbclient.NewSession().ReadK8sCluster(nsId, clusterId)
 		if err != nil {
 			if ctxErr := ctx.Err(); ctxErr != nil {
 				return clusterInfo, ctxErr
@@ -183,7 +183,7 @@ func pollK8sNodeGroupsActive(ctx context.Context, nsId, clusterId string, expect
 		if err := common.SleepWithContext(ctx, 15*time.Second); err != nil {
 			return clusterInfo, err
 		}
-		updated, err := tbclient.NewSession().SetContext(ctx).ReadK8sCluster(nsId, clusterId)
+		updated, err := tbclient.NewSession().ReadK8sCluster(nsId, clusterId)
 		if err != nil {
 			if ctxErr := ctx.Err(); ctxErr != nil {
 				return clusterInfo, ctxErr
@@ -559,7 +559,7 @@ func DeleteK8sCluster(ctx context.Context, nsId, clusterId string) error {
 			if err := common.SleepWithContext(ctx, 15*time.Second); err != nil {
 				return err
 			}
-			updated, err := tbclient.NewSession().SetContext(ctx).ReadK8sCluster(nsId, clusterId)
+			updated, err := tbclient.NewSession().ReadK8sCluster(nsId, clusterId)
 			if err != nil {
 				if ctxErr := ctx.Err(); ctxErr != nil {
 					return ctxErr

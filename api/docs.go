@@ -4791,15 +4791,6 @@ const docTemplate = `{
                         "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
-                    },
-                    {
-                        "enum": [
-                            "respond-async"
-                        ],
-                        "type": "string",
-                        "description": "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)",
-                        "name": "Prefer",
-                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -4807,12 +4798,6 @@ const docTemplate = `{
                         "description": "K8s infra recommendation (pass directly to POST /migration/ns/{nsId}/k8sCluster)",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-controller_RecommendK8sInfraResponse"
-                        }
-                    },
-                    "202": {
-                        "description": "Recommendation started asynchronously - use GET /request/{reqId} to check status",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
                         }
                     },
                     "400": {
@@ -4823,12 +4808,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    },
-                    "503": {
-                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }

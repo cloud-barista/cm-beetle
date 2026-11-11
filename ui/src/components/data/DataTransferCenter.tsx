@@ -1222,6 +1222,8 @@ export const DataTransferCenter: React.FC = () => {
           )
         );
       } else if (status === 'Failed' || status === 'Error') {
+        const resData = reqDetails?.responseData || {};
+        const migResult = resData?.data || resData?.result || resData;
         const errMsg = reqDetails?.errorResponse || 'Execution Error';
         const recovered = errMsg.includes('source unquiesced via postCmd');
         setDataJobs((prevJobs) =>
@@ -1231,7 +1233,9 @@ export const DataTransferCenter: React.FC = () => {
                   ...j,
                   status: 'Failed',
                   elapsedSeconds: dur,
-                  sourceRecovered: recovered || j.sourceRecovered,
+                  hookOutputs: migResult?.hookOutputs || j.hookOutputs,
+                  sourceRecovered: Boolean(migResult?.sourceRecovered ?? (recovered || j.sourceRecovered)),
+                  effectiveStrategy: migResult?.effectiveStrategy || j.effectiveStrategy,
                   logs: [
                     ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
                     `GET /beetle/request/${job.reqId} -> Status: Failed (${errMsg}) (Duration: ${dur}s)`
@@ -1500,7 +1504,7 @@ export const DataTransferCenter: React.FC = () => {
             </div>
           </div>
 
-          {(activeJob.sourcePreCmd || activeJob.destinationPreCmd || activeJob.sourcePostCmd || activeJob.destinationPostCmd) && (
+          {(activeJob.sourcePreCmd || activeJob.destinationPreCmd || activeJob.sourcePostCmd || activeJob.destinationPostCmd || activeJob.hookOutputs) && (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">

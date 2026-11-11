@@ -13293,13 +13293,6 @@ paths:
         in: header
         name: X-Request-Id
         type: string
-      - description: Set to 'respond-async' to run this recommendation asynchronously
-          (RFC 7240)
-        enum:
-        - respond-async
-        in: header
-        name: Prefer
-        type: string
       produces:
       - application/json
       responses:
@@ -13307,22 +13300,12 @@ paths:
           description: K8s infra recommendation (pass directly to POST /migration/ns/{nsId}/k8sCluster)
           schema:
             $ref: '#/definitions/model.ApiResponse-controller_RecommendK8sInfraResponse'
-        "202":
-          description: Recommendation started asynchronously - use GET /request/{reqId}
-            to check status
-          schema:
-            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ApiResponse-any'
-        "503":
-          description: 'Too many concurrent async jobs; retry later or without Prefer:
-            respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend a K8s infra configuration for cloud migration

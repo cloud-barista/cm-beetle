@@ -44,7 +44,6 @@ Poll `GET /request/{reqId}` until `status` is `Success` or `Error`. For frequent
 | `POST /recommendation/infraWithNlb` | VM infrastructure + NLB recommendation |
 | `POST /recommendation/multiInfra` | Multi-group / multi-CSP infrastructure recommendation |
 | `POST /recommendation/multiInfraWithNlb` | Multi-group infrastructure + NLB recommendation |
-| `POST /recommendation/k8sCluster` | Managed Kubernetes cluster recommendation |
 | `POST /recommendation/middleware/objectStorage` | Managed Object Storage recommendation |
 | `POST /recommendation/middleware/rdbms` | Managed RDBMS recommendation |
 

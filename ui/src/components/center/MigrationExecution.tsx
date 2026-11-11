@@ -285,16 +285,17 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
         return;
       }
 
-      const reqId = res.reqId || `req-data-${Date.now().toString().slice(-6)}`;
+      const realReqId = res.reqId || '';
+      const jobId = realReqId || `job-data-${Date.now().toString().slice(-6)}`;
       const newJob: MigrationJob = {
-        id: reqId,
-        reqId,
+        id: jobId,
+        reqId: realReqId,
         infraId: `data-${selectedSourceBucket || 'source'} -> ${selectedTargetStorage || 'target'}`,
         nsId: dataNsId,
         nameSeed: 'data-mig',
         csp: dataCsp,
         region: dataRegion,
-        status: 'Handling',
+        status: realReqId ? 'Handling' : 'Success',
         startTime: new Date().toISOString(),
         createdAtMs: Date.now(),
         elapsedSeconds: 0,
@@ -302,14 +303,14 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
         totalVms: 1,
         logs: [
           `GET /beetle/migration/data/encryptionKey -> Issued KeyID: ${usedKeyId}`,
-          `POST /beetle/migration/data -> Encrypted fields & Dispatched (ReqID: ${reqId}, Status: Handling)`
+          `POST /beetle/migration/data -> Encrypted fields & Dispatched (ReqID: ${realReqId || 'sync'}, Status: ${realReqId ? 'Handling' : 'Success'})`
         ]
       };
 
       setJobs(prev => [newJob, ...prev]);
       setActiveJobId(newJob.id);
       setShowDataLaunchModal(false);
-      setToastMsg(`🔒 Data Migration launched with encrypted credentials! (ReqID: ${reqId})`);
+      setToastMsg(`🔒 Data Migration launched with encrypted credentials! (ReqID: ${realReqId || 'sync'})`);
       setTimeout(() => setToastMsg(null), 6000);
     } catch (err: any) {
       setDataLaunchError(err.message || 'Failed to execute data migration.');
@@ -552,7 +553,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
 
     const effectiveModel = buildEffectiveCloudModel(selectedCloudModel.cloudInfraModel);
     const trimmedSeed = customNameSeed.trim();
-    const reqId = `req-${Date.now().toString().slice(-6)}`;
+    const jobId = `job-${Date.now().toString().slice(-6)}`;
     const baseInfraName = effectiveModel.targetInfra?.name || selectedCloudModel.name;
     const targetInfraId = composeSeededName(baseInfraName, trimmedSeed);
     const seededTargetNlbList = (effectiveModel.targetNlbList || []).map((nlb: any) => ({
@@ -572,8 +573,8 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     const queryStr = params.toString();
 
     const newJob: MigrationJob = {
-      id: reqId,
-      reqId,
+      id: jobId,
+      reqId: '',
       infraId: targetInfraId,
       nsId: customNsId,
       nameSeed: trimmedSeed,
@@ -589,13 +590,12 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       nlbStatus: seededTargetNlbList.length > 0 ? 'Idle' : undefined,
       logs: [
         `POST /beetle/migration/ns/${customNsId}/infra?${queryStr}`,
-        `HTTP 202 Accepted (ReqID: ${reqId}, Status: Handling)`,
-        `GET /beetle/request/${reqId} -> Status: Handling (Elapsed: 0s)`
+        'Submitting async migration request to CM-Beetle...'
       ]
     };
 
     setJobs(prev => [newJob, ...prev]);
-    setActiveJobId(reqId);
+    setActiveJobId(jobId);
     setShowLaunchModal(false);
 
     // Call Beetle API
@@ -604,14 +604,14 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       // Backend returned error (e.g. resource already exists or validation failed)
       setJobs(prev =>
         prev.map(j =>
-          j.id === reqId
+          j.id === jobId
             ? {
                 ...j,
                 status: 'Failed',
                 error: res.error || 'Migration failed (Resource already exists or validation failed)',
                 logs: [
-                  ...j.logs.filter(l => !l.includes('GET /beetle/request/')),
-                  `GET /beetle/request/${reqId} -> Status: Error (${res.error || 'Resource already exists or validation failed'})`
+                  `POST /beetle/migration/ns/${customNsId}/infra?${queryStr}`,
+                  `Request Failed: ${res.error || 'Resource already exists or validation failed'}`
                 ]
               }
             : j
@@ -620,18 +620,20 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       setToastMsg(`✕ Migration Failed: ${res.error || 'Resource already exists'}`);
       setTimeout(() => setToastMsg(null), 6000);
     } else if (res.reqId) {
-      // Bind actual backend ReqID
+      // Bind actual backend ReqID and reset polling jitter clock
       const realReqId = res.reqId;
+      const boundAtMs = Date.now();
       setJobs(prev =>
         prev.map(j =>
-          j.id === reqId
+          j.id === jobId
             ? {
                 ...j,
                 reqId: realReqId,
+                createdAtMs: boundAtMs,
                 logs: [
                   `POST /beetle/migration/ns/${customNsId}/infra?${queryStr}`,
                   `HTTP 202 Accepted (ReqID: ${realReqId}, Status: Handling)`,
-                  `GET /beetle/request/${realReqId} -> Status: Handling (Elapsed: 0s)`
+                  `GET /beetle/request/${realReqId}?brief=true -> Status: Handling (Elapsed: 0s)`
                 ]
               }
             : j
@@ -1058,7 +1060,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
 
             <div className="flex items-center gap-3 text-xs font-mono text-text-muted">
               <span>Namespace: <strong className="text-text-main">{activeJob.nsId}</strong></span>
-              <span>Req ID: <strong className="text-emerald-500">{activeJob.reqId}</strong></span>
+              <span>Req ID: <strong className="text-emerald-500">{activeJob.reqId || 'Pending...'}</strong></span>
               <span>Elapsed: <strong className="text-teal-400">{activeJob.elapsedSeconds}s</strong></span>
               <button
                 onClick={() => handleOpenDeleteModal(activeJob)}
@@ -1163,7 +1165,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 <span className="text-xs font-mono text-text-muted">
                   Correlation Header:{' '}
                   <strong className="font-extrabold text-teal-600 dark:text-teal-400">
-                    X-Request-Source: {activeJob.tumblebugSource || `cm-beetle:${activeJob.reqId}`}
+                    X-Request-Source: {activeJob.tumblebugSource || (activeJob.reqId ? `cm-beetle:${activeJob.reqId}` : 'Pending...')}
                   </strong>
                 </span>
               </div>
@@ -2364,7 +2366,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
 
             <div className="space-y-4">
               <p className="text-xs text-text-muted leading-relaxed">
-                Are you sure you want to remove the migration request record for target infra <strong className="text-text-main">"{deleteModalJob.infraId}"</strong> (<span className="font-mono text-emerald-400">{deleteModalJob.reqId}</span>) from the Queue?
+                Are you sure you want to remove the migration request record for target infra <strong className="text-text-main">"{deleteModalJob.infraId}"</strong> (<span className="font-mono text-emerald-400">{deleteModalJob.reqId || 'Pending'}</span>) from the Queue?
               </p>
               <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-400 font-mono">
                 ⚠️ Note: This action only removes the UI queue request record. Physical cloud infrastructure resources will NOT be deleted.

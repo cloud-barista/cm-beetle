@@ -179,6 +179,11 @@ type MigrationResult struct {
 	SourceRecovered   bool         `json:"sourceRecovered,omitempty"`
 }
 
+// PreserveOnError reports whether partial hook outputs or recovery state should be kept on error.
+func (r MigrationResult) PreserveOnError() bool {
+	return r.HookOutputs != nil || r.SourceRecovered
+}
+
 // ============================================================================
 // Filesystem Access Configuration
 // ============================================================================

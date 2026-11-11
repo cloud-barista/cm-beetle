@@ -498,6 +498,11 @@ func RunAsync[T any](ctx context.Context, reqID string, work func(context.Contex
 	return true
 }
 
+// ErrorResultPreserver is implemented by result types that expose partial diagnostics on error.
+type ErrorResultPreserver interface {
+	PreserveOnError() bool
+}
+
 // finalizeRequest updates a request's status to Success or Error and stores the result or error message.
 func finalizeRequest[T any](reqID string, result T, err error) {
 	details, ok := GetRequest(reqID)
@@ -514,6 +519,9 @@ func finalizeRequest[T any](reqID string, result T, err error) {
 	if err != nil {
 		details.Status = RequestStatusError
 		details.ErrorResponse = err.Error()
+		if preserver, ok := any(result).(ErrorResultPreserver); ok && preserver.PreserveOnError() {
+			details.ResponseData = result
+		}
 
 		// Extract retry information from rate limit errors
 		if retryAfter, ok := ratelimit.RetryAfter(err); ok {

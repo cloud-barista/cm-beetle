@@ -116,6 +116,9 @@ func ResponseBodyDump() echo.MiddlewareFunc {
 					if details.ErrorResponse == "" {
 						details.ErrorResponse = "No error message found"
 					}
+					if dataVal, exists := lastResData["data"]; exists && dataVal != nil {
+						details.ResponseData = dataVal
+					}
 					break processResponse
 				}
 
