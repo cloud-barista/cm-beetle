@@ -50,7 +50,7 @@ services:
   # 2. CM-Honeybee (On-Premise Infrastructure Extractor)
   # ============================================================================
   cm-honeybee:
-    image: cloudbaristaorg/cm-honeybee:0.6.3
+    image: cloudbaristaorg/cm-honeybee:0.6.4
     container_name: cm-honeybee
     networks:
       - cloud-barista
