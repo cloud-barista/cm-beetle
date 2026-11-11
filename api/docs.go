@@ -6254,17 +6254,17 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/definitions/common.RequestDetails"
-                                }
-                            }
+                            "$ref": "#/definitions/model.ApiResponse-controller_GetAllRequestsResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -9964,6 +9964,17 @@ const docTemplate = `{
                 }
             }
         },
+        "controller.GetAllRequestsResponse": {
+            "type": "object",
+            "properties": {
+                "requests": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.RequestDetails"
+                    }
+                }
+            }
+        },
         "controller.InspectObjectStorageRequest": {
             "type": "object",
             "required": [
@@ -11707,6 +11718,34 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/controller.CheckSSHReadyResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-controller_GetAllRequestsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/controller.GetAllRequestsResponse"
                         }
                     ]
                 },

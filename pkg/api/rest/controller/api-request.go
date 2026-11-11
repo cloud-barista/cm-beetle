@@ -124,6 +124,17 @@ func RestGetRequest(c echo.Context) error {
 	return c.JSON(http.StatusOK, model.SuccessResponse(details))
 }
 
+// GetAllRequestsResponse wraps tracked requests under the "requests" key aligned with CB-Tumblebug.
+type GetAllRequestsResponse struct {
+	Requests []common.RequestDetails `json:"requests"`
+}
+
+// SaveRequestsFileResult holds metadata returned when savefile=true writes request logs to disk.
+type SaveRequestsFileResult struct {
+	FilePath string `json:"file_path"`
+	Count    int    `json:"count"`
+}
+
 // RestGetAllRequests godoc
 // @ID GetAllRequests
 // @Summary Get all requests
@@ -153,8 +164,9 @@ func RestGetRequest(c echo.Context) error {
 // @Param limit query int false "Maximum number of recent requests to return (0 = unlimited)" default(0)
 // @Param brief query bool false "Omit requestInfo.body and responseData for lightweight listing (default: false)" default(false)
 // @Param savefile query string false "Option to save the results to a file (set 'true' to activate)" Enums(true,false) default(false)
-// @Success 200 {object} map[string][]common.RequestDetails
+// @Success 200 {object} model.ApiResponse[GetAllRequestsResponse]
 // @Failure 400 {object} model.ApiResponse[any]
+// @Failure 500 {object} model.ApiResponse[any]
 // @Router /requests [get]
 func RestGetAllRequests(c echo.Context) error {
 	statusFilter := c.QueryParam("status")
@@ -223,16 +235,18 @@ func RestGetAllRequests(c echo.Context) error {
 
 		log.Info().Msgf("Filtered request log saved to: %s", logPath)
 
-		// Return only the file path when savefile is requested
-		return c.JSON(http.StatusOK, map[string]interface{}{
-			"message":   "Filtered requests saved successfully",
-			"file_path": logPath,
-			"count":     len(allRequests),
-		})
+		// Return the saved file metadata wrapped in standard ApiResponse
+		return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(
+			SaveRequestsFileResult{
+				FilePath: logPath,
+				Count:    len(allRequests),
+			},
+			"Filtered requests saved successfully",
+		))
 	}
 
 	// Return the filtered requests data when savefile is not requested
-	return c.JSON(http.StatusOK, model.SuccessResponse(map[string][]common.RequestDetails{"requests": allRequests}))
+	return c.JSON(http.StatusOK, model.SuccessResponse(GetAllRequestsResponse{Requests: allRequests}))
 }
 
 // RestDeleteRequest godoc

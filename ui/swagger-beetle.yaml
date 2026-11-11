@@ -2418,6 +2418,13 @@ definitions:
     required:
     - onpremiseInfraModel
     type: object
+  controller.GetAllRequestsResponse:
+    properties:
+      requests:
+        items:
+          $ref: '#/definitions/common.RequestDetails'
+        type: array
+    type: object
   controller.InspectObjectStorageRequest:
     properties:
       accessKeyId:
@@ -3707,6 +3714,25 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/controller.CheckSSHReadyResponse'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-controller_GetAllRequestsResponse:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/controller.GetAllRequestsResponse'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -14490,13 +14516,13 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              items:
-                $ref: '#/definitions/common.RequestDetails'
-              type: array
-            type: object
+            $ref: '#/definitions/model.ApiResponse-controller_GetAllRequestsResponse'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Get all requests

@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
+	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -159,9 +162,10 @@ func TestRestGetAllRequests_SortingFilteringAndValidation(t *testing.T) {
 		require.NoError(t, RestGetAllRequests(c))
 		require.Equal(t, http.StatusOK, rec.Code)
 
-		var resp model.ApiResponse[map[string][]common.RequestDetails]
+		var resp model.ApiResponse[GetAllRequestsResponse]
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
-		items := resp.Data["requests"]
+		assert.True(t, resp.Success)
+		items := resp.Data.Requests
 		require.Len(t, items, 1)
 		assert.Equal(t, "req-newer", items[0].ReqId)
 		assert.Nil(t, items[0].RequestInfo.Body)
@@ -175,11 +179,33 @@ func TestRestGetAllRequests_SortingFilteringAndValidation(t *testing.T) {
 		require.NoError(t, RestGetAllRequests(c))
 		require.Equal(t, http.StatusOK, rec.Code)
 
-		var resp model.ApiResponse[map[string][]common.RequestDetails]
+		var resp model.ApiResponse[GetAllRequestsResponse]
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
-		items := resp.Data["requests"]
+		items := resp.Data.Requests
 		require.Len(t, items, 1)
 		assert.Equal(t, "req-older", items[0].ReqId)
+	})
+
+	t.Run("Saves filtered requests to file with ApiResponse envelope", func(t *testing.T) {
+		tmpRoot := t.TempDir()
+		require.NoError(t, os.MkdirAll(filepath.Join(tmpRoot, "log"), 0o755))
+		prevRoot := config.Beetle.Root
+		config.Beetle.Root = tmpRoot
+		t.Cleanup(func() { config.Beetle.Root = prevRoot })
+
+		req := httptest.NewRequest(http.MethodGet, "/beetle/requests?savefile=true", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		require.NoError(t, RestGetAllRequests(c))
+		require.Equal(t, http.StatusOK, rec.Code)
+
+		var resp model.ApiResponse[SaveRequestsFileResult]
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
+		assert.True(t, resp.Success)
+		assert.Equal(t, "Filtered requests saved successfully", resp.Message)
+		assert.Equal(t, 2, resp.Data.Count)
+		assert.FileExists(t, resp.Data.FilePath)
 	})
 
 	t.Run("Rejects negative or non-integer limit with 400", func(t *testing.T) {
