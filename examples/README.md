@@ -48,12 +48,12 @@ curl -s http://localhost:8056/beetle/readyz
 
 Follow the tutorials in order using the step-by-step curl commands documented in each directory:
 
-1. **Step 1 — Provision Target Cloud Bucket ([`object-storage-migration/`](./object-storage-migration/)):**
+1. **Step 1: Provision Target Cloud Bucket ([`object-storage-migration/`](./object-storage-migration/)):**
    - **Recommendation**: Submit source KT Cloud bucket properties (`POST /beetle/recommendation/middleware/objectStorage`) to generate an NCP-compatible bucket recommendation.
-   - **Provisioning**: Provision the recommended bucket in CB-Tumblebug with late-binding naming (`POST /beetle/migration/middleware/ns/mig01/objectStorage?nameSeed=test`), creating `test-os-01`.
+   - **Provisioning**: Provision the recommended bucket in CB-Tumblebug with late-binding naming (`POST /beetle/migration/middleware/ns/mig01/objectStorage?nameSeed=test`), creating `test-os-01` and returning `MigratedObjectStorageResult` (`201 Created`).
    - *(Keep `test-os-01` active to proceed to Step 2.)*
 
-2. **Step 2 — Transfer Data into Target Bucket ([`data-migration/`](./data-migration/)):**
+2. **Step 2: Transfer Data into Target Bucket ([`data-migration/`](./data-migration/)):**
    - **One-time RSA Key**: Fetch a fresh public key bundle (`GET /beetle/migration/data/encryptionKey`).
    - **In-Transit Encryption**: Encrypt sensitive credentials (`POST /beetle/migration/data/test/encrypt`).
    - **Data Transfer**: Launch the asynchronous transfer job (`POST /beetle/migration/data` with `Prefer: respond-async`) to migrate objects from KT Cloud into `test-os-01`.
@@ -73,7 +73,7 @@ Follow the tutorials in order using the step-by-step curl commands documented in
 
 > [!NOTE]
 > **Prerequisites and Preparation**:
-> - **For Bucket Recommendation & Provisioning**: Source bucket metadata (name, versioning, CORS, etc.) must be provided in the JSON payload (or discovered via CM-Beetle's temporary Scan/Inspect test APIs).
+> - **For Bucket Recommendation & Provisioning**: Source bucket metadata (name, versioning, CORS, etc.) must be provided in the JSON payload (or discovered locally for supported S3 CSPs via CM-Beetle's `[TEST ONLY]` Scan/Inspect client helper APIs).
 > - **For Data Migration**: The target bucket **must be provisioned beforehand** (using `object-storage-migration`), and valid S3 read credentials for the source storage are required.
 
 ---

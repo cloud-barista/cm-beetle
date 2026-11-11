@@ -7,17 +7,17 @@
 
 ### Environment
 
-- CM-Beetle: v0.5.2+ (1c7e6cd)
-- CB-Tumblebug: v0.12.19
+- CM-Beetle: v0.6.4+ (95cc61d)
+- CB-Tumblebug: v0.13.8
 - Target CSP: AZURE
 - Target Region: koreasouth
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Name Seed: my
 - Test CLI: Custom automated testing tool
-- Test Date: June 24, 2026
-- Test Time: 19:40:36 KST
-- Test Execution: 2026-06-24 19:40:36 KST
+- Test Date: November 11, 2026
+- Test Time: 12:58:03 KST
+- Test Execution: 2026-11-11 12:58:03 KST
 
 ### Scenario
 
@@ -37,18 +37,18 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 5ms | Pass |
-| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 346ms | Pass |
-| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 3ms | Pass |
-| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 19ms | Pass |
-| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 36ms | Pass |
-| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 6.186s | Pass |
+| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 4ms | Pass |
+| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 1.02s | Pass |
+| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 4ms | Pass |
+| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 39ms | Pass |
+| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 77ms | Pass |
+| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 6.354s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 11.600498747s
+**Total Duration**: 12.504580615s
 
-*Test executed on June 24, 2026 at 19:40:36 KST (2026-06-24 19:40:36 KST) using CM-Beetle automated test CLI*
+*Test executed on November 11, 2026 at 12:58:03 KST (2026-11-11 12:58:03 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -73,7 +73,10 @@
 
 ```json
 {
-  "nameSeed": "my",
+  "desiredCloud": {
+    "csp": "azure",
+    "region": "koreasouth"
+  },
   "sourceObjectStorages": [
     {
       "bucketName": "source-bucket-01",
@@ -237,6 +240,128 @@
 - **Status**: ✅ **SUCCESS**
 - **Response**: Object storages created successfully
 
+**Response Body**:
+
+<details>
+  <summary> <ins>Click to see the response body</ins> </summary>
+
+```json
+{
+  "data": {
+    "description": "Successfully created 2 object storage(s)",
+    "objectStorage": [
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T03:58:06Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T03:58:06Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "azure-koreasouth",
+          "credentialHolder": "admin",
+          "credentialName": "azure",
+          "driverName": "azure-driver-v1.0.so",
+          "providerName": "azure",
+          "regionDetail": {
+            "description": "Korea South",
+            "location": {
+              "display": "Korea South",
+              "latitude": 35.1796,
+              "longitude": 129.0756
+            },
+            "regionId": "koreasouth",
+            "regionName": "koreasouth",
+            "zones": []
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "koreasouth",
+            "assignedZone": ""
+          },
+          "regionZoneInfoName": "azure-koreasouth",
+          "verified": true
+        },
+        "connectionName": "azure-koreasouth",
+        "cspResourceId": "tbg2d8ikd9udfti3ndc0",
+        "cspResourceName": "tbg2d8ikd9udfti3ndc0",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-01",
+        "maxKeys": 1000,
+        "name": "my-os-01",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tbg2d8ikd9udfti3ndc0"
+      },
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T03:58:07Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T03:58:07Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "azure-koreasouth",
+          "credentialHolder": "admin",
+          "credentialName": "azure",
+          "driverName": "azure-driver-v1.0.so",
+          "providerName": "azure",
+          "regionDetail": {
+            "description": "Korea South",
+            "location": {
+              "display": "Korea South",
+              "latitude": 35.1796,
+              "longitude": 129.0756
+            },
+            "regionId": "koreasouth",
+            "regionName": "koreasouth",
+            "zones": []
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "koreasouth",
+            "assignedZone": ""
+          },
+          "regionZoneInfoName": "azure-koreasouth",
+          "verified": true
+        },
+        "connectionName": "azure-koreasouth",
+        "cspResourceId": "tbmd242rd6jqro7pubdk",
+        "cspResourceName": "tbmd242rd6jqro7pubdk",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-02",
+        "maxKeys": 1000,
+        "name": "my-os-02",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tbmd242rd6jqro7pubdk"
+      }
+    ],
+    "status": "created"
+  },
+  "message": "Successfully created 2 object storage(s)",
+  "success": true
+}
+```
+
+</details>
+
 ### Test Case 3: List object storages
 
 #### 3.1 API Request Information
@@ -255,7 +380,18 @@
 ```json
 {
   "data": {
-    "objectStorage": null
+    "objectStorage": [
+      {
+        "connectionName": "azure-koreasouth",
+        "id": "my-os-01",
+        "name": "my-os-01"
+      },
+      {
+        "connectionName": "azure-koreasouth",
+        "id": "my-os-02",
+        "name": "my-os-02"
+      }
+    ]
   },
   "success": true
 }
@@ -295,11 +431,55 @@
 ```json
 {
   "data": {
+    "conditions": [
+      {
+        "lastTransitionTime": "2026-11-11T03:58:06Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Ready"
+      },
+      {
+        "lastTransitionTime": "2026-11-11T03:58:06Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Synced"
+      }
+    ],
+    "connectionConfig": {
+      "configName": "azure-koreasouth",
+      "credentialHolder": "admin",
+      "credentialName": "azure",
+      "driverName": "azure-driver-v1.0.so",
+      "providerName": "azure",
+      "regionDetail": {
+        "description": "Korea South",
+        "location": {
+          "display": "Korea South",
+          "latitude": 35.1796,
+          "longitude": 129.0756
+        },
+        "regionId": "koreasouth",
+        "regionName": "koreasouth",
+        "zones": []
+      },
+      "regionRepresentative": true,
+      "regionZoneInfo": {
+        "assignedRegion": "koreasouth",
+        "assignedZone": ""
+      },
+      "regionZoneInfoName": "azure-koreasouth",
+      "verified": true
+    },
     "connectionName": "azure-koreasouth",
+    "cspResourceId": "tbg2d8ikd9udfti3ndc0",
+    "cspResourceName": "tbg2d8ikd9udfti3ndc0",
     "description": "Created by CM-Beetle",
     "id": "my-os-01",
+    "maxKeys": 1000,
     "name": "my-os-01",
-    "status": "Available"
+    "resourceType": "objectStorage",
+    "status": "Available",
+    "uid": "tbg2d8ikd9udfti3ndc0"
   },
   "success": true
 }

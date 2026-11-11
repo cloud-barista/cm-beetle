@@ -7,17 +7,17 @@
 
 ### Environment
 
-- CM-Beetle: v0.5.2+ (1c7e6cd)
-- CB-Tumblebug: v0.12.19
+- CM-Beetle: v0.6.4+ (95cc61d)
+- CB-Tumblebug: v0.13.8
 - Target CSP: IBM
 - Target Region: au-syd
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Name Seed: my
 - Test CLI: Custom automated testing tool
-- Test Date: June 24, 2026
-- Test Time: 19:43:04 KST
-- Test Execution: 2026-06-24 19:43:04 KST
+- Test Date: November 11, 2026
+- Test Time: 13:00:09 KST
+- Test Execution: 2026-11-11 13:00:09 KST
 
 ### Scenario
 
@@ -37,18 +37,18 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 7ms | Pass |
-| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 3m55.604s | Pass |
-| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 21ms | Pass |
-| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 1.194s | Pass |
-| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 2.523s | Pass |
-| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 19.601s | Pass |
+| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 3ms | Pass |
+| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 2m41.75s | Pass |
+| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 7ms | Pass |
+| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 2.106s | Pass |
+| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 4.61s | Pass |
+| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 28.168s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 4m23.95579199s
+**Total Duration**: 3m21.649301493s
 
-*Test executed on June 24, 2026 at 19:43:04 KST (2026-06-24 19:43:04 KST) using CM-Beetle automated test CLI*
+*Test executed on November 11, 2026 at 13:00:09 KST (2026-11-11 13:00:09 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -73,7 +73,10 @@
 
 ```json
 {
-  "nameSeed": "my",
+  "desiredCloud": {
+    "csp": "ibm",
+    "region": "au-syd"
+  },
   "sourceObjectStorages": [
     {
       "bucketName": "source-bucket-01",
@@ -307,6 +310,136 @@
 - **Status**: ✅ **SUCCESS**
 - **Response**: Object storages created successfully
 
+**Response Body**:
+
+<details>
+  <summary> <ins>Click to see the response body</ins> </summary>
+
+```json
+{
+  "data": {
+    "description": "Successfully created 2 object storage(s)",
+    "objectStorage": [
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T04:00:26Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T04:00:26Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "ibm-au-syd",
+          "credentialHolder": "admin",
+          "credentialName": "ibm",
+          "driverName": "ibm-driver-v1.0.so",
+          "providerName": "ibm",
+          "regionDetail": {
+            "description": "Sydney (Australia)",
+            "location": {
+              "display": "Australia (Sydney)",
+              "latitude": -33.86882,
+              "longitude": 151.209296
+            },
+            "regionId": "au-syd",
+            "regionName": "au-syd",
+            "zones": [
+              "au-syd-1",
+              "au-syd-2",
+              "au-syd-3"
+            ]
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "au-syd",
+            "assignedZone": "au-syd-1"
+          },
+          "regionZoneInfoName": "ibm-au-syd",
+          "verified": true
+        },
+        "connectionName": "ibm-au-syd",
+        "cspResourceId": "tbns38hdccs95asu615f",
+        "cspResourceName": "tbns38hdccs95asu615f",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-01",
+        "maxKeys": 1000,
+        "name": "my-os-01",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tbns38hdccs95asu615f"
+      },
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T04:00:39Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T04:00:39Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "ibm-au-syd",
+          "credentialHolder": "admin",
+          "credentialName": "ibm",
+          "driverName": "ibm-driver-v1.0.so",
+          "providerName": "ibm",
+          "regionDetail": {
+            "description": "Sydney (Australia)",
+            "location": {
+              "display": "Australia (Sydney)",
+              "latitude": -33.86882,
+              "longitude": 151.209296
+            },
+            "regionId": "au-syd",
+            "regionName": "au-syd",
+            "zones": [
+              "au-syd-1",
+              "au-syd-2",
+              "au-syd-3"
+            ]
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "au-syd",
+            "assignedZone": "au-syd-1"
+          },
+          "regionZoneInfoName": "ibm-au-syd",
+          "verified": true
+        },
+        "connectionName": "ibm-au-syd",
+        "cspResourceId": "tbei2j4r62g6uv7eppsq",
+        "cspResourceName": "tbei2j4r62g6uv7eppsq",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-02",
+        "maxKeys": 1000,
+        "name": "my-os-02",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tbei2j4r62g6uv7eppsq"
+      }
+    ],
+    "status": "created"
+  },
+  "message": "Successfully created 2 object storage(s)",
+  "success": true
+}
+```
+
+</details>
+
 ### Test Case 3: List object storages
 
 #### 3.1 API Request Information
@@ -325,7 +458,18 @@
 ```json
 {
   "data": {
-    "objectStorage": null
+    "objectStorage": [
+      {
+        "connectionName": "ibm-au-syd",
+        "id": "my-os-01",
+        "name": "my-os-01"
+      },
+      {
+        "connectionName": "ibm-au-syd",
+        "id": "my-os-02",
+        "name": "my-os-02"
+      }
+    ]
   },
   "success": true
 }
@@ -365,11 +509,59 @@
 ```json
 {
   "data": {
+    "conditions": [
+      {
+        "lastTransitionTime": "2026-11-11T04:00:26Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Ready"
+      },
+      {
+        "lastTransitionTime": "2026-11-11T04:00:26Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Synced"
+      }
+    ],
+    "connectionConfig": {
+      "configName": "ibm-au-syd",
+      "credentialHolder": "admin",
+      "credentialName": "ibm",
+      "driverName": "ibm-driver-v1.0.so",
+      "providerName": "ibm",
+      "regionDetail": {
+        "description": "Sydney (Australia)",
+        "location": {
+          "display": "Australia (Sydney)",
+          "latitude": -33.86882,
+          "longitude": 151.209296
+        },
+        "regionId": "au-syd",
+        "regionName": "au-syd",
+        "zones": [
+          "au-syd-1",
+          "au-syd-2",
+          "au-syd-3"
+        ]
+      },
+      "regionRepresentative": true,
+      "regionZoneInfo": {
+        "assignedRegion": "au-syd",
+        "assignedZone": "au-syd-1"
+      },
+      "regionZoneInfoName": "ibm-au-syd",
+      "verified": true
+    },
     "connectionName": "ibm-au-syd",
+    "cspResourceId": "tbns38hdccs95asu615f",
+    "cspResourceName": "tbns38hdccs95asu615f",
     "description": "Created by CM-Beetle",
     "id": "my-os-01",
+    "maxKeys": 1000,
     "name": "my-os-01",
-    "status": "Available"
+    "resourceType": "objectStorage",
+    "status": "Available",
+    "uid": "tbns38hdccs95asu615f"
   },
   "success": true
 }

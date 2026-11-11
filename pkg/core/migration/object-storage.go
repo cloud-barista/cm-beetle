@@ -15,6 +15,7 @@ limitations under the License.
 package migration
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -25,6 +26,17 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 )
+
+// isNotFoundErr reports whether an upstream error indicates a 404 Not Found status.
+func isNotFoundErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "api error: 404") ||
+		strings.Contains(msg, "not found") ||
+		strings.Contains(msg, "does not exist")
+}
 
 // ============================================================================
 // Helpers
@@ -119,9 +131,8 @@ func toStorageModelObjectStorageInfo(src tbmodel.ObjectStorageInfo) storagemodel
 // ============================================================================
 
 // CreateObjectStorage migrates object storages to the target cloud.
-// It applies late-binding via the seed parameter, creates each bucket, then configures
-// versioning and CORS according to CSP support information.
-func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage, seed string) error {
+// Each target bucket is attempted independently; partial failures or skipped features are recorded in Warnings.
+func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage, seed string) (MigratedObjectStorageResult, error) {
 	log.Info().
 		Str("nsId", nsId).
 		Str("csp", req.TargetCloud.Csp).
@@ -129,13 +140,18 @@ func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage,
 		Int("targetBuckets", len(req.TargetObjectStorages)).
 		Msg("Starting object storage migration")
 
-	// Validate connection
+	// Validate target cloud connection before attempting bucket creation.
 	connName, err := GenerateConnectionName(req.TargetCloud.Csp, req.TargetCloud.Region)
 	if err != nil {
-		return fmt.Errorf("invalid cloud configuration (%s %s): %w", req.TargetCloud.Csp, req.TargetCloud.Region, err)
+		wrappedErr := fmt.Errorf("invalid cloud configuration (%s %s): %w", req.TargetCloud.Csp, req.TargetCloud.Region, err)
+		return MigratedObjectStorageResult{
+			Status:        "failed",
+			Description:   wrappedErr.Error(),
+			ObjectStorage: []storagemodel.ObjectStorageInfo{},
+		}, wrappedErr
 	}
 
-	// Apply NameSeed (Late Binding) on a cloned slice to avoid mutating caller input
+	// Apply NameSeed on a cloned slice to avoid mutating caller input.
 	if seed != "" {
 		req.TargetObjectStorages = slices.Clone(req.TargetObjectStorages)
 		for i := range req.TargetObjectStorages {
@@ -143,7 +159,12 @@ func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage,
 		}
 	}
 
-	// Create each bucket
+	createdBuckets := make([]storagemodel.ObjectStorageInfo, 0, len(req.TargetObjectStorages))
+	provisionedTargets := make([]storagemodel.TargetObjectStorage, 0, len(req.TargetObjectStorages))
+	var warnings []string
+	var createErrs []error
+
+	// Attempt each target bucket independently.
 	for i, target := range req.TargetObjectStorages {
 		log.Debug().
 			Int("index", i+1).
@@ -152,92 +173,141 @@ func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage,
 			Str("targetBucket", target.BucketName).
 			Msg("Creating object storage")
 
+		if strings.TrimSpace(target.BucketName) == "" {
+			msg := fmt.Sprintf("Bucket[%d]: bucketName is empty; skipping", i)
+			log.Warn().Msg(msg)
+			warnings = append(warnings, msg)
+			createErrs = append(createErrs, errors.New(msg))
+			continue
+		}
+
 		createReq := tbmodel.ObjectStorageCreateRequest{
 			BucketName:     target.BucketName,
 			ConnectionName: connName,
 			Description:    "Created by CM-Beetle",
 		}
-		if _, err := tbclient.NewSession().CreateObjectStorage(nsId, createReq); err != nil {
+		info, err := tbclient.NewSession().CreateObjectStorage(nsId, createReq)
+		if err != nil {
 			log.Error().Err(err).Str("bucketName", target.BucketName).Msg("Failed to create object storage")
-			return fmt.Errorf("failed to create object storage '%s': %w", target.BucketName, err)
+			msg := fmt.Sprintf("Bucket '%s': failed to create object storage: %v", target.BucketName, err)
+			warnings = append(warnings, msg)
+			createErrs = append(createErrs, fmt.Errorf("failed to create object storage '%s': %w", target.BucketName, err))
+			continue
 		}
 
+		createdBuckets = append(createdBuckets, toStorageModelObjectStorageInfo(info))
+		provisionedTargets = append(provisionedTargets, target)
 		log.Info().
 			Str("sourceBucket", target.SourceBucketName).
 			Str("targetBucket", target.BucketName).
 			Msg("Object storage created")
 	}
 
-	// Configure versioning and CORS
-	// Re-check support because the user may have modified the recommendation before calling migration
-	supportResp, supportErr := tbclient.NewSession().GetObjectStorageSupport(req.TargetCloud.Csp)
-	if supportErr != nil {
-		log.Warn().Err(supportErr).Str("csp", req.TargetCloud.Csp).
-			Msg("Failed to fetch CSP support info; skipping versioning/CORS configuration")
-	} else {
-		support, hasSupportInfo := supportResp.Supports[req.TargetCloud.Csp]
-		corsSupported := !hasSupportInfo || support.Cors
-		versioningSupported := !hasSupportInfo || support.Versioning
+	if len(createdBuckets) == 0 {
+		result := MigratedObjectStorageResult{
+			Status:        "failed",
+			Description:   fmt.Sprintf("All %d object storage migration(s) failed", len(req.TargetObjectStorages)),
+			Warnings:      warnings,
+			ObjectStorage: createdBuckets,
+		}
+		return result, fmt.Errorf("all object storage migrations failed: %w", errors.Join(createErrs...))
+	}
 
-		tbSess := tbclient.NewSession()
+	// Re-check CSP feature support because the caller may have edited the recommendation model.
+	cspKey := strings.ToLower(strings.TrimSpace(req.TargetCloud.Csp))
+	needsFeatureConfig := false
+	for _, target := range provisionedTargets {
+		if target.VersioningEnabled || (target.CORSEnabled && len(target.CORSRule) > 0) {
+			needsFeatureConfig = true
+			break
+		}
+	}
 
-		for _, target := range req.TargetObjectStorages {
-			bucketId := target.BucketName
+	if needsFeatureConfig {
+		supportResp, supportErr := tbclient.NewSession().GetObjectStorageSupport(cspKey)
+		if supportErr != nil {
+			log.Warn().Err(supportErr).Str("csp", cspKey).
+				Msg("Failed to fetch CSP support info; skipping versioning and CORS configuration")
+			warnings = append(warnings, fmt.Sprintf("CSP '%s': failed to fetch support info; skipped versioning and CORS configuration: %v", cspKey, supportErr))
+		} else {
+			support, hasSupportInfo := supportResp.Supports[cspKey]
+			corsSupported := !hasSupportInfo || support.Cors
+			versioningSupported := !hasSupportInfo || support.Versioning
 
-			// Configure versioning
-			if target.VersioningEnabled {
-				if !versioningSupported {
-					log.Warn().
-						Str("bucket", bucketId).
-						Str("csp", req.TargetCloud.Csp).
-						Msg("Versioning requested but not supported by CSP; skipping")
-				} else {
-					verReq := tbmodel.ObjectStorageSetVersioningRequest{Status: "Enabled"}
-					if err := tbSess.SetObjectStorageVersioning(nsId, bucketId, verReq); err != nil {
-						log.Error().Err(err).Str("bucket", bucketId).Msg("Failed to enable versioning; continuing")
+			for _, target := range provisionedTargets {
+				bucketId := target.BucketName
+
+				// Apply versioning configuration using an isolated request session.
+				if target.VersioningEnabled {
+					if !versioningSupported {
+						msg := fmt.Sprintf("Bucket '%s': versioning skipped (not supported on %s)", bucketId, cspKey)
+						log.Warn().Str("bucket", bucketId).Str("csp", cspKey).Msg(msg)
+						warnings = append(warnings, msg)
 					} else {
-						log.Info().Str("bucket", bucketId).Msg("Versioning enabled")
+						verReq := tbmodel.ObjectStorageSetVersioningRequest{Status: "Enabled"}
+						if err := tbclient.NewSession().SetObjectStorageVersioning(nsId, bucketId, verReq); err != nil {
+							msg := fmt.Sprintf("Bucket '%s': failed to enable versioning: %v", bucketId, err)
+							log.Error().Err(err).Str("bucket", bucketId).Msg("Failed to enable versioning; continuing")
+							warnings = append(warnings, msg)
+						} else {
+							log.Info().Str("bucket", bucketId).Msg("Versioning enabled")
+						}
 					}
 				}
-			}
 
-			// Configure CORS
-			if target.CORSEnabled && len(target.CORSRule) > 0 {
-				if !corsSupported {
-					log.Warn().
-						Str("bucket", bucketId).
-						Str("csp", req.TargetCloud.Csp).
-						Msg("CORS requested but not supported by CSP; skipping")
-				} else {
-					corsRules := make([]tbmodel.CorsRule, 0, len(target.CORSRule))
-					for _, r := range target.CORSRule {
-						corsRules = append(corsRules, tbmodel.CorsRule{
-							AllowedOrigin: r.AllowedOrigin,
-							AllowedMethod: r.AllowedMethod,
-							AllowedHeader: r.AllowedHeader,
-							ExposeHeader:  r.ExposeHeader,
-							MaxAgeSeconds: r.MaxAgeSeconds,
-						})
-					}
-					corsReq := tbmodel.ObjectStorageSetCorsRequest{CorsRule: corsRules}
-					if err := tbSess.SetObjectStorageCORS(nsId, bucketId, corsReq); err != nil {
-						log.Error().Err(err).Str("bucket", bucketId).Msg("Failed to set CORS; continuing")
+				// Apply CORS configuration using an isolated request session.
+				if target.CORSEnabled && len(target.CORSRule) > 0 {
+					if !corsSupported {
+						msg := fmt.Sprintf("Bucket '%s': CORS skipped (not supported on %s)", bucketId, cspKey)
+						log.Warn().Str("bucket", bucketId).Str("csp", cspKey).Msg(msg)
+						warnings = append(warnings, msg)
 					} else {
-						log.Info().Str("bucket", bucketId).Msg("CORS configured")
+						corsRules := make([]tbmodel.CorsRule, 0, len(target.CORSRule))
+						for _, r := range target.CORSRule {
+							corsRules = append(corsRules, tbmodel.CorsRule{
+								AllowedOrigin: r.AllowedOrigin,
+								AllowedMethod: r.AllowedMethod,
+								AllowedHeader: r.AllowedHeader,
+								ExposeHeader:  r.ExposeHeader,
+								MaxAgeSeconds: r.MaxAgeSeconds,
+							})
+						}
+						corsReq := tbmodel.ObjectStorageSetCorsRequest{CorsRule: corsRules}
+						if err := tbclient.NewSession().SetObjectStorageCORS(nsId, bucketId, corsReq); err != nil {
+							msg := fmt.Sprintf("Bucket '%s': failed to configure CORS: %v", bucketId, err)
+							log.Error().Err(err).Str("bucket", bucketId).Msg("Failed to set CORS; continuing")
+							warnings = append(warnings, msg)
+						} else {
+							log.Info().Str("bucket", bucketId).Msg("CORS configured")
+						}
 					}
 				}
 			}
 		}
 	}
 
+	status := "created"
+	description := fmt.Sprintf("Successfully created %d object storage(s)", len(createdBuckets))
+	if len(warnings) > 0 {
+		status = "partial"
+		description = fmt.Sprintf("%d of %d object storage(s) created with %d warning(s)", len(createdBuckets), len(req.TargetObjectStorages), len(warnings))
+	}
+
 	log.Info().
 		Str("nsId", nsId).
 		Str("csp", req.TargetCloud.Csp).
 		Str("region", req.TargetCloud.Region).
-		Int("totalBuckets", len(req.TargetObjectStorages)).
+		Str("status", status).
+		Int("createdBuckets", len(createdBuckets)).
+		Int("warnings", len(warnings)).
 		Msg("Object storage migration completed")
 
-	return nil
+	return MigratedObjectStorageResult{
+		Status:        status,
+		Description:   description,
+		Warnings:      warnings,
+		ObjectStorage: createdBuckets,
+	}, nil
 }
 
 // ListObjectStorages returns all migrated object storages in the namespace.
@@ -303,22 +373,26 @@ func ExistObjectStorage(nsId, osId string) (bool, error) {
 	return exists, nil
 }
 
-// DeleteObjectStorage deletes a specific object storage. Treats 404 as already deleted (idempotent).
-// option controls deletion behavior: "" (standard), "empty" (empty first), "force" (force with contents), "reconcile" (metadata only).
+// DeleteObjectStorage deletes or empties a specific object storage according to option.
+// Options: "" (standard delete), "empty" (empty objects only, keep bucket), "force" (empty and force-delete).
 func DeleteObjectStorage(nsId, osId, option string) error {
 	log.Info().Str("nsId", nsId).Str("osId", osId).Str("option", option).Msg("Deleting object storage")
 
 	err := tbclient.NewSession().DeleteObjectStorage(nsId, osId, option)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
+		if option != "empty" && isNotFoundErr(err) {
 			log.Info().Str("nsId", nsId).Str("osId", osId).Msg("Object storage not found; treating as already deleted")
 			return nil
 		}
-		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to delete object storage")
+		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Str("option", option).Msg("Failed to delete object storage")
 		return fmt.Errorf("failed to delete object storage '%s': %w", osId, err)
 	}
 
-	log.Info().Str("nsId", nsId).Str("osId", osId).Str("option", option).Msg("Object storage deleted")
+	if option == "empty" {
+		log.Info().Str("nsId", nsId).Str("osId", osId).Msg("Object storage emptied")
+	} else {
+		log.Info().Str("nsId", nsId).Str("osId", osId).Str("option", option).Msg("Object storage deleted")
+	}
 	return nil
 }
 

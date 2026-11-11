@@ -2,9 +2,9 @@
 
 This example demonstrates how to use the CM-Beetle REST APIs to:
 
-1. **Recommend** optimal Object Storage (bucket) configurations for a target CSP/region.
+1. **Recommend** optimal Object Storage (bucket) configurations for a target CSP and region.
 2. **Migrate (Provision)** target cloud buckets with naming customization (Late Binding).
-3. **Verify and Manage** migrated buckets.
+3. **Verify and Clean Up** migrated buckets and objects.
 
 ---
 
@@ -12,7 +12,7 @@ This example demonstrates how to use the CM-Beetle REST APIs to:
 
 - CM-Beetle server running on `http://localhost:8056`
 - Basic authentication credentials: `default:default`
-- Target namespace (e.g., `mig01`) created or available in CB-Tumblebug
+- Target namespace (for example, `mig01`) created in CB-Tumblebug
 
 ---
 
@@ -50,17 +50,20 @@ At minimum, the `bucketName` field is required:
 ```
 
 <details>
-<summary><strong>Alternative Discovery Methods (Temporary Test APIs & Beetle UX Lab)</strong></summary>
+<summary><strong>Alternative Discovery Methods ([TEST ONLY] Client Helpers and Beetle UX Lab)</strong></summary>
 
 <br>
 
-> [!NOTE]
-> **Temporary Test APIs**:
-> The `scan` and `inspect` endpoints (`POST .../objectStorage/scan` and `POST .../objectStorage/inspect`) are **temporary internal APIs** introduced in CM-Beetle specifically for testing, feature evaluation, and UI prototyping. They may be deprecated or replaced in future releases.
+> [!WARNING]
+> **Non-Production Test Helpers Only (`[Test] Client Helper (Non-Production)`)**:
+> The `publicKey`, `scan`, and `inspect` endpoints (`GET /beetle/migration/security/publicKey`, `POST /beetle/migration/middleware/objectStorage/scan`, and `POST /beetle/migration/middleware/objectStorage/inspect`) are **non-production test helpers** provided solely for local evaluation and Beetle UX Lab prototyping.
+>
+> - Do **NOT** send cloud credentials to these endpoints in production workflows; production clients should inspect source S3 buckets directly on the client side.
+> - Supported S3-compatible CSPs for `/scan` and `/inspect`: `aws`, `gcp`, `alibaba`, `tencent`, `ibm`, `ncp` (unsupported CSPs return `400 Bad Request`).
 
-#### Method B: Automated Discovery via Scan & Inspect APIs (Temporary Test APIs)
+#### Method B: Automated Discovery via `[TEST ONLY]` Scan and Inspect Helpers
 
-If you have source cloud credentials, you can discover and inspect buckets automatically:
+For supported S3-compatible CSPs (`aws`, `gcp`, `alibaba`, `tencent`, `ibm`, `ncp`), you can test bucket discovery locally:
 
 1. **Scan bucket list:**
    ```bash
@@ -68,30 +71,30 @@ If you have source cloud credentials, you can discover and inspect buckets autom
      -H "Content-Type: application/json" \
      -u "default:default" \
      -d '{
-       "csp": "kt",
-       "region": "kr1",
+       "csp": "aws",
+       "region": "ap-northeast-2",
        "accessKeyId": "YOUR_SOURCE_KEY_ID",
        "secretAccessKey": "YOUR_SOURCE_SECRET_KEY"
      }' | jq .
    ```
 
-2. **Inspect selected bucket metadata (CORS, Versioning, etc.):**
+2. **Inspect selected bucket metadata (CORS rules, Versioning, encryption, object summary):**
    ```bash
    curl -s -X POST "http://localhost:8056/beetle/migration/middleware/objectStorage/inspect" \
      -H "Content-Type: application/json" \
      -u "default:default" \
      -d '{
-       "csp": "kt",
-       "region": "kr1",
+       "csp": "aws",
+       "region": "ap-northeast-2",
        "accessKeyId": "YOUR_SOURCE_KEY_ID",
        "secretAccessKey": "YOUR_SOURCE_SECRET_KEY",
-       "selectedBucketNames": ["kt-test-source-bucket"]
+       "selectedBucketNames": ["my-source-bucket"]
      }' | jq .
    ```
 
 #### Method C: Visual Discovery via Beetle UX Lab Portal
 
-You can also use the Beetle UX Lab GUI (`http://localhost:8056/beetle/ui/`) under **Object Storage Migration** to enter credentials, scan buckets, and inspect properties with a single click.
+You can also use the Beetle UX Lab GUI (`http://localhost:8056/beetle/ui/`) under **Object Storage Migration** for local evaluation.
 
 </details>
 
@@ -102,7 +105,6 @@ You can also use the Beetle UX Lab GUI (`http://localhost:8056/beetle/ui/`) unde
 Analyze source bucket configurations (versioning, CORS, encryption, capacity) and recommend compatible bucket configurations for the target cloud.
 
 - **API Endpoint:** `POST /beetle/recommendation/middleware/objectStorage`
-- **API Documentation:** [Managed Object Storage Recommendation API Spec](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.4/api/swagger.yaml#/%5BRecommendation%5D%20Managed%20Object%20Storage)
 - **Payload File:** `object-storage-recommendation-request.json`
 
 ### curl Command
@@ -118,9 +120,10 @@ curl -s -X POST "http://localhost:8056/beetle/recommendation/middleware/objectSt
 
 ```json
 {
+  "success": true,
   "data": {
     "status": "partial",
-    "description": "Successfully recommended 1 object storage configuration(s)",
+    "description": "Recommended 1 object storage configuration(s) for ncp kr with 2 warning(s)",
     "warnings": [
       "Bucket 'kt-test-source-bucket': versioning disabled (not supported on ncp)",
       "Bucket 'kt-test-source-bucket': CORS disabled (not supported on ncp)"
@@ -143,11 +146,11 @@ curl -s -X POST "http://localhost:8056/beetle/recommendation/middleware/objectSt
 
 > [!NOTE]
 > **Understanding `"status": "partial"` and `warnings`**:
-> The status is reported as `partial` because NCP Object Storage does not support bucket versioning or CORS in the same manner as AWS or KT Cloud. CM-Beetle automatically reconciles these CSP feature differences, disables unsupported options, and records the changes in `warnings` so that the output model can be immediately provisioned without manual fixes.
+> The status is reported as `partial` because NCP Object Storage does not support bucket-level versioning or CORS via CB-Tumblebug. CM-Beetle automatically disables unsupported options and records the adjustments in `warnings` so the output model can be provisioned directly.
 
 ### Save Recommendation Directly for Migration
 
-You can pipe the recommendation `data` directly into `object-storage-migration-request.json`:
+Pipe the recommendation `data` directly into `object-storage-migration-request.json`:
 
 ```bash
 curl -s -X POST "http://localhost:8056/beetle/recommendation/middleware/objectStorage" \
@@ -160,39 +163,40 @@ curl -s -X POST "http://localhost:8056/beetle/recommendation/middleware/objectSt
 
 ## Step 2: Migrate (Provision) Object Storage Buckets
 
-Create the recommended buckets in the target cloud provider.
+Create the recommended buckets in the target cloud provider. Each bucket in `targetObjectStorages` is provisioned independently.
 
 - **API Endpoint:** `POST /beetle/migration/middleware/ns/{nsId}/objectStorage`
-- **API Documentation:** [Managed Object Storage Migration API Spec](https://cloud-barista.github.io/api/?url=https://raw.githubusercontent.com/cloud-barista/cm-beetle/v0.6.4/api/swagger.yaml#/%5BMigration%5D%20Managed%20Object%20Storage)
 - **Payload File:** `object-storage-migration-request.json`
 
 > [!NOTE]
-> **About `nameSeed` (Late Binding Naming):**  
-> The `nameSeed` query parameter prefixes target bucket names at migration time (e.g., `os-01` becomes `test-os-01`).
+> **About `nameSeed` (Late Binding Naming):**
+> The `nameSeed` query parameter prefixes target bucket names at migration time (for example, `os-01` becomes `test-os-01`).
 >
 > - **Validation Rules:** 1 to 20 characters, alphanumeric and hyphens (`-`) only, must start with an alphanumeric character.
-> - **Omission:** If omitted, recommended bucket names (`os-01`, etc.) are used as-is.
+> - **Omission:** If omitted, recommended base bucket names (`os-01`, etc.) are used as-is.
 
 ### Option 2A: Synchronous Execution (with `nameSeed=test`)
 
-Using `?nameSeed=test` prefixes target bucket names (`os-01` becomes `test-os-01`):
-
 ```bash
-curl -s -i -X POST "http://localhost:8056/beetle/migration/middleware/ns/mig01/objectStorage?nameSeed=test" \
+curl -s -X POST "http://localhost:8056/beetle/migration/middleware/ns/mig01/objectStorage?nameSeed=test" \
   -H "Content-Type: application/json" \
   -u "default:default" \
-  -d @object-storage-migration-request.json
+  -d @object-storage-migration-request.json | jq .
 ```
 
 - **Expected Response (`HTTP/1.1 201 Created`):**
   ```json
   {
+    "success": true,
     "data": {
-      "targetCloud": { "csp": "ncp", "region": "kr" },
-      "targetObjectStorages": [
+      "status": "created",
+      "description": "Successfully created 1 of 1 object storage(s) for ncp kr",
+      "objectStorage": [
         {
           "id": "test-os-01",
           "name": "test-os-01",
+          "connectionName": "ncp-kr",
+          "cspResourceName": "test-os-01-...",
           "status": "Available"
         }
       ]
@@ -212,15 +216,15 @@ curl -s -X POST "http://localhost:8056/beetle/migration/middleware/ns/mig01/obje
   -d @object-storage-migration-request.json | jq .
 ```
 
-- **Response:** HTTP 202 with `reqId`
-- **Check Status:**
+- **Response:** `HTTP/1.1 202 Accepted` with `reqId`
+- **Poll Status (`MigratedObjectStorageResult` in `responseData`):**
   ```bash
   curl -s -X GET "http://localhost:8056/beetle/request/{reqId}" -u "default:default" | jq .
   ```
 
 ---
 
-## Step 3: Verify and Inspect Migrated Buckets
+## Step 3: Verify and Clean Up Migrated Buckets
 
 ### List All Buckets in Namespace
 
@@ -231,14 +235,19 @@ curl -s -X GET "http://localhost:8056/beetle/migration/middleware/ns/mig01/objec
 
 - **Expected Output:**
   ```json
-  [
-    {
-      "id": "test-os-01",
-      "name": "test-os-01",
-      "connectionName": "ncp-kr",
-      "status": "Available"
+  {
+    "success": true,
+    "data": {
+      "objectStorage": [
+        {
+          "id": "test-os-01",
+          "name": "test-os-01",
+          "connectionName": "ncp-kr",
+          "status": "Available"
+        }
+      ]
     }
-  ]
+  }
   ```
 
 ### Get Specific Bucket Details
@@ -257,15 +266,36 @@ curl -s -I -X HEAD "http://localhost:8056/beetle/migration/middleware/ns/mig01/o
 
 - **Expected Output:** `HTTP/1.1 200 OK`
 
+### Post-Migration Object Verification & Day-2 Operations
+
+After transferring objects (see [`../data-migration/`](../data-migration/)), you can verify transferred objects directly via CM-Beetle:
+
+- **List objects:** `GET /beetle/migration/middleware/ns/mig01/objectStorage/test-os-01/object`
+- **Inspect object headers (`ETag`, `Last-Modified`, `Content-Length`, `X-Storage-Class`):** `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/test-os-01/object/{objectKey}`
+- **Delete verification object:** `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/test-os-01/object/{objectKey}`
+
+For **Day-2 operations** after migration (such as generating Presigned URLs or modifying CORS/Versioning policies), use the CB-Tumblebug Object Storage APIs (`/tumblebug/ns/{nsId}/resources/objectStorage/{osId}/...`).
+
 ### Delete Bucket (Cleanup)
 
 > [!TIP]
 > **Planning to test Data Migration next?**
-> Keep `test-os-01` active! Do **NOT** run the delete command yet, as the next tutorial ([Data Migration](../data-migration/)) transfers objects directly into this `test-os-01` bucket. Delete it only after data migration testing is complete.
+> Keep `test-os-01` active! Do **NOT** delete the bucket yet, as the next tutorial ([Data Migration](../data-migration/)) transfers objects directly into `test-os-01`.
+
+`DELETE .../objectStorage/{osId}` supports three explicit modes:
+
+- **Standard delete (empty bucket):** omit `option` to delete the bucket itself.
+- **Empty contents only (keep bucket):** `?option=empty` removes all objects/versions while keeping `test-os-01` active.
+- **Force delete (non-empty bucket):** `?option=force` empties all objects/versions first and then deletes `test-os-01`.
 
 ```bash
-curl -s -X DELETE "http://localhost:8056/beetle/migration/middleware/ns/mig01/objectStorage/test-os-01" \
-  -u "default:default" | jq .
+# Delete an empty bucket (returns HTTP 204 No Content)
+curl -i -X DELETE "http://localhost:8056/beetle/migration/middleware/ns/mig01/objectStorage/test-os-01" \
+  -u "default:default"
+
+# Or empty all objects/versions and delete the bucket in one step (returns HTTP 204 No Content)
+curl -i -X DELETE "http://localhost:8056/beetle/migration/middleware/ns/mig01/objectStorage/test-os-01?option=force" \
+  -u "default:default"
 ```
 
 ---
@@ -273,7 +303,3 @@ curl -s -X DELETE "http://localhost:8056/beetle/migration/middleware/ns/mig01/ob
 ## Reference Automation Script (`run.sh`)
 
 An illustrative script [`run.sh`](./run.sh) is provided as an automation reference example demonstrating how to chain the recommendation, provisioning, and inspection API calls in a bash workflow.
-
-> [!NOTE]
-> This script is shared strictly for **reference and educational purposes**. To understand each phase of the Object Storage lifecycle and verify intermediate outputs, follow the individual curl commands described in the sections above.
-

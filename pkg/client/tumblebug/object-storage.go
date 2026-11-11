@@ -17,12 +17,23 @@ package tbclient
 import (
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/rs/zerolog/log"
 )
+
+// encodeObjectKeySegment normalizes an objectKey into a single escaped URL path segment.
+func encodeObjectKeySegment(objectKey string) string {
+	if unescaped, err := url.PathUnescape(objectKey); err == nil {
+		return url.PathEscape(unescaped)
+	}
+	return url.PathEscape(objectKey)
+}
 
 // * [Note]
 // * This Tumblebug Client is used to interact with the CB-Tumblebug API.
@@ -175,18 +186,30 @@ func (s *Session) ExistObjectStorage(nsId string, osId string) (bool, error) {
 		return false, err
 	}
 
-	// HTTP Status OK is 200
-	exists := resp.StatusCode() == 200
-	log.Debug().Msgf("Object storage (%s) exists: %v", osId, exists)
-	return exists, nil
+	if resp.StatusCode() == http.StatusOK {
+		log.Debug().Msgf("Object storage (%s) exists: true", osId)
+		return true, nil
+	}
+	if resp.StatusCode() == http.StatusNotFound {
+		log.Debug().Msgf("Object storage (%s) exists: false", osId)
+		return false, nil
+	}
+	if resp.StatusCode() == http.StatusTooManyRequests {
+		return false, &ratelimit.ErrLimited{
+			RetryAfter: 2 * time.Second,
+		}
+	}
+
+	err = fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+	log.Error().Err(err).Msgf("Failed to check existence of object storage: %s", osId)
+	return false, err
 }
 
-// DeleteObjectStorage deletes an object storage (bucket).
-// option controls the deletion behavior (mutually exclusive):
-//   - ""        : Standard delete — fails if the bucket is not empty.
-//   - "empty"   : Empty the bucket first, then delete.
-//   - "force"   : Force-delete with all contents (passed to Spider as force=true).
-//   - "reconcile": Remove only Tumblebug metadata without calling the CSP delete API.
+// DeleteObjectStorage deletes or empties an object storage (bucket).
+// option controls the behavior (mutually exclusive):
+//   - ""      : Standard delete (fails if the bucket is not empty).
+//   - "empty" : Empty all objects in the bucket without deleting the bucket itself.
+//   - "force" : Empty all objects and force-delete the bucket (passed to Spider as force=true).
 func (s *Session) DeleteObjectStorage(nsId string, osId string, option string) error {
 	log.Debug().Msgf("Deleting object storage: %s in namespace: %s (option=%s)", osId, nsId, option)
 
@@ -212,7 +235,7 @@ func (s *Session) DeleteObjectStorage(nsId string, osId string, option string) e
 		return err
 	}
 
-	log.Debug().Msgf("Object storage (%s) deleted successfully (option=%s)", osId, option)
+	log.Debug().Msgf("Object storage (%s) delete request succeeded (option=%s)", osId, option)
 	return nil
 }
 
@@ -249,10 +272,11 @@ func (s *Session) ListObjectStorageObjects(nsId string, osId string) (tbmodel.Ob
 func (s *Session) GetStorageObject(nsId, osId, objectKey string) (tbmodel.Object, error) {
 	log.Debug().Msgf("Getting object metadata: %s in object storage: %s, namespace: %s", objectKey, osId, nsId)
 
+	encodedKey := encodeObjectKeySegment(objectKey)
 	var resBody tbmodel.Object
 	resp, err := s.
 		SetResult(&resBody).
-		Head(fmt.Sprintf("/ns/%s/resources/objectStorage/%s/object/%s", nsId, osId, objectKey))
+		Head(fmt.Sprintf("/ns/%s/resources/objectStorage/%s/object/%s", nsId, osId, encodedKey))
 
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed to get object metadata: %s", objectKey)
@@ -270,11 +294,25 @@ func (s *Session) GetStorageObject(nsId, osId, objectKey string) (tbmodel.Object
 		return tbmodel.Object{}, err
 	}
 
-	// TB HEAD returns metadata in response headers, not in the body.
+	// Populate object metadata from Tumblebug HEAD response headers.
 	header := resp.Header()
-	resBody.Key = objectKey
+	if unescaped, unescapeErr := url.PathUnescape(objectKey); unescapeErr == nil {
+		resBody.Key = unescaped
+	} else {
+		resBody.Key = objectKey
+	}
 	resBody.ETag = header.Get("ETag")
 	resBody.LastModified = header.Get("Last-Modified")
+	resBody.StorageClass = header.Get("x-amz-storage-class")
+	if resBody.StorageClass == "" {
+		resBody.StorageClass = header.Get("X-Storage-Class")
+	}
+	resBody.Size = -1
+	if cl := strings.TrimSpace(header.Get("Content-Length")); cl != "" {
+		if size, parseErr := strconv.ParseInt(cl, 10, 64); parseErr == nil && size >= 0 {
+			resBody.Size = size
+		}
+	}
 
 	log.Debug().Msgf("Object metadata retrieved for: %s", objectKey)
 	return resBody, nil
@@ -284,8 +322,9 @@ func (s *Session) GetStorageObject(nsId, osId, objectKey string) (tbmodel.Object
 func (s *Session) DeleteStorageObject(nsId, osId, objectKey string) error {
 	log.Debug().Msgf("Deleting object: %s from object storage: %s, namespace: %s", objectKey, osId, nsId)
 
+	encodedKey := encodeObjectKeySegment(objectKey)
 	resp, err := s.
-		Delete(fmt.Sprintf("/ns/%s/resources/objectStorage/%s/object/%s", nsId, osId, objectKey))
+		Delete(fmt.Sprintf("/ns/%s/resources/objectStorage/%s/object/%s", nsId, osId, encodedKey))
 
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed to delete object: %s", objectKey)

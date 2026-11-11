@@ -7,17 +7,17 @@
 
 ### Environment
 
-- CM-Beetle: v0.5.2+ (1c7e6cd)
-- CB-Tumblebug: v0.12.19
+- CM-Beetle: v0.6.4+ (95cc61d)
+- CB-Tumblebug: v0.13.8
 - Target CSP: GCP
 - Target Region: asia-northeast3
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Name Seed: my
 - Test CLI: Custom automated testing tool
-- Test Date: June 24, 2026
-- Test Time: 19:40:47 KST
-- Test Execution: 2026-06-24 19:40:47 KST
+- Test Date: November 11, 2026
+- Test Time: 12:58:15 KST
+- Test Execution: 2026-11-11 12:58:15 KST
 
 ### Scenario
 
@@ -37,18 +37,18 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 4ms | Pass |
-| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 22.334s | Pass |
-| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 5ms | Pass |
-| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 1.6s | Pass |
-| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 3.044s | Pass |
-| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 23.342s | Pass |
+| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 3ms | Pass |
+| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 14.927s | Pass |
+| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 7ms | Pass |
+| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 863ms | Pass |
+| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 1.647s | Pass |
+| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 14.835s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 55.33402873s
+**Total Duration**: 37.286991231s
 
-*Test executed on June 24, 2026 at 19:40:47 KST (2026-06-24 19:40:47 KST) using CM-Beetle automated test CLI*
+*Test executed on November 11, 2026 at 12:58:15 KST (2026-11-11 12:58:15 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -73,7 +73,10 @@
 
 ```json
 {
-  "nameSeed": "my",
+  "desiredCloud": {
+    "csp": "gcp",
+    "region": "asia-northeast3"
+  },
   "sourceObjectStorages": [
     {
       "bucketName": "source-bucket-01",
@@ -307,6 +310,136 @@
 - **Status**: ✅ **SUCCESS**
 - **Response**: Object storages created successfully
 
+**Response Body**:
+
+<details>
+  <summary> <ins>Click to see the response body</ins> </summary>
+
+```json
+{
+  "data": {
+    "description": "Successfully created 2 object storage(s)",
+    "objectStorage": [
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T03:58:24Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T03:58:24Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "gcp-asia-northeast3",
+          "credentialHolder": "admin",
+          "credentialName": "gcp",
+          "driverName": "gcp-driver-v1.0.so",
+          "providerName": "gcp",
+          "regionDetail": {
+            "description": "Seoul South Korea",
+            "location": {
+              "display": "South Korea (Seoul)",
+              "latitude": 37.2,
+              "longitude": 127
+            },
+            "regionId": "asia-northeast3",
+            "regionName": "asia-northeast3",
+            "zones": [
+              "asia-northeast3-a",
+              "asia-northeast3-b",
+              "asia-northeast3-c"
+            ]
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "asia-northeast3",
+            "assignedZone": "asia-northeast3-a"
+          },
+          "regionZoneInfoName": "gcp-asia-northeast3",
+          "verified": true
+        },
+        "connectionName": "gcp-asia-northeast3",
+        "cspResourceId": "tbucs6i3r12vic0gs5vl",
+        "cspResourceName": "tbucs6i3r12vic0gs5vl",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-01",
+        "maxKeys": 1000,
+        "name": "my-os-01",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tbucs6i3r12vic0gs5vl"
+      },
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-11T03:58:30Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-11T03:58:30Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "gcp-asia-northeast3",
+          "credentialHolder": "admin",
+          "credentialName": "gcp",
+          "driverName": "gcp-driver-v1.0.so",
+          "providerName": "gcp",
+          "regionDetail": {
+            "description": "Seoul South Korea",
+            "location": {
+              "display": "South Korea (Seoul)",
+              "latitude": 37.2,
+              "longitude": 127
+            },
+            "regionId": "asia-northeast3",
+            "regionName": "asia-northeast3",
+            "zones": [
+              "asia-northeast3-a",
+              "asia-northeast3-b",
+              "asia-northeast3-c"
+            ]
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "asia-northeast3",
+            "assignedZone": "asia-northeast3-a"
+          },
+          "regionZoneInfoName": "gcp-asia-northeast3",
+          "verified": true
+        },
+        "connectionName": "gcp-asia-northeast3",
+        "cspResourceId": "tb179709i652t4q8j13a",
+        "cspResourceName": "tb179709i652t4q8j13a",
+        "description": "Created by CM-Beetle",
+        "id": "my-os-02",
+        "maxKeys": 1000,
+        "name": "my-os-02",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tb179709i652t4q8j13a"
+      }
+    ],
+    "status": "created"
+  },
+  "message": "Successfully created 2 object storage(s)",
+  "success": true
+}
+```
+
+</details>
+
 ### Test Case 3: List object storages
 
 #### 3.1 API Request Information
@@ -325,7 +458,18 @@
 ```json
 {
   "data": {
-    "objectStorage": null
+    "objectStorage": [
+      {
+        "connectionName": "gcp-asia-northeast3",
+        "id": "my-os-01",
+        "name": "my-os-01"
+      },
+      {
+        "connectionName": "gcp-asia-northeast3",
+        "id": "my-os-02",
+        "name": "my-os-02"
+      }
+    ]
   },
   "success": true
 }
@@ -365,11 +509,59 @@
 ```json
 {
   "data": {
+    "conditions": [
+      {
+        "lastTransitionTime": "2026-11-11T03:58:24Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Ready"
+      },
+      {
+        "lastTransitionTime": "2026-11-11T03:58:24Z",
+        "reason": "Available",
+        "status": "True",
+        "type": "Synced"
+      }
+    ],
+    "connectionConfig": {
+      "configName": "gcp-asia-northeast3",
+      "credentialHolder": "admin",
+      "credentialName": "gcp",
+      "driverName": "gcp-driver-v1.0.so",
+      "providerName": "gcp",
+      "regionDetail": {
+        "description": "Seoul South Korea",
+        "location": {
+          "display": "South Korea (Seoul)",
+          "latitude": 37.2,
+          "longitude": 127
+        },
+        "regionId": "asia-northeast3",
+        "regionName": "asia-northeast3",
+        "zones": [
+          "asia-northeast3-a",
+          "asia-northeast3-b",
+          "asia-northeast3-c"
+        ]
+      },
+      "regionRepresentative": true,
+      "regionZoneInfo": {
+        "assignedRegion": "asia-northeast3",
+        "assignedZone": "asia-northeast3-a"
+      },
+      "regionZoneInfoName": "gcp-asia-northeast3",
+      "verified": true
+    },
     "connectionName": "gcp-asia-northeast3",
+    "cspResourceId": "tbucs6i3r12vic0gs5vl",
+    "cspResourceName": "tbucs6i3r12vic0gs5vl",
     "description": "Created by CM-Beetle",
     "id": "my-os-01",
+    "maxKeys": 1000,
     "name": "my-os-01",
-    "status": "Available"
+    "resourceType": "objectStorage",
+    "status": "Available",
+    "uid": "tbucs6i3r12vic0gs5vl"
   },
   "success": true
 }

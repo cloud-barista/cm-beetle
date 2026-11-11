@@ -59,6 +59,15 @@ func Init(cfg ApiConfig) {
 	})
 }
 
+// SetClient replaces the global Tumblebug client and returns a function to restore the previous client.
+func SetClient(c *TumblebugClient) func() {
+	prev := globalClient
+	globalClient = c
+	return func() {
+		globalClient = prev
+	}
+}
+
 // NewClient creates a new TumblebugClient instance.
 func NewClient(cfg ApiConfig) *TumblebugClient {
 	if cfg.RestUrl == "" {

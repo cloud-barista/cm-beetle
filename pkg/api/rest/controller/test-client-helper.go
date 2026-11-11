@@ -33,39 +33,70 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// getS3EndpointForCsp resolves the appropriate S3 API endpoint for minio-go client based on CSP and region
-func getS3EndpointForCsp(cspName, region string) string {
-	switch strings.ToLower(cspName) {
+// isValidCloudRegion checks that a cloud region identifier contains only safe characters.
+func isValidCloudRegion(region string) bool {
+	if len(region) == 0 || len(region) > 64 {
+		return false
+	}
+	for _, r := range region {
+		isAlphaNum := (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9')
+		if !isAlphaNum && r != '-' && r != '_' {
+			return false
+		}
+	}
+	return true
+}
+
+// getS3EndpointForCsp resolves the S3-compatible endpoint for supported CSPs without silent fallback.
+func getS3EndpointForCsp(cspName, region string) (string, error) {
+	cspKey := strings.ToLower(strings.TrimSpace(cspName))
+	regionClean := strings.ToLower(strings.TrimSpace(region))
+	if regionClean != "" && !isValidCloudRegion(regionClean) {
+		return "", fmt.Errorf("invalid region format '%s'", region)
+	}
+
+	switch cspKey {
 	case csp.AWS:
-		if region != "" {
-			return fmt.Sprintf("s3.%s.amazonaws.com", region)
+		if regionClean != "" {
+			return fmt.Sprintf("s3.%s.amazonaws.com", regionClean), nil
 		}
-		return "s3.amazonaws.com"
+		return "s3.amazonaws.com", nil
 	case csp.GCP:
-		return "storage.googleapis.com"
+		return "storage.googleapis.com", nil
 	case csp.Alibaba:
-		if region != "" {
-			return fmt.Sprintf("oss-%s.aliyuncs.com", region)
+		if regionClean != "" {
+			return fmt.Sprintf("oss-%s.aliyuncs.com", regionClean), nil
 		}
-		return "oss-ap-northeast-1.aliyuncs.com"
+		return "oss-ap-northeast-1.aliyuncs.com", nil
 	case csp.Tencent:
-		if region != "" {
-			return fmt.Sprintf("cos.%s.myqcloud.com", region)
+		if regionClean != "" {
+			return fmt.Sprintf("cos.%s.myqcloud.com", regionClean), nil
 		}
-		return "cos.ap-guangzhou.myqcloud.com"
+		return "cos.ap-guangzhou.myqcloud.com", nil
+	case csp.IBM:
+		if regionClean != "" {
+			return fmt.Sprintf("s3.%s.cloud-object-storage.appdomain.cloud", regionClean), nil
+		}
+		return "s3.us.cloud-object-storage.appdomain.cloud", nil
+	case csp.NCP:
+		if regionClean != "" {
+			return fmt.Sprintf("%s.object.ncloudstorage.com", regionClean), nil
+		}
+		return "kr.object.ncloudstorage.com", nil
 	default:
-		return "s3.amazonaws.com"
+		return "", fmt.Errorf("unsupported CSP '%s' for S3 test helper; supported CSPs: aws, gcp, alibaba, tencent, ibm, ncp", cspName)
 	}
 }
 
-// getAwsBucketRegion fetches the exact AWS S3 region of a bucket using the X-Amz-Bucket-Region response header
+// getAwsBucketRegion fetches the AWS S3 region of a bucket via the X-Amz-Bucket-Region response header.
 func getAwsBucketRegion(ctx context.Context, bucketName string) string {
 	url := fmt.Sprintf("https://%s.s3.amazonaws.com", bucketName)
-	req, err := http.NewRequestWithContext(ctx, "HEAD", url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
 	if err != nil {
 		return ""
 	}
-	resp, err := http.DefaultClient.Do(req)
+	httpClient := &http.Client{Timeout: 5 * time.Second}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return ""
 	}
@@ -79,10 +110,10 @@ func getAwsBucketRegion(ctx context.Context, bucketName string) string {
 }
 
 // ============================================================================
-// Minimal Test API Models
+// Test-Only Client Helper API Models (Non-Production)
 // ============================================================================
 
-// ScanObjectStorageRequest represents request parameters for credential-based object storage bucket scanning
+// ScanObjectStorageRequest represents request parameters for test-only object storage bucket scanning.
 type ScanObjectStorageRequest struct {
 	Csp             string `json:"csp" validate:"required"`
 	Region          string `json:"region" validate:"required"`
@@ -95,7 +126,7 @@ type ScanObjectStorageRequest struct {
 	S3SecretKey     string `json:"s3SecretKey,omitempty"`
 }
 
-// ScannedBucketSummary represents summary info of a discovered bucket
+// ScannedBucketSummary represents summary info of a discovered bucket.
 type ScannedBucketSummary struct {
 	BucketName        string `json:"bucketName"`
 	Region            string `json:"region,omitempty"`
@@ -106,7 +137,7 @@ type ScannedBucketSummary struct {
 	EncryptionType    string `json:"encryptionType,omitempty"`
 }
 
-// InspectObjectStorageRequest represents request parameters for deep object storage metadata collection
+// InspectObjectStorageRequest represents request parameters for test-only deep object storage metadata collection.
 type InspectObjectStorageRequest struct {
 	Csp                 string   `json:"csp" validate:"required"`
 	Region              string   `json:"region,omitempty"`
@@ -121,14 +152,17 @@ type InspectObjectStorageRequest struct {
 }
 
 // ============================================================================
-// Minimal Test Handlers
+// Test-Only Client Helper Handlers (Non-Production)
 // ============================================================================
 
 // GetSecurityPublicKey godoc
 // @ID GetSecurityPublicKey
-// @Summary (CM-Beetle) Get RSA public key for credential encryption
-// @Description Generate and return a one-time RSA public key bundle for encrypting sensitive CSP access credentials (accessKey, secretKey, tokens) before scanning or sending across web clients.
-// @Tags [Minimal Test]
+// @Summary [TEST ONLY] Get RSA public key for credential encryption
+// @Description [WARNING - NON-PRODUCTION TEST HELPER] This endpoint is provided strictly for local testing, evaluation, and Beetle UX Lab prototyping.
+// @Description Do NOT rely on this helper flow in production systems; production clients must discover source buckets client-side and encrypt data migration credentials via `/migration/data/encryptionKey` and the `transx/fieldsec` package.
+// @Description
+// @Description Generates and returns a one-time RSA public key bundle for encrypting sensitive CSP access credentials before calling the test-only `/scan` or `/inspect` helper endpoints.
+// @Tags [Test] Client Helper (Non-Production)
 // @Accept json
 // @Produce json
 // @Param X-Request-Id header string false "Unique request ID"
@@ -136,17 +170,17 @@ type InspectObjectStorageRequest struct {
 // @Failure 500 {object} model.ApiResponse[any] "Key generation failed"
 // @Router /migration/security/publicKey [get]
 func GetSecurityPublicKey(c echo.Context) error {
-	log.Info().Msg("[Minimal Test API] Generating RSA public key for credential encryption")
+	log.Warn().Msg("[Test Client Helper] Non-production endpoint GET /migration/security/publicKey invoked")
 
 	keyPair, err := transx.GetKeyStore().GenerateKeyPair(transx.GetKeyExpiry())
 	if err != nil {
-		log.Error().Err(err).Msg("[Minimal Test API] Failed to generate encryption key")
+		log.Error().Err(err).Msg("[Test Client Helper] Failed to generate encryption key")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Key generation failed"))
 	}
 
 	bundle, err := keyPair.ExportPublicBundle()
 	if err != nil {
-		log.Error().Err(err).Msg("[Minimal Test API] Failed to export public key bundle")
+		log.Error().Err(err).Msg("[Test Client Helper] Failed to export public key bundle")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Key export failed"))
 	}
 
@@ -155,29 +189,43 @@ func GetSecurityPublicKey(c echo.Context) error {
 
 // ScanObjectStorage godoc
 // @ID ScanObjectStorage
-// @Summary (CB-Tumblebug) Scan cloud account object storage buckets
-// @Description Scan and list all object storage buckets in the specified cloud provider account using provided CSP access credentials via MinIO S3 SDK.
-// @Tags [Minimal Test]
+// @Summary [TEST ONLY] Scan cloud account object storage buckets
+// @Description [WARNING - NON-PRODUCTION TEST HELPER] This endpoint is provided strictly for local testing, evaluation, and Beetle UX Lab prototyping.
+// @Description Do NOT send cloud credentials to this endpoint in production workflows; production clients must scan S3 buckets directly on the client side.
+// @Description
+// @Description Scans and lists object storage buckets in the specified cloud provider account and region via the MinIO S3 SDK (supported CSPs: `aws`, `gcp`, `alibaba`, `tencent`, `ibm`, `ncp`).
+// @Tags [Test] Client Helper (Non-Production)
 // @Accept json
 // @Produce json
 // @Param request body ScanObjectStorageRequest true "CSP credentials and target cloud information for bucket scanning"
 // @Param X-Request-Id header string false "Unique request ID"
 // @Success 200 {object} model.ApiResponse[[]ScannedBucketSummary] "List of discovered object storage buckets"
-// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters or missing credentials"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters, unsupported CSP, or missing credentials"
 // @Failure 500 {object} model.ApiResponse[any] "Failed to list buckets from S3 API"
 // @Router /migration/middleware/objectStorage/scan [post]
 func ScanObjectStorage(c echo.Context) error {
+	log.Warn().Msg("[Test Client Helper] Non-production endpoint POST /migration/middleware/objectStorage/scan invoked")
+
 	var req ScanObjectStorageRequest
 	if err := c.Bind(&req); err != nil {
-		log.Error().Err(err).Msg("[Minimal Test API] Failed to bind scan request")
+		log.Error().Err(err).Msg("[Test Client Helper] Failed to bind scan request")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
-	if req.Csp == "" || req.Region == "" {
+	if strings.TrimSpace(req.Csp) == "" || strings.TrimSpace(req.Region) == "" {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("CSP and region are required"))
 	}
 
-	// Decrypt sensitive credential fields via fieldsec if keyId is provided
+	globalEndpoint, err := getS3EndpointForCsp(req.Csp, "")
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
+	}
+	regionEndpoint, err := getS3EndpointForCsp(req.Csp, req.Region)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
+	}
+
+	// Decrypt sensitive credential fields via fieldsec when keyId is provided.
 	if req.KeyId != "" {
 		sensitiveFields := []string{
 			"accessKeyId",
@@ -187,20 +235,20 @@ func ScanObjectStorage(c echo.Context) error {
 			"s3AccessKey",
 			"s3SecretKey",
 		}
-		if decrypted, err := fieldsec.DecryptWithStore(req, sensitiveFields, transx.GetKeyStore(), req.KeyId, "keyId"); err == nil {
+		if decrypted, decErr := fieldsec.DecryptWithStore(req, sensitiveFields, transx.GetKeyStore(), req.KeyId, "keyId"); decErr == nil {
 			req = decrypted.(ScanObjectStorageRequest)
-			log.Info().Str("keyId", req.KeyId).Msg("[Minimal Test API] Successfully decrypted credential fields via fieldsec")
+			log.Info().Str("keyId", req.KeyId).Msg("[Test Client Helper] Successfully decrypted credential fields via fieldsec")
 		} else {
-			log.Warn().Err(err).Str("keyId", req.KeyId).Msg("[Minimal Test API] Failed to decrypt credential fields via fieldsec")
+			log.Warn().Err(decErr).Str("keyId", req.KeyId).Msg("[Test Client Helper] Failed to decrypt credential fields via fieldsec")
 		}
 	}
 
 	log.Info().
 		Str("csp", req.Csp).
 		Str("region", req.Region).
-		Msg("[Minimal Test API] Scanning object storage buckets for CSP account")
+		Msg("[Test Client Helper] Scanning object storage buckets for CSP account")
 
-	// Resolve S3 access credentials: S3AccessKey/S3SecretKey priority, fallback to AccessKeyId/SecretAccessKey
+	// Resolve S3 access credentials with S3AccessKey/S3SecretKey taking precedence.
 	accessKey := req.S3AccessKey
 	if accessKey == "" {
 		accessKey = req.AccessKeyId
@@ -211,31 +259,29 @@ func ScanObjectStorage(c echo.Context) error {
 	}
 
 	if accessKey == "" || secretKey == "" {
-		log.Warn().Str("csp", req.Csp).Msg("[Minimal Test API] Access Key and Secret Key are required for bucket scanning")
+		log.Warn().Str("csp", req.Csp).Msg("[Test Client Helper] Access Key and Secret Key are required for bucket scanning")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Access Key and Secret Key are required to scan cloud buckets"))
 	}
 
-	// 1. Global S3 Client for Account-wide Bucket Listing & Location Detection
-	globalEndpoint := getS3EndpointForCsp(req.Csp, "")
+	// Build global S3 client for account-wide bucket listing and location detection.
 	globalClient, err := minio.New(globalEndpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
 		Secure: true,
 		Region: "us-east-1",
 	})
 	if err != nil {
-		log.Error().Err(err).Str("csp", req.Csp).Msg("[Minimal Test API] Failed to create MinIO S3 global client")
+		log.Error().Err(err).Str("csp", req.Csp).Msg("[Test Client Helper] Failed to create MinIO S3 global client")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to initialize S3 client: %v", err)))
 	}
 
 	ctx := c.Request().Context()
 	realBuckets, err := globalClient.ListBuckets(ctx)
 	if err != nil {
-		log.Error().Err(err).Str("csp", req.Csp).Str("endpoint", globalEndpoint).Msg("[Minimal Test API] MinIO S3 ListBuckets failed")
+		log.Error().Err(err).Str("csp", req.Csp).Str("endpoint", globalEndpoint).Msg("[Test Client Helper] MinIO S3 ListBuckets failed")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to list buckets from %s (%s): %v", req.Csp, globalEndpoint, err)))
 	}
 
-	// 2. Region-specific Client for Inspecting Buckets in Target Region
-	regionEndpoint := getS3EndpointForCsp(req.Csp, req.Region)
+	// Build region-specific client for inspecting buckets in the target region.
 	regionClient, err := minio.New(regionEndpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
 		Secure: true,
@@ -252,7 +298,7 @@ func ScanObjectStorage(c echo.Context) error {
 		buckets []ScannedBucketSummary
 	)
 
-	// Controlled Concurrency Worker Pool (Max 10 parallel workers to avoid CSP QPS / Rate Limit throttling)
+	// Limit concurrent bucket inspections to 10 workers to avoid CSP rate throttling.
 	maxConcurrency := 10
 	sem := make(chan struct{}, maxConcurrency)
 
@@ -261,17 +307,17 @@ func ScanObjectStorage(c echo.Context) error {
 		go func(bucket minio.BucketInfo) {
 			defer wg.Done()
 
-			sem <- struct{}{}        // acquire worker slot
-			defer func() { <-sem }() // release worker slot
+			sem <- struct{}{}
+			defer func() { <-sem }()
 
-			// 1. Precise Region Resolution: HTTP X-Amz-Bucket-Region header for AWS, MinIO GetBucketLocation fallback
+			// Resolve bucket region via X-Amz-Bucket-Region for AWS or GetBucketLocation otherwise.
 			bucketRegion := ""
-			if strings.ToLower(req.Csp) == "aws" {
+			if strings.ToLower(strings.TrimSpace(req.Csp)) == csp.AWS {
 				bucketRegion = getAwsBucketRegion(ctx, bucket.Name)
 			}
 			if bucketRegion == "" {
-				loc, err := globalClient.GetBucketLocation(ctx, bucket.Name)
-				if err == nil {
+				loc, locErr := globalClient.GetBucketLocation(ctx, bucket.Name)
+				if locErr == nil {
 					locClean := strings.ToLower(strings.TrimSpace(loc))
 					switch locClean {
 					case "", "us":
@@ -287,37 +333,34 @@ func ScanObjectStorage(c echo.Context) error {
 				bucketRegion = strings.ToLower(strings.TrimSpace(bucket.BucketRegion))
 			}
 
-			// 2. Strict Region Filtering: Filter out buckets located in a different region
+			// Skip buckets located outside the requested target region.
 			if targetRegion != "" && bucketRegion != targetRegion {
 				log.Debug().
 					Str("bucket", bucket.Name).
 					Str("bucketRegion", bucketRegion).
 					Str("targetRegion", targetRegion).
-					Msg("[Minimal Test API] Skipping bucket in different region")
+					Msg("[Test Client Helper] Skipping bucket in different region")
 				return
 			}
 
-			// 3. Creation Time
 			creationTime := ""
 			if !bucket.CreationDate.IsZero() {
 				creationTime = bucket.CreationDate.Format("2006-01-02T15:04:05Z")
 			}
 
-			// 4. Versioning Status via region client
 			versioningEnabled := false
-			if vConfig, err := regionClient.GetBucketVersioning(ctx, bucket.Name); err == nil {
+			if vConfig, vErr := regionClient.GetBucketVersioning(ctx, bucket.Name); vErr == nil {
 				versioningEnabled = vConfig.Enabled()
 			}
 
-			// 5. Encryption Status via region client
 			encryptionType := "None"
-			if encConfig, err := regionClient.GetBucketEncryption(ctx, bucket.Name); err == nil && len(encConfig.Rules) > 0 {
+			if encConfig, encErr := regionClient.GetBucketEncryption(ctx, bucket.Name); encErr == nil && len(encConfig.Rules) > 0 {
 				encryptionType = "AES256"
 			}
 
-			// 6. Object Count & Total Size Calculation (Limit max scan keys for fast performance)
-			var sizeBytes int64 = 0
-			var objectCount int64 = 0
+			// Sample up to 1000 objects to estimate object count and size quickly.
+			var sizeBytes int64
+			var objectCount int64
 			objCh := regionClient.ListObjects(ctx, bucket.Name, minio.ListObjectsOptions{
 				Recursive: true,
 				MaxKeys:   1000,
@@ -347,44 +390,61 @@ func ScanObjectStorage(c echo.Context) error {
 
 	wg.Wait()
 
-	// Sort scanned buckets alphabetically by BucketName for consistent deterministic output
+	// Sort scanned buckets alphabetically by BucketName for deterministic output.
 	sort.Slice(buckets, func(i, j int) bool {
 		return strings.ToLower(buckets[i].BucketName) < strings.ToLower(buckets[j].BucketName)
 	})
 
-	log.Info().Int("count", len(buckets)).Str("csp", req.Csp).Str("targetRegion", req.Region).Msg("[Minimal Test API] Successfully scanned and filtered buckets for target region")
+	log.Info().Int("count", len(buckets)).Str("csp", req.Csp).Str("targetRegion", req.Region).Msg("[Test Client Helper] Successfully scanned and filtered buckets for target region")
 	return c.JSON(http.StatusOK, model.SuccessResponse(buckets))
 }
 
 // InspectObjectStorage godoc
 // @ID InspectObjectStorage
-// @Summary (CM-Beetle) Collect deep metadata from selected source object storage buckets
-// @Description Deeply inspect and extract feature/usage metadata (totalSizeBytes, objectCount, versioning, encryption, CORS, policy, tags, creationDate) from selected cloud object storage buckets.
+// @Summary [TEST ONLY] Collect deep metadata from selected source object storage buckets
+// @Description [WARNING - NON-PRODUCTION TEST HELPER] This endpoint is provided strictly for local testing, evaluation, and Beetle UX Lab prototyping.
+// @Description Do NOT send cloud credentials to this endpoint in production workflows; production clients must inspect source S3 buckets directly on the client side and submit the resulting `SourceObjectStorage` model to `POST /recommendation/middleware/objectStorage`.
 // @Description
-// @Description [Note] Extracted fields strictly conform to Beetle's Recommendation API input specification (`SourceObjectStorage`).
-// @Description - Versioning: Extracted via `GetBucketVersioning`. If versioning is disabled or error occurs, `versioningEnabled` is false.
-// @Description - Encryption: Extracted via `GetBucketEncryption`. If encryption rules are absent or error occurs, `encryptionEnabled` is false.
-// @Description - CORS: Extracted via `GetBucketCors`. If CORS rules are absent or error occurs, `corsEnabled` is false and `corsRule` is nil.
-// @Description - Public Access: Extracted via `GetBucketPolicy`. If wildcard public policy statement is detected, `isPublic` is true, otherwise false.
-// @Description - Tags: Extracted via `GetBucketTagging`. If tags are not set, `tags` is nil/empty map.
-// @Description - CreationDate: Extracted via bucket listing creation timestamp formatted in RFC 3339 format.
+// @Description Deeply inspects and extracts feature and usage metadata (totalSizeBytes, objectCount, versioning, encryption, CORS rules, policy, tags, creationDate) from selected buckets (supported CSPs: `aws`, `gcp`, `alibaba`, `tencent`, `ibm`, `ncp`).
+// @Description
+// @Description [Note] Extracted fields conform to Beetle's Recommendation API input specification (`SourceObjectStorage`):
+// @Description - Versioning: Extracted via `GetBucketVersioning`. If disabled or unavailable, `versioningEnabled` is false.
+// @Description - Encryption: Extracted via `GetBucketEncryption`. If rules are absent or unavailable, `encryptionEnabled` is false.
+// @Description - CORS: Extracted via `GetBucketCors`. Active rules are mapped into `corsRule`; otherwise `corsEnabled` is false and `corsRule` is nil.
+// @Description - Public Access: Extracted via `GetBucketPolicy`. If a wildcard public principal statement is detected, `isPublic` is true.
+// @Description - Tags: Extracted via `GetBucketTagging`.
+// @Description - CreationDate: Extracted via bucket listing creation timestamp formatted in RFC 3339.
 // @Description - AccessFrequency: Defaults to `"frequent"` (Standard storage tier baseline for recommendation).
-// @Tags [Minimal Test]
+// @Tags [Test] Client Helper (Non-Production)
 // @Accept json
 // @Produce json
 // @Param request body InspectObjectStorageRequest true "Parameters and selected bucket names for deep object storage inspection"
 // @Param X-Request-Id header string false "Unique request ID"
 // @Success 200 {object} model.ApiResponse[storagemodel.SourceObjectStorage] "Successfully collected source object storage model for selected buckets"
-// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters or missing credentials"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters, unsupported CSP, or missing credentials"
 // @Failure 500 {object} model.ApiResponse[any] "Failed to inspect object storage buckets"
 // @Router /migration/middleware/objectStorage/inspect [post]
 func InspectObjectStorage(c echo.Context) error {
+	log.Warn().Msg("[Test Client Helper] Non-production endpoint POST /migration/middleware/objectStorage/inspect invoked")
+
 	var req InspectObjectStorageRequest
 	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
+	}
+
+	if strings.TrimSpace(req.Csp) == "" {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("CSP is required"))
+	}
+	if len(req.SelectedBucketNames) == 0 {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one bucket name in selectedBucketNames is required"))
+	}
+
+	endpoint, err := getS3EndpointForCsp(req.Csp, req.Region)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
 
-	// Decrypt sensitive credential fields via fieldsec if keyId is provided
+	// Decrypt sensitive credential fields via fieldsec when keyId is provided.
 	if req.KeyId != "" {
 		sensitiveFields := []string{
 			"accessKeyId",
@@ -394,13 +454,15 @@ func InspectObjectStorage(c echo.Context) error {
 			"s3AccessKey",
 			"s3SecretKey",
 		}
-		if decrypted, err := fieldsec.DecryptWithStore(req, sensitiveFields, transx.GetKeyStore(), req.KeyId, "keyId"); err == nil {
+		if decrypted, decErr := fieldsec.DecryptWithStore(req, sensitiveFields, transx.GetKeyStore(), req.KeyId, "keyId"); decErr == nil {
 			req = decrypted.(InspectObjectStorageRequest)
-			log.Info().Str("keyId", req.KeyId).Msg("[Minimal Test API] Successfully decrypted credential fields for bucket inspection")
+			log.Info().Str("keyId", req.KeyId).Msg("[Test Client Helper] Successfully decrypted credential fields for bucket inspection")
+		} else {
+			log.Warn().Err(decErr).Str("keyId", req.KeyId).Msg("[Test Client Helper] Failed to decrypt credential fields for bucket inspection")
 		}
 	}
 
-	// Resolve S3 access credentials: S3AccessKey/S3SecretKey priority, fallback to AccessKeyId/SecretAccessKey
+	// Resolve S3 access credentials with S3AccessKey/S3SecretKey taking precedence.
 	accessKey := req.S3AccessKey
 	if accessKey == "" {
 		accessKey = req.AccessKeyId
@@ -411,26 +473,23 @@ func InspectObjectStorage(c echo.Context) error {
 	}
 
 	if accessKey == "" || secretKey == "" {
-		log.Warn().Str("csp", req.Csp).Msg("[Minimal Test API] Access Key and Secret Key are required for bucket inspection")
+		log.Warn().Str("csp", req.Csp).Msg("[Test Client Helper] Access Key and Secret Key are required for bucket inspection")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Access Key and Secret Key are required to inspect object storage metadata"))
 	}
 
 	reqCtx := c.Request().Context()
-	endpoint := getS3EndpointForCsp(req.Csp, req.Region)
-	useSSL := true
-
 	minioClient, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-		Secure: useSSL,
+		Secure: true,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("[Minimal Test API] Failed to initialize MinIO client for bucket inspection")
+		log.Error().Err(err).Msg("[Test Client Helper] Failed to initialize MinIO client for bucket inspection")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Failed to initialize object storage client: "+err.Error()))
 	}
 
-	// Pre-fetch account bucket list to obtain CreationDate
+	// Pre-fetch account bucket list to obtain CreationDate values.
 	bucketCreationDates := make(map[string]string)
-	if bucketsList, err := minioClient.ListBuckets(reqCtx); err == nil {
+	if bucketsList, listErr := minioClient.ListBuckets(reqCtx); listErr == nil {
 		for _, b := range bucketsList {
 			if !b.CreationDate.IsZero() {
 				bucketCreationDates[b.Name] = b.CreationDate.Format(time.RFC3339)
@@ -457,53 +516,52 @@ func InspectObjectStorage(c echo.Context) error {
 		go func(bucketName string) {
 			defer wg.Done()
 
-			sem <- struct{}{}        // acquire worker slot
-			defer func() { <-sem }() // release worker slot
+			sem <- struct{}{}
+			defer func() { <-sem }()
 
-			// 1. Versioning Configuration
 			versioningEnabled := false
-			vConfig, err := minioClient.GetBucketVersioning(reqCtx, bucketName)
-			if err == nil && vConfig.Enabled() {
+			if vConfig, vErr := minioClient.GetBucketVersioning(reqCtx, bucketName); vErr == nil && vConfig.Enabled() {
 				versioningEnabled = true
 			}
 
-			// 2. Encryption Configuration
 			encryptionEnabled := false
-			encConfig, err := minioClient.GetBucketEncryption(reqCtx, bucketName)
-			if err == nil && encConfig != nil && len(encConfig.Rules) > 0 {
+			if encConfig, encErr := minioClient.GetBucketEncryption(reqCtx, bucketName); encErr == nil && encConfig != nil && len(encConfig.Rules) > 0 {
 				encryptionEnabled = true
 			}
 
-			// 3. Public Access Policy Check
 			isPublic := false
-			if policyStr, err := minioClient.GetBucketPolicy(reqCtx, bucketName); err == nil {
+			if policyStr, pErr := minioClient.GetBucketPolicy(reqCtx, bucketName); pErr == nil {
 				if strings.Contains(policyStr, `"Principal":"*"`) || strings.Contains(policyStr, `"Principal": "*"`) || strings.Contains(policyStr, `"Principal":{"AWS":"*"}`) {
 					isPublic = true
 				}
 			}
 
-			// 4. Bucket Tagging Extraction
 			var tagsMap map[string]string
-			if tagging, err := minioClient.GetBucketTagging(reqCtx, bucketName); err == nil && tagging != nil {
+			if tagging, tErr := minioClient.GetBucketTagging(reqCtx, bucketName); tErr == nil && tagging != nil {
 				tagsMap = tagging.ToMap()
 			}
 
-			// 5. CORS Configuration Extraction (GetBucketCors)
+			// Extract active CORS rules when configured on the bucket.
 			corsEnabled := false
 			var corsRules []storagemodel.CORSRule
-			// Extract CORS if supported by target bucket
-			if corsConfig, err := minioClient.GetBucketCors(reqCtx, bucketName); err == nil && corsConfig != nil {
-				// Note: minio-go provides GetBucketCors
+			if corsConfig, cErr := minioClient.GetBucketCors(reqCtx, bucketName); cErr == nil && corsConfig != nil && len(corsConfig.CORSRules) > 0 {
 				corsEnabled = true
+				corsRules = make([]storagemodel.CORSRule, 0, len(corsConfig.CORSRules))
+				for _, r := range corsConfig.CORSRules {
+					corsRules = append(corsRules, storagemodel.CORSRule{
+						AllowedOrigin: r.AllowedOrigin,
+						AllowedMethod: r.AllowedMethod,
+						AllowedHeader: r.AllowedHeader,
+						ExposeHeader:  r.ExposeHeader,
+						MaxAgeSeconds: r.MaxAgeSeconds,
+					})
+				}
 			}
 
-			// 6. Creation Date Lookup
 			creationDate := bucketCreationDates[bucketName]
 
-			// 7. Object Stats (Total size in bytes & object count)
-			var totalSizeBytes int64 = 0
-			var objectCount int64 = 0
-
+			var totalSizeBytes int64
+			var objectCount int64
 			objCh := minioClient.ListObjects(reqCtx, bucketName, minio.ListObjectsOptions{
 				Recursive: true,
 				MaxKeys:   1000,
@@ -543,7 +601,7 @@ func InspectObjectStorage(c echo.Context) error {
 
 	wg.Wait()
 
-	// Sort inspected bucket results alphabetically by BucketName for consistent deterministic output
+	// Sort inspected bucket results alphabetically by BucketName for deterministic output.
 	sort.Slice(results, func(i, j int) bool {
 		return strings.ToLower(results[i].BucketName) < strings.ToLower(results[j].BucketName)
 	})
@@ -557,6 +615,6 @@ func InspectObjectStorage(c echo.Context) error {
 		SourceObjectStorages: results,
 	}
 
-	log.Info().Int("count", len(results)).Str("csp", req.Csp).Msg("[Minimal Test API] Successfully inspected bucket metadata into SourceObjectStorage model")
+	log.Info().Int("count", len(results)).Str("csp", req.Csp).Msg("[Test Client Helper] Successfully inspected bucket metadata into SourceObjectStorage model")
 	return c.JSON(http.StatusOK, model.SuccessResponse(sourceModel))
 }

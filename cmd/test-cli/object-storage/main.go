@@ -22,6 +22,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
 	"github.com/cloud-barista/cm-beetle/pkg/logger"
 )
 
@@ -43,6 +44,9 @@ type TestConfig struct {
 		RequestBodyFile string `yaml:"requestBodyFile"`
 		AuthConfigFile  string `yaml:"authConfigFile"`
 	} `yaml:"beetle"`
+	Migration struct {
+		NameSeed string `yaml:"nameSeed"`
+	} `yaml:"migration"`
 }
 
 // TestCase holds a single CSP-Region pair to test.
@@ -61,7 +65,6 @@ type AuthConfig struct {
 
 // OsRequest holds the source object storage information loaded from JSON.
 type OsRequest struct {
-	NameSeed             string                                     `json:"nameSeed"`
 	SourceObjectStorages []storagemodel.SourceObjectStorageProperty `json:"sourceObjectStorages"`
 }
 
@@ -131,7 +134,8 @@ type objectStorageListData struct {
 // ============================================================================
 
 var (
-	configFile = flag.String("config", "testconf/test-config.yaml", "Path to YAML config file")
+	configFile   = flag.String("config", "testconf/test-config.yaml", "Path to YAML config file")
+	nameSeedFlag = flag.String("nameSeed", "", "Optional name seed override for migrated object storages")
 )
 
 func init() {
@@ -171,8 +175,11 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to load object storage request")
 	}
 
-	baseNameSeed := osRequest.NameSeed
-	log.Info().Str("nameSeed", baseNameSeed).Msg("Loaded NameSeed from request file")
+	baseNameSeed := cfg.Migration.NameSeed
+	if *nameSeedFlag != "" {
+		baseNameSeed = *nameSeedFlag
+	}
+	log.Info().Str("nameSeed", baseNameSeed).Msg("Configured NameSeed for object storage migration")
 
 	// Check CM-Beetle readiness before starting tests
 	probeClient := resty.New().SetTimeout(10 * time.Second)
@@ -232,7 +239,7 @@ func main() {
 func runTestCase(idx int, tc TestCase, cfg TestConfig, osRequest OsRequest, nameSeed string, suite *TestSuite, authConfig AuthConfig) {
 	name := displayName(tc)
 	log.Info().Msgf("%s", "\n"+strings.Repeat("=", 60))
-	log.Info().Msgf("[%d/%d] Testing %s (%s %s) — NameSeed: %q", idx+1, suite.TotalCspPairs, name, tc.Csp, tc.Region, nameSeed)
+	log.Info().Msgf("[%d/%d] Testing %s (%s %s) - NameSeed: %q", idx+1, suite.TotalCspPairs, name, tc.Csp, tc.Region, nameSeed)
 	log.Info().Msgf("%s", strings.Repeat("=", 60))
 
 	client := resty.New()
@@ -295,9 +302,10 @@ func runTestCase(idx int, tc TestCase, cfg TestConfig, osRequest OsRequest, name
 	if !stopTesting {
 		result2 := runMigrateTest(client, cfg, recommendation, nameSeed, name)
 		record(result2)
-		if result2.Success {
+		if result2.Response != nil {
 			report.MigrationResponse = result2.Response
-		} else {
+		}
+		if !result2.Success {
 			stopTesting = true
 		}
 	} else {
@@ -336,7 +344,7 @@ func runTestCase(idx int, tc TestCase, cfg TestConfig, osRequest OsRequest, name
 		record(skippedResult("Test 5: Get", name))
 	}
 
-	// Test 6: Delete cleanup — always attempt regardless of previous failures
+	// Test 6: Delete cleanup - always attempt regardless of previous failures
 	if len(osIds) > 0 {
 		result6 := runDeleteAllTest(client, cfg, osIds, name)
 		record(result6)
@@ -406,7 +414,7 @@ func runRecommendTest(
 
 	result.EndTime = time.Now()
 	result.Duration = result.EndTime.Sub(result.StartTime)
-	result.StatusCode = resp.StatusCode()
+	result.StatusCode = statusCodeOf(resp)
 
 	if err != nil {
 		result.Error = err.Error()
@@ -415,7 +423,7 @@ func runRecommendTest(
 	}
 	if resp.IsError() {
 		result.Error = fmt.Sprintf("HTTP %d: %s", resp.StatusCode(), string(resp.Body()))
-		log.Error().Msgf("❌ %s failed: HTTP %d — %s", testLabel, resp.StatusCode(), string(resp.Body()))
+		log.Error().Msgf("❌ %s failed: HTTP %d: %s", testLabel, resp.StatusCode(), string(resp.Body()))
 		return storagemodel.RecommendedObjectStorage{}, result
 	}
 
@@ -450,14 +458,16 @@ func runMigrateTest(
 		cfg.Beetle.Endpoint, cfg.Beetle.NamespaceID)
 	result.RequestURL = url
 
+	var apiResp model.ApiResponse[migration.MigratedObjectStorageResult]
 	resp, err := client.R().
 		SetBody(reqBody).
 		SetQueryParam("nameSeed", nameSeed).
+		SetResult(&apiResp).
 		Post(url)
 
 	result.EndTime = time.Now()
 	result.Duration = result.EndTime.Sub(result.StartTime)
-	result.StatusCode = resp.StatusCode()
+	result.StatusCode = statusCodeOf(resp)
 
 	if err != nil {
 		result.Error = err.Error()
@@ -466,12 +476,28 @@ func runMigrateTest(
 	}
 	if resp.IsError() {
 		result.Error = fmt.Sprintf("HTTP %d: %s", resp.StatusCode(), string(resp.Body()))
-		log.Error().Msgf("❌ %s failed: HTTP %d — %s", testLabel, resp.StatusCode(), string(resp.Body()))
+		log.Error().Msgf("❌ %s failed: HTTP %d: %s", testLabel, resp.StatusCode(), string(resp.Body()))
+		return result
+	}
+
+	for _, warning := range apiResp.Data.Warnings {
+		log.Warn().Str("warning", warning).Msg("Object storage migration warning")
+	}
+
+	result.Response = toMap(apiResp)
+	if len(apiResp.Data.ObjectStorage) != len(recommendation.TargetObjectStorages) {
+		result.Error = fmt.Sprintf("created %d of %d requested bucket(s) (status=%s, warnings=%v)",
+			len(apiResp.Data.ObjectStorage), len(recommendation.TargetObjectStorages), apiResp.Data.Status, apiResp.Data.Warnings)
+		log.Error().Msgf("❌ %s failed: %s", testLabel, result.Error)
 		return result
 	}
 
 	result.Success = true
-	log.Info().Msgf("✅ %s passed: %d bucket(s) created", testLabel, len(recommendation.TargetObjectStorages))
+	log.Info().
+		Str("status", apiResp.Data.Status).
+		Int("createdBuckets", len(apiResp.Data.ObjectStorage)).
+		Int("warnings", len(apiResp.Data.Warnings)).
+		Msgf("✅ %s passed: %s", testLabel, apiResp.Data.Description)
 	return result
 }
 
@@ -498,7 +524,7 @@ func runListTest(client *resty.Client, cfg TestConfig, name string) TestResults 
 
 	result.EndTime = time.Now()
 	result.Duration = result.EndTime.Sub(result.StartTime)
-	result.StatusCode = resp.StatusCode()
+	result.StatusCode = statusCodeOf(resp)
 
 	if err != nil {
 		result.Error = err.Error()
@@ -507,7 +533,7 @@ func runListTest(client *resty.Client, cfg TestConfig, name string) TestResults 
 	}
 	if resp.IsError() {
 		result.Error = fmt.Sprintf("HTTP %d: %s", resp.StatusCode(), string(resp.Body()))
-		log.Error().Msgf("❌ %s failed: HTTP %d — %s", testLabel, resp.StatusCode(), string(resp.Body()))
+		log.Error().Msgf("❌ %s failed: HTTP %d: %s", testLabel, resp.StatusCode(), string(resp.Body()))
 		return result
 	}
 
@@ -535,7 +561,7 @@ func runExistTest(client *resty.Client, cfg TestConfig, osId, name string) TestR
 
 	result.EndTime = time.Now()
 	result.Duration = result.EndTime.Sub(result.StartTime)
-	result.StatusCode = resp.StatusCode()
+	result.StatusCode = statusCodeOf(resp)
 
 	if err != nil {
 		result.Error = err.Error()
@@ -544,7 +570,7 @@ func runExistTest(client *resty.Client, cfg TestConfig, osId, name string) TestR
 	}
 	if resp.IsError() {
 		result.Error = fmt.Sprintf("HTTP %d: %s", resp.StatusCode(), string(resp.Body()))
-		log.Error().Msgf("❌ %s failed: HTTP %d — %s", testLabel, resp.StatusCode(), string(resp.Body()))
+		log.Error().Msgf("❌ %s failed: HTTP %d: %s", testLabel, resp.StatusCode(), string(resp.Body()))
 		return result
 	}
 
@@ -574,7 +600,7 @@ func runGetTest(client *resty.Client, cfg TestConfig, osId, name string) TestRes
 
 	result.EndTime = time.Now()
 	result.Duration = result.EndTime.Sub(result.StartTime)
-	result.StatusCode = resp.StatusCode()
+	result.StatusCode = statusCodeOf(resp)
 
 	if err != nil {
 		result.Error = err.Error()
@@ -583,7 +609,7 @@ func runGetTest(client *resty.Client, cfg TestConfig, osId, name string) TestRes
 	}
 	if resp.IsError() {
 		result.Error = fmt.Sprintf("HTTP %d: %s", resp.StatusCode(), string(resp.Body()))
-		log.Error().Msgf("❌ %s failed: HTTP %d — %s", testLabel, resp.StatusCode(), string(resp.Body()))
+		log.Error().Msgf("❌ %s failed: HTTP %d: %s", testLabel, resp.StatusCode(), string(resp.Body()))
 		return result
 	}
 
@@ -613,12 +639,12 @@ func runDeleteAllTest(client *resty.Client, cfg TestConfig, osIds []string, name
 		deleted := false
 		for attempt := 1; attempt <= maxRetries; attempt++ {
 			if attempt > 1 {
-				log.Info().Str("osId", osId).Int("attempt", attempt).Msg("Retrying deletion...")
+				log.Info().Str("osId", osId).Int("attempt", attempt).Msg("Retrying standard deletion...")
 				time.Sleep(10 * time.Second)
 			}
 
 			resp, err := client.R().Delete(url)
-			statusCode := resp.StatusCode()
+			statusCode := statusCodeOf(resp)
 
 			if err == nil && (statusCode < 400 || statusCode == 404) {
 				log.Info().Msgf("Deleted '%s' (HTTP %d)", osId, statusCode)
@@ -627,12 +653,32 @@ func runDeleteAllTest(client *resty.Client, cfg TestConfig, osIds []string, name
 			}
 
 			log.Warn().Err(err).Int("statusCode", statusCode).Int("attempt", attempt).
-				Msgf("Deletion attempt failed for '%s'", osId)
+				Msgf("Standard deletion attempt failed for '%s'", osId)
+		}
+
+		// Retry with option=force if standard deletion failed (e.g. non-empty or versioned bucket).
+		if !deleted {
+			for attempt := 1; attempt <= maxRetries; attempt++ {
+				log.Info().Str("osId", osId).Int("attempt", attempt).Msg("Retrying cleanup with option=force...")
+				time.Sleep(5 * time.Second)
+
+				resp, err := client.R().SetQueryParam("option", "force").Delete(url)
+				statusCode := statusCodeOf(resp)
+
+				if err == nil && (statusCode < 400 || statusCode == 404) {
+					log.Info().Msgf("Force-deleted '%s' (HTTP %d)", osId, statusCode)
+					deleted = true
+					break
+				}
+
+				log.Warn().Err(err).Int("statusCode", statusCode).Int("attempt", attempt).
+					Msgf("Force deletion attempt failed for '%s'", osId)
+			}
 		}
 
 		if !deleted {
 			allSucceeded = false
-			log.Error().Msgf("Failed to delete '%s' after %d attempts", osId, maxRetries)
+			log.Error().Msgf("Failed to delete '%s' after standard and force attempts", osId)
 		}
 	}
 
@@ -670,6 +716,14 @@ func checkReadiness(client *resty.Client, endpoint string) error {
 	}
 	log.Info().Msg("CM-Beetle readiness check passed")
 	return nil
+}
+
+// statusCodeOf returns the HTTP status code of resp, or 0 when resp is nil.
+func statusCodeOf(resp *resty.Response) int {
+	if resp == nil {
+		return 0
+	}
+	return resp.StatusCode()
 }
 
 // displayName returns a human-readable name for a test case.
@@ -904,7 +958,14 @@ func generateMarkdownContent(report *OSTestReport) string {
 	sb.WriteString("<details>\n")
 	sb.WriteString("  <summary> <ins>Click to see the request body</ins> </summary>\n\n")
 	sb.WriteString("```json\n")
-	reqJSON, _ := json.MarshalIndent(report.OsRequest, "", "  ")
+	recReq := controller.RecommendObjectStorageRequest{
+		DesiredCloud: storagemodel.CloudProperty{
+			Csp:    report.CSP,
+			Region: report.Region,
+		},
+		SourceObjectStorages: report.OsRequest.SourceObjectStorages,
+	}
+	reqJSON, _ := json.MarshalIndent(recReq, "", "  ")
 	sb.WriteString(string(reqJSON))
 	sb.WriteString("\n```\n\n")
 	sb.WriteString("</details>\n\n")
@@ -971,6 +1032,16 @@ func generateMarkdownContent(report *OSTestReport) string {
 			sb.WriteString("- **Status**: ❌ **FAILED**\n")
 			if r2.Error != "" {
 				sb.WriteString(fmt.Sprintf("- **Error**: %s\n\n", r2.Error))
+			}
+			if report.MigrationResponse != nil {
+				sb.WriteString("**Response Body**:\n\n")
+				sb.WriteString("<details>\n")
+				sb.WriteString("  <summary> <ins>Click to see the response body</ins> </summary>\n\n")
+				sb.WriteString("```json\n")
+				migJSON, _ := json.MarshalIndent(report.MigrationResponse, "", "  ")
+				sb.WriteString(string(migJSON))
+				sb.WriteString("\n```\n\n")
+				sb.WriteString("</details>\n\n")
 			}
 		}
 	}

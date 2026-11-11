@@ -1,6 +1,6 @@
 # 마이그레이션된 인프라 자원 조회 및 삭제 가이드
 
-본 문서는 CM-Beetle을 통해 배포된 마이그레이션된 인프라 및 개별 인프라 자원(VM, Security Group, SSH Key, vNet, Subnet)의 **기본 조회 및 순차 삭제 절차**와, CSP(NCP, AWS 등) 콘솔에서 자원이 먼저 삭제되었거나 의존성 오류로 정상 삭제가 불가능할 때 사용하는 **Force 삭제 절차**를 안내합니다.
+본 문서는 CM-Beetle을 통해 배포된 마이그레이션된 인프라 및 개별 자원(VM, Security Group, SSH Key, vNet, Subnet, Object Storage)의 **기본 조회 및 순차 삭제 절차**와, CSP(NCP, AWS 등) 콘솔에서 자원이 먼저 삭제되었거나 내부 객체/의존성 오류로 정상 삭제가 불가능할 때 사용하는 **Force 삭제 절차**를 안내합니다.
 
 > [!IMPORTANT]
 > **🚨 핵심 주의사항**
@@ -119,6 +119,31 @@ curl -s -u "default:default" -X 'DELETE' \
   -H 'accept: application/json'
 ```
 
+#### Step 5: Object Storage (버킷) 조회 및 삭제
+
+Object Storage는 vNet과 독립적인 리소스이며, 버킷 내부 객체의 보존 여부에 따라 삭제 옵션을 명확히 구분해야 합니다.
+
+- **옵션 미지정 (`DELETE .../objectStorage/{osId}`)**: **비어 있는 버킷 자체를 삭제**합니다. 버킷 내부에 객체나 버전이 남아 있으면 실패합니다.
+- **`?option=empty`**: 버킷 자체는 **유지**하고, **내부 객체 및 버전만 모두 비웁니다.** (버킷을 삭제하지 않으므로 주의)
+- **`?option=force`**: 내부 객체 및 버전을 먼저 모두 비운 뒤 **버킷과 메타데이터까지 일괄 삭제**합니다.
+
+```bash
+# 1. Object Storage 목록 조회
+curl -s -u "default:default" -X 'GET' \
+  'http://localhost:8056/beetle/migration/middleware/ns/mig01/objectStorage' \
+  -H 'accept: application/json'
+
+# 2. (선택) 버킷은 유지하고 내부 객체만 비우기
+curl -s -u "default:default" -X 'DELETE' \
+  'http://localhost:8056/beetle/migration/middleware/ns/mig01/objectStorage/mig-os-01?option=empty' \
+  -H 'accept: application/json'
+
+# 3. 비어 있는 버킷 정상 삭제
+curl -s -u "default:default" -X 'DELETE' \
+  'http://localhost:8056/beetle/migration/middleware/ns/mig01/objectStorage/mig-os-01' \
+  -H 'accept: application/json'
+```
+
 ---
 
 ## 3. 마이그레이션된 잔여 인프라 자원 조회 및 Force 삭제
@@ -217,16 +242,27 @@ curl -s -u "default:default" -X 'DELETE' \
   -H 'accept: application/json'
 ```
 
+#### Step 5: Object Storage 강제 삭제 (`option=force`)
+
+버킷 내부에 객체나 버전이 남아 있거나 CSP 콘솔에서 먼저 삭제되어 메타데이터 불일치가 발생한 경우, 내부 객체를 비우고 버킷 및 플랫폼 메타데이터를 강제로 정리합니다.
+
+```bash
+curl -s -u "default:default" -X 'DELETE' \
+  'http://localhost:8056/beetle/migration/middleware/ns/mig01/objectStorage/mig-os-01?option=force' \
+  -H 'accept: application/json'
+```
+
 ---
 
 ## 4. 파라미터 요약 비교표
 
-| 대상 자원          | 정상 삭제 옵션        | Force 삭제 옵션     | Force 삭제 동작 설명                                          |
-| :----------------- | :-------------------- | :------------------ | :------------------------------------------------------------ |
-| **Infra**          | `?option=terminate`   | **`?option=force`** | CSP VM 상태 무시 및 내부 메타데이터 즉시 제거                 |
-| **Security Group** | _(파라미터 없음)_     | **`?force=true`**   | 자원 간 의존성 검사 우회, Spider 실패 시에도 레코드 강제 삭제 |
-| **SSH Key**        | _(파라미터 없음)_     | **`?force=true`**   | CSP 키 부재 시에도 내부 레코드 즉시 삭제                      |
-| **vNet & Subnet**  | `?action=withsubnets` | **`?action=force`** | CSP 강제 삭제 호출 및 CSP 존재 검증 우회 후 레코드 삭제       |
+| 대상 자원          | 정상 삭제 옵션        | 내용 비우기 옵션  | Force 삭제 옵션     | Force 삭제 동작 설명                                                 |
+| :----------------- | :-------------------- | :---------------- | :------------------ | :------------------------------------------------------------------- |
+| **Infra**          | `?option=terminate`   | -                 | **`?option=force`** | CSP VM 상태 무시 및 내부 메타데이터 즉시 제거                        |
+| **Security Group** | _(파라미터 없음)_     | -                 | **`?force=true`**   | 자원 간 의존성 검사 우회, Spider 실패 시에도 레코드 강제 삭제        |
+| **SSH Key**        | _(파라미터 없음)_     | -                 | **`?force=true`**   | CSP 키 부재 시에도 내부 레코드 즉시 삭제                             |
+| **vNet & Subnet**  | `?action=withsubnets` | -                 | **`?action=force`** | CSP 강제 삭제 호출 및 CSP 존재 검증 우회 후 레코드 삭제              |
+| **Object Storage** | _(파라미터 없음)_     | `?option=empty`   | **`?option=force`** | 버킷 내부 객체/버전 전체 비우기 후 버킷 및 내부 메타데이터 일괄 삭제 |
 
 ---
 
