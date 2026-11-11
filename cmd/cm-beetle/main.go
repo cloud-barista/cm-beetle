@@ -231,8 +231,8 @@ func checkReadiness(url string) (bool, error) {
 // @tag.name [Test] Utilities
 // @tag.description Utility APIs for testing and debugging
 
-// @tag.name [Minimal Test]
-// @tag.description Isolated test APIs for credential encryption and cloud object storage scanning
+// @tag.name [Test] Client Helper (Non-Production)
+// @tag.description Test-only helper APIs for local evaluation of credential encryption and S3 bucket scanning (do not use in production)
 
 func main() {
 

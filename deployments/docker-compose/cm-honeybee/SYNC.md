@@ -20,6 +20,11 @@ deployments/docker-compose/cm-honeybee/
 | :--- | :--- | :--- |
 | `openbao/openbao-config.hcl` | `server/openbao/openbao-config.hcl` | OpenBao configuration for Honeybee's dedicated secrets backend |
 
+## v0.6.4 Sync (2026-11-11)
+
+- Bumped `cm-honeybee` service image to `cloudbaristaorg/cm-honeybee:0.6.4` in `docker-compose.ui.yaml`.
+- Verified `docker-compose.ui.yaml` service settings and `cm-honeybee/openbao/openbao-config.hcl` remain aligned with upstream v0.6.4.
+
 ## v0.6.3 Sync (2026-11-04)
 
 - Bumped `cm-honeybee` service image to `cloudbaristaorg/cm-honeybee:0.6.3` (includes `gpuCards` refinement in `/infra/refined`).

@@ -19723,8 +19723,8 @@ const docTemplate = `{
             "name": "[Test] Utilities"
         },
         {
-            "description": "Isolated test APIs for credential encryption and cloud object storage scanning",
-            "name": "[Minimal Test]"
+            "description": "Test-only helper APIs for local evaluation of credential encryption and S3 bucket scanning (do not use in production)",
+            "name": "[Test] Client Helper (Non-Production)"
         }
     ],
     "externalDocs": {
