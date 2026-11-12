@@ -163,6 +163,8 @@ const SAMPLE_TARGET_STORAGE_MODEL: StorageTargetModelEnvelope = {
   raw: sampleTargetObjectStorage,
 };
 
+const DRAFT_STORAGE_SOURCE_ID = '__draft_source_storage__';
+const DRAFT_STORAGE_PLANNING_ID = '__draft_planning_storage__';
 const DRAFT_STORAGE_TARGET_ID = '__draft_target_storage__';
 
 export type { ObjectStorageJobCard };
@@ -308,12 +310,16 @@ export const ObjectStorageMigration: React.FC = () => {
   const [step1SubTab, setStep1SubTab] = useState<'generate' | 'load'>('generate');
   const [pendingOptSourceModelId, setPendingOptSourceModelId] = useState<string>(SAMPLE_STORAGE_MODEL.id);
   const [loadedOptSourceModel, setLoadedOptSourceModel] = useState<StorageSourceModelEnvelope | null>(null);
-  const [isOptSourceLoaded, setIsOptSourceLoaded] = useState<boolean>(false);
   const [pendingTargetModelId, setPendingTargetModelId] = useState<string>(SAMPLE_TARGET_STORAGE_MODEL.id);
   const [loadedTargetModel, setLoadedTargetModel] = useState<StorageTargetModelEnvelope | null>(null);
   const [hasTargetUnsavedChanges, setHasTargetUnsavedChanges] = useState<boolean>(false);
   const [showSaveTargetModal, setShowSaveTargetModal] = useState(false);
   const [deleteTargetModalTarget, setDeleteTargetModalTarget] = useState<StorageTargetModelEnvelope | null>(null);
+
+  // Step 1 & Step 2 unsaved draft snapshots and Load overwrite guard
+  const [step1DraftBuckets, setStep1DraftBuckets] = useState<any[]>([]);
+  const [refineDraftBuckets, setRefineDraftBuckets] = useState<any[]>([]);
+  const [overwriteConfirmTarget, setOverwriteConfirmTarget] = useState<'refine' | 'target' | null>(null);
 
   // Step 4 launch selector state
   const [selectedTargetModelId, setSelectedTargetModelId] = useState<string>(SAMPLE_TARGET_STORAGE_MODEL.id);
@@ -432,6 +438,46 @@ export const ObjectStorageMigration: React.FC = () => {
     fetchSavedStorageModels();
   }, []);
 
+  const draftSourceStorageEnvelope: StorageSourceModelEnvelope | null =
+    hasStep1UnsavedChanges && step1DraftBuckets.length > 0
+      ? {
+          id: DRAFT_STORAGE_SOURCE_ID,
+          name:
+            lastSavedSourceStorageModel?.name ||
+            buildDefaultModelName('source', `${scanCsp}-${scanRegion}-storage`),
+          description: `Extracted source object storage draft (${step1DraftBuckets.length} buckets on ${scanCsp.toUpperCase()} ${scanRegion})`,
+          version: lastSavedSourceStorageModel?.version || '1.0.0',
+          stage: 'source',
+          category: 'infra',
+          schemaType: 'SourceObjectStorage',
+          sourceCloud: { csp: scanCsp, region: scanRegion },
+          sourceObjectStorages: step1DraftBuckets,
+          isDraft: true,
+        }
+      : null;
+
+  const draftPlanningStorageEnvelope: StorageSourceModelEnvelope | null =
+    isModelLoaded && hasRefineUnsavedChanges && refineDraftBuckets.length > 0
+      ? {
+          id: DRAFT_STORAGE_PLANNING_ID,
+          name:
+            loadedSourceModel &&
+            loadedSourceModel.stage === 'planning' &&
+            !isBuiltInSampleModel(loadedSourceModel) &&
+            !loadedSourceModel.isDraft
+              ? cleanModelDisplayName(loadedSourceModel.name)
+              : buildDefaultModelName('planning', loadedSourceModel?.name || 'storage'),
+          description: `Refined planning object storage draft (${refineDraftBuckets.length} buckets)`,
+          version: loadedSourceModel?.version || '1.0.0',
+          stage: 'planning',
+          category: 'infra',
+          schemaType: 'SourceObjectStorage',
+          sourceCloud: loadedSourceModel?.sourceCloud || { csp: scanCsp, region: scanRegion },
+          sourceObjectStorages: refineDraftBuckets,
+          isDraft: true,
+        }
+      : null;
+
   // Grouped model lists for dropdowns
   const userStorageModels = savedSourceModels.filter((m) => !isBuiltInSampleModel(m));
   const userPlanningModels = userStorageModels.filter((m) => m.stage === 'planning');
@@ -442,6 +488,21 @@ export const ObjectStorageMigration: React.FC = () => {
     ...userSourceModels,
     ...sampleSourceModels,
   ];
+  const refineDraftModels: StorageSourceModelEnvelope[] = draftSourceStorageEnvelope
+    ? [draftSourceStorageEnvelope]
+    : [];
+  const allRefineSourceModels: StorageSourceModelEnvelope[] = [
+    ...refineDraftModels,
+    ...allSourceModels,
+  ];
+  const optDraftModels: StorageSourceModelEnvelope[] = [
+    draftPlanningStorageEnvelope,
+    draftSourceStorageEnvelope,
+  ].filter(Boolean) as StorageSourceModelEnvelope[];
+  const allOptSourceModels: StorageSourceModelEnvelope[] = [
+    ...optDraftModels,
+    ...allSourceModels,
+  ];
 
   const userTargetModels = savedTargetModels.filter((m) => !isBuiltInSampleModel(m));
   const sampleTargetModels: StorageTargetModelEnvelope[] = [SAMPLE_TARGET_STORAGE_MODEL];
@@ -450,7 +511,10 @@ export const ObjectStorageMigration: React.FC = () => {
     ...sampleTargetModels,
   ];
 
-  const pendingSourceModel = allSourceModels.find((m) => m.id === pendingSourceModelId) || allSourceModels[0] || null;
+  const pendingSourceModel =
+    allRefineSourceModels.find((m) => m.id === pendingSourceModelId) ||
+    allRefineSourceModels[0] ||
+    null;
   const isRefinePendingAlreadyLoaded = Boolean(
     isModelLoaded &&
       loadedSourceModel &&
@@ -459,13 +523,10 @@ export const ObjectStorageMigration: React.FC = () => {
       !hasRefineUnsavedChanges
   );
 
-  const pendingOptSourceModel = allSourceModels.find((m) => m.id === pendingOptSourceModelId) || allSourceModels[0] || null;
-  const isOptSourcePendingAlreadyLoaded = Boolean(
-    isOptSourceLoaded &&
-      loadedOptSourceModel &&
-      pendingOptSourceModel &&
-      loadedOptSourceModel.id === pendingOptSourceModel.id
-  );
+  const pendingOptSourceModel =
+    allOptSourceModels.find((m) => m.id === pendingOptSourceModelId) ||
+    allOptSourceModels[0] ||
+    null;
 
   const pendingTargetModel = allTargetModels.find((m) => m.id === pendingTargetModelId) || allTargetModels[0] || null;
   const isTargetPendingAlreadyLoaded = Boolean(
@@ -499,28 +560,68 @@ export const ObjectStorageMigration: React.FC = () => {
   };
 
   const hasUnsavedTargetDraft = Boolean(recommendationResult && (!loadedTargetModel || hasTargetUnsavedChanges));
-  const draftTargetModelEnvelope: StorageTargetModelEnvelope | null = recommendationResult
-    ? {
-        id: DRAFT_STORAGE_TARGET_ID,
-        name:
-          loadedTargetModel && !isBuiltInSampleModel(loadedTargetModel)
-            ? loadedTargetModel.name
-            : buildDefaultModelName(
-                'target',
-                loadedOptSourceModel?.name || loadedSourceModel?.name || 'storage',
-                desiredCsp
-              ),
-        description: recommendationResult.description || 'Unsaved target object storage draft',
-        version: loadedTargetModel?.version || '1.0.0',
-        stage: 'target',
-        category: 'infra',
-        schemaType: 'RecommendedObjectStorage',
-        csp: desiredCsp,
-        region: desiredRegion,
-        targetObjectStorages: buildActiveTargetStoragesPayload(),
-        raw: recommendationResult,
-      }
-    : null;
+  const draftTargetModelEnvelope: StorageTargetModelEnvelope | null =
+    hasUnsavedTargetDraft && recommendationResult
+      ? {
+          id: DRAFT_STORAGE_TARGET_ID,
+          name:
+            loadedTargetModel && !isBuiltInSampleModel(loadedTargetModel)
+              ? loadedTargetModel.name
+              : buildDefaultModelName(
+                  'target',
+                  loadedOptSourceModel?.name || loadedSourceModel?.name || 'storage',
+                  desiredCsp
+                ),
+          description: recommendationResult.description || 'Unsaved target object storage draft',
+          version: loadedTargetModel?.version || '1.0.0',
+          stage: 'target',
+          category: 'infra',
+          schemaType: 'RecommendedObjectStorage',
+          csp: desiredCsp,
+          region: desiredRegion,
+          targetObjectStorages: buildActiveTargetStoragesPayload(),
+          raw: recommendationResult,
+          isDraft: true,
+        }
+      : null;
+
+  const hasSourceStorageDraft = Boolean(draftSourceStorageEnvelope);
+  const hasPlanningStorageDraft = Boolean(draftPlanningStorageEnvelope);
+  const firstFallbackSourceId = allSourceModels[0]?.id || SAMPLE_STORAGE_MODEL.id;
+  const firstFallbackTargetId = allTargetModels[0]?.id || SAMPLE_TARGET_STORAGE_MODEL.id;
+
+  useEffect(() => {
+    if (pendingSourceModelId === DRAFT_STORAGE_SOURCE_ID && !hasSourceStorageDraft) {
+      setPendingSourceModelId(lastSavedSourceStorageModel?.id || firstFallbackSourceId);
+    }
+  }, [pendingSourceModelId, hasSourceStorageDraft, lastSavedSourceStorageModel, firstFallbackSourceId]);
+
+  useEffect(() => {
+    const isClearedSourceDraft =
+      pendingOptSourceModelId === DRAFT_STORAGE_SOURCE_ID && !hasSourceStorageDraft;
+    const isClearedPlanningDraft =
+      pendingOptSourceModelId === DRAFT_STORAGE_PLANNING_ID && !hasPlanningStorageDraft;
+    if (isClearedSourceDraft || isClearedPlanningDraft) {
+      setPendingOptSourceModelId(
+        (loadedSourceModel && !loadedSourceModel.isDraft ? loadedSourceModel.id : undefined) ||
+          lastSavedSourceStorageModel?.id ||
+          firstFallbackSourceId
+      );
+    }
+  }, [
+    pendingOptSourceModelId,
+    hasSourceStorageDraft,
+    hasPlanningStorageDraft,
+    loadedSourceModel,
+    lastSavedSourceStorageModel,
+    firstFallbackSourceId,
+  ]);
+
+  useEffect(() => {
+    if (selectedTargetModelId === DRAFT_STORAGE_TARGET_ID && !hasUnsavedTargetDraft) {
+      setSelectedTargetModelId(loadedTargetModel?.id || firstFallbackTargetId);
+    }
+  }, [selectedTargetModelId, hasUnsavedTargetDraft, loadedTargetModel, firstFallbackTargetId]);
 
   const activeSelectedTargetModel: StorageTargetModelEnvelope =
     selectedTargetModelId === DRAFT_STORAGE_TARGET_ID && draftTargetModelEnvelope
@@ -609,7 +710,7 @@ export const ObjectStorageMigration: React.FC = () => {
   };
 
   // Explicit Load handler for Step 2 (Refinement)
-  const handleLoadRefineModel = () => {
+  const executeLoadRefineModel = () => {
     if (!pendingSourceModel) return;
     const bucketsToLoad = mapEnvelopeToSourceBuckets(pendingSourceModel);
     setSourceBuckets(bucketsToLoad);
@@ -619,23 +720,20 @@ export const ObjectStorageMigration: React.FC = () => {
     setIsModelLoaded(true);
     setActiveRefineStep(2);
     setHasRefineUnsavedChanges(false);
-    if (!isOptSourceLoaded) {
-      setPendingOptSourceModelId(pendingSourceModel.id);
-    }
+    setPendingOptSourceModelId(pendingSourceModel.id);
   };
 
-  // Explicit Load handler for Step 3 Sub-Tab 1 (Generate Recommendation)
-  const handleLoadOptSourceModel = () => {
-    if (!pendingOptSourceModel) return;
-    const bucketsToLoad = mapEnvelopeToSourceBuckets(pendingOptSourceModel);
-    setSourceBuckets(bucketsToLoad);
-    setExcludedBucketNames([]);
-    setLoadedOptSourceModel(pendingOptSourceModel);
-    setIsOptSourceLoaded(true);
+  const handleLoadRefineModel = () => {
+    if (!pendingSourceModel) return;
+    if (isModelLoaded && hasRefineUnsavedChanges) {
+      setOverwriteConfirmTarget('refine');
+      return;
+    }
+    executeLoadRefineModel();
   };
 
   // Explicit Load handler for Step 3 Sub-Tab 2 (Load Saved Target Model)
-  const handleLoadTargetModel = () => {
+  const executeLoadTargetModel = () => {
     if (!pendingTargetModel) return;
     const targetCsp = (pendingTargetModel.csp || 'aws').toLowerCase();
     const targetReg = pendingTargetModel.region || 'ap-northeast-2';
@@ -679,6 +777,15 @@ export const ObjectStorageMigration: React.FC = () => {
     setLoadedTargetModel(pendingTargetModel);
     setSelectedTargetModelId(pendingTargetModel.id);
     setHasTargetUnsavedChanges(false);
+  };
+
+  const handleLoadTargetModel = () => {
+    if (!pendingTargetModel) return;
+    if (recommendationResult && hasTargetUnsavedChanges) {
+      setOverwriteConfirmTarget('target');
+      return;
+    }
+    executeLoadTargetModel();
   };
 
   // Detailed CORS Config Rule Modification Helpers
@@ -868,6 +975,27 @@ export const ObjectStorageMigration: React.FC = () => {
     });
   };
 
+  useEffect(() => {
+    if (!hasStep1UnsavedChanges) {
+      setStep1DraftBuckets([]);
+      return;
+    }
+    if (subTab === 'source') {
+      setStep1DraftBuckets(sourceBuckets.length > 0 ? formatSourceBucketsForArtifact(sourceBuckets) : []);
+    }
+  }, [subTab, hasStep1UnsavedChanges, sourceBuckets]);
+
+  useEffect(() => {
+    if (!hasRefineUnsavedChanges || !isModelLoaded) {
+      setRefineDraftBuckets([]);
+      return;
+    }
+    if (subTab === 'refine') {
+      const active = sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName));
+      setRefineDraftBuckets(active.length > 0 ? formatSourceBucketsForArtifact(active) : []);
+    }
+  }, [subTab, isModelLoaded, hasRefineUnsavedChanges, sourceBuckets, excludedBucketNames]);
+
   // Step 1: Save Source Storage Model (stage: 'source')
   const handleSaveStep1SourceModel = async (result: SaveRevisionResult) => {
     if (sourceBuckets.length === 0) {
@@ -919,7 +1047,7 @@ export const ObjectStorageMigration: React.FC = () => {
       sourceObjectStorages: formatSourceBucketsForArtifact(activeBuckets),
     };
     const parentId =
-      loadedSourceModel && !isBuiltInSampleModel(loadedSourceModel)
+      loadedSourceModel && !isBuiltInSampleModel(loadedSourceModel) && !loadedSourceModel.isDraft
         ? loadedSourceModel.id
         : undefined;
     const saved = result.overwriteId
@@ -953,26 +1081,36 @@ export const ObjectStorageMigration: React.FC = () => {
 
   // Step 3: Run Beetle Object Storage Recommendation API
   const handleGenerateRecommendation = async () => {
-    const activeBuckets = sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName));
-    if (activeBuckets.length === 0) {
-      showToast('All buckets are currently excluded. Include at least one bucket for recommendation.', 'error');
+    if (!pendingOptSourceModel) {
+      showToast('Select a source or planning object storage model first.', 'error');
+      return;
+    }
+    const optBuckets = mapEnvelopeToSourceBuckets(pendingOptSourceModel);
+    if (optBuckets.length === 0) {
+      showToast('Selected model has no buckets for recommendation.', 'error');
       return;
     }
 
-    const payloadSourceBuckets = formatSourceBucketsForArtifact(activeBuckets);
+    const payloadSourceBuckets = formatSourceBucketsForArtifact(optBuckets);
 
     setIsRecommending(true);
     try {
       const res = await beetleApi.recommendObjectStorage(desiredCsp, desiredRegion, payloadSourceBuckets);
+      setSourceBuckets(optBuckets);
+      setExcludedBucketNames([]);
+      setLoadedOptSourceModel(pendingOptSourceModel);
       setRecommendationResult(res);
       setLoadedTargetModel(null);
       setHasTargetUnsavedChanges(true);
     } catch (err: any) {
       console.warn('API recommendation fallback using sampleTargetObjectStorage', err);
+      setSourceBuckets(optBuckets);
+      setExcludedBucketNames([]);
+      setLoadedOptSourceModel(pendingOptSourceModel);
       setRecommendationResult({
         ...sampleTargetObjectStorage,
         targetCloud: { csp: desiredCsp, region: desiredRegion },
-        description: `Target cloud object storage recommendation for ${activeBuckets.length} bucket(s) on ${desiredCsp.toUpperCase()} (${desiredRegion})`
+        description: `Target cloud object storage recommendation for ${optBuckets.length} bucket(s) on ${desiredCsp.toUpperCase()} (${desiredRegion})`
       });
       setLoadedTargetModel(null);
       setHasTargetUnsavedChanges(true);
@@ -1003,7 +1141,7 @@ export const ObjectStorageMigration: React.FC = () => {
 
     const parentCandidate = loadedOptSourceModel || loadedSourceModel;
     const parentId =
-      parentCandidate && !isBuiltInSampleModel(parentCandidate)
+      parentCandidate && !isBuiltInSampleModel(parentCandidate) && !parentCandidate.isDraft
         ? parentCandidate.id
         : undefined;
 
@@ -1549,6 +1687,13 @@ export const ObjectStorageMigration: React.FC = () => {
                   onChange={(e) => setPendingSourceModelId(e.target.value)}
                   className="flex-1 min-w-[260px] bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
                 >
+                  {refineDraftModels.length > 0 && (
+                    <optgroup label="Draft Model">
+                      {refineDraftModels.map((m) => (
+                        <option key={m.id} value={m.id}>{formatSourceOptionText(m, '1.0', true)}</option>
+                      ))}
+                    </optgroup>
+                  )}
                   {userPlanningModels.length > 0 && (
                     <optgroup label="Planning Models">
                       {userPlanningModels.map((m) => (
@@ -1627,7 +1772,7 @@ export const ObjectStorageMigration: React.FC = () => {
                     </>
                   )}
                 </button>
-                {pendingSourceModel && !isBuiltInSampleModel(pendingSourceModel) && (
+                {pendingSourceModel && !isBuiltInSampleModel(pendingSourceModel) && !pendingSourceModel.isDraft && (
                   <button
                     type="button"
                     onClick={() => setDeleteSourceModalTarget(pendingSourceModel)}
@@ -1669,11 +1814,11 @@ export const ObjectStorageMigration: React.FC = () => {
             {isModelLoaded && loadedSourceModel && (
               <div className="mb-4">
                 <ActiveModelBanner
-                  mode="loaded"
+                  mode={loadedSourceModel.isDraft ? 'draft' : 'loaded'}
                   name={loadedSourceModel.name}
-                  version={loadedSourceModel.version}
+                  version={loadedSourceModel.isDraft ? undefined : loadedSourceModel.version}
                   stageKind={resolveModelStageKind(loadedSourceModel, 'source')}
-                  hasUnsavedChanges={hasRefineUnsavedChanges}
+                  hasUnsavedChanges={hasRefineUnsavedChanges || Boolean(loadedSourceModel.isDraft)}
                   updatedTime={loadedSourceModel.updatedTime}
                   metrics={[
                     {
@@ -2164,11 +2309,11 @@ export const ObjectStorageMigration: React.FC = () => {
             {/* Step Header with Green Check Circle Icon / Number Badge */}
             <div className="flex items-center space-x-2.5 border-b border-border-main/40 pb-3">
               <div className={`w-6 h-6 rounded-full flex items-center justify-center font-extrabold text-xs shrink-0 ${
-                (step1SubTab === 'generate' ? isOptSourceLoaded : Boolean(loadedTargetModel))
+                (step1SubTab === 'generate' ? Boolean(pendingOptSourceModel) : Boolean(loadedTargetModel))
                   ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/40'
                   : 'bg-emerald-500 text-slate-950'
               }`}>
-                {(step1SubTab === 'generate' ? isOptSourceLoaded : Boolean(loadedTargetModel)) ? (
+                {(step1SubTab === 'generate' ? Boolean(pendingOptSourceModel) : Boolean(loadedTargetModel)) ? (
                   <Check className="w-3.5 h-3.5 text-emerald-500 font-bold" />
                 ) : (
                   '1'
@@ -2219,6 +2364,13 @@ export const ObjectStorageMigration: React.FC = () => {
                       onChange={(e) => setPendingOptSourceModelId(e.target.value)}
                       className="flex-1 min-w-[260px] px-4 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold text-sm focus:outline-none focus:border-emerald-500 cursor-pointer"
                     >
+                      {optDraftModels.length > 0 && (
+                        <optgroup label="Draft Model">
+                          {optDraftModels.map((m) => (
+                            <option key={m.id} value={m.id}>{formatSourceOptionText(m, '1.0', true)}</option>
+                          ))}
+                        </optgroup>
+                      )}
                       {userPlanningModels.length > 0 && (
                         <optgroup label="Planning Models">
                           {userPlanningModels.map((m) => (
@@ -2263,44 +2415,6 @@ export const ObjectStorageMigration: React.FC = () => {
                       )}
                     </div>
                   )}
-
-                  <div className="flex flex-wrap items-center gap-3 pt-1">
-                    <button
-                      type="button"
-                      onClick={handleLoadOptSourceModel}
-                      disabled={!pendingOptSourceModel}
-                      className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer ${
-                        !pendingOptSourceModel
-                          ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
-                          : isOptSourcePendingAlreadyLoaded
-                            ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
-                            : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/20'
-                      }`}
-                    >
-                      {isOptSourcePendingAlreadyLoaded ? (
-                        <>
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Model Loaded</span>
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="w-3.5 h-3.5" />
-                          <span>Load Model</span>
-                        </>
-                      )}
-                    </button>
-
-                    {pendingOptSourceModel && !isBuiltInSampleModel(pendingOptSourceModel) && (
-                      <button
-                        type="button"
-                        onClick={() => setDeleteSourceModalTarget(pendingOptSourceModel)}
-                        className="px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Delete Model</span>
-                      </button>
-                    )}
-                  </div>
                 </div>
 
                 {/* Desired CSP & Desired Region */}
@@ -2345,9 +2459,9 @@ export const ObjectStorageMigration: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleGenerateRecommendation}
-                    disabled={isRecommending || !isOptSourceLoaded || sourceBuckets.length === 0}
+                    disabled={isRecommending || !pendingOptSourceModel || (pendingOptSourceModel.sourceObjectStorages?.length || 0) === 0}
                     className={`px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm flex items-center space-x-2 transition-all ${
-                      !isOptSourceLoaded || sourceBuckets.length === 0
+                      !pendingOptSourceModel || (pendingOptSourceModel.sourceObjectStorages?.length || 0) === 0
                         ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed opacity-60'
                         : 'bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 cursor-pointer shadow-lg shadow-emerald-500/20'
                     }`}
@@ -2355,7 +2469,7 @@ export const ObjectStorageMigration: React.FC = () => {
                     {isRecommending ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
                     ) : (
-                      <Sparkles className={`w-4 h-4 ${!isOptSourceLoaded || sourceBuckets.length === 0 ? 'text-text-muted' : 'text-slate-950'}`} />
+                      <Sparkles className={`w-4 h-4 ${!pendingOptSourceModel || (pendingOptSourceModel.sourceObjectStorages?.length || 0) === 0 ? 'text-text-muted' : 'text-slate-950'}`} />
                     )}
                     <span>Recommend Target Cloud Object Storage</span>
                   </button>
@@ -3347,25 +3461,35 @@ export const ObjectStorageMigration: React.FC = () => {
         stageKind="planning"
         defaultName={
           loadedSourceModel
-            ? loadedSourceModel.stage === 'planning' && !isBuiltInSampleModel(loadedSourceModel)
+            ? loadedSourceModel.stage === 'planning' &&
+              !isBuiltInSampleModel(loadedSourceModel) &&
+              !loadedSourceModel.isDraft
               ? cleanModelDisplayName(loadedSourceModel.name)
               : buildDefaultModelName('planning', loadedSourceModel.name)
             : buildDefaultModelName('planning', 'storage')
         }
         defaultDescription={
           loadedSourceModel
-            ? loadedSourceModel.stage === 'planning' && !isBuiltInSampleModel(loadedSourceModel)
+            ? loadedSourceModel.stage === 'planning' &&
+              !isBuiltInSampleModel(loadedSourceModel) &&
+              !loadedSourceModel.isDraft
               ? loadedSourceModel.description || 'Refined planning object storage model'
               : `Refined planning object storage model derived from ${cleanModelDisplayName(loadedSourceModel.name)}`
             : 'Refined planning object storage model'
         }
         defaultVersion={
-          loadedSourceModel && loadedSourceModel.stage === 'planning' && !isBuiltInSampleModel(loadedSourceModel)
+          loadedSourceModel &&
+          loadedSourceModel.stage === 'planning' &&
+          !isBuiltInSampleModel(loadedSourceModel) &&
+          !loadedSourceModel.isDraft
             ? loadedSourceModel.version || '1.0.0'
             : '1.0.0'
         }
         defaultOverwriteId={
-          loadedSourceModel && loadedSourceModel.stage === 'planning' && !isBuiltInSampleModel(loadedSourceModel)
+          loadedSourceModel &&
+          loadedSourceModel.stage === 'planning' &&
+          !isBuiltInSampleModel(loadedSourceModel) &&
+          !loadedSourceModel.isDraft
             ? loadedSourceModel.id
             : null
         }
@@ -3441,7 +3565,6 @@ export const ObjectStorageMigration: React.FC = () => {
           }
           if (loadedOptSourceModel?.id === deletedId) {
             setLoadedOptSourceModel(null);
-            setIsOptSourceLoaded(false);
           }
           if (lastSavedSourceStorageModel?.id === deletedId) {
             setLastSavedSourceStorageModel(null);
@@ -3482,7 +3605,12 @@ export const ObjectStorageMigration: React.FC = () => {
         onProceed={() => {
           const dest = unsavedNextTarget;
           if (!dest) return;
-          if (dest === 'provision') {
+          if (dest === 'refine' && draftSourceStorageEnvelope) {
+            setPendingSourceModelId(DRAFT_STORAGE_SOURCE_ID);
+            setPendingOptSourceModelId(DRAFT_STORAGE_SOURCE_ID);
+          } else if (dest === 'optimize' && draftPlanningStorageEnvelope) {
+            setPendingOptSourceModelId(DRAFT_STORAGE_PLANNING_ID);
+          } else if (dest === 'provision') {
             if (hasUnsavedTargetDraft) {
               setSelectedTargetModelId(DRAFT_STORAGE_TARGET_ID);
             } else if (loadedTargetModel) {
@@ -3491,6 +3619,22 @@ export const ObjectStorageMigration: React.FC = () => {
           }
           setSubTab(dest);
         }}
+      />
+
+      {/* Overwrite Unsaved Editor Changes on Load Confirmation Modal */}
+      <UnsavedConfirmModal
+        isOpen={overwriteConfirmTarget !== null}
+        onStay={() => setOverwriteConfirmTarget(null)}
+        onProceed={() => {
+          if (overwriteConfirmTarget === 'refine') {
+            executeLoadRefineModel();
+          } else if (overwriteConfirmTarget === 'target') {
+            executeLoadTargetModel();
+          }
+        }}
+        description="You have unsaved edits in the current editor. Loading another model will overwrite your current unsaved changes. Continue?"
+        stayLabel="Cancel"
+        proceedLabel="Load and Overwrite"
       />
 
       <ModelToast

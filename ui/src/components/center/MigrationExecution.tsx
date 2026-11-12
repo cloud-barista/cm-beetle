@@ -59,6 +59,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     editedCandidate,
     savedCloudModels,
     selectedCloudModel,
+    hasUnsavedCloudChanges,
     namespaceId,
     nameSeed,
     fetchSavedSourceModels,
@@ -72,7 +73,6 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
 
   // Launch Modal State (Infra)
   const [showLaunchModal, setShowLaunchModal] = useState(false);
-  const [cachedDraftModel, setCachedDraftModel] = useState<CloudModelEnvelope | null>(null);
   const [customNsId, setCustomNsId] = useState(namespaceId || 'mig01');
   const [customInfraId, setCustomInfraId] = useState('');
   const [customNameSeed, setCustomNameSeed] = useState(nameSeed || '');
@@ -416,33 +416,58 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     return () => clearInterval(interval);
   }, [hasRunningLocalClockJob, setJobs]);
 
-  useEffect(() => {
-    if (selectedCloudModel && String(selectedCloudModel.id).startsWith('candidate-')) {
-      setCachedDraftModel(selectedCloudModel);
-    } else if (editedCandidate && !selectedCloudModel) {
-      const csp = editedCandidate.targetCloud?.csp;
-      const region = editedCandidate.targetCloud?.region || '';
-      setCachedDraftModel({
-        id: 'candidate-draft',
-        name: buildDefaultModelName('target', selectedSourceModel?.name || editedCandidate.targetInfra?.name, csp),
-        description:
-          editedCandidate.description ||
-          `Optimized target cloud model for ${csp?.toUpperCase() || 'Cloud'} (${region})`,
-        cloudInfraModel: editedCandidate,
-        version: '1.0.0',
-        stage: 'target',
-        updatedTime: new Date().toISOString(),
-      });
+  const hasUnsavedCloudDraft = Boolean(hasUnsavedCloudChanges && editedCandidate);
+  const draftCloudModel = React.useMemo<CloudModelEnvelope | null>(() => {
+    if (!hasUnsavedCloudDraft || !editedCandidate) {
+      return null;
     }
-  }, [selectedCloudModel, editedCandidate, selectedSourceModel]);
+    const csp = editedCandidate.targetCloud?.csp;
+    const region = editedCandidate.targetCloud?.region || '';
+    const isCurrentDraft = Boolean(
+      selectedCloudModel && String(selectedCloudModel.id).startsWith('candidate-')
+    );
+    const matchingCustomSaved =
+      selectedCloudModel &&
+      !isCurrentDraft &&
+      !isBuiltInSampleModel(selectedCloudModel) &&
+      (selectedCloudModel.cloudInfraModel?.targetCloud?.csp || '').toLowerCase() === (csp || '').toLowerCase()
+        ? selectedCloudModel
+        : null;
+    return {
+      id: isCurrentDraft && selectedCloudModel ? selectedCloudModel.id : 'candidate-draft',
+      name:
+        isCurrentDraft && selectedCloudModel
+          ? selectedCloudModel.name
+          : matchingCustomSaved
+            ? matchingCustomSaved.name
+            : buildDefaultModelName('target', selectedSourceModel?.name || editedCandidate.targetInfra?.name, csp),
+      description:
+        editedCandidate.description ||
+        `Optimized target cloud model for ${csp?.toUpperCase() || 'Cloud'} (${region})`,
+      cloudInfraModel: editedCandidate,
+      version:
+        isCurrentDraft && selectedCloudModel
+          ? selectedCloudModel.version
+          : matchingCustomSaved?.version || '1.0.0',
+      stage: 'target',
+      updatedTime: selectedCloudModel?.updatedTime,
+    };
+  }, [hasUnsavedCloudDraft, editedCandidate, selectedCloudModel, selectedSourceModel?.name]);
 
   const handleOpenLaunchModal = () => {
-    if (!selectedCloudModel) {
-      if (cachedDraftModel) {
-        useMigrationStore.setState({ selectedCloudModel: cachedDraftModel });
+    const isStaleDraftSelected = Boolean(
+      selectedCloudModel &&
+        String(selectedCloudModel.id).startsWith('candidate-') &&
+        !hasUnsavedCloudDraft
+    );
+    if (!selectedCloudModel || isStaleDraftSelected) {
+      if (draftCloudModel) {
+        useMigrationStore.setState({ selectedCloudModel: draftCloudModel });
       } else if (savedCloudModels.length > 0) {
         const preferred = savedCloudModels.find((m) => !isBuiltInSampleModel(m)) || savedCloudModels[0];
         useMigrationStore.setState({ selectedCloudModel: preferred });
+      } else if (isStaleDraftSelected) {
+        useMigrationStore.setState({ selectedCloudModel: null });
       }
     }
     setValidationResult(null);
@@ -1506,11 +1531,11 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
               <div className="space-y-1.5">
                 <label className="block text-sm font-extrabold text-teal-600 dark:text-teal-400 font-sans">1. Select Target Cloud Model</label>
                 {(() => {
-                  const isUnsavedDraft = Boolean(
+                  const isDraftSelected = Boolean(
                     selectedCloudModel &&
-                      !savedCloudModels.some((m) => m.id === selectedCloudModel.id)
+                      String(selectedCloudModel.id).startsWith('candidate-')
                   );
-                  const draftModel = isUnsavedDraft ? selectedCloudModel : cachedDraftModel;
+                  const draftModel = draftCloudModel;
                   const userTargetModels = savedCloudModels.filter((m) => !isBuiltInSampleModel(m));
                   const sampleTargetModels = savedCloudModels.filter((m) => isBuiltInSampleModel(m));
                   const allSelectableModels = draftModel
@@ -1518,7 +1543,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                     : savedCloudModels;
                   const badge = selectedCloudModel
                     ? getStageBadgeMeta(
-                        isUnsavedDraft
+                        isDraftSelected
                           ? 'draft'
                           : resolveModelStageKind(selectedCloudModel, 'target')
                       )

@@ -195,6 +195,8 @@ interface MigrationState {
   refinedSourceInfra: OnpremInfra | null;
   savedSourceModels: OnpremModelEnvelope[];
   selectedSourceModel: OnpremModelEnvelope | null;
+  unsavedSourceDraft: OnpremModelEnvelope | null;
+  unsavedPlanningDraft: OnpremModelEnvelope | null;
   
   fetchSourceGroups: () => Promise<void>;
   createSourceGroup: (name: string, description: string) => Promise<string>;
@@ -205,6 +207,8 @@ interface MigrationState {
   fetchRefinedInfraByGroup: (sgId: string) => Promise<void>;
   fetchSavedSourceModels: () => Promise<void>;
   selectSourceModel: (model: OnpremModelEnvelope | null) => void;
+  setUnsavedSourceDraft: (draft: OnpremModelEnvelope | null) => void;
+  setUnsavedPlanningDraft: (draft: OnpremModelEnvelope | null) => void;
   saveSourceModel: (name: string, description: string, version: string, infra: OnpremInfra, options?: SaveArtifactOptions) => Promise<OnpremModelEnvelope>;
   updateSourceModel: (id: string, name: string, description: string, version: string, infra: OnpremInfra, options?: SaveArtifactOptions) => Promise<OnpremModelEnvelope>;
   deleteSourceModel: (id: string) => Promise<void>;
@@ -223,12 +227,14 @@ interface MigrationState {
   editedCandidate: RecommendedInfra | null;
   savedCloudModels: CloudModelEnvelope[];
   selectedCloudModel: CloudModelEnvelope | null;
+  hasUnsavedCloudChanges: boolean;
   isRecommending: boolean;
   tumblebugProviders: string[];
   tumblebugRegions: { id: string; name: string }[];
   
   setDesiredCsp: (csp: string) => Promise<void>;
   setDesiredRegion: (region: string) => void;
+  setHasUnsavedCloudChanges: (hasUnsaved: boolean) => void;
   setTargetPairs: (pairs: CloudProperty[]) => void;
   setRecommendationMode: (mode: 'multi' | 'single') => void;
   setCachedMultiCandidates: (candidates: RecommendedInfra[] | null) => void;
@@ -438,6 +444,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   refinedSourceInfra: SAMPLE_MIGRATION_TESTBED_INFRA,
   savedSourceModels: [SAMPLE_MIGRATION_TESTBED_MODEL, SAMPLE_9_NODE_TESTBED_MODEL, SAMPLE_15_NODE_MODEL],
   selectedSourceModel: SAMPLE_MIGRATION_TESTBED_MODEL,
+  unsavedSourceDraft: null,
+  unsavedPlanningDraft: null,
   tumblebugProviders: [
     'aws', 'azure', 'gcp', 'alibaba', 'tencent',
     'ibm', 'ncp', 'nhn', 'kt', 'openstack'
@@ -577,7 +585,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
       : undefined;
 
     let updatedSelected = curSelected ? (allModels.find(m => m.id === curSelected.id) || curSelected) : SAMPLE_MIGRATION_TESTBED_MODEL;
-    if (lineageMatch) {
+    if (!curSelected?.isDraft && lineageMatch) {
       updatedSelected = lineageMatch;
     } else if (
       (updatedSelected.id === SAMPLE_MIGRATION_TESTBED_MODEL.id || updatedSelected.id === DEFAULT_FALLBACK_SOURCE_MODEL.id) &&
@@ -610,16 +618,24 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   selectSourceModel: (model) => {
     set({ 
       selectedSourceModel: model,
-      refinedSourceInfra: model ? model.onpremiseInfraModel : null
+      ...(get().unsavedSourceDraft ? {} : { refinedSourceInfra: model ? model.onpremiseInfraModel : null })
     });
   },
+
+  setUnsavedSourceDraft: (draft) => set({ unsavedSourceDraft: draft }),
+  setUnsavedPlanningDraft: (draft) => set({ unsavedPlanningDraft: draft }),
 
   saveSourceModel: async (name, description, version, infra, options) => {
     const activeSgId = get().activeSgId;
     const stage = options?.stage || 'source';
     const parentModel = get().selectedSourceModel;
     const sourceGroupId = options?.sourceGroupId || parentModel?.lineage?.sourceGroupId || activeSgId || undefined;
-    const parentId = options?.parentId || (stage === 'planning' ? (parentModel?.lineage?.sourceModelId || parentModel?.id) : undefined);
+    const rawParentId =
+      options?.parentId ||
+      (stage === 'planning'
+        ? parentModel?.lineage?.sourceModelId || (!parentModel?.isDraft ? parentModel?.id : undefined)
+        : undefined);
+    const parentId = rawParentId && !rawParentId.endsWith('-draft') ? rawParentId : undefined;
 
     const saved = await artifactApi.saveSourceModel(name, description, infra, version, {
       stage,
@@ -629,7 +645,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     set({
       savedSourceModels: [...get().savedSourceModels.filter(m => m.id !== saved.id), saved],
       selectedSourceModel: saved,
-      refinedSourceInfra: infra
+      refinedSourceInfra: infra,
+      ...(stage === 'planning' ? { unsavedPlanningDraft: null } : { unsavedSourceDraft: null })
     });
     return saved;
   },
@@ -638,7 +655,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     const parentModel = get().selectedSourceModel;
     const stage = options?.stage || parentModel?.stage || 'source';
     const sourceGroupId = options?.sourceGroupId || parentModel?.lineage?.sourceGroupId || get().activeSgId || undefined;
-    const parentId = options?.parentId || (stage === 'planning' ? parentModel?.lineage?.sourceModelId : undefined);
+    const rawParentId = options?.parentId || (stage === 'planning' ? parentModel?.lineage?.sourceModelId : undefined);
+    const parentId = rawParentId && !rawParentId.endsWith('-draft') ? rawParentId : undefined;
 
     const saved = await artifactApi.updateSourceModel(id, name, description, updatedInfra, version, {
       stage,
@@ -649,7 +667,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     set({
       savedSourceModels: updatedList,
       selectedSourceModel: saved,
-      refinedSourceInfra: updatedInfra
+      refinedSourceInfra: updatedInfra,
+      ...(stage === 'planning' ? { unsavedPlanningDraft: null } : { unsavedSourceDraft: null })
     });
     return saved;
   },
@@ -685,6 +704,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     SAMPLE_AI_STACK_TESTBED_CLOUD_MODEL,
   ],
   selectedCloudModel: null,
+  hasUnsavedCloudChanges: false,
   isRecommending: false,
 
   setDesiredCsp: async (csp) => {
@@ -700,6 +720,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     }
   },
   setDesiredRegion: (region) => set({ desiredRegion: region }),
+  setHasUnsavedCloudChanges: (hasUnsaved) => set({ hasUnsavedCloudChanges: hasUnsaved }),
   setTargetPairs: (pairs) => set({ targetPairs: pairs }),
   setRecommendationMode: (mode) => set({ recommendationMode: mode }),
   setCachedMultiCandidates: (candidates) => set({ cachedMultiCandidates: candidates }),
@@ -726,7 +747,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   triggerRecommendation: async (sourceInfra) => {
-    set({ isRecommending: true, recommendationCandidates: [], editedCandidate: null, selectedCloudModel: null });
+    set({ isRecommending: true, recommendationCandidates: [], editedCandidate: null, selectedCloudModel: null, hasUnsavedCloudChanges: false });
     try {
       const pairs = get().targetPairs;
       const limit = get().recommendationLimit || 5;
@@ -747,6 +768,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
         selectedCandidateIndex: 0,
         editedCandidate: candidates.length > 0 ? candidates[0] : null,
         selectedCloudModel: null,
+        hasUnsavedCloudChanges: candidates.length > 0,
         isRecommending: false 
       });
     } catch (err) {
@@ -758,10 +780,12 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
 
   selectCandidate: (index) => {
     const list = get().recommendationCandidates;
-    if (index >= 0 && index < list.length) {
+    if (index >= 0 && index < list.length && index !== get().selectedCandidateIndex) {
       set({ 
         selectedCandidateIndex: index,
-        editedCandidate: list[index]
+        editedCandidate: list[index],
+        selectedCloudModel: null,
+        hasUnsavedCloudChanges: true
       });
     }
   },
@@ -815,6 +839,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
 
     set({ 
       selectedCloudModel: model,
+      hasUnsavedCloudChanges: Boolean(model && String(model.id).startsWith('candidate-')),
       editedCandidate: infra,
       recommendationCandidates: infra ? [infra] : [],
       selectedCandidateIndex: 0,
@@ -836,7 +861,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     });
     set({
       savedCloudModels: [...get().savedCloudModels.filter(m => m.id !== saved.id), saved],
-      selectedCloudModel: saved
+      selectedCloudModel: saved,
+      hasUnsavedCloudChanges: false
     });
     return saved;
   },
@@ -850,18 +876,20 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
       sourceGroupId
     });
     const updatedList = get().savedCloudModels.map(m => m.id === id ? saved : m);
-    set({ savedCloudModels: updatedList, selectedCloudModel: saved });
+    set({ savedCloudModels: updatedList, selectedCloudModel: saved, hasUnsavedCloudChanges: false });
     return saved;
   },
 
   deleteCloudModel: async (id) => {
     await artifactApi.deleteCloudModel(id);
     const updated = get().savedCloudModels.filter(m => m.id !== id);
+    const isDeletingSelected = get().selectedCloudModel?.id === id;
     set({
       savedCloudModels: updated,
-      selectedCloudModel: get().selectedCloudModel?.id === id ? null : get().selectedCloudModel,
-      editedCandidate: get().selectedCloudModel?.id === id ? null : get().editedCandidate,
-      recommendationCandidates: get().selectedCloudModel?.id === id ? [] : get().recommendationCandidates
+      selectedCloudModel: isDeletingSelected ? null : get().selectedCloudModel,
+      editedCandidate: isDeletingSelected ? null : get().editedCandidate,
+      recommendationCandidates: isDeletingSelected ? [] : get().recommendationCandidates,
+      ...(isDeletingSelected ? { hasUnsavedCloudChanges: false } : {})
     });
   },
 
@@ -878,7 +906,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
       savedCloudModels: remaining,
       selectedCloudModel: isSelectedRemoved ? null : get().selectedCloudModel,
       editedCandidate: isSelectedRemoved ? null : get().editedCandidate,
-      recommendationCandidates: isSelectedRemoved ? [] : get().recommendationCandidates
+      recommendationCandidates: isSelectedRemoved ? [] : get().recommendationCandidates,
+      ...(isSelectedRemoved ? { hasUnsavedCloudChanges: false } : {})
     });
     return customModels.length;
   },

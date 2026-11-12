@@ -50,11 +50,13 @@ const inferNodeClusterGroup = (n: OnpremNode): 'ai-inference' | 'analytics-compu
 export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () => void }> = ({ onNext, onBack }) => {
   const {
     savedSourceModels, selectedSourceModel, selectSourceModel,
+    unsavedSourceDraft, setUnsavedPlanningDraft,
     fetchSavedSourceModels, saveSourceModel, updateSourceModel, deleteSourceModel,
   } = useMigrationStore();
 
   const [pendingModelId, setPendingModelId] = useState<string>(selectedSourceModel?.id || '');
   const [loadedModelId, setLoadedModelId] = useState<string>('');
+  const [loadedModel, setLoadedModel] = useState<OnpremModelEnvelope | null>(null);
   const [activeTunedNodeId, setActiveTunedNodeId] = useState<string>('');
   const [tunedNodes, setTunedNodes] = useState<OnpremNode[]>([]);
   const [selectedClusterGroup, setSelectedClusterGroup] = useState<ClusterGroupFilter>('all');
@@ -71,6 +73,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   const [newRuleCidr, setNewRuleCidr] = useState('0.0.0.0/0');
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showUnsavedNextModal, setShowUnsavedNextModal] = useState(false);
+  const [showOverwriteLoadModal, setShowOverwriteLoadModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [toastTone, setToastTone] = useState<'success' | 'error'>('success');
@@ -424,10 +427,12 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     SAMPLE_9_NODE_TESTBED_MODEL,
     SAMPLE_15_NODE_MODEL,
   ];
+  const draftModels: OnpremModelEnvelope[] = unsavedSourceDraft ? [unsavedSourceDraft] : [];
   const userModels = savedSourceModels.filter(m => !isBuiltInSampleModel(m));
   const userPlanningModels = userModels.filter(m => m.stage === 'planning');
   const userSourceModels = userModels.filter(m => m.stage !== 'planning');
   const allModels: OnpremModelEnvelope[] = [
+    ...draftModels,
     ...userPlanningModels,
     ...userSourceModels,
     ...sampleModels,
@@ -436,18 +441,33 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   useEffect(() => { fetchSavedSourceModels(); }, []);
 
   useEffect(() => {
-    if (selectedSourceModel?.id) {
+    if (selectedSourceModel?.id && selectedSourceModel.id !== 'planning-draft') {
       setPendingModelId(selectedSourceModel.id);
     }
   }, [selectedSourceModel?.id]);
+
+  useEffect(() => {
+    if (pendingModelId === 'source-draft' && !unsavedSourceDraft) {
+      const nextId =
+        (selectedSourceModel && selectedSourceModel.id !== 'planning-draft' ? selectedSourceModel.id : '') ||
+        allModels[0]?.id ||
+        '';
+      setPendingModelId(nextId);
+    }
+    if (loadedModelId === 'source-draft' && !unsavedSourceDraft && selectedSourceModel && !selectedSourceModel.isDraft) {
+      setLoadedModelId(selectedSourceModel.id);
+      setLoadedModel(selectedSourceModel);
+    }
+  }, [pendingModelId, loadedModelId, unsavedSourceDraft, selectedSourceModel, allModels]);
 
   const pendingModel = allModels.find(m => m.id === pendingModelId) || null;
   const isPendingAlreadyLoaded =
     isModelLoaded && Boolean(pendingModel) && loadedModelId === pendingModel?.id && !hasUnsavedChanges;
 
-  const handleLoadModel = () => {
+  const executeLoadModel = () => {
     if (!pendingModel || !pendingModel.onpremiseInfraModel) return;
     selectSourceModel(pendingModel);
+    setLoadedModel(pendingModel);
     setLoadedModelId(pendingModel.id);
     setTunedNodes(JSON.parse(JSON.stringify(pendingModel.onpremiseInfraModel.nodes || [])));
     setTunedNetwork(JSON.parse(JSON.stringify(pendingModel.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
@@ -464,6 +484,15 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     if (pendingModel.onpremiseInfraModel.nodes && pendingModel.onpremiseInfraModel.nodes.length > 0) {
       setActiveTunedNodeId(pendingModel.onpremiseInfraModel.nodes[0]?.machineId || '');
     }
+  };
+
+  const handleLoadModel = () => {
+    if (!pendingModel || !pendingModel.onpremiseInfraModel) return;
+    if (isModelLoaded && hasUnsavedChanges) {
+      setShowOverwriteLoadModal(true);
+      return;
+    }
+    executeLoadModel();
   };
 
   const handleDeleteModel = () => {
@@ -535,37 +564,66 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     0
   );
 
-  const effectivePlanningInfra = selectedSourceModel
+  const effectivePlanningInfra = loadedModel
     ? {
-        ...selectedSourceModel.onpremiseInfraModel,
+        ...loadedModel.onpremiseInfraModel,
         nodes: filteredPlanningNodes,
-        network: tunedNetwork || selectedSourceModel.onpremiseInfraModel.network,
+        network: tunedNetwork || loadedModel.onpremiseInfraModel.network,
         nlbs: tunedNlbs.length > 0 ? tunedNlbs : undefined,
       }
     : null;
 
+  useEffect(() => {
+    if (isModelLoaded && hasUnsavedChanges && loadedModel && effectivePlanningInfra && filteredPlanningNodes.length > 0) {
+      const draftName =
+        loadedModel.stage === 'planning' && !isBuiltInSampleModel(loadedModel) && !loadedModel.isDraft
+          ? cleanModelDisplayName(loadedModel.name)
+          : buildDefaultModelName('planning', loadedModel.name);
+      setUnsavedPlanningDraft({
+        id: 'planning-draft',
+        name: draftName,
+        description: `Refined planning infrastructure model (${filteredPlanningNodes.length} nodes)`,
+        onpremiseInfraModel: JSON.parse(JSON.stringify(effectivePlanningInfra)),
+        version: loadedModel.version || '1.0.0',
+        stage: 'planning',
+        category: 'infra',
+        schemaType: 'OnpremInfra',
+        lineage: {
+          sourceGroupId: loadedModel.lineage?.sourceGroupId,
+          sourceModelId: loadedModel.isDraft ? undefined : (loadedModel.lineage?.sourceModelId || loadedModel.id),
+        },
+        isDraft: true,
+      });
+    } else {
+      setUnsavedPlanningDraft(null);
+    }
+  }, [isModelLoaded, hasUnsavedChanges, loadedModel, tunedNodes, excludedNodeIds, tunedNetwork, tunedNlbs, setUnsavedPlanningDraft]);
+
   const handleSaveArtifact = async (result: { name: string; description: string; version: string; overwriteId: string | null }) => {
-    if (!selectedSourceModel || !effectivePlanningInfra) return;
+    if (!loadedModel || !effectivePlanningInfra) return;
     const filteredNodes = filteredPlanningNodes;
     const updatedInfra = effectivePlanningInfra;
 
-    const resolvedSourceParentId = selectedSourceModel.stage === 'planning'
-      ? (selectedSourceModel.lineage?.sourceModelId || selectedSourceModel.id)
-      : selectedSourceModel.id;
+    const resolvedSourceParentId = loadedModel.isDraft
+      ? undefined
+      : loadedModel.stage === 'planning'
+        ? (loadedModel.lineage?.sourceModelId || loadedModel.id)
+        : loadedModel.id;
 
     const saved = result.overwriteId
       ? await updateSourceModel(result.overwriteId, result.name, result.description, result.version, updatedInfra, {
           stage: 'planning',
           parentId: resolvedSourceParentId,
-          sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
+          sourceGroupId: loadedModel.lineage?.sourceGroupId
         })
       : await saveSourceModel(result.name, result.description, result.version, updatedInfra, {
           stage: 'planning',
           parentId: resolvedSourceParentId,
-          sourceGroupId: selectedSourceModel.lineage?.sourceGroupId
+          sourceGroupId: loadedModel.lineage?.sourceGroupId
         });
 
     setPendingModelId(saved.id);
+    setLoadedModel(saved);
     setLoadedModelId(saved.id);
     setTunedNodes(filteredNodes);
     setExcludedNodeIds([]);
@@ -618,15 +676,15 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   };
 
   const handleFetchSourceSummary = async (fmt: 'html' | 'md' | 'json' = sourceSummaryFormat) => {
-    if (!selectedSourceModel) return;
+    if (!loadedModel) return;
     setSourceSummaryFormat(fmt);
     setShowSourceSummaryModal(true);
     setIsLoadingSourceSummary(true);
     try {
       const currentInfra = {
-        ...selectedSourceModel.onpremiseInfraModel,
-        nodes: filteredPlanningNodes.length > 0 ? filteredPlanningNodes : selectedSourceModel.onpremiseInfraModel.nodes,
-        network: tunedNetwork || selectedSourceModel.onpremiseInfraModel.network,
+        ...loadedModel.onpremiseInfraModel,
+        nodes: filteredPlanningNodes.length > 0 ? filteredPlanningNodes : loadedModel.onpremiseInfraModel.nodes,
+        network: tunedNetwork || loadedModel.onpremiseInfraModel.network,
         nlbs: tunedNlbs.length > 0 ? tunedNlbs : undefined,
       };
       const content = await beetleApi.getSourceInfraSummary(currentInfra, fmt);
@@ -650,7 +708,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `source_infra_summary_${selectedSourceModel?.name?.replace(/\s+/g, '_') || 'model'}.${sourceSummaryFormat}`;
+    a.download = `source_infra_summary_${loadedModel?.name?.replace(/\s+/g, '_') || 'model'}.${sourceSummaryFormat}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -691,6 +749,13 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                 className="flex-1 min-w-[260px] bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
               >
                 <option value="">-- Choose Infrastructure Model --</option>
+                {draftModels.length > 0 && (
+                  <optgroup label="Draft Model">
+                    {draftModels.map(m => (
+                      <option key={m.id} value={m.id}>{formatSourceOptionText(m, '1.0', true)}</option>
+                    ))}
+                  </optgroup>
+                )}
                 {userPlanningModels.length > 0 && (
                   <optgroup label="Planning Models">
                     {userPlanningModels.map(m => (
@@ -761,7 +826,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                   </>
                 )}
               </button>
-              {pendingModel && !isBuiltInSampleModel(pendingModel) && (
+              {pendingModel && !isBuiltInSampleModel(pendingModel) && !pendingModel.isDraft && (
                 <button
                   type="button"
                   onClick={handleDeleteModel}
@@ -789,7 +854,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
               Step 2: Planning Infrastructure Specification & Refinement
             </h3>
           </div>
-          {selectedSourceModel && isModelLoaded && (
+          {loadedModel && isModelLoaded && (
             <div className="flex items-center space-x-2">
               <button
                 type="button"
@@ -811,15 +876,15 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
           )}
         </div>
 
-        {selectedSourceModel && isModelLoaded && (
+        {loadedModel && isModelLoaded && (
           <div className="mb-4">
             <ActiveModelBanner
-              mode="loaded"
-              name={selectedSourceModel.name}
-              version={selectedSourceModel.version}
-              stageKind={resolveModelStageKind(selectedSourceModel, 'source')}
-              hasUnsavedChanges={hasUnsavedChanges}
-              updatedTime={selectedSourceModel.updatedTime}
+              mode={loadedModel.isDraft ? 'draft' : 'loaded'}
+              name={loadedModel.name}
+              version={loadedModel.isDraft ? undefined : loadedModel.version}
+              stageKind={resolveModelStageKind(loadedModel, 'source')}
+              hasUnsavedChanges={hasUnsavedChanges || Boolean(loadedModel.isDraft)}
+              updatedTime={loadedModel.updatedTime}
               metrics={[
                 { label: 'Nodes', value: String(filteredPlanningNodes.length) },
                 {
@@ -837,7 +902,7 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
           </div>
         )}
 
-        {isModelLoaded && selectedSourceModel && (
+        {isModelLoaded && loadedModel && (
           <div className="space-y-4">
             {isJsonOpen && (
               <div className="space-y-3 mb-4">
@@ -1995,27 +2060,27 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
         title="Save Planning Model"
         stageKind="planning"
         defaultName={
-          selectedSourceModel
-            ? selectedSourceModel.stage === 'planning' && !isBuiltInSampleModel(selectedSourceModel)
-              ? cleanModelDisplayName(selectedSourceModel.name)
-              : buildDefaultModelName('planning', selectedSourceModel.name)
+          loadedModel
+            ? loadedModel.stage === 'planning' && !isBuiltInSampleModel(loadedModel) && !loadedModel.isDraft
+              ? cleanModelDisplayName(loadedModel.name)
+              : buildDefaultModelName('planning', loadedModel.name)
             : ''
         }
         defaultDescription={
-          selectedSourceModel
-            ? selectedSourceModel.stage === 'planning' && !isBuiltInSampleModel(selectedSourceModel)
-              ? selectedSourceModel.description || 'Refined planning infrastructure model'
-              : `Refined planning infrastructure model derived from ${cleanModelDisplayName(selectedSourceModel.name)}`
+          loadedModel
+            ? loadedModel.stage === 'planning' && !isBuiltInSampleModel(loadedModel) && !loadedModel.isDraft
+              ? loadedModel.description || 'Refined planning infrastructure model'
+              : `Refined planning infrastructure model derived from ${cleanModelDisplayName(loadedModel.name)}`
             : ''
         }
         defaultVersion={
-          selectedSourceModel && selectedSourceModel.stage === 'planning' && !isBuiltInSampleModel(selectedSourceModel)
-            ? selectedSourceModel.version || '1.0.0'
+          loadedModel && loadedModel.stage === 'planning' && !isBuiltInSampleModel(loadedModel) && !loadedModel.isDraft
+            ? loadedModel.version || '1.0.0'
             : '1.0.0'
         }
         defaultOverwriteId={
-          selectedSourceModel && selectedSourceModel.stage === 'planning' && !isBuiltInSampleModel(selectedSourceModel)
-            ? selectedSourceModel.id
+          loadedModel && loadedModel.stage === 'planning' && !isBuiltInSampleModel(loadedModel) && !loadedModel.isDraft
+            ? loadedModel.id
             : null
         }
         existingRevisions={savedSourceModels
@@ -2036,8 +2101,9 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
           await deleteSourceModel(deletedId);
           const remaining = allModels.filter(m => m.id !== deletedId);
           setPendingModelId(remaining[0]?.id || '');
-          if (loadedModelId === deletedId || selectedSourceModel?.id === deletedId) {
+          if (loadedModelId === deletedId || loadedModel?.id === deletedId) {
             setLoadedModelId('');
+            setLoadedModel(null);
             setIsModelLoaded(false);
             setTunedNodes([]);
             setTunedNlbs([]);
@@ -2053,8 +2119,21 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
         isOpen={showUnsavedNextModal}
         onStay={() => setShowUnsavedNextModal(false)}
         onProceed={() => {
+          const currentPlanDraft = useMigrationStore.getState().unsavedPlanningDraft;
+          if (currentPlanDraft) {
+            selectSourceModel(currentPlanDraft);
+          }
           if (onNext) onNext();
         }}
+      />
+
+      <UnsavedConfirmModal
+        isOpen={showOverwriteLoadModal}
+        onStay={() => setShowOverwriteLoadModal(false)}
+        onProceed={executeLoadModel}
+        description="You have unsaved edits in the current editor. Loading another model will overwrite your current unsaved changes. Continue?"
+        stayLabel="Cancel"
+        proceedLabel="Load and Overwrite"
       />
 
       {/* Source Infrastructure Summary Modal (POST /beetle/summary/source) */}
