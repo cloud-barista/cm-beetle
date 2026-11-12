@@ -2,7 +2,7 @@
 
 - **작성일**: 2026-11-12
 - **대상 범위**: `CM-Beetle` (`cmd/aimx`, `ui/` Beetle UX Lab) 및 `mc-terrarium/examples/aws/ai-stack-testbed`
-- **시연 핵심 스택**: `Kotaemon` (`ghcr.io/cinnamon/kotaemon:main-lite`, `:7860`) + `Ollama` (`gemma4:e2b` 또는 `gemma4:e4b` + `bge-m3`, `:11434`)
+- **시연 핵심 스택**: `Kotaemon` (`ghcr.io/cinnamon/kotaemon:main-full`, `v0.12.0`, `:7860`) + `Ollama` (`gemma4:12b`, `gemma4:e4b`, 또는 `gemma4:e2b` + `bge-m3`, `:11434`)
 
 ---
 
@@ -19,7 +19,7 @@
    - `CM-Beetle`의 `transx` 데이터 마이그레이션 1회 실행만으로 타겟 GPU VM에서 **모델 재다운로드(0초) 및 PDF 재인덱싱(0초) 없이** 기존 대화 스레드와 노란색 인용 하이라이팅이 즉시 그대로 재현됩니다.
 3. **컨테이너 내부 DNS 고정 및 무인 DB 초기화**:
    - `Kotaemon` 컨테이너는 호스트 공인 IP가 아닌 Docker 내부 브리지 DNS(`KH_OLLAMA_URL=http://ollama:11434/v1/`)로 `Ollama`를 바라보므로, 소스 VM에서 타겟 VM으로 공인/사설 IP가 바뀌어도 설정 수정이 전혀 필요하지 않습니다.
-   - 초기 프로비저닝 스크립트(`cmd/aimx` 및 `setup-ai-stack.sh`)가 `sql.db` 내 `llm` 및 `embedding` 테이블의 `ollama` 항목을 자동으로 `default=1`로 활성화하므로 웹 UI에서 별도의 수동 모델 연결 설정 없이 즉시 문서 업로드와 채팅이 가능합니다.
+   - 초기 프로비저닝 스크립트(`cmd/aimx` 및 `setup-ai-stack.sh`)가 `sql.db` 내 `llm_table`/`llm`/`embedding` 테이블의 `ollama` 항목을 자동으로 `default=1`로 활성화하고, `settings` 테이블(`admin` 계정)에 **Docling 파서(`reader_mode: "docling"`), 리랭킹 중복 채점 해제(`use_reranking: false`, `use_llm_reranking: false`), 한국어 응답(`reasoning.lang: "ko"`), 인라인 각주 인용(`highlight_citation: "inline"`), 마인드맵 생성(`create_mindmap: true`)** 기본값을 영구 저장하므로 재구축 및 타겟 이관 직후 수동 설정 없이 동일한 RAG 품질이 유지됩니다.
 
 ---
 
@@ -104,7 +104,7 @@ curl -s -o /dev/null -w "UI HTTP Status: %{http_code}\n" http://localhost:3000
 | 구분 | GPU 카드 및 VRAM | 대표적인 CSP 스펙 예시 | 권장 모델 조합 (`modelName` + `embeddingModel`) | 예상 VRAM 점유량 | 특징 및 시연 적합도 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **기본 (16GB)** | `NVIDIA Tesla T4` (16GB) | AWS `g4dn.xlarge` (4 vCPU, 16 GiB)<br>GCP `n1-standard-4` + T4 | **`gemma4:e2b`** (~4.6GB) + **`bge-m3`** (~1.2GB) | 약 **5.8GB ~ 7.0GB** (여유 충분) | 재고 확보가 가장 쉽고 빠르며 두 모델이 100% GPU에 상주 |
-| **고성능 (24GB)** | `NVIDIA A10G` (24GB)<br>`NVIDIA L4` (24GB) | AWS `g5.xlarge` / `g5.2xlarge` (A10G)<br>AWS `g6.xlarge` (L4)<br>GCP `g2-standard-4` (L4) | **`gemma4:e4b`** (~9.6GB) + **`bge-m3`** (~1.2GB)<br>*(또는 빠른 응답용 `gemma4:e2b`)* | 약 **10.8GB ~ 12.5GB** (24GB 내 여유 상주) | 더 정교한 한국어/영어 요약 품질 제공, 16GB T4에서는 스왑 위험이 있으므로 24GB 이상에서 권장 |
+| **고성능 (24GB)** | `NVIDIA L4` (24GB)<br>`NVIDIA A10G` (24GB) | AWS `g6.2xlarge` / `g6.xlarge` (L4)<br>AWS `g5.2xlarge` / `g5.xlarge` (A10G)<br>GCP `g2-standard-8` / `g2-standard-4` (L4) | **`gemma4:12b`** (~8.2GB) + **`bge-m3`** (~1.2GB)<br>*(또는 `gemma4:e4b` ~9.6GB + `bge-m3`)* | 약 **9.4GB ~ 12.5GB** (`OLLAMA_CONTEXT_LENGTH=16384` 포함 24GB 내 상주) | 표/도표 포함 한국어 RAG 및 인라인 인용(`[1]`, `[2]`), 마인드맵 시각화에 최적 |
 
 ### 3.2 AWS 쿼터(Quota) 및 서울 리전(`ap-northeast-2`) 용량 부족 회피 팁
 

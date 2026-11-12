@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -122,13 +124,17 @@ func TestBuildDockerComposeYAMLKotaemonAndOpenWebUI(t *testing.T) {
 	}
 	compose := buildDockerComposeYAML(cfg.AIService)
 	expectedSnippets := []string{
-		"image: ghcr.io/cinnamon/kotaemon:main-lite",
+		"image: ghcr.io/cinnamon/kotaemon:main-full",
 		"container_name: aimx-kotaemon",
 		"\"7860:7860\"",
 		"KH_OLLAMA_URL=http://ollama:11434/v1/",
 		"LOCAL_MODEL=gemma4:e2b",
 		"LOCAL_MODEL_EMBEDDINGS=bge-m3",
 		"OLLAMA_MAX_LOADED_MODELS=2",
+		"OLLAMA_CONTEXT_LENGTH=16384",
+		"./ollama/.nv:/root/.nv",
+		"KH_APP_VERSION=v0.12.0",
+		"FTLANG_CACHE=/app/ktem_app_data/fasttext-langdetect",
 		"./ktem_app_data:/app/ktem_app_data",
 	}
 	for _, s := range expectedSnippets {
@@ -211,7 +217,7 @@ func TestBuildTransxMigrationModelAndKotaemonProtection(t *testing.T) {
 		TransxStrategy:       "relay",
 		Filter: TransxFilterConfig{
 			Include: []string{"docker-compose.yml"},
-			Exclude: []string{"*.log", "*.db-wal", "ktem_app_data/user_data/**", "ktem_app_data/chunks_cache_dir/**"},
+			Exclude: []string{"*.log", "*.db-wal", "ktem_app_data/user_data/**", "ktem_app_data/chunks_cache_dir/**", "ktem_app_data/fasttext-langdetect/**", "ktem_app_data/huggingface/**"},
 		},
 	}
 	dmFull := buildTransxMigrationModel("1.2.3.4", "5.6.7.8", keys, aiCfg)
@@ -278,8 +284,8 @@ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 		WebUIUrl: "http://3.35.10.20:7860",
 	}
 	parseEndpointMetricsOutput(&epKt, sampleOut, ktCfg.AIService)
-	if !epKt.WebUIConfigOK || epKt.WebUIVersion != "main-lite" {
-		t.Errorf("expected Kotaemon HTTP 200 to set WebUIConfigOK=true and version 'main-lite', got ok=%v ver=%q",
+	if !epKt.WebUIConfigOK || epKt.WebUIVersion != "main-full" {
+		t.Errorf("expected Kotaemon HTTP 200 to set WebUIConfigOK=true and version 'main-full', got ok=%v ver=%q",
 			epKt.WebUIConfigOK, epKt.WebUIVersion)
 	}
 
@@ -366,34 +372,210 @@ func TestApplyTargetSubnetZone(t *testing.T) {
 			},
 			TargetSpecList: []cloudmodel.SpecInfo{
 				{
-					Id:             "aws+ap-northeast-2+g5.xlarge",
-					AvailableZones: []string{"ap-northeast-2c", "ap-northeast-2a"},
+					Id:               "aws+ap-northeast-2+g5.xlarge",
+					AvailableZones:   []string{"ap-northeast-2c", "ap-northeast-2a"},
+					UnavailableZones: []string{"ap-northeast-2b", "ap-northeast-2d"},
 				},
 			},
 		}
 	}
 
+	backendRec := baseRec()
+	backendRec.TargetVNet.SubnetInfoList[0].Zone = "ap-northeast-2a"
+	gotBackend, err := applyTargetSubnetZone(&backendRec, TestCase{CloudProperty: cloudmodel.CloudProperty{Csp: "aws", Region: "ap-northeast-2"}})
+	if err != nil || gotBackend != "ap-northeast-2a" || backendRec.TargetVNet.SubnetInfoList[0].Zone != "ap-northeast-2a" {
+		t.Errorf("expected backend recommended zone 'ap-northeast-2a' to be preserved, got %q (err=%v)", gotBackend, err)
+	}
+
 	awsRec := baseRec()
-	gotAws := applyTargetSubnetZone(&awsRec, TestCase{CloudProperty: cloudmodel.CloudProperty{Csp: "aws", Region: "ap-northeast-2"}})
-	if gotAws != "ap-northeast-2c" || awsRec.TargetVNet.SubnetInfoList[0].Zone != "ap-northeast-2c" {
-		t.Errorf("expected zonal CSP aws to pick AvailableZones[0] 'ap-northeast-2c', got %q / %q",
-			gotAws, awsRec.TargetVNet.SubnetInfoList[0].Zone)
+	gotAws, err := applyTargetSubnetZone(&awsRec, TestCase{CloudProperty: cloudmodel.CloudProperty{Csp: "aws", Region: "ap-northeast-2"}})
+	if err != nil || gotAws != "ap-northeast-2c" || awsRec.TargetVNet.SubnetInfoList[0].Zone != "ap-northeast-2c" {
+		t.Errorf("expected zonal CSP aws to pick AvailableZones[0] 'ap-northeast-2c', got %q / %q (err=%v)",
+			gotAws, awsRec.TargetVNet.SubnetInfoList[0].Zone, err)
 	}
 
 	overrideRec := baseRec()
-	gotOverride := applyTargetSubnetZone(&overrideRec, TestCase{
+	gotOverride, err := applyTargetSubnetZone(&overrideRec, TestCase{
 		CloudProperty: cloudmodel.CloudProperty{Csp: "aws", Region: "ap-northeast-2"},
 		PreferredZone: "ap-northeast-2a",
 	})
-	if gotOverride != "ap-northeast-2a" || overrideRec.TargetVNet.SubnetInfoList[0].Zone != "ap-northeast-2a" {
-		t.Errorf("expected PreferredZone 'ap-northeast-2a' to take precedence, got %q", gotOverride)
+	if err != nil || gotOverride != "ap-northeast-2a" || overrideRec.TargetVNet.SubnetInfoList[0].Zone != "ap-northeast-2a" {
+		t.Errorf("expected PreferredZone 'ap-northeast-2a' to take precedence, got %q (err=%v)", gotOverride, err)
 	}
 
-	for _, regionalCSP := range []string{"azure", "gcp"} {
+	invalidRec := baseRec()
+	if _, err := applyTargetSubnetZone(&invalidRec, TestCase{
+		CloudProperty: cloudmodel.CloudProperty{Csp: "aws", Region: "ap-northeast-2"},
+		PreferredZone: "ap-northeast-2b",
+	}); err == nil {
+		t.Errorf("expected invalid PreferredZone 'ap-northeast-2b' to return an error")
+	}
+
+	for _, regionalCSP := range []string{"azure", "gcp", "nhn"} {
 		regRec := baseRec()
-		gotReg := applyTargetSubnetZone(&regRec, TestCase{CloudProperty: cloudmodel.CloudProperty{Csp: regionalCSP, Region: "korea"}})
-		if gotReg != "" || regRec.TargetVNet.SubnetInfoList[0].Zone != "" {
-			t.Errorf("expected regional CSP %s to keep SubnetReq.Zone empty, got %q", regionalCSP, regRec.TargetVNet.SubnetInfoList[0].Zone)
+		gotReg, err := applyTargetSubnetZone(&regRec, TestCase{CloudProperty: cloudmodel.CloudProperty{Csp: regionalCSP, Region: "korea"}})
+		if err != nil || gotReg != "" || regRec.TargetVNet.SubnetInfoList[0].Zone != "" {
+			t.Errorf("expected regional CSP %s to keep SubnetReq.Zone empty, got %q (err=%v)", regionalCSP, regRec.TargetVNet.SubnetInfoList[0].Zone, err)
 		}
+	}
+
+	regPinned := baseRec()
+	if _, err := applyTargetSubnetZone(&regPinned, TestCase{
+		CloudProperty: cloudmodel.CloudProperty{Csp: "azure", Region: "koreacentral"},
+		PreferredZone: "koreacentral-1",
+	}); err == nil {
+		t.Errorf("expected PreferredZone on regional CSP azure to return an error")
+	}
+}
+
+func TestExternalSshConfigAndConnectionsParsing(t *testing.T) {
+	cfg, err := loadConfig("testconf/template-ai-stack-testbed-config.yaml")
+	if err != nil {
+		t.Fatalf("expected ai-stack-testbed template config to load cleanly, got: %v", err)
+	}
+	if !cfg.Source.isExternalSSH() {
+		t.Fatalf("expected isExternalSSH()=true for ai-stack-testbed template")
+	}
+	targets := selectedTargets(cfg)
+	if len(targets) != 1 || targets[0].Csp != "gcp" || targets[0].Region != "asia-northeast3" {
+		t.Fatalf("expected primary target gcp/asia-northeast3, got %+v", targets)
+	}
+
+	missingNode := cfg
+	missingNode.Source.NodeName = ""
+	if err := validateConfig(missingNode); err == nil {
+		t.Errorf("expected error when source.nodeName is empty with connectionsFile")
+	}
+
+	bothSet := cfg
+	bothSet.Source.SshHost = "10.0.0.10"
+	if err := validateConfig(bothSet); err == nil {
+		t.Errorf("expected error when both connectionsFile and sshHost are set")
+	}
+
+	directNoPort := cfg
+	directNoPort.Source.ConnectionsFile = ""
+	directNoPort.Source.SshHost = "10.0.0.10"
+	directNoPort.Source.SshUsername = "ubuntu"
+	directNoPort.Source.SshPrivateKeyPath = "/tmp/key"
+	directNoPort.Source.SshPort = 0
+	if err := validateConfig(directNoPort); err == nil {
+		t.Errorf("expected error when source.sshPort <= 0 in direct sshHost mode")
+	}
+
+	tbAutoCfg, err := loadConfig("testconf/template-kotaemon-config.yaml")
+	if err != nil {
+		t.Fatalf("unexpected error loading kotaemon template: %v", err)
+	}
+	tbAutoCfg.AIService.ModelName = "auto"
+	if err := validateConfig(tbAutoCfg); err == nil {
+		t.Errorf("expected error when aiService.modelName is 'auto' in CB-Tumblebug source mode")
+	}
+
+	tmpDir := t.TempDir()
+	connPath := filepath.Join(tmpDir, "source_connections_public.json")
+	mockJSON := `[{"name":"ai-gpu-01","ip_address":"203.0.113.10","ssh_port":2222,"user":"ubuntu","private_key":"mock-key-material"}]`
+	if err := os.WriteFile(connPath, []byte(mockJSON), 0o600); err != nil {
+		t.Fatalf("failed to write mock connections JSON: %v", err)
+	}
+	cfg.Source.ConnectionsFile = connPath
+	access, err := resolveExternalSourceAccess(cfg)
+	if err != nil {
+		t.Fatalf("expected resolveExternalSourceAccess to succeed, got: %v", err)
+	}
+	if access.Host != "203.0.113.10" || access.Port != 2222 || access.Username != "ubuntu" {
+		t.Errorf("unexpected externalSourceAccess parsed: host=%s port=%d user=%s", access.Host, access.Port, access.Username)
+	}
+	access.Clear()
+	if access.PrivateKey != "" {
+		t.Errorf("expected Clear() to wipe in-memory key material")
+	}
+
+	sampleCompose := `services:
+  kotaemon:
+    environment:
+      - LOCAL_MODEL=gemma4:e4b
+      - LOCAL_MODEL_EMBEDDINGS=bge-m3
+`
+	genModel, embModel := parseComposeModelEnv(sampleCompose)
+	if genModel != "gemma4:e4b" || embModel != "bge-m3" {
+		t.Errorf("expected parsed models gemma4:e4b + bge-m3, got %q + %q", genModel, embModel)
+	}
+}
+
+func TestKotaemonDefaultsPythonScript(t *testing.T) {
+	pyBin, err := exec.LookPath("python3")
+	if err != nil {
+		t.Skip("python3 not installed; skipping SQLite defaults script execution test")
+	}
+
+	tmpDir := t.TempDir()
+	dbPath := filepath.Join(tmpDir, "sql.db")
+	seedPy := `import json, sqlite3, sys
+conn = sqlite3.connect(sys.argv[1])
+cur = conn.cursor()
+cur.execute('CREATE TABLE llm_table (name TEXT PRIMARY KEY, "default" INTEGER)')
+cur.execute('INSERT INTO llm_table VALUES ("openai", 1), ("ollama", 0)')
+cur.execute('CREATE TABLE embedding (name TEXT PRIMARY KEY, "default" INTEGER)')
+cur.execute('INSERT INTO embedding VALUES ("openai", 1), ("ollama", 0)')
+cur.execute('CREATE TABLE user (id TEXT PRIMARY KEY, username TEXT)')
+cur.execute('INSERT INTO user VALUES ("uid-admin-1", "admin")')
+cur.execute('CREATE TABLE settings (id TEXT PRIMARY KEY, user TEXT, setting TEXT)')
+cur.execute('INSERT INTO settings VALUES ("sid-1", "uid-admin-1", ?)', (json.dumps({"custom.keep": "yes", "reasoning.lang": "en"}),))
+conn.commit()
+conn.close()
+`
+	if out, sErr := exec.Command(pyBin, "-c", seedPy, dbPath).CombinedOutput(); sErr != nil {
+		t.Fatalf("failed to seed mock Kotaemon sql.db: %v (%s)", sErr, string(out))
+	}
+
+	script := buildKotaemonDefaultsPythonScript()
+	cmd1 := exec.Command(pyBin, "-", dbPath, "admin")
+	cmd1.Stdin = strings.NewReader(script)
+	out1, err := cmd1.CombinedOutput()
+	if err != nil || !strings.Contains(string(out1), "DEFAULT_UPDATED") {
+		t.Fatalf("expected first run to output DEFAULT_UPDATED, err=%v, out=%s", err, string(out1))
+	}
+
+	cmd2 := exec.Command(pyBin, "-", dbPath, "admin")
+	cmd2.Stdin = strings.NewReader(script)
+	out2, err := cmd2.CombinedOutput()
+	if err != nil || !strings.Contains(string(out2), "DEFAULT_UNCHANGED") {
+		t.Fatalf("expected second run to be idempotent (DEFAULT_UNCHANGED), err=%v, out=%s", err, string(out2))
+	}
+
+	verifyPy := `import json, sqlite3, sys
+conn = sqlite3.connect(sys.argv[1])
+cur = conn.cursor()
+llm_def = cur.execute('SELECT "default" FROM llm_table WHERE name="ollama"').fetchone()[0]
+emb_def = cur.execute('SELECT "default" FROM embedding WHERE name="ollama"').fetchone()[0]
+raw_setting = cur.execute('SELECT setting FROM settings WHERE user="uid-admin-1"').fetchone()[0]
+conn.close()
+data = json.loads(raw_setting)
+data["_llm_def"] = llm_def
+data["_emb_def"] = emb_def
+print(json.dumps(data))
+`
+	verifyOut, err := exec.Command(pyBin, "-c", verifyPy, dbPath).CombinedOutput()
+	if err != nil {
+		t.Fatalf("failed to query updated sql.db: %v (%s)", err, string(verifyOut))
+	}
+	var got map[string]any
+	if err := json.Unmarshal(verifyOut, &got); err != nil {
+		t.Fatalf("failed to decode settings JSON: %v", err)
+	}
+	if got["_llm_def"] != float64(1) || got["_emb_def"] != float64(1) {
+		t.Errorf("expected ollama default=1 in llm_table and embedding, got %v", got)
+	}
+	if got["custom.keep"] != "yes" {
+		t.Errorf("expected existing custom setting key to be preserved, got %v", got["custom.keep"])
+	}
+	if got["index.options.1.reader_mode"] != "docling" ||
+		got["index.options.1.use_reranking"] != false ||
+		got["index.options.1.use_llm_reranking"] != false ||
+		got["reasoning.lang"] != "ko" ||
+		got["reasoning.options.simple.highlight_citation"] != "inline" ||
+		got["reasoning.options.simple.create_mindmap"] != true {
+		t.Errorf("unexpected Kotaemon RAG settings persisted: %+v", got)
 	}
 }

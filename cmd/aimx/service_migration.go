@@ -14,6 +14,7 @@ import (
 // ephemeralSshKeyPair holds Source and Target SSH keys strictly in memory during Stage 3 transfer.
 type ephemeralSshKeyPair struct {
 	SourceKeyID      string
+	SourcePort       int
 	SourceUsername   string
 	SourcePrivateKey string
 	TargetKeyID      string
@@ -41,8 +42,8 @@ func migrateInfraAndAIService(beetle, tb *resty.Client, cfg TestConfig, auth Aut
 	fmt.Printf("🚚 [Stage 3] Target GPU Infra Migration & %s Service Migration (%s / %s)\n", appName, target.Csp, target.Region)
 	fmt.Println("================================================================================")
 
-	if state.Source.PublicIP == "" || state.Source.SshKeyID == "" {
-		if err := refreshSourceEndpointFromTumblebug(tb, cfg, auth, state); err != nil {
+	if state.Source.PublicIP == "" || (!cfg.Source.isExternalSSH() && state.Source.SshKeyID == "") {
+		if err := refreshSourceEndpoint(tb, cfg, auth, state); err != nil {
 			return err
 		}
 	}
@@ -51,17 +52,44 @@ func migrateInfraAndAIService(beetle, tb *resty.Client, cfg TestConfig, auth Aut
 		return err
 	}
 
-	fmt.Println("\n🔑 [Stage 3-2] Retrieving Source & Target SSH keys from CB-Tumblebug (ephemeral in-memory management)...")
+	fmt.Println("\n🔑 [Stage 3-2] Retrieving Source & Target SSH keys (ephemeral in-memory management)...")
 	ephemeralKeys, err := acquireEphemeralSshKeys(tb, auth.TumblebugEndpoint, cfg, state)
 	if err != nil {
 		return err
 	}
 	defer ephemeralKeys.Clear()
 
-	fmt.Printf("⏸️  [Stage 3-3] Quiescing Source %s & Ollama containers, syncing SQLite DB (%s) & normalizing permissions...\n",
+	fmt.Println("🐳 [Stage 3-3] Ensuring Docker Compose & NVIDIA Container Runtime on Target GPU VM before Source quiesce...")
+	if err := ensureDockerAndNvidiaRuntime(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, cfg.Timing); err != nil {
+		return err
+	}
+	prepTargetDirCmd := fmt.Sprintf(`set -e
+if [ -f %s/docker-compose.yml ]; then
+  cd %s && sudo docker compose stop 2>/dev/null || true
+fi
+sudo mkdir -p %s/ollama/.nv
+if [ "%s" != "/opt/ai-stack" ] && [ ! -e /opt/ai-stack ]; then
+  sudo ln -s "%s" /opt/ai-stack || true
+fi
+sudo chown -R %s:%s %s
+chmod 755 %s`,
+		cfg.AIService.RootDir, cfg.AIService.RootDir,
+		cfg.AIService.RootDir,
+		cfg.AIService.RootDir, cfg.AIService.RootDir,
+		ephemeralKeys.TargetUsername, ephemeralKeys.TargetUsername, cfg.AIService.RootDir,
+		cfg.AIService.RootDir)
+	if _, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, []string{prepTargetDirCmd}); err != nil {
+		return fmt.Errorf("failed to prepare target AI service directory: %w", err)
+	}
+
+	if cfg.AIService.isKotaemon() {
+		_, _ = runSourceCmd(tb, cfg, auth, state.Source.NodeID, []string{buildLangdetectCacheScript(cfg.AIService.RootDir)}, false)
+	}
+
+	fmt.Printf("⏸️  [Stage 3-4] Quiescing Source %s & Ollama containers, syncing SQLite DB (%s) & normalizing permissions...\n",
 		appName, cfg.AIService.dbFileName())
 	stopCmd := fmt.Sprintf("cd %s && sudo docker compose stop && sync", cfg.AIService.RootDir)
-	if _, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, state.Source.NodeID, []string{stopCmd}); err != nil {
+	if _, err := runSourceCmd(tb, cfg, auth, state.Source.NodeID, []string{stopCmd}, true); err != nil {
 		return fmt.Errorf("failed to stop source AI containers: %w", err)
 	}
 
@@ -76,23 +104,13 @@ sha256sum %s/%s 2>/dev/null | awk '{print $1}' || true`,
 		ephemeralKeys.SourceUsername, ephemeralKeys.SourceUsername, cfg.AIService.RootDir,
 		cfg.AIService.RootDir,
 		strings.TrimRight(cfg.AIService.RootDir, "/"), relDbPath)
-	quiesceOut, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, state.Source.NodeID, []string{hashAndPermCmd})
+	quiesceOut, err := runSourceCmd(tb, cfg, auth, state.Source.NodeID, []string{hashAndPermCmd}, true)
 	if err != nil {
 		return fmt.Errorf("failed to normalize permissions and hash DB on source VM: %w", err)
 	}
 	if latestSha := strings.TrimSpace(extractSection(quiesceOut, "===QUIESCED_DB_SHA256===", "")); latestSha != "" {
 		state.Source.WebUIDbSha256 = strings.Split(latestSha, "\n")[0]
 		fmt.Printf("   🔒 Source %s SHA-256: %s\n", cfg.AIService.dbFileName(), state.Source.WebUIDbSha256)
-	}
-
-	fmt.Println("🐳 [Stage 3-4] Ensuring Docker Compose & NVIDIA Container Runtime on Target GPU VM...")
-	if err := ensureDockerAndNvidiaRuntime(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID); err != nil {
-		return err
-	}
-	prepTargetDirCmd := fmt.Sprintf("sudo mkdir -p %s && sudo chown -R %s:%s %s && chmod 755 %s",
-		cfg.AIService.RootDir, ephemeralKeys.TargetUsername, ephemeralKeys.TargetUsername, cfg.AIService.RootDir, cfg.AIService.RootDir)
-	if _, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, []string{prepTargetDirCmd}); err != nil {
-		return fmt.Errorf("failed to prepare target AI service directory: %w", err)
 	}
 
 	txModel := buildTransxMigrationModel(state.Source.PublicIP, state.Target.PublicIP, ephemeralKeys, cfg.AIService)
@@ -105,17 +123,34 @@ sha256sum %s/%s 2>/dev/null | awk '{print $1}' || true`,
 
 	txStart := time.Now()
 	if err := executeTransxMigration(beetle, cfg.Beetle.Endpoint, txModel, cfg.AIService.UseDataEncryption); err != nil {
+		resumeSourceCmd := buildDockerComposeUpWithRetryCmd(cfg.AIService.RootDir, "")
+		_, _ = runSourceCmd(tb, cfg, auth, state.Source.NodeID, []string{resumeSourceCmd}, false)
 		return err
 	}
 	state.DataTransferDuration = time.Since(txStart).Round(time.Second).String()
 	state.DataTransferStrategy = txModel.Strategy
 	fmt.Printf("✅ transx Data Migration finished in %s!\n", state.DataTransferDuration)
 
+	// Resume source containers immediately after transx completes so Source stays online during Target initialization.
+	resumeSourceCmd := buildDockerComposeUpWithRetryCmd(cfg.AIService.RootDir, "")
+	_, _ = runSourceCmd(tb, cfg, auth, state.Source.NodeID, []string{resumeSourceCmd}, true)
+
 	fmt.Printf("▶️  [Stage 3-6] Verifying transferred %s hash & starting Migrated Ollama + %s stack on Target GPU VM...\n",
 		cfg.AIService.dbFileName(), appName)
+	targetExtraDir := fmt.Sprintf("%s/ollama/.nv", strings.TrimRight(cfg.AIService.RootDir, "/"))
+	if cfg.AIService.isKotaemon() {
+		targetExtraDir = fmt.Sprintf("%s/ollama/.nv %s/ktem_app_data/fasttext-langdetect",
+			strings.TrimRight(cfg.AIService.RootDir, "/"), strings.TrimRight(cfg.AIService.RootDir, "/"))
+	}
 	verifyTargetHashCmd := fmt.Sprintf(`set -e
+sudo mkdir -p %s
+sudo chown -R %s:%s %s
+sudo chmod -R u+rwX,g+rX,o+rX %s
 echo "===TRANSFERRED_DB_SHA256==="
 sha256sum %s/%s 2>/dev/null | awk '{print $1}' || true`,
+		targetExtraDir,
+		ephemeralKeys.TargetUsername, ephemeralKeys.TargetUsername, cfg.AIService.RootDir,
+		cfg.AIService.RootDir,
 		strings.TrimRight(cfg.AIService.RootDir, "/"), relDbPath)
 	hashOut, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, []string{verifyTargetHashCmd})
 	if err != nil {
@@ -129,7 +164,7 @@ sha256sum %s/%s 2>/dev/null | awk '{print $1}' || true`,
 	}
 
 	if !cfg.AIService.TransferModelWeights {
-		startOllamaCmd := fmt.Sprintf("cd %s && sudo docker compose up -d ollama", cfg.AIService.RootDir)
+		startOllamaCmd := buildDockerComposeUpWithRetryCmd(cfg.AIService.RootDir, "ollama")
 		if _, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, []string{startOllamaCmd}); err != nil {
 			return fmt.Errorf("failed to start Ollama on target VM: %w", err)
 		}
@@ -138,18 +173,17 @@ sha256sum %s/%s 2>/dev/null | awk '{print $1}' || true`,
 		}
 	}
 
-	startTargetCmd := fmt.Sprintf("cd %s && sudo docker compose up -d", cfg.AIService.RootDir)
+	startTargetCmd := buildDockerComposeUpWithRetryCmd(cfg.AIService.RootDir, "")
 	if _, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, []string{startTargetCmd}); err != nil {
 		return fmt.Errorf("failed to start migrated AI service stack on target VM: %w", err)
 	}
 
-	// Resume source containers so both Source and Target web UIs remain online for side-by-side comparison.
-	resumeSourceCmd := fmt.Sprintf("cd %s && sudo docker compose up -d", cfg.AIService.RootDir)
-	_, _ = execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, state.Source.NodeID, []string{resumeSourceCmd})
-
 	waitWithCountdown(cfg.Timing.TargetServiceReadySeconds, fmt.Sprintf("Waiting for Target GPU Ollama & %s services to initialize", appName))
 	if err := pollServiceEndpointsReady(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, cfg.AIService, cfg.Timing); err != nil {
 		return err
+	}
+	if cfg.AIService.isKotaemon() {
+		ensureKotaemonLangdetectCache(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, cfg.AIService)
 	}
 
 	fmt.Printf("🔥 [Stage 3-7] Pre-warming migrated models (%s) into Target GPU VRAM...\n", cfg.AIService.modelSummary())
@@ -158,7 +192,8 @@ sha256sum %s/%s 2>/dev/null | awk '{print $1}' || true`,
 	state.Source.WebUIUrl = fmt.Sprintf("http://%s:%d", state.Source.PublicIP, appPort)
 	state.Target.WebUIUrl = fmt.Sprintf("http://%s:%d", state.Target.PublicIP, appPort)
 	state.StageDurations["migrate"] = time.Since(stageStart).Round(time.Second).String()
-	if err := saveState(cfg.Beetle.StateFile, state); err != nil {
+	statePath := resolveConfigPath(cfg.ConfigDir, cfg.Beetle.StateFile)
+	if err := saveState(statePath, state); err != nil {
 		return err
 	}
 
@@ -172,8 +207,11 @@ sha256sum %s/%s 2>/dev/null | awk '{print $1}' || true`,
 	return nil
 }
 
-// refreshSourceEndpointFromTumblebug populates state.Source connection metadata if `migrate` is called standalone.
-func refreshSourceEndpointFromTumblebug(tb *resty.Client, cfg TestConfig, auth AuthConfig, state *MigrationState) error {
+// refreshSourceEndpoint populates state.Source connection metadata when migrate is invoked standalone.
+func refreshSourceEndpoint(tb *resty.Client, cfg TestConfig, auth AuthConfig, state *MigrationState) error {
+	if cfg.Source.isExternalSSH() {
+		return enrichNodeFromExternalSource(cfg, state, nil)
+	}
 	baseURL := strings.TrimRight(auth.TumblebugEndpoint, "/")
 	getURL := fmt.Sprintf("%s/tumblebug/ns/%s/infra/%s", baseURL, cfg.Source.NamespaceID, cfg.Source.InfraID)
 	var infraInfo tbmodel.InfraInfo
@@ -190,12 +228,29 @@ func refreshSourceEndpointFromTumblebug(tb *resty.Client, cfg TestConfig, auth A
 	return nil
 }
 
-// acquireEphemeralSshKeys retrieves both Source and Target SSH keys from CB-Tumblebug into an ephemeral struct.
+// acquireEphemeralSshKeys retrieves Source (external SSH or CB-Tumblebug) and Target SSH keys into an ephemeral struct.
 func acquireEphemeralSshKeys(tb *resty.Client, tbEndpoint string, cfg TestConfig, state *MigrationState) (*ephemeralSshKeyPair, error) {
-	srcKey, srcUser, err := fetchSshPrivateKey(tb, tbEndpoint, cfg.Source.NamespaceID, state.Source.SshKeyID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch source SSH key '%s': %w", state.Source.SshKeyID, err)
+	var srcKeyID, srcKey, srcUser string
+	srcPort := 22
+	if cfg.Source.isExternalSSH() {
+		extAccess, err := resolveExternalSourceAccess(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve external source SSH key: %w", err)
+		}
+		srcKeyID = "external-ssh"
+		srcPort = extAccess.Port
+		srcUser = extAccess.Username
+		srcKey = extAccess.PrivateKey
+		extAccess.Clear()
+	} else {
+		var err error
+		srcKey, srcUser, err = fetchSshPrivateKey(tb, tbEndpoint, cfg.Source.NamespaceID, state.Source.SshKeyID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch source SSH key '%s': %w", state.Source.SshKeyID, err)
+		}
+		srcKeyID = state.Source.SshKeyID
 	}
+
 	tgtKey, tgtUser, err := fetchSshPrivateKey(tb, tbEndpoint, cfg.Beetle.NamespaceID, state.Target.SshKeyID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch target SSH key '%s': %w", state.Target.SshKeyID, err)
@@ -204,11 +259,12 @@ func acquireEphemeralSshKeys(tb *resty.Client, tbEndpoint string, cfg TestConfig
 	resolvedSrcUser := firstNonEmpty(state.Source.SshUsername, srcUser)
 	resolvedTgtUser := firstNonEmpty(state.Target.SshUsername, tgtUser)
 	if resolvedSrcUser == "" || resolvedTgtUser == "" {
-		return nil, fmt.Errorf("failed to resolve SSH username from Tumblebug for source (%q) or target (%q)", resolvedSrcUser, resolvedTgtUser)
+		return nil, fmt.Errorf("failed to resolve SSH username for source (%q) or target (%q)", resolvedSrcUser, resolvedTgtUser)
 	}
 
 	return &ephemeralSshKeyPair{
-		SourceKeyID:      state.Source.SshKeyID,
+		SourceKeyID:      srcKeyID,
+		SourcePort:       srcPort,
 		SourceUsername:   resolvedSrcUser,
 		SourcePrivateKey: srcKey,
 		TargetKeyID:      state.Target.SshKeyID,
@@ -244,6 +300,8 @@ func isProtectedKotaemonPattern(pattern string) bool {
 		"ktem_app_data/user_data",
 		"ktem_app_data/chunks_cache_dir",
 		"ktem_app_data/markdown_cache_dir",
+		"ktem_app_data/fasttext-langdetect",
+		"ktem_app_data/huggingface",
 	} {
 		if strings.HasPrefix(lower, prefix) || lower == "ktem_app_data" || lower == "ktem_app_data/**" || lower == "ktem_app_data/*" {
 			return true
@@ -301,7 +359,11 @@ func buildTransxMigrationModel(srcIP, tgtIP string, keys *ephemeralSshKeyPair, a
 	strategy := strings.ToLower(strings.TrimSpace(aiCfg.TransxStrategy))
 
 	var srcUser, tgtUser, srcKey, tgtKey string
+	srcPort := 22
 	if keys != nil {
+		if keys.SourcePort > 0 {
+			srcPort = keys.SourcePort
+		}
 		srcUser = keys.SourceUsername
 		tgtUser = keys.TargetUsername
 		srcKey = keys.SourcePrivateKey
@@ -316,7 +378,7 @@ func buildTransxMigrationModel(srcIP, tgtIP string, keys *ephemeralSshKeyPair, a
 				AccessType: transx.AccessTypeSSH,
 				SSH: &transx.SSHConfig{
 					Host:       srcIP,
-					Port:       22,
+					Port:       srcPort,
 					Username:   srcUser,
 					PrivateKey: srcKey,
 					Archive:    true,

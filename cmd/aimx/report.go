@@ -98,7 +98,7 @@ func printComparisonSummary(state *MigrationState, aiCfg AIServiceConfig) {
 
 // writeMarkdownReport writes a comprehensive Markdown report to testresult/aimx-migration-report-{csp}-{region}.md.
 func writeMarkdownReport(cfg TestConfig, target TestCase, state *MigrationState) (string, error) {
-	outDir := filepath.Dir(cfg.Beetle.StateFile)
+	outDir := filepath.Dir(resolveConfigPath(cfg.ConfigDir, cfg.Beetle.StateFile))
 	if outDir == "" || outDir == "." {
 		outDir = "testresult"
 	}

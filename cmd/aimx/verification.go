@@ -27,23 +27,27 @@ type openWebUIConfigResponse struct {
 	Version string `json:"version"`
 }
 
-// collectEndpointMetrics gathers GPU hardware details, LLM tok/s, and web service health on a GPU VM.
-func collectEndpointMetrics(tb *resty.Client, tbEndpoint, nsID, infraID string, ep *EndpointMetrics, aiCfg AIServiceConfig) error {
-	escapedPrompt := strings.ReplaceAll(aiCfg.TestPrompt, `"`, `\"`)
+// buildMetricsCollectionScript constructs the remote shell script used to inspect GPU, Ollama tok/s, and WebUI status.
+func buildMetricsCollectionScript(aiCfg AIServiceConfig) string {
 	appPort := aiCfg.activeAppPort()
 	relDbPath := aiCfg.relativeDbPath()
+	genBody, _ := json.Marshal(map[string]any{
+		"model":  aiCfg.ModelName,
+		"prompt": aiCfg.TestPrompt,
+		"stream": false,
+	})
 
-	configProbeCmd := "true"
+	configProbeCmd := "sudo docker inspect --format '{{.Config.Image}}' aimx-kotaemon 2>/dev/null || true"
 	if !aiCfg.isKotaemon() {
 		configProbeCmd = fmt.Sprintf("curl -s http://localhost:%d/api/config 2>/dev/null || true", appPort)
 	}
 
-	metricsScript := fmt.Sprintf(`echo "===GPU_CSV==="
+	return fmt.Sprintf(`echo "===GPU_CSV==="
 nvidia-smi --query-gpu=index,uuid,name,driver_version,pci.bus_id,memory.total --format=csv,noheader,nounits 2>/dev/null || true
 echo "===GPU_BANNER==="
 nvidia-smi 2>/dev/null | head -n 5 || true
 echo "===INFERENCE_JSON==="
-curl -s http://localhost:%d/api/generate -d '{"model":"%s","prompt":"%s","stream":false}' || true
+curl -s http://localhost:%d/api/generate -H "Content-Type: application/json" -d '%s' || true
 echo ""
 echo "===OLLAMA_PS==="
 sudo docker exec aimx-ollama ollama ps 2>/dev/null | awk 'NR==2 {for(i=1;i<=NF;i++) if($i ~ /%%/) {print $i, $(i+1); break}}' || true
@@ -57,21 +61,63 @@ echo "===WEBUI_CONFIG_JSON==="
 echo ""
 echo "===VOLUME_SIZE==="
 sudo du -sh %s 2>/dev/null | awk '{print $1}' || true`,
-		aiCfg.OllamaPort, aiCfg.ModelName, escapedPrompt,
+		aiCfg.OllamaPort, strings.ReplaceAll(string(genBody), `'`, `'\''`),
 		strings.TrimRight(aiCfg.RootDir, "/"), relDbPath,
 		appPort, configProbeCmd, aiCfg.RootDir)
+}
 
+// collectEndpointMetrics gathers GPU hardware details, LLM tok/s, and web service health on a CB-Tumblebug GPU VM.
+func collectEndpointMetrics(tb *resty.Client, tbEndpoint, nsID, infraID string, ep *EndpointMetrics, aiCfg AIServiceConfig) error {
+	metricsScript := buildMetricsCollectionScript(aiCfg)
 	out, err := execRemoteCmdQuiet(tb, tbEndpoint, nsID, infraID, ep.NodeID, []string{metricsScript})
 	if err != nil {
 		return err
 	}
+	populateEndpointMetrics(ep, out, aiCfg)
+	return nil
+}
 
+// collectSourceEndpointMetrics gathers GPU hardware details, LLM tok/s, and web service health on the Source GPU VM.
+func collectSourceEndpointMetrics(tb *resty.Client, cfg TestConfig, auth AuthConfig, ep *EndpointMetrics) error {
+	metricsScript := buildMetricsCollectionScript(cfg.AIService)
+	out, err := runSourceCmd(tb, cfg, auth, ep.NodeID, []string{metricsScript}, false)
+	if err != nil {
+		return err
+	}
+	populateEndpointMetrics(ep, out, cfg.AIService)
+	return nil
+}
+
+// refreshSourceLightweightStatus refreshes Source container tag, HTTP status, and volume size without re-running LLM inference.
+func refreshSourceLightweightStatus(tb *resty.Client, cfg TestConfig, auth AuthConfig, ep *EndpointMetrics) {
+	appPort := cfg.AIService.activeAppPort()
+	configProbeCmd := "sudo docker inspect --format '{{.Config.Image}}' aimx-kotaemon 2>/dev/null || true"
+	if !cfg.AIService.isKotaemon() {
+		configProbeCmd = fmt.Sprintf("curl -s http://localhost:%d/api/config 2>/dev/null || true", appPort)
+	}
+	probeScript := fmt.Sprintf(`echo "===WEBUI_HTTP==="
+curl -s -o /dev/null -w "%%{http_code}" http://localhost:%d/ || true
+echo ""
+echo "===WEBUI_CONFIG_JSON==="
+%s
+echo ""
+echo "===VOLUME_SIZE==="
+sudo du -sh %s 2>/dev/null | awk '{print $1}' || true`,
+		appPort, configProbeCmd, cfg.AIService.RootDir)
+	out, err := runSourceCmd(tb, cfg, auth, ep.NodeID, []string{probeScript}, false)
+	if err != nil {
+		return
+	}
+	parseEndpointMetricsOutput(ep, out, cfg.AIService)
+}
+
+// populateEndpointMetrics applies parsed remote output and external reachability to EndpointMetrics.
+func populateEndpointMetrics(ep *EndpointMetrics, out string, aiCfg AIServiceConfig) {
 	ep.AppType = aiCfg.AppType
 	ep.EmbeddingModel = aiCfg.EmbeddingModel
-	ep.WebUIUrl = fmt.Sprintf("http://%s:%d", ep.PublicIP, appPort)
+	ep.WebUIUrl = fmt.Sprintf("http://%s:%d", ep.PublicIP, aiCfg.activeAppPort())
 	parseEndpointMetricsOutput(ep, out, aiCfg)
 	ep.ExternalWebUIReachable = probeExternalWebUI(ep.PublicIP, aiCfg)
-	return nil
 }
 
 // probeExternalWebUI tests whether the active AI web application is reachable over HTTP from the AIMX host.
@@ -140,7 +186,14 @@ func parseEndpointMetricsOutput(ep *EndpointMetrics, output string, aiCfg AIServ
 	if aiCfg.isKotaemon() {
 		ep.WebUIConfigOK = ep.WebUIHttpStatus >= 200 && ep.WebUIHttpStatus < 400
 		if ep.WebUIConfigOK {
-			ep.WebUIVersion = "main-lite"
+			ep.WebUIVersion = "main-full"
+			imgInfo := strings.TrimSpace(extractSection(output, "===WEBUI_CONFIG_JSON===", "===VOLUME_SIZE==="))
+			if idx := strings.LastIndex(imgInfo, "kotaemon:"); idx >= 0 {
+				tag := strings.TrimSpace(strings.Split(imgInfo[idx+len("kotaemon:"):], "\n")[0])
+				if tag != "" {
+					ep.WebUIVersion = tag
+				}
+			}
 		}
 	} else if cfgJSON := extractSection(output, "===WEBUI_CONFIG_JSON===", "===VOLUME_SIZE==="); cfgJSON != "" {
 		for _, line := range strings.Split(cfgJSON, "\n") {
@@ -179,12 +232,16 @@ func verifyMigratedAIService(tb *resty.Client, cfg TestConfig, auth AuthConfig, 
 	targetTransferredSha := state.Target.WebUIDbSha256
 	preTransferMatch := sourceQuiescedSha != "" && sourceQuiescedSha == targetTransferredSha
 
-	if state.Source.EvalTokensPerSec == 0 && state.Source.NodeID != "" {
+	if state.Source.EvalTokensPerSec == 0 && (state.Source.NodeID != "" || cfg.Source.isExternalSSH()) {
+		if cfg.Source.isExternalSSH() && state.Source.PublicIP == "" {
+			_ = enrichNodeFromExternalSource(cfg, state, nil)
+		}
 		fmt.Println("📊 Collecting Source GPU VM baseline metrics (may take a few minutes if model is unloaded from VRAM)...")
-		_ = collectEndpointMetrics(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, &state.Source, cfg.AIService)
+		_ = collectSourceEndpointMetrics(tb, cfg, auth, &state.Source)
 	} else if state.Source.PublicIP != "" {
 		state.Source.WebUIUrl = fmt.Sprintf("http://%s:%d", state.Source.PublicIP, appPort)
 		state.Source.ExternalWebUIReachable = probeExternalWebUI(state.Source.PublicIP, cfg.AIService)
+		refreshSourceLightweightStatus(tb, cfg, auth, &state.Source)
 	}
 
 	fmt.Printf("⚡ Running '%s' GPU inference benchmark & %s automated checks on Target VM (%s)...\n",
@@ -196,10 +253,10 @@ func verifyMigratedAIService(tb *resty.Client, cfg TestConfig, auth AuthConfig, 
 	if preTransferMatch {
 		state.Source.WebUIDbSha256 = sourceQuiescedSha
 		state.Target.WebUIDbSha256 = targetTransferredSha
-	} else if state.Source.NodeID != "" && state.Source.WebUIDbSha256 != state.Target.WebUIDbSha256 {
+	} else if (state.Source.NodeID != "" || cfg.Source.isExternalSSH()) && state.Source.WebUIDbSha256 != state.Target.WebUIDbSha256 {
 		srcHashCmd := fmt.Sprintf("sudo sha256sum %s/%s 2>/dev/null | awk '{print $1}' || true",
 			strings.TrimRight(cfg.AIService.RootDir, "/"), cfg.AIService.relativeDbPath())
-		if out, err := execRemoteCmdQuiet(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, state.Source.NodeID, []string{srcHashCmd}); err == nil {
+		if out, err := runSourceCmd(tb, cfg, auth, state.Source.NodeID, []string{srcHashCmd}, false); err == nil {
 			if h := strings.TrimSpace(strings.Split(strings.TrimSpace(out), "\n")[0]); len(h) == 64 {
 				state.Source.WebUIDbSha256 = h
 			}
@@ -210,7 +267,8 @@ func verifyMigratedAIService(tb *resty.Client, cfg TestConfig, auth AuthConfig, 
 	}
 
 	state.StageDurations["verify"] = time.Since(start).Round(time.Second).String()
-	if err := saveState(cfg.Beetle.StateFile, state); err != nil {
+	statePath := resolveConfigPath(cfg.ConfigDir, cfg.Beetle.StateFile)
+	if err := saveState(statePath, state); err != nil {
 		return err
 	}
 
@@ -259,20 +317,24 @@ func cleanupEnvironment(beetle, tb *resty.Client, cfg TestConfig, auth AuthConfi
 
 	cleanupTumblebugResourcesByPrefix(tb, baseTB, cfg.Beetle.NamespaceID, targetPrefixes)
 
-	if cfg.Source.CleanupSourceInfra && cfg.Source.InfraID != "" {
-		srcDelURL := fmt.Sprintf("%s/tumblebug/ns/%s/infra/%s", baseTB, cfg.Source.NamespaceID, cfg.Source.InfraID)
-		fmt.Printf("🗑️  Deleting Source GPU Infra '%s' via DELETE %s...\n", cfg.Source.InfraID, srcDelURL)
-		resp, err := tb.R().SetQueryParam("option", "terminate").Delete(srcDelURL)
-		if err != nil {
-			return fmt.Errorf("failed to delete source infra '%s': err=%v", cfg.Source.InfraID, err)
+	if cfg.Source.CleanupSourceInfra {
+		if cfg.Source.isExternalSSH() {
+			fmt.Printf("ℹ️  External SSH Source (%s) is managed outside CB-Tumblebug; skipping source infrastructure deletion.\n", cfg.Source.displayLabel())
+		} else if cfg.Source.InfraID != "" {
+			srcDelURL := fmt.Sprintf("%s/tumblebug/ns/%s/infra/%s", baseTB, cfg.Source.NamespaceID, cfg.Source.InfraID)
+			fmt.Printf("🗑️  Deleting Source GPU Infra '%s' via DELETE %s...\n", cfg.Source.InfraID, srcDelURL)
+			resp, err := tb.R().SetQueryParam("option", "terminate").Delete(srcDelURL)
+			if err != nil {
+				return fmt.Errorf("failed to delete source infra '%s': err=%v", cfg.Source.InfraID, err)
+			}
+			if resp.IsError() && !isNotFoundResponse(resp.StatusCode(), resp.String()) {
+				return fmt.Errorf("failed to delete source infra '%s': status=%d, body=%s", cfg.Source.InfraID, resp.StatusCode(), resp.String())
+			}
+			_, _ = tb.R().Delete(fmt.Sprintf("%s/tumblebug/ns/%s/sharedResources", baseTB, cfg.Source.NamespaceID))
+			_, _ = tb.R().Delete(fmt.Sprintf("%s/tumblebug/ns/%s/defaultResources", baseTB, cfg.Source.NamespaceID))
+			cleanupTumblebugResourcesByPrefix(tb, baseTB, cfg.Source.NamespaceID, []string{cfg.Source.InfraID, cfg.Source.NamespaceID + "-shared-"})
+			fmt.Printf("✅ Deleted Source GPU Infra '%s' and released associated network/security/key resources\n", cfg.Source.InfraID)
 		}
-		if resp.IsError() && !isNotFoundResponse(resp.StatusCode(), resp.String()) {
-			return fmt.Errorf("failed to delete source infra '%s': status=%d, body=%s", cfg.Source.InfraID, resp.StatusCode(), resp.String())
-		}
-		_, _ = tb.R().Delete(fmt.Sprintf("%s/tumblebug/ns/%s/sharedResources", baseTB, cfg.Source.NamespaceID))
-		_, _ = tb.R().Delete(fmt.Sprintf("%s/tumblebug/ns/%s/defaultResources", baseTB, cfg.Source.NamespaceID))
-		cleanupTumblebugResourcesByPrefix(tb, baseTB, cfg.Source.NamespaceID, []string{cfg.Source.InfraID, cfg.Source.NamespaceID + "-shared-"})
-		fmt.Printf("✅ Deleted Source GPU Infra '%s' and released associated network/security/key resources\n", cfg.Source.InfraID)
 	}
 
 	return nil

@@ -6,11 +6,21 @@ set -e
 set -o pipefail
 
 export DEBIAN_FRONTEND=noninteractive
-export NEEDRESTART_MODE=a
+export NEEDRESTART_MODE=l
 export NEEDRESTART_SUSPEND=1
 
+# Prevent needrestart or unattended-upgrades from restarting containerd/docker during pulls.
 if [ -d /etc/needrestart/conf.d ]; then
-    echo "\$nrconf{restart} = 'a';" | sudo tee /etc/needrestart/conf.d/99-autorestart.conf > /dev/null 2>&1 || true
+    sudo rm -f /etc/needrestart/conf.d/99-autorestart.conf 2>/dev/null || true
+    echo '$nrconf{restart} = "l";' | sudo tee /etc/needrestart/conf.d/99-no-autorestart.conf > /dev/null 2>&1 || true
+fi
+sudo systemctl stop apt-daily.timer apt-daily-upgrade.timer unattended-upgrades.service 2>/dev/null || true
+
+# Allow AI service ports if guest UFW firewall is active on the VM image.
+if command -v ufw >/dev/null 2>&1 && sudo ufw status 2>/dev/null | grep -q "Status: active"; then
+    sudo ufw allow 7860/tcp >/dev/null 2>&1 || true
+    sudo ufw allow 3000/tcp >/dev/null 2>&1 || true
+    sudo ufw allow 11434/tcp >/dev/null 2>&1 || true
 fi
 
 APT_OPTS=(-o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -o DPkg::Lock::Timeout=600)
@@ -126,6 +136,7 @@ EOF
     if ! dpkg -l nvidia-modprobe 2>/dev/null | grep -q "^ii"; then
         "${APT_INSTALL[@]}" nvidia-modprobe 2>&1 | tail -3 || true
     fi
+    sudo rmmod nouveau 2>/dev/null || true
     sudo modprobe nvidia 2>/dev/null || true
     sudo modprobe nvidia-uvm 2>/dev/null || true
 fi
@@ -140,6 +151,7 @@ else
     wait_for_apt_locks
     curl -fsSL https://get.docker.com | sudo sh
 fi
+sudo usermod -aG docker "$(id -un)" 2>/dev/null || true
 
 if sudo docker compose version >/dev/null 2>&1; then
     echo "✓ Docker Compose v2 already installed: $(sudo docker compose version)"
@@ -160,9 +172,10 @@ else
     wait_for_apt_locks
     curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
         sudo gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-    curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
         sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-        sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list > /dev/null
+        sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list.tmp > /dev/null
+    sudo mv /etc/apt/sources.list.d/nvidia-container-toolkit.list.tmp /etc/apt/sources.list.d/nvidia-container-toolkit.list
     sudo apt-get -o DPkg::Lock::Timeout=600 update -qq
     "${APT_INSTALL[@]}" nvidia-container-toolkit 2>&1 | tail -5
 fi
@@ -175,5 +188,11 @@ if ! grep -q "nvidia" /etc/docker/daemon.json 2>/dev/null; then
 else
     echo "✓ Docker NVIDIA runtime already configured in /etc/docker/daemon.json"
 fi
+sudo systemctl start containerd docker 2>/dev/null || true
 
+if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1; then
+    echo "GPU_ACTIVE"
+else
+    echo "GPU_REBOOT_NEEDED"
+fi
 echo "RUNTIME_READY"

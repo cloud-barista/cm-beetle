@@ -29,7 +29,8 @@ func (restyNoopLogger) Debugf(_ string, _ ...interface{}) {}
 
 // TestConfig defines the root YAML configuration for AIMX.
 type TestConfig struct {
-	Test struct {
+	ConfigDir string `yaml:"-"`
+	Test      struct {
 		ExecutionMode string     `yaml:"executionMode"`
 		Cases         []TestCase `yaml:"cases"`
 	} `yaml:"test"`
@@ -57,7 +58,7 @@ type BeetleConfig struct {
 	StateFile      string `yaml:"stateFile"`
 }
 
-// SourceConfig holds CB-Tumblebug source GPU VM settings for direct infraDynamic provisioning.
+// SourceConfig holds either CB-Tumblebug source GPU VM settings or external SSH source settings (e.g., mc-terrarium).
 type SourceConfig struct {
 	NamespaceID            string `yaml:"namespaceId"`
 	InfraID                string `yaml:"infraId"`
@@ -69,6 +70,33 @@ type SourceConfig struct {
 	AutoProvisionIfMissing bool   `yaml:"autoProvisionIfMissing"`
 	OpenServicePorts       bool   `yaml:"openServicePortsOnSource"`
 	CleanupSourceInfra     bool   `yaml:"cleanupSourceInfra"`
+	ConnectionsFile        string `yaml:"connectionsFile"`
+	NodeName               string `yaml:"nodeName"`
+	SshHost                string `yaml:"sshHost"`
+	SshPort                int    `yaml:"sshPort"`
+	SshUsername            string `yaml:"sshUsername"`
+	SshPrivateKeyPath      string `yaml:"sshPrivateKeyPath"`
+	SshKnownHostsPath      string `yaml:"sshKnownHostsPath"`
+	SshStrictHostKey       bool   `yaml:"sshStrictHostKey"`
+	Csp                    string `yaml:"csp"`
+	Region                 string `yaml:"region"`
+}
+
+// isExternalSSH returns true when the source VM is accessed directly via SSH instead of CB-Tumblebug.
+func (s SourceConfig) isExternalSSH() bool {
+	return strings.TrimSpace(s.ConnectionsFile) != "" || strings.TrimSpace(s.SshHost) != ""
+}
+
+// displayLabel returns a concise human-readable identifier for the configured source environment.
+func (s SourceConfig) displayLabel() string {
+	if s.isExternalSSH() {
+		node := firstNonEmpty(s.NodeName, s.InfraID, s.SshHost)
+		if strings.TrimSpace(s.ConnectionsFile) != "" {
+			return fmt.Sprintf("external-ssh:%s (%s)", node, filepath.Base(s.ConnectionsFile))
+		}
+		return fmt.Sprintf("external-ssh:%s (%s:%d)", node, s.SshHost, s.SshPort)
+	}
+	return fmt.Sprintf("%s (ns: %s)", s.InfraID, s.NamespaceID)
 }
 
 // TransxFilterConfig maps custom include/exclude glob patterns to transx.FilterOption.
@@ -233,6 +261,7 @@ func loadConfig(path string) (TestConfig, error) {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return cfg, fmt.Errorf("failed to parse YAML config %s: %w", path, err)
 	}
+	cfg.ConfigDir = filepath.Dir(path)
 	if err := validateConfig(cfg); err != nil {
 		return cfg, fmt.Errorf("invalid config in %s: %w", path, err)
 	}
@@ -248,11 +277,6 @@ func validateConfig(cfg TestConfig) error {
 		"beetle.authConfigFile":    cfg.Beetle.AuthConfigFile,
 		"beetle.baseInfraFile":     cfg.Beetle.BaseInfraFile,
 		"beetle.stateFile":         cfg.Beetle.StateFile,
-		"source.namespaceId":       cfg.Source.NamespaceID,
-		"source.infraId":           cfg.Source.InfraID,
-		"source.nodeGroupName":     cfg.Source.NodeGroupName,
-		"source.specId":            cfg.Source.SpecID,
-		"source.imageId":           cfg.Source.ImageID,
 		"aiService.appType":        cfg.AIService.AppType,
 		"aiService.rootDir":        cfg.AIService.RootDir,
 		"aiService.modelName":      cfg.AIService.ModelName,
@@ -262,6 +286,46 @@ func validateConfig(cfg TestConfig) error {
 	for field, val := range requiredStrings {
 		if strings.TrimSpace(val) == "" {
 			return fmt.Errorf("required field '%s' is missing or empty", field)
+		}
+	}
+
+	if cfg.Source.isExternalSSH() {
+		hasConnFile := strings.TrimSpace(cfg.Source.ConnectionsFile) != ""
+		hasDirectHost := strings.TrimSpace(cfg.Source.SshHost) != ""
+		if hasConnFile && hasDirectHost {
+			return fmt.Errorf("source.connectionsFile and source.sshHost are mutually exclusive; specify only one")
+		}
+		if hasConnFile {
+			if strings.TrimSpace(cfg.Source.NodeName) == "" {
+				return fmt.Errorf("required field 'source.nodeName' is missing or empty when source.connectionsFile is set")
+			}
+		} else {
+			if strings.TrimSpace(cfg.Source.SshUsername) == "" || strings.TrimSpace(cfg.Source.SshPrivateKeyPath) == "" {
+				return fmt.Errorf("required fields 'source.sshUsername' and 'source.sshPrivateKeyPath' must be set when source.sshHost is set")
+			}
+			if cfg.Source.SshPort <= 0 {
+				return fmt.Errorf("source.sshPort (%d) must be a positive integer when source.sshHost is set", cfg.Source.SshPort)
+			}
+		}
+	} else {
+		tbRequired := map[string]string{
+			"source.namespaceId":   cfg.Source.NamespaceID,
+			"source.infraId":       cfg.Source.InfraID,
+			"source.nodeGroupName": cfg.Source.NodeGroupName,
+			"source.specId":        cfg.Source.SpecID,
+			"source.imageId":       cfg.Source.ImageID,
+		}
+		for field, val := range tbRequired {
+			if strings.TrimSpace(val) == "" {
+				return fmt.Errorf("required field '%s' is missing or empty", field)
+			}
+		}
+		if cfg.Source.RootDiskSize <= 0 {
+			return fmt.Errorf("source.rootDiskSize (%d) must be a positive integer", cfg.Source.RootDiskSize)
+		}
+		if strings.EqualFold(strings.TrimSpace(cfg.AIService.ModelName), "auto") ||
+			strings.EqualFold(strings.TrimSpace(cfg.AIService.EmbeddingModel), "auto") {
+			return fmt.Errorf("'auto' model discovery is only supported for external SSH source mode")
 		}
 	}
 
@@ -278,9 +342,6 @@ func validateConfig(cfg TestConfig) error {
 		}
 	}
 
-	if cfg.Source.RootDiskSize <= 0 {
-		return fmt.Errorf("source.rootDiskSize (%d) must be a positive integer", cfg.Source.RootDiskSize)
-	}
 	if cfg.AIService.OllamaPort <= 0 || cfg.AIService.activeAppPort() <= 0 {
 		return fmt.Errorf("aiService.ollamaPort (%d) and active web port (%d) must be positive integers",
 			cfg.AIService.OllamaPort, cfg.AIService.activeAppPort())

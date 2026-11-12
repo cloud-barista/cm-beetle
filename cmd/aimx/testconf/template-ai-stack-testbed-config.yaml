@@ -1,0 +1,81 @@
+# AIMX External Testbed Preset: mc-terrarium/examples/aws/ai-stack-testbed (ai-gpu-01) -> Multi-Cloud Target GPU
+# References the live OpenTofu-managed Source GPU VM via source_connections_public.json without CB-Tumblebug setup-source.
+# Copy to testconf/ai-stack-testbed-config.yaml:
+#   cp cmd/aimx/testconf/template-ai-stack-testbed-config.yaml cmd/aimx/testconf/ai-stack-testbed-config.yaml
+
+test:
+  executionMode: recommend
+  cases:
+    - csp: gcp
+      region: asia-northeast3
+      name: GCP-Seoul-GPU
+      execute: true
+      nameSeed: aimx
+    - csp: alibaba
+      region: ap-northeast-2
+      name: Alibaba-Seoul-GPU
+      execute: false
+      nameSeed: aimx
+    - csp: ibm
+      region: jp-tok
+      name: IBM-Tokyo-GPU
+      execute: false
+      nameSeed: aimx
+    - csp: aws
+      region: ap-northeast-2
+      name: AWS-Seoul-GPU
+      execute: false
+      nameSeed: aimx
+    - csp: aws
+      region: us-west-2
+      name: AWS-Oregon-GPU
+      execute: false
+      nameSeed: aimx
+
+beetle:
+  endpoint: http://localhost:8056
+  namespaceId: default
+  authConfigFile: testconf/auth-config.json
+  baseInfraFile: testconf/source-infra-base.json
+  stateFile: testresult/.aimx-state.json
+
+source:
+  # External OpenTofu source GPU VM from mc-terrarium/examples/aws/ai-stack-testbed.
+  infraId: ai-stack-testbed
+  connectionsFile: ../../../mc-terrarium/examples/aws/ai-stack-testbed/source_connections_public.json
+  nodeName: ai-gpu-01
+  csp: aws
+  region: ap-northeast-2
+  cleanupSourceInfra: false
+
+aiService:
+  # Kotaemon RAG stack (:7860) + Ollama (:11434) deployed by setup-ai-stack.sh.
+  appType: kotaemon
+  rootDir: /opt/aimx/ai-service
+  # 'auto' reads LOCAL_MODEL and LOCAL_MODEL_EMBEDDINGS directly from <rootDir>/docker-compose.yml on ai-gpu-01.
+  modelName: auto
+  embeddingModel: auto
+  ollamaPort: 11434
+  appPort: 7860
+  adminUsername: admin
+  adminPassword: admin
+  testPrompt: "Explain in 2 concise sentences why GPU acceleration is essential for RAG document search and LLM inference."
+  transferModelWeights: true
+  transxStrategy: auto
+  filter:
+    include: []
+    exclude:
+      - "*.log"
+      - "*.tmp"
+      - "__pycache__/**"
+  useDataEncryption: true
+
+timing:
+  stepTransitionSeconds: 10
+  vmBootStabilizeSeconds: 30
+  sshRetryMaxAttempts: 18
+  sshRetryIntervalSeconds: 10
+  serviceInitWaitSeconds: 30
+  dbFlushWaitSeconds: 5
+  targetServiceReadyWaitSeconds: 30
+  remoteCmdTimeoutMinutes: 20

@@ -484,7 +484,7 @@ export const DataTransferCenter: React.FC = () => {
     setIncludeFilter('ollama/models/blobs/**, ollama/models/manifests/**, ktem_app_data/**, docker-compose.yml');
     setExcludeFilter('*.log, *.tmp, __pycache__/**');
     setSourcePreCmd('cd /opt/aimx/ai-service && sudo docker compose stop && sync && sudo chown -R $(id -un):$(id -gn) /opt/aimx/ai-service && sudo chmod -R u+rwX,g+rX,o+rX /opt/aimx/ai-service');
-    setDestinationPreCmd('sudo mkdir -p /opt/aimx/ai-service && sudo chown -R $(id -un):$(id -gn) /opt/aimx/ai-service && chmod 755 /opt/aimx/ai-service');
+    setDestinationPreCmd('if [ -f /opt/aimx/ai-service/docker-compose.yml ]; then cd /opt/aimx/ai-service && sudo docker compose stop 2>/dev/null || true; fi && sudo mkdir -p /opt/aimx/ai-service/ollama/.nv /opt/aimx/ai-service/ktem_app_data/fasttext-langdetect && sudo chown -R $(id -un):$(id -gn) /opt/aimx/ai-service && chmod 755 /opt/aimx/ai-service');
     setSourcePostCmd('cd /opt/aimx/ai-service && sudo docker compose up -d');
     setDestinationPostCmd(
       [
@@ -493,9 +493,48 @@ export const DataTransferCenter: React.FC = () => {
         'if ! command -v docker >/dev/null 2>&1; then curl -fsSL https://get.docker.com | sudo sh; fi',
         'if ! sudo docker compose version >/dev/null 2>&1; then sudo apt-get -o DPkg::Lock::Timeout=600 update -qq && (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq docker-compose-v2 || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq docker-compose-plugin); fi',
         'if ! command -v lspci >/dev/null 2>&1; then sudo apt-get -o DPkg::Lock::Timeout=600 update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq pciutils; fi',
-        'if sudo lspci 2>/dev/null | grep -qi nvidia; then if ! nvidia-smi >/dev/null 2>&1; then KVER=$(uname -r); UBU_VER=$(. /etc/os-release 2>/dev/null && echo "$VERSION_ID" | tr -d "." || echo "2204"); [ "$UBU_VER" = "2404" ] && RDIST="ubuntu2404" || RDIST="ubuntu2204"; sudo apt-get -o DPkg::Lock::Timeout=600 update -qq && (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "linux-headers-$KVER" build-essential dkms || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq linux-headers-generic build-essential dkms) && (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "linux-modules-extra-$KVER" || true); if [ -f "/lib/modules/$KVER/build/.config" ]; then KGCC=$(grep "CONFIG_CC_VERSION_TEXT=" "/lib/modules/$KVER/build/.config" 2>/dev/null | sed "s/.*gcc.*[ (]\\([0-9]\\+\\)\\..*/\\1/" || true); SGCC=$(gcc -dumpversion 2>/dev/null | cut -d. -f1 || true); if [ -n "$KGCC" ] && [ -n "$SGCC" ] && [ "$KGCC" -gt "$SGCC" ] 2>/dev/null; then sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "gcc-$KGCC" && sudo mkdir -p /etc/dkms/framework.conf.d && echo "export CC=/usr/bin/gcc-$KGCC" | sudo tee /etc/dkms/framework.conf.d/cc.conf >/dev/null; fi; fi; curl -fsSL "https://developer.download.nvidia.com/compute/cuda/repos/${RDIST}/x86_64/cuda-keyring_1.1-1_all.deb" -o /tmp/cuda-keyring.deb && sudo dpkg -i --force-confdef --force-confold /tmp/cuda-keyring.deb && rm -f /tmp/cuda-keyring.deb && sudo apt-get -o DPkg::Lock::Timeout=600 update -qq && (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq -o Dpkg::Options::="--force-overwrite" cuda-drivers-580-open || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq -o Dpkg::Options::="--force-overwrite" cuda-drivers-580 || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq -o Dpkg::Options::="--force-overwrite" cuda-drivers) && (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nvidia-modprobe || true) && (sudo modprobe nvidia 2>/dev/null || true) && (sudo modprobe nvidia-uvm 2>/dev/null || true); fi && if ! command -v nvidia-ctk >/dev/null 2>&1; then curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed "s#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g" | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list >/dev/null && sudo apt-get -o DPkg::Lock::Timeout=600 update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nvidia-container-toolkit; fi && if ! grep -q "nvidia" /etc/docker/daemon.json 2>/dev/null; then sudo nvidia-ctk runtime configure --runtime=docker >/dev/null 2>&1 && sudo systemctl restart docker; fi; fi',
+        [
+          'if sudo lspci 2>/dev/null | grep -qi nvidia; then',
+          'if ! nvidia-smi >/dev/null 2>&1; then',
+          'KVER=$(uname -r); UBU_VER=$(. /etc/os-release 2>/dev/null && echo "$VERSION_ID" | tr -d "." || echo "2204");',
+          '[ "$UBU_VER" = "2404" ] && RDIST="ubuntu2404" || RDIST="ubuntu2204";',
+          'sudo apt-get -o DPkg::Lock::Timeout=600 update -qq',
+          '&& (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "linux-headers-$KVER" build-essential dkms || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq linux-headers-generic build-essential dkms)',
+          '&& (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "linux-modules-extra-$KVER" || true);',
+          'if [ -f "/lib/modules/$KVER/build/.config" ]; then',
+          'KGCC=$(grep "CONFIG_CC_VERSION_TEXT=" "/lib/modules/$KVER/build/.config" 2>/dev/null | sed "s/.*gcc.*[ (]\\([0-9]\\+\\)\\..*/\\1/" || true);',
+          'SGCC=$(gcc -dumpversion 2>/dev/null | cut -d. -f1 || true);',
+          'if [ -n "$KGCC" ] && [ -n "$SGCC" ] && [ "$KGCC" -gt "$SGCC" ] 2>/dev/null; then',
+          'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "gcc-$KGCC" && sudo mkdir -p /etc/dkms/framework.conf.d && echo "export CC=/usr/bin/gcc-$KGCC" | sudo tee /etc/dkms/framework.conf.d/cc.conf >/dev/null;',
+          'fi; fi;',
+          'curl -fsSL "https://developer.download.nvidia.com/compute/cuda/repos/${RDIST}/x86_64/cuda-keyring_1.1-1_all.deb" -o /tmp/cuda-keyring.deb',
+          '&& sudo dpkg -i --force-confdef --force-confold /tmp/cuda-keyring.deb && rm -f /tmp/cuda-keyring.deb',
+          '&& sudo apt-get -o DPkg::Lock::Timeout=600 update -qq',
+          '&& (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq -o Dpkg::Options::="--force-overwrite" cuda-drivers-580-open || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq -o Dpkg::Options::="--force-overwrite" cuda-drivers-580 || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq -o Dpkg::Options::="--force-overwrite" cuda-drivers)',
+          '&& (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nvidia-modprobe || true)',
+          '&& (sudo rmmod nouveau 2>/dev/null || true) && (sudo modprobe nvidia 2>/dev/null || true) && (sudo modprobe nvidia-uvm 2>/dev/null || true);',
+          'fi',
+          '&& if ! command -v nvidia-ctk >/dev/null 2>&1; then',
+          'curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg',
+          '&& curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed "s#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g" | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list >/dev/null',
+          '&& sudo apt-get -o DPkg::Lock::Timeout=600 update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nvidia-container-toolkit;',
+          'fi',
+          '&& if ! grep -q "nvidia" /etc/docker/daemon.json 2>/dev/null; then sudo nvidia-ctk runtime configure --runtime=docker >/dev/null 2>&1 && sudo systemctl restart docker; fi;',
+          'fi',
+        ].join(' '),
+        'sudo chown -R $(id -un):$(id -gn) /opt/aimx/ai-service && sudo chmod -R u+rwX,g+rX,o+rX /opt/aimx/ai-service',
         'cd /opt/aimx/ai-service && sudo docker compose up -d',
-        '(for i in $(seq 1 20); do curl -sf http://localhost:11434/api/tags >/dev/null 2>&1 && break; sleep 2; done; curl -sf http://localhost:11434/api/generate -H "Content-Type: application/json" -d \'{"model":"gemma4:e2b","prompt":"Hello","stream":false,"keep_alive":"30m"}\' >/dev/null 2>&1 || true; curl -sf http://localhost:11434/api/embed -H "Content-Type: application/json" -d \'{"model":"bge-m3","input":"Cloud-Barista conference migration","keep_alive":"30m"}\' >/dev/null 2>&1 || true; for i in $(seq 1 30); do curl -s -o /dev/null -w "%{http_code}" http://localhost:7860/ | grep -Eq "^(200|302|307)$" && break; sleep 2; done)',
+        [
+          '(AI_MODEL=$(grep -E "LOCAL_MODEL=" /opt/aimx/ai-service/docker-compose.yml 2>/dev/null | head -1 | sed "s/.*LOCAL_MODEL=//" | tr -d " \\"\\r");',
+          '[ -z "$AI_MODEL" ] && AI_MODEL="gemma4:e2b";',
+          'AI_EMB=$(grep -E "LOCAL_MODEL_EMBEDDINGS=" /opt/aimx/ai-service/docker-compose.yml 2>/dev/null | head -1 | sed "s/.*LOCAL_MODEL_EMBEDDINGS=//" | tr -d " \\"\\r");',
+          '[ -z "$AI_EMB" ] && AI_EMB="bge-m3";',
+          'for i in $(seq 1 20); do curl -sf http://localhost:11434/api/tags >/dev/null 2>&1 && break; sleep 2; done;',
+          'curl -sf --max-time 300 http://localhost:11434/api/generate -H "Content-Type: application/json" -d "{\\"model\\":\\"$AI_MODEL\\",\\"prompt\\":\\"Hello!\\",\\"options\\":{\\"num_predict\\":32},\\"stream\\":false,\\"keep_alive\\":\\"30m\\"}" >/dev/null 2>&1 || true;',
+          'curl -sf --max-time 300 http://localhost:11434/api/embed -H "Content-Type: application/json" -d "{\\"model\\":\\"$AI_EMB\\",\\"input\\":\\"Cloud-Barista conference presentation RAG migration\\",\\"keep_alive\\":\\"30m\\"}" >/dev/null 2>&1 || true;',
+          'for i in $(seq 1 45); do curl -s -o /dev/null -w "%{http_code}" http://localhost:7860/ | grep -Eq "^(200|302|307)$" && break; sleep 3; done;',
+          'if [ ! -s /opt/aimx/ai-service/ktem_app_data/fasttext-langdetect/lid.176.bin ]; then sudo docker cp aimx-kotaemon:/app/.venv/lib/python3.10/site-packages/fast_langdetect/resources/lid.176.ftz /opt/aimx/ai-service/ktem_app_data/fasttext-langdetect/lid.176.bin 2>/dev/null || true; fi)',
+        ].join(' '),
       ].join(' && ')
     );
     setShowDirectoryTree(true);
