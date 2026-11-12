@@ -1,6 +1,9 @@
 # AI 반도체 기반 AI 서비스 마이그레이션 시나리오 정의 및 구조 설계서 (AIMX)
 
-본 문서는 **AI 반도체(GPU) 기반 인프라와 설치형 AI 서비스(Gemma LLM + Open WebUI)**를 클라우드 환경 간에 이전하는 **`AIMX` (AI Migration X)**의 시나리오 정의 및 기술 설계를 다룹니다.
+본 문서는 **AI 반도체(GPU) 기반 인프라와 설치형 AI 서비스(Gemma LLM + Open WebUI)**를 클라우드 환경 간에 이전하는 **`AIMX` (AI Migration X)**의 초기 시나리오 정의 및 기술 설계를 다룹니다.
+
+> [!NOTE]
+> **최신 컨퍼런스 RAG 스택 (`Kotaemon Full v0.12.0` + `gemma4:12b` + `bge-m3`) 및 10-Node 외부 테스트베드(`ai-stack-testbed`) 연동 가이드**: 본 설계 이후 확장된 문서 인용 하이라이팅(`inline` Citation)/마인드맵 기반 `Kotaemon` RAG 워크플로우와 `mc-terrarium/examples/aws/ai-stack-testbed` 연동 절차는 [**AIMX (Kotaemon + Ollama) RAG AI 서비스 마이그레이션 구동 테스트 및 시연 가이드 (`aimx-kotaemon-rag-migration-test-guide.md`)**](../test/aimx-kotaemon-rag-migration-test-guide.md) 및 [**`cmd/aimx/README.md`**](../../cmd/aimx/README.md)를 참조하십시오.
 
 > 📘 **AI 서비스 스택 및 추론 메커니즘 상세 해설서**: 실제 이관되는 AI 볼륨 내부 파일 구조(`GGUF` 가중치 블롭, `manifests`, `webui.db` SQLite WAL, `ChromaDB`)와 GPU VRAM 적재(`Pre-Warmup`) 및 LLM 추론 단계(`Prefill` vs. `Decode`, `KV Cache`)에 대한 배경지식 해설은 [**설치형 AI 서비스 스택 데이터 구조 및 LLM 추론 메커니즘 해설서 (`ai-service-stack-reference.md`)**](./ai-service-stack-reference.md)를 참조하십시오.
 

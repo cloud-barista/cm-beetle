@@ -12,49 +12,50 @@ Documentation site for CM-Beetle, computing infrastructure migration.
   - [Validation Guide](feature-guide/core-validation.md) - Pre-flight dry-run validation rules for target infrastructure.
 - **Infrastructure**
   - [Computing Infrastructure](feature-guide/infra-computing.md) - VM, VNet, Subnet, and Security Group migration support and pipeline architecture.
-  - [GPU Infrastructure Recommendation & Migration API Guide](feature-guide/gpu-infra-migration-api-guide.md) - End-to-end guide for recommending and migrating GPU infrastructure (`Tesla T4`, etc.) via CM-Beetle REST APIs.
-  - [Kubernetes Infrastructure](feature-guide/infra-kubernetes.md) – Managed Kubernetes cluster recommendation and migration.
+  - [GPU Infrastructure Recommendation & Migration API Guide](gpu-infra-migration-api-guide.md) - End-to-end guide for recommending and migrating GPU infrastructure (`Tesla T4`, `NVIDIA L4`, etc.) via CM-Beetle REST APIs.
+  - [Kubernetes Infrastructure](feature-guide/infra-kubernetes.md) - Managed Kubernetes cluster recommendation and migration.
 - **Managed Middleware**
-  - [Managed Middleware Overview](feature-guide/middleware-overview.md) – Multi-cloud support matrix for managed middleware.
-  - [Network Load Balancer (NLB)](feature-guide/middleware-nlb.md) – NLB backend topology grouping and migration.
-  - [Managed Object Storage](feature-guide/middleware-object-storage.md) – Object storage bucket recommendation, feature adjustment, and migration.
-  - [Managed RDBMS (RDS)](feature-guide/middleware-rdbms.md) – Relational database recommendation, referential validation, and migration.
+  - [Managed Middleware Overview](feature-guide/middleware-overview.md) - Multi-cloud support matrix for managed middleware.
+  - [Network Load Balancer (NLB)](feature-guide/middleware-nlb.md) - NLB backend topology grouping and migration.
+  - [Managed Object Storage](feature-guide/middleware-object-storage.md) - Object storage bucket recommendation, feature adjustment, and migration.
+  - [Managed RDBMS (RDS)](feature-guide/middleware-rdbms.md) - Relational database recommendation, referential validation, and migration.
 - **Data**
-  - [Data Transfer](feature-guide/data-transfer.md) – Server filesystem and data transfer capabilities and workflow.
+  - [Data Transfer](feature-guide/data-transfer.md) - Server filesystem and data transfer capabilities and workflow.
 
 ## API Guides
 
-- [API Guide: Align Names](api-guide-align-names.md) – Propagate name changes to dependent resources (Late Binding, NameSeed).
-- [API Development Guide](api-development-guide.md) – Guidelines for developing CM-Beetle APIs.
-- [API Response Policy](api-response-policy.md) – Guidelines for API response message formatting.
-- [Module Import Guide](module-import-guide.md) – How to import and use CM-Beetle modules.
+- [API Guide: Align Names](api-guide-align-names.md) - Propagate name changes to dependent resources (Late Binding, NameSeed).
+- [API Development Guide](api-development-guide.md) - Guidelines for developing CM-Beetle APIs.
+- [API Response Policy](api-response-policy.md) - Guidelines for API response message formatting.
+- [Module Import Guide](module-import-guide.md) - How to import and use CM-Beetle modules.
 
 ## Installation & Setup
 
-- [Installation and Execution](installation-and-execution.md) – How to install and run CM-Beetle.
+- [Installation and Execution](installation-and-execution.md) - How to install and run CM-Beetle.
 
 ## Testing & Integration
 
-- [AIMX (Kotaemon + Ollama) RAG Migration Test & Demo Guide](test/aimx-kotaemon-rag-migration-test-guide.md) - Post-merge server restart, CLI/UI live test workflow, and GPU/Zone selection guide.
-- [Test Results: Data Migration](test-results-data-migration.md) – Data migration test results and examples.
-- [Test Results: Object Storage](test-results-object-storage.md) – Object storage test results and examples.
-- [Beetle v0.3.0 Integration Testing](beetle-v0.3.0-integration-and-testing-with-tumblebug-honeybee-and-model.md) – Integration test results with CB-Tumblebug, Honeybee, and Model.
-- [Beetle v0.4.0 Integration Testing](beetle-v0.4.0-integration-and-testing-with-tumblebug-honeybee-and-model.md) – Integration test results for v0.4.0.
+- [AIMX (Kotaemon + Ollama) RAG Migration Test & Demo Guide](test/aimx-kotaemon-rag-migration-test-guide.md) - External `ai-stack-testbed` (`ai-gpu-01`) & CB-Tumblebug source workflows, CLI/UI RAG migration, incremental sync, and GPU/Zone selection guide.
+- [Test Results: Data Migration](test-results-data-migration.md) - Data migration test results and examples.
+- [Test Results: Object Storage](test-results-object-storage.md) - Object storage test results and examples.
+- [Beetle v0.3.0 Integration Testing](beetle-v0.3.0-integration-and-testing-with-tumblebug-honeybee-and-model.md) - Integration test results with CB-Tumblebug, Honeybee, and Model.
+- [Beetle v0.4.0 Integration Testing](beetle-v0.4.0-integration-and-testing-with-tumblebug-honeybee-and-model.md) - Integration test results for v0.4.0.
 
 ## Dependency Upgrade Guides
 
-- [API Upgrade Guide: TB v0.12.9](api-upgrade-guide-tb-v0.12.9.md) – API changes and upgrade steps for CB-Tumblebug v0.12.9.
+- [API Upgrade Guide: TB v0.12.9](api-upgrade-guide-tb-v0.12.9.md) - API changes and upgrade steps for CB-Tumblebug v0.12.9.
 
 ## CM-Beetle Breaking Changes
 
-- **[Breaking Changes](changes/)** – CM-Beetle release notes for breaking changes affecting Beetle API/`imdl` consumers
-  - [v0.5.10 Breaking Changes](changes/BREAKING_CHANGES_v0.5.10.md) – `postCommand` → `postCommands`, `nodeUserPassword` removed from dynamic node groups
+- **[Breaking Changes](changes/)** - CM-Beetle release notes for breaking changes affecting Beetle API/`imdl` consumers
+  - [v0.5.10 Breaking Changes](changes/BREAKING_CHANGES_v0.5.10.md) - `postCommand` -> `postCommands`, `nodeUserPassword` removed from dynamic node groups
 
 ## Developer Resources
 
-- [AI Service Migration PoC Design (AIMX)](poc/ai-service-migration-design.md) – Top-down 4-layer GPU infrastructure, LLM weights (`Ollama`/`Gemma`), and stateful app (`Open WebUI`) migration scenario and architecture.
-- [Unit Comparison Across Components](unit-comparison-across-components.md) – Unit standards across CB sub-systems and GPU memory normalization rationale.
-- [GPU Recommendation Pipeline Plan](plan/gpu-recommendation-pipeline-plan.md) – Architecture and design for GPU-equipped server recommendation.
+- [AI Service Migration PoC Design (AIMX)](poc/ai-service-migration-design.md) - Top-down 4-layer GPU infrastructure, LLM weights (`Ollama`/`Gemma`), and stateful app (`Open WebUI` / `Kotaemon`) migration scenario and architecture.
+- [Unit Comparison Across Components](unit-comparison-across-components.md) - Unit standards across CB sub-systems and GPU memory normalization rationale.
+- [GPU Recommendation Pipeline Plan](plan/gpu-recommendation-pipeline-plan.md) - Architecture and design for GPU-equipped server recommendation.
 - [10-CSP Zone & Availability-Aware Recommendation Plan](plan/zone-and-availability-aware-recommendation-plan.md) - Phased design for availability filtering, zonal/regional subnet mapping, and provisioning zone failover.
-- [Tumblebug Call Pacer](tumblebug-call-pacer.md) – How CM-Beetle stays under CB-Tumblebug's rate limit, and how to maintain it.
-- [AI Context](ai-context-for-us.md) – Context information for AI-assisted development.
+- [Zone & Availability-Aware Recommendation Follow-Up Plan](plan/zone-and-availability-aware-recommendation-followup-plan.md) - Follow-up roadmap for Phase 1.5~3 (`tbclient` live availability enrichment, multi-zone failover, and UI zone diagnostics).
+- [Tumblebug Call Pacer](tumblebug-call-pacer.md) - How CM-Beetle stays under CB-Tumblebug's rate limit, and how to maintain it.
+- [AI Context](ai-context-for-us.md) - Context information for AI-assisted development.

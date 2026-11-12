@@ -2,10 +2,10 @@
 
 ## Overview
 
-CM-Beetle provides a validation API that checks whether a target infrastructure model (the model a user edits after receiving a recommendation) can actually be migrated — **without creating or modifying any resource**. This lets a Portal (or any API client) catch problems while the user is still editing, instead of only finding out after clicking "migrate".
+CM-Beetle provides a validation API that checks whether a target infrastructure model (the model a user edits after receiving a recommendation) can actually be migrated, **without creating or modifying any resource**. This lets a Portal (or any API client) catch problems while the user is still editing, instead of only finding out after clicking "migrate".
 
 - **Validates** a `RecommendedInfra` model against the same rules migration execution enforces immediately before provisioning
-- **Never creates, modifies, or deletes** any CSP/Tumblebug resource — read-only checks only
+- **Never creates, modifies, or deletes** any CSP/Tumblebug resource (read-only checks only)
 - **Returns every problem found in one call** (not just the first one), so a UI can highlight all invalid fields at once
 - **Mirrors the intended migration mode** via the same `useExisting` flag the migration API takes (see [API Reference](#api-reference) below), since what counts as "valid" differs by mode
 
@@ -25,9 +25,9 @@ CM-Beetle provides a validation API that checks whether a target infrastructure 
 | ------------- | ------- | -------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `nsId`        | string  | path     | Yes      | Namespace ID (e.g. `mig01`)                                                                                                                                                      |
 | `useExisting` | boolean | query    | No       | Validate as if reusing existing resources instead of creating new ones (default: `true`). Should match the value intended for the actual `POST /migration/ns/{nsId}/infra` call. |
-| request body  | JSON    | body     | Yes      | The target `RecommendedInfra` model to validate — same shape as the migration API's request body                                                                                 |
+| `request body` | JSON    | body     | Yes      | The target `RecommendedInfra` model to validate (same shape as the migration API's request body)                                                                                 |
 
-**Response — always `200 OK`:**
+**Response (always `200 OK`):**
 
 ```json
 {
@@ -46,41 +46,43 @@ CM-Beetle provides a validation API that checks whether a target infrastructure 
 }
 ```
 
-`400 Bad Request` is reserved for a malformed request itself (bad JSON, missing `nsId`) — a **failed validation is not a request error**, it's a normal, successfully-answered result. Always check the `valid` field, not the HTTP status code.
+`400 Bad Request` is reserved for a malformed request itself (bad JSON, missing `nsId`). A **failed validation is not a request error**; it is a normal, successfully-answered result. Always check the `valid` field, not the HTTP status code.
 
 ---
 
 ## What Gets Validated
 
-| #   | Category                                       | `useExisting` mode | Issue code                    | Severity | Triggered when                                                                                                                                                                                                          |
-| --- | ---------------------------------------------- | ------------------ | ----------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Name format & referential integrity            | both               | `REFERENTIAL_INTEGRITY`       | error    | A name isn't 3–63 alphanumeric/hyphen characters, or an internal reference doesn't resolve within the submitted model (e.g. a NodeGroup's `securityGroupIds` entry has no matching `name` in `targetSecurityGroupList`) |
-| 2   | Infra (MCI) name required                      | both               | `REQUIRED_FIELD_MISSING`      | error    | `targetInfra.name` is empty                                                                                                                                                                                             |
-| 3   | Required fields for creating fresh resources   | `false`            | `REQUIRED_FIELD_MISSING`      | error    | `targetVNet.name`, `targetSshKey.name`, or a security group's `name` is empty                                                                                                                                           |
-| 4   | Required fields for reusing existing resources | `true`             | `REQUIRED_FIELD_MISSING`      | error    | A NodeGroup's `vNetId`, `sshKeyId`, or `securityGroupIds` is empty                                                                                                                                                      |
-| 5   | Resource name collision (fresh creation)       | `false`            | `RESOURCE_ALREADY_EXISTS`     | error    | The VNet/SSH key/security group to be created already exists in the namespace                                                                                                                                           |
-| 6   | CSP/region connection match (reuse)            | `true`             | `CONNECTION_MISMATCH`         | error    | The VNet/SSH key/security group exists, but under a different Tumblebug connection (CSP+region+credential) than the NodeGroup requests                                                                                  |
-| 7   | Fallback creation data present (reuse)         | `true`             | `RESOURCE_NOT_AVAILABLE`      | error    | The resource doesn't exist yet, and the accompanying `Target*` data isn't enough to create it instead (e.g. `targetVNet.cidrBlock` is empty)                                                                            |
-| 8   | Spec/image required fields                     | both               | `REQUIRED_FIELD_MISSING`      | error    | A NodeGroup's `specId`, `imageId`, or `connectionName` is empty                                                                                                                                                         |
-| 9   | Connection name format                         | both               | `INVALID_CONNECTION_NAME`     | error    | A NodeGroup's `connectionName` isn't in `csp-region` format (e.g. `aws-ap-northeast-2`)                                                                                                                                 |
-| 10  | Spec/image lookup                              | both               | `SPEC_OR_IMAGE_LOOKUP_FAILED` | error    | The `specId` or `imageId` doesn't resolve to a real Tumblebug spec/image                                                                                                                                                |
-| 11  | Spec/image compatibility                       | both               | `SPEC_IMAGE_INCOMPATIBLE`     | error    | The resolved spec and image are incompatible for that CSP (e.g. an `x86_64` spec paired with an `arm64` image)                                                                                                          |
-| 12  | Infra (MCI) name collision                     | both               | `RESOURCE_ALREADY_EXISTS`     | error    | `targetInfra.name` already exists in the namespace, regardless of mode                                                                                                                                                  |
+| #   | Category                                              | `useExisting` mode | Issue code                    | Severity | Triggered when                                                                                                                                                                                                                                   |
+| --- | ----------------------------------------------------- | ------------------ | ----------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Name format & referential integrity                   | both               | `REFERENTIAL_INTEGRITY`       | error    | A name isn't 3-63 alphanumeric/hyphen characters, or an internal reference doesn't resolve within the submitted model (e.g. a NodeGroup's `securityGroupIds` entry has no matching `name` in `targetSecurityGroupList`)                          |
+| 2   | Infra (MCI) name required                             | both               | `REQUIRED_FIELD_MISSING`      | error    | `targetInfra.name` is empty                                                                                                                                                                                                                      |
+| 3   | Required fields for creating fresh resources          | `false`            | `REQUIRED_FIELD_MISSING`      | error    | `targetVNet.name`, `targetSshKey.name`, or a security group's `name` is empty                                                                                                                                                                    |
+| 4   | Required fields for reusing existing resources        | `true`             | `REQUIRED_FIELD_MISSING`      | error    | A NodeGroup's `vNetId`, `sshKeyId`, or `securityGroupIds` is empty                                                                                                                                                                               |
+| 5   | Resource name collision (fresh creation)              | `false`            | `RESOURCE_ALREADY_EXISTS`     | error    | The VNet/SSH key/security group to be created already exists in the namespace                                                                                                                                                                    |
+| 6   | CSP/region connection match (reuse)                   | `true`             | `CONNECTION_MISMATCH`         | error    | The VNet/SSH key/security group exists, but under a different Tumblebug connection (CSP+region+credential) than the NodeGroup requests                                                                                                           |
+| 7   | Fallback creation data present (reuse)                | `true`             | `RESOURCE_NOT_AVAILABLE`      | error    | The resource doesn't exist yet, and the accompanying `Target*` data isn't enough to create it instead (e.g. `targetVNet.cidrBlock` is empty)                                                                                                     |
+| 8   | Spec/image required fields                            | both               | `REQUIRED_FIELD_MISSING`      | error    | A NodeGroup's `specId`, `imageId`, or `connectionName` is empty                                                                                                                                                                                  |
+| 9   | Connection name format                                | both               | `INVALID_CONNECTION_NAME`     | error    | A NodeGroup's `connectionName` isn't in `csp-region` format (e.g. `aws-ap-northeast-2`)                                                                                                                                                          |
+| 10  | Spec/image lookup                                     | both               | `SPEC_OR_IMAGE_LOOKUP_FAILED` | error    | The `specId` or `imageId` doesn't resolve to a real Tumblebug spec/image                                                                                                                                                                         |
+| 11  | Spec/image compatibility                              | both               | `SPEC_IMAGE_INCOMPATIBLE`     | error    | The resolved spec and image are incompatible for that CSP (e.g. an `x86_64` spec paired with an `arm64` image)                                                                                                                                   |
+| 12  | Infra (MCI) name collision                            | both               | `RESOURCE_ALREADY_EXISTS`     | error    | `targetInfra.name` already exists in the namespace, regardless of mode                                                                                                                                                                           |
+| 13  | Spec availability & zonal subnet compatibility        | both               | `SUBNET_ZONE_UNAVAILABLE`     | error    | On zonal-subnet CSPs (`aws`, `alibaba`, `tencent`, `ibm`, `ncp`, `kt`), a NodeGroup's VM spec is unavailable (`Unsupported`, `QuotaExceeded`, `SoldOut`), its subnet omits or specifies an unavailable zone, or shared specs lack a common zone |
+| 14  | Regional subnet zone pinning                          | both               | `REGIONAL_SUBNET_ZONE_PINNED` | warning  | On regional-subnet CSPs (`azure`, `gcp`), a subnet pins a specific `zone`, which may cause over-constrained allocation failures without blocking migration                                                                                       |
 
-All issues currently returned are `severity: "error"` — `warning` is a reserved severity for future checks that shouldn't block migration by themselves (see [`pkg/core/validation/model.go`](../../pkg/core/validation/model.go)).
+Issues at `severity: "error"` set `valid: false` and block migration. Issues at `severity: "warning"` (such as `REGIONAL_SUBNET_ZONE_PINNED`) highlight risks worth the caller's attention while keeping `valid: true` when no `error` is present (see [`pkg/core/validation/model.go`](../../pkg/core/validation/model.go)).
 
-### Why checks 3–7 depend on `useExisting`
+### Why checks 3-7 depend on `useExisting`
 
 Migration behaves differently depending on `useExisting`, so validation mirrors that instead of applying one fixed rule:
 
-- **`false` (create fresh):** CM-Beetle always creates a brand-new VNet/SSH key/security groups. If something with that name already exists, creating it would collide — so existence itself is the error (#5).
+- **`false` (create fresh):** CM-Beetle always creates a brand-new VNet/SSH key/security groups. If something with that name already exists, creating it would collide, so existence itself is the error (#5).
 - **`true` (reuse existing):** CM-Beetle reuses a resource by ID if one is found, otherwise falls back to creating it from the accompanying `Target*` data. A resource that doesn't exist yet is only an error when that fallback data is also missing (#7).
 
-  Finding a resource by ID isn't automatically safe to reuse, though. Tumblebug only guarantees the ID is unique — not that the resource sits in the CSP/region you're actually targeting. Reusing a same-named resource from the wrong region would silently attach new VMs to the wrong network, so its connection must match what the NodeGroup asks for (#6).
+  Finding a resource by ID isn't automatically safe to reuse, though. Tumblebug only guarantees the ID is unique, not that the resource sits in the CSP/region you're actually targeting. Reusing a same-named resource from the wrong region would silently attach new VMs to the wrong network, so its connection must match what the NodeGroup asks for (#6).
 
 ### Path format
 
-`path` points at the offending field so a UI can highlight it directly. It's either a JSON-pointer-style field path (`targetVNet.name`, `targetInfra.nodeGroups[0].specId`) or, for resource-level checks that aren't tied to one field, a short `field (id: value)` description (`targetVNet (id: vnet-01)`). Treat it as a hint for display, not a strict machine-parseable schema — it's a plain string, not indexed by consumers today.
+`path` points at the offending field so a UI can highlight it directly. It's either a JSON-pointer-style field path (`targetVNet.name`, `targetInfra.nodeGroups[0].specId`, `targetVNet.subnetInfoList[0].zone`) or, for resource-level checks that aren't tied to one field, a short `field (id: value)` description (`targetVNet (id: vnet-01)`). Treat it as a hint for display, not a strict machine-parseable schema; it's a plain string, not indexed by consumers today.
 
 ---
 
@@ -127,7 +129,7 @@ curl -X POST "http://localhost:8056/beetle/validation/ns/mig01/infra?useExisting
 }
 ```
 
-Both issues are returned together in one call — the Portal doesn't need to fix one field, call the API again, then find the next problem.
+Both issues are returned together in one call, so the Portal doesn't need to fix one field, call the API again, then find the next problem.
 
 ---
 
@@ -141,4 +143,4 @@ Both issues are returned together in one call — the Portal doesn't need to fix
 
 ### Related documentation
 
-- [API Guide: Align Names](../api-guide-align-names.md) — naming/referential-integrity utility APIs this feature reuses
+- [API Guide: Align Names](../api-guide-align-names.md) - naming/referential-integrity utility APIs this feature reuses

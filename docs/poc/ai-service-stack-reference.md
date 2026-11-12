@@ -2,6 +2,7 @@
 
 > 🔗 **연계 문서**: 본 문서는 [**AI 반도체 기반 AI 서비스 마이그레이션 시나리오 정의 및 구조 설계서 (`ai-service-migration-design.md`)**](./ai-service-migration-design.md)의 기술 배경지식 해설서(Companion Reference)입니다.
 > 마이그레이션 파이프라인 및 아키텍처는 본 설계서를 참조하고, **실제 전송되는 AI 서비스 데이터의 내부 구조(Part 1)**와 **GPU 메모리 적재 및 LLM 추론 동작 원리(Part 2)**는 본 문서를 참조하십시오.
+> 또한 `Kotaemon Full (v0.12.0)` + `Ollama (gemma4:12b / gemma4:e2b + bge-m3)` RAG 스택(`/opt/aimx/ai-service/ktem_app_data/user_data/sql.db`, `Docling`, `ChromaDB`, `LanceDB`) 및 `mc-terrarium/examples/aws/ai-stack-testbed` 연동 가이드는 [**`aimx-kotaemon-rag-migration-test-guide.md`**](../test/aimx-kotaemon-rag-migration-test-guide.md)를 참조하십시오.
 
 ---
 
