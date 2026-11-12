@@ -7,13 +7,19 @@ interface UnsavedConfirmModalProps {
   isOpen: boolean;
   onStay: () => void;
   onProceed: () => void;
+  description?: string;
+  stayLabel?: string;
+  proceedLabel?: string;
 }
 
-// Lightweight 2-button confirmation popup shown when advancing with unsaved model changes.
+// Lightweight 2-button confirmation popup shown when advancing or loading with unsaved model changes.
 export const UnsavedConfirmModal: React.FC<UnsavedConfirmModalProps> = ({
   isOpen,
   onStay,
   onProceed,
+  description = 'Your current model has not been saved yet. If you continue, it will be carried forward as an Unsaved Draft until saved. Would you like to proceed without saving?',
+  stayLabel = 'Stay on This Step',
+  proceedLabel = 'Proceed without Saving',
 }) => {
   if (!isOpen) return null;
 
@@ -35,7 +41,7 @@ export const UnsavedConfirmModal: React.FC<UnsavedConfirmModalProps> = ({
         </div>
 
         <p className="text-sm text-text-muted leading-relaxed">
-          Your current model has not been saved yet. Unsaved changes will not appear in the saved model list in the next step. Would you like to proceed without saving?
+          {description}
         </p>
 
         <div className="flex justify-end gap-3 pt-2 text-sm font-extrabold">
@@ -44,7 +50,7 @@ export const UnsavedConfirmModal: React.FC<UnsavedConfirmModalProps> = ({
             onClick={onStay}
             className="px-4 py-2.5 bg-bg-panel border border-border-main text-text-main hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-xl transition cursor-pointer"
           >
-            Stay on This Step
+            {stayLabel}
           </button>
           <button
             type="button"
@@ -54,7 +60,7 @@ export const UnsavedConfirmModal: React.FC<UnsavedConfirmModalProps> = ({
             }}
             className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition cursor-pointer shadow-md shadow-emerald-500/20"
           >
-            Proceed without Saving
+            {proceedLabel}
           </button>
         </div>
       </div>

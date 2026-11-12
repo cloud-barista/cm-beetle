@@ -30,6 +30,8 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
   const {
     savedSourceModels,
     selectedSourceModel,
+    unsavedSourceDraft,
+    unsavedPlanningDraft,
     desiredCsp,
     desiredRegion,
     targetPairs,
@@ -63,6 +65,8 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     clearCustomCloudModels,
     savedCloudModels,
     selectedCloudModel,
+    hasUnsavedCloudChanges: hasUnsavedChanges,
+    setHasUnsavedCloudChanges: setHasUnsavedChanges,
     selectCloudModel,
     fetchSavedCloudModels,
     tumblebugProviders,
@@ -107,15 +111,27 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     }
   };
 
-  const [activeTunedNodeId, setActiveTunedNodeId] = useState<string>('');
-  const [pendingSourceModelId, setPendingSourceModelId] = useState<string>(selectedSourceModel?.id || '');
-  const [loadedSourceModelId, setLoadedSourceModelId] = useState<string>('');
+  const getSourceModelSig = (model: OnpremModelEnvelope | null | undefined): string =>
+    model
+      ? `${model.id}:${model.updatedTime || ''}:${model.version || ''}:${model.onpremiseInfraModel?.nodes?.length || 0}`
+      : '';
+
+  const initialSourceModel = selectedSourceModel || savedSourceModels[0] || null;
+  const [activeTunedNodeId, setActiveTunedNodeId] = useState<string>(
+    () => initialSourceModel?.onpremiseInfraModel?.nodes?.[0]?.machineId || ''
+  );
+  const [pendingSourceModelId, setPendingSourceModelId] = useState<string>(
+    () => initialSourceModel?.id || ''
+  );
+  const [loadedSourceSig, setLoadedSourceSig] = useState<string>(() =>
+    getSourceModelSig(initialSourceModel)
+  );
   const [pendingCloudModelId, setPendingCloudModelId] = useState<string>(selectedCloudModel?.id || '');
   const [loadedCloudModelId, setLoadedCloudModelId] = useState<string>('');
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [showSaveTargetModal, setShowSaveTargetModal] = useState(false);
   const [showUnsavedNextModal, setShowUnsavedNextModal] = useState(false);
+  const [showOverwriteTargetLoadModal, setShowOverwriteTargetLoadModal] = useState(false);
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [toastTone, setToastTone] = useState<'success' | 'error'>('success');
@@ -136,7 +152,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
           buildDefaultModelName('target', selectedSourceModel?.name, editedCandidate.targetCloud?.csp);
         useMigrationStore.setState({
           selectedCloudModel: {
-            id: `candidate-${Date.now()}`,
+            id: 'candidate-draft',
             name: modelName,
             description:
               selectedCloudModel?.description ||
@@ -165,14 +181,21 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
   const [pairRegionsMap, setPairRegionsMap] = useState<Record<string, { id: string; name: string }[]>>({});
 
   // Tuned nodes state for left spec editor
-  const [tunedNodes, setTunedNodes] = useState<OnpremNode[]>([]);
+  const [tunedNodes, setTunedNodes] = useState<OnpremNode[]>(() =>
+    initialSourceModel?.onpremiseInfraModel?.nodes
+      ? JSON.parse(JSON.stringify(initialSourceModel.onpremiseInfraModel.nodes))
+      : []
+  );
   const [isJsonOpen, setIsJsonOpen] = useState(false);
-  const [tunedNetwork, setTunedNetwork] = useState<any>(null);
+  const [tunedNetwork, setTunedNetwork] = useState<any>(() =>
+    initialSourceModel?.onpremiseInfraModel?.network
+      ? JSON.parse(JSON.stringify(initialSourceModel.onpremiseInfraModel.network))
+      : null
+  );
   const [newCidr, setNewCidr] = useState('');
   const [activeStep, setActiveStep] = useState<number>(() =>
     editedCandidate && recommendationCandidates.length > 0 ? 2 : 1
   );
-  const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [recommendMode, setRecommendMode] = useState<'new' | 'saved'>('new');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -365,32 +388,63 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     }
   };
 
-  useEffect(() => {
-    if (selectedSourceModel?.id) {
-      setPendingSourceModelId(selectedSourceModel.id);
-    }
-  }, [selectedSourceModel?.id]);
-
-  useEffect(() => {
-    if (pendingSourceModelId && !savedSourceModels.some(m => m.id === pendingSourceModelId)) {
-      setPendingSourceModelId(selectedSourceModel?.id || savedSourceModels[0]?.id || '');
-    }
-    if (loadedSourceModelId && !savedSourceModels.some(m => m.id === loadedSourceModelId)) {
-      setLoadedSourceModelId('');
+  const bindSourceModelState = (model: OnpremModelEnvelope | null) => {
+    if (!model || !model.onpremiseInfraModel) {
+      setPendingSourceModelId('');
+      setLoadedSourceSig('');
       setTunedNodes([]);
       setTunedNetwork(null);
-      if (recommendMode === 'new') {
-        setIsModelLoaded(false);
+      setExcludedNodeIds([]);
+      setActiveTunedNodeId('');
+      return;
+    }
+    const clonedNodes: OnpremNode[] = JSON.parse(
+      JSON.stringify(model.onpremiseInfraModel.nodes || [])
+    );
+    const clonedNetwork = JSON.parse(
+      JSON.stringify(model.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })
+    );
+    setPendingSourceModelId(model.id);
+    setLoadedSourceSig(getSourceModelSig(model));
+    setTunedNodes(clonedNodes);
+    setTunedNetwork(clonedNetwork);
+    setExcludedNodeIds([]);
+    setActiveTunedNodeId(clonedNodes[0]?.machineId || '');
+  };
+
+  const draftSourceModels: OnpremModelEnvelope[] = [
+    unsavedPlanningDraft,
+    unsavedSourceDraft,
+  ].filter(Boolean) as OnpremModelEnvelope[];
+  const allSelectableSourceModels: OnpremModelEnvelope[] = [
+    ...draftSourceModels,
+    ...savedSourceModels,
+  ];
+
+  useEffect(() => {
+    if (selectedSourceModel) {
+      const nextSig = getSourceModelSig(selectedSourceModel);
+      if (nextSig !== loadedSourceSig) {
+        bindSourceModelState(selectedSourceModel);
       }
     }
-  }, [savedSourceModels, pendingSourceModelId, loadedSourceModelId, selectedSourceModel?.id, recommendMode]);
+  }, [selectedSourceModel, loadedSourceSig]);
+
+  useEffect(() => {
+    if (pendingSourceModelId && !allSelectableSourceModels.some(m => m.id === pendingSourceModelId)) {
+      const fallback =
+        (selectedSourceModel && allSelectableSourceModels.find(m => m.id === selectedSourceModel.id)) ||
+        allSelectableSourceModels[0] ||
+        null;
+      selectSourceModel(fallback);
+      bindSourceModelState(fallback);
+    }
+  }, [allSelectableSourceModels, pendingSourceModelId, selectedSourceModel, selectSourceModel]);
 
   const userPlanningModels = savedSourceModels.filter(m => !isBuiltInSampleModel(m) && m.stage === 'planning');
   const userSourceModels = savedSourceModels.filter(m => !isBuiltInSampleModel(m) && m.stage !== 'planning');
   const sampleSourceModels = savedSourceModels.filter(m => isBuiltInSampleModel(m));
-  const pendingSourceModel = savedSourceModels.find(m => m.id === pendingSourceModelId) || null;
-  const isSourceAlreadyLoaded =
-    recommendMode === 'new' && Boolean(loadedSourceModelId) && Boolean(pendingSourceModel) && loadedSourceModelId === pendingSourceModel?.id;
+  const pendingSourceModel = allSelectableSourceModels.find(m => m.id === pendingSourceModelId) || null;
 
   const validSavedCloudModels = savedCloudModels.filter(m => m && m.name !== 'Unnamed Design');
   const userTargetModels = validSavedCloudModels.filter(m => !isBuiltInSampleModel(m));
@@ -418,17 +472,16 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     loadedCloudModelId === pendingCloudModel?.id &&
     !hasUnsavedChanges;
 
-  const handleLoadModel = () => {
-    if (!pendingSourceModel || !pendingSourceModel.onpremiseInfraModel) return;
-    selectSourceModel(pendingSourceModel);
-    setLoadedSourceModelId(pendingSourceModel.id);
-    setTunedNodes(JSON.parse(JSON.stringify(pendingSourceModel.onpremiseInfraModel.nodes || [])));
-    setTunedNetwork(JSON.parse(JSON.stringify(pendingSourceModel.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
-    setExcludedNodeIds([]);
-    setIsModelLoaded(true);
-    if (pendingSourceModel.onpremiseInfraModel.nodes && pendingSourceModel.onpremiseInfraModel.nodes.length > 0) {
-      setActiveTunedNodeId(pendingSourceModel.onpremiseInfraModel.nodes[0]?.machineId || '');
+  const handleSelectSourceModel = (nextId: string) => {
+    if (!nextId) {
+      selectSourceModel(null);
+      bindSourceModelState(null);
+      return;
     }
+    const chosen = allSelectableSourceModels.find(m => m.id === nextId) || null;
+    if (!chosen) return;
+    selectSourceModel(chosen);
+    bindSourceModelState(chosen);
   };
 
   const activeNode = tunedNodes.find((n) => n.machineId === activeTunedNodeId);
@@ -501,19 +554,13 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     setActiveStep(2);
   };
 
-  const handleLoadDesign = () => {
+  const executeLoadDesign = () => {
     if (!pendingCloudModel) return;
     selectCloudModel(pendingCloudModel);
     setLoadedCloudModelId(pendingCloudModel.id);
     const linkedSource = useMigrationStore.getState().selectedSourceModel;
     if (linkedSource?.onpremiseInfraModel) {
-      setLoadedSourceModelId(linkedSource.id);
-      setPendingSourceModelId(linkedSource.id);
-      setTunedNodes(JSON.parse(JSON.stringify(linkedSource.onpremiseInfraModel.nodes || [])));
-      setTunedNetwork(JSON.parse(JSON.stringify(linkedSource.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
-      if (linkedSource.onpremiseInfraModel.nodes && linkedSource.onpremiseInfraModel.nodes.length > 0) {
-        setActiveTunedNodeId(linkedSource.onpremiseInfraModel.nodes[0]?.machineId || '');
-      }
+      bindSourceModelState(linkedSource);
     }
     let rawInfra = pendingCloudModel.cloudInfraModel || (pendingCloudModel as any).cloud_infra_model || (pendingCloudModel as any).recommendedInfra;
     if (typeof rawInfra === 'string') {
@@ -533,9 +580,17 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         setDesiredRegion(infra.targetCloud?.region || (infra as any).region);
       }
     }
-    setIsModelLoaded(true);
     setHasUnsavedChanges(false);
     setActiveStep(2);
+  };
+
+  const handleLoadDesign = () => {
+    if (!pendingCloudModel) return;
+    if (editedCandidate && hasUnsavedChanges) {
+      setShowOverwriteTargetLoadModal(true);
+      return;
+    }
+    executeLoadDesign();
   };
 
   const handleDeleteDesign = () => {
@@ -1189,7 +1244,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         <div className="flex border-b border-border-main/20 mb-6 max-w-4xl">
           <button
             type="button"
-            onClick={() => { setRecommendMode('new'); setIsModelLoaded(Boolean(selectedSourceModel && tunedNodes.length > 0)); }}
+            onClick={() => setRecommendMode('new')}
             className={`flex-1 pb-3 text-sm font-extrabold text-center border-b-2 transition-all cursor-pointer ${
               recommendMode === 'new'
                 ? 'border-emerald-500 text-emerald-500'
@@ -1200,7 +1255,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
           </button>
           <button
             type="button"
-            onClick={() => { setRecommendMode('saved'); setIsModelLoaded(Boolean(selectedCloudModel && !String(selectedCloudModel.id).startsWith('candidate-'))); }}
+            onClick={() => setRecommendMode('saved')}
             className={`flex-1 pb-3 text-sm font-extrabold text-center border-b-2 transition-all cursor-pointer ${
               recommendMode === 'saved'
                 ? 'border-emerald-500 text-emerald-500'
@@ -1220,10 +1275,17 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                 <div className="flex flex-wrap items-center gap-2.5">
                   <select
                     value={pendingSourceModelId}
-                    onChange={(e) => setPendingSourceModelId(e.target.value)}
+                    onChange={(e) => handleSelectSourceModel(e.target.value)}
                     className="flex-1 min-w-[260px] bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
                   >
                     <option value="">-- Choose Infrastructure Model --</option>
+                    {draftSourceModels.length > 0 && (
+                      <optgroup label="Draft Model">
+                        {draftSourceModels.map((m) => (
+                          <option key={m.id} value={m.id}>{formatSourceOptionText(m, '1.0', true)}</option>
+                        ))}
+                      </optgroup>
+                    )}
                     {userPlanningModels.length > 0 && (
                       <optgroup label="Planning Models">
                         {userPlanningModels.map((m) => (
@@ -1268,38 +1330,6 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                     )}
                   </div>
                 )}
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleLoadModel}
-                    disabled={!pendingSourceModel}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer ${
-                      !pendingSourceModel
-                        ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
-                        : isSourceAlreadyLoaded
-                          ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/25'
-                    }`}
-                  >
-                    {isSourceAlreadyLoaded ? (
-                      <>
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Model Loaded</span>
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-4 h-4" />
-                        <span>Load Model</span>
-                      </>
-                    )}
-                  </button>
-                  {isModelLoaded && tunedNodes.length > 0 && selectedSourceModel && (
-                    <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-                      {tunedNodes.length} Node(s) loaded from &quot;{cleanModelDisplayName(selectedSourceModel.name)}&quot;
-                    </span>
-                  )}
-                </div>
               </div>
             </div>
 
@@ -2582,7 +2612,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                         Node Group Consolidation
                                       </span>
                                       <span className="font-extrabold text-text-main text-sm">
-                                        {srcNodes.length} Source Nodes -&gt; {tgtNgs.length} Homogeneous Node Groups
+                                        {srcNodes.length} Source Nodes -&gt; {tgtNgs.length} Node Groups
                                       </span>
                                       <span className="text-xs text-text-muted">
                                         Preserves source machine lineage via cm-source-machine-ids
@@ -3572,7 +3602,6 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
           setPendingCloudModelId(remaining[0]?.id || '');
           if (loadedCloudModelId === deletedId || selectedCloudModel?.id === deletedId) {
             setLoadedCloudModelId('');
-            setIsModelLoaded(false);
             setHasUnsavedChanges(false);
             setActiveStep(1);
           }
@@ -3601,6 +3630,15 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         isOpen={showUnsavedNextModal}
         onStay={() => setShowUnsavedNextModal(false)}
         onProceed={executeProceedToMigration}
+      />
+
+      <UnsavedConfirmModal
+        isOpen={showOverwriteTargetLoadModal}
+        onStay={() => setShowOverwriteTargetLoadModal(false)}
+        onProceed={executeLoadDesign}
+        description="You have unsaved edits in the current target cloud model. Loading another model will overwrite your current unsaved changes. Continue?"
+        stayLabel="Cancel"
+        proceedLabel="Load and Overwrite"
       />
 
       <ModelToast

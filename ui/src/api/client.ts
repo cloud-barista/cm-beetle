@@ -500,6 +500,7 @@ export interface StorageSourceModelEnvelope {
   sourceObjectStorages: any[];
   sourceCloud?: { csp: string; region: string };
   updatedTime?: string;
+  isDraft?: boolean;
 }
 
 export interface StorageTargetModelEnvelope {
@@ -516,6 +517,7 @@ export interface StorageTargetModelEnvelope {
   targetObjectStorages: any[];
   raw: any;
   updatedTime?: string;
+  isDraft?: boolean;
 }
 
 const mapArtifactToSourceEnvelope = (raw: any, fallbackInfra?: OnpremInfra): OnpremModelEnvelope => {

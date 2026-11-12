@@ -67,10 +67,14 @@ export function normalizeModelVersion(version?: string | null, fallback = '1.0.0
 
 // Format source or planning model option label without stage brackets.
 export function formatSourceOptionText(
-  model: { name?: string | null; version?: string | null },
-  fallbackVersion = '1.0'
+  model: { name?: string | null; version?: string | null; isDraft?: boolean },
+  fallbackVersion = '1.0',
+  isDraft = false
 ): string {
   const cleanName = cleanModelDisplayName(model.name);
+  if (isDraft || model.isDraft) {
+    return `${cleanName} (Unsaved Draft)`;
+  }
   const ver = normalizeModelVersion(model.version, fallbackVersion);
   return `${cleanName} (v${ver})`;
 }

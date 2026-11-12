@@ -168,6 +168,7 @@ export interface OnpremModelEnvelope {
   schemaType?: string;
   lineage?: ArtifactLineage;
   updatedTime?: string;
+  isDraft?: boolean;
 }
 
 // Target Cloud recommendations & deployments (Beetle / Tumblebug)
@@ -295,6 +296,7 @@ export interface CloudModelEnvelope {
   schemaType?: string;
   lineage?: ArtifactLineage;
   updatedTime?: string;
+  isDraft?: boolean;
 }
 
 // Deployment Live status types

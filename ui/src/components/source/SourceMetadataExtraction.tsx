@@ -385,7 +385,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     sourceGroups, activeSgId, connections, refinedSourceInfra, isLoadingSource,
     fetchSourceGroups, createSourceGroup, deleteSourceGroup, refreshSourceGroup,
     registerConnection, fetchRefinedInfraByGroup, fetchSavedSourceModels, savedSourceModels,
-    saveSourceModel, updateSourceModel,
+    selectSourceModel, saveSourceModel, updateSourceModel, setUnsavedSourceDraft,
   } = useMigrationStore();
 
   // ── Shared credentials (used in both modal & inline section) ────
@@ -458,6 +458,29 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
       setHasUnsavedChanges(Boolean(refinedSourceInfra));
     }
   }, [lastSavedSourceModel, savedSourceModels, refinedSourceInfra]);
+
+  useEffect(() => {
+    if (hasUnsavedChanges && refinedSourceInfra) {
+      const grp = sourceGroups.find((g: any) => g.id === activeSgId);
+      setUnsavedSourceDraft({
+        id: 'source-draft',
+        name: lastSavedSourceModel?.name || buildDefaultModelName('source', grp?.name),
+        description:
+          lastSavedSourceModel?.description ||
+          grp?.description ||
+          `Extracted source infrastructure model (${refinedSourceInfra.nodes?.length || 0} nodes)`,
+        onpremiseInfraModel: JSON.parse(JSON.stringify(refinedSourceInfra)),
+        version: lastSavedSourceModel?.version || '1.0.0',
+        stage: 'source',
+        category: 'infra',
+        schemaType: 'OnpremInfra',
+        lineage: { sourceGroupId: activeSgId || undefined },
+        isDraft: true,
+      });
+    } else {
+      setUnsavedSourceDraft(null);
+    }
+  }, [hasUnsavedChanges, refinedSourceInfra, activeSgId, sourceGroups, lastSavedSourceModel, setUnsavedSourceDraft]);
 
   // Sync inline rows from store connections (when group selected / refreshed).
   // A blank draft row is always kept at the end, ready for entering the next server.
@@ -2026,6 +2049,10 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
         isOpen={showUnsavedNextModal}
         onStay={() => setShowUnsavedNextModal(false)}
         onProceed={() => {
+          const currentDraft = useMigrationStore.getState().unsavedSourceDraft;
+          if (currentDraft) {
+            selectSourceModel(currentDraft);
+          }
           if (onNext) onNext();
         }}
       />
