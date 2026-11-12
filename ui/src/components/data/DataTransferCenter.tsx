@@ -299,18 +299,18 @@ export const DataTransferCenter: React.FC = () => {
       host: srcHost,
       checkedAt: nowIso,
       isSample: true,
-      openWebUi: { ok: true, httpStatus: 200, latencyMs: 18, version: '0.6.5' },
+      openWebUi: { ok: true, port: 7860, httpStatus: 200, latencyMs: 18, version: 'Kotaemon' },
       ollamaTags: {
         ok: true,
         latencyMs: 14,
         modelName: 'gemma4:e2b',
-        sizeBytes: 3180000000,
+        sizeBytes: 4620000000,
         digest: sampleDigest,
         parameterSize: '2.6B',
         quantizationLevel: 'Q4_K_M',
-        totalModels: 1
+        totalModels: 2
       },
-      ollamaPs: { ok: true, vramBytes: 3420000000, activeModel: 'gemma4:e2b', gpuAccelerated: true },
+      ollamaPs: { ok: true, vramBytes: 5840000000, activeModel: 'gemma4:e2b + bge-m3', gpuAccelerated: true },
       inference: {
         ok: true,
         latencyMs: 412,
@@ -323,18 +323,18 @@ export const DataTransferCenter: React.FC = () => {
       host: tgtHost,
       checkedAt: nowIso,
       isSample: true,
-      openWebUi: { ok: true, httpStatus: 200, latencyMs: 22, version: '0.6.5' },
+      openWebUi: { ok: true, port: 7860, httpStatus: 200, latencyMs: 22, version: 'Kotaemon' },
       ollamaTags: {
         ok: true,
         latencyMs: 17,
         modelName: 'gemma4:e2b',
-        sizeBytes: 3180000000,
+        sizeBytes: 4620000000,
         digest: sampleDigest,
         parameterSize: '2.6B',
         quantizationLevel: 'Q4_K_M',
-        totalModels: 1
+        totalModels: 2
       },
-      ollamaPs: { ok: true, vramBytes: 3420000000, activeModel: 'gemma4:e2b', gpuAccelerated: true },
+      ollamaPs: { ok: true, vramBytes: 5840000000, activeModel: 'gemma4:e2b + bge-m3', gpuAccelerated: true },
       inference: {
         ok: true,
         latencyMs: 389,
@@ -454,7 +454,7 @@ export const DataTransferCenter: React.FC = () => {
     );
   };
 
-  // Apply AIMX (Ollama + OpenWebUI) filter preset & auto-select AI GPU server + /opt/aimx/ai-service path
+  // Apply AIMX (Ollama + Kotaemon) filter preset & auto-select AI GPU server + /opt/aimx/ai-service path
   const handleApplyAimxPreset = async () => {
     setSourceAccessType('remote-ssh');
     setTargetAccessType('remote-ssh');
@@ -481,10 +481,10 @@ export const DataTransferCenter: React.FC = () => {
         handleFetchTargetInfras(dataNsId, true);
       }
     }
-    setIncludeFilter('ollama/models/blobs/**, ollama/models/manifests/**, open-webui/webui.db, docker-compose.yml');
-    setExcludeFilter('open-webui/cache/**, *.log, *.tmp, __pycache__/**');
-    setSourcePreCmd('cd /opt/aimx/ai-service && sudo docker compose stop && sync && sudo chown -R $USER:$USER /opt/aimx/ai-service && sudo chmod -R u+rwX /opt/aimx/ai-service');
-    setDestinationPreCmd('sudo mkdir -p /opt/aimx/ai-service && sudo chown -R $USER:$USER /opt/aimx/ai-service && chmod 755 /opt/aimx/ai-service');
+    setIncludeFilter('ollama/models/blobs/**, ollama/models/manifests/**, ktem_app_data/**, docker-compose.yml');
+    setExcludeFilter('*.log, *.tmp, __pycache__/**');
+    setSourcePreCmd('cd /opt/aimx/ai-service && sudo docker compose stop && sync && sudo chown -R $(id -un):$(id -gn) /opt/aimx/ai-service && sudo chmod -R u+rwX,g+rX,o+rX /opt/aimx/ai-service');
+    setDestinationPreCmd('sudo mkdir -p /opt/aimx/ai-service && sudo chown -R $(id -un):$(id -gn) /opt/aimx/ai-service && chmod 755 /opt/aimx/ai-service');
     setSourcePostCmd('cd /opt/aimx/ai-service && sudo docker compose up -d');
     setDestinationPostCmd(
       [
@@ -495,7 +495,7 @@ export const DataTransferCenter: React.FC = () => {
         'if ! command -v lspci >/dev/null 2>&1; then sudo apt-get -o DPkg::Lock::Timeout=600 update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq pciutils; fi',
         'if sudo lspci 2>/dev/null | grep -qi nvidia; then if ! nvidia-smi >/dev/null 2>&1; then KVER=$(uname -r); UBU_VER=$(. /etc/os-release 2>/dev/null && echo "$VERSION_ID" | tr -d "." || echo "2204"); [ "$UBU_VER" = "2404" ] && RDIST="ubuntu2404" || RDIST="ubuntu2204"; sudo apt-get -o DPkg::Lock::Timeout=600 update -qq && (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "linux-headers-$KVER" build-essential dkms || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq linux-headers-generic build-essential dkms) && (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "linux-modules-extra-$KVER" || true); if [ -f "/lib/modules/$KVER/build/.config" ]; then KGCC=$(grep "CONFIG_CC_VERSION_TEXT=" "/lib/modules/$KVER/build/.config" 2>/dev/null | sed "s/.*gcc.*[ (]\\([0-9]\\+\\)\\..*/\\1/" || true); SGCC=$(gcc -dumpversion 2>/dev/null | cut -d. -f1 || true); if [ -n "$KGCC" ] && [ -n "$SGCC" ] && [ "$KGCC" -gt "$SGCC" ] 2>/dev/null; then sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "gcc-$KGCC" && sudo mkdir -p /etc/dkms/framework.conf.d && echo "export CC=/usr/bin/gcc-$KGCC" | sudo tee /etc/dkms/framework.conf.d/cc.conf >/dev/null; fi; fi; curl -fsSL "https://developer.download.nvidia.com/compute/cuda/repos/${RDIST}/x86_64/cuda-keyring_1.1-1_all.deb" -o /tmp/cuda-keyring.deb && sudo dpkg -i --force-confdef --force-confold /tmp/cuda-keyring.deb && rm -f /tmp/cuda-keyring.deb && sudo apt-get -o DPkg::Lock::Timeout=600 update -qq && (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq -o Dpkg::Options::="--force-overwrite" cuda-drivers-580-open || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq -o Dpkg::Options::="--force-overwrite" cuda-drivers-580 || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq -o Dpkg::Options::="--force-overwrite" cuda-drivers) && (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nvidia-modprobe || true) && (sudo modprobe nvidia 2>/dev/null || true) && (sudo modprobe nvidia-uvm 2>/dev/null || true); fi && if ! command -v nvidia-ctk >/dev/null 2>&1; then curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed "s#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g" | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list >/dev/null && sudo apt-get -o DPkg::Lock::Timeout=600 update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nvidia-container-toolkit; fi && if ! grep -q "nvidia" /etc/docker/daemon.json 2>/dev/null; then sudo nvidia-ctk runtime configure --runtime=docker >/dev/null 2>&1 && sudo systemctl restart docker; fi; fi',
         'cd /opt/aimx/ai-service && sudo docker compose up -d',
-        '(for i in $(seq 1 15); do curl -sf http://localhost:11434/api/tags >/dev/null 2>&1 && break; sleep 2; done; curl -sf http://localhost:11434/api/generate -H "Content-Type: application/json" -d \'{"model":"gemma4:e2b","prompt":"Hello","stream":false,"keep_alive":"30m"}\' >/dev/null 2>&1 || sudo docker exec aimx-ollama ollama run gemma4:e2b "Hello" >/dev/null 2>&1 || true)',
+        '(for i in $(seq 1 20); do curl -sf http://localhost:11434/api/tags >/dev/null 2>&1 && break; sleep 2; done; curl -sf http://localhost:11434/api/generate -H "Content-Type: application/json" -d \'{"model":"gemma4:e2b","prompt":"Hello","stream":false,"keep_alive":"30m"}\' >/dev/null 2>&1 || true; curl -sf http://localhost:11434/api/embed -H "Content-Type: application/json" -d \'{"model":"bge-m3","input":"Cloud-Barista conference migration","keep_alive":"30m"}\' >/dev/null 2>&1 || true; for i in $(seq 1 30); do curl -s -o /dev/null -w "%{http_code}" http://localhost:7860/ | grep -Eq "^(200|302|307)$" && break; sleep 2; done)',
       ].join(' && ')
     );
     setShowDirectoryTree(true);
@@ -1622,7 +1622,7 @@ export const DataTransferCenter: React.FC = () => {
               )}
             </div>
             <p className="text-sm text-text-muted">
-              Verifies Service UI (:3000), Ollama Runtime (:11434), SHA-256 Model Weights Digest, and GPU VRAM Inference Decode Speed across Source and Target nodes.
+              Verifies Kotaemon RAG UI (:7860), Ollama Runtime (:11434), SHA-256 Model Weights Digest, and GPU VRAM Inference Decode Speed across Source and Target nodes.
             </p>
           </div>
 
@@ -1736,10 +1736,10 @@ export const DataTransferCenter: React.FC = () => {
 
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-normal text-text-muted">Layer 4 - Service UI (:{st.openWebUi.port || 3000}):</span>
+                    <span className="font-normal text-text-muted">Layer 4 - Service UI (:{st.openWebUi.port || 7860}):</span>
                     <span className={`font-extrabold font-mono ${st.openWebUi.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
                       {st.openWebUi.ok
-                        ? `HTTP ${st.openWebUi.httpStatus} (${st.openWebUi.version || 'Open WebUI'}, ${st.openWebUi.latencyMs}ms)`
+                        ? `HTTP ${st.openWebUi.httpStatus} (${st.openWebUi.version || 'Kotaemon'}, ${st.openWebUi.latencyMs}ms)`
                         : st.openWebUi.error || 'Unreachable'}
                     </span>
                   </div>
@@ -1825,7 +1825,7 @@ export const DataTransferCenter: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleApplyAimxPreset}
-                    title="Apply ai-stack-testbed demo preset (Ollama + OpenWebUI)"
+                    title="Apply ai-stack-testbed demo preset (Ollama + Kotaemon)"
                     className="px-2.5 py-1 rounded-lg bg-bg-input/70 hover:bg-bg-main border border-border-main text-text-muted hover:text-emerald-500 transition cursor-pointer text-xs font-semibold flex items-center gap-1.5"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-emerald-500/80" />
@@ -3326,7 +3326,7 @@ export const DataTransferCenter: React.FC = () => {
                       className="px-2.5 py-1 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold rounded-lg transition cursor-pointer flex items-center gap-1"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>+ Preset: AIMX (Ollama + OpenWebUI)</span>
+                      <span>+ Preset: AIMX (Ollama + Kotaemon)</span>
                     </button>
                     <button
                       type="button"

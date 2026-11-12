@@ -22,11 +22,14 @@ var ensureGpuRuntimeScript string
 // cudaRegex extracts the CUDA version reported in the standard nvidia-smi banner.
 var cudaRegex = regexp.MustCompile(`CUDA Version:\s*([0-9.]+)`)
 
-// setupSourceEnvironment provisions or reuses the source GPU VM and seeds Ollama (Gemma) + Open WebUI.
+// setupSourceEnvironment provisions or reuses the source GPU VM and seeds Ollama + the configured AI web service.
 func setupSourceEnvironment(tb *resty.Client, cfg TestConfig, auth AuthConfig, state *MigrationState) error {
 	start := time.Now()
+	appName := cfg.AIService.appDisplayName()
+	appPort := cfg.AIService.activeAppPort()
+
 	fmt.Println("\n================================================================================")
-	fmt.Println("🚀 [Stage 1] Source GPU VM Provisioning & AI Service (Gemma + Open WebUI) Setup")
+	fmt.Printf("🚀 [Stage 1] Source GPU VM Provisioning & AI Service (Ollama + %s) Setup\n", appName)
 	fmt.Println("================================================================================")
 
 	infraInfo, created, err := ensureSourceGpuInfra(tb, cfg, auth)
@@ -37,7 +40,7 @@ func setupSourceEnvironment(tb *resty.Client, cfg TestConfig, auth AuthConfig, s
 		waitWithCountdown(cfg.Timing.VmBootStabilizeSeconds, "Waiting for newly provisioned Source GPU VM boot & NVIDIA driver init")
 	}
 
-	metrics, sgIDs, err := extractNodeEndpointInfo(infraInfo, cfg.AIService.ModelName)
+	metrics, sgIDs, err := extractNodeEndpointInfo(infraInfo, cfg.AIService)
 	if err != nil {
 		return err
 	}
@@ -52,38 +55,58 @@ func setupSourceEnvironment(tb *resty.Client, cfg TestConfig, auth AuthConfig, s
 		return err
 	}
 
-	if err := deployDockerComposeStack(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, cfg.AIService); err != nil {
+	if err := deployOllamaContainerFirst(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, cfg.AIService); err != nil {
 		return err
 	}
 
-	waitWithCountdown(cfg.Timing.ServiceInitWaitSeconds, "Waiting for Source Ollama & Open WebUI containers to initialize")
-	if err := pollServiceEndpointsReady(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, cfg.AIService.OllamaPort, cfg.AIService.OpenWebUIPort, cfg.Timing); err != nil {
+	if err := pullOllamaModels(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, cfg.AIService, "Source"); err != nil {
 		return err
 	}
 
-	fmt.Printf("📥 Pulling Gemma model '%s' on Source GPU VM...\n", cfg.AIService.ModelName)
-	pullCmd := fmt.Sprintf("sudo docker exec aimx-ollama ollama pull %s", cfg.AIService.ModelName)
-	if _, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, []string{pullCmd}); err != nil {
-		return fmt.Errorf("failed to pull Gemma model %s on source VM: %w", cfg.AIService.ModelName, err)
+	fmt.Printf("🐳 Starting %s container on Source GPU VM (:%d)...\n", appName, appPort)
+	upCmd := fmt.Sprintf("cd %s && sudo docker compose up -d", cfg.AIService.RootDir)
+	if _, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, []string{upCmd}); err != nil {
+		return fmt.Errorf("failed to start %s container on source VM: %w", appName, err)
 	}
 
-	fmt.Println("⚡ Running baseline Gemma GPU inference & collecting Source metrics...")
+	waitWithCountdown(cfg.Timing.ServiceInitWaitSeconds, fmt.Sprintf("Waiting for Source Ollama & %s containers to initialize", appName))
+	if err := pollServiceEndpointsReady(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, cfg.AIService, cfg.Timing); err != nil {
+		return err
+	}
+
+	if cfg.AIService.isKotaemon() {
+		if err := ensureKotaemonOllamaDefaults(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, cfg.AIService, cfg.Timing); err != nil {
+			fmt.Printf("⚠️  Kotaemon auto-default check warning: %v (verify 'Resources' tab in browser if needed)\n", err)
+		}
+	}
+
+	warmupOllamaModels(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, cfg.AIService)
+
+	fmt.Println("⚡ Running baseline GPU inference & collecting Source metrics...")
 	if err := collectEndpointMetrics(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, &metrics, cfg.AIService); err != nil {
 		return fmt.Errorf("failed to collect baseline source metrics: %w", err)
 	}
 
-	metrics.WebUIUrl = fmt.Sprintf("http://%s:%d", metrics.PublicIP, cfg.AIService.OpenWebUIPort)
+	metrics.WebUIUrl = fmt.Sprintf("http://%s:%d", metrics.PublicIP, appPort)
 	state.Source = metrics
 	state.StageDurations["setup-source"] = time.Since(start).Round(time.Second).String()
 	if err := saveState(cfg.Beetle.StateFile, state); err != nil {
 		return err
 	}
 
-	fmt.Printf("✅ [Stage 1 Complete] Source GPU='%s' (%.0fGB), Gemma='%s', Speed=%.2f tok/s\n",
-		metrics.GpuModel, metrics.GpuVramGB, metrics.ModelName, metrics.EvalTokensPerSec)
+	fmt.Printf("✅ [Stage 1 Complete] Source GPU='%s' (%.0fGB), Models='%s', Speed=%.2f tok/s\n",
+		metrics.GpuModel, metrics.GpuVramGB, cfg.AIService.modelSummary(), metrics.EvalTokensPerSec)
 	fmt.Println("--------------------------------------------------------------------------------")
-	fmt.Printf("🌐 [Source Open WebUI Ready] Browser Link : %s\n", metrics.WebUIUrl)
+	fmt.Printf("🌐 [Source %s Ready] Browser Link : %s\n", appName, metrics.WebUIUrl)
 	fmt.Printf("🌐 [Source Ollama API Ready] API Endpoint : http://%s:%d/api/tags\n", metrics.PublicIP, cfg.AIService.OllamaPort)
+	if cfg.AIService.isKotaemon() {
+		fmt.Printf("🔐 [Kotaemon Login] Username: %s | Password: %s\n", cfg.AIService.AdminUsername, cfg.AIService.AdminPassword)
+		fmt.Println("📄 [Next Demo Action before Migration]:")
+		fmt.Println("   1) Open the Source Kotaemon link above and sign in.")
+		fmt.Println("   2) Upload Cloud-Barista conference PDF slides in the 'File Index' tab.")
+		fmt.Println("   3) Ask 2-3 questions to verify slide citations with yellow highlights on the right panel.")
+		fmt.Println("   4) Run '-mode recommend' -> '-mode migrate' -> '-mode verify' (or migrate via Beetle UX Lab UI).")
+	}
 	fmt.Println("--------------------------------------------------------------------------------")
 	return nil
 }
@@ -181,29 +204,31 @@ func ensureSourceGpuInfra(tb *resty.Client, cfg TestConfig, auth AuthConfig) (tb
 }
 
 // extractNodeEndpointInfo extracts connection and resource identifiers from the first node of a Tumblebug InfraInfo.
-func extractNodeEndpointInfo(infraInfo tbmodel.InfraInfo, modelName string) (EndpointMetrics, []string, error) {
+func extractNodeEndpointInfo(infraInfo tbmodel.InfraInfo, aiCfg AIServiceConfig) (EndpointMetrics, []string, error) {
 	if len(infraInfo.Node) == 0 {
 		return EndpointMetrics{}, nil, fmt.Errorf("infra '%s' has no nodes", infraInfo.Id)
 	}
 	n := infraInfo.Node[0]
 	return EndpointMetrics{
-		InfraID:     infraInfo.Id,
-		NodeID:      n.Id,
-		PublicIP:    n.PublicIP,
-		SshKeyID:    n.SshKeyId,
-		SshUsername: n.NodeUserName,
-		Csp:         n.ConnectionConfig.ProviderName,
-		Region:      n.Region.Region,
-		SpecID:      n.SpecId,
-		ImageID:     n.ImageId,
-		ModelName:   modelName,
+		InfraID:        infraInfo.Id,
+		NodeID:         n.Id,
+		PublicIP:       n.PublicIP,
+		SshKeyID:       n.SshKeyId,
+		SshUsername:    n.NodeUserName,
+		Csp:            n.ConnectionConfig.ProviderName,
+		Region:         n.Region.Region,
+		SpecID:         n.SpecId,
+		ImageID:        n.ImageId,
+		AppType:        aiCfg.AppType,
+		ModelName:      aiCfg.ModelName,
+		EmbeddingModel: aiCfg.EmbeddingModel,
 	}, n.SecurityGroupIds, nil
 }
 
-// openSecurityGroupServicePorts ensures Ollama and Open WebUI TCP ports are open on the Security Group via Tumblebug.
+// openSecurityGroupServicePorts ensures Ollama and active web app TCP ports are open on the Security Group via Tumblebug.
 func openSecurityGroupServicePorts(tb *resty.Client, tbEndpoint, nsID string, sgIDs []string, aiCfg AIServiceConfig) {
 	baseURL := strings.TrimRight(tbEndpoint, "/")
-	requiredPorts := []int{aiCfg.OpenWebUIPort, aiCfg.OllamaPort}
+	requiredPorts := []int{aiCfg.activeAppPort(), aiCfg.OllamaPort}
 
 	for _, sgID := range sgIDs {
 		sgURL := fmt.Sprintf("%s/tumblebug/ns/%s/resources/securityGroup/%s", baseURL, nsID, sgID)
@@ -260,8 +285,55 @@ func isPortCoveredByRules(rules []tbmodel.FirewallRuleInfo, targetPort int) bool
 	return false
 }
 
-// buildDockerComposeYAML generates the Docker Compose file for Ollama (GPU) and Open WebUI.
+// buildDockerComposeYAML generates the Docker Compose configuration for Ollama and Kotaemon or Open WebUI.
 func buildDockerComposeYAML(aiCfg AIServiceConfig) string {
+	appPort := aiCfg.activeAppPort()
+	if aiCfg.isKotaemon() {
+		return fmt.Sprintf(`services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: aimx-ollama
+    restart: unless-stopped
+    ports:
+      - "%d:11434"
+    environment:
+      - OLLAMA_LOAD_TIMEOUT=15m
+      - OLLAMA_KEEP_ALIVE=30m
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_NUM_PARALLEL=2
+    volumes:
+      - ./ollama:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  kotaemon:
+    # Lightweight image with built-in PDF viewer and citation highlighting.
+    image: ghcr.io/cinnamon/kotaemon:main-lite
+    container_name: aimx-kotaemon
+    restart: unless-stopped
+    ports:
+      - "%d:7860"
+    environment:
+      - GRADIO_SERVER_NAME=0.0.0.0
+      - GRADIO_SERVER_PORT=7860
+      - KH_OLLAMA_URL=http://ollama:11434/v1/
+      - LOCAL_MODEL=%s
+      - LOCAL_MODEL_EMBEDDINGS=%s
+      - KH_FEATURE_USER_MANAGEMENT=true
+      - KH_FEATURE_USER_MANAGEMENT_ADMIN=%s
+      - KH_FEATURE_USER_MANAGEMENT_PASSWORD=%s
+    volumes:
+      - ./ktem_app_data:/app/ktem_app_data
+    depends_on:
+      - ollama
+`, aiCfg.OllamaPort, appPort, aiCfg.ModelName, aiCfg.EmbeddingModel, aiCfg.AdminUsername, aiCfg.AdminPassword)
+	}
+
 	return fmt.Sprintf(`services:
   ollama:
     image: ollama/ollama:latest
@@ -295,7 +367,7 @@ func buildDockerComposeYAML(aiCfg AIServiceConfig) string {
       - ./open-webui:/app/backend/data
     depends_on:
       - ollama
-`, aiCfg.OllamaPort, aiCfg.OpenWebUIPort)
+`, aiCfg.OllamaPort, appPort)
 }
 
 // ensureDockerAndNvidiaRuntime verifies NVIDIA GPU driver, Docker Compose, and NVIDIA Container Toolkit across CSPs.
@@ -307,25 +379,102 @@ func ensureDockerAndNvidiaRuntime(tb *resty.Client, tbEndpoint, nsID, infraID, n
 	return nil
 }
 
-// deployDockerComposeStack creates the AI service directory structure, writes docker-compose.yml, and starts containers.
-func deployDockerComposeStack(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, aiCfg AIServiceConfig) error {
+// deployOllamaContainerFirst prepares the host directories, writes docker-compose.yml, and starts Ollama before model pulls.
+func deployOllamaContainerFirst(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, aiCfg AIServiceConfig) error {
 	if err := ensureDockerAndNvidiaRuntime(tb, tbEndpoint, nsID, infraID, nodeID); err != nil {
 		return err
 	}
 
 	composeContent := buildDockerComposeYAML(aiCfg)
+	subDir := aiCfg.appDataSubdir()
 	deployCmd := fmt.Sprintf(`set -e
-sudo mkdir -p %s/ollama %s/open-webui
+sudo mkdir -p %s/ollama %s/%s
 sudo chown -R $(id -un):$(id -gn) %s
 cat << 'EOF' > %s/docker-compose.yml
 %sEOF
-cd %s && sudo docker compose up -d`,
-		aiCfg.RootDir, aiCfg.RootDir, aiCfg.RootDir, aiCfg.RootDir, composeContent, aiCfg.RootDir)
+cd %s && sudo docker compose up -d ollama
+for i in $(seq 1 24); do
+  if curl -sf http://localhost:%d/api/tags >/dev/null 2>&1; then
+    break
+  fi
+  sleep 3
+done`,
+		aiCfg.RootDir, aiCfg.RootDir, subDir, aiCfg.RootDir, aiCfg.RootDir, composeContent, aiCfg.RootDir, aiCfg.OllamaPort)
 
-	fmt.Printf("🐳 Deploying Ollama + Open WebUI Docker Compose stack in '%s'...\n", aiCfg.RootDir)
-	_, err := execRemoteCmd(tb, tbEndpoint, nsID, infraID, nodeID, []string{deployCmd})
+	fmt.Printf("🐳 Preparing '%s' (%s) & starting Ollama container...\n", aiCfg.RootDir, aiCfg.appDisplayName())
+	if _, err := execRemoteCmd(tb, tbEndpoint, nsID, infraID, nodeID, []string{deployCmd}); err != nil {
+		return fmt.Errorf("failed to deploy Docker Compose config and Ollama on %s: %w", infraID, err)
+	}
+	return nil
+}
+
+// pullOllamaModels pulls the primary generation model and optional embedding model into aimx-ollama.
+func pullOllamaModels(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, aiCfg AIServiceConfig, roleLabel string) error {
+	fmt.Printf("📥 Pulling LLM '%s' on %s GPU VM...\n", aiCfg.ModelName, roleLabel)
+	pullGenCmd := fmt.Sprintf("sudo docker exec aimx-ollama ollama pull %s", aiCfg.ModelName)
+	if _, err := execRemoteCmd(tb, tbEndpoint, nsID, infraID, nodeID, []string{pullGenCmd}); err != nil {
+		return fmt.Errorf("failed to pull LLM model %s on %s VM: %w", aiCfg.ModelName, strings.ToLower(roleLabel), err)
+	}
+
+	if emb := strings.TrimSpace(aiCfg.EmbeddingModel); emb != "" {
+		fmt.Printf("📥 Pulling multilingual embedding model '%s' on %s GPU VM...\n", emb, roleLabel)
+		pullEmbCmd := fmt.Sprintf("sudo docker exec aimx-ollama ollama pull %s", emb)
+		if _, err := execRemoteCmd(tb, tbEndpoint, nsID, infraID, nodeID, []string{pullEmbCmd}); err != nil {
+			return fmt.Errorf("failed to pull embedding model %s on %s VM: %w", emb, strings.ToLower(roleLabel), err)
+		}
+	}
+	return nil
+}
+
+// warmupOllamaModels preloads the generation and embedding models into GPU VRAM with a 30m keep-alive window.
+func warmupOllamaModels(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, aiCfg AIServiceConfig) {
+	var cmds []string
+	cmds = append(cmds, fmt.Sprintf(`curl -sf http://localhost:%d/api/generate -d '{"model":"%s","prompt":"Hello","stream":false,"keep_alive":"30m"}' >/dev/null || true`,
+		aiCfg.OllamaPort, aiCfg.ModelName))
+	if emb := strings.TrimSpace(aiCfg.EmbeddingModel); emb != "" {
+		cmds = append(cmds, fmt.Sprintf(`curl -sf http://localhost:%d/api/embed -d '{"model":"%s","input":"Cloud-Barista conference slide search","keep_alive":"30m"}' >/dev/null || true`,
+			aiCfg.OllamaPort, emb))
+	}
+	cmds = append(cmds, "sudo docker exec aimx-ollama ollama ps || true")
+	_, _ = execRemoteCmd(tb, tbEndpoint, nsID, infraID, nodeID, []string{strings.Join(cmds, " && ")})
+}
+
+// ensureKotaemonOllamaDefaults sets the 'ollama' LLM and Embedding connectors to default=1 in Kotaemon's SQLite database.
+func ensureKotaemonOllamaDefaults(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, aiCfg AIServiceConfig, timing TimingConfig) error {
+	pyCmd := `sudo docker exec aimx-kotaemon python3 -c '
+import os, sqlite3
+db = "/app/ktem_app_data/user_data/sql.db"
+changed = False
+if os.path.exists(db):
+    conn = sqlite3.connect(db)
+    cur = conn.cursor()
+    tables = [r[0] for r in cur.execute("SELECT name FROM sqlite_master WHERE type=\x27table\x27").fetchall()]
+    for t in tables:
+        tl = t.lower()
+        if "llm" in tl or "embedding" in tl:
+            cols = [c[1] for c in cur.execute(f"PRAGMA table_info(\"{t}\")").fetchall()]
+            if "name" in cols and "default" in cols:
+                row = cur.execute(f"SELECT \"default\" FROM \"{t}\" WHERE name = ?", ("ollama",)).fetchone()
+                if row is not None and not row[0]:
+                    cur.execute(f"UPDATE \"{t}\" SET \"default\" = 0")
+                    cur.execute(f"UPDATE \"{t}\" SET \"default\" = 1 WHERE name = ?", ("ollama",))
+                    changed = True
+    if changed:
+        conn.commit()
+    conn.close()
+print("DEFAULT_UPDATED" if changed else "DEFAULT_UNCHANGED")
+'`
+	out, err := execRemoteCmdQuiet(tb, tbEndpoint, nsID, infraID, nodeID, []string{pyCmd})
 	if err != nil {
-		return fmt.Errorf("failed to deploy Docker Compose stack on %s: %w", infraID, err)
+		return err
+	}
+	if strings.Contains(out, "DEFAULT_UPDATED") {
+		fmt.Println("🔧 Activated 'ollama' as the default LLM & Embedding provider in Kotaemon sql.db; restarting container...")
+		if _, rErr := execRemoteCmdQuiet(tb, tbEndpoint, nsID, infraID, nodeID, []string{"sudo docker restart aimx-kotaemon"}); rErr != nil {
+			return rErr
+		}
+		time.Sleep(10 * time.Second)
+		return pollServiceEndpointsReady(tb, tbEndpoint, nsID, infraID, nodeID, aiCfg, timing)
 	}
 	return nil
 }

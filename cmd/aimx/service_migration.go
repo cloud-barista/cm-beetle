@@ -30,11 +30,15 @@ func (k *ephemeralSshKeyPair) Clear() {
 	k.TargetPrivateKey = ""
 }
 
-// migrateInfraAndAIService executes Stage 3: Target GPU VM provisioning + transx AI model/app migration + Target stack startup.
+// migrateInfraAndAIService executes Stage 3: Target GPU VM provisioning, transx AI stack migration, and Target startup.
 func migrateInfraAndAIService(beetle, tb *resty.Client, cfg TestConfig, auth AuthConfig, target TestCase, state *MigrationState) error {
 	stageStart := time.Now()
+	appName := cfg.AIService.appDisplayName()
+	appPort := cfg.AIService.activeAppPort()
+	relDbPath := cfg.AIService.relativeDbPath()
+
 	fmt.Println("\n================================================================================")
-	fmt.Printf("🚚 [Stage 3] Target GPU Infra Migration & AI Model/Application Migration (%s / %s)\n", target.Csp, target.Region)
+	fmt.Printf("🚚 [Stage 3] Target GPU Infra Migration & %s Service Migration (%s / %s)\n", appName, target.Csp, target.Region)
 	fmt.Println("================================================================================")
 
 	if state.Source.PublicIP == "" || state.Source.SshKeyID == "" {
@@ -54,30 +58,39 @@ func migrateInfraAndAIService(beetle, tb *resty.Client, cfg TestConfig, auth Aut
 	}
 	defer ephemeralKeys.Clear()
 
-	fmt.Println("⏸️  [Stage 3-3] Quiescing Source AI containers, syncing SQLite DB & normalizing permissions for transx...")
-	quiesceCmd := fmt.Sprintf(`set -e
-cd %s && sudo docker compose stop && sync
+	fmt.Printf("⏸️  [Stage 3-3] Quiescing Source %s & Ollama containers, syncing SQLite DB (%s) & normalizing permissions...\n",
+		appName, cfg.AIService.dbFileName())
+	stopCmd := fmt.Sprintf("cd %s && sudo docker compose stop && sync", cfg.AIService.RootDir)
+	if _, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, state.Source.NodeID, []string{stopCmd}); err != nil {
+		return fmt.Errorf("failed to stop source AI containers: %w", err)
+	}
+
+	waitWithCountdown(cfg.Timing.DbFlushWaitSeconds, fmt.Sprintf("Waiting for %s SQLite WAL & disk buffers to flush", appName))
+
+	hashAndPermCmd := fmt.Sprintf(`set -e
+sync
 sudo chown -R %s:%s %s
-sudo chmod -R u+rwX %s
+sudo chmod -R u+rwX,g+rX,o+rX %s
 echo "===QUIESCED_DB_SHA256==="
-sha256sum %s/open-webui/webui.db 2>/dev/null | awk '{print $1}' || true`,
-		cfg.AIService.RootDir, ephemeralKeys.SourceUsername, ephemeralKeys.SourceUsername, cfg.AIService.RootDir, cfg.AIService.RootDir, cfg.AIService.RootDir)
-	quiesceOut, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, state.Source.NodeID, []string{quiesceCmd})
+sha256sum %s/%s 2>/dev/null | awk '{print $1}' || true`,
+		ephemeralKeys.SourceUsername, ephemeralKeys.SourceUsername, cfg.AIService.RootDir,
+		cfg.AIService.RootDir,
+		strings.TrimRight(cfg.AIService.RootDir, "/"), relDbPath)
+	quiesceOut, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, state.Source.NodeID, []string{hashAndPermCmd})
 	if err != nil {
-		return fmt.Errorf("failed to quiesce source AI containers: %w", err)
+		return fmt.Errorf("failed to normalize permissions and hash DB on source VM: %w", err)
 	}
 	if latestSha := strings.TrimSpace(extractSection(quiesceOut, "===QUIESCED_DB_SHA256===", "")); latestSha != "" {
 		state.Source.WebUIDbSha256 = strings.Split(latestSha, "\n")[0]
+		fmt.Printf("   🔒 Source %s SHA-256: %s\n", cfg.AIService.dbFileName(), state.Source.WebUIDbSha256)
 	}
-
-	waitWithCountdown(cfg.Timing.DbFlushWaitSeconds, "Waiting for Open WebUI SQLite WAL & Ollama disk buffers to flush")
 
 	fmt.Println("🐳 [Stage 3-4] Ensuring Docker Compose & NVIDIA Container Runtime on Target GPU VM...")
 	if err := ensureDockerAndNvidiaRuntime(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID); err != nil {
 		return err
 	}
-	prepTargetDirCmd := fmt.Sprintf("sudo mkdir -p %s && sudo chown -R %s:%s %s",
-		cfg.AIService.RootDir, ephemeralKeys.TargetUsername, ephemeralKeys.TargetUsername, cfg.AIService.RootDir)
+	prepTargetDirCmd := fmt.Sprintf("sudo mkdir -p %s && sudo chown -R %s:%s %s && chmod 755 %s",
+		cfg.AIService.RootDir, ephemeralKeys.TargetUsername, ephemeralKeys.TargetUsername, cfg.AIService.RootDir, cfg.AIService.RootDir)
 	if _, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, []string{prepTargetDirCmd}); err != nil {
 		return fmt.Errorf("failed to prepare target AI service directory: %w", err)
 	}
@@ -98,51 +111,63 @@ sha256sum %s/open-webui/webui.db 2>/dev/null | awk '{print $1}' || true`,
 	state.DataTransferStrategy = txModel.Strategy
 	fmt.Printf("✅ transx Data Migration finished in %s!\n", state.DataTransferDuration)
 
-	fmt.Println("▶️  [Stage 3-6] Verifying transferred SQLite DB hash & starting Migrated Ollama (Gemma) + Open WebUI stack on Target GPU VM...")
-	startTargetCmd := fmt.Sprintf(`set -e
+	fmt.Printf("▶️  [Stage 3-6] Verifying transferred %s hash & starting Migrated Ollama + %s stack on Target GPU VM...\n",
+		cfg.AIService.dbFileName(), appName)
+	verifyTargetHashCmd := fmt.Sprintf(`set -e
 echo "===TRANSFERRED_DB_SHA256==="
-sha256sum %s/open-webui/webui.db 2>/dev/null | awk '{print $1}' || true
-cd %s && sudo docker compose up -d`, cfg.AIService.RootDir, cfg.AIService.RootDir)
-	startOut, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, []string{startTargetCmd})
+sha256sum %s/%s 2>/dev/null | awk '{print $1}' || true`,
+		strings.TrimRight(cfg.AIService.RootDir, "/"), relDbPath)
+	hashOut, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, []string{verifyTargetHashCmd})
 	if err != nil {
-		return fmt.Errorf("failed to start migrated AI service stack on target VM: %w", err)
+		return fmt.Errorf("failed to verify transferred SQLite DB hash on target VM: %w", err)
 	}
-	if transferredSha := strings.TrimSpace(extractSection(startOut, "===TRANSFERRED_DB_SHA256===", "")); transferredSha != "" {
+	if transferredSha := strings.TrimSpace(extractSection(hashOut, "===TRANSFERRED_DB_SHA256===", "")); transferredSha != "" {
 		state.Target.WebUIDbSha256 = strings.Split(transferredSha, "\n")[0]
-	}
-
-	// Resume source containers so both Source and Target Open WebUI remain online for side-by-side browser check.
-	resumeSourceCmd := fmt.Sprintf("cd %s && sudo docker compose up -d", cfg.AIService.RootDir)
-	_, _ = execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, state.Source.NodeID, []string{resumeSourceCmd})
-
-	waitWithCountdown(cfg.Timing.TargetServiceReadySeconds, "Waiting for Target GPU Ollama & Open WebUI services to initialize")
-	if err := pollServiceEndpointsReady(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, cfg.AIService.OllamaPort, cfg.AIService.OpenWebUIPort, cfg.Timing); err != nil {
-		return err
-	}
-
-	if !cfg.AIService.TransferModelWeights {
-		fmt.Printf("📥 Pulling Gemma model '%s' on Target GPU VM (transferModelWeights=false)...\n", cfg.AIService.ModelName)
-		pullCmd := fmt.Sprintf("sudo docker exec aimx-ollama ollama pull %s", cfg.AIService.ModelName)
-		if _, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, []string{pullCmd}); err != nil {
-			return fmt.Errorf("failed to pull Gemma model on target VM: %w", err)
+		if state.Source.WebUIDbSha256 != "" && state.Source.WebUIDbSha256 == state.Target.WebUIDbSha256 {
+			fmt.Printf("   ✅ Target %s SHA-256 Verified Identical (%s)\n", cfg.AIService.dbFileName(), state.Target.WebUIDbSha256)
 		}
 	}
 
-	fmt.Printf("🔥 [Stage 3-7] Pre-warming migrated model '%s' into Target GPU VRAM (cold load may take 3~5 min)...\n", cfg.AIService.ModelName)
-	warmupCmd := fmt.Sprintf(`curl -s http://localhost:%d/api/generate -d '{"model":"%s","prompt":"Hello","stream":false,"keep_alive":"30m"}' >/dev/null && sudo docker exec aimx-ollama ollama ps`,
-		cfg.AIService.OllamaPort, cfg.AIService.ModelName)
-	_, _ = execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, []string{warmupCmd})
+	if !cfg.AIService.TransferModelWeights {
+		startOllamaCmd := fmt.Sprintf("cd %s && sudo docker compose up -d ollama", cfg.AIService.RootDir)
+		if _, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, []string{startOllamaCmd}); err != nil {
+			return fmt.Errorf("failed to start Ollama on target VM: %w", err)
+		}
+		if err := pullOllamaModels(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, cfg.AIService, "Target"); err != nil {
+			return err
+		}
+	}
 
-	state.Source.WebUIUrl = fmt.Sprintf("http://%s:%d", state.Source.PublicIP, cfg.AIService.OpenWebUIPort)
-	state.Target.WebUIUrl = fmt.Sprintf("http://%s:%d", state.Target.PublicIP, cfg.AIService.OpenWebUIPort)
+	startTargetCmd := fmt.Sprintf("cd %s && sudo docker compose up -d", cfg.AIService.RootDir)
+	if _, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, []string{startTargetCmd}); err != nil {
+		return fmt.Errorf("failed to start migrated AI service stack on target VM: %w", err)
+	}
+
+	// Resume source containers so both Source and Target web UIs remain online for side-by-side comparison.
+	resumeSourceCmd := fmt.Sprintf("cd %s && sudo docker compose up -d", cfg.AIService.RootDir)
+	_, _ = execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, state.Source.NodeID, []string{resumeSourceCmd})
+
+	waitWithCountdown(cfg.Timing.TargetServiceReadySeconds, fmt.Sprintf("Waiting for Target GPU Ollama & %s services to initialize", appName))
+	if err := pollServiceEndpointsReady(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, cfg.AIService, cfg.Timing); err != nil {
+		return err
+	}
+
+	fmt.Printf("🔥 [Stage 3-7] Pre-warming migrated models (%s) into Target GPU VRAM...\n", cfg.AIService.modelSummary())
+	warmupOllamaModels(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, cfg.AIService)
+
+	state.Source.WebUIUrl = fmt.Sprintf("http://%s:%d", state.Source.PublicIP, appPort)
+	state.Target.WebUIUrl = fmt.Sprintf("http://%s:%d", state.Target.PublicIP, appPort)
 	state.StageDurations["migrate"] = time.Since(stageStart).Round(time.Second).String()
 	if err := saveState(cfg.Beetle.StateFile, state); err != nil {
 		return err
 	}
 
 	fmt.Println("--------------------------------------------------------------------------------")
-	fmt.Printf("🌐 [Source Open WebUI Link] %s\n", state.Source.WebUIUrl)
-	fmt.Printf("🌐 [Target Open WebUI Link] %s  (Migrated!)\n", state.Target.WebUIUrl)
+	fmt.Printf("🌐 [Source %s Link] %s\n", appName, state.Source.WebUIUrl)
+	fmt.Printf("🌐 [Target %s Link] %s  (Migrated!)\n", appName, state.Target.WebUIUrl)
+	if cfg.AIService.isKotaemon() {
+		fmt.Printf("🔐 [Kotaemon Login] Username: %s | Password: %s\n", cfg.AIService.AdminUsername, cfg.AIService.AdminPassword)
+	}
 	fmt.Println("--------------------------------------------------------------------------------")
 	return nil
 }
@@ -156,11 +181,11 @@ func refreshSourceEndpointFromTumblebug(tb *resty.Client, cfg TestConfig, auth A
 	if err != nil || resp.IsError() {
 		return fmt.Errorf("failed to fetch source infra '%s' from Tumblebug: err=%v, status=%d", cfg.Source.InfraID, err, resp.StatusCode())
 	}
-	metrics, _, err := extractNodeEndpointInfo(infraInfo, cfg.AIService.ModelName)
+	metrics, _, err := extractNodeEndpointInfo(infraInfo, cfg.AIService)
 	if err != nil {
 		return err
 	}
-	metrics.WebUIUrl = fmt.Sprintf("http://%s:%d", metrics.PublicIP, cfg.AIService.OpenWebUIPort)
+	metrics.WebUIUrl = fmt.Sprintf("http://%s:%d", metrics.PublicIP, cfg.AIService.activeAppPort())
 	state.Source = metrics
 	return nil
 }
@@ -209,7 +234,25 @@ func fetchSshPrivateKey(tb *resty.Client, tbEndpoint, nsID, sshKeyID string) (st
 	return keyInfo.PrivateKey, firstNonEmpty(keyInfo.VerifiedUsername, keyInfo.Username), nil
 }
 
-// buildTransxFilter constructs the transx.FilterOption from configured filter rules and model weight options.
+// isProtectedKotaemonPattern returns true if a filter exclude pattern would strip required Kotaemon or SQLite WAL data.
+func isProtectedKotaemonPattern(pattern string) bool {
+	lower := strings.ToLower(strings.TrimSpace(pattern))
+	if strings.Contains(lower, ".db-wal") || strings.Contains(lower, ".db-shm") {
+		return true
+	}
+	for _, prefix := range []string{
+		"ktem_app_data/user_data",
+		"ktem_app_data/chunks_cache_dir",
+		"ktem_app_data/markdown_cache_dir",
+	} {
+		if strings.HasPrefix(lower, prefix) || lower == "ktem_app_data" || lower == "ktem_app_data/**" || lower == "ktem_app_data/*" {
+			return true
+		}
+	}
+	return false
+}
+
+// buildTransxFilter constructs the transx.FilterOption while protecting SQLite WAL and Kotaemon state directories.
 func buildTransxFilter(aiCfg AIServiceConfig) *transx.FilterOption {
 	var includes []string
 	seenInc := make(map[string]bool)
@@ -226,10 +269,14 @@ func buildTransxFilter(aiCfg AIServiceConfig) *transx.FilterOption {
 	addExclude := func(patterns ...string) {
 		for _, p := range patterns {
 			p = strings.TrimSpace(p)
-			if p != "" && !seenExc[p] {
-				seenExc[p] = true
-				excludes = append(excludes, p)
+			if p == "" || seenExc[p] {
+				continue
 			}
+			if aiCfg.isKotaemon() && isProtectedKotaemonPattern(p) {
+				continue
+			}
+			seenExc[p] = true
+			excludes = append(excludes, p)
 		}
 	}
 
@@ -348,5 +395,3 @@ func firstNonEmpty(values ...string) string {
 	}
 	return ""
 }
-
-

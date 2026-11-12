@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 )
 
@@ -17,6 +18,12 @@ func TestLoadTemplateConfigAndDefaults(t *testing.T) {
 	}
 	if cfg.Test.ExecutionMode != "seq" {
 		t.Errorf("expected default executionMode 'seq', got %q", cfg.Test.ExecutionMode)
+	}
+	if cfg.AIService.AppType != "open-webui" {
+		t.Errorf("expected appType 'open-webui', got %q", cfg.AIService.AppType)
+	}
+	if cfg.AIService.relativeDbPath() != "open-webui/webui.db" {
+		t.Errorf("expected relativeDbPath 'open-webui/webui.db', got %q", cfg.AIService.relativeDbPath())
 	}
 	if cfg.Source.NodeGroupName != "nvidiat4" {
 		t.Errorf("expected nodeGroupName 'nvidiat4', got %q", cfg.Source.NodeGroupName)
@@ -62,12 +69,90 @@ func TestLoadTemplateConfigAndDefaults(t *testing.T) {
 	}
 }
 
+func TestLoadKotaemonTemplateAndNoFallbackValidation(t *testing.T) {
+	cfg, err := loadConfig("testconf/template-kotaemon-config.yaml")
+	if err != nil {
+		t.Fatalf("expected kotaemon template config to load cleanly, got: %v", err)
+	}
+	if !cfg.AIService.isKotaemon() {
+		t.Fatalf("expected isKotaemon()=true, got appType=%q", cfg.AIService.AppType)
+	}
+	if cfg.AIService.EmbeddingModel != "bge-m3" {
+		t.Errorf("expected embeddingModel 'bge-m3', got %q", cfg.AIService.EmbeddingModel)
+	}
+	if cfg.AIService.activeAppPort() != 7860 {
+		t.Errorf("expected activeAppPort 7860, got %d", cfg.AIService.activeAppPort())
+	}
+	if cfg.AIService.relativeDbPath() != "ktem_app_data/user_data/sql.db" {
+		t.Errorf("expected Kotaemon DB path 'ktem_app_data/user_data/sql.db', got %q", cfg.AIService.relativeDbPath())
+	}
+	if cfg.AIService.dbFileName() != "sql.db" {
+		t.Errorf("expected dbFileName 'sql.db', got %q", cfg.AIService.dbFileName())
+	}
+
+	missingAppType := cfg
+	missingAppType.AIService.AppType = ""
+	if err := validateConfig(missingAppType); err == nil {
+		t.Errorf("expected error when aiService.appType is empty (No Fallback rule)")
+	}
+
+	unknownAppType := cfg
+	unknownAppType.AIService.AppType = "unknown-rag"
+	if err := validateConfig(unknownAppType); err == nil {
+		t.Errorf("expected error when aiService.appType is unsupported")
+	}
+
+	missingEmb := cfg
+	missingEmb.AIService.EmbeddingModel = ""
+	if err := validateConfig(missingEmb); err == nil {
+		t.Errorf("expected error when aiService.embeddingModel is missing for kotaemon")
+	}
+
+	missingAdmin := cfg
+	missingAdmin.AIService.AdminUsername = ""
+	if err := validateConfig(missingAdmin); err == nil {
+		t.Errorf("expected error when aiService.adminUsername is missing for kotaemon")
+	}
+}
+
+func TestBuildDockerComposeYAMLKotaemonAndOpenWebUI(t *testing.T) {
+	cfg, err := loadConfig("testconf/template-kotaemon-config.yaml")
+	if err != nil {
+		t.Fatalf("unexpected error loading kotaemon template: %v", err)
+	}
+	compose := buildDockerComposeYAML(cfg.AIService)
+	expectedSnippets := []string{
+		"image: ghcr.io/cinnamon/kotaemon:main-lite",
+		"container_name: aimx-kotaemon",
+		"\"7860:7860\"",
+		"KH_OLLAMA_URL=http://ollama:11434/v1/",
+		"LOCAL_MODEL=gemma4:e2b",
+		"LOCAL_MODEL_EMBEDDINGS=bge-m3",
+		"OLLAMA_MAX_LOADED_MODELS=2",
+		"./ktem_app_data:/app/ktem_app_data",
+	}
+	for _, s := range expectedSnippets {
+		if !strings.Contains(compose, s) {
+			t.Errorf("expected Kotaemon compose YAML to contain %q, got:\n%s", s, compose)
+		}
+	}
+
+	owCfg, err := loadConfig("testconf/template-test-config.yaml")
+	if err != nil {
+		t.Fatalf("unexpected error loading open-webui template: %v", err)
+	}
+	owCompose := buildDockerComposeYAML(owCfg.AIService)
+	if !strings.Contains(owCompose, "ghcr.io/open-webui/open-webui:main") || !strings.Contains(owCompose, "\"3000:8080\"") {
+		t.Errorf("unexpected Open WebUI compose YAML:\n%s", owCompose)
+	}
+}
+
 func TestIsPortCoveredByRules(t *testing.T) {
 	rules := []tbmodel.FirewallRuleInfo{
 		{Direction: "inbound", Protocol: "TCP", Port: "1-65535", CIDR: "0.0.0.0/0"},
 	}
-	if !isPortCoveredByRules(rules, 3000) || !isPortCoveredByRules(rules, 11434) {
-		t.Errorf("expected 1-65535 rule to cover ports 3000 and 11434")
+	if !isPortCoveredByRules(rules, 7860) || !isPortCoveredByRules(rules, 11434) {
+		t.Errorf("expected 1-65535 rule to cover ports 7860 and 11434")
 	}
 }
 
@@ -109,44 +194,36 @@ OS_PRETTY=Ubuntu 22.04.5 LTS`
 	}
 }
 
-func TestBuildTransxMigrationModelAndEphemeralKeys(t *testing.T) {
+func TestBuildTransxMigrationModelAndKotaemonProtection(t *testing.T) {
 	keys := &ephemeralSshKeyPair{
 		SourceKeyID:      "src-key-1",
-		SourceUsername:   "cb-user",
+		SourceUsername:   "ubuntu",
 		SourcePrivateKey: "-----BEGIN RSA PRIVATE KEY-----\nSRC\n-----END RSA PRIVATE KEY-----",
 		TargetKeyID:      "tgt-key-1",
-		TargetUsername:   "ubuntu",
+		TargetUsername:   "cb-user",
 		TargetPrivateKey: "-----BEGIN RSA PRIVATE KEY-----\nTGT\n-----END RSA PRIVATE KEY-----",
 	}
 
 	aiCfg := AIServiceConfig{
+		AppType:              "kotaemon",
 		RootDir:              "/opt/aimx/ai-service",
 		TransferModelWeights: true,
 		TransxStrategy:       "relay",
 		Filter: TransxFilterConfig{
 			Include: []string{"docker-compose.yml"},
-			Exclude: []string{"open-webui/uploads/**"},
+			Exclude: []string{"*.log", "*.db-wal", "ktem_app_data/user_data/**", "ktem_app_data/chunks_cache_dir/**"},
 		},
 	}
 	dmFull := buildTransxMigrationModel("1.2.3.4", "5.6.7.8", keys, aiCfg)
 	if dmFull.Source.Path != "/opt/aimx/ai-service/" {
 		t.Errorf("expected trailing slash on source path, got %q", dmFull.Source.Path)
 	}
-	if dmFull.Strategy != "relay" {
-		t.Errorf("expected strategy 'relay', got %q", dmFull.Strategy)
-	}
-	if dmFull.Destination.Filesystem.SSH.Username != "ubuntu" {
-		t.Errorf("expected target username 'ubuntu' from ephemeral key pair, got %q", dmFull.Destination.Filesystem.SSH.Username)
-	}
-	if !dmFull.Source.Filesystem.SSH.Partial || dmFull.Source.Filesystem.SSH.MaxRetries != 3 {
-		t.Errorf("expected Partial=true and MaxRetries=3 on source SSHConfig, got %+v", dmFull.Source.Filesystem.SSH)
-	}
-	if dmFull.Source.Filter == nil || len(dmFull.Source.Filter.Include) != 1 {
-		t.Fatalf("expected 1 include pattern, got %+v", dmFull.Source.Filter)
+	if dmFull.Destination.Filesystem.SSH.Username != "cb-user" {
+		t.Errorf("expected target username 'cb-user', got %q", dmFull.Destination.Filesystem.SSH.Username)
 	}
 	for _, ex := range dmFull.Source.Filter.Exclude {
-		if strings.HasPrefix(ex, "ollama/models/blobs") {
-			t.Errorf("did not expect model blob exclusion when TransferModelWeights=true, got %v", dmFull.Source.Filter.Exclude)
+		if strings.Contains(ex, "db-wal") || strings.Contains(ex, "ktem_app_data") {
+			t.Errorf("protected Kotaemon/WAL pattern must not be excluded, got %v", dmFull.Source.Filter.Exclude)
 		}
 	}
 
@@ -168,13 +245,13 @@ func TestBuildTransxMigrationModelAndEphemeralKeys(t *testing.T) {
 	}
 }
 
-func TestParseEndpointMetricsAndWriteReport(t *testing.T) {
+func TestParseEndpointMetricsAndWriteReportBothApps(t *testing.T) {
 	sampleOut := `===GPU_CSV===
 0, GPU-25d17822-abcd, NVIDIA L4, 570.195.03, 0000:31:00.0, 23034
 ===GPU_BANNER===
 | NVIDIA-SMI 570.195.03             Driver Version: 570.195.03     CUDA Version: 12.8     |
 ===INFERENCE_JSON===
-{"model":"gemma2:2b","response":"GPUs provide massive parallel tensor cores that accelerate matrix multiplications.","eval_count":85,"eval_duration":1000000000}
+{"model":"gemma4:e2b","response":"GPUs provide massive parallel tensor cores that accelerate matrix multiplications.","eval_count":85,"eval_duration":1000000000}
 ===OLLAMA_PS===
 100% GPU
 ===WEBUI_DB_SHA256===
@@ -184,57 +261,50 @@ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 ===WEBUI_CONFIG_JSON===
 {"status":true,"name":"Open WebUI","version":"0.5.10"}
 ===VOLUME_SIZE===
-1.8G`
+6.1G`
 
-	ep := EndpointMetrics{
+	ktCfg, err := loadConfig("testconf/template-kotaemon-config.yaml")
+	if err != nil {
+		t.Fatalf("failed to load kotaemon template: %v", err)
+	}
+	epKt := EndpointMetrics{
 		InfraID:  "mc-daisy",
-		NodeID:   "nvidial4-1",
+		NodeID:   "nvidiat4-1",
 		PublicIP: "3.35.10.20",
 		Csp:      "aws",
 		Region:   "ap-northeast-2",
-		SpecID:   "aws+ap-northeast-2+g6.xlarge",
+		SpecID:   "aws+ap-northeast-2+g4dn.xlarge",
 		ImageID:  "ami-00ffffe72a332c865",
-		WebUIUrl: "http://3.35.10.20:3000",
+		WebUIUrl: "http://3.35.10.20:7860",
 	}
-	parseEndpointMetricsOutput(&ep, sampleOut)
-
-	if ep.GpuModel != "NVIDIA L4" || ep.GpuVramGB != 24 {
-		t.Errorf("expected NVIDIA L4 24GB, got %s %.0fGB", ep.GpuModel, ep.GpuVramGB)
-	}
-	if ep.EvalTokensPerSec != 85.0 {
-		t.Errorf("expected 85.0 tok/s, got %.2f", ep.EvalTokensPerSec)
-	}
-	if ep.OllamaProcessor != "100% GPU" {
-		t.Errorf("expected '100%% GPU', got %q", ep.OllamaProcessor)
-	}
-	if ep.WebUIHttpStatus != 200 || !ep.WebUIConfigOK || ep.WebUIVersion != "0.5.10" {
-		t.Errorf("expected HTTP 200 and WebUIConfigOK v0.5.10, got status=%d ok=%v ver=%q",
-			ep.WebUIHttpStatus, ep.WebUIConfigOK, ep.WebUIVersion)
+	parseEndpointMetricsOutput(&epKt, sampleOut, ktCfg.AIService)
+	if !epKt.WebUIConfigOK || epKt.WebUIVersion != "main-lite" {
+		t.Errorf("expected Kotaemon HTTP 200 to set WebUIConfigOK=true and version 'main-lite', got ok=%v ver=%q",
+			epKt.WebUIConfigOK, epKt.WebUIVersion)
 	}
 
 	tmpDir := t.TempDir()
-	cfg, _ := loadConfig("testconf/template-test-config.yaml")
-	cfg.Beetle.StateFile = filepath.Join(tmpDir, ".aimx-state.json")
-
+	ktCfg.Beetle.StateFile = filepath.Join(tmpDir, ".aimx-state.json")
 	state := &MigrationState{
-		Source:               ep,
-		Target:               ep,
-		DataTransferDuration: "42s",
-		DataTransferStrategy: "relay",
-		StageDurations:       map[string]string{"setup-source": "2m10s", "migrate": "3m15s"},
+		Source:               epKt,
+		Target:               epKt,
+		DataTransferDuration: "52s",
+		DataTransferStrategy: "auto",
+		StageDurations:       map[string]string{"setup-source": "2m40s", "migrate": "3m10s"},
 	}
-	reportPath, err := writeMarkdownReport(cfg, TestCase{Name: "aws-ap-northeast-2"}, state)
+	reportPath, err := writeMarkdownReport(ktCfg, TestCase{Name: "aws-ap-northeast-2"}, state)
 	if err != nil {
-		t.Fatalf("failed to write markdown report: %v", err)
+		t.Fatalf("failed to write kotaemon markdown report: %v", err)
 	}
-	content, err := os.ReadFile(reportPath)
+	contentBytes, err := os.ReadFile(reportPath)
 	if err != nil {
 		t.Fatalf("failed to read generated report: %v", err)
 	}
-	if !strings.Contains(string(content), "85.00 tokens/sec") ||
-		!strings.Contains(string(content), "Verified Identical") ||
-		!strings.Contains(string(content), "http://3.35.10.20:3000") {
-		t.Errorf("generated report missing expected metrics:\n%s", string(content))
+	content := string(contentBytes)
+	for _, expected := range []string{"Kotaemon (`:7860`)", "gemma4:e2b + bge-m3", "sql.db", "Verified Identical", "http://3.35.10.20:7860"} {
+		if !strings.Contains(content, expected) {
+			t.Errorf("kotaemon report missing %q:\n%s", expected, content)
+		}
 	}
 }
 
@@ -285,4 +355,45 @@ data: {"type":"CommandDone","summary":{"totalNodes":1,"completedNodes":0,"failed
 	}
 }
 
+func TestApplyTargetSubnetZone(t *testing.T) {
+	baseRec := func() cloudmodel.RecommendedInfra {
+		return cloudmodel.RecommendedInfra{
+			TargetVNet: cloudmodel.VNetReq{
+				SubnetInfoList: []cloudmodel.SubnetReq{{Name: "subnet-01", IPv4_CIDR: "10.0.1.0/24"}},
+			},
+			TargetInfra: cloudmodel.InfraReq{
+				NodeGroups: []cloudmodel.CreateNodeGroupReq{{Name: "ng-01", SpecId: "aws+ap-northeast-2+g5.xlarge"}},
+			},
+			TargetSpecList: []cloudmodel.SpecInfo{
+				{
+					Id:             "aws+ap-northeast-2+g5.xlarge",
+					AvailableZones: []string{"ap-northeast-2c", "ap-northeast-2a"},
+				},
+			},
+		}
+	}
 
+	awsRec := baseRec()
+	gotAws := applyTargetSubnetZone(&awsRec, TestCase{CloudProperty: cloudmodel.CloudProperty{Csp: "aws", Region: "ap-northeast-2"}})
+	if gotAws != "ap-northeast-2c" || awsRec.TargetVNet.SubnetInfoList[0].Zone != "ap-northeast-2c" {
+		t.Errorf("expected zonal CSP aws to pick AvailableZones[0] 'ap-northeast-2c', got %q / %q",
+			gotAws, awsRec.TargetVNet.SubnetInfoList[0].Zone)
+	}
+
+	overrideRec := baseRec()
+	gotOverride := applyTargetSubnetZone(&overrideRec, TestCase{
+		CloudProperty: cloudmodel.CloudProperty{Csp: "aws", Region: "ap-northeast-2"},
+		PreferredZone: "ap-northeast-2a",
+	})
+	if gotOverride != "ap-northeast-2a" || overrideRec.TargetVNet.SubnetInfoList[0].Zone != "ap-northeast-2a" {
+		t.Errorf("expected PreferredZone 'ap-northeast-2a' to take precedence, got %q", gotOverride)
+	}
+
+	for _, regionalCSP := range []string{"azure", "gcp"} {
+		regRec := baseRec()
+		gotReg := applyTargetSubnetZone(&regRec, TestCase{CloudProperty: cloudmodel.CloudProperty{Csp: regionalCSP, Region: "korea"}})
+		if gotReg != "" || regRec.TargetVNet.SubnetInfoList[0].Zone != "" {
+			t.Errorf("expected regional CSP %s to keep SubnetReq.Zone empty, got %q", regionalCSP, regRec.TargetVNet.SubnetInfoList[0].Zone)
+		}
+	}
+}

@@ -9,7 +9,7 @@ GO := $(GOPROXY_OPTION) go
 GOPATH := $(shell go env GOPATH)
 SWAG := ~/go/bin/swag
 
-.PHONY: all dependency tidy lint update swag swagger build arm prod run stop clean help up up-no-cache compose compose-no-cache test-infra test-rdbms test-infra-with-nlb test-os test-data test-async test-rate-limiting test-multi-infra-recommendation test-gpu-recommendation test-k8s-infra-recommendation test-k8s-infra-migration test-aimx
+.PHONY: all dependency tidy lint update swag swagger build arm prod run stop clean help up up-no-cache compose compose-no-cache test-infra test-rdbms test-infra-with-nlb test-os test-data test-async test-rate-limiting test-multi-infra-recommendation test-gpu-recommendation test-k8s-infra-recommendation test-k8s-infra-migration test-aimx test-aimx-kotaemon
 
 all: swag build ## Default target: build the project
 
@@ -204,7 +204,7 @@ test-k8s-infra-recommendation: ## Run the K8s infra test CLI in recommendation m
 test-k8s-infra-migration: ## Run the K8s infra test CLI in migration mode (alias)
 	@$(MAKE) test-k8s-infra EXTRA_ARGS="-mode migration"
 
-test-aimx: ## Run AIMX (AI Migration X) GPU & AI service migration prototype CLI (Usage: make test-aimx EXTRA_ARGS="-mode setup-source")
+test-aimx: ## Run AIMX (AI Migration X) GPU & AI service migration prototype CLI (Usage: make test-aimx EXTRA_ARGS="-config testconf/kotaemon-config.yaml -mode setup-source")
 	@echo "Running AIMX (AI Migration X) CLI..."
 	@if [ ! -f cmd/aimx/testconf/auth-config.json ]; then \
 		cp cmd/aimx/testconf/template-auth-config.json cmd/aimx/testconf/auth-config.json; \
@@ -214,7 +214,14 @@ test-aimx: ## Run AIMX (AI Migration X) GPU & AI service migration prototype CLI
 		cp cmd/aimx/testconf/template-test-config.yaml cmd/aimx/testconf/test-config.yaml; \
 		echo "Created cmd/aimx/testconf/test-config.yaml from template."; \
 	fi
+	@if [ ! -f cmd/aimx/testconf/kotaemon-config.yaml ]; then \
+		cp cmd/aimx/testconf/template-kotaemon-config.yaml cmd/aimx/testconf/kotaemon-config.yaml; \
+		echo "Created cmd/aimx/testconf/kotaemon-config.yaml from template."; \
+	fi
 	@cd cmd/aimx && $(GO) run . -config testconf/test-config.yaml $(EXTRA_ARGS)
+
+test-aimx-kotaemon: ## Run AIMX CLI with Kotaemon + Ollama (gemma4:e2b + bge-m3) preset (Usage: make test-aimx-kotaemon EXTRA_ARGS="-mode setup-source")
+	@$(MAKE) test-aimx EXTRA_ARGS="-config testconf/kotaemon-config.yaml $(EXTRA_ARGS)"
 
 test-data-clean: ## Clean up data migration test artifacts
 	@echo "Cleaning data migration test artifacts..."

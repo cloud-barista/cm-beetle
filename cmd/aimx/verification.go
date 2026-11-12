@@ -27,9 +27,17 @@ type openWebUIConfigResponse struct {
 	Version string `json:"version"`
 }
 
-// collectEndpointMetrics gathers GPU hardware details, Gemma inference tok/s, and Open WebUI state on a VM.
+// collectEndpointMetrics gathers GPU hardware details, LLM tok/s, and web service health on a GPU VM.
 func collectEndpointMetrics(tb *resty.Client, tbEndpoint, nsID, infraID string, ep *EndpointMetrics, aiCfg AIServiceConfig) error {
 	escapedPrompt := strings.ReplaceAll(aiCfg.TestPrompt, `"`, `\"`)
+	appPort := aiCfg.activeAppPort()
+	relDbPath := aiCfg.relativeDbPath()
+
+	configProbeCmd := "true"
+	if !aiCfg.isKotaemon() {
+		configProbeCmd = fmt.Sprintf("curl -s http://localhost:%d/api/config 2>/dev/null || true", appPort)
+	}
+
 	metricsScript := fmt.Sprintf(`echo "===GPU_CSV==="
 nvidia-smi --query-gpu=index,uuid,name,driver_version,pci.bus_id,memory.total --format=csv,noheader,nounits 2>/dev/null || true
 echo "===GPU_BANNER==="
@@ -40,35 +48,44 @@ echo ""
 echo "===OLLAMA_PS==="
 sudo docker exec aimx-ollama ollama ps 2>/dev/null | awk 'NR==2 {for(i=1;i<=NF;i++) if($i ~ /%%/) {print $i, $(i+1); break}}' || true
 echo "===WEBUI_DB_SHA256==="
-sudo sha256sum %s/open-webui/webui.db 2>/dev/null | awk '{print $1}' || true
+sudo sha256sum %s/%s 2>/dev/null | awk '{print $1}' || true
 echo "===WEBUI_HTTP==="
 curl -s -o /dev/null -w "%%{http_code}" http://localhost:%d/ || true
 echo ""
 echo "===WEBUI_CONFIG_JSON==="
-curl -s http://localhost:%d/api/config 2>/dev/null || true
+%s
 echo ""
 echo "===VOLUME_SIZE==="
 sudo du -sh %s 2>/dev/null | awk '{print $1}' || true`,
-		aiCfg.OllamaPort, aiCfg.ModelName, escapedPrompt, aiCfg.RootDir, aiCfg.OpenWebUIPort, aiCfg.OpenWebUIPort, aiCfg.RootDir)
+		aiCfg.OllamaPort, aiCfg.ModelName, escapedPrompt,
+		strings.TrimRight(aiCfg.RootDir, "/"), relDbPath,
+		appPort, configProbeCmd, aiCfg.RootDir)
 
 	out, err := execRemoteCmdQuiet(tb, tbEndpoint, nsID, infraID, ep.NodeID, []string{metricsScript})
 	if err != nil {
 		return err
 	}
 
-	ep.WebUIUrl = fmt.Sprintf("http://%s:%d", ep.PublicIP, aiCfg.OpenWebUIPort)
-	parseEndpointMetricsOutput(ep, out)
-	ep.ExternalWebUIReachable = probeExternalWebUI(ep.PublicIP, aiCfg.OpenWebUIPort)
+	ep.AppType = aiCfg.AppType
+	ep.EmbeddingModel = aiCfg.EmbeddingModel
+	ep.WebUIUrl = fmt.Sprintf("http://%s:%d", ep.PublicIP, appPort)
+	parseEndpointMetricsOutput(ep, out, aiCfg)
+	ep.ExternalWebUIReachable = probeExternalWebUI(ep.PublicIP, aiCfg)
 	return nil
 }
 
-// probeExternalWebUI tests whether Open WebUI is directly reachable over HTTP from the AIMX host.
-func probeExternalWebUI(publicIP string, port int) bool {
+// probeExternalWebUI tests whether the active AI web application is reachable over HTTP from the AIMX host.
+func probeExternalWebUI(publicIP string, aiCfg AIServiceConfig) bool {
+	port := aiCfg.activeAppPort()
 	if strings.TrimSpace(publicIP) == "" || port <= 0 {
 		return false
 	}
 	client := &http.Client{Timeout: 5 * time.Second}
-	url := fmt.Sprintf("http://%s:%d/api/config", publicIP, port)
+	probePath := "/api/config"
+	if aiCfg.isKotaemon() {
+		probePath = "/"
+	}
+	url := fmt.Sprintf("http://%s:%d%s", publicIP, port, probePath)
 	resp, err := client.Get(url)
 	if err != nil {
 		return false
@@ -78,7 +95,7 @@ func probeExternalWebUI(publicIP string, port int) bool {
 }
 
 // parseEndpointMetricsOutput populates EndpointMetrics from the structured remote verification output.
-func parseEndpointMetricsOutput(ep *EndpointMetrics, output string) {
+func parseEndpointMetricsOutput(ep *EndpointMetrics, output string, aiCfg AIServiceConfig) {
 	cudaVer := parseCudaVersion(output)
 	cards := parseNvidiaSmiCsv(extractSection(output, "===GPU_CSV===", "===GPU_BANNER==="), cudaVer)
 	if len(cards) > 0 {
@@ -120,7 +137,12 @@ func parseEndpointMetricsOutput(ep *EndpointMetrics, output string) {
 			ep.WebUIHttpStatus = code
 		}
 	}
-	if cfgJSON := extractSection(output, "===WEBUI_CONFIG_JSON===", "===VOLUME_SIZE==="); cfgJSON != "" {
+	if aiCfg.isKotaemon() {
+		ep.WebUIConfigOK = ep.WebUIHttpStatus >= 200 && ep.WebUIHttpStatus < 400
+		if ep.WebUIConfigOK {
+			ep.WebUIVersion = "main-lite"
+		}
+	} else if cfgJSON := extractSection(output, "===WEBUI_CONFIG_JSON===", "===VOLUME_SIZE==="); cfgJSON != "" {
 		for _, line := range strings.Split(cfgJSON, "\n") {
 			line = strings.TrimSpace(line)
 			if strings.HasPrefix(line, "{") && strings.HasSuffix(line, "}") {
@@ -141,8 +163,11 @@ func parseEndpointMetricsOutput(ep *EndpointMetrics, output string) {
 // verifyMigratedAIService executes Stage 4: collects Target (and Source if needed) metrics and generates the report.
 func verifyMigratedAIService(tb *resty.Client, cfg TestConfig, auth AuthConfig, target TestCase, state *MigrationState) error {
 	start := time.Now()
+	appName := cfg.AIService.appDisplayName()
+	appPort := cfg.AIService.activeAppPort()
+
 	fmt.Println("\n================================================================================")
-	fmt.Println("🔬 [Stage 4] End-to-End GPU, Gemma Inference & Open WebUI Automated Verification")
+	fmt.Printf("🔬 [Stage 4] End-to-End GPU, %s Inference & %s Automated Verification\n", cfg.AIService.modelSummary(), appName)
 	fmt.Println("================================================================================")
 	fmt.Println("⏳ [Notice] First-time GPU model loading from migrated disk weights into VRAM (cold start) can take several minutes (typically 3~8 min; ~20s when warm). Please wait...")
 
@@ -150,26 +175,30 @@ func verifyMigratedAIService(tb *resty.Client, cfg TestConfig, auth AuthConfig, 
 		return fmt.Errorf("target GPU VM state not found in %s (run -mode=migrate or -mode=seq first)", cfg.Beetle.StateFile)
 	}
 
-	preTransferMatch := state.Source.WebUIDbSha256 != "" && state.Source.WebUIDbSha256 == state.Target.WebUIDbSha256
+	sourceQuiescedSha := state.Source.WebUIDbSha256
+	targetTransferredSha := state.Target.WebUIDbSha256
+	preTransferMatch := sourceQuiescedSha != "" && sourceQuiescedSha == targetTransferredSha
 
 	if state.Source.EvalTokensPerSec == 0 && state.Source.NodeID != "" {
 		fmt.Println("📊 Collecting Source GPU VM baseline metrics (may take a few minutes if model is unloaded from VRAM)...")
 		_ = collectEndpointMetrics(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, &state.Source, cfg.AIService)
 	} else if state.Source.PublicIP != "" {
-		state.Source.WebUIUrl = fmt.Sprintf("http://%s:%d", state.Source.PublicIP, cfg.AIService.OpenWebUIPort)
-		state.Source.ExternalWebUIReachable = probeExternalWebUI(state.Source.PublicIP, cfg.AIService.OpenWebUIPort)
+		state.Source.WebUIUrl = fmt.Sprintf("http://%s:%d", state.Source.PublicIP, appPort)
+		state.Source.ExternalWebUIReachable = probeExternalWebUI(state.Source.PublicIP, cfg.AIService)
 	}
 
-	fmt.Printf("⚡ Running Gemma ('%s') GPU inference benchmark & Open WebUI automated checks on Target VM (%s)...\n",
-		cfg.AIService.ModelName, state.Target.InfraID)
+	fmt.Printf("⚡ Running '%s' GPU inference benchmark & %s automated checks on Target VM (%s)...\n",
+		cfg.AIService.ModelName, appName, state.Target.InfraID)
 	if err := collectEndpointMetrics(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, &state.Target, cfg.AIService); err != nil {
 		return fmt.Errorf("failed to collect target verification metrics: %w", err)
 	}
 
 	if preTransferMatch {
-		state.Target.WebUIDbSha256 = state.Source.WebUIDbSha256
+		state.Source.WebUIDbSha256 = sourceQuiescedSha
+		state.Target.WebUIDbSha256 = targetTransferredSha
 	} else if state.Source.NodeID != "" && state.Source.WebUIDbSha256 != state.Target.WebUIDbSha256 {
-		srcHashCmd := fmt.Sprintf("sudo sha256sum %s/open-webui/webui.db 2>/dev/null | awk '{print $1}' || true", cfg.AIService.RootDir)
+		srcHashCmd := fmt.Sprintf("sudo sha256sum %s/%s 2>/dev/null | awk '{print $1}' || true",
+			strings.TrimRight(cfg.AIService.RootDir, "/"), cfg.AIService.relativeDbPath())
 		if out, err := execRemoteCmdQuiet(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, state.Source.NodeID, []string{srcHashCmd}); err == nil {
 			if h := strings.TrimSpace(strings.Split(strings.TrimSpace(out), "\n")[0]); len(h) == 64 {
 				state.Source.WebUIDbSha256 = h

@@ -64,7 +64,12 @@ func recommendTargetGpuInfra(beetle, tb *resty.Client, cfg TestConfig, auth Auth
 		if len(c.TargetInfra.NodeGroups) > 0 {
 			imgSummary = firstNonEmpty(c.TargetInfra.NodeGroups[0].CspImageName, c.TargetInfra.NodeGroups[0].ImageId, "N/A")
 		}
-		fmt.Printf("   [%d] %s | Spec: %s | Image: %s\n", i+1, c.Description, specSummary, imgSummary)
+		zones := findCandidateAvailableZones(c)
+		if len(zones) > 0 {
+			fmt.Printf("   [%d] %s | Spec: %s | Zones: %v | Image: %s\n", i+1, c.Description, specSummary, zones, imgSummary)
+		} else {
+			fmt.Printf("   [%d] %s | Spec: %s | Image: %s\n", i+1, c.Description, specSummary, imgSummary)
+		}
 	}
 
 	selected := candidates[0]
@@ -104,6 +109,53 @@ func findCandidateSpecSummary(c cloudmodel.RecommendedInfra) string {
 	return "N/A"
 }
 
+// findCandidateAvailableZones returns AvailableZones for the candidate's primary GPU spec when provided by CB-Tumblebug.
+func findCandidateAvailableZones(c cloudmodel.RecommendedInfra) []string {
+	targetSpecID := ""
+	if len(c.TargetInfra.NodeGroups) > 0 {
+		targetSpecID = c.TargetInfra.NodeGroups[0].SpecId
+	}
+	for _, s := range c.TargetSpecList {
+		if (targetSpecID == "" || s.Id == targetSpecID) && len(s.AvailableZones) > 0 {
+			return s.AvailableZones
+		}
+	}
+	return nil
+}
+
+// isZonalSubnetCSP reports whether the provider binds each subnet to a single availability zone.
+func isZonalSubnetCSP(cspName string) bool {
+	switch strings.ToLower(strings.TrimSpace(cspName)) {
+	case "aws", "alibaba", "tencent", "ibm", "ncp", "kt":
+		return true
+	default:
+		return false
+	}
+}
+
+// applyTargetSubnetZone sets SubnetInfoList[0].Zone from PreferredZone or AvailableZones[0] on zonal-subnet CSPs.
+func applyTargetSubnetZone(rec *cloudmodel.RecommendedInfra, target TestCase) string {
+	if rec == nil || len(rec.TargetVNet.SubnetInfoList) == 0 {
+		return ""
+	}
+	if preferred := strings.TrimSpace(target.PreferredZone); preferred != "" {
+		rec.TargetVNet.SubnetInfoList[0].Zone = preferred
+		return preferred
+	}
+	if existing := strings.TrimSpace(rec.TargetVNet.SubnetInfoList[0].Zone); existing != "" {
+		return existing
+	}
+	if !isZonalSubnetCSP(target.Csp) {
+		return ""
+	}
+	zones := findCandidateAvailableZones(*rec)
+	if len(zones) > 0 {
+		rec.TargetVNet.SubnetInfoList[0].Zone = zones[0]
+		return zones[0]
+	}
+	return ""
+}
+
 // provisionTargetGpuInfra calls CM-Beetle's POST /beetle/migration/ns/{nsId}/infra to provision or reuse the Target GPU VM.
 func provisionTargetGpuInfra(beetle, tb *resty.Client, cfg TestConfig, auth AuthConfig, target TestCase, state *MigrationState) (*cloudmodel.VmInfraInfo, error) {
 	if state.Target.InfraID != "" && state.Target.Csp == target.Csp && state.Target.Region == target.Region {
@@ -124,11 +176,14 @@ func provisionTargetGpuInfra(beetle, tb *resty.Client, cfg TestConfig, auth Auth
 	}
 
 	specLabel := findCandidateSpecSummary(*state.SelectedRecommendation)
-	fmt.Printf("\n🚀 [Stage 3-1] Provisioning Target GPU Infrastructure via CM-Beetle (%s / %s) — %s...\n",
+	fmt.Printf("\n🚀 [Stage 3-1] Provisioning Target GPU Infrastructure via CM-Beetle (%s / %s) - %s...\n",
 		target.Csp, target.Region, specLabel)
 
 	reqBody := controller.MigrateInfraRequest{
 		RecommendedInfra: *state.SelectedRecommendation,
+	}
+	if selectedZone := applyTargetSubnetZone(&reqBody.RecommendedInfra, target); selectedZone != "" {
+		fmt.Printf("   📍 Target Subnet Zone selected: %s\n", selectedZone)
 	}
 
 	url := fmt.Sprintf("%s/beetle/migration/ns/%s/infra", strings.TrimRight(cfg.Beetle.Endpoint, "/"), cfg.Beetle.NamespaceID)
@@ -158,17 +213,19 @@ func provisionTargetGpuInfra(beetle, tb *resty.Client, cfg TestConfig, auth Auth
 	node := vmInfra.Node[0]
 	state.TargetInfra = &vmInfra
 	state.Target = EndpointMetrics{
-		InfraID:     vmInfra.Id,
-		NodeID:      node.Id,
-		PublicIP:    node.PublicIP,
-		SshKeyID:    node.SshKeyId,
-		SshUsername: node.NodeUserName,
-		Csp:         target.Csp,
-		Region:      target.Region,
-		SpecID:      node.SpecId,
-		ImageID:     node.ImageId,
-		ModelName:   cfg.AIService.ModelName,
-		WebUIUrl:    fmt.Sprintf("http://%s:%d", node.PublicIP, cfg.AIService.OpenWebUIPort),
+		InfraID:        vmInfra.Id,
+		NodeID:         node.Id,
+		PublicIP:       node.PublicIP,
+		SshKeyID:       node.SshKeyId,
+		SshUsername:    node.NodeUserName,
+		Csp:            target.Csp,
+		Region:         target.Region,
+		SpecID:         node.SpecId,
+		ImageID:        node.ImageId,
+		AppType:        cfg.AIService.AppType,
+		ModelName:      cfg.AIService.ModelName,
+		EmbeddingModel: cfg.AIService.EmbeddingModel,
+		WebUIUrl:       fmt.Sprintf("http://%s:%d", node.PublicIP, cfg.AIService.activeAppPort()),
 	}
 	if err := saveState(cfg.Beetle.StateFile, state); err != nil {
 		return nil, err

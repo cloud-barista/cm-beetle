@@ -795,7 +795,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
     // Matches cm-butterfly & mc-terrarium source_connections_*.csv specification
     const headers = ['name', 'description', 'ip_address', 'ssh_port', 'user', 'password', 'private_key'];
     const sampleRows = [
-      'ai-gpu-01,"AI Inference Primary - Ollama (:11434) + gemma4:e2b + Open WebUI (:3000)",10.0.1.11,22,ubuntu,,',
+      'ai-gpu-01,"AI Inference Primary - Ollama (:11434) + gemma4:e2b + bge-m3 + Kotaemon (:7860)",10.0.1.11,22,ubuntu,,',
       'data-master-01,"Analytics Compute Master - Spark / Airflow (:8080, :7077)",10.0.1.21,22,ubuntu,,',
       'db-primary-01,"Backend & DB - PostgreSQL Primary (:5432)",10.0.1.31,22,ubuntu,,',
     ];
@@ -819,7 +819,7 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
   ];
 
   const sampleAiStackConnections = [
-    { id: 'sample-c1', name: 'ai-gpu-01',          description: 'AI Inference Primary - Ollama (:11434) + gemma4:e2b + Open WebUI (:3000)', ip_address: '10.0.1.11', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    { id: 'sample-c1', name: 'ai-gpu-01',          description: 'AI Inference Primary - Ollama (:11434) + gemma4:e2b + bge-m3 + Kotaemon (:7860)', ip_address: '10.0.1.11', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
     { id: 'sample-c2', name: 'ai-gpu-02',          description: 'AI Inference Worker 1 - Ollama Runtime (:11434)',                          ip_address: '10.0.1.12', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
     { id: 'sample-c3', name: 'ai-gpu-03',          description: 'AI Inference Worker 2 - vLLM / Vector Worker (:8000, :11434)',             ip_address: '10.0.1.13', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
     { id: 'sample-c4', name: 'data-master-01',     description: 'Analytics Compute Master - Spark / Airflow Coordinator (:8080, :7077)',    ip_address: '10.0.1.21', ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },

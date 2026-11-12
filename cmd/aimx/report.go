@@ -12,6 +12,10 @@ import (
 func printComparisonSummary(state *MigrationState, aiCfg AIServiceConfig) {
 	s := state.Source
 	t := state.Target
+	appName := aiCfg.appDisplayName()
+	appPort := aiCfg.activeAppPort()
+	dbFile := aiCfg.dbFileName()
+
 	dbMatch := "N/A"
 	if s.WebUIDbSha256 != "" && t.WebUIDbSha256 != "" {
 		if s.WebUIDbSha256 == t.WebUIDbSha256 {
@@ -21,8 +25,20 @@ func printComparisonSummary(state *MigrationState, aiCfg AIServiceConfig) {
 		}
 	}
 
-	srcUrl := firstNonEmpty(s.WebUIUrl, fmt.Sprintf("http://%s:%d", s.PublicIP, aiCfg.OpenWebUIPort))
-	tgtUrl := firstNonEmpty(t.WebUIUrl, fmt.Sprintf("http://%s:%d", t.PublicIP, aiCfg.OpenWebUIPort))
+	srcUrl := firstNonEmpty(s.WebUIUrl, fmt.Sprintf("http://%s:%d", s.PublicIP, appPort))
+	tgtUrl := firstNonEmpty(t.WebUIUrl, fmt.Sprintf("http://%s:%d", t.PublicIP, appPort))
+
+	probeMetricLabel := fmt.Sprintf("%s /api/config", appName)
+	if aiCfg.isKotaemon() {
+		probeMetricLabel = fmt.Sprintf("%s Web Probe", appName)
+	}
+
+	srcModelDisplay := firstNonEmpty(s.ModelName, aiCfg.ModelName)
+	tgtModelDisplay := firstNonEmpty(t.ModelName, aiCfg.ModelName)
+	if strings.TrimSpace(aiCfg.EmbeddingModel) != "" {
+		srcModelDisplay = fmt.Sprintf("%s + %s", srcModelDisplay, aiCfg.EmbeddingModel)
+		tgtModelDisplay = fmt.Sprintf("%s + %s", tgtModelDisplay, aiCfg.EmbeddingModel)
+	}
 
 	type tableRow struct {
 		metric string
@@ -37,13 +53,13 @@ func printComparisonSummary(state *MigrationState, aiCfg AIServiceConfig) {
 		{"Instance Spec", shortSpecName(s.SpecID), shortSpecName(t.SpecID)},
 		{"GPU Accelerator", fmt.Sprintf("%dx %s (%.0fGB)", s.GpuCount, s.GpuModel, s.GpuVramGB), fmt.Sprintf("%dx %s (%.0fGB)", t.GpuCount, t.GpuModel, t.GpuVramGB)},
 		{"Driver / CUDA", fmt.Sprintf("%s / %s", s.DriverVersion, s.CudaVersion), fmt.Sprintf("%s / %s", t.DriverVersion, t.CudaVersion)},
-		{"Gemma Model", s.ModelName, t.ModelName},
+		{"Ollama Models", srcModelDisplay, tgtModelDisplay},
 		{"Ollama Processor", s.OllamaProcessor, t.OllamaProcessor},
 		{"Inference Speed", fmt.Sprintf("%.2f tokens/sec", s.EvalTokensPerSec), fmt.Sprintf("%.2f tokens/sec", t.EvalTokensPerSec)},
-		{"Open WebUI HTTP Status", fmt.Sprintf("HTTP %d (v%s)", s.WebUIHttpStatus, firstNonEmpty(s.WebUIVersion, "-")), fmt.Sprintf("HTTP %d (v%s)", t.WebUIHttpStatus, firstNonEmpty(t.WebUIVersion, "-"))},
-		{"Open WebUI /api/config", fmt.Sprintf("ok=%v (ext=%v)", s.WebUIConfigOK, s.ExternalWebUIReachable), fmt.Sprintf("ok=%v (ext=%v)", t.WebUIConfigOK, t.ExternalWebUIReachable)},
+		{fmt.Sprintf("%s HTTP Status", appName), fmt.Sprintf("HTTP %d (%s)", s.WebUIHttpStatus, firstNonEmpty(s.WebUIVersion, "-")), fmt.Sprintf("HTTP %d (%s)", t.WebUIHttpStatus, firstNonEmpty(t.WebUIVersion, "-"))},
+		{probeMetricLabel, fmt.Sprintf("ok=%v (ext=%v)", s.WebUIConfigOK, s.ExternalWebUIReachable), fmt.Sprintf("ok=%v (ext=%v)", t.WebUIConfigOK, t.ExternalWebUIReachable)},
 		{"Data Volume Size", s.VolumeSizeHuman, t.VolumeSizeHuman},
-		{"WebUI SQLite SHA-256", shortHash(s.WebUIDbSha256), fmt.Sprintf("%s (%s)", shortHash(t.WebUIDbSha256), dbMatch)},
+		{fmt.Sprintf("%s SQLite SHA-256 (%s)", appName, dbFile), shortHash(s.WebUIDbSha256), fmt.Sprintf("%s (%s)", shortHash(t.WebUIDbSha256), dbMatch)},
 		{"transx Transfer Duration", "Source -> Target", transferInfo},
 	}
 
@@ -64,7 +80,7 @@ func printComparisonSummary(state *MigrationState, aiCfg AIServiceConfig) {
 	sepLine := strings.Repeat("-", w1+w2+w3+10)
 
 	fmt.Printf("\n%s\n", sepLine)
-	fmt.Println("📊 AIMX (AI Migration X) — Source vs. Target GPU AI Service Summary")
+	fmt.Printf("📊 AIMX (AI Migration X) : Source vs. Target GPU AI Service Summary (%s)\n", appName)
 	fmt.Println(sepLine)
 	fmt.Printf(rowFmt, "Metric", "Source GPU VM", "Target GPU VM")
 	fmt.Println(sepLine)
@@ -72,8 +88,11 @@ func printComparisonSummary(state *MigrationState, aiCfg AIServiceConfig) {
 		fmt.Printf(rowFmt, r.metric, r.source, r.target)
 	}
 	fmt.Println(sepLine)
-	fmt.Printf("🌐 [Source Open WebUI Browser URL] 👉 %s\n", srcUrl)
-	fmt.Printf("🌐 [Target Open WebUI Browser URL] 👉 %s\n", tgtUrl)
+	fmt.Printf("🌐 [Source %s Browser URL] 👉 %s\n", appName, srcUrl)
+	fmt.Printf("🌐 [Target %s Browser URL] 👉 %s\n", appName, tgtUrl)
+	if aiCfg.isKotaemon() {
+		fmt.Printf("🔐 [Kotaemon Login] Username: %s | Password: %s\n", aiCfg.AdminUsername, aiCfg.AdminPassword)
+	}
 	fmt.Println(sepLine)
 }
 
@@ -92,8 +111,12 @@ func writeMarkdownReport(cfg TestConfig, target TestCase, state *MigrationState)
 
 	s := state.Source
 	t := state.Target
-	srcUrl := firstNonEmpty(s.WebUIUrl, fmt.Sprintf("http://%s:%d", s.PublicIP, cfg.AIService.OpenWebUIPort))
-	tgtUrl := firstNonEmpty(t.WebUIUrl, fmt.Sprintf("http://%s:%d", t.PublicIP, cfg.AIService.OpenWebUIPort))
+	appName := cfg.AIService.appDisplayName()
+	appPort := cfg.AIService.activeAppPort()
+	dbFile := cfg.AIService.dbFileName()
+
+	srcUrl := firstNonEmpty(s.WebUIUrl, fmt.Sprintf("http://%s:%d", s.PublicIP, appPort))
+	tgtUrl := firstNonEmpty(t.WebUIUrl, fmt.Sprintf("http://%s:%d", t.PublicIP, appPort))
 
 	dbStatus := "Pending"
 	if s.WebUIDbSha256 != "" && t.WebUIDbSha256 != "" {
@@ -104,15 +127,20 @@ func writeMarkdownReport(cfg TestConfig, target TestCase, state *MigrationState)
 		}
 	}
 
+	probeRowLabel := fmt.Sprintf("%s `/api/config` Probe", appName)
+	if cfg.AIService.isKotaemon() {
+		probeRowLabel = fmt.Sprintf("%s Web Readiness Probe", appName)
+	}
+
 	var b strings.Builder
-	b.WriteString("# AIMX (AI Migration X) — AI Service Migration Verification Report\n\n")
+	b.WriteString("# AIMX (AI Migration X) : AI Service Migration Verification Report\n\n")
 	b.WriteString(fmt.Sprintf("- **Generated At**: `%s`\n", time.Now().Format(time.RFC3339)))
 	b.WriteString(fmt.Sprintf("- **Target Cloud**: `%s` (`%s`)\n", target.Csp, target.Region))
-	b.WriteString(fmt.Sprintf("- **AI Model & App Stack**: Ollama (`%s`) + Open WebUI (`:%d`)\n", cfg.AIService.ModelName, cfg.AIService.OpenWebUIPort))
+	b.WriteString(fmt.Sprintf("- **AI Model & App Stack**: Ollama (`%s`) + %s (`:%d`)\n", cfg.AIService.modelSummary(), appName, appPort))
 	b.WriteString(fmt.Sprintf("- **`transx` Data Transfer Duration**: `%s` (Strategy: `%s`, TransferModelWeights: `%v`, EncryptedKeys: `%v`)\n",
 		state.DataTransferDuration, state.DataTransferStrategy, cfg.AIService.TransferModelWeights, cfg.AIService.UseDataEncryption))
-	b.WriteString(fmt.Sprintf("- **Source Open WebUI URL**: [%s](%s)\n", srcUrl, srcUrl))
-	b.WriteString(fmt.Sprintf("- **Target Open WebUI URL**: [%s](%s)\n\n", tgtUrl, tgtUrl))
+	b.WriteString(fmt.Sprintf("- **Source %s URL**: [%s](%s)\n", appName, srcUrl, srcUrl))
+	b.WriteString(fmt.Sprintf("- **Target %s URL**: [%s](%s)\n\n", appName, tgtUrl, tgtUrl))
 
 	b.WriteString("## 1. Source vs. Target GPU Infrastructure & AI Service Comparison\n\n")
 	b.WriteString("| Layer | Metric | Source GPU Environment | Target GPU Environment |\n")
@@ -124,15 +152,18 @@ func writeMarkdownReport(cfg TestConfig, target TestCase, state *MigrationState)
 	b.WriteString(fmt.Sprintf("| **Infra** | Machine Image | `%s` | `%s` |\n", s.ImageID, t.ImageID))
 	b.WriteString(fmt.Sprintf("| **GPU** | Accelerator Model | `%dx %s (%.0f GB VRAM)` | `%dx %s (%.0f GB VRAM)` |\n", s.GpuCount, s.GpuModel, s.GpuVramGB, t.GpuCount, t.GpuModel, t.GpuVramGB))
 	b.WriteString(fmt.Sprintf("| **GPU** | Driver / CUDA Version | `%s` / `CUDA %s` | `%s` / `CUDA %s` |\n", s.DriverVersion, s.CudaVersion, t.DriverVersion, t.CudaVersion))
-	b.WriteString(fmt.Sprintf("| **Model** | Gemma Model Tag | `%s` | `%s` |\n", s.ModelName, t.ModelName))
+	b.WriteString(fmt.Sprintf("| **Model** | Generation LLM Tag | `%s` | `%s` |\n", firstNonEmpty(s.ModelName, cfg.AIService.ModelName), firstNonEmpty(t.ModelName, cfg.AIService.ModelName)))
+	if strings.TrimSpace(cfg.AIService.EmbeddingModel) != "" {
+		b.WriteString(fmt.Sprintf("| **Model** | Multilingual Embedding Tag | `%s` | `%s` |\n", cfg.AIService.EmbeddingModel, cfg.AIService.EmbeddingModel))
+	}
 	b.WriteString(fmt.Sprintf("| **Model** | Ollama Processor (`ollama ps`) | `%s` | `%s` |\n", s.OllamaProcessor, t.OllamaProcessor))
 	b.WriteString(fmt.Sprintf("| **Model** | Inference Throughput | **`%.2f tokens/sec`** | **`%.2f tokens/sec`** |\n", s.EvalTokensPerSec, t.EvalTokensPerSec))
-	b.WriteString(fmt.Sprintf("| **App** | Open WebUI Browser Link | [%s](%s) (HTTP `%d`) | [%s](%s) (HTTP `%d`) |\n", srcUrl, srcUrl, s.WebUIHttpStatus, tgtUrl, tgtUrl, t.WebUIHttpStatus))
-	b.WriteString(fmt.Sprintf("| **App** | Open WebUI `/api/config` Probe | `ok=%v` (`v%s`, external=`%v`) | `ok=%v` (`v%s`, external=`%v`) |\n", s.WebUIConfigOK, firstNonEmpty(s.WebUIVersion, "-"), s.ExternalWebUIReachable, t.WebUIConfigOK, firstNonEmpty(t.WebUIVersion, "-"), t.ExternalWebUIReachable))
-	b.WriteString(fmt.Sprintf("| **App** | Open WebUI DB Integrity (`webui.db`) | `%s` | %s |\n", shortHash(s.WebUIDbSha256), dbStatus))
+	b.WriteString(fmt.Sprintf("| **App** | %s Browser Link | [%s](%s) (HTTP `%d`) | [%s](%s) (HTTP `%d`) |\n", appName, srcUrl, srcUrl, s.WebUIHttpStatus, tgtUrl, tgtUrl, t.WebUIHttpStatus))
+	b.WriteString(fmt.Sprintf("| **App** | %s | `ok=%v` (`%s`, external=`%v`) | `ok=%v` (`%s`, external=`%v`) |\n", probeRowLabel, s.WebUIConfigOK, firstNonEmpty(s.WebUIVersion, "-"), s.ExternalWebUIReachable, t.WebUIConfigOK, firstNonEmpty(t.WebUIVersion, "-"), t.ExternalWebUIReachable))
+	b.WriteString(fmt.Sprintf("| **App** | %s DB Integrity (`%s`) | `%s` | %s |\n", appName, dbFile, shortHash(s.WebUIDbSha256), dbStatus))
 	b.WriteString(fmt.Sprintf("| **Data** | Service Directory Size (`%s`) | `%s` | `%s` |\n\n", cfg.AIService.RootDir, s.VolumeSizeHuman, t.VolumeSizeHuman))
 
-	b.WriteString("## 2. Gemma GPU Inference Verification Output\n\n")
+	b.WriteString("## 2. GPU Inference Verification Output\n\n")
 	b.WriteString(fmt.Sprintf("- **Prompt**: `%s`\n", cfg.AIService.TestPrompt))
 	b.WriteString(fmt.Sprintf("- **Source Response**:\n  > %s\n\n", oneLine(s.SampleResponse)))
 	b.WriteString(fmt.Sprintf("- **Target Response**:\n  > %s\n\n", oneLine(t.SampleResponse)))
