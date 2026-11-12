@@ -1,0 +1,80 @@
+# AIMX Conference Demo Preset: Kotaemon (:7860) + Ollama (gemma4:e2b + bge-m3)
+# Optimized for NVIDIA Tesla T4 (16GB VRAM) co-residency and Cloud-Barista Conference PDF Citation Highlighting.
+# Copy to testconf/kotaemon-config.yaml:
+#   cp cmd/aimx/testconf/template-kotaemon-config.yaml cmd/aimx/testconf/kotaemon-config.yaml
+
+test:
+  executionMode: seq
+  cases:
+    - csp: aws
+      region: ap-northeast-2
+      name: AWS-Seoul-GPU
+      execute: true
+      nameSeed: aimx
+      # Optional: pin target subnet AZ (e.g., ap-northeast-2a or ap-northeast-2c) when avoiding AZ capacity shortages.
+      # preferredZone: ap-northeast-2a
+    - csp: gcp
+      region: asia-northeast3
+      name: GCP-Seoul-GPU
+      execute: false
+      nameSeed: aimx
+    - csp: aws
+      region: us-west-2
+      name: AWS-Oregon-GPU
+      execute: false
+      nameSeed: aimx
+
+beetle:
+  endpoint: http://localhost:8056
+  namespaceId: default
+  authConfigFile: testconf/auth-config.json
+  baseInfraFile: testconf/source-infra-base.json
+  stateFile: testresult/.aimx-state.json
+
+source:
+  namespaceId: default
+  infraId: mc-daisy
+  # AWS Seoul g4dn.xlarge: 4 vCPU, 16 GiB RAM, 1x NVIDIA Tesla T4 (16GB VRAM), 100GB EBS Root Disk.
+  nodeGroupName: nvidiat4
+  specId: aws+ap-northeast-2+g4dn.xlarge
+  imageId: ami-00ffffe72a332c865
+  rootDiskType: gp2
+  rootDiskSize: 100
+  autoProvisionIfMissing: true
+  openServicePortsOnSource: true
+  cleanupSourceInfra: false
+
+aiService:
+  # Kotaemon RAG stack with built-in PDF viewer and yellow slide citation highlighting.
+  appType: kotaemon
+  rootDir: /opt/aimx/ai-service
+  # gemma4:e2b (~4.6GB) + bge-m3 (~1.2GB) = ~5.8GB total, keeping both models 100% resident in 16GB T4 VRAM without swap lag.
+  # Optional larger variant for >=24GB GPUs (e.g., L4/A10G): gemma4:e4b
+  modelName: gemma4:e2b
+  embeddingModel: bge-m3
+  ollamaPort: 11434
+  appPort: 7860
+  adminUsername: admin
+  adminPassword: admin
+  testPrompt: "Explain in 2 concise sentences why GPU acceleration is essential for RAG document search and LLM inference."
+  transferModelWeights: true
+  transxStrategy: auto
+  # Exclude only transient logs/bytecode so sql.db (+ WAL/SHM), PDFs, Chroma vectorstore, LanceDB docstore, and highlight chunks all migrate intact.
+  filter:
+    include: []
+    exclude:
+      - "*.log"
+      - "*.tmp"
+      - "__pycache__/**"
+  useDataEncryption: true
+
+timing:
+  stepTransitionSeconds: 10
+  vmBootStabilizeSeconds: 30
+  sshRetryMaxAttempts: 18
+  sshRetryIntervalSeconds: 10
+  # Gradio-based Kotaemon initial boot and sql.db creation typically takes 25-40s.
+  serviceInitWaitSeconds: 30
+  dbFlushWaitSeconds: 5
+  targetServiceReadyWaitSeconds: 30
+  remoteCmdTimeoutMinutes: 20

@@ -35,6 +35,7 @@ Documentation site for CM-Beetle, computing infrastructure migration.
 
 ## Testing & Integration
 
+- [AIMX (Kotaemon + Ollama) RAG Migration Test & Demo Guide](test/aimx-kotaemon-rag-migration-test-guide.md) - Post-merge server restart, CLI/UI live test workflow, and GPU/Zone selection guide.
 - [Test Results: Data Migration](test-results-data-migration.md) – Data migration test results and examples.
 - [Test Results: Object Storage](test-results-object-storage.md) – Object storage test results and examples.
 - [Beetle v0.3.0 Integration Testing](beetle-v0.3.0-integration-and-testing-with-tumblebug-honeybee-and-model.md) – Integration test results with CB-Tumblebug, Honeybee, and Model.
@@ -54,5 +55,6 @@ Documentation site for CM-Beetle, computing infrastructure migration.
 - [AI Service Migration PoC Design (AIMX)](poc/ai-service-migration-design.md) – Top-down 4-layer GPU infrastructure, LLM weights (`Ollama`/`Gemma`), and stateful app (`Open WebUI`) migration scenario and architecture.
 - [Unit Comparison Across Components](unit-comparison-across-components.md) – Unit standards across CB sub-systems and GPU memory normalization rationale.
 - [GPU Recommendation Pipeline Plan](plan/gpu-recommendation-pipeline-plan.md) – Architecture and design for GPU-equipped server recommendation.
+- [10-CSP Zone & Availability-Aware Recommendation Plan](plan/zone-and-availability-aware-recommendation-plan.md) - Phased design for availability filtering, zonal/regional subnet mapping, and provisioning zone failover.
 - [Tumblebug Call Pacer](tumblebug-call-pacer.md) – How CM-Beetle stays under CB-Tumblebug's rate limit, and how to maintain it.
 - [AI Context](ai-context-for-us.md) – Context information for AI-assisted development.

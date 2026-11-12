@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const ALLOWED_PORTS = new Set<number>([80, 443, 3000, 8080, 11434]);
+const ALLOWED_PORTS = new Set<number>([80, 443, 3000, 7860, 8080, 11434]);
 const ALLOWED_PATHS = new Set<string>(['/', '/api/config', '/api/tags', '/api/ps', '/api/generate']);
 const MAX_RESPONSE_BYTES = 65536;
 const PROBE_TIMEOUT_MS = 15000;
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     const numericPort = Number(body.port);
     if (!Number.isInteger(numericPort) || !ALLOWED_PORTS.has(numericPort)) {
       return NextResponse.json(
-        { ok: false, error: 'Port is not in allowlist (allowed: 80, 443, 3000, 8080, 11434).' },
+        { ok: false, error: 'Port is not in allowlist (allowed: 80, 443, 3000, 7860, 8080, 11434).' },
         { status: 400 }
       );
     }
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
         ? { 'Content-Type': 'application/json', Accept: 'application/json' }
         : { Accept: 'application/json, text/plain;q=0.9, */*;q=0.8' },
       body: serializedPayload,
-      redirect: 'error',
+      redirect: 'manual',
       cache: 'no-store',
       signal: AbortSignal.timeout(PROBE_TIMEOUT_MS)
     });
@@ -141,14 +141,21 @@ export async function POST(req: NextRequest) {
       parsedJson = null;
     }
 
+    const isReachableHttp = upstream.ok || (rawPath === '/' && upstream.status >= 200 && upstream.status < 400);
     const result: Record<string, any> = {
-      ok: upstream.ok,
+      ok: isReachableHttp,
       httpStatus: upstream.status,
       latencyMs,
       checkedAt: new Date().toISOString()
     };
 
-    if (rawPath === '/api/config' && parsedJson) {
+    if (numericPort === 7860 && rawPath === '/') {
+      result.openWebUi = {
+        name: 'Kotaemon',
+        version: 'Kotaemon',
+        status: isReachableHttp
+      };
+    } else if (rawPath === '/api/config' && parsedJson) {
       result.openWebUi = {
         name: String(parsedJson.name || 'Open WebUI'),
         version: String(parsedJson.version || 'active'),

@@ -16,7 +16,7 @@ func main() {
 	flag.Parse()
 
 	fmt.Println("================================================================================")
-	fmt.Println("🤖 AIMX (AI Migration X) — AI Semiconductor & AI Service Migration Executor")
+	fmt.Println("🤖 AIMX (AI Migration X) : AI Semiconductor & AI Service Migration Executor")
 	fmt.Println("================================================================================")
 
 	cfg, err := loadConfig(*configPath)
@@ -49,8 +49,8 @@ func main() {
 	}
 
 	mode := strings.ToLower(cfg.Test.ExecutionMode)
-	fmt.Printf("⚙️  Execution Mode: %s | Source Infra: %s (ns: %s) | Model: %s\n",
-		mode, cfg.Source.InfraID, cfg.Source.NamespaceID, cfg.AIService.ModelName)
+	fmt.Printf("⚙️  Execution Mode: %s | Source Infra: %s (ns: %s) | App: %s (:%d) | Model: %s\n",
+		mode, cfg.Source.InfraID, cfg.Source.NamespaceID, cfg.AIService.appDisplayName(), cfg.AIService.activeAppPort(), cfg.AIService.modelSummary())
 
 	switch mode {
 	case "setup-source":

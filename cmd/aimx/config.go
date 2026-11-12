@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -12,6 +13,11 @@ import (
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
+)
+
+const (
+	appTypeKotaemon  = "kotaemon"
+	appTypeOpenWebUI = "open-webui"
 )
 
 // restyNoopLogger silences verbose Resty debug output.
@@ -39,6 +45,7 @@ type TestCase struct {
 	Name                     string `yaml:"name"`
 	Execute                  bool   `yaml:"execute"`
 	NameSeed                 string `yaml:"nameSeed,omitempty"`
+	PreferredZone            string `yaml:"preferredZone,omitempty"`
 }
 
 // BeetleConfig holds CM-Beetle endpoint and file paths.
@@ -70,17 +77,83 @@ type TransxFilterConfig struct {
 	Exclude []string `yaml:"exclude"`
 }
 
-// AIServiceConfig defines the Gemma model, Open WebUI stack, and transx transfer parameters.
+// AIServiceConfig defines the Ollama models, web application stack (Kotaemon or Open WebUI), and transx transfer parameters.
 type AIServiceConfig struct {
+	AppType              string             `yaml:"appType"`
 	RootDir              string             `yaml:"rootDir"`
 	ModelName            string             `yaml:"modelName"`
+	EmbeddingModel       string             `yaml:"embeddingModel"`
 	OllamaPort           int                `yaml:"ollamaPort"`
+	AppPort              int                `yaml:"appPort"`
 	OpenWebUIPort        int                `yaml:"openWebUIPort"`
+	AdminUsername        string             `yaml:"adminUsername"`
+	AdminPassword        string             `yaml:"adminPassword"`
 	TestPrompt           string             `yaml:"testPrompt"`
 	TransferModelWeights bool               `yaml:"transferModelWeights"`
 	TransxStrategy       string             `yaml:"transxStrategy"`
 	Filter               TransxFilterConfig `yaml:"filter"`
 	UseDataEncryption    bool               `yaml:"useDataEncryption"`
+}
+
+// isKotaemon returns true when the configured AI web application is Kotaemon.
+func (c AIServiceConfig) isKotaemon() bool {
+	return strings.EqualFold(strings.TrimSpace(c.AppType), appTypeKotaemon)
+}
+
+// activeAppPort returns the configured web port for the selected AI application.
+func (c AIServiceConfig) activeAppPort() int {
+	if c.AppPort > 0 {
+		return c.AppPort
+	}
+	return c.OpenWebUIPort
+}
+
+// appDisplayName returns the human-readable name of the active AI application.
+func (c AIServiceConfig) appDisplayName() string {
+	if c.isKotaemon() {
+		return "Kotaemon"
+	}
+	return "Open WebUI"
+}
+
+// appContainerName returns the Docker container name for the active AI application.
+func (c AIServiceConfig) appContainerName() string {
+	if c.isKotaemon() {
+		return "aimx-kotaemon"
+	}
+	return "aimx-open-webui"
+}
+
+// appDataSubdir returns the host volume subdirectory relative to RootDir for the active AI application.
+func (c AIServiceConfig) appDataSubdir() string {
+	if c.isKotaemon() {
+		return "ktem_app_data"
+	}
+	return "open-webui"
+}
+
+// relativeDbPath returns the SQLite database file path relative to RootDir.
+func (c AIServiceConfig) relativeDbPath() string {
+	if c.isKotaemon() {
+		return "ktem_app_data/user_data/sql.db"
+	}
+	return "open-webui/webui.db"
+}
+
+// dbFileName returns the short SQLite filename used for integrity display.
+func (c AIServiceConfig) dbFileName() string {
+	if c.isKotaemon() {
+		return "sql.db"
+	}
+	return "webui.db"
+}
+
+// modelSummary formats the generation and optional embedding model tags for console and report display.
+func (c AIServiceConfig) modelSummary() string {
+	if strings.TrimSpace(c.EmbeddingModel) != "" {
+		return fmt.Sprintf("%s + %s", c.ModelName, c.EmbeddingModel)
+	}
+	return c.ModelName
 }
 
 // TimingConfig controls stabilization delays and readiness polling intervals across stages.
@@ -121,7 +194,9 @@ type EndpointMetrics struct {
 	GpuVramGB              float32 `json:"gpuVramGb"`
 	DriverVersion          string  `json:"driverVersion"`
 	CudaVersion            string  `json:"cudaVersion"`
+	AppType                string  `json:"appType,omitempty"`
 	ModelName              string  `json:"modelName"`
+	EmbeddingModel         string  `json:"embeddingModel,omitempty"`
 	OllamaProcessor        string  `json:"ollamaProcessor"`
 	EvalTokensPerSec       float64 `json:"evalTokensPerSec"`
 	SampleResponse         string  `json:"sampleResponse"`
@@ -164,7 +239,7 @@ func loadConfig(path string) (TestConfig, error) {
 	return cfg, nil
 }
 
-// validateConfig verifies that all required configuration fields are explicitly provided.
+// validateConfig verifies that all required configuration fields are explicitly provided without fallback.
 func validateConfig(cfg TestConfig) error {
 	requiredStrings := map[string]string{
 		"test.executionMode":       cfg.Test.ExecutionMode,
@@ -178,22 +253,37 @@ func validateConfig(cfg TestConfig) error {
 		"source.nodeGroupName":     cfg.Source.NodeGroupName,
 		"source.specId":            cfg.Source.SpecID,
 		"source.imageId":           cfg.Source.ImageID,
+		"aiService.appType":        cfg.AIService.AppType,
 		"aiService.rootDir":        cfg.AIService.RootDir,
 		"aiService.modelName":      cfg.AIService.ModelName,
 		"aiService.testPrompt":     cfg.AIService.TestPrompt,
 		"aiService.transxStrategy": cfg.AIService.TransxStrategy,
 	}
 	for field, val := range requiredStrings {
-		if val == "" {
+		if strings.TrimSpace(val) == "" {
 			return fmt.Errorf("required field '%s' is missing or empty", field)
 		}
 	}
+
+	appType := strings.ToLower(strings.TrimSpace(cfg.AIService.AppType))
+	if appType != appTypeKotaemon && appType != appTypeOpenWebUI {
+		return fmt.Errorf("aiService.appType (%q) must be %q or %q", cfg.AIService.AppType, appTypeKotaemon, appTypeOpenWebUI)
+	}
+	if appType == appTypeKotaemon {
+		if strings.TrimSpace(cfg.AIService.EmbeddingModel) == "" {
+			return fmt.Errorf("required field 'aiService.embeddingModel' is missing or empty when aiService.appType is %q", appTypeKotaemon)
+		}
+		if strings.TrimSpace(cfg.AIService.AdminUsername) == "" || strings.TrimSpace(cfg.AIService.AdminPassword) == "" {
+			return fmt.Errorf("required fields 'aiService.adminUsername' and 'aiService.adminPassword' must be set when aiService.appType is %q", appTypeKotaemon)
+		}
+	}
+
 	if cfg.Source.RootDiskSize <= 0 {
 		return fmt.Errorf("source.rootDiskSize (%d) must be a positive integer", cfg.Source.RootDiskSize)
 	}
-	if cfg.AIService.OllamaPort <= 0 || cfg.AIService.OpenWebUIPort <= 0 {
-		return fmt.Errorf("aiService.ollamaPort (%d) and aiService.openWebUIPort (%d) must be positive integers",
-			cfg.AIService.OllamaPort, cfg.AIService.OpenWebUIPort)
+	if cfg.AIService.OllamaPort <= 0 || cfg.AIService.activeAppPort() <= 0 {
+		return fmt.Errorf("aiService.ollamaPort (%d) and active web port (%d) must be positive integers",
+			cfg.AIService.OllamaPort, cfg.AIService.activeAppPort())
 	}
 	if cfg.Timing.SshRetryMaxAttempts <= 0 || cfg.Timing.SshRetryIntervalSeconds <= 0 || cfg.Timing.RemoteCmdTimeoutMinutes <= 0 {
 		return fmt.Errorf("timing.sshRetryMaxAttempts, timing.sshRetryIntervalSeconds, and timing.remoteCmdTimeoutMinutes must be > 0")

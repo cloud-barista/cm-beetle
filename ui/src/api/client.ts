@@ -1544,7 +1544,7 @@ export const beetleApi = {
 
   probeWorkload: async (params: {
     host: string;
-    port: 80 | 443 | 3000 | 8080 | 11434;
+    port: 80 | 443 | 3000 | 7860 | 8080 | 11434;
     path: '/' | '/api/config' | '/api/tags' | '/api/ps' | '/api/generate';
     method?: 'GET' | 'POST';
     model?: string;
@@ -1558,12 +1558,18 @@ export const beetleApi = {
 
   verifyAiStackEndpoint: async (host: string, preferredModel: string = 'gemma4:e2b'): Promise<AiStackLayerStatus> => {
     const cleanHost = host.trim();
-    const probeOpenWebUi = async () => {
-      const primary = await beetleApi
+    const probeServiceUi = async () => {
+      const kotaemon = await beetleApi
+        .probeWorkload({ host: cleanHost, port: 7860, path: '/', method: 'GET' })
+        .catch((e) => ({ ok: false, error: e.message }));
+      if (kotaemon?.ok) {
+        return { ...kotaemon, port: 7860 };
+      }
+      const openWebUi = await beetleApi
         .probeWorkload({ host: cleanHost, port: 3000, path: '/api/config', method: 'GET' })
         .catch((e) => ({ ok: false, error: e.message }));
-      if (primary?.ok) {
-        return { ...primary, port: 3000 };
+      if (openWebUi?.ok) {
+        return { ...openWebUi, port: 3000 };
       }
       const fallback = await beetleApi
         .probeWorkload({ host: cleanHost, port: 8080, path: '/api/config', method: 'GET' })
@@ -1571,11 +1577,11 @@ export const beetleApi = {
       if (fallback?.ok) {
         return { ...fallback, port: 8080 };
       }
-      return { ...primary, port: 3000 };
+      return { ...kotaemon, port: 7860 };
     };
 
     const [webUiRes, tagsRes, psRes] = await Promise.all([
-      probeOpenWebUi(),
+      probeServiceUi(),
       beetleApi.probeWorkload({ host: cleanHost, port: 11434, path: '/api/tags', method: 'GET' }).catch((e) => ({ ok: false, error: e.message })),
       beetleApi.probeWorkload({ host: cleanHost, port: 11434, path: '/api/ps', method: 'GET' }).catch((e) => ({ ok: false, error: e.message }))
     ]);
@@ -1609,10 +1615,10 @@ export const beetleApi = {
       checkedAt: new Date().toISOString(),
       openWebUi: {
         ok: Boolean(webUiRes?.ok),
-        port: Number(webUiRes?.port || 3000),
+        port: Number(webUiRes?.port || 7860),
         httpStatus: Number(webUiRes?.httpStatus || 0),
         latencyMs: webUiRes?.latencyMs,
-        version: webUiRes?.openWebUi?.version,
+        version: webUiRes?.openWebUi?.version || (Number(webUiRes?.port || 7860) === 7860 ? 'Kotaemon' : undefined),
         error: webUiRes?.error
       },
       ollamaTags: {

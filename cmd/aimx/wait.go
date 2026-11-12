@@ -279,21 +279,26 @@ func pollGpuVmReady(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, 
 	return "", fmt.Errorf("GPU VM '%s' did not become ready after %d attempts: %w", infraID, maxAttempts, lastErr)
 }
 
-// pollServiceEndpointsReady waits until both Ollama and Open WebUI respond on the GPU VM.
-func pollServiceEndpointsReady(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, ollamaPort, webuiPort int, timing TimingConfig) error {
+// pollServiceEndpointsReady waits until both Ollama and the configured AI web service respond on the GPU VM.
+func pollServiceEndpointsReady(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, aiCfg AIServiceConfig, timing TimingConfig) error {
 	maxAttempts := timing.SshRetryMaxAttempts
 	if maxAttempts <= 0 {
-		maxAttempts = 12
+		maxAttempts = 18
 	}
 	interval := timing.SshRetryIntervalSeconds
 	if interval <= 0 {
 		interval = 10
 	}
 
-	fmt.Printf("🔍 Polling Ollama (:%d) & Open WebUI (:%d) readiness on '%s'...\n", ollamaPort, webuiPort, infraID)
+	appPort := aiCfg.activeAppPort()
+	fmt.Printf("🔍 Polling Ollama (:%d) & %s (:%d) readiness on '%s'...\n", aiCfg.OllamaPort, aiCfg.appDisplayName(), appPort, infraID)
+	dbCheck := "true"
+	if aiCfg.isKotaemon() {
+		dbCheck = fmt.Sprintf("[ -s \"%s/%s\" ]", strings.TrimRight(aiCfg.RootDir, "/"), aiCfg.relativeDbPath())
+	}
 	checkCmd := fmt.Sprintf(
-		"curl -sf http://localhost:%d/api/tags >/dev/null && code=$(curl -s -o /dev/null -w '%%{http_code}' http://localhost:%d) && [ \"$code\" -ge 200 ] && [ \"$code\" -lt 400 ] && echo \"SERVICES_OK:$code\"",
-		ollamaPort, webuiPort,
+		"curl -sf http://localhost:%d/api/tags >/dev/null && code=$(curl -s -o /dev/null -w '%%{http_code}' http://localhost:%d/) && [ \"$code\" -ge 200 ] && [ \"$code\" -lt 400 ] && %s && echo \"SERVICES_OK:$code\"",
+		aiCfg.OllamaPort, appPort, dbCheck,
 	)
 
 	var lastErr error
@@ -304,8 +309,8 @@ func pollServiceEndpointsReady(tb *resty.Client, tbEndpoint, nsID, infraID, node
 			return nil
 		}
 		lastErr = err
-		fmt.Printf("   ⏳ Attempt %d/%d: AI services initializing; waiting %ds...\n", attempt, maxAttempts, interval)
+		fmt.Printf("   ⏳ Attempt %d/%d: %s initializing; waiting %ds...\n", attempt, maxAttempts, aiCfg.appDisplayName(), interval)
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
-	return fmt.Errorf("AI services on '%s' did not become healthy after %d attempts: %v", infraID, maxAttempts, lastErr)
+	return fmt.Errorf("AI services (%s) on '%s' did not become healthy after %d attempts: %v", aiCfg.appDisplayName(), infraID, maxAttempts, lastErr)
 }

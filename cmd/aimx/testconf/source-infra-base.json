@@ -100,6 +100,15 @@
           "srcCIDR": "0.0.0.0/0",
           "srcPorts": "*",
           "dstCIDR": "0.0.0.0/0",
+          "dstPorts": "7860",
+          "protocol": "tcp",
+          "direction": "inbound",
+          "action": "allow"
+        },
+        {
+          "srcCIDR": "0.0.0.0/0",
+          "srcPorts": "*",
+          "dstCIDR": "0.0.0.0/0",
           "dstPorts": "8080",
           "protocol": "tcp",
           "direction": "inbound",
