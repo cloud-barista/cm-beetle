@@ -385,6 +385,11 @@ func gpuHostResourceProximity(ctx gpuRankingContext, a, b cloudmodel.SpecInfo) i
 	return int(da - db)
 }
 
+// gpuAvailabilityMatch prefers verified Available GPU specs over Unverified ones at equal suitability.
+func gpuAvailabilityMatch(ctx gpuRankingContext, a, b cloudmodel.SpecInfo) int {
+	return availabilityPriority(a) - availabilityPriority(b)
+}
+
 // sortGpuByProximityWithCost sorts GPU VM specs using a multi-dimensional ranking hierarchy:
 // 1. GPU Vendor Match (e.g., NVIDIA -> NVIDIA: absolute prerequisite for driver/CUDA binary compatibility)
 // 2. GPU Count Proximity (Exact count match first, preventing architecture & parallelism mismatch)
@@ -445,6 +450,7 @@ func sortGpuByProximityWithCost(vmSpecs []cloudmodel.SpecInfo, node onpremmodel.
 			gpuVramProximity,
 			gpuModelMatch,
 			gpuHostResourceProximity,
+			gpuAvailabilityMatch,
 			func(ctx gpuRankingContext, a, b cloudmodel.SpecInfo) int {
 				validA := a.CostPerHour >= 0
 				validB := b.CostPerHour >= 0
@@ -608,6 +614,9 @@ func recommendGpuNodeSpec(
 	if strings.Contains(providerName, "ncp") {
 		rawSpecs = filterNcpKvmTbSpecs(region, rawSpecs)
 	}
+
+	// Exclude unprovisionable GPU specs based on runtime availability metadata.
+	rawSpecs = filterAvailableTbSpecs(providerName, rawSpecs)
 
 	// Filter specs with valid cost, relaxing only if all remaining candidates have unknown pricing (-1)
 	validSpecs := filterPricedSpecs(rawSpecs)

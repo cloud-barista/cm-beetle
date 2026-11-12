@@ -426,6 +426,7 @@ func RecommendCompositeInfraCandidates(
 		candidate.TargetSpecList = candidateSpecList
 		candidate.TargetOsImageList = candidateImageList
 		candidate.TargetNlbList = targetNlbList
+		alignCandidateSubnetsWithSpecZones(&candidate)
 
 		overallStatus, overallStatusDesc, summary := calculateCandidateMatchRateWithDetails(
 			csp, candidateNodeGroups, syntheticSrcInfra, candidateSpecList, candidateImageList, minMatchRate,
