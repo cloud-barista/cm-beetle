@@ -30,7 +30,7 @@ func main() {
 		cfg.Source.CleanupSourceInfra = true
 	}
 
-	auth, err := loadAuthConfig(cfg.Beetle.AuthConfigFile)
+	auth, err := loadAuthConfig(resolveConfigPath(cfg.ConfigDir, cfg.Beetle.AuthConfigFile))
 	if err != nil {
 		log.Fatalf("❌ Auth Configuration Error: %v", err)
 	}
@@ -43,14 +43,20 @@ func main() {
 	beetleClient := newBeetleClient(auth)
 	tbClient := newTumblebugClient(auth)
 
-	state, err := loadState(cfg.Beetle.StateFile)
+	statePath := resolveConfigPath(cfg.ConfigDir, cfg.Beetle.StateFile)
+	state, err := loadState(statePath)
 	if err != nil {
-		log.Fatalf("❌ Failed to load state file %s: %v", cfg.Beetle.StateFile, err)
+		log.Fatalf("❌ Failed to load state file %s: %v", statePath, err)
 	}
 
 	mode := strings.ToLower(cfg.Test.ExecutionMode)
-	fmt.Printf("⚙️  Execution Mode: %s | Source Infra: %s (ns: %s) | App: %s (:%d) | Model: %s\n",
-		mode, cfg.Source.InfraID, cfg.Source.NamespaceID, cfg.AIService.appDisplayName(), cfg.AIService.activeAppPort(), cfg.AIService.modelSummary())
+	if cfg.Source.isExternalSSH() && mode != "cleanup" {
+		if err := resolveExternalAIServiceModels(&cfg); err != nil {
+			log.Fatalf("❌ External Source Model Discovery Error: %v", err)
+		}
+	}
+	fmt.Printf("⚙️  Execution Mode: %s | Source: %s | App: %s (:%d) | Model: %s\n",
+		mode, cfg.Source.displayLabel(), cfg.AIService.appDisplayName(), cfg.AIService.activeAppPort(), cfg.AIService.modelSummary())
 
 	switch mode {
 	case "setup-source":

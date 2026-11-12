@@ -535,6 +535,7 @@ func RecommendInfra(ctx context.Context, desiredCsp string, desiredRegion string
 	recommendedVmInfra.TargetSpecList = recommendedVmSpecList
 	recommendedVmInfra.TargetOsImageList = recommendedVmOsImageList
 	recommendedVmInfra.TargetSecurityGroupList = recommendedSecurityGroupList
+	alignCandidateSubnetsWithSpecZones(&recommendedVmInfra)
 
 	log.Trace().Msgf("the recommended infra info: %+v", recommendedVmInfra)
 
@@ -973,6 +974,7 @@ func RecommendInfraCandidates(ctx context.Context, desiredCsp string, desiredReg
 		candidateInfra.TargetOsImageList = deduplicatedVmOsImageList
 		candidateInfra.TargetSecurityGroupList = deduplicatedSecurityGroupList
 		candidateInfra.TargetInfra.Description = "Recommended VMs comprising multi-cloud infrastructure"
+		alignCandidateSubnetsWithSpecZones(&candidateInfra)
 
 		// Calculate overall match rate with detailed information
 		overallStatus, overallStatusDesc, infraMatchRateSummary := calculateCandidateMatchRateWithDetails(csp, tempNodeGroupList, srcInfra, deduplicatedVmSpecList, deduplicatedVmOsImageList, minMatchRate)

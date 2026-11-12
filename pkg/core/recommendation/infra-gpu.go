@@ -355,6 +355,7 @@ func RecommendGpuInfraCandidates(
 		candidate.TargetSpecList = candidateSpecList
 		candidate.TargetOsImageList = candidateImageList
 		candidate.Status = overallStatus
+		alignCandidateSubnetsWithSpecZones(&candidate)
 		// Skip duplicate candidate if all node groups match an existing candidate
 		if isDuplicateInfraCandidate(recommendedVmInfraCandidates, candidate) {
 			log.Debug().Int("candidateIndex", candidateIdx).Msg("skipping duplicate candidate infrastructure")

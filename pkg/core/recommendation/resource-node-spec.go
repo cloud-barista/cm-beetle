@@ -146,6 +146,9 @@ func recommendCpuNodeSpec(ctx context.Context, csp string, region string, node o
 			}
 		}
 
+		// Exclude unprovisionable specs based on runtime availability metadata.
+		nodeSpecInfoList = filterAvailableTbSpecs(providerName, nodeSpecInfoList)
+
 		// Filter specs with valid cost, relaxing only if all remaining candidates have unknown pricing (-1)
 		nodeSpecInfoList = filterPricedSpecs(nodeSpecInfoList)
 
@@ -286,6 +289,11 @@ type specRankingContext struct {
 // if b does, zero if tied (falls through to the next criterion in the chain).
 type specCriterion func(ctx specRankingContext, a, b cloudmodel.SpecInfo) int
 
+// byAvailability prefers verified Available specs over Unverified ones at equal suitability.
+func byAvailability(ctx specRankingContext, a, b cloudmodel.SpecInfo) int {
+	return availabilityPriority(a) - availabilityPriority(b)
+}
+
 // byCost ranks the cheaper spec first.
 func byCost(ctx specRankingContext, a, b cloudmodel.SpecInfo) int {
 	switch {
@@ -333,11 +341,11 @@ func sortByProximityWithCost(vmSpecs []cloudmodel.SpecInfo, vcpus, memory uint32
 	// vendor is known, then proximity, then cost as the final tie-break.
 	switch machineType {
 	case "compute-intensive":
-		rankSpecs(ctx, vmSpecs, vendorMatch, vcpuProximity, memoryProximity, byCost)
+		rankSpecs(ctx, vmSpecs, vendorMatch, vcpuProximity, memoryProximity, byAvailability, byCost)
 	case "memory-intensive":
-		rankSpecs(ctx, vmSpecs, vendorMatch, memoryProximity, vcpuProximity, byCost)
+		rankSpecs(ctx, vmSpecs, vendorMatch, memoryProximity, vcpuProximity, byAvailability, byCost)
 	default: // "general-purpose"
-		rankSpecs(ctx, vmSpecs, vendorMatch, manhattanProximity, byCost)
+		rankSpecs(ctx, vmSpecs, vendorMatch, manhattanProximity, byAvailability, byCost)
 	}
 }
 

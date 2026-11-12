@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -24,6 +25,10 @@ var cudaRegex = regexp.MustCompile(`CUDA Version:\s*([0-9.]+)`)
 
 // setupSourceEnvironment provisions or reuses the source GPU VM and seeds Ollama + the configured AI web service.
 func setupSourceEnvironment(tb *resty.Client, cfg TestConfig, auth AuthConfig, state *MigrationState) error {
+	if cfg.Source.isExternalSSH() {
+		return verifyExternalSourceEnvironment(tb, cfg, auth, state)
+	}
+
 	start := time.Now()
 	appName := cfg.AIService.appDisplayName()
 	appPort := cfg.AIService.activeAppPort()
@@ -51,11 +56,11 @@ func setupSourceEnvironment(tb *resty.Client, cfg TestConfig, auth AuthConfig, s
 		openSecurityGroupServicePorts(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, sgIDs, cfg.AIService)
 	}
 
-	if _, err := pollGpuVmReady(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, cfg.Timing); err != nil {
+	if err := pollVmSshReady(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, cfg.Timing); err != nil {
 		return err
 	}
 
-	if err := deployOllamaContainerFirst(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, cfg.AIService); err != nil {
+	if err := deployOllamaContainerFirst(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, cfg.AIService, cfg.Timing); err != nil {
 		return err
 	}
 
@@ -64,7 +69,7 @@ func setupSourceEnvironment(tb *resty.Client, cfg TestConfig, auth AuthConfig, s
 	}
 
 	fmt.Printf("🐳 Starting %s container on Source GPU VM (:%d)...\n", appName, appPort)
-	upCmd := fmt.Sprintf("cd %s && sudo docker compose up -d", cfg.AIService.RootDir)
+	upCmd := buildDockerComposeUpWithRetryCmd(cfg.AIService.RootDir, "")
 	if _, err := execRemoteCmd(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, []string{upCmd}); err != nil {
 		return fmt.Errorf("failed to start %s container on source VM: %w", appName, err)
 	}
@@ -75,6 +80,7 @@ func setupSourceEnvironment(tb *resty.Client, cfg TestConfig, auth AuthConfig, s
 	}
 
 	if cfg.AIService.isKotaemon() {
+		ensureKotaemonLangdetectCache(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, cfg.AIService)
 		if err := ensureKotaemonOllamaDefaults(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, metrics.NodeID, cfg.AIService, cfg.Timing); err != nil {
 			fmt.Printf("⚠️  Kotaemon auto-default check warning: %v (verify 'Resources' tab in browser if needed)\n", err)
 		}
@@ -90,7 +96,7 @@ func setupSourceEnvironment(tb *resty.Client, cfg TestConfig, auth AuthConfig, s
 	metrics.WebUIUrl = fmt.Sprintf("http://%s:%d", metrics.PublicIP, appPort)
 	state.Source = metrics
 	state.StageDurations["setup-source"] = time.Since(start).Round(time.Second).String()
-	if err := saveState(cfg.Beetle.StateFile, state); err != nil {
+	if err := saveState(resolveConfigPath(cfg.ConfigDir, cfg.Beetle.StateFile), state); err != nil {
 		return err
 	}
 
@@ -108,6 +114,52 @@ func setupSourceEnvironment(tb *resty.Client, cfg TestConfig, auth AuthConfig, s
 		fmt.Println("   4) Run '-mode recommend' -> '-mode migrate' -> '-mode verify' (or migrate via Beetle UX Lab UI).")
 	}
 	fmt.Println("--------------------------------------------------------------------------------")
+	return nil
+}
+
+// verifyExternalSourceEnvironment inspects and validates an existing external SSH source GPU VM (e.g., mc-terrarium ai-stack-testbed).
+func verifyExternalSourceEnvironment(tb *resty.Client, cfg TestConfig, auth AuthConfig, state *MigrationState) error {
+	start := time.Now()
+	appName := cfg.AIService.appDisplayName()
+	appPort := cfg.AIService.activeAppPort()
+
+	fmt.Println("\n================================================================================")
+	fmt.Printf("🔎 [Stage 1] External Source GPU VM Verification (%s + Ollama)\n", appName)
+	fmt.Println("================================================================================")
+
+	if err := enrichNodeFromExternalSource(cfg, state, nil); err != nil {
+		return err
+	}
+	fmt.Printf("📌 External Source GPU Node: node=%s, ip=%s, csp=%s/%s, spec=%s\n",
+		state.Source.NodeID, state.Source.PublicIP, state.Source.Csp, state.Source.Region, state.Source.SpecID)
+
+	checkCmd := fmt.Sprintf(
+		"nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader && curl -sf http://localhost:%d/api/tags >/dev/null && code=$(curl -s -o /dev/null -w '%%{http_code}' http://localhost:%d/) && [ \"$code\" -ge 200 ] && [ \"$code\" -lt 400 ] && echo \"EXTERNAL_SOURCE_READY:$code\"",
+		cfg.AIService.OllamaPort, appPort,
+	)
+	out, err := execExternalSshCmd(cfg, checkCmd, false)
+	if err != nil || !strings.Contains(out, "EXTERNAL_SOURCE_READY:") {
+		return fmt.Errorf("external source GPU VM '%s' (%s) is not ready: err=%v, out=%s", state.Source.NodeID, state.Source.PublicIP, err, out)
+	}
+	fmt.Printf("✅ External Source GPU & AI stack healthy: %s\n", strings.Split(out, "\n")[0])
+
+	if cfg.AIService.isKotaemon() {
+		_, _ = execExternalSshCmd(cfg, buildLangdetectCacheScript(cfg.AIService.RootDir), false)
+	}
+
+	fmt.Println("⚡ Running baseline GPU inference & collecting External Source metrics...")
+	if err := collectSourceEndpointMetrics(tb, cfg, auth, &state.Source); err != nil {
+		return fmt.Errorf("failed to collect external source baseline metrics: %w", err)
+	}
+
+	state.Source.WebUIUrl = fmt.Sprintf("http://%s:%d", state.Source.PublicIP, appPort)
+	state.StageDurations["setup-source"] = time.Since(start).Round(time.Second).String()
+	if err := saveState(resolveConfigPath(cfg.ConfigDir, cfg.Beetle.StateFile), state); err != nil {
+		return err
+	}
+
+	fmt.Printf("✅ [Stage 1 Complete] External Source GPU='%s' (%.0fGB), Models='%s', Speed=%.2f tok/s\n",
+		state.Source.GpuModel, state.Source.GpuVramGB, cfg.AIService.modelSummary(), state.Source.EvalTokensPerSec)
 	return nil
 }
 
@@ -301,8 +353,10 @@ func buildDockerComposeYAML(aiCfg AIServiceConfig) string {
       - OLLAMA_KEEP_ALIVE=30m
       - OLLAMA_MAX_LOADED_MODELS=2
       - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_CONTEXT_LENGTH=16384
     volumes:
       - ./ollama:/root/.ollama
+      - ./ollama/.nv:/root/.nv
     deploy:
       resources:
         reservations:
@@ -312,8 +366,8 @@ func buildDockerComposeYAML(aiCfg AIServiceConfig) string {
               capabilities: [gpu]
 
   kotaemon:
-    # Lightweight image with built-in PDF viewer and citation highlighting.
-    image: ghcr.io/cinnamon/kotaemon:main-lite
+    # Full image (v0.12.0) with built-in PDF viewer, citation highlighting, and advanced document/table parsers.
+    image: ghcr.io/cinnamon/kotaemon:main-full
     container_name: aimx-kotaemon
     restart: unless-stopped
     ports:
@@ -321,6 +375,8 @@ func buildDockerComposeYAML(aiCfg AIServiceConfig) string {
     environment:
       - GRADIO_SERVER_NAME=0.0.0.0
       - GRADIO_SERVER_PORT=7860
+      - KH_APP_VERSION=v0.12.0
+      - FTLANG_CACHE=/app/ktem_app_data/fasttext-langdetect
       - KH_OLLAMA_URL=http://ollama:11434/v1/
       - LOCAL_MODEL=%s
       - LOCAL_MODEL_EMBEDDINGS=%s
@@ -329,6 +385,13 @@ func buildDockerComposeYAML(aiCfg AIServiceConfig) string {
       - KH_FEATURE_USER_MANAGEMENT_PASSWORD=%s
     volumes:
       - ./ktem_app_data:/app/ktem_app_data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     depends_on:
       - ollama
 `, aiCfg.OllamaPort, appPort, aiCfg.ModelName, aiCfg.EmbeddingModel, aiCfg.AdminUsername, aiCfg.AdminPassword)
@@ -344,8 +407,10 @@ func buildDockerComposeYAML(aiCfg AIServiceConfig) string {
     environment:
       - OLLAMA_LOAD_TIMEOUT=15m
       - OLLAMA_KEEP_ALIVE=30m
+      - OLLAMA_CONTEXT_LENGTH=16384
     volumes:
       - ./ollama:/root/.ollama
+      - ./ollama/.nv:/root/.nv
     deploy:
       resources:
         reservations:
@@ -370,36 +435,115 @@ func buildDockerComposeYAML(aiCfg AIServiceConfig) string {
 `, aiCfg.OllamaPort, appPort)
 }
 
+// buildDockerComposeUpWithRetryCmd builds a 3-attempt shell command for starting Docker Compose services reliably.
+func buildDockerComposeUpWithRetryCmd(rootDir, serviceName string) string {
+	svcArg := strings.TrimSpace(serviceName)
+	upTarget := "sudo docker compose up -d"
+	if svcArg != "" {
+		upTarget = "sudo docker compose up -d " + svcArg
+	}
+	return fmt.Sprintf(`cd %s
+for attempt in 1 2 3; do
+  if %s; then
+    break
+  fi
+  if [ "$attempt" -eq 3 ]; then
+    exit 1
+  fi
+  echo "Retrying docker compose up (attempt $((attempt+1))/3)..."
+  sudo systemctl start containerd docker 2>/dev/null || true
+  sleep 10
+done`, rootDir, upTarget)
+}
+
+// buildPrepareMigrationHelperScript generates the helper script stored in <rootDir>/prepare-for-migration.sh.
+func buildPrepareMigrationHelperScript(rootDir, dbPath string) string {
+	return fmt.Sprintf(`#!/bin/bash
+set -e
+DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$DIR"
+sudo docker compose stop && sync
+sleep 3
+sudo chown -R "$(id -un):$(id -gn)" "$DIR"
+sudo chmod -R u+rwX,g+rX,o+rX "$DIR"
+echo "QUIESCED_DB_SHA256=$(sha256sum "$DIR/%s" 2>/dev/null | awk '{print $1}')"
+sudo docker compose up -d
+`, dbPath)
+}
+
+// buildLangdetectCacheScript pre-populates Kotaemon's fast-langdetect model cache from the container image.
+func buildLangdetectCacheScript(rootDir string) string {
+	cacheDir := strings.TrimRight(rootDir, "/") + "/ktem_app_data/fasttext-langdetect"
+	return fmt.Sprintf(`sudo mkdir -p "%s"
+if [ ! -s "%s/lid.176.bin" ]; then
+  sudo docker cp aimx-kotaemon:/app/.venv/lib/python3.10/site-packages/fast_langdetect/resources/lid.176.ftz "%s/lid.176.bin" 2>/dev/null || true
+  sudo chown -R "$(id -un):$(id -gn)" "%s" 2>/dev/null || true
+fi`, cacheDir, cacheDir, cacheDir, cacheDir)
+}
+
 // ensureDockerAndNvidiaRuntime verifies NVIDIA GPU driver, Docker Compose, and NVIDIA Container Toolkit across CSPs.
-func ensureDockerAndNvidiaRuntime(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string) error {
+func ensureDockerAndNvidiaRuntime(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, timing TimingConfig) error {
 	script := strings.ReplaceAll(ensureGpuRuntimeScript, "\r\n", "\n")
-	if _, err := execRemoteCmd(tb, tbEndpoint, nsID, infraID, nodeID, []string{script}); err != nil {
+	out, err := execRemoteCmd(tb, tbEndpoint, nsID, infraID, nodeID, []string{script})
+	if err != nil {
 		return fmt.Errorf("failed to verify Docker/NVIDIA container runtime on %s: %w", infraID, err)
+	}
+	if strings.Contains(out, "GPU_REBOOT_NEEDED") {
+		fmt.Printf("🔄 Newly installed NVIDIA kernel module on '%s' requires reboot; rebooting VM...\n", infraID)
+		_, _ = execRemoteCmdQuiet(tb, tbEndpoint, nsID, infraID, nodeID, []string{"sudo nohup sh -c 'sleep 2 && reboot' >/dev/null 2>&1 &"})
+		waitWithCountdown(30, fmt.Sprintf("Waiting for '%s' reboot to activate NVIDIA GPU driver", infraID))
+		if _, rErr := pollGpuVmReady(tb, tbEndpoint, nsID, infraID, nodeID, timing); rErr != nil {
+			return rErr
+		}
+		_, _ = execRemoteCmdQuiet(tb, tbEndpoint, nsID, infraID, nodeID, []string{"sudo systemctl start containerd docker"})
 	}
 	return nil
 }
 
 // deployOllamaContainerFirst prepares the host directories, writes docker-compose.yml, and starts Ollama before model pulls.
-func deployOllamaContainerFirst(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, aiCfg AIServiceConfig) error {
-	if err := ensureDockerAndNvidiaRuntime(tb, tbEndpoint, nsID, infraID, nodeID); err != nil {
+func deployOllamaContainerFirst(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, aiCfg AIServiceConfig, timing TimingConfig) error {
+	if err := ensureDockerAndNvidiaRuntime(tb, tbEndpoint, nsID, infraID, nodeID, timing); err != nil {
 		return err
 	}
 
 	composeContent := buildDockerComposeYAML(aiCfg)
+	prepHelper := buildPrepareMigrationHelperScript(aiCfg.RootDir, aiCfg.relativeDbPath())
 	subDir := aiCfg.appDataSubdir()
+	extraDirs := fmt.Sprintf("%s/ollama/.nv", aiCfg.RootDir)
+	staleContainer := "aimx-kotaemon"
+	if aiCfg.isKotaemon() {
+		extraDirs = fmt.Sprintf("%s/ollama/.nv %s/ktem_app_data/fasttext-langdetect", aiCfg.RootDir, aiCfg.RootDir)
+		staleContainer = "aimx-open-webui"
+	}
+
 	deployCmd := fmt.Sprintf(`set -e
-sudo mkdir -p %s/ollama %s/%s
+sudo mkdir -p %s/ollama %s/%s %s
+if [ "%s" != "/opt/ai-stack" ] && [ ! -e /opt/ai-stack ]; then
+  sudo ln -s "%s" /opt/ai-stack || true
+fi
 sudo chown -R $(id -un):$(id -gn) %s
+sudo docker rm -f %s 2>/dev/null || true
 cat << 'EOF' > %s/docker-compose.yml
 %sEOF
-cd %s && sudo docker compose up -d ollama
+cat << 'EOF' > %s/prepare-for-migration.sh
+%sEOF
+chmod +x %s/prepare-for-migration.sh
+%s
 for i in $(seq 1 24); do
   if curl -sf http://localhost:%d/api/tags >/dev/null 2>&1; then
     break
   fi
   sleep 3
 done`,
-		aiCfg.RootDir, aiCfg.RootDir, subDir, aiCfg.RootDir, aiCfg.RootDir, composeContent, aiCfg.RootDir, aiCfg.OllamaPort)
+		aiCfg.RootDir, aiCfg.RootDir, subDir, extraDirs,
+		aiCfg.RootDir, aiCfg.RootDir,
+		aiCfg.RootDir,
+		staleContainer,
+		aiCfg.RootDir, composeContent,
+		aiCfg.RootDir, prepHelper,
+		aiCfg.RootDir,
+		buildDockerComposeUpWithRetryCmd(aiCfg.RootDir, "ollama"),
+		aiCfg.OllamaPort)
 
 	fmt.Printf("🐳 Preparing '%s' (%s) & starting Ollama container...\n", aiCfg.RootDir, aiCfg.appDisplayName())
 	if _, err := execRemoteCmd(tb, tbEndpoint, nsID, infraID, nodeID, []string{deployCmd}); err != nil {
@@ -408,17 +552,33 @@ done`,
 	return nil
 }
 
+// buildOllamaPullWithRetryCmd builds a 3-attempt shell command for pulling an Ollama model reliably.
+func buildOllamaPullWithRetryCmd(rootDir, modelTag string) string {
+	return fmt.Sprintf(`for attempt in 1 2 3; do
+  if sudo docker exec aimx-ollama ollama pull %s; then
+    break
+  fi
+  if [ "$attempt" -eq 3 ]; then
+    exit 1
+  fi
+  echo "Retrying ollama pull %s (attempt $((attempt+1))/3)..."
+  sudo systemctl start containerd docker 2>/dev/null || true
+  cd %s && sudo docker compose up -d ollama
+  sleep 10
+done`, modelTag, modelTag, rootDir)
+}
+
 // pullOllamaModels pulls the primary generation model and optional embedding model into aimx-ollama.
 func pullOllamaModels(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, aiCfg AIServiceConfig, roleLabel string) error {
 	fmt.Printf("📥 Pulling LLM '%s' on %s GPU VM...\n", aiCfg.ModelName, roleLabel)
-	pullGenCmd := fmt.Sprintf("sudo docker exec aimx-ollama ollama pull %s", aiCfg.ModelName)
+	pullGenCmd := buildOllamaPullWithRetryCmd(aiCfg.RootDir, aiCfg.ModelName)
 	if _, err := execRemoteCmd(tb, tbEndpoint, nsID, infraID, nodeID, []string{pullGenCmd}); err != nil {
 		return fmt.Errorf("failed to pull LLM model %s on %s VM: %w", aiCfg.ModelName, strings.ToLower(roleLabel), err)
 	}
 
 	if emb := strings.TrimSpace(aiCfg.EmbeddingModel); emb != "" {
 		fmt.Printf("📥 Pulling multilingual embedding model '%s' on %s GPU VM...\n", emb, roleLabel)
-		pullEmbCmd := fmt.Sprintf("sudo docker exec aimx-ollama ollama pull %s", emb)
+		pullEmbCmd := buildOllamaPullWithRetryCmd(aiCfg.RootDir, emb)
 		if _, err := execRemoteCmd(tb, tbEndpoint, nsID, infraID, nodeID, []string{pullEmbCmd}); err != nil {
 			return fmt.Errorf("failed to pull embedding model %s on %s VM: %w", emb, strings.ToLower(roleLabel), err)
 		}
@@ -428,48 +588,107 @@ func pullOllamaModels(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string
 
 // warmupOllamaModels preloads the generation and embedding models into GPU VRAM with a 30m keep-alive window.
 func warmupOllamaModels(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, aiCfg AIServiceConfig) {
+	genBody, _ := json.Marshal(map[string]any{
+		"model":      aiCfg.ModelName,
+		"prompt":     "Hello!",
+		"options":    map[string]any{"num_predict": 32},
+		"stream":     false,
+		"keep_alive": "30m",
+	})
 	var cmds []string
-	cmds = append(cmds, fmt.Sprintf(`curl -sf http://localhost:%d/api/generate -d '{"model":"%s","prompt":"Hello","stream":false,"keep_alive":"30m"}' >/dev/null || true`,
-		aiCfg.OllamaPort, aiCfg.ModelName))
+	cmds = append(cmds, fmt.Sprintf(`curl -sf --max-time 300 http://localhost:%d/api/generate -H "Content-Type: application/json" -d '%s' >/dev/null || true`,
+		aiCfg.OllamaPort, string(genBody)))
 	if emb := strings.TrimSpace(aiCfg.EmbeddingModel); emb != "" {
-		cmds = append(cmds, fmt.Sprintf(`curl -sf http://localhost:%d/api/embed -d '{"model":"%s","input":"Cloud-Barista conference slide search","keep_alive":"30m"}' >/dev/null || true`,
-			aiCfg.OllamaPort, emb))
+		embBody, _ := json.Marshal(map[string]any{
+			"model":      emb,
+			"input":      "Cloud-Barista conference presentation RAG migration",
+			"keep_alive": "30m",
+		})
+		cmds = append(cmds, fmt.Sprintf(`curl -sf --max-time 300 http://localhost:%d/api/embed -H "Content-Type: application/json" -d '%s' >/dev/null || true`,
+			aiCfg.OllamaPort, string(embBody)))
 	}
 	cmds = append(cmds, "sudo docker exec aimx-ollama ollama ps || true")
 	_, _ = execRemoteCmd(tb, tbEndpoint, nsID, infraID, nodeID, []string{strings.Join(cmds, " && ")})
 }
 
-// ensureKotaemonOllamaDefaults sets the 'ollama' LLM and Embedding connectors to default=1 in Kotaemon's SQLite database.
-func ensureKotaemonOllamaDefaults(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, aiCfg AIServiceConfig, timing TimingConfig) error {
-	pyCmd := `sudo docker exec aimx-kotaemon python3 -c '
-import os, sqlite3
-db = "/app/ktem_app_data/user_data/sql.db"
+// ensureKotaemonLangdetectCache copies lid.176.ftz into the host volume so offline CJK citation matching never stalls.
+func ensureKotaemonLangdetectCache(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, aiCfg AIServiceConfig) {
+	_, _ = execRemoteCmdQuiet(tb, tbEndpoint, nsID, infraID, nodeID, []string{buildLangdetectCacheScript(aiCfg.RootDir)})
+}
+
+// buildKotaemonDefaultsPythonScript builds the SQLite initialization script for Ollama defaults and Korean/Docling RAG settings.
+func buildKotaemonDefaultsPythonScript() string {
+	return `import json, os, sqlite3, sys, uuid
+db = sys.argv[1]
+admin_user = sys.argv[2].strip().lower()
 changed = False
 if os.path.exists(db):
-    conn = sqlite3.connect(db)
+    conn = sqlite3.connect(db, timeout=10)
     cur = conn.cursor()
-    tables = [r[0] for r in cur.execute("SELECT name FROM sqlite_master WHERE type=\x27table\x27").fetchall()]
-    for t in tables:
+    existing = {r[0] for r in cur.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+    candidates = ["llm_table", "llm", "embedding", "resources__llm", "resources__embedding"]
+    for t in sorted(existing):
         tl = t.lower()
-        if "llm" in tl or "embedding" in tl:
-            cols = [c[1] for c in cur.execute(f"PRAGMA table_info(\"{t}\")").fetchall()]
-            if "name" in cols and "default" in cols:
-                row = cur.execute(f"SELECT \"default\" FROM \"{t}\" WHERE name = ?", ("ollama",)).fetchone()
-                if row is not None and not row[0]:
-                    cur.execute(f"UPDATE \"{t}\" SET \"default\" = 0")
-                    cur.execute(f"UPDATE \"{t}\" SET \"default\" = 1 WHERE name = ?", ("ollama",))
+        if ("llm" in tl or "embedding" in tl) and t not in candidates:
+            candidates.append(t)
+    for t in candidates:
+        if t not in existing or not t.replace("_", "").isalnum():
+            continue
+        cols = [c[1] for c in cur.execute(f'PRAGMA table_info("{t}")').fetchall()]
+        if "name" in cols and "default" in cols:
+            row = cur.execute(f'SELECT "default" FROM "{t}" WHERE name = ?', ("ollama",)).fetchone()
+            if row is not None and row[0] != 1:
+                cur.execute(f'UPDATE "{t}" SET "default" = 0')
+                cur.execute(f'UPDATE "{t}" SET "default" = 1 WHERE name = ?', ("ollama",))
+                changed = True
+    if "user" in existing and "settings" in existing and admin_user:
+        admin_row = cur.execute("SELECT id FROM user WHERE lower(username) = ?", (admin_user,)).fetchone()
+        if admin_row:
+            uid = admin_row[0]
+            desired_settings = {
+                "index.options.1.reader_mode": "docling",
+                "index.options.1.use_reranking": False,
+                "index.options.1.use_llm_reranking": False,
+                "reasoning.use": "simple",
+                "reasoning.lang": "ko",
+                "reasoning.options.simple.highlight_citation": "inline",
+                "reasoning.options.simple.create_mindmap": True,
+                "reasoning.options.complex.highlight_citation": "inline",
+                "reasoning.options.complex.create_mindmap": True,
+            }
+            s_row = cur.execute("SELECT id, setting FROM settings WHERE user = ?", (uid,)).fetchone()
+            if s_row:
+                sid, raw = s_row
+                current = json.loads(raw) if isinstance(raw, str) and raw else {}
+                if any(current.get(k) != v for k, v in desired_settings.items()):
+                    current.update(desired_settings)
+                    cur.execute("UPDATE settings SET setting = ? WHERE id = ?", (json.dumps(current), sid))
                     changed = True
+            else:
+                sid = uuid.uuid4().hex
+                cur.execute(
+                    "INSERT INTO settings (id, user, setting) VALUES (?, ?, ?)",
+                    (sid, uid, json.dumps(desired_settings)),
+                )
+                changed = True
     if changed:
         conn.commit()
     conn.close()
 print("DEFAULT_UPDATED" if changed else "DEFAULT_UNCHANGED")
-'`
+`
+}
+
+// ensureKotaemonOllamaDefaults activates 'ollama' defaults and Korean/Docling RAG settings in Kotaemon's SQLite database.
+func ensureKotaemonOllamaDefaults(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, aiCfg AIServiceConfig, timing TimingConfig) error {
+	escapedAdmin := strings.ReplaceAll(strings.TrimSpace(aiCfg.AdminUsername), `'`, `'\''`)
+	pyCmd := fmt.Sprintf(`sudo docker exec -i aimx-kotaemon python3 - /app/ktem_app_data/user_data/sql.db '%s' << 'PY_EOF'
+%sPY_EOF`, escapedAdmin, buildKotaemonDefaultsPythonScript())
 	out, err := execRemoteCmdQuiet(tb, tbEndpoint, nsID, infraID, nodeID, []string{pyCmd})
 	if err != nil {
 		return err
 	}
 	if strings.Contains(out, "DEFAULT_UPDATED") {
-		fmt.Println("🔧 Activated 'ollama' as the default LLM & Embedding provider in Kotaemon sql.db; restarting container...")
+		fmt.Println("🔧 Activated 'ollama' defaults & Korean RAG settings (Docling / inline citation / mindmap) in Kotaemon sql.db; restarting container...")
 		if _, rErr := execRemoteCmdQuiet(tb, tbEndpoint, nsID, infraID, nodeID, []string{"sudo docker restart aimx-kotaemon"}); rErr != nil {
 			return rErr
 		}
@@ -482,22 +701,31 @@ print("DEFAULT_UPDATED" if changed else "DEFAULT_UNCHANGED")
 // discoverSourceInfra performs hybrid inspection of the live source GPU VM and updates the base OnpremInfra model.
 func discoverSourceInfra(tb *resty.Client, cfg TestConfig, auth AuthConfig, state *MigrationState) (onpremmodel.OnpremInfra, error) {
 	var baseInfra onpremmodel.OnpremInfra
-	rawBytes, err := os.ReadFile(cfg.Beetle.BaseInfraFile)
+	baseInfraPath := resolveConfigPath(cfg.ConfigDir, cfg.Beetle.BaseInfraFile)
+	rawBytes, err := os.ReadFile(baseInfraPath)
 	if err != nil {
-		return baseInfra, fmt.Errorf("failed to read base infra file %s: %w", cfg.Beetle.BaseInfraFile, err)
+		return baseInfra, fmt.Errorf("failed to read base infra file %s: %w", baseInfraPath, err)
 	}
 	if err := json.Unmarshal(rawBytes, &baseInfra); err != nil {
-		return baseInfra, fmt.Errorf("failed to unmarshal base infra JSON %s: %w", cfg.Beetle.BaseInfraFile, err)
+		return baseInfra, fmt.Errorf("failed to unmarshal base infra JSON %s: %w", baseInfraPath, err)
 	}
 	if len(baseInfra.Nodes) == 0 {
-		return baseInfra, fmt.Errorf("base infra file %s must contain at least 1 node", cfg.Beetle.BaseInfraFile)
+		return baseInfra, fmt.Errorf("base infra file %s must contain at least 1 node", baseInfraPath)
 	}
 
-	if err := enrichNodeFromTumblebugMetadata(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, state, &baseInfra); err != nil {
-		return baseInfra, err
+	if cfg.Source.isExternalSSH() {
+		if err := enrichNodeFromExternalSource(cfg, state, &baseInfra); err != nil {
+			return baseInfra, err
+		}
+		fmt.Printf("🔎 Inspecting live hardware & GPU specs on External Source VM '%s' (%s) via SSH...\n",
+			state.Source.NodeID, state.Source.PublicIP)
+	} else {
+		if err := enrichNodeFromTumblebugMetadata(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, state, &baseInfra); err != nil {
+			return baseInfra, err
+		}
+		fmt.Printf("🔎 Inspecting live hardware & GPU specs on Source VM '%s' via CB-Tumblebug Remote Command...\n", cfg.Source.InfraID)
 	}
 
-	fmt.Printf("🔎 Inspecting live hardware & GPU specs on Source VM '%s' via CB-Tumblebug Remote Command...\n", cfg.Source.InfraID)
 	inspectScript := `echo "===GPU_CSV==="
 nvidia-smi --query-gpu=index,uuid,name,driver_version,pci.bus_id,memory.total --format=csv,noheader,nounits 2>/dev/null
 echo "===GPU_BANNER==="
@@ -523,19 +751,33 @@ if [ -f /etc/os-release ]; then
   echo "OS_PRETTY=$PRETTY_NAME"
 fi`
 
-	out, err := execRemoteCmdQuiet(tb, auth.TumblebugEndpoint, cfg.Source.NamespaceID, cfg.Source.InfraID, state.Source.NodeID, []string{inspectScript})
+	out, err := runSourceCmd(tb, cfg, auth, state.Source.NodeID, []string{inspectScript}, false)
 	if err != nil {
-		return baseInfra, fmt.Errorf("failed to inspect live hardware & GPU specs on source VM '%s': %w", cfg.Source.InfraID, err)
+		return baseInfra, fmt.Errorf("failed to inspect live hardware & GPU specs on source VM '%s': %w", cfg.Source.displayLabel(), err)
 	}
 	enrichNodeFromInspectionOutput(&baseInfra.Nodes[0], out)
+	if len(baseInfra.Nodes[0].GPUCards) > 0 {
+		c := baseInfra.Nodes[0].GPUCards[0]
+		state.Source.GpuVendor = c.Vendor
+		state.Source.GpuModel = c.Model
+		state.Source.GpuCount = len(baseInfra.Nodes[0].GPUCards)
+		state.Source.GpuVramGB = c.MemoryTotalGB
+		state.Source.DriverVersion = c.DriverVersion
+		state.Source.CudaVersion = c.CudaVersion
+	}
 
+	statePath := resolveConfigPath(cfg.ConfigDir, cfg.Beetle.StateFile)
+	outDir := filepath.Dir(statePath)
+	if outDir == "" || outDir == "." {
+		outDir = "testresult"
+	}
 	if discBytes, mErr := json.MarshalIndent(baseInfra, "", "  "); mErr == nil {
-		_ = os.MkdirAll("testresult", 0o755)
-		_ = os.WriteFile("testresult/source-infra-discovered.json", discBytes, 0o644)
+		_ = os.MkdirAll(outDir, 0o755)
+		_ = os.WriteFile(filepath.Join(outDir, "source-infra-discovered.json"), discBytes, 0o644)
 	}
 
 	state.DiscoveredOnpremInfra = baseInfra
-	if err := saveState(cfg.Beetle.StateFile, state); err != nil {
+	if err := saveState(statePath, state); err != nil {
 		return baseInfra, err
 	}
 	return baseInfra, nil

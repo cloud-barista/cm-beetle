@@ -76,6 +76,8 @@ cmd/aimx/aimx
 cmd/aimx/test-aimx
 cmd/aimx/testconf/auth-config.json
 cmd/aimx/testconf/test-config.yaml
+cmd/aimx/testconf/kotaemon-config.yaml
+cmd/aimx/testconf/ai-stack-testbed-config.yaml
 cmd/aimx/testresult/
 pkg/testclient/scripts/sequentialFullTest/executionStatus*
 pkg/testclient/scripts/sequentialFullTest/ansibleAutoConf/*

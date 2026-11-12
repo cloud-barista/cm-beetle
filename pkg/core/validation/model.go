@@ -51,6 +51,8 @@ const (
 	CodeInvalidNodeGroupSize     = "INVALID_NODEGROUP_SIZE"
 	CodeMissingRequiredNodeGroup = "MISSING_REQUIRED_NODEGROUP"
 	CodeInvalidRootDiskSize      = "INVALID_ROOT_DISK_SIZE"
+	CodeSubnetZoneUnavailable    = "SUBNET_ZONE_UNAVAILABLE"
+	CodeRegionalSubnetZonePinned = "REGIONAL_SUBNET_ZONE_PINNED"
 )
 
 // ValidationIssue is a single problem found while validating a target model.

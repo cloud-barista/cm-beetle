@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -79,7 +81,7 @@ func recommendTargetGpuInfra(beetle, tb *resty.Client, cfg TestConfig, auth Auth
 	state.RecommendedCandidates = candidates
 	state.SelectedRecommendation = &selected
 	state.StageDurations["recommend"] = time.Since(start).Round(time.Second).String()
-	if err := saveState(cfg.Beetle.StateFile, state); err != nil {
+	if err := saveState(resolveConfigPath(cfg.ConfigDir, cfg.Beetle.StateFile), state); err != nil {
 		return nil, err
 	}
 
@@ -116,44 +118,60 @@ func findCandidateAvailableZones(c cloudmodel.RecommendedInfra) []string {
 		targetSpecID = c.TargetInfra.NodeGroups[0].SpecId
 	}
 	for _, s := range c.TargetSpecList {
-		if (targetSpecID == "" || s.Id == targetSpecID) && len(s.AvailableZones) > 0 {
+		if (targetSpecID == "" || s.Id == targetSpecID || (s.CspSpecName != "" && s.CspSpecName == targetSpecID)) && len(s.AvailableZones) > 0 {
 			return s.AvailableZones
 		}
 	}
 	return nil
 }
 
-// isZonalSubnetCSP reports whether the provider binds each subnet to a single availability zone.
-func isZonalSubnetCSP(cspName string) bool {
-	switch strings.ToLower(strings.TrimSpace(cspName)) {
-	case "aws", "alibaba", "tencent", "ibm", "ncp", "kt":
-		return true
-	default:
-		return false
+// findCandidateUnavailableZones returns UnavailableZones for the candidate's primary GPU spec when provided by CB-Tumblebug.
+func findCandidateUnavailableZones(c cloudmodel.RecommendedInfra) []string {
+	targetSpecID := ""
+	if len(c.TargetInfra.NodeGroups) > 0 {
+		targetSpecID = c.TargetInfra.NodeGroups[0].SpecId
 	}
+	for _, s := range c.TargetSpecList {
+		if (targetSpecID == "" || s.Id == targetSpecID || (s.CspSpecName != "" && s.CspSpecName == targetSpecID)) && len(s.UnavailableZones) > 0 {
+			return s.UnavailableZones
+		}
+	}
+	return nil
 }
 
-// applyTargetSubnetZone sets SubnetInfoList[0].Zone from PreferredZone or AvailableZones[0] on zonal-subnet CSPs.
-func applyTargetSubnetZone(rec *cloudmodel.RecommendedInfra, target TestCase) string {
+// applyTargetSubnetZone accepts CM-Beetle's recommended subnet zone or validates an explicit PreferredZone override.
+func applyTargetSubnetZone(rec *cloudmodel.RecommendedInfra, target TestCase) (string, error) {
 	if rec == nil || len(rec.TargetVNet.SubnetInfoList) == 0 {
-		return ""
+		return "", nil
 	}
-	if preferred := strings.TrimSpace(target.PreferredZone); preferred != "" {
+	preferred := strings.TrimSpace(target.PreferredZone)
+	if !recommendation.IsZonalSubnetCSP(target.Csp) {
+		if preferred != "" {
+			return "", fmt.Errorf("preferredZone %q cannot be pinned on regional-subnet CSP %q", preferred, target.Csp)
+		}
+		rec.TargetVNet.SubnetInfoList[0].Zone = ""
+		return "", nil
+	}
+
+	availZones := findCandidateAvailableZones(*rec)
+	unavailZones := findCandidateUnavailableZones(*rec)
+	if preferred != "" {
+		if slices.Contains(unavailZones, preferred) || (len(availZones) > 0 && !slices.Contains(availZones, preferred)) {
+			return "", fmt.Errorf("preferredZone %q is not available for selected spec on %s/%s (available zones: %v)",
+				preferred, target.Csp, target.Region, availZones)
+		}
 		rec.TargetVNet.SubnetInfoList[0].Zone = preferred
-		return preferred
+		return preferred, nil
 	}
+
 	if existing := strings.TrimSpace(rec.TargetVNet.SubnetInfoList[0].Zone); existing != "" {
-		return existing
+		return existing, nil
 	}
-	if !isZonalSubnetCSP(target.Csp) {
-		return ""
+	if len(availZones) > 0 {
+		rec.TargetVNet.SubnetInfoList[0].Zone = availZones[0]
+		return availZones[0], nil
 	}
-	zones := findCandidateAvailableZones(*rec)
-	if len(zones) > 0 {
-		rec.TargetVNet.SubnetInfoList[0].Zone = zones[0]
-		return zones[0]
-	}
-	return ""
+	return "", nil
 }
 
 // provisionTargetGpuInfra calls CM-Beetle's POST /beetle/migration/ns/{nsId}/infra to provision or reuse the Target GPU VM.
@@ -182,7 +200,11 @@ func provisionTargetGpuInfra(beetle, tb *resty.Client, cfg TestConfig, auth Auth
 	reqBody := controller.MigrateInfraRequest{
 		RecommendedInfra: *state.SelectedRecommendation,
 	}
-	if selectedZone := applyTargetSubnetZone(&reqBody.RecommendedInfra, target); selectedZone != "" {
+	selectedZone, err := applyTargetSubnetZone(&reqBody.RecommendedInfra, target)
+	if err != nil {
+		return nil, err
+	}
+	if selectedZone != "" {
 		fmt.Printf("   📍 Target Subnet Zone selected: %s\n", selectedZone)
 	}
 
@@ -227,7 +249,7 @@ func provisionTargetGpuInfra(beetle, tb *resty.Client, cfg TestConfig, auth Auth
 		EmbeddingModel: cfg.AIService.EmbeddingModel,
 		WebUIUrl:       fmt.Sprintf("http://%s:%d", node.PublicIP, cfg.AIService.activeAppPort()),
 	}
-	if err := saveState(cfg.Beetle.StateFile, state); err != nil {
+	if err := saveState(resolveConfigPath(cfg.ConfigDir, cfg.Beetle.StateFile), state); err != nil {
 		return nil, err
 	}
 
@@ -238,8 +260,8 @@ func provisionTargetGpuInfra(beetle, tb *resty.Client, cfg TestConfig, auth Auth
 	fmt.Printf("✅ Target GPU VM Provisioned: infraId=%s, nodeId=%s, publicIp=%s, spec=%s\n",
 		state.Target.InfraID, state.Target.NodeID, state.Target.PublicIP, state.Target.SpecID)
 
-	waitWithCountdown(cfg.Timing.VmBootStabilizeSeconds, "Waiting for newly provisioned Target GPU VM boot & NVIDIA driver init")
-	if _, err := pollGpuVmReady(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, cfg.Timing); err != nil {
+	waitWithCountdown(cfg.Timing.VmBootStabilizeSeconds, "Waiting for newly provisioned Target GPU VM boot & SSH init")
+	if err := pollVmSshReady(tb, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, state.Target.InfraID, state.Target.NodeID, cfg.Timing); err != nil {
 		return nil, err
 	}
 

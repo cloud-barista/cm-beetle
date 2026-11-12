@@ -45,11 +45,11 @@ source:
   cleanupSourceInfra: false
 
 aiService:
-  # Kotaemon RAG stack with built-in PDF viewer and yellow slide citation highlighting.
+  # Kotaemon Full RAG stack (v0.12.0, Docling parser + Korean inline citations + mindmap) on port 7860.
   appType: kotaemon
   rootDir: /opt/aimx/ai-service
   # gemma4:e2b (~4.6GB) + bge-m3 (~1.2GB) = ~5.8GB total, keeping both models 100% resident in 16GB T4 VRAM without swap lag.
-  # Optional larger variant for >=24GB GPUs (e.g., L4/A10G): gemma4:e4b
+  # Optional larger variants for >=24GB GPUs (e.g., L4/A10G): gemma4:12b (~8.2GB) or gemma4:e4b (~9.6GB).
   modelName: gemma4:e2b
   embeddingModel: bge-m3
   ollamaPort: 11434

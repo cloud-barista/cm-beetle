@@ -25,10 +25,15 @@ err := result.Err() // non-nil summary error, or nil if Valid
   `targetSshKey.name` / security group `name` (false).
 - **Resource name collision / availability** against Tumblebug: must NOT
   already exist (`useExisting=false`), or must exist under the _same
-  CSP/region connection_ the node group requests — not just under the same ID
+  CSP/region connection_ the node group requests, not just under the same ID
   (`useExisting=true`, `CONNECTION_MISMATCH` otherwise).
 - **VM spec/image compatibility** per node group (Tumblebug spec/image
   lookup + `pkg/compat`).
+- **Spec availability & subnet-zone alignment**: verifies that node group VM
+  specs are available and aligned with subnet zones on zonal-subnet CSPs
+  (`SUBNET_ZONE_UNAVAILABLE`, `severity: "error"`), and emits a non-blocking
+  warning when a subnet pins a zone on regional-subnet CSPs `azure` or `gcp`
+  (`REGIONAL_SUBNET_ZONE_PINNED`, `severity: "warning"`).
 - **Infra (MCI) name collision**: `targetInfra.name` must not already exist.
 
 ## Running the tests
@@ -38,15 +43,16 @@ go test ./pkg/core/validation/... -v -cover
 ```
 
 Plain `go test ./pkg/core/validation/...` (no `-v`) prints a single `ok ...`
-line — the quietest form to paste into a PR or chat.
+line, the quietest form to paste into a PR or chat.
 
 No live Tumblebug, Spider, or CSP credentials are needed. `infra_test.go`'s
 `TestMain` starts an `httptest.Server` that serves canned JSON for the
 handful of Tumblebug endpoints this package reads (VNet/SshKey/SecurityGroup/
 Infra/Spec/Image), then points `tbclient` at it via `tbclient.Init(...)`.
 Any request path not in the `fixtures` map 404s automatically, which is
-exactly the "resource does not exist" case most scenarios need — so only the
-"found" fixtures require an explicit map entry.
+exactly the "resource does not exist" case most scenarios need, so only the
+"found" fixtures require an explicit map entry. Zone and availability scenarios
+are covered in `infra_zone_test.go`.
 
 `tbclient.NewSession()` uses a single process-global client guarded by
 `sync.Once`, so `tbclient.Init` can only meaningfully run once per test
@@ -64,5 +70,5 @@ intact.
    the `targetOption`s to reach that state, and the expected `wantValid`/
    `wantCode`.
 3. Give fixture names that read as intent (`vnet-mismatch`,
-   `vnet-does-not-exist`) — the fixtures map doubles as documentation of what
+   `vnet-does-not-exist`), as the fixtures map doubles as documentation of what
    each stands in for.

@@ -251,6 +251,34 @@ func truncateRunes(s string, maxRunes int) string {
 	return string(runes[:maxRunes-3]) + "..."
 }
 
+// pollVmSshReady retries basic SSH command execution until a newly provisioned VM accepts remote commands.
+func pollVmSshReady(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, timing TimingConfig) error {
+	maxAttempts := timing.SshRetryMaxAttempts
+	if maxAttempts <= 0 {
+		maxAttempts = 18
+	}
+	interval := timing.SshRetryIntervalSeconds
+	if interval <= 0 {
+		interval = 10
+	}
+
+	fmt.Printf("🔍 Polling SSH readiness on infra '%s' (max %d attempts, %ds interval)...\n", infraID, maxAttempts, interval)
+	checkCmd := []string{"echo \"SSH_READY:$(hostname):$(uname -r)\""}
+
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		out, err := execRemoteCmdQuiet(tb, tbEndpoint, nsID, infraID, nodeID, checkCmd)
+		if err == nil && strings.Contains(out, "SSH_READY:") {
+			fmt.Printf("✅ VM '%s' SSH is ready (attempt %d/%d): %s\n", infraID, attempt, maxAttempts, strings.Split(strings.TrimSpace(out), "\n")[0])
+			return nil
+		}
+		lastErr = err
+		fmt.Printf("   ⏳ Attempt %d/%d: SSH not ready yet (%v); waiting %ds...\n", attempt, maxAttempts, err, interval)
+		time.Sleep(time.Duration(interval) * time.Second)
+	}
+	return fmt.Errorf("VM '%s' SSH did not become ready after %d attempts: %w", infraID, maxAttempts, lastErr)
+}
+
 // pollGpuVmReady retries SSH and nvidia-smi checks until the GPU VM is responsive.
 func pollGpuVmReady(tb *resty.Client, tbEndpoint, nsID, infraID, nodeID string, timing TimingConfig) (string, error) {
 	maxAttempts := timing.SshRetryMaxAttempts
