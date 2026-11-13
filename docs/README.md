@@ -35,6 +35,7 @@ Documentation site for CM-Beetle, computing infrastructure migration.
 
 ## Testing & Integration
 
+- [Computing Infrastructure Recommendation Stress Test](test/infra-recommendation-stress-test.md) - Linear scale-up benchmark (`100 -> 1,000` nodes), `5N` sub-request latency profiling, RSS memory trajectory, and async/memoization optimization roadmap.
 - [AIMX (Kotaemon + Ollama) RAG Migration Test & Demo Guide](test/aimx-kotaemon-rag-migration-test-guide.md) - External `ai-stack-testbed` (`ai-gpu-01`) & CB-Tumblebug source workflows, CLI/UI RAG migration, incremental sync, and GPU/Zone selection guide.
 - [Test Results: Data Migration](test-results-data-migration.md) - Data migration test results and examples.
 - [Test Results: Object Storage](test-results-object-storage.md) - Object storage test results and examples.
