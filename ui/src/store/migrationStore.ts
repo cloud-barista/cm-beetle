@@ -179,6 +179,16 @@ export const DEFAULT_FALLBACK_SOURCE_MODEL: OnpremModelEnvelope = {
   updatedTime: new Date().toISOString()
 };
 
+export interface RecommendationProgressState {
+  reqId: string;
+  status: string;
+  totalNodes: number;
+  targetCount: number;
+  startedAtMs: number;
+  subRequestSummary?: SubRequestSummary;
+  lastAction?: string;
+}
+
 export type TabType = 'infra' | 'storage' | 'data' | 'credential' | 'overview' | 'source' | 'refine' | 'design' | 'migrate' | 'operations';
 
 interface MigrationState {
@@ -229,12 +239,15 @@ interface MigrationState {
   selectedCloudModel: CloudModelEnvelope | null;
   hasUnsavedCloudChanges: boolean;
   isRecommending: boolean;
+  recommendationProgress: RecommendationProgressState | null;
+  recommendationError: string | null;
   tumblebugProviders: string[];
   tumblebugRegions: { id: string; name: string }[];
   
   setDesiredCsp: (csp: string) => Promise<void>;
   setDesiredRegion: (region: string) => void;
   setHasUnsavedCloudChanges: (hasUnsaved: boolean) => void;
+  clearRecommendationError: () => void;
   setTargetPairs: (pairs: CloudProperty[]) => void;
   setRecommendationMode: (mode: 'multi' | 'single') => void;
   setCachedMultiCandidates: (candidates: RecommendedInfra[] | null) => void;
@@ -706,6 +719,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   selectedCloudModel: null,
   hasUnsavedCloudChanges: false,
   isRecommending: false,
+  recommendationProgress: null,
+  recommendationError: null,
 
   setDesiredCsp: async (csp) => {
     set({ desiredCsp: csp });
@@ -721,6 +736,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
   setDesiredRegion: (region) => set({ desiredRegion: region }),
   setHasUnsavedCloudChanges: (hasUnsaved) => set({ hasUnsavedCloudChanges: hasUnsaved }),
+  clearRecommendationError: () => set({ recommendationError: null }),
   setTargetPairs: (pairs) => set({ targetPairs: pairs }),
   setRecommendationMode: (mode) => set({ recommendationMode: mode }),
   setCachedMultiCandidates: (candidates) => set({ cachedMultiCandidates: candidates }),
@@ -747,34 +763,76 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   triggerRecommendation: async (sourceInfra) => {
-    set({ isRecommending: true, recommendationCandidates: [], editedCandidate: null, selectedCloudModel: null, hasUnsavedCloudChanges: false });
+    const pairs = get().targetPairs;
+    const totalNodes = sourceInfra?.nodes?.length || 0;
+    const targetCount = pairs.length > 0 ? pairs.length : 1;
+    const startedAtMs = Date.now();
+    set({
+      isRecommending: true,
+      recommendationCandidates: [],
+      editedCandidate: null,
+      selectedCloudModel: null,
+      hasUnsavedCloudChanges: false,
+      recommendationError: null,
+      recommendationProgress: {
+        reqId: '',
+        status: 'Submitting',
+        totalNodes,
+        targetCount,
+        startedAtMs,
+      },
+    });
     try {
-      const pairs = get().targetPairs;
       const limit = get().recommendationLimit || 5;
       const minMatchRate = get().minMatchRate;
+      const onProgress = (prog: { reqId: string; status: string; subRequestSummary?: SubRequestSummary }) => {
+        set((state) => {
+          const prevAction = state.recommendationProgress?.lastAction;
+          const nextAction = prog.subRequestSummary?.currentAction || prevAction;
+          return {
+            recommendationProgress: {
+              reqId: prog.reqId,
+              status: prog.status,
+              totalNodes,
+              targetCount,
+              startedAtMs: state.recommendationProgress?.startedAtMs || startedAtMs,
+              subRequestSummary: prog.subRequestSummary || state.recommendationProgress?.subRequestSummary,
+              lastAction: nextAction,
+            },
+          };
+        });
+      };
+
       let candidates: RecommendedInfra[] = [];
       if (pairs.length === 1) {
-        // Single target CSP & Region pair -> Call single infra recommendation API
-        candidates = await beetleApi.getRecommendations(sourceInfra, pairs[0].csp, pairs[0].region, limit, minMatchRate);
+        candidates = await beetleApi.getRecommendations(sourceInfra, pairs[0].csp, pairs[0].region, limit, minMatchRate, { onProgress });
       } else if (pairs.length >= 2) {
-        // Multiple target CSP & Region pairs (2~10) -> Call multiInfra recommendation API
-        candidates = await beetleApi.getMultiRecommendations(sourceInfra, pairs, minMatchRate);
+        candidates = await beetleApi.getMultiRecommendations(sourceInfra, pairs, minMatchRate, { onProgress });
       } else {
-        candidates = await beetleApi.getRecommendations(sourceInfra, get().desiredCsp, get().desiredRegion, limit, minMatchRate);
+        candidates = await beetleApi.getRecommendations(sourceInfra, get().desiredCsp, get().desiredRegion, limit, minMatchRate, { onProgress });
       }
 
-      set({ 
-        recommendationCandidates: candidates, 
+      set({
+        recommendationCandidates: candidates,
         selectedCandidateIndex: 0,
         editedCandidate: candidates.length > 0 ? candidates[0] : null,
         selectedCloudModel: null,
         hasUnsavedCloudChanges: candidates.length > 0,
-        isRecommending: false 
+        isRecommending: false,
+        recommendationProgress: null,
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Beetle Recommendation API Error:', err);
-      set({ isRecommending: false });
-      alert('Failed to fetch recommendations from Beetle. Check server logs.');
+      const errMsg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to fetch recommendations from Beetle. Check server logs.';
+      set({
+        isRecommending: false,
+        recommendationProgress: null,
+        recommendationError: errMsg,
+      });
     }
   },
 
