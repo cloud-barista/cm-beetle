@@ -73,8 +73,13 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     tumblebugRegions,
     fetchTumblebugProviders,
     fetchTumblebugRegions,
+    clearRecommendationError,
+    recommendationProgress,
+    recommendationError,
     namespaceId
   } = useMigrationStore();
+
+  const [recommendClockMs, setRecommendClockMs] = useState<number>(() => Date.now());
 
   const [isValidatingDryRun, setIsValidatingDryRun] = useState(false);
   const [dryRunResult, setDryRunResult] = useState<{
@@ -353,22 +358,60 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
       },
       nlbs: sourceNlbs && sourceNlbs.length > 0 ? sourceNlbs : undefined
     };
-    useMigrationStore.setState({ isRecommending: true, recommendationCandidates: [], editedCandidate: null });
+    const totalNodes = sourceInfra.nodes?.length || 0;
+    const startedAtMs = Date.now();
+    useMigrationStore.setState({
+      isRecommending: true,
+      recommendationCandidates: [],
+      editedCandidate: null,
+      recommendationError: null,
+      recommendationProgress: {
+        reqId: '',
+        status: 'Submitting',
+        totalNodes,
+        targetCount: 1,
+        startedAtMs,
+      },
+    });
     try {
-      const candidates = await beetleApi.getRecommendations(sourceInfra, csp, region, 5, minMatchRate);
+      const candidates = await beetleApi.getRecommendations(sourceInfra, csp, region, 5, minMatchRate, {
+        onProgress: (prog) => {
+          useMigrationStore.setState((state) => ({
+            recommendationProgress: {
+              reqId: prog.reqId,
+              status: prog.status,
+              totalNodes,
+              targetCount: 1,
+              startedAtMs: state.recommendationProgress?.startedAtMs || startedAtMs,
+              subRequestSummary: prog.subRequestSummary || state.recommendationProgress?.subRequestSummary,
+              lastAction: prog.subRequestSummary?.currentAction || state.recommendationProgress?.lastAction,
+            },
+          }));
+        },
+      });
       useMigrationStore.setState({
         recommendationCandidates: candidates,
         selectedCandidateIndex: 0,
         editedCandidate: candidates.length > 0 ? candidates[0] : null,
-        isRecommending: false
+        isRecommending: false,
+        recommendationProgress: null,
       });
       setHasUnsavedChanges(candidates.length > 0);
       setActiveStep(2);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to get deep-dive recommendations:', err);
-      useMigrationStore.setState({ isRecommending: false });
+      const errMsg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        `Failed to get deep-dive recommendations for ${csp.toUpperCase()}`;
+      useMigrationStore.setState({
+        isRecommending: false,
+        recommendationProgress: null,
+        recommendationError: errMsg,
+      });
       setToastTone('error');
-      setToastMsg('Failed to get deep-dive recommendations for ' + csp.toUpperCase());
+      setToastMsg(errMsg);
     }
   };
 
@@ -549,7 +592,12 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
       nlbs: sourceNlbs && sourceNlbs.length > 0 ? sourceNlbs : undefined
     };
     await triggerRecommendation(sourceInfra);
-    const latestCandidates = useMigrationStore.getState().recommendationCandidates;
+    const { recommendationCandidates: latestCandidates, recommendationError: latestErr } = useMigrationStore.getState();
+    if (latestErr) {
+      setToastTone('error');
+      setToastMsg(latestErr);
+      return;
+    }
     setHasUnsavedChanges(latestCandidates.length > 0);
     setActiveStep(2);
   };
@@ -1211,6 +1259,35 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
   const { isRecommending } = useMigrationStore();
 
+  useEffect(() => {
+    if (!isRecommending) return;
+    const timer = setInterval(() => {
+      setRecommendClockMs(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isRecommending]);
+
+  const formatRecommendPhase = (action?: string): string => {
+    if (!action) {
+      return 'Preparing target cloud validation and network topology';
+    }
+    const lower = action.toLowerCase();
+    if (lower.includes('recommendspec') || lower.includes('searchimage')) {
+      return 'Phase A: Node Spec and OS Image Discovery';
+    }
+    if (lower.includes('specimagepairreview') || lower.includes('specimagereview')) {
+      return 'Phase B: Provisioning Compatibility Verification';
+    }
+    return `Processing: ${action}`;
+  };
+
+  const recommendElapsedSec = recommendationProgress?.startedAtMs
+    ? Math.max(0, Math.floor((recommendClockMs - recommendationProgress.startedAtMs) / 1000))
+    : 0;
+  const recommendPhaseText = formatRecommendPhase(
+    recommendationProgress?.subRequestSummary?.currentAction || recommendationProgress?.lastAction
+  );
+
   return (
     <div className="space-y-6 mx-auto pb-24">
 
@@ -1598,35 +1675,120 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
               </div>
             </div>
 
-            <div className="mt-6 flex justify-start">
-              <button
-                onClick={handleRecommend}
-                disabled={
-                  isRecommending ||
-                  tunedNodes.length === 0 ||
-                  (recommendationMode === 'multi' && (targetPairs || []).length < 2) ||
-                  (hasDuplicatePairs && (targetPairs || []).length > 1)
-                }
-                className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50 text-slate-950 font-extrabold rounded-xl text-sm tracking-wider transition shadow-lg shadow-emerald-500/10 flex items-center justify-center space-x-2 cursor-pointer"
-              >
-                {isRecommending ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Recommending...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    <span>
-                      {recommendationMode === 'multi'
-                        ? (targetPairs || []).length < 2
-                          ? 'Select at least 2 Target Pairs to Compare'
-                          : `Recommend Cross-CSP Target Infrastructure (${(targetPairs || []).length} Pairs)`
-                        : `Recommend Target Cloud Infrastructure (${recommendationLimit} Candidates)`}
+            <div className="mt-6 space-y-4">
+              <div className="flex justify-start">
+                <button
+                  onClick={handleRecommend}
+                  disabled={
+                    isRecommending ||
+                    tunedNodes.length === 0 ||
+                    (recommendationMode === 'multi' && (targetPairs || []).length < 2) ||
+                    (hasDuplicatePairs && (targetPairs || []).length > 1)
+                  }
+                  className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50 text-slate-950 font-extrabold rounded-xl text-sm transition shadow-lg shadow-emerald-500/10 flex items-center justify-center space-x-2 cursor-pointer"
+                >
+                  {isRecommending ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Recommending...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>
+                        {recommendationMode === 'multi'
+                          ? (targetPairs || []).length < 2
+                            ? 'Select at least 2 Target Pairs to Compare'
+                            : `Recommend Cross-CSP Target Infrastructure (${(targetPairs || []).length} Pairs)`
+                          : `Recommend Target Cloud Infrastructure (${recommendationLimit} Candidates)`}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {isRecommending && recommendationProgress && (
+                <div className="bg-bg-panel border border-emerald-500/30 rounded-2xl p-5 space-y-3 max-w-4xl">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <Loader2 className="w-5 h-5 text-emerald-500 animate-spin shrink-0" />
+                      <span className="text-sm font-extrabold text-text-main">
+                        {recommendPhaseText}
+                      </span>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-sm font-extrabold text-emerald-600 dark:text-emerald-400 uppercase">
+                      {recommendationProgress.status || 'Handling'}
                     </span>
-                  </>
-                )}
-              </button>
+                  </div>
+
+                  <div className="w-full h-2 rounded-full bg-bg-input overflow-hidden border border-border-main/60">
+                    <div className="h-full w-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 animate-pulse rounded-full" />
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                    <div>
+                      <div className="text-sm font-normal text-text-muted">Nodes</div>
+                      <div className="text-sm font-extrabold text-text-main">
+                        {recommendationProgress.totalNodes.toLocaleString()}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-normal text-text-muted">API Calls Completed</div>
+                      <div className="text-sm font-extrabold text-text-main">
+                        {recommendationProgress.subRequestSummary?.success ?? 0}
+                        {(recommendationProgress.subRequestSummary?.handling ?? 0) > 0
+                          ? ` (+${recommendationProgress.subRequestSummary?.handling} active)`
+                          : ''}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-normal text-text-muted">Elapsed Time</div>
+                      <div className="text-sm font-extrabold text-text-main">
+                        {recommendElapsedSec}s
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-normal text-text-muted">Request ID</div>
+                      <div className="text-sm font-extrabold text-text-main font-mono truncate" title={recommendationProgress.reqId || 'Pending'}>
+                        {recommendationProgress.reqId || 'Pending...'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {recommendationProgress.subRequestSummary?.currentAction && (
+                    <div className="pt-2 border-t border-border-main/30 flex flex-wrap items-center gap-2 text-sm">
+                      <span className="font-normal text-text-muted">Active Call:</span>
+                      <span className="font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
+                        {recommendationProgress.subRequestSummary.currentAction}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!isRecommending && recommendationError && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex items-start justify-between gap-3 max-w-4xl">
+                  <div className="flex items-start gap-2.5 text-sm">
+                    <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-extrabold text-red-600 dark:text-red-400">
+                        Recommendation Failed
+                      </div>
+                      <div className="font-normal text-text-main mt-0.5">
+                        {recommendationError}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearRecommendationError}
+                    className="p-1 text-text-muted hover:text-text-main rounded-lg transition cursor-pointer shrink-0"
+                    title="Dismiss error"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </>
         ) : (
@@ -1804,9 +1966,45 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         )}
 
         {recommendationCandidates.length === 0 ? (
-          <div className="py-8 text-center text-text-muted text-sm italic">
-            No recommendation generated yet. Complete previous steps to run recommendations.
-          </div>
+          isRecommending && recommendationProgress ? (
+            <div className="py-8 flex flex-col items-center justify-center gap-3 text-center">
+              <Loader2 className="w-7 h-7 text-emerald-500 animate-spin" />
+              <div className="text-sm font-extrabold text-text-main">{recommendPhaseText}</div>
+              <div className="text-sm font-normal text-text-muted">
+                Nodes: <span className="font-extrabold text-text-main">{recommendationProgress.totalNodes.toLocaleString()}</span>
+                {' / '}
+                API Calls Completed: <span className="font-extrabold text-text-main">{recommendationProgress.subRequestSummary?.success ?? 0}</span>
+                {' / '}
+                Elapsed: <span className="font-extrabold text-text-main">{recommendElapsedSec}s</span>
+              </div>
+            </div>
+          ) : recommendationError ? (
+            <div className="my-4 bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex items-start justify-between gap-3">
+              <div className="flex items-start gap-2.5 text-sm">
+                <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-extrabold text-red-600 dark:text-red-400">
+                    Recommendation Failed
+                  </div>
+                  <div className="font-normal text-text-main mt-0.5">
+                    {recommendationError}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={clearRecommendationError}
+                className="p-1 text-text-muted hover:text-text-main rounded-lg transition cursor-pointer shrink-0"
+                title="Dismiss error"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="py-8 text-center text-text-muted text-sm italic">
+              No recommendation generated yet. Complete previous steps to run recommendations.
+            </div>
+          )
         ) : (
           <div className="space-y-6">
 

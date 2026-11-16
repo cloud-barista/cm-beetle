@@ -121,6 +121,22 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	}
 
+	reqCache := requestCacheFromContext(req.Context())
+	explicitDuration, hasExplicitDuration := GetCacheDuration(req.Context())
+	noCacheRequested := hasExplicitDuration && explicitDuration == 0
+	cacheableInRequest := reqCache != nil && !noCacheRequested && isRequestScopedCacheable(req)
+
+	var reqCacheKey requestCacheKey
+	if cacheableInRequest {
+		reqCacheKey = buildRequestCacheKey(method, url, bodyBytes)
+		if cachedResp, hit := reqCache.get(reqCacheKey, req); hit {
+			log.Trace().Str("method", method).Str("url", url).Msg("Request cache hit")
+			return cachedResp, nil
+		}
+	} else if reqCache != nil {
+		reqCache.recordBypass()
+	}
+
 	// Generate cache key for GET method only
 	requestKey := ""
 	if method == "GET" {
@@ -131,21 +147,26 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 		}
 
 		// Check Cache
-		if item, found := clientCache.Load(requestKey); found {
-			if cachedItem, ok := item.(CacheItem); ok {
-				if time.Now().Before(cachedItem.ExpiresAt) {
-					log.Trace().Msgf("Cache hit! Expires: %v", time.Since(cachedItem.ExpiresAt))
+		if !noCacheRequested {
+			if item, found := clientCache.Load(requestKey); found {
+				if cachedItem, ok := item.(CacheItem); ok {
+					if time.Now().Before(cachedItem.ExpiresAt) {
+						log.Trace().Msgf("Cache hit! Expires: %v", time.Since(cachedItem.ExpiresAt))
+						if cacheableInRequest && cachedItem.StatusCode >= http.StatusOK && cachedItem.StatusCode < http.StatusMultipleChoices {
+							reqCache.set(reqCacheKey, cachedItem.StatusCode, cachedItem.Header, cachedItem.ResponseBytes)
+						}
 
-					// Construct response from cache
-					resp := &http.Response{
-						StatusCode: cachedItem.StatusCode,
-						Header:     cachedItem.Header,
-						Body:       io.NopCloser(bytes.NewBuffer(cachedItem.ResponseBytes)),
-						Request:    req,
+						// Construct response from cache
+						resp := &http.Response{
+							StatusCode: cachedItem.StatusCode,
+							Header:     cachedItem.Header.Clone(),
+							Body:       io.NopCloser(bytes.NewBuffer(cachedItem.ResponseBytes)),
+							Request:    req,
+						}
+						return resp, nil
+					} else {
+						clientCache.Delete(requestKey)
 					}
-					return resp, nil
-				} else {
-					clientCache.Delete(requestKey)
 				}
 			}
 		}
@@ -172,16 +193,21 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 				}
 
 				// Return newly populated cache entry if an in-flight request completed while waiting.
-				if item, found := clientCache.Load(requestKey); found {
-					if cachedItem, ok := item.(CacheItem); ok {
-						log.Debug().Msg("Got the cached result while waiting")
-						resp := &http.Response{
-							StatusCode: cachedItem.StatusCode,
-							Header:     cachedItem.Header,
-							Body:       io.NopCloser(bytes.NewBuffer(cachedItem.ResponseBytes)),
-							Request:    req,
+				if !noCacheRequested {
+					if item, found := clientCache.Load(requestKey); found {
+						if cachedItem, ok := item.(CacheItem); ok && time.Now().Before(cachedItem.ExpiresAt) {
+							log.Debug().Msg("Got the cached result while waiting")
+							if cacheableInRequest && cachedItem.StatusCode >= http.StatusOK && cachedItem.StatusCode < http.StatusMultipleChoices {
+								reqCache.set(reqCacheKey, cachedItem.StatusCode, cachedItem.Header, cachedItem.ResponseBytes)
+							}
+							resp := &http.Response{
+								StatusCode: cachedItem.StatusCode,
+								Header:     cachedItem.Header.Clone(),
+								Body:       io.NopCloser(bytes.NewBuffer(cachedItem.ResponseBytes)),
+								Request:    req,
+							}
+							return resp, nil
 						}
-						return resp, nil
 					}
 				}
 				retryCount++
@@ -189,6 +215,10 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 				break
 			}
 		}
+	}
+
+	if cacheableInRequest {
+		reqCache.recordMiss()
 	}
 
 	finishSubReq := beginSubRequestTrace(req, bodyBytes)
@@ -241,24 +271,30 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 
 	finishSubReq(resp.StatusCode, nil, nil)
 
+	if cacheableInRequest && resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
+		reqCache.set(reqCacheKey, resp.StatusCode, resp.Header, respBodyBytes)
+	}
+
 	// Success
 	if method == "GET" {
 		requestDone(requestKey)
 		recordCircuitBreakerSuccess(requestKey)
 
-		// Determine cache duration
-		cacheDuration := t.CacheDuration
-		if d, ok := GetCacheDuration(req.Context()); ok {
-			cacheDuration = d
-		}
+		if !noCacheRequested {
+			// Determine cache duration
+			cacheDuration := t.CacheDuration
+			if hasExplicitDuration {
+				cacheDuration = explicitDuration
+			}
 
-		// Cache the response
-		clientCache.Store(requestKey, CacheItem{
-			ResponseBytes: respBodyBytes,
-			StatusCode:    resp.StatusCode,
-			Header:        resp.Header,
-			ExpiresAt:     time.Now().Add(cacheDuration),
-		})
+			// Cache the response
+			clientCache.Store(requestKey, CacheItem{
+				ResponseBytes: respBodyBytes,
+				StatusCode:    resp.StatusCode,
+				Header:        resp.Header,
+				ExpiresAt:     time.Now().Add(cacheDuration),
+			})
+		}
 	}
 
 	log.Debug().Int("status", resp.StatusCode).Str("method", method).Str("url", url).Dur("latency", duration).Msg("Internal Call OK")

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/labstack/echo/v4"
 )
@@ -43,8 +44,9 @@ func RequestIdAndDetailsIssuer(next echo.HandlerFunc) echo.HandlerFunc {
 					"use DELETE /beetle/request/{reqId} to remove it, or omit the header to auto-generate a new one", reqID))
 		}
 
-		// Attach reqID to request context for downstream Tumblebug Transport-AOP correlation.
+		// Attach reqID and request-scoped Tumblebug query cache to request context.
 		ctx := common.WithRequestID(c.Request().Context(), reqID)
+		ctx = tbclient.WithRequestCache(ctx)
 		c.SetRequest(c.Request().WithContext(ctx))
 
 		// Set "X-Request-Id" in response header.

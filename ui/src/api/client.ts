@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { OnpremInfra, OnpremNlb, OnpremNode, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, CheckSSHReadyResponse, ArtifactLineage, RequestDetailsResult, AiStackLayerStatus } from '../types/migration';
+import { OnpremInfra, OnpremNlb, OnpremNode, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, CheckSSHReadyResponse, ArtifactLineage, RequestDetailsResult, SubRequestSummary, AiStackLayerStatus } from '../types/migration';
 import { cleanModelDisplayName, isBuiltInSampleModel, normalizeModelVersion } from '../utils/modelFormat';
 
 // Shared Axios client with basic authentication pre-configured (standard Cloud-Barista settings)
@@ -899,75 +899,210 @@ export const artifactApi = {
 // ============================================================================
 let objectStorageSupportCachePromise: Promise<Record<string, { cors: boolean; presignedUrl: boolean; versioning: boolean }>> | null = null;
 
+export interface RecommendationPollProgress {
+  reqId: string;
+  status: string;
+  subRequestSummary?: SubRequestSummary;
+}
+
+export interface RecommendationRequestOptions {
+  onProgress?: (progress: RecommendationPollProgress) => void;
+  signal?: AbortSignal;
+}
+
+const ASYNC_RECOMMEND_POLL_DELAYS_MS = [400, 600, 1000, 1500];
+const ASYNC_RECOMMEND_MAX_WAIT_MS = 30 * 60 * 1000;
+const ASYNC_RECOMMEND_MAX_CONSECUTIVE_ERRORS = 5;
+
+const extractRecommendationArray = (payload: any): RecommendedInfra[] => {
+  if (Array.isArray(payload)) return payload;
+  if (payload && Array.isArray(payload.data)) return payload.data;
+  return [];
+};
+
+const sleepWithAbort = (ms: number, signal?: AbortSignal): Promise<void> =>
+  new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new Error('Recommendation polling aborted'));
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new Error('Recommendation polling aborted'));
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+
+const pollAsyncRecommendation = async (
+  submitRequest: () => Promise<any>,
+  options?: RecommendationRequestOptions
+): Promise<RecommendedInfra[]> => {
+  const response = await submitRequest();
+  if (response.status !== 202) {
+    return extractRecommendationArray(response.data);
+  }
+
+  const reqId: string | undefined =
+    response.data?.data?.reqId || response.headers?.['x-request-id'] || response.data?.reqId;
+  if (!reqId) {
+    throw new Error('Async recommendation accepted without a request ID');
+  }
+
+  options?.onProgress?.({
+    reqId,
+    status: response.data?.data?.status || 'Handling',
+  });
+
+  const startedAt = Date.now();
+  let attempt = 0;
+  let consecutiveErrors = 0;
+
+  while (Date.now() - startedAt < ASYNC_RECOMMEND_MAX_WAIT_MS) {
+    const delayMs =
+      ASYNC_RECOMMEND_POLL_DELAYS_MS[
+        Math.min(attempt, ASYNC_RECOMMEND_POLL_DELAYS_MS.length - 1)
+      ];
+    attempt += 1;
+    await sleepWithAbort(delayMs, options?.signal);
+
+    const details = await beetleApi.getRequestDetails(reqId, {
+      brief: true,
+      withSubRequests: false,
+    });
+    const status = details.status || 'Handling';
+
+    if (status === 'Success' || status === 'Completed' || status === 'Succeeded') {
+      const finalDetails =
+        details.responseData !== undefined
+          ? details
+          : await beetleApi.getRequestDetails(reqId, {
+              brief: false,
+              withSubRequests: false,
+            });
+      if (
+        finalDetails.errorResponse ||
+        (finalDetails.status !== 'Success' &&
+          finalDetails.status !== 'Completed' &&
+          finalDetails.status !== 'Succeeded')
+      ) {
+        throw new Error(finalDetails.errorResponse || 'Failed to retrieve completed recommendation result');
+      }
+      return extractRecommendationArray(finalDetails.responseData);
+    }
+
+    if (status === 'Error' || status === 'Failed') {
+      throw new Error(details.errorResponse || 'Recommendation request failed');
+    }
+
+    if (details.errorResponse) {
+      consecutiveErrors += 1;
+      if (consecutiveErrors >= ASYNC_RECOMMEND_MAX_CONSECUTIVE_ERRORS) {
+        throw new Error(details.errorResponse);
+      }
+    } else {
+      consecutiveErrors = 0;
+    }
+
+    options?.onProgress?.({
+      reqId,
+      status,
+      subRequestSummary: details.subRequestSummary,
+    });
+  }
+
+  throw new Error('Recommendation request timed out while waiting for completion');
+};
+
 export const beetleApi = {
-  // Get Cloud Recommendation candidates based on Source model input
+  // Get Cloud Recommendation candidates based on Source model input (async via Prefer: respond-async)
   getRecommendations: async (
     sourceInfra: OnpremInfra,
     desiredCsp: string,
     desiredRegion: string,
     limit?: number,
-    minMatchRate?: number
+    minMatchRate?: number,
+    options?: RecommendationRequestOptions
   ): Promise<RecommendedInfra[]> => {
     const sanitizedInfra = sanitizeOnpremInfraIntegers(sourceInfra);
     const hasNlbs = sanitizedInfra.nlbs && sanitizedInfra.nlbs.length > 0;
     const limitQuery = limit ? `&limit=${limit}` : '';
     const matchRateQuery = typeof minMatchRate === 'number' && !isNaN(minMatchRate) ? `&minMatchRate=${minMatchRate}` : '';
 
-    let response;
-    if (hasNlbs) {
-      // Call NLB-aware recommendation endpoint
-      response = await api.post(`/beetle/recommendation/infraWithNlb?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}${limitQuery}${matchRateQuery}`, {
-        desiredCsp,
-        desiredRegion,
-        sourceInfra: sanitizedInfra
-      });
-    } else {
-      // Call standard VM recommendation endpoint
-      response = await api.post(`/beetle/recommendation/infra?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}${limitQuery}${matchRateQuery}`, {
-        desiredCspAndRegionPair: {
-          csp: desiredCsp,
-          region: desiredRegion
-        },
-        onpremiseInfraModel: sanitizedInfra
-      });
-    }
-
-    // Beetle recommendation returns wrapping object: { success: true, data: RecommendedInfra[] }
-    if (response.data && Array.isArray(response.data.data)) {
-      return response.data.data;
-    }
-    return Array.isArray(response.data) ? response.data : [];
+    return pollAsyncRecommendation(
+      () => {
+        const config = {
+          headers: { Prefer: 'respond-async' },
+          ...(options?.signal ? { signal: options.signal } : {}),
+        };
+        if (hasNlbs) {
+          return api.post(
+            `/beetle/recommendation/infraWithNlb?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}${limitQuery}${matchRateQuery}`,
+            {
+              desiredCsp,
+              desiredRegion,
+              sourceInfra: sanitizedInfra,
+            },
+            config
+          );
+        }
+        return api.post(
+          `/beetle/recommendation/infra?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}${limitQuery}${matchRateQuery}`,
+          {
+            desiredCspAndRegionPair: {
+              csp: desiredCsp,
+              region: desiredRegion,
+            },
+            onpremiseInfraModel: sanitizedInfra,
+          },
+          config
+        );
+      },
+      options
+    );
   },
 
-  // Get Multi-Cloud Recommendation candidates based on Source model input and multiple target CSP/Region pairs (2~10 pairs)
+  // Get Multi-Cloud Recommendation candidates across target CSP/Region pairs (async via Prefer: respond-async)
   getMultiRecommendations: async (
     sourceInfra: OnpremInfra,
     targetPairs: CloudProperty[],
-    minMatchRate: number = 85
+    minMatchRate: number = 85,
+    options?: RecommendationRequestOptions
   ): Promise<RecommendedInfra[]> => {
     const sanitizedInfra = sanitizeOnpremInfraIntegers(sourceInfra);
     const hasNlbs = sanitizedInfra.nlbs && sanitizedInfra.nlbs.length > 0;
     const query = `?minMatchRate=${minMatchRate}`;
 
-    let response;
-    if (hasNlbs) {
-      // Call NLB-aware multi-infra recommendation endpoint
-      response = await api.post(`/beetle/recommendation/multiInfraWithNlb${query}`, {
-        desiredCspAndRegionPairs: targetPairs,
-        sourceInfra: sanitizedInfra
-      });
-    } else {
-      // Call standard multi-infra recommendation endpoint
-      response = await api.post(`/beetle/recommendation/multiInfra${query}`, {
-        desiredCspAndRegionPairs: targetPairs,
-        sourceInfra: sanitizedInfra
-      });
-    }
-
-    if (response.data && Array.isArray(response.data.data)) {
-      return response.data.data;
-    }
-    return Array.isArray(response.data) ? response.data : [];
+    return pollAsyncRecommendation(
+      () => {
+        const config = {
+          headers: { Prefer: 'respond-async' },
+          ...(options?.signal ? { signal: options.signal } : {}),
+        };
+        if (hasNlbs) {
+          return api.post(
+            `/beetle/recommendation/multiInfraWithNlb${query}`,
+            {
+              desiredCspAndRegionPairs: targetPairs,
+              sourceInfra: sanitizedInfra,
+            },
+            config
+          );
+        }
+        return api.post(
+          `/beetle/recommendation/multiInfra${query}`,
+          {
+            desiredCspAndRegionPairs: targetPairs,
+            sourceInfra: sanitizedInfra,
+          },
+          config
+        );
+      },
+      options
+    );
   },
 
   // Validate target infrastructure model before migration
