@@ -4,15 +4,15 @@ This document covers recommendation and migration support for Kubernetes infrast
 
 ## Support Status
 
-| Resource       | AWS | Azure | GCP | Alibaba | Tencent | IBM | (OpenStack) | (NCP) | (NHN) | (KT)  |
-| -------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :-------: | :-: | :-: | :-: |
-| VNet           | 📅  |  📅   | 📅  |   📅    |   📅    | 📅  |    ❌     |  —  |  —  | ❌  |
-| Subnet         | 📅  |  📅   | 📅  |   📅    |   📅    | 📅  |    ❌     |  —  |  —  | ❌  |
-| Security Group | 📅  |  📅   | 📅  |   📅    |   📅    | 📅  |    ❌     |  —  |  —  | ❌  |
-| SSH Key        | 📅  |  📅   | 📅  |   📅    |   📅    | 📅  |    ❌     |  —  |  —  | ❌  |
-| VM Spec        | 🚧  |  📅   | 📅  |   📅    |   📅    | 📅  |    ❌     |  —  |  —  | ❌  |
-| Node Image     | 🚧  |  📅   | 📅  |   📅    |   📅    | 📅  |    ❌     |  —  |  —  | ❌  |
-| K8s Cluster    | 🚧  |  📅   | 📅  |   📅    |   📅    | 📅  |    ❌     |  —  |  —  | ❌  |
+| Resource       | AWS | Azure | GCP | Alibaba | Tencent | IBM | (OpenStack) | NCP | NHN | (KT) |
+| -------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :---------: | :-: | :-: | :--: |
+| VNet           | 📅  |  📅   | 📅  |   📅    |   📅    | 📅  |     ❌      |  -  |  -  |  ❌  |
+| Subnet         | 📅  |  📅   | 📅  |   📅    |   📅    | 📅  |     ❌      |  -  |  -  |  ❌  |
+| Security Group | 📅  |  📅   | 📅  |   📅    |   📅    | 📅  |     ❌      |  -  |  -  |  ❌  |
+| SSH Key        | 📅  |  📅   | 📅  |   📅    |   📅    | 📅  |     ❌      |  -  |  -  |  ❌  |
+| VM Spec        | 🚧  |  📅   | 📅  |   📅    |   📅    | 📅  |     ❌      |  -  |  -  |  ❌  |
+| Node Image     | ✅  |  ✅   | ✅  |   ✅    |   🚧    | ✅  |     ❌      | ✅  | ✅  |  ❌  |
+| K8s Cluster    | ✅  |  ✅   | ✅  |   ✅    |   🚧    | ✅  |     ❌      | ✅  | ✅  |  ❌  |
 
 ## Supported Operations
 
@@ -20,7 +20,5 @@ TBD
 
 ## Roadmap
 
-- 🚧 **In progress (2026)**: AWS
-- 📅 Planned: Azure, GCP, Alibaba, Tencent, IBM
+- 🚧 **In progress**: Tencent
 - ❌ OpenStack, KT: Not supported
-- — NCP, NHN: not yet planned

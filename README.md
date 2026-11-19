@@ -59,10 +59,9 @@ The tables below show recommendation and migration support by target CSP and res
 | Security Group  | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    📅     | ✅  | ✅  |  —  |
 | SSH Key         | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    📅     | ✅  | ✅  |  —  |
 | Node Spec       | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    📅     | ✅  | ✅  |  —  |
-| OS Image        | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    📅     | ✅  | ✅  |  —  |
+| Node Image      | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    📅     | ✅  | ✅  |  —  |
 | Virtual Machine | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    📅     | ✅  | ✅  |  —  |
 | K8s Cluster     | ✅  |  ✅   | ✅  |   ✅    |   🚧    | ✅  |    ❌     | ✅  | ✅  | ❌  |
-| K8s Node Image  | ✅  |  ✅   | ✅  |   ✅    |   🚧    | ✅  |    ❌     | ✅  | ✅  | ❌  |
 | Object Storage  | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     | ✅  | ✅  | ✅  |
 | NLB             | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    📅     | ✅  | ✅  | 📅  |
 | RDBMS (MySQL)   | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     | ✅  | ✅  | ❌  |
