@@ -3,18 +3,19 @@ package onpremisemodel
 // NodeProperty represents a node in the on-premise infrastructure.
 // The node includes a physical server, virtual machine (VM), and Kubernetes node.
 type NodeProperty struct {
-	Hostname      string                     `json:"hostname"`
-	MachineId     string                     `json:"machineId"`                              // Unique identifier for the node (e.g., UUID)
-	Role          string                     `json:"role,omitempty" example:"control-plane"` // Node role (e.g., "control-plane", "worker", "standalone")
-	CPU           CpuProperty                `json:"cpu"`
-	Memory        MemoryProperty             `json:"memory"`
-	RootDisk      DiskProperty               `json:"rootDisk"`
-	DataDisks     []DiskProperty             `json:"dataDisks,omitempty"`
-	Interfaces    []NetworkInterfaceProperty `json:"interfaces"`
-	RoutingTable  []RouteProperty            `json:"routingTable"`
-	FirewallTable []FirewallRuleProperty     `json:"firewallTable,omitempty"`
-	OS            OsProperty                 `json:"os"`
-	GPUCards      []GpuCardProperty          `json:"gpuCards,omitempty"` // Physical GPU cards installed on the node
+	Hostname       string                     `json:"hostname"`
+	MachineId      string                     `json:"machineId"`                              // Unique identifier for the node (e.g., UUID)
+	Role           string                     `json:"role,omitempty" example:"control-plane"` // Node role (e.g., "control-plane", "worker", "standalone")
+	CPU            CpuProperty                `json:"cpu"`
+	Memory         MemoryProperty             `json:"memory"`
+	RootDisk       DiskProperty               `json:"rootDisk"`
+	DataDisks      []DiskProperty             `json:"dataDisks,omitempty"`
+	Interfaces     []NetworkInterfaceProperty `json:"interfaces"`
+	RoutingTable   []RouteProperty            `json:"routingTable"`
+	FirewallTable  []FirewallRuleProperty     `json:"firewallTable,omitempty"`
+	ListeningPorts []ListeningPortProperty    `json:"listeningPorts,omitempty"` // Listening TCP/UDP sockets on the node
+	OS             OsProperty                 `json:"os"`
+	GPUCards       []GpuCardProperty          `json:"gpuCards,omitempty"` // Physical GPU cards installed on the node
 }
 
 type CpuProperty struct {
@@ -101,4 +102,12 @@ type GpuCardProperty struct {
 	MemoryReservedGB float32 `json:"memoryReservedGB,omitempty" example:"2"`                   // VRAM reserved for ECC parity and system overhead in GB
 	MemoryFreeGB     float32 `json:"memoryFreeGB,omitempty" example:"38"`                      // Available/Free memory in GB
 	MemoryUsedGB     float32 `json:"memoryUsedGB,omitempty" example:"2"`                       // Used memory in GB
+}
+
+// ListeningPortProperty represents a listening TCP socket or bound UDP socket on a node.
+type ListeningPortProperty struct {
+	Protocol    string `json:"protocol" example:"tcp"`                  // Transport protocol (e.g., "tcp", "udp")
+	BindAddress string `json:"bindAddress,omitempty" example:"0.0.0.0"` // Local bind address (e.g., "0.0.0.0", "::", "127.0.0.1")
+	Port        int    `json:"port" example:"8080"`                     // Listening port number
+	ProcessName string `json:"processName,omitempty" example:"nginx"`   // Owning process name if available
 }
