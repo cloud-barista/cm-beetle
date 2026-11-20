@@ -5726,6 +5726,25 @@ definitions:
     - name
     - version
     type: object
+  onpremisemodel.ListeningPortProperty:
+    properties:
+      bindAddress:
+        description: Local bind address (e.g., "0.0.0.0", "::", "127.0.0.1")
+        example: 0.0.0.0
+        type: string
+      port:
+        description: Listening port number
+        example: 8080
+        type: integer
+      processName:
+        description: Owning process name if available
+        example: nginx
+        type: string
+      protocol:
+        description: Transport protocol (e.g., "tcp", "udp")
+        example: tcp
+        type: string
+    type: object
   onpremisemodel.MemoryProperty:
     properties:
       available:
@@ -5892,6 +5911,11 @@ definitions:
       interfaces:
         items:
           $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
+        type: array
+      listeningPorts:
+        description: Listening TCP/UDP sockets on the node
+        items:
+          $ref: '#/definitions/onpremisemodel.ListeningPortProperty'
         type: array
       machineId:
         description: Unique identifier for the node (e.g., UUID)

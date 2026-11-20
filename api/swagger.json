@@ -14476,6 +14476,31 @@
                 }
             }
         },
+        "onpremisemodel.ListeningPortProperty": {
+            "type": "object",
+            "properties": {
+                "bindAddress": {
+                    "description": "Local bind address (e.g., \"0.0.0.0\", \"::\", \"127.0.0.1\")",
+                    "type": "string",
+                    "example": "0.0.0.0"
+                },
+                "port": {
+                    "description": "Listening port number",
+                    "type": "integer",
+                    "example": 8080
+                },
+                "processName": {
+                    "description": "Owning process name if available",
+                    "type": "string",
+                    "example": "nginx"
+                },
+                "protocol": {
+                    "description": "Transport protocol (e.g., \"tcp\", \"udp\")",
+                    "type": "string",
+                    "example": "tcp"
+                }
+            }
+        },
         "onpremisemodel.MemoryProperty": {
             "type": "object",
             "required": [
@@ -14715,6 +14740,13 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/onpremisemodel.NetworkInterfaceProperty"
+                    }
+                },
+                "listeningPorts": {
+                    "description": "Listening TCP/UDP sockets on the node",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.ListeningPortProperty"
                     }
                 },
                 "machineId": {

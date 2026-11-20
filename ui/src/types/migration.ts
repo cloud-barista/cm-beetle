@@ -84,6 +84,13 @@ export interface GpuCardProperty {
   memoryUsedGB?: number;
 }
 
+export interface ListeningPortProperty {
+  protocol: string;
+  bindAddress?: string;
+  port: number;
+  processName?: string;
+}
+
 export interface OnpremNode {
   machineId: string;
   hostname: string;
@@ -94,6 +101,7 @@ export interface OnpremNode {
   interfaces: InterfaceProperty[];
   routingTable: RouteProperty[];
   firewallTable: FirewallRule[];
+  listeningPorts?: ListeningPortProperty[] | null;
   os: OsProperty;
   gpuCards?: GpuCardProperty[] | null;
   workloadTag?: string;
