@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -135,6 +136,7 @@ type RDBMSTestReport struct {
 	CSP                    string
 	Region                 string
 	DisplayName            string
+	PublicAccess           bool
 	TestDate               string
 	TestTime               string
 	TestDateTime           time.Time
@@ -165,6 +167,7 @@ func main() {
 	dryRunFlag := flag.Bool("dry-run", false, "Parse config and validate without executing tests")
 	updateSummaryFlag := flag.Bool("update-summary", false, "Regenerate summary reports from existing test reports without running tests")
 	nsIdOverride := flag.String("nsId", "", "Override namespace ID")
+	outputDirFlag := flag.String("output-dir", "", "Optional directory to write markdown test reports")
 	flag.Parse()
 
 	logger.NewLogger(logger.Config{LogLevel: "info"})
@@ -251,8 +254,10 @@ func main() {
 		return
 	}
 
-	if *updateSummaryFlag {
-		log.Info().Msg("[Update Summary] Regenerating summary reports from existing test results...")
+	resolveOutputDir := func() string {
+		if strings.TrimSpace(*outputDirFlag) != "" {
+			return strings.TrimSpace(*outputDirFlag)
+		}
 		outputDir := "testresult"
 		cfgDir := filepath.Dir(*configPath)
 		candidateDir := filepath.Join(filepath.Dir(cfgDir), "testresult")
@@ -261,9 +266,17 @@ func main() {
 		} else if _, err := os.Stat(filepath.Join(cfgDir, "testresult")); err == nil {
 			outputDir = filepath.Join(cfgDir, "testresult")
 		}
+		return outputDir
+	}
+
+	privateRun := isPrivateSuiteConfig(testConfig)
+
+	if *updateSummaryFlag {
+		log.Info().Msg("[Update Summary] Regenerating summary reports from existing test results...")
+		outputDir := resolveOutputDir()
 		_ = os.MkdirAll(outputDir, 0755)
 
-		generateSummaryReport(outputDir, testConfig, nil, 0)
+		generateSummaryReport(outputDir, testConfig, nil, 0, privateRun)
 		log.Info().Str("reportDir", outputDir).Msg("Summary reports regenerated successfully.")
 		return
 	}
@@ -300,20 +313,13 @@ func main() {
 	totalDuration := time.Since(startTime)
 
 	// 5. Generate Markdown Reports
-	outputDir := "testresult"
-	cfgDir := filepath.Dir(*configPath)
-	candidateDir := filepath.Join(filepath.Dir(cfgDir), "testresult")
-	if _, err := os.Stat(candidateDir); err == nil {
-		outputDir = candidateDir
-	} else if _, err := os.Stat(filepath.Join(cfgDir, "testresult")); err == nil {
-		outputDir = filepath.Join(cfgDir, "testresult")
-	}
+	outputDir := resolveOutputDir()
 	_ = os.MkdirAll(outputDir, 0755)
 
-	generateSummaryReport(outputDir, testConfig, reports, totalDuration)
+	generateSummaryReport(outputDir, testConfig, reports, totalDuration, privateRun)
 	for _, r := range reports {
 		if r != nil {
-			generateDetailedReport(outputDir, r)
+			generateDetailedReport(outputDir, r, privateRun)
 		}
 	}
 
@@ -352,6 +358,7 @@ func runSingleRDBMSTest(
 		CSP:          tc.Csp,
 		Region:       tc.Region,
 		DisplayName:  tc.Name,
+		PublicAccess: tc.PublicAccess,
 		TestDate:     now.Format("2006-01-02"),
 		TestTime:     now.Format("15:04:05"),
 		TestDateTime: now,
@@ -678,7 +685,7 @@ func runSingleRDBMSTest(
 			inst := &recommendedResult.TargetRDBMSInstances[i]
 			inst.RDBMSName = baseRDBMSName
 			inst.VNetId = vNetId
-			inst.SubnetIds = subnetIds
+			inst.SubnetIds = resolveRDBMSSubnetIds(tc.Csp, tc.PublicAccess, subnetIds)
 			inst.SecurityGroupIds = sgIds
 			// DBEngine: use recommendation if present, fallback to test-config
 			if inst.DBEngine == "" && tc.DBEngine != "" {
@@ -726,7 +733,7 @@ func runSingleRDBMSTest(
 				log.Info().Msgf("[%s] Using recommended StorageSize %dGB (test-config reference: %dGB)", tc.Csp, inst.StorageSize, tc.StorageSize)
 			}
 			inst.PublicAccess = tc.PublicAccess
-			if tc.PublicAccess && tc.NHNDBSGToAllowAllInbound {
+			if tc.NHNDBSGToAllowAllInbound {
 				inst.NHNDBSGToAllowAllInbound = true
 			}
 			if tc.NCPDBACGToAllowAllInbound || (strings.EqualFold(tc.Csp, "ncp") && tc.InternalDataIOTest) {
@@ -756,7 +763,7 @@ func runSingleRDBMSTest(
 			Name:                      recommendedResult.TargetRDBMSInstances[0].RDBMSName,
 			ConnectionName:            tc.ConnectionName,
 			VNetId:                    vNetId,
-			SubnetIds:                 subnetIds,
+			SubnetIds:                 recommendedResult.TargetRDBMSInstances[0].SubnetIds,
 			SecurityGroupIds:          sgIds,
 			DBEngine:                  recommendedResult.TargetRDBMSInstances[0].DBEngine,
 			DBEngineVersion:           recommendedResult.TargetRDBMSInstances[0].DBEngineVersion,
@@ -958,10 +965,19 @@ func runSingleRDBMSTest(
 		createDbStep.RequestBody = maskSecrets(dbReq)
 
 		if cDbErr != nil || cDbResp.IsError() {
-			createDbStep.Success = false
-			createDbStep.StatusCode = cDbResp.StatusCode()
-			createDbStep.Error = fmt.Sprintf("err: %v, body: %s", cDbErr, cDbResp.String())
-			log.Error().Msgf("[%s] Beetle Create Database failed: %s", tc.Csp, createDbStep.Error)
+			if expectsPrivateFastFailForDBCreate(tc.Csp, tc.PublicAccess, dynCharset, dynCollation) && cDbErr == nil && cDbResp != nil && cDbResp.StatusCode() == http.StatusUnprocessableEntity {
+				createDbStep.Skipped = true
+				createDbStep.StatusCode = cDbResp.StatusCode()
+				createDbStep.ErrorMessage = "Expected HTTP 422 fast-fail on private RDBMS (create DB inside VPC via Bastion / transx / CM-Centipede)"
+				log.Info().Msgf("[%s] Beetle Create Database returned expected HTTP 422 fast-fail on private RDBMS", tc.Csp)
+			} else {
+				createDbStep.Success = false
+				if cDbResp != nil {
+					createDbStep.StatusCode = cDbResp.StatusCode()
+				}
+				createDbStep.Error = fmt.Sprintf("err: %v, body: %s", cDbErr, cDbResp.String())
+				log.Error().Msgf("[%s] Beetle Create Database failed: %s", tc.Csp, createDbStep.Error)
+			}
 		} else {
 			createDbStep.Success = true
 			createDbStep.StatusCode = cDbResp.StatusCode()
@@ -989,9 +1005,18 @@ func runSingleRDBMSTest(
 		listDbStep.RequestURL = listDbURL
 
 		if lDbErr != nil || lDbResp.IsError() {
-			listDbStep.Success = false
-			listDbStep.StatusCode = lDbResp.StatusCode()
-			listDbStep.Error = fmt.Sprintf("err: %v, body: %s", lDbErr, lDbResp.String())
+			if expectsPrivateFastFailForDBSQLOp(tc.Csp, tc.PublicAccess) && lDbErr == nil && lDbResp != nil && lDbResp.StatusCode() == http.StatusUnprocessableEntity {
+				listDbStep.Skipped = true
+				listDbStep.StatusCode = lDbResp.StatusCode()
+				listDbStep.ErrorMessage = "Expected HTTP 422 fast-fail on private SQL-only RDBMS"
+				log.Info().Msgf("[%s] Beetle List Databases returned expected HTTP 422 fast-fail on private SQL-only RDBMS", tc.Csp)
+			} else {
+				listDbStep.Success = false
+				if lDbResp != nil {
+					listDbStep.StatusCode = lDbResp.StatusCode()
+				}
+				listDbStep.Error = fmt.Sprintf("err: %v, body: %s", lDbErr, lDbResp.String())
+			}
 		} else {
 			listDbStep.Success = true
 			listDbStep.StatusCode = lDbResp.StatusCode()
@@ -1021,14 +1046,16 @@ func runSingleRDBMSTest(
 		secTransStep.RequestURL = secTransURL
 
 		if secErr != nil || secResp.IsError() {
-			if !tc.PublicAccess || strings.EqualFold(tc.Csp, "ncp") {
+			if (!tc.PublicAccess || strings.EqualFold(tc.Csp, "ncp")) && secErr == nil && secResp != nil && secResp.StatusCode() == http.StatusUnprocessableEntity {
 				secTransStep.Skipped = true
 				secTransStep.StatusCode = secResp.StatusCode()
-				secTransStep.ErrorMessage = "N/A (private VPC endpoint; external probe unreachable)"
-				log.Warn().Msgf("[%s] Beetle Get Secure Transport returned expected non-fatal error for private endpoint", tc.Csp)
+				secTransStep.ErrorMessage = "Expected HTTP 422 fast-fail on private RDBMS (inspect TLS inside VPC)"
+				log.Info().Msgf("[%s] Beetle Get Secure Transport returned expected HTTP 422 fast-fail for private endpoint", tc.Csp)
 			} else {
 				secTransStep.Success = false
-				secTransStep.StatusCode = secResp.StatusCode()
+				if secResp != nil {
+					secTransStep.StatusCode = secResp.StatusCode()
+				}
 				secTransStep.Error = fmt.Sprintf("err: %v, body: %s", secErr, secResp.String())
 				log.Warn().Msgf("[%s] Beetle Get Secure Transport failed: %s", tc.Csp, secTransStep.Error)
 			}
@@ -1087,15 +1114,16 @@ func runSingleRDBMSTest(
 
 	// 4.2 Internal VPC VM Data I/O Test (via dedicated Test Runner VM in same VNet)
 	intIoStep := TestResults{TestName: "Data I/O Test (Internal VPC VM)", StartTime: time.Now()}
+	expectedCharset := ""
+	expectedCollation := ""
+	if len(recommendedResult.TargetRDBMSInstances) > 0 && len(recommendedResult.TargetRDBMSInstances[0].Databases) > 0 {
+		expectedCharset = recommendedResult.TargetRDBMSInstances[0].Databases[0].Charset
+		expectedCollation = recommendedResult.TargetRDBMSInstances[0].Databases[0].Collation
+	}
+	dbCreatedViaAPI := !expectsPrivateFastFailForDBCreate(tc.Csp, tc.PublicAccess, expectedCharset, expectedCollation)
 	if tc.InternalDataIOTest && rdbmsEndpoint != "" && vNetId != "" && len(subnetIds) > 0 {
-		expectedCharset := ""
-		expectedCollation := ""
-		if len(recommendedResult.TargetRDBMSInstances) > 0 && len(recommendedResult.TargetRDBMSInstances[0].Databases) > 0 {
-			expectedCharset = recommendedResult.TargetRDBMSInstances[0].Databases[0].Charset
-			expectedCollation = recommendedResult.TargetRDBMSInstances[0].Databases[0].Collation
-		}
-		log.Info().Msgf("[%s] Running Internal VPC VM Data I/O Test on dedicated runner VM in VNet '%s'...", tc.Csp, vNetId)
-		intStatus, intErr := runInternalVmDataIOTest(cfg.Beetle.Endpoint, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, tc, vNetId, subnetIds[0], sgIds, rdbmsEndpoint, dbName, expectedCharset, expectedCollation, secTransportInfo, bClient, tbClient)
+		log.Info().Msgf("[%s] Running Internal VPC VM Data I/O Test on dedicated runner VM in VNet '%s' (dbCreatedViaAPI=%v)...", tc.Csp, vNetId, dbCreatedViaAPI)
+		intStatus, intErr := runInternalVmDataIOTest(cfg.Beetle.Endpoint, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, tc, vNetId, subnetIds[0], sgIds, rdbmsEndpoint, dbName, expectedCharset, expectedCollation, dbCreatedViaAPI, secTransportInfo, bClient, tbClient)
 		intIoStep.EndTime = time.Now()
 		intIoStep.Duration = intIoStep.EndTime.Sub(intIoStep.StartTime)
 		if intErr != nil {
@@ -1126,7 +1154,13 @@ func runSingleRDBMSTest(
 	// ------------------------------------------------------------------------
 	// 5.1 Delete Logical Database
 	delDbStep := TestResults{TestName: "Beetle DELETE Logical Database", StartTime: time.Now()}
-	if createdRDBMSId != "" {
+	if createdRDBMSId != "" && !dbCreatedViaAPI && !expectsPrivateFastFailForDBSQLOp(tc.Csp, tc.PublicAccess) {
+		delDbStep.EndTime = time.Now()
+		delDbStep.Duration = delDbStep.EndTime.Sub(delDbStep.StartTime)
+		delDbStep.Skipped = true
+		delDbStep.ErrorMessage = "Database was managed and cleaned up inside VPC Runner VM"
+		log.Info().Msgf("[%s] Skipping remote Beetle Delete Database (managed and cleaned up inside VPC Runner VM)", tc.Csp)
+	} else if createdRDBMSId != "" {
 		// Delete dynamic test database first
 		delDynURL := fmt.Sprintf("%s/migration/middleware/ns/%s/rdbms/%s/database/%s", cfg.Beetle.Endpoint, cfg.Beetle.NamespaceID, createdRDBMSId, dynamicDbName)
 		_, _ = bClient.R().
@@ -1143,10 +1177,19 @@ func runSingleRDBMSTest(
 		delDbStep.Duration = delDbStep.EndTime.Sub(delDbStep.StartTime)
 		delDbStep.RequestURL = delDbURL
 		if delDbErr != nil || delDbResp.IsError() {
-			delDbStep.Success = false
-			delDbStep.StatusCode = delDbResp.StatusCode()
-			delDbStep.Error = fmt.Sprintf("err: %v, body: %s", delDbErr, delDbResp.String())
-			log.Warn().Msgf("[%s] Delete Database error: %s", tc.Csp, delDbStep.Error)
+			if expectsPrivateFastFailForDBSQLOp(tc.Csp, tc.PublicAccess) && delDbErr == nil && delDbResp != nil && delDbResp.StatusCode() == http.StatusUnprocessableEntity {
+				delDbStep.Skipped = true
+				delDbStep.StatusCode = delDbResp.StatusCode()
+				delDbStep.ErrorMessage = "Expected HTTP 422 fast-fail on private SQL-only RDBMS"
+				log.Info().Msgf("[%s] Beetle Delete Database returned expected HTTP 422 fast-fail on private SQL-only RDBMS", tc.Csp)
+			} else {
+				delDbStep.Success = false
+				if delDbResp != nil {
+					delDbStep.StatusCode = delDbResp.StatusCode()
+				}
+				delDbStep.Error = fmt.Sprintf("err: %v, body: %s", delDbErr, delDbResp.String())
+				log.Warn().Msgf("[%s] Delete Database error: %s", tc.Csp, delDbStep.Error)
+			}
 		} else {
 			delDbStep.Success = true
 			delDbStep.StatusCode = delDbResp.StatusCode()
@@ -1593,6 +1636,7 @@ func runInternalVmDataIOTest(
 	vNetId, subnetId string,
 	sgIds []string,
 	rdbmsEndpoint, dbName, expectedCharset, expectedCollation string,
+	dbCreatedViaAPI bool,
 	secInfo *rdbmsmodel.RDBMSSecureTransportInfo,
 	bClient *resty.Client,
 	tbClient *resty.Client,
@@ -1691,19 +1735,35 @@ func runInternalVmDataIOTest(
 		writeCertCmd := fmt.Sprintf("cat <<'EOF' > /tmp/ca.pem\n%s\nEOF\nchmod 644 /tmp/ca.pem", strings.TrimSpace(secInfo.CACertificate.PEM))
 		commands = append(commands, writeCertCmd)
 		sslFlag = " --ssl-ca=/tmp/ca.pem"
-	} else if secInfo != nil && (secInfo.TLSInUse || secInfo.Enforced) {
+	} else if (secInfo != nil && (secInfo.TLSInUse || secInfo.Enforced)) || !tc.PublicAccess {
 		sslFlag = " --ssl-mode=REQUIRED"
 	}
 
-	sqlStatements := fmt.Sprintf("SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='%s'; DROP TABLE IF EXISTS beetle_internal_test; CREATE TABLE beetle_internal_test (id INT PRIMARY KEY, val VARCHAR(255)); INSERT INTO beetle_internal_test (id, val) VALUES (1, 'internal-test-ok'); SELECT val FROM beetle_internal_test WHERE id=1; SHOW STATUS LIKE 'Ssl_cipher'; DROP TABLE beetle_internal_test;", dbName)
+	var sqlStatements string
 	var sqlCmd string
-	if sslFlag != "" {
-		sqlCmd = fmt.Sprintf("mysql -h %s -P %s -u %s -p'%s'%s %s -e \"%s\" || mysql -h %s -P %s -u %s -p'%s' %s -e \"%s\"",
-			host, port, tc.AdminUserName, tc.AdminUserPassword, sslFlag, dbName, sqlStatements,
-			host, port, tc.AdminUserName, tc.AdminUserPassword, dbName, sqlStatements)
+	if !dbCreatedViaAPI {
+		// Mirror Bastion / transx / CM-Centipede private data migration by creating and cleaning up the logical DB inside the VPC.
+		bootstrapSQL := buildInternalBootstrapSQL(dbName, expectedCharset, expectedCollation)
+		sqlStatements = fmt.Sprintf("%s USE %s; SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='%s'; DROP TABLE IF EXISTS beetle_internal_test; CREATE TABLE beetle_internal_test (id INT PRIMARY KEY, val VARCHAR(255)); INSERT INTO beetle_internal_test (id, val) VALUES (1, 'internal-test-ok'); SELECT val FROM beetle_internal_test WHERE id=1; SHOW VARIABLES LIKE 'require_secure_transport'; SHOW STATUS LIKE 'Ssl_cipher'; DROP TABLE beetle_internal_test; DROP DATABASE IF EXISTS %s;",
+			bootstrapSQL, dbName, dbName, dbName)
+		if sslFlag != "" {
+			sqlCmd = fmt.Sprintf("mysql -h %s -P %s -u %s -p'%s'%s -e \"%s\" || mysql -h %s -P %s -u %s -p'%s' -e \"%s\"",
+				host, port, tc.AdminUserName, tc.AdminUserPassword, sslFlag, sqlStatements,
+				host, port, tc.AdminUserName, tc.AdminUserPassword, sqlStatements)
+		} else {
+			sqlCmd = fmt.Sprintf("mysql -h %s -P %s -u %s -p'%s' -e \"%s\"",
+				host, port, tc.AdminUserName, tc.AdminUserPassword, sqlStatements)
+		}
 	} else {
-		sqlCmd = fmt.Sprintf("mysql -h %s -P %s -u %s -p'%s' %s -e \"%s\"",
-			host, port, tc.AdminUserName, tc.AdminUserPassword, dbName, sqlStatements)
+		sqlStatements = fmt.Sprintf("SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='%s'; DROP TABLE IF EXISTS beetle_internal_test; CREATE TABLE beetle_internal_test (id INT PRIMARY KEY, val VARCHAR(255)); INSERT INTO beetle_internal_test (id, val) VALUES (1, 'internal-test-ok'); SELECT val FROM beetle_internal_test WHERE id=1; SHOW VARIABLES LIKE 'require_secure_transport'; SHOW STATUS LIKE 'Ssl_cipher'; DROP TABLE beetle_internal_test;", dbName)
+		if sslFlag != "" {
+			sqlCmd = fmt.Sprintf("mysql -h %s -P %s -u %s -p'%s'%s %s -e \"%s\" || mysql -h %s -P %s -u %s -p'%s' %s -e \"%s\"",
+				host, port, tc.AdminUserName, tc.AdminUserPassword, sslFlag, dbName, sqlStatements,
+				host, port, tc.AdminUserName, tc.AdminUserPassword, dbName, sqlStatements)
+		} else {
+			sqlCmd = fmt.Sprintf("mysql -h %s -P %s -u %s -p'%s' %s -e \"%s\"",
+				host, port, tc.AdminUserName, tc.AdminUserPassword, dbName, sqlStatements)
+		}
 	}
 	commands = append(commands, sqlCmd)
 
@@ -1762,6 +1822,89 @@ func runInternalVmDataIOTest(
 // ============================================================================
 // Helper Functions & Reporting
 // ============================================================================
+
+// resolveRDBMSSubnetIds returns the subnet list for RDBMS provisioning, isolating Azure private server delegation to subnet #2 when available.
+func resolveRDBMSSubnetIds(cspName string, publicAccess bool, subnetIds []string) []string {
+	if strings.EqualFold(strings.TrimSpace(cspName), "azure") && !publicAccess && len(subnetIds) >= 2 {
+		return subnetIds[1:]
+	}
+	return subnetIds
+}
+
+// expectsPrivateFastFailForDBCreate reports whether POST .../database is expected to fast-fail with HTTP 422 on private RDBMS.
+func expectsPrivateFastFailForDBCreate(cspName string, publicAccess bool, charset, collation string) bool {
+	if publicAccess {
+		return false
+	}
+	charset = strings.TrimSpace(charset)
+	collation = strings.TrimSpace(collation)
+	switch strings.ToLower(strings.TrimSpace(cspName)) {
+	case "aws", "ibm":
+		return true
+	case "tencent":
+		return collation != ""
+	case "azure":
+		return charset != "" && collation == ""
+	case "ncp", "nhn":
+		return charset != "" || collation != ""
+	default:
+		return false
+	}
+}
+
+// expectsPrivateFastFailForDBSQLOp reports whether GET/DELETE .../database is expected to fast-fail with HTTP 422 on private RDBMS.
+func expectsPrivateFastFailForDBSQLOp(cspName string, publicAccess bool) bool {
+	if publicAccess {
+		return false
+	}
+	switch strings.ToLower(strings.TrimSpace(cspName)) {
+	case "aws", "ibm":
+		return true
+	default:
+		return false
+	}
+}
+
+// isPrivateSuiteConfig reports whether testConfig represents a dedicated private RDBMS test suite so reports do not overwrite public results.
+func isPrivateSuiteConfig(testConfig TestConfig) bool {
+	if len(testConfig.Test.Cases) == 0 {
+		return false
+	}
+	hasNonNCP := false
+	for _, tc := range testConfig.Test.Cases {
+		if tc.PublicAccess {
+			return false
+		}
+		if !strings.EqualFold(strings.TrimSpace(tc.Csp), "ncp") {
+			hasNonNCP = true
+		}
+	}
+	return hasNonNCP
+}
+
+// resolveReportPrefix builds the markdown report filename prefix for an engine and access mode.
+func resolveReportPrefix(engine string, privateRun bool) string {
+	base := "mysql"
+	if strings.EqualFold(strings.TrimSpace(engine), "mariadb") {
+		base = "mariadb"
+	}
+	if privateRun {
+		return base + "-private"
+	}
+	return base
+}
+
+// buildInternalBootstrapSQL constructs a CREATE DATABASE IF NOT EXISTS statement preserving optional charset and collation.
+func buildInternalBootstrapSQL(dbName, charset, collation string) string {
+	stmt := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", strings.TrimSpace(dbName))
+	if cs := strings.TrimSpace(charset); cs != "" {
+		stmt += fmt.Sprintf(" CHARACTER SET %s", cs)
+	}
+	if col := strings.TrimSpace(collation); col != "" {
+		stmt += fmt.Sprintf(" COLLATE %s", col)
+	}
+	return stmt + ";"
+}
 
 // resolveBaseRDBMSName resolves the base RDBMS name without duplicate seed prefixes.
 // In parallel test runs, it guarantees that every CSP case has a unique name (rdbms-<csp>)
@@ -1993,7 +2136,7 @@ func hasCSPData(table map[string]map[string]string, csp string) bool {
 	return false
 }
 
-func generateSummaryReport(outputDir string, testConfig TestConfig, reports []*RDBMSTestReport, totalDuration time.Duration) {
+func generateSummaryReport(outputDir string, testConfig TestConfig, reports []*RDBMSTestReport, totalDuration time.Duration, privateRun bool) {
 	validReports := make([]*RDBMSTestReport, 0, len(reports))
 	for _, r := range reports {
 		if r != nil {
@@ -2017,14 +2160,16 @@ func generateSummaryReport(outputDir string, testConfig TestConfig, reports []*R
 	}
 
 	if len(mysqlReports) > 0 || len(validReports) == 0 {
-		generateSummaryReportForEngine(outputDir, "MySQL", "mysql-summary.md", []string{"AWS", "AZURE", "GCP", "ALIBABA", "TENCENT", "IBM", "NCP", "NHN", "OPENSTACK"}, testConfig, mysqlReports, totalDuration)
+		mysqlPrefix := resolveReportPrefix("mysql", privateRun)
+		generateSummaryReportForEngine(outputDir, "MySQL", mysqlPrefix, mysqlPrefix+"-summary.md", []string{"AWS", "AZURE", "GCP", "ALIBABA", "TENCENT", "IBM", "NCP", "NHN", "OPENSTACK"}, testConfig, mysqlReports, totalDuration, privateRun)
 	}
 	if len(mariadbReports) > 0 || len(validReports) == 0 {
-		generateSummaryReportForEngine(outputDir, "MariaDB", "mariadb-summary.md", []string{"AWS", "ALIBABA", "NHN", "OPENSTACK"}, testConfig, mariadbReports, totalDuration)
+		mariadbPrefix := resolveReportPrefix("mariadb", privateRun)
+		generateSummaryReportForEngine(outputDir, "MariaDB", mariadbPrefix, mariadbPrefix+"-summary.md", []string{"AWS", "ALIBABA", "NHN", "OPENSTACK"}, testConfig, mariadbReports, totalDuration, privateRun)
 	}
 }
 
-func generateSummaryReportForEngine(outputDir string, engineTitle, summaryFileName string, canonicalOrder []string, testConfig TestConfig, reports []*RDBMSTestReport, totalDuration time.Duration) {
+func generateSummaryReportForEngine(outputDir string, engineTitle, filePrefix, summaryFileName string, canonicalOrder []string, testConfig TestConfig, reports []*RDBMSTestReport, totalDuration time.Duration, privateRun bool) {
 	reportByCSP := make(map[string]*RDBMSTestReport)
 	for _, r := range reports {
 		reportByCSP[strings.ToUpper(r.CSP)] = r
@@ -2055,7 +2200,7 @@ func generateSummaryReportForEngine(outputDir string, engineTitle, summaryFileNa
 
 	// Parse existing summary if available to merge historical CSP results
 	existingCSPs, existingTable := parseExistingSummary(summaryPath)
-	if engineTitle == "MySQL" && len(existingCSPs) == 0 {
+	if !privateRun && engineTitle == "MySQL" && len(existingCSPs) == 0 {
 		legacyPath := filepath.Join(outputDir, "summary.md")
 		if _, err := os.Stat(legacyPath); err == nil {
 			existingCSPs, existingTable = parseExistingSummary(legacyPath)
@@ -2124,7 +2269,14 @@ func generateSummaryReportForEngine(outputDir string, engineTitle, summaryFileNa
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("# CM-Beetle Managed RDBMS (%s) Test Run Summary\n\n", engineTitle))
+	summaryTitle := fmt.Sprintf("# CM-Beetle Managed RDBMS (%s) Test Run Summary\n\n", engineTitle)
+	accessModeLabel := "Public / Default (per test-config.yaml)"
+	if privateRun {
+		summaryTitle = fmt.Sprintf("# CM-Beetle Managed RDBMS (%s - Private) Test Run Summary\n\n", engineTitle)
+		accessModeLabel = "Private (publicAccess=false)"
+	}
+	sb.WriteString(summaryTitle)
+	sb.WriteString(fmt.Sprintf("- **Access Mode:** %s\n", accessModeLabel))
 	sb.WriteString(fmt.Sprintf("- **Run Timestamp:** %s\n", time.Now().Format("2006-01-02 15:04:05")))
 	if totalDuration > 0 {
 		sb.WriteString(fmt.Sprintf("- **Run Duration:** %s\n", totalDuration.Round(time.Second)))
@@ -2205,7 +2357,7 @@ func generateSummaryReportForEngine(outputDir string, engineTitle, summaryFileNa
 	// Parse individual report headers for date/status if not in current run
 	indHeaders := make(map[string]*individualReportHeader)
 	for _, csp := range cumulativeCSPs {
-		fileName := fmt.Sprintf("%s-%s.md", strings.ToLower(engineTitle), strings.ToLower(csp))
+		fileName := fmt.Sprintf("%s-%s.md", filePrefix, strings.ToLower(csp))
 		reportPath := filepath.Join(outputDir, fileName)
 		if h := parseIndividualReportHeader(reportPath); h != nil {
 			indHeaders[csp] = h
@@ -2401,24 +2553,30 @@ func getStepIcon(results []TestResults, stepName string) string {
 	return "—"
 }
 
-func generateDetailedReport(outputDir string, r *RDBMSTestReport) {
+func generateDetailedReport(outputDir string, r *RDBMSTestReport, privateRun bool) {
 	engine := "mysql"
 	if len(r.SourceRDBMS.SourceRDBMSInstances) > 0 && r.SourceRDBMS.SourceRDBMSInstances[0].DBEngine.Engine != "" {
 		engine = strings.ToLower(r.SourceRDBMS.SourceRDBMSInstances[0].DBEngine.Engine)
 	}
 	isMariaDB := strings.EqualFold(engine, "mariadb") || strings.Contains(strings.ToLower(r.DisplayName), "mariadb")
 
-	fileName := fmt.Sprintf("mysql-%s.md", r.CSP)
+	engineKey := "mysql"
 	engineName := "MySQL"
 	if isMariaDB {
-		fileName = fmt.Sprintf("mariadb-%s.md", r.CSP)
+		engineKey = "mariadb"
 		engineName = "MariaDB"
 	}
+	fileName := fmt.Sprintf("%s-%s.md", resolveReportPrefix(engineKey, privateRun), r.CSP)
 	filePath := filepath.Join(outputDir, fileName)
 	var sb strings.Builder
 
+	accessMode := "Private (publicAccess=false)"
+	if r.PublicAccess {
+		accessMode = "Public (publicAccess=true)"
+	}
 	sb.WriteString(fmt.Sprintf("# Managed RDBMS (%s) Test Report: %s (%s)\n\n", engineName, strings.ToUpper(r.CSP), r.Region))
 	sb.WriteString(fmt.Sprintf("- **Test Case:** %s\n", r.DisplayName))
+	sb.WriteString(fmt.Sprintf("- **Access Mode:** %s\n", accessMode))
 	sb.WriteString(fmt.Sprintf("- **Date & Time:** %s %s\n", r.TestDate, r.TestTime))
 	sb.WriteString(fmt.Sprintf("- **Namespace:** `%s`\n", r.NamespaceID))
 	sb.WriteString(fmt.Sprintf("- **Total Duration:** %s\n", r.Summary.Duration.Round(time.Millisecond)))

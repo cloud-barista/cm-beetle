@@ -528,6 +528,25 @@ See the [Object Storage Feature Guide](middleware-object-storage.md) for bucket 
 
 ---
 
+## Integration with Managed RDBMS Migration (Public & Private)
+
+After provisioning a managed RDBMS instance via CM-Beetle, `POST /beetle/migration/data` (`transx` hooks) can transfer and restore database dumps from on-premises servers into either public or private VPC-isolated RDBMS instances:
+
+```
+1. POST /recommendation/middleware/rdbms              -> get recommended target RDBMS spec and warnings
+2. POST /migration/middleware/ns/{nsId}/rdbms         -> provision target RDBMS instance
+3. GET  /migration/middleware/ns/{nsId}/rdbms/{id}    -> retrieve target endpoint and publicAccess mode
+4. GET  /beetle/migration/data/encryptionKey          -> get one-time public key
+5. POST /beetle/migration/data                        -> source.preCmd (mysqldump --databases) -> transfer -> destination.postCmd (in-VPC mysql restore)
+6. GET  /beetle/request/{reqId}                       -> poll until Success or Error
+```
+
+For Private RDBMS (`publicAccess=false`), target the SSH `destination` to a Bastion or application VM inside the same VNet/VPC so `destination.postCmd` can restore directly to the private DB endpoint (including creating logical databases with exact `charset`/`collation` on SQL-only CSPs such as AWS/IBM).
+
+See the [Managed RDBMS Feature Guide (Post-Migration Data Transfer & CM-Centipede Integration)](middleware-rdbms.md#post-migration-data-transfer-guide-public-vs-private-rdbms) for the complete `publicAccess=false` Fast-Fail matrix, TLS handling, and CM-Centipede integration contract.
+
+---
+
 ## Test Results
 
 End-to-end test results across all supported CSPs are available in:

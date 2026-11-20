@@ -16,12 +16,14 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
 	rdbmsmodel "github.com/cloud-barista/cm-beetle/imdl/rdbms-model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
@@ -29,6 +31,15 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
+
+// tumblebugErrorStatusCode maps typed Tumblebug 4xx errors to their original HTTP status code.
+func tumblebugErrorStatusCode(err error) int {
+	var apiErr *tbclient.APIError
+	if errors.As(err, &apiErr) && apiErr.StatusCode >= 400 && apiErr.StatusCode < 500 {
+		return apiErr.StatusCode
+	}
+	return http.StatusInternalServerError
+}
 
 // ============================================================================
 // Request Models
@@ -59,6 +70,8 @@ type MigrateRDBMSRequest struct {
 // @Description By default this API runs synchronously. Send header `Prefer: respond-async` to run it
 // @Description asynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes, or 35-45+ minutes for IBM dedicated flavors): receive 202 Accepted with a reqId.
 // @Description - IBM Cloud Databases hosting note: 'multitenant' shared model provisions in ~10 minutes, whereas Dedicated flavors ('b3c.*') take 35-45+ minutes. Ensure client/proxy timeouts are configured for >= 50 minutes if calling synchronously with dedicated flavors.
+// @Description - Private RDBMS (`publicAccess=false`, requires CB-Tumblebug v0.13.9+): on SQL-only CSPs (AWS, IBM), remote logical database creation is skipped with a warning log. Perform schema/data transfer inside the target VPC/VNet via `POST /migration/data` (`transx` hooks) or CM-Centipede.
+// @Description - Guide (Private RDBMS & Post-Migration Data Transfer): https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#post-migration-data-transfer-guide-public-vs-private-rdbms
 // @Tags [Migration] Managed RDBMS
 // @Accept json
 // @Produce json
@@ -146,7 +159,7 @@ func MigrateRDBMS(c echo.Context) error {
 		if strings.Contains(err.Error(), "invalid cloud configuration") {
 			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 		}
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+		return c.JSON(tumblebugErrorStatusCode(err), model.SimpleErrorResponse(err.Error()))
 	}
 
 	return c.JSON(http.StatusCreated, model.SimpleSuccessResponse("Managed RDBMS instances created successfully"))
@@ -208,7 +221,7 @@ func ListRDBMS(c echo.Context) error {
 	res, err := migration.ListRDBMS(c.Request().Context(), nsId)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Msg("Failed to list managed RDBMS instances")
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+		return c.JSON(tumblebugErrorStatusCode(err), model.SimpleErrorResponse(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(res, "Successfully retrieved managed RDBMS list"))
@@ -225,6 +238,7 @@ func ListRDBMS(c echo.Context) error {
 // @Param rdbmsId path string true "RDBMS Instance ID"
 // @Success 200 {object} model.ApiResponse[rdbmsmodel.RDBMSInfo] "Successfully retrieved RDBMS details"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 404 {object} model.ApiResponse[any] "RDBMS instance not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
 // @Router /migration/middleware/ns/{nsId}/rdbms/{rdbmsId} [get]
 func GetRDBMS(c echo.Context) error {
@@ -237,7 +251,7 @@ func GetRDBMS(c echo.Context) error {
 	res, err := migration.GetRDBMS(c.Request().Context(), nsId, rdbmsId)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to get managed RDBMS details")
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+		return c.JSON(tumblebugErrorStatusCode(err), model.SimpleErrorResponse(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(res, "Successfully retrieved managed RDBMS details"))
@@ -255,6 +269,7 @@ func GetRDBMS(c echo.Context) error {
 // @Param option query string false "Deletion option (e.g., 'force')"
 // @Success 200 {object} model.ApiResponse[any] "Successfully deleted managed RDBMS instance"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 404 {object} model.ApiResponse[any] "RDBMS instance not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
 // @Router /migration/middleware/ns/{nsId}/rdbms/{rdbmsId} [delete]
 func DeleteRDBMS(c echo.Context) error {
@@ -268,7 +283,7 @@ func DeleteRDBMS(c echo.Context) error {
 
 	if err := migration.DeleteRDBMS(c.Request().Context(), nsId, rdbmsId, option); err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to delete managed RDBMS instance")
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+		return c.JSON(tumblebugErrorStatusCode(err), model.SimpleErrorResponse(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, model.SimpleSuccessResponse(fmt.Sprintf("Managed RDBMS '%s' deleted successfully", rdbmsId)))
@@ -281,7 +296,9 @@ func DeleteRDBMS(c echo.Context) error {
 // CreateRDBMSDatabase godoc
 // @ID CreateRDBMSDatabase
 // @Summary Create a logical database inside a Managed RDBMS (RDS) instance
-// @Description Create a new logical database inside an existing managed RDBMS instance
+// @Description Create a new logical database inside an existing managed RDBMS instance.
+// @Description Private RDBMS (publicAccess=false, requires CB-Tumblebug v0.13.9+): returns 422 Unprocessable Entity immediately when the target CSP or charset/collation options require direct SQL access (AWS, IBM, Azure charset-only, Tencent collation, NCP/NHN charset or collation).
+// @Description See: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#private-mode-publicaccessfalse-fast-fail-policy
 // @Tags [Migration] Managed RDBMS
 // @Accept json
 // @Produce json
@@ -292,6 +309,8 @@ func DeleteRDBMS(c echo.Context) error {
 // @Param request body rdbmsmodel.RDBMSDatabaseCreateReq true "Database creation request"
 // @Success 201 {object} model.ApiResponse[any] "Successfully created logical database"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 404 {object} model.ApiResponse[any] "RDBMS instance not found"
+// @Failure 422 {object} model.ApiResponse[any] "Unprocessable Entity - operation requires direct SQL access on a private RDBMS (publicAccess=false)"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
 // @Router /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database [post]
 func CreateRDBMSDatabase(c echo.Context) error {
@@ -314,7 +333,7 @@ func CreateRDBMSDatabase(c echo.Context) error {
 
 	if err := migration.CreateRDBMSDatabase(c.Request().Context(), nsId, rdbmsId, adminUser, adminPass, req); err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to create logical database")
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+		return c.JSON(tumblebugErrorStatusCode(err), model.SimpleErrorResponse(err.Error()))
 	}
 
 	return c.JSON(http.StatusCreated, model.SimpleSuccessResponse(fmt.Sprintf("Logical database '%s' created successfully", req.DatabaseName)))
@@ -323,7 +342,9 @@ func CreateRDBMSDatabase(c echo.Context) error {
 // ListRDBMSDatabases godoc
 // @ID ListRDBMSDatabases
 // @Summary List logical databases inside a Managed RDBMS (RDS) instance
-// @Description Retrieve the list of logical databases inside an existing managed RDBMS instance
+// @Description Retrieve the list of logical databases inside an existing managed RDBMS instance.
+// @Description Private RDBMS (publicAccess=false, requires CB-Tumblebug v0.13.9+): returns 422 Unprocessable Entity immediately for SQL-only CSPs (AWS, IBM) that have no native logical database API.
+// @Description See: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#private-mode-publicaccessfalse-fast-fail-policy
 // @Tags [Migration] Managed RDBMS
 // @Accept json
 // @Produce json
@@ -333,6 +354,8 @@ func CreateRDBMSDatabase(c echo.Context) error {
 // @Param X-Admin-User-Password header string true "Admin User Password"
 // @Success 200 {object} model.ApiResponse[rdbmsmodel.RDBMSDatabaseListResponse] "Successfully retrieved logical databases"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 404 {object} model.ApiResponse[any] "RDBMS instance not found"
+// @Failure 422 {object} model.ApiResponse[any] "Unprocessable Entity - operation requires direct SQL access on a private RDBMS (publicAccess=false)"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
 // @Router /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database [get]
 func ListRDBMSDatabases(c echo.Context) error {
@@ -351,7 +374,7 @@ func ListRDBMSDatabases(c echo.Context) error {
 	res, err := migration.ListRDBMSDatabases(c.Request().Context(), nsId, rdbmsId, adminUser, adminPass)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to list logical databases")
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+		return c.JSON(tumblebugErrorStatusCode(err), model.SimpleErrorResponse(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(res, "Successfully retrieved logical databases"))
@@ -360,7 +383,9 @@ func ListRDBMSDatabases(c echo.Context) error {
 // DeleteRDBMSDatabase godoc
 // @ID DeleteRDBMSDatabase
 // @Summary Delete a logical database inside a Managed RDBMS (RDS) instance
-// @Description Delete a logical database inside an existing managed RDBMS instance
+// @Description Delete a logical database inside an existing managed RDBMS instance.
+// @Description Private RDBMS (publicAccess=false, requires CB-Tumblebug v0.13.9+): returns 422 Unprocessable Entity immediately for SQL-only CSPs (AWS, IBM) that have no native logical database API.
+// @Description See: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#private-mode-publicaccessfalse-fast-fail-policy
 // @Tags [Migration] Managed RDBMS
 // @Accept json
 // @Produce json
@@ -371,6 +396,8 @@ func ListRDBMSDatabases(c echo.Context) error {
 // @Param X-Admin-User-Password header string true "Admin User Password"
 // @Success 200 {object} model.ApiResponse[any] "Successfully deleted logical database"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 404 {object} model.ApiResponse[any] "RDBMS instance not found"
+// @Failure 422 {object} model.ApiResponse[any] "Unprocessable Entity - operation requires direct SQL access on a private RDBMS (publicAccess=false)"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
 // @Router /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{dbName} [delete]
 func DeleteRDBMSDatabase(c echo.Context) error {
@@ -389,7 +416,7 @@ func DeleteRDBMSDatabase(c echo.Context) error {
 
 	if err := migration.DeleteRDBMSDatabase(c.Request().Context(), nsId, rdbmsId, dbName, adminUser, adminPass); err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to delete logical database")
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+		return c.JSON(tumblebugErrorStatusCode(err), model.SimpleErrorResponse(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, model.SimpleSuccessResponse(fmt.Sprintf("Logical database '%s' deleted successfully", dbName)))
@@ -398,7 +425,9 @@ func DeleteRDBMSDatabase(c echo.Context) error {
 // GetRDBMSSecureTransport godoc
 // @ID GetRDBMSSecureTransport
 // @Summary Get secure transport status and server CA certificate of an RDBMS instance
-// @Description Retrieve live TLS enforcement status, active cipher, and server CA certificate via CB-Tumblebug and CB-Spider
+// @Description Retrieve live TLS enforcement status, active cipher, and server CA certificate via CB-Tumblebug and CB-Spider.
+// @Description Private RDBMS (publicAccess=false, requires CB-Tumblebug v0.13.9+): returns 422 Unprocessable Entity immediately across all CSPs because TLS/SQL probing requires direct network reachability to the DB port.
+// @Description See: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#post-migration-data-transfer-guide-public-vs-private-rdbms
 // @Tags [Migration] Managed RDBMS
 // @Accept json
 // @Produce json
@@ -408,6 +437,8 @@ func DeleteRDBMSDatabase(c echo.Context) error {
 // @Param X-Admin-User-Password header string true "Admin User Password"
 // @Success 200 {object} model.ApiResponse[rdbmsmodel.RDBMSSecureTransportInfo] "Successfully retrieved secure transport info"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 404 {object} model.ApiResponse[any] "RDBMS instance not found"
+// @Failure 422 {object} model.ApiResponse[any] "Unprocessable Entity - secure-transport probing requires direct TLS/SQL access on a private RDBMS (publicAccess=false)"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
 // @Router /migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/secure-transport [get]
 func GetRDBMSSecureTransport(c echo.Context) error {
@@ -426,7 +457,7 @@ func GetRDBMSSecureTransport(c echo.Context) error {
 	res, err := migration.GetRDBMSSecureTransport(c.Request().Context(), nsId, rdbmsId, adminUser, adminPass)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("rdbmsId", rdbmsId).Msg("Failed to get secure transport info")
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+		return c.JSON(tumblebugErrorStatusCode(err), model.SimpleErrorResponse(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(res, "Successfully retrieved secure transport info"))

@@ -147,6 +147,8 @@ type RecommendRDBMSRequest struct {
 // @Description [Note] The recommended instance names use default patterns (`mig-rdbms-01`, `mig-rdbms-02`, ...).
 // @Description - To apply a naming prefix at migration time, use the `nameSeed` query parameter on the migration API.
 // @Description - IBM Cloud Databases hosting note: defaults to 'multitenant' shared model for fast provisioning (~10 minutes). Dedicated host flavors ('b3c.*') take 35-45+ minutes.
+// @Description - Private RDBMS (`publicAccess=false`, requires CB-Tumblebug v0.13.9+): preserves original `charset`/`collation` for Tencent and Azure without silent mutation and emits `warnings` when direct SQL would trigger HTTP 422 (AWS, IBM, Tencent with collation, Azure charset-only).
+// @Description - Guide: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#private-mode-publicaccessfalse-fast-fail-policy
 // @Tags [Recommendation] Managed RDBMS
 // @Accept json
 // @Produce json

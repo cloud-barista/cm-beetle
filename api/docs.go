@@ -358,7 +358,7 @@ const docTemplate = `{
         },
         "/migration/data": {
             "post": {
-                "description": "By default this API runs synchronously and returns the migration result directly.\n\n[Async Operation (opt-in)]\n1. Send header ` + "`" + `Prefer: respond-async` + "`" + ` → Receive 202 Accepted with reqId\n2. Poll GET /request/{reqId} to check status\n3. Status flow: Handling → Success / Error\n* Only the \"respond-async\" preference token is recognized; other tokens (e.g. wait=N) are ignored.\n* If too many async jobs are already running, this returns 503 instead of 202; retry after the ` + "`" + `Retry-After` + "`" + ` seconds.\n\n[Endpoint Requirements]\n* Both source and destination must be remote endpoints (SSH or object storage)\n* Local filesystem access is not allowed for security reasons\n\n[Transfer Options]\n* Strategy: auto (default), direct, relay, ssh-agent-fwd-push, ssh-agent-fwd-pull\n* SSH: Supports PrivateKey content or PrivateKeyPath\n\n[Encryption Support]\n* To encrypt sensitive fields, first call GET /migration/data/encryptionKey\n* Encrypted requests include ` + "`" + `encryptionKeyId` + "`" + ` field\n* Server automatically detects and decrypts encrypted requests\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
+                "description": "By default this API runs synchronously and returns the migration result directly.\n\n[Async Operation (opt-in)]\n1. Send header ` + "`" + `Prefer: respond-async` + "`" + ` → Receive 202 Accepted with reqId\n2. Poll GET /request/{reqId} to check status\n3. Status flow: Handling → Success / Error\n* Only the \"respond-async\" preference token is recognized; other tokens (e.g. wait=N) are ignored.\n* If too many async jobs are already running, this returns 503 instead of 202; retry after the ` + "`" + `Retry-After` + "`" + ` seconds.\n\n[Endpoint Requirements]\n* Both source and destination must be remote endpoints (SSH or object storage)\n* Local filesystem access is not allowed for security reasons\n\n[Transfer Options]\n* Strategy: auto (default), direct, relay, ssh-agent-fwd-push, ssh-agent-fwd-pull\n* SSH: Supports PrivateKey content or PrivateKeyPath\n\n[Encryption Support]\n* To encrypt sensitive fields, first call GET /migration/data/encryptionKey\n* Encrypted requests include ` + "`" + `encryptionKeyId` + "`" + ` field\n* Server automatically detects and decrypts encrypted requests\n\n[Examples \u0026 Guides]\n* Data Transfer Feature Guide (hooks \u0026 workflows): https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/data-transfer.md\n* Post-Migration Managed RDBMS Data Transfer (Public \u0026 Private): https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#post-migration-data-transfer-guide-public-vs-private-rdbms\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -1730,7 +1730,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Provision and migrate managed RDBMS / RDS instances in target cloud based on recommendation results (supports AWS RDS, GCP Cloud SQL, Azure Database, NCP Cloud DB, NHN RDS, Alibaba ApsaraDB, TencentDB, IBM Databases)\n\n[Note]\n- This API provisions managed RDBMS instances in the target cloud within the specified namespace.\n- Input should be the output from the RecommendRDBMS API with ` + "`" + `adminUserName` + "`" + ` and ` + "`" + `adminUserPassword` + "`" + ` set for each target instance.\n- Connection name is automatically resolved from CSP and region in the request body.\n\n[Note] ` + "`" + `nameSeed` + "`" + ` enables dynamic naming via **Late Binding**.\n- If ` + "`" + `nameSeed` + "`" + ` query param is set (e.g., ` + "`" + `?nameSeed=my` + "`" + `), instance names are prefixed: ` + "`" + `my-rdbms-01` + "`" + `.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes, or 35-45+ minutes for IBM dedicated flavors): receive 202 Accepted with a reqId.\n- IBM Cloud Databases hosting note: 'multitenant' shared model provisions in ~10 minutes, whereas Dedicated flavors ('b3c.*') take 35-45+ minutes. Ensure client/proxy timeouts are configured for \u003e= 50 minutes if calling synchronously with dedicated flavors.",
+                "description": "Provision and migrate managed RDBMS / RDS instances in target cloud based on recommendation results (supports AWS RDS, GCP Cloud SQL, Azure Database, NCP Cloud DB, NHN RDS, Alibaba ApsaraDB, TencentDB, IBM Databases)\n\n[Note]\n- This API provisions managed RDBMS instances in the target cloud within the specified namespace.\n- Input should be the output from the RecommendRDBMS API with ` + "`" + `adminUserName` + "`" + ` and ` + "`" + `adminUserPassword` + "`" + ` set for each target instance.\n- Connection name is automatically resolved from CSP and region in the request body.\n\n[Note] ` + "`" + `nameSeed` + "`" + ` enables dynamic naming via **Late Binding**.\n- If ` + "`" + `nameSeed` + "`" + ` query param is set (e.g., ` + "`" + `?nameSeed=my` + "`" + `), instance names are prefixed: ` + "`" + `my-rdbms-01` + "`" + `.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes, or 35-45+ minutes for IBM dedicated flavors): receive 202 Accepted with a reqId.\n- IBM Cloud Databases hosting note: 'multitenant' shared model provisions in ~10 minutes, whereas Dedicated flavors ('b3c.*') take 35-45+ minutes. Ensure client/proxy timeouts are configured for \u003e= 50 minutes if calling synchronously with dedicated flavors.\n- Private RDBMS (` + "`" + `publicAccess=false` + "`" + `, requires CB-Tumblebug v0.13.9+): on SQL-only CSPs (AWS, IBM), remote logical database creation is skipped with a warning log. Perform schema/data transfer inside the target VPC/VNet via ` + "`" + `POST /migration/data` + "`" + ` (` + "`" + `transx` + "`" + ` hooks) or CM-Centipede.\n- Guide (Private RDBMS \u0026 Post-Migration Data Transfer): https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#post-migration-data-transfer-guide-public-vs-private-rdbms",
                 "consumes": [
                     "application/json"
                 ],
@@ -1912,6 +1912,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
+                    "404": {
+                        "description": "RDBMS instance not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -1969,6 +1975,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
+                    "404": {
+                        "description": "RDBMS instance not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -1980,7 +1992,7 @@ const docTemplate = `{
         },
         "/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database": {
             "get": {
-                "description": "Retrieve the list of logical databases inside an existing managed RDBMS instance",
+                "description": "Retrieve the list of logical databases inside an existing managed RDBMS instance.\nPrivate RDBMS (publicAccess=false, requires CB-Tumblebug v0.13.9+): returns 422 Unprocessable Entity immediately for SQL-only CSPs (AWS, IBM) that have no native logical database API.\nSee: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#private-mode-publicaccessfalse-fast-fail-policy",
                 "consumes": [
                     "application/json"
                 ],
@@ -2036,6 +2048,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
+                    "404": {
+                        "description": "RDBMS instance not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity - operation requires direct SQL access on a private RDBMS (publicAccess=false)",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -2045,7 +2069,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new logical database inside an existing managed RDBMS instance",
+                "description": "Create a new logical database inside an existing managed RDBMS instance.\nPrivate RDBMS (publicAccess=false, requires CB-Tumblebug v0.13.9+): returns 422 Unprocessable Entity immediately when the target CSP or charset/collation options require direct SQL access (AWS, IBM, Azure charset-only, Tencent collation, NCP/NHN charset or collation).\nSee: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#private-mode-publicaccessfalse-fast-fail-policy",
                 "consumes": [
                     "application/json"
                 ],
@@ -2110,6 +2134,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
+                    "404": {
+                        "description": "RDBMS instance not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity - operation requires direct SQL access on a private RDBMS (publicAccess=false)",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -2121,7 +2157,7 @@ const docTemplate = `{
         },
         "/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{dbName}": {
             "delete": {
-                "description": "Delete a logical database inside an existing managed RDBMS instance",
+                "description": "Delete a logical database inside an existing managed RDBMS instance.\nPrivate RDBMS (publicAccess=false, requires CB-Tumblebug v0.13.9+): returns 422 Unprocessable Entity immediately for SQL-only CSPs (AWS, IBM) that have no native logical database API.\nSee: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#private-mode-publicaccessfalse-fast-fail-policy",
                 "consumes": [
                     "application/json"
                 ],
@@ -2184,6 +2220,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
+                    "404": {
+                        "description": "RDBMS instance not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity - operation requires direct SQL access on a private RDBMS (publicAccess=false)",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -2195,7 +2243,7 @@ const docTemplate = `{
         },
         "/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/secure-transport": {
             "get": {
-                "description": "Retrieve live TLS enforcement status, active cipher, and server CA certificate via CB-Tumblebug and CB-Spider",
+                "description": "Retrieve live TLS enforcement status, active cipher, and server CA certificate via CB-Tumblebug and CB-Spider.\nPrivate RDBMS (publicAccess=false, requires CB-Tumblebug v0.13.9+): returns 422 Unprocessable Entity immediately across all CSPs because TLS/SQL probing requires direct network reachability to the DB port.\nSee: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#post-migration-data-transfer-guide-public-vs-private-rdbms",
                 "consumes": [
                     "application/json"
                 ],
@@ -2247,6 +2295,18 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "404": {
+                        "description": "RDBMS instance not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity - secure-transport probing requires direct TLS/SQL access on a private RDBMS (publicAccess=false)",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -4949,7 +5009,7 @@ const docTemplate = `{
         },
         "/recommendation/middleware/rdbms": {
             "post": {
-                "description": "Recommend optimal Managed RDBMS / RDS (MySQL, MariaDB) instance specs, engine versions, and storage configurations for target cloud migration (supports AWS RDS, GCP Cloud SQL, Azure Database, Alibaba ApsaraDB, TencentDB, IBM Databases, NCP Cloud DB, NHN RDS)\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can be set in the query parameter or the request body.\n- If set in the request body, the query parameter values will be overridden.\n\n[Note] The recommended instance names use default patterns (` + "`" + `mig-rdbms-01` + "`" + `, ` + "`" + `mig-rdbms-02` + "`" + `, ...).\n- To apply a naming prefix at migration time, use the ` + "`" + `nameSeed` + "`" + ` query parameter on the migration API.\n- IBM Cloud Databases hosting note: defaults to 'multitenant' shared model for fast provisioning (~10 minutes). Dedicated host flavors ('b3c.*') take 35-45+ minutes.",
+                "description": "Recommend optimal Managed RDBMS / RDS (MySQL, MariaDB) instance specs, engine versions, and storage configurations for target cloud migration (supports AWS RDS, GCP Cloud SQL, Azure Database, Alibaba ApsaraDB, TencentDB, IBM Databases, NCP Cloud DB, NHN RDS)\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can be set in the query parameter or the request body.\n- If set in the request body, the query parameter values will be overridden.\n\n[Note] The recommended instance names use default patterns (` + "`" + `mig-rdbms-01` + "`" + `, ` + "`" + `mig-rdbms-02` + "`" + `, ...).\n- To apply a naming prefix at migration time, use the ` + "`" + `nameSeed` + "`" + ` query parameter on the migration API.\n- IBM Cloud Databases hosting note: defaults to 'multitenant' shared model for fast provisioning (~10 minutes). Dedicated host flavors ('b3c.*') take 35-45+ minutes.\n- Private RDBMS (` + "`" + `publicAccess=false` + "`" + `, requires CB-Tumblebug v0.13.9+): preserves original ` + "`" + `charset` + "`" + `/` + "`" + `collation` + "`" + ` for Tencent and Azure without silent mutation and emits ` + "`" + `warnings` + "`" + ` when direct SQL would trigger HTTP 422 (AWS, IBM, Tencent with collation, Azure charset-only).\n- Guide: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#private-mode-publicaccessfalse-fast-fail-policy",
                 "consumes": [
                     "application/json"
                 ],

@@ -23,8 +23,19 @@ import (
 	rdbmsmodel "github.com/cloud-barista/cm-beetle/imdl/rdbms-model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/cloud-barista/cm-beetle/pkg/csp"
 	"github.com/rs/zerolog/log"
 )
+
+// isSQLOnlyRDBMSProvider reports whether logical DB CRUD on the CSP requires direct SQL (no native DB API).
+func isSQLOnlyRDBMSProvider(cspName string) bool {
+	switch strings.ToLower(strings.TrimSpace(cspName)) {
+	case csp.AWS, csp.IBM:
+		return true
+	default:
+		return false
+	}
+}
 
 // ============================================================================
 // Core RDBMS Migration Functions
@@ -114,28 +125,36 @@ func CreateRDBMS(ctx context.Context, nsId string, req rdbmsmodel.RecommendedRDB
 
 		// Create specified inner databases if any
 		if len(target.Databases) > 0 {
-			log.Info().
-				Str("rdbmsName", target.RDBMSName).
-				Int("databasesCount", len(target.Databases)).
-				Msg("Creating inner logical databases")
+			if !target.PublicAccess && isSQLOnlyRDBMSProvider(req.TargetCloud.Csp) {
+				log.Warn().
+					Str("rdbmsName", target.RDBMSName).
+					Str("csp", req.TargetCloud.Csp).
+					Int("skippedDatabases", len(target.Databases)).
+					Msg("Skipping remote logical database creation on private SQL-only RDBMS; create databases from inside the target VPC/VNet (e.g., via a Bastion host)")
+			} else {
+				log.Info().
+					Str("rdbmsName", target.RDBMSName).
+					Int("databasesCount", len(target.Databases)).
+					Msg("Creating inner logical databases")
 
-			for _, db := range target.Databases {
-				dbReq := rdbmsmodel.RDBMSDatabaseCreateReq{
-					DatabaseName: db.DatabaseName,
-					Charset:      db.Charset,
-					Collation:    db.Collation,
-				}
-				if dbErr := tbclient.NewSession().SetContext(ctx).CreateRDBMSDatabase(nsId, target.RDBMSName, adminUser, adminPass, dbReq); dbErr != nil {
-					log.Warn().
-						Err(dbErr).
-						Str("rdbmsName", target.RDBMSName).
-						Str("databaseName", db.DatabaseName).
-						Msg("Failed to create inner database; continuing with next database")
-				} else {
-					log.Info().
-						Str("rdbmsName", target.RDBMSName).
-						Str("databaseName", db.DatabaseName).
-						Msg("Inner database created successfully")
+				for _, db := range target.Databases {
+					dbReq := rdbmsmodel.RDBMSDatabaseCreateReq{
+						DatabaseName: db.DatabaseName,
+						Charset:      db.Charset,
+						Collation:    db.Collation,
+					}
+					if dbErr := tbclient.NewSession().SetContext(ctx).CreateRDBMSDatabase(nsId, target.RDBMSName, adminUser, adminPass, dbReq); dbErr != nil {
+						log.Warn().
+							Err(dbErr).
+							Str("rdbmsName", target.RDBMSName).
+							Str("databaseName", db.DatabaseName).
+							Msg("Failed to create inner database; continuing with next database")
+					} else {
+						log.Info().
+							Str("rdbmsName", target.RDBMSName).
+							Str("databaseName", db.DatabaseName).
+							Msg("Inner database created successfully")
+					}
 				}
 			}
 		}
