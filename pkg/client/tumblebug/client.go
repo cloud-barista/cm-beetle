@@ -16,6 +16,7 @@ package tbclient
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
@@ -25,6 +26,25 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 )
+
+// APIError preserves the HTTP status code returned by CB-Tumblebug alongside the error body.
+type APIError struct {
+	StatusCode int
+	Status     string
+	Body       string
+}
+
+func (e *APIError) Error() string {
+	return fmt.Sprintf("API Error: %s (Body: %s)", e.Status, e.Body)
+}
+
+func newAPIError(resp *resty.Response) *APIError {
+	return &APIError{
+		StatusCode: resp.StatusCode(),
+		Status:     resp.Status(),
+		Body:       string(resp.Body()),
+	}
+}
 
 // * [Note]
 // * This Tumblebug Client is used to interact with the CB-Tumblebug API.

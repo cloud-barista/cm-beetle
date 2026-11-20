@@ -1,0 +1,246 @@
+beetle:
+  endpoint: http://localhost:8056/beetle
+  namespaceId: default
+  requestBodyFile: rdbms-req.json
+  authConfigFile: auth.json
+
+# Private RDBMS (publicAccess: false) E2E test template.
+# Validates HTTP 422 fast-fail behavior on Control Plane SQL/TLS APIs and verifies
+# in-VPC Runner VM (Bastion / transx / CM-Centipede equivalent) DB creation, TLS, and SQL I/O.
+test:
+  set:
+    mode: parallel # sequential or parallel
+  cases:
+    # 1. AWS (SQL-only CSP: skips remote DB create, verifies HTTP 422 fast-fail + in-VPC DB bootstrap & SQL I/O)
+    - name: "AWS AP-Northeast-2 (Seoul) MySQL Private Test"
+      csp: aws
+      region: ap-northeast-2
+      rdbmsId: test-rdbms-priv-aws
+      connectionName: aws-ap-northeast-2
+      vNetName: test-rdbms-priv-vnet-aws
+      cidrBlock: 10.20.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.20.1.0/24
+          zone: ap-northeast-2a
+        - name: subnet-2
+          cidr: 10.20.2.0/24
+          zone: ap-northeast-2c
+      securityGroupName: test-rdbms-priv-sg-aws
+      dbEngine: mysql
+      adminUserName: admin
+      adminUserPassword: Password123!
+      publicAccess: false
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: false
+      internalDataIOTest: true
+      vmOSType: "ubuntu 24.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: ""
+      vmSpecId: ""
+      execute: true
+
+    # 2. Azure (Native ARM API with charset+collation; subnet-1 for Runner VM, dedicated empty subnet-2 for Flexible Server)
+    - name: "Azure KoreaCentral MySQL Private Test"
+      csp: azure
+      region: koreacentral
+      rdbmsId: test-rdbms-priv-azure
+      connectionName: azure-koreacentral
+      vNetName: test-rdbms-priv-vnet-azure
+      cidrBlock: 10.21.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.21.1.0/24
+          zone: ""
+        - name: subnet-2
+          cidr: 10.21.2.0/24
+          zone: ""
+      securityGroupName: test-rdbms-priv-sg-azure
+      dbEngine: mysql
+      adminUserName: dbadmin
+      adminUserPassword: Password123!
+      dbInstanceSpec: Standard_B1ms
+      publicAccess: false
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: false
+      internalDataIOTest: true
+      vmOSType: "ubuntu 24.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: ""
+      vmSpecId: ""
+      execute: true
+
+    # 3. Alibaba (100% Native API for DB CRUD; verifies HTTP 422 on secure-transport + in-VPC SQL I/O)
+    - name: "Alibaba AP-Northeast-2 (Seoul) MySQL Private Test"
+      csp: alibaba
+      region: ap-northeast-2
+      rdbmsId: test-rdbms-priv-alibaba
+      connectionName: alibaba-ap-northeast-2
+      vNetName: test-rdbms-priv-vnet-alibaba
+      cidrBlock: 10.23.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.23.1.0/24
+          zone: ""
+      securityGroupName: test-rdbms-priv-sg-alibaba
+      dbEngine: mysql
+      adminUserName: dbadmin
+      adminUserPassword: Password123!
+      dbInstanceSpec: mysql.n4.large.1
+      publicAccess: false
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: false
+      internalDataIOTest: true
+      vmOSType: "ubuntu 24.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: ""
+      vmSpecId: ""
+      execute: true
+
+    # 4. Tencent (Preserves collation with recommendation warning; verifies HTTP 422 on POST /database + in-VPC bootstrap & SQL I/O)
+    - name: "Tencent AP-Seoul MySQL Private Test"
+      csp: tencent
+      region: ap-seoul
+      rdbmsId: test-rdbms-priv-tencent
+      connectionName: tencent-ap-seoul
+      vNetName: test-rdbms-priv-vnet-tencent
+      cidrBlock: 10.24.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.24.1.0/24
+          zone: ""
+      securityGroupName: test-rdbms-priv-sg-tencent
+      dbEngine: mysql
+      adminUserName: root
+      adminUserPassword: Password123!
+      publicAccess: false
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: false
+      internalDataIOTest: true
+      vmOSType: "ubuntu 22.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: ""
+      vmSpecId: ""
+      execute: true
+
+    # 5. NCP (Private-only CSP; Native REST API for DB CRUD + in-VPC SQL I/O)
+    - name: "NCP Korea MySQL Private Test"
+      csp: ncp
+      region: kr
+      rdbmsId: test-rdbms-priv-ncp
+      connectionName: ncp-kr
+      vNetName: test-rdbms-priv-vnet-ncp
+      cidrBlock: 10.27.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.27.1.0/24
+          zone: ""
+      securityGroupName: test-rdbms-priv-sg-ncp
+      dbEngine: mysql
+      adminUserName: dbadmin
+      adminUserPassword: Password123!
+      publicAccess: false
+      ncpDBACGToAllowAllInbound: true
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: false
+      internalDataIOTest: true
+      vmOSType: "ubuntu 22.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: "23214590"
+      vmSpecId: "s2-g3"
+      execute: true
+
+    # 6. NHN (Private mode with nhnDBSGToAllowAllInbound=true; Native REST API for DB CRUD + in-VPC SQL I/O)
+    - name: "NHN KR1 MySQL Private Test"
+      csp: nhn
+      region: kr1
+      rdbmsId: test-rdbms-priv-nhn
+      connectionName: nhn-kr1
+      vNetName: test-rdbms-priv-vnet-nhn
+      cidrBlock: 10.28.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.28.1.0/24
+          zone: ""
+      securityGroupName: test-rdbms-priv-sg-nhn
+      dbEngine: mysql
+      adminUserName: myadmin
+      adminUserPassword: Password123!
+      publicAccess: false
+      nhnDBSGToAllowAllInbound: true
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: false
+      internalDataIOTest: true
+      vmOSType: "ubuntu 24.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: ""
+      vmSpecId: ""
+      execute: true
+
+    # 7. GCP (Excluded in private template pending CB-Spider Private IP Peering automation)
+    - name: "GCP US-Central1 MySQL Private Test"
+      csp: gcp
+      region: us-central1
+      rdbmsId: test-rdbms-priv-gcp
+      connectionName: gcp-us-central1
+      vNetName: test-rdbms-priv-vnet-gcp
+      cidrBlock: 10.22.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.22.1.0/24
+          zone: us-central1-a
+      securityGroupName: test-rdbms-priv-sg-gcp
+      dbEngine: mysql
+      adminUserName: admin
+      adminUserPassword: Password123!
+      storageType: PD_SSD
+      publicAccess: false
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: false
+      internalDataIOTest: true
+      vmOSType: "ubuntu 24.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      execute: false
+      exclusionReason: "Pending CB-Spider automated GCP Private IP Peering (cb-tumblebug#2829)"
+
+    # 8. IBM (Excluded in private template: IBM Cloud Databases standard test uses publicAccess=true)
+    - name: "IBM US-South MySQL Private Test"
+      csp: ibm
+      region: us-south
+      rdbmsId: test-rdbms-priv-ibm
+      connectionName: ibm-us-south
+      vNetName: test-rdbms-priv-vnet-ibm
+      cidrBlock: 10.25.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.25.1.0/24
+          zone: ""
+      securityGroupName: test-rdbms-priv-sg-ibm
+      dbEngine: mysql
+      adminUserName: admin
+      adminUserPassword: TumblebugPass2026
+      dbInstanceSpec: multitenant
+      publicAccess: false
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: false
+      internalDataIOTest: true
+      vmOSType: "ubuntu 24.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      execute: false
+      exclusionReason: "IBM Cloud Databases standard lifecycle uses publicAccess=true"

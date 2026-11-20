@@ -2,6 +2,9 @@ package recommendation
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -971,7 +974,7 @@ func TestResolveTargetDatabases(t *testing.T) {
 
 	t.Run("AWS MySQL preserves charset and collation", func(t *testing.T) {
 		var warnings []string
-		got := resolveTargetDatabases("aws", "mysql", "inst-1", innerDBs, &warnings)
+		got := resolveTargetDatabases("aws", "mysql", "inst-1", true, innerDBs, &warnings)
 		if len(got) != 1 || got[0].Charset != "utf8mb4" || got[0].Collation != "utf8mb4_unicode_ci" {
 			t.Fatalf("unexpected target databases: %+v", got)
 		}
@@ -982,7 +985,7 @@ func TestResolveTargetDatabases(t *testing.T) {
 
 	t.Run("Alibaba MariaDB omits collation and keeps charset", func(t *testing.T) {
 		var warnings []string
-		got := resolveTargetDatabases("alibaba", "mariadb", "inst-1", innerDBs, &warnings)
+		got := resolveTargetDatabases("alibaba", "mariadb", "inst-1", true, innerDBs, &warnings)
 		if len(got) != 1 || got[0].Charset != "utf8mb4" || got[0].Collation != "" {
 			t.Fatalf("expected charset only on Alibaba MariaDB, got %+v", got)
 		}
@@ -992,21 +995,21 @@ func TestResolveTargetDatabases(t *testing.T) {
 	})
 
 	t.Run("NCP and NHN omit charset and collation for native REST API", func(t *testing.T) {
-		for _, csp := range []string{"ncp", "nhn"} {
+		for _, cspName := range []string{"ncp", "nhn"} {
 			var warnings []string
-			got := resolveTargetDatabases(csp, "mysql", "inst-1", innerDBs, &warnings)
+			got := resolveTargetDatabases(cspName, "mysql", "inst-1", false, innerDBs, &warnings)
 			if len(got) != 1 || got[0].Charset != "" || got[0].Collation != "" {
-				t.Fatalf("expected empty charset/collation on %s, got %+v", csp, got)
+				t.Fatalf("expected empty charset/collation on %s, got %+v", cspName, got)
 			}
 			if len(warnings) == 0 {
-				t.Fatalf("expected warning on %s, got none", csp)
+				t.Fatalf("expected warning on %s, got none", cspName)
 			}
 		}
 	})
 
 	t.Run("PostgreSQL omits charset and collation", func(t *testing.T) {
 		var warnings []string
-		got := resolveTargetDatabases("aws", "postgresql", "inst-1", innerDBs, &warnings)
+		got := resolveTargetDatabases("aws", "postgresql", "inst-1", true, innerDBs, &warnings)
 		if len(got) != 1 || got[0].Charset != "" || got[0].Collation != "" {
 			t.Fatalf("expected empty charset/collation on postgresql, got %+v", got)
 		}
@@ -1014,4 +1017,200 @@ func TestResolveTargetDatabases(t *testing.T) {
 			t.Fatalf("expected warning on postgresql, got none")
 		}
 	})
+
+	t.Run("Tencent MySQL (private) preserves charset and collation with warning", func(t *testing.T) {
+		var warnings []string
+		got := resolveTargetDatabases("tencent", "mysql", "inst-1", false, innerDBs, &warnings)
+		if len(got) != 1 || got[0].Charset != "utf8mb4" || got[0].Collation != "utf8mb4_unicode_ci" {
+			t.Fatalf("expected original charset and collation preserved on private TencentDB, got %+v", got)
+		}
+		if len(warnings) == 0 || !strings.Contains(warnings[0], "HTTP 422") {
+			t.Fatalf("expected private TencentDB warning, got %v", warnings)
+		}
+	})
+
+	t.Run("Tencent MySQL (public) preserves charset and collation without warning", func(t *testing.T) {
+		var warnings []string
+		got := resolveTargetDatabases("tencent", "mysql", "inst-1", true, innerDBs, &warnings)
+		if len(got) != 1 || got[0].Charset != "utf8mb4" || got[0].Collation != "utf8mb4_unicode_ci" {
+			t.Fatalf("expected original charset and collation preserved on public TencentDB, got %+v", got)
+		}
+		if len(warnings) != 0 {
+			t.Fatalf("expected 0 warnings on public TencentDB, got %v", warnings)
+		}
+	})
+
+	charsetOnlyDBs := []rdbmsmodel.InnerDatabaseProperty{
+		{
+			DatabaseName: "sampledb",
+			CharacterSet: "utf8mb4",
+		},
+	}
+
+	t.Run("Azure MySQL (private) with charset-only preserves charset with warning", func(t *testing.T) {
+		var warnings []string
+		got := resolveTargetDatabases("azure", "mysql", "inst-1", false, charsetOnlyDBs, &warnings)
+		if len(got) != 1 || got[0].Charset != "utf8mb4" || got[0].Collation != "" {
+			t.Fatalf("expected original charset preserved without mutating collation on private Azure, got %+v", got)
+		}
+		if len(warnings) == 0 || !strings.Contains(warnings[0], "HTTP 422") {
+			t.Fatalf("expected private Azure charset-only warning, got %v", warnings)
+		}
+	})
+
+	t.Run("Azure MySQL (public) with charset-only preserves charset without warning", func(t *testing.T) {
+		var warnings []string
+		got := resolveTargetDatabases("azure", "mysql", "inst-1", true, charsetOnlyDBs, &warnings)
+		if len(got) != 1 || got[0].Charset != "utf8mb4" || got[0].Collation != "" {
+			t.Fatalf("expected original charset preserved on public Azure, got %+v", got)
+		}
+		if len(warnings) != 0 {
+			t.Fatalf("expected 0 warnings on public Azure, got %v", warnings)
+		}
+	})
+
+	t.Run("Azure MySQL (private) with both charset and collation preserves both without warning", func(t *testing.T) {
+		var warnings []string
+		got := resolveTargetDatabases("azure", "mysql", "inst-1", false, innerDBs, &warnings)
+		if len(got) != 1 || got[0].Charset != "utf8mb4" || got[0].Collation != "utf8mb4_unicode_ci" {
+			t.Fatalf("expected charset and collation preserved on private Azure, got %+v", got)
+		}
+		if len(warnings) != 0 {
+			t.Fatalf("expected 0 warnings when both charset and collation are set on private Azure, got %v", warnings)
+		}
+	})
+}
+
+func TestValidateRDBMS_NHNAllowAllInboundPrivate(t *testing.T) {
+	calledValidate := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == http.MethodPost && r.URL.Path == "/ns/mig01/resources/rdbms/validate" {
+			calledValidate = true
+			var req rdbmsmodel.RDBMSCreateRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			_ = json.NewEncoder(w).Encode(req)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	restore := tbclient.SetClient(tbclient.NewClient(tbclient.ApiConfig{
+		RestUrl:       srv.URL,
+		Username:      "default",
+		Password:      "default",
+		HttpTransport: http.DefaultTransport,
+	}))
+	t.Cleanup(func() {
+		restore()
+		srv.Close()
+	})
+
+	req := rdbmsmodel.RDBMSCreateRequest{
+		Name:                     "nhn-private-db",
+		ConnectionName:           "nhn-kr1",
+		DBEngine:                 "mysql",
+		DBEngineVersion:          "8.0",
+		PublicAccess:             false,
+		NHNDBSGToAllowAllInbound: true,
+	}
+
+	got, err := ValidateRDBMS(context.Background(), "mig01", req)
+	if err != nil {
+		t.Fatalf("expected NHN private request with nhnDBSGToAllowAllInbound=true to pass local validation, got error: %v", err)
+	}
+	if !calledValidate {
+		t.Fatalf("expected request to reach Tumblebug validate endpoint")
+	}
+	if !got.NHNDBSGToAllowAllInbound || got.PublicAccess {
+		t.Fatalf("unexpected validated response: %+v", got)
+	}
+}
+
+func TestRecommendRDBMS_PrivateSQLOnlyWarning(t *testing.T) {
+	for _, targetCSP := range []string{"aws", "ibm"} {
+		t.Run("Private "+targetCSP+" preserves databases inventory and emits VPC warning", func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				switch r.URL.Path {
+				case "/rdbms/support":
+					_ = json.NewEncoder(w).Encode(rdbmsmodel.RDBMSSupportResponse{
+						Supports: map[string]rdbmsmodel.RDBMSCSPSupportInfo{
+							targetCSP: {
+								Supported:          true,
+								SupportedDBEngines: []string{"mysql"},
+							},
+						},
+					})
+				case "/rdbms/capability":
+					_ = json.NewEncoder(w).Encode(rdbmsmodel.RDBMSCapabilityResponse{
+						Supports: rdbmsmodel.RDBMSMetaInfo{
+							ProviderName:                 targetCSP,
+							SupportedVersions:            []string{"8.0.36"},
+							SupportsStorageTypeSelection: true,
+							StorageTypeOptions:           []string{"gp3"},
+							StorageSizeRangeGB:           rdbmsmodel.StorageSizeRange{Min: 20, Max: 1000},
+							DBInstanceSpecs: []rdbmsmodel.RDBMSDBInstanceSpecInfo{
+								{Name: "db.t3.medium", VCpuCount: "2", MemSizeMiB: "4096"},
+							},
+						},
+					})
+				default:
+					http.NotFound(w, r)
+				}
+			}))
+			restore := tbclient.SetClient(tbclient.NewClient(tbclient.ApiConfig{
+				RestUrl:       srv.URL,
+				Username:      "default",
+				Password:      "default",
+				HttpTransport: http.DefaultTransport,
+			}))
+			t.Cleanup(func() {
+				restore()
+				srv.Close()
+			})
+
+			publicFalse := false
+			sources := []rdbmsmodel.SourceRDBMSProperty{
+				{
+					DisplayName: "src-mysql-01",
+					DBNode: rdbmsmodel.DBNodeProperty{
+						Hostname: "db-01",
+						CPU:      rdbmsmodel.CpuProperty{Threads: 2},
+						Memory:   rdbmsmodel.MemoryProperty{TotalSize: 4},
+						RootDisk: rdbmsmodel.DiskProperty{TotalSize: 50, Type: "SSD"},
+					},
+					DBEngine: rdbmsmodel.DBEngineProperty{
+						Engine:        "mysql",
+						EngineVersion: "8.0",
+					},
+					InnerDatabases: []rdbmsmodel.InnerDatabaseProperty{
+						{DatabaseName: "appdb", CharacterSet: "utf8mb4", Collation: "utf8mb4_unicode_ci"},
+					},
+				},
+			}
+
+			res, err := RecommendRDBMS(context.Background(), targetCSP, "ap-northeast-2", sources, true, &TargetPreferences{
+				PublicAccess: &publicFalse,
+			})
+			if err != nil {
+				t.Fatalf("RecommendRDBMS failed for %s: %v", targetCSP, err)
+			}
+			if len(res.TargetRDBMSInstances) != 1 || len(res.TargetRDBMSInstances[0].Databases) != 1 {
+				t.Fatalf("expected databases inventory to be preserved, got %+v", res.TargetRDBMSInstances)
+			}
+			found := false
+			for _, w := range res.Warnings {
+				if strings.Contains(w, "does not support remote logical database creation via API") {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Fatalf("expected private SQL-only warning for %s, got warnings: %v", targetCSP, res.Warnings)
+			}
+		})
+	}
 }

@@ -53,7 +53,7 @@ func (s *Session) GetRDBMSSupport(optionalCsp ...string) (rdbmsmodel.RDBMSSuppor
 				RetryAfter: 2 * time.Second,
 			}
 		}
-		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		err := newAPIError(resp)
 		log.Error().Err(err).Msg("Failed to retrieve RDBMS support info")
 		return rdbmsmodel.RDBMSSupportResponse{}, err
 	}
@@ -111,7 +111,7 @@ func (s *Session) GetRDBMSCapability(connectionName string, optionalEngine ...st
 				RetryAfter: 2 * time.Second,
 			}
 		}
-		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		err := newAPIError(resp)
 		log.Error().Err(err).Msg("Failed to retrieve RDBMS capability")
 		return rdbmsmodel.RDBMSCapabilityResponse{}, err
 	}
@@ -141,7 +141,7 @@ func (s *Session) ValidateRDBMS(nsId string, req rdbmsmodel.RDBMSCreateRequest) 
 				RetryAfter: 2 * time.Second,
 			}
 		}
-		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		err := newAPIError(resp)
 		log.Error().Err(err).Msg("Failed to validate RDBMS create request")
 		return rdbmsmodel.RDBMSCreateRequest{}, err
 	}
@@ -175,7 +175,7 @@ func (s *Session) CreateRDBMS(nsId string, req rdbmsmodel.RDBMSCreateRequest) (r
 				RetryAfter: 2 * time.Second,
 			}
 		}
-		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		err := newAPIError(resp)
 		log.Error().Err(err).Msgf("Failed to create RDBMS: %s", req.Name)
 		return rdbmsmodel.RDBMSInfo{}, err
 	}
@@ -204,7 +204,7 @@ func (s *Session) GetRDBMS(nsId, rdbmsId string) (rdbmsmodel.RDBMSInfo, error) {
 				RetryAfter: 2 * time.Second,
 			}
 		}
-		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		err := newAPIError(resp)
 		log.Error().Err(err).Msgf("Failed to retrieve RDBMS: %s", rdbmsId)
 		return rdbmsmodel.RDBMSInfo{}, err
 	}
@@ -242,7 +242,7 @@ func (s *Session) ListRDBMS(nsId, option, filterKey, filterVal string) (rdbmsmod
 				RetryAfter: 2 * time.Second,
 			}
 		}
-		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		err := newAPIError(resp)
 		log.Error().Err(err).Msg("Failed to list RDBMS instances")
 		return rdbmsmodel.RDBMSListResponse{}, err
 	}
@@ -272,7 +272,7 @@ func (s *Session) ListRDBMSIDs(nsId string) (rdbmsmodel.IdList, error) {
 				RetryAfter: 2 * time.Second,
 			}
 		}
-		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		err := newAPIError(resp)
 		log.Error().Err(err).Msg("Failed to list RDBMS IDs")
 		return rdbmsmodel.IdList{}, err
 	}
@@ -302,7 +302,7 @@ func (s *Session) DeleteRDBMS(nsId, rdbmsId, option string) error {
 				RetryAfter: 2 * time.Second,
 			}
 		}
-		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		err := newAPIError(resp)
 		log.Error().Err(err).Msgf("Failed to delete RDBMS: %s", rdbmsId)
 		return err
 	}
@@ -339,7 +339,7 @@ func (s *Session) CreateRDBMSDatabase(nsId, rdbmsId, adminUserName, adminPasswor
 				RetryAfter: 2 * time.Second,
 			}
 		}
-		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		err := newAPIError(resp)
 		log.Error().Err(err).Msgf("Failed to create database '%s' in RDBMS '%s'", req.DatabaseName, rdbmsId)
 		return err
 	}
@@ -374,7 +374,7 @@ func (s *Session) ListRDBMSDatabases(nsId, rdbmsId, adminUserName, adminPassword
 				RetryAfter: 2 * time.Second,
 			}
 		}
-		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		err := newAPIError(resp)
 		log.Error().Err(err).Msgf("Failed to list databases in RDBMS: %s", rdbmsId)
 		return rdbmsmodel.RDBMSDatabaseListResponse{}, err
 	}
@@ -407,7 +407,7 @@ func (s *Session) DeleteRDBMSDatabase(nsId, rdbmsId, dbName, adminUserName, admi
 				RetryAfter: 2 * time.Second,
 			}
 		}
-		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		err := newAPIError(resp)
 		log.Error().Err(err).Msgf("Failed to delete database '%s' in RDBMS '%s'", dbName, rdbmsId)
 		return err
 	}
@@ -442,7 +442,7 @@ func (s *Session) GetRDBMSSecureTransport(nsId, rdbmsId, adminUserName, adminPas
 				RetryAfter: 2 * time.Second,
 			}
 		}
-		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		err := newAPIError(resp)
 		log.Error().Err(err).Msgf("Failed to retrieve secure transport for RDBMS: %s", rdbmsId)
 		return rdbmsmodel.RDBMSSecureTransportInfo{}, err
 	}

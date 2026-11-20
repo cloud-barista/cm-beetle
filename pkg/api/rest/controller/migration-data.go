@@ -111,7 +111,9 @@ func GetDataMigrationEncryptionKey(c echo.Context) error {
 // @Description * Encrypted requests include `encryptionKeyId` field
 // @Description * Server automatically detects and decrypts encrypted requests
 // @Description
-// @Description [Examples]
+// @Description [Examples & Guides]
+// @Description * Data Transfer Feature Guide (hooks & workflows): https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/data-transfer.md
+// @Description * Post-Migration Managed RDBMS Data Transfer (Public & Private): https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#post-migration-data-transfer-guide-public-vs-private-rdbms
 // @Description * Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
 // @Description
 // @Tags [Migration] Data (incubating)

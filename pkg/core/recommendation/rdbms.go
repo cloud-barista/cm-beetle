@@ -91,9 +91,6 @@ func ValidateRDBMS(ctx context.Context, nsId string, req rdbmsmodel.RDBMSCreateR
 		if !strings.HasPrefix(strings.ToLower(targetConn), csp.NHN) {
 			return emptyRes, fmt.Errorf("nhnDBSGToAllowAllInbound is only supported for NHN Cloud")
 		}
-		if !req.PublicAccess {
-			return emptyRes, fmt.Errorf("nhnDBSGToAllowAllInbound requires publicAccess=true")
-		}
 	}
 
 	// 4. NCP Cloud specific flag & publicAccess validation
@@ -111,7 +108,7 @@ func ValidateRDBMS(ctx context.Context, nsId string, req rdbmsmodel.RDBMSCreateR
 		}
 	}
 
-	// 4. Pass to Tumblebug for live CSP capability strict dry-run validation (autoFillDefaults=false)
+	// 5. Pass to Tumblebug for live CSP capability strict dry-run validation (autoFillDefaults=false)
 	req.AutoFillDefaults = false
 	log.Info().Str("nsId", nsId).Str("rdbmsName", req.Name).Str("connection", targetConn).Msg("Validating RDBMS create request via CB-Tumblebug (strict mode: autoFillDefaults=false)")
 	return tbSess.ValidateRDBMS(nsId, req)
@@ -572,7 +569,13 @@ func RecommendRDBMS(ctx context.Context, desiredCsp, desiredRegion string, sourc
 		targetAdminUser := resolveTargetAdminUser(userAdmin, capa.AdminUserNameRequirement, &warnings)
 
 		// 5. Map Inner Databases
-		targetDatabases := resolveTargetDatabases(desiredCsp, targetEngine, instName, src.InnerDatabases, &warnings)
+		targetDatabases := resolveTargetDatabases(desiredCsp, targetEngine, instName, targetPublicAccess, src.InnerDatabases, &warnings)
+		if !targetPublicAccess && (desiredCsp == csp.AWS || desiredCsp == csp.IBM) && len(targetDatabases) > 0 {
+			warnings = append(warnings, fmt.Sprintf(
+				"instance '%s': %s private RDBMS does not support remote logical database creation via API; %d inner database(s) will be skipped during provisioning and should be created from inside the VPC/VNet (e.g., via a Bastion host).",
+				instName, strings.ToUpper(desiredCsp), len(targetDatabases),
+			))
+		}
 
 		targetInst := rdbmsmodel.TargetRDBMSInstance{
 			SourceInstanceName:        instName,
@@ -1161,9 +1164,9 @@ func isDBEngineSupported(support rdbmsmodel.RDBMSCSPSupportInfo, hasSupport bool
 }
 
 // resolveTargetDatabases maps source inner databases to target database specs while respecting CSP/engine constraints.
-func resolveTargetDatabases(csp, targetEngine, instName string, innerDBs []rdbmsmodel.InnerDatabaseProperty, warnings *[]string) []rdbmsmodel.TargetDatabase {
+func resolveTargetDatabases(cspName, targetEngine, instName string, publicAccess bool, innerDBs []rdbmsmodel.InnerDatabaseProperty, warnings *[]string) []rdbmsmodel.TargetDatabase {
 	targetDatabases := make([]rdbmsmodel.TargetDatabase, 0, len(innerDBs))
-	cspLower := strings.ToLower(strings.TrimSpace(csp))
+	cspLower := strings.ToLower(strings.TrimSpace(cspName))
 	engineLower := strings.ToLower(strings.TrimSpace(targetEngine))
 
 	for _, db := range innerDBs {
@@ -1181,7 +1184,7 @@ func resolveTargetDatabases(csp, targetEngine, instName string, innerDBs []rdbms
 				}
 				charset = ""
 				collation = ""
-			case cspLower == "ncp":
+			case cspLower == csp.NCP:
 				if warnings != nil {
 					msg := fmt.Sprintf("instance '%s' database '%s': omitted charset/collation on NCP so database creation uses the native NCP REST API without requiring direct VPC SQL connectivity", instName, dbName)
 					log.Info().Msg(msg)
@@ -1189,7 +1192,7 @@ func resolveTargetDatabases(csp, targetEngine, instName string, innerDBs []rdbms
 				}
 				charset = ""
 				collation = ""
-			case cspLower == "nhn":
+			case cspLower == csp.NHN:
 				if warnings != nil {
 					msg := fmt.Sprintf("instance '%s' database '%s': omitted charset/collation on NHN Cloud so database creation uses the native NHN REST API without requiring console 'Direct Control' pre-activation", instName, dbName)
 					log.Info().Msg(msg)
@@ -1197,13 +1200,25 @@ func resolveTargetDatabases(csp, targetEngine, instName string, innerDBs []rdbms
 				}
 				charset = ""
 				collation = ""
-			case cspLower == "alibaba" && engineLower == "mariadb" && collation != "":
+			case cspLower == csp.Alibaba && engineLower == "mariadb" && collation != "":
 				if warnings != nil {
 					msg := fmt.Sprintf("instance '%s' database '%s': omitted collation '%s' because Alibaba Cloud MariaDB OpenAPI accepts charset only", instName, dbName, collation)
 					log.Info().Msg(msg)
 					*warnings = append(*warnings, msg)
 				}
 				collation = ""
+			case cspLower == csp.Tencent && !publicAccess && collation != "":
+				if warnings != nil {
+					msg := fmt.Sprintf("instance '%s' database '%s': private TencentDB does not support remote collation '%s' via native API (Tumblebug returns HTTP 422); create the database inside the VPC to preserve exact collation, or omit collation to use the native TencentDB API", instName, dbName, collation)
+					log.Warn().Msg(msg)
+					*warnings = append(*warnings, msg)
+				}
+			case cspLower == csp.Azure && !publicAccess && charset != "" && collation == "":
+				if warnings != nil {
+					msg := fmt.Sprintf("instance '%s' database '%s': private Azure MySQL with charset '%s' and no collation requires direct SQL lookup (Tumblebug returns HTTP 422); specify an explicit collation (or omit both) to use the native Azure ARM API, or create the database inside the VNet", instName, dbName, charset)
+					log.Warn().Msg(msg)
+					*warnings = append(*warnings, msg)
+				}
 			}
 		}
 
