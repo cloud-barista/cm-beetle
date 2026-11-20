@@ -286,3 +286,136 @@ func TestNodePropertyWithMixedGPU(t *testing.T) {
 		t.Errorf("expected card 3 DriverIndex 'card0', got '%s'", c3.DriverIndex)
 	}
 }
+
+func TestNodePropertyWithListeningPorts(t *testing.T) {
+	nodeJSON := `{
+		"hostname": "web-node-01",
+		"machineId": "m-web-001",
+		"cpu": {
+			"architecture": "x86_64",
+			"cpus": 1,
+			"cores": 4,
+			"threads": 8
+		},
+		"memory": {
+			"type": "DDR4",
+			"totalSize": 16
+		},
+		"rootDisk": {
+			"label": "/",
+			"type": "SSD",
+			"totalSize": 256
+		},
+		"interfaces": [],
+		"routingTable": [],
+		"listeningPorts": [
+			{
+				"protocol": "tcp",
+				"bindAddress": "0.0.0.0",
+				"port": 8080,
+				"processName": "nginx"
+			},
+			{
+				"protocol": "udp",
+				"bindAddress": "0.0.0.0",
+				"port": 53,
+				"processName": "named"
+			},
+			{
+				"protocol": "tcp",
+				"port": 22
+			}
+		],
+		"os": {
+			"prettyName": "Ubuntu 22.04 LTS"
+		}
+	}`
+
+	var node NodeProperty
+	if err := json.Unmarshal([]byte(nodeJSON), &node); err != nil {
+		t.Fatalf("failed to unmarshal NodeProperty with ListeningPorts: %v", err)
+	}
+
+	if len(node.ListeningPorts) != 3 {
+		t.Fatalf("expected 3 listening ports, got %d", len(node.ListeningPorts))
+	}
+
+	p0 := node.ListeningPorts[0]
+	if p0.Protocol != "tcp" || p0.BindAddress != "0.0.0.0" || p0.Port != 8080 || p0.ProcessName != "nginx" {
+		t.Errorf("unexpected listening port 0: %+v", p0)
+	}
+
+	p1 := node.ListeningPorts[1]
+	if p1.Protocol != "udp" || p1.BindAddress != "0.0.0.0" || p1.Port != 53 || p1.ProcessName != "named" {
+		t.Errorf("unexpected listening port 1: %+v", p1)
+	}
+
+	p2 := node.ListeningPorts[2]
+	if p2.Protocol != "tcp" || p2.BindAddress != "" || p2.Port != 22 || p2.ProcessName != "" {
+		t.Errorf("unexpected listening port 2: %+v", p2)
+	}
+
+	data, err := json.Marshal(node)
+	if err != nil {
+		t.Fatalf("failed to marshal NodeProperty: %v", err)
+	}
+
+	var roundTrip NodeProperty
+	if err := json.Unmarshal(data, &roundTrip); err != nil {
+		t.Fatalf("failed to round-trip NodeProperty: %v", err)
+	}
+
+	if len(roundTrip.ListeningPorts) != 3 || roundTrip.ListeningPorts[0] != p0 || roundTrip.ListeningPorts[2] != p2 {
+		t.Errorf("round-trip mismatch: got %+v", roundTrip.ListeningPorts)
+	}
+}
+
+func TestNodePropertyWithoutListeningPortsBackwardCompatibility(t *testing.T) {
+	nodeJSON := `{
+		"hostname": "legacy-node-01",
+		"machineId": "m-legacy-001",
+		"cpu": {
+			"architecture": "x86_64",
+			"cpus": 1,
+			"cores": 4,
+			"threads": 8
+		},
+		"memory": {
+			"type": "DDR4",
+			"totalSize": 16
+		},
+		"rootDisk": {
+			"label": "/",
+			"type": "SSD",
+			"totalSize": 256
+		},
+		"interfaces": [],
+		"routingTable": [],
+		"os": {
+			"prettyName": "Ubuntu 22.04 LTS"
+		}
+	}`
+
+	var node NodeProperty
+	if err := json.Unmarshal([]byte(nodeJSON), &node); err != nil {
+		t.Fatalf("failed to unmarshal NodeProperty without ListeningPorts: %v", err)
+	}
+
+	if len(node.ListeningPorts) != 0 {
+		t.Errorf("expected empty ListeningPorts, got %+v", node.ListeningPorts)
+	}
+
+	data, err := json.Marshal(node)
+	if err != nil {
+		t.Fatalf("failed to marshal NodeProperty: %v", err)
+	}
+
+	var rawMap map[string]interface{}
+	if err := json.Unmarshal(data, &rawMap); err != nil {
+		t.Fatalf("failed to unmarshal into map: %v", err)
+	}
+
+	if _, exists := rawMap["listeningPorts"]; exists {
+		t.Errorf("expected 'listeningPorts' key to be omitted when empty")
+	}
+}
