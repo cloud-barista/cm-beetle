@@ -43,6 +43,10 @@ func decryptValue(encrypted string, privateKey *rsa.PrivateKey) (string, error) 
 		return "", fmt.Errorf("create GCM: %w", err)
 	}
 
+	if len(payload.Nonce) != gcm.NonceSize() {
+		return "", fmt.Errorf("invalid nonce length: got %d, want %d", len(payload.Nonce), gcm.NonceSize())
+	}
+
 	plaintext, err := gcm.Open(nil, payload.Nonce, payload.Ciphertext, nil)
 	if err != nil {
 		return "", fmt.Errorf("decrypt data: %w", err)

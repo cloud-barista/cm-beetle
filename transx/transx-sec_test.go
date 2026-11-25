@@ -513,7 +513,7 @@ func TestSSHAgentFwdAndStrategyValidation(t *testing.T) {
 		t.Fatalf("NewRsyncExecutorWithMode(Push) failed: %v", err)
 	}
 	pushCmd := execPush.buildRemoteRsyncCommand(srcSSH, dstSSH, dstSSH.Filesystem.SSH)
-	if !strings.Contains(pushCmd, "/var/lib/mysql/data/ admin@203.0.113.50:/var/lib/mysql/target") {
+	if !strings.Contains(pushCmd, "-- '/var/lib/mysql/data/' 'admin@203.0.113.50:/var/lib/mysql/target'") {
 		t.Errorf("Unexpected push rsync command: %s", pushCmd)
 	}
 	if !strings.Contains(pushCmd, "--partial --append-verify --timeout=180") {
@@ -525,7 +525,7 @@ func TestSSHAgentFwdAndStrategyValidation(t *testing.T) {
 		t.Fatalf("NewRsyncExecutorWithMode(Pull) failed: %v", err)
 	}
 	pullCmd := execPull.buildRemoteRsyncPullCommand(srcSSH, dstSSH, srcSSH.Filesystem.SSH)
-	if !strings.Contains(pullCmd, "ubuntu@10.0.1.10:/var/lib/mysql/data/ /var/lib/mysql/target") {
+	if !strings.Contains(pullCmd, "-- 'ubuntu@10.0.1.10:/var/lib/mysql/data/' '/var/lib/mysql/target'") {
 		t.Errorf("Unexpected pull rsync command: %s", pullCmd)
 	}
 }
@@ -545,6 +545,19 @@ func TestSSHConfigUnmarshalJSONDefaultsAndOverrides(t *testing.T) {
 	}
 	if disabledCfg.Archive || disabledCfg.Compress || disabledCfg.Partial || disabledCfg.MaxRetries != 1 {
 		t.Errorf("Expected explicit false overrides to be preserved, got %+v", disabledCfg)
+	}
+
+	// Re-encoding and decoding (as done by fieldsec.Encrypt/Decrypt) must preserve explicit false flags.
+	reencoded, err := json.Marshal(disabledCfg)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+	var roundTrippedCfg SSHConfig
+	if err := json.Unmarshal(reencoded, &roundTrippedCfg); err != nil {
+		t.Fatalf("round-trip json.Unmarshal failed: %v", err)
+	}
+	if roundTrippedCfg.Archive || roundTrippedCfg.Compress || roundTrippedCfg.Partial {
+		t.Errorf("Expected round-tripped false flags to stay false, got %+v", roundTrippedCfg)
 	}
 
 	srcLoc := DataLocation{
@@ -569,12 +582,24 @@ func TestSSHConfigUnmarshalJSONDefaultsAndOverrides(t *testing.T) {
 }
 
 func TestPreFlightFallbackAndStagingCleanup(t *testing.T) {
-	rootStaging := createLocalStagingLocation("/")
-	if rootStaging.Path != filepath.Join(DefaultStagingPath, "root") {
-		t.Errorf("Expected root path staging to be isolated under /tmp/transx-staging/root, got %s", rootStaging.Path)
+	fsLocA := createLocalStagingLocation(DataLocation{StorageType: StorageTypeFilesystem, Path: "/"})
+	fsLocB := createLocalStagingLocation(DataLocation{StorageType: StorageTypeFilesystem, Path: "/var/data"})
+	for _, loc := range []DataLocation{fsLocA, fsLocB} {
+		rel, err := filepath.Rel(DefaultStagingPath, loc.Path)
+		if err != nil || strings.Contains(rel, string(filepath.Separator)) || !strings.HasPrefix(rel, "fs-") {
+			t.Errorf("Expected 1-level /tmp/transx-staging/fs-<id> staging path, got %s", loc.Path)
+		}
+	}
+	if fsLocA.Path == fsLocB.Path {
+		t.Errorf("Expected unique staging paths across invocations, got identical %s", fsLocA.Path)
 	}
 
-	stagingLoc := createLocalStagingLocation("/var/data/transx-unit-test-cleanup")
+	objLoc := createLocalStagingLocation(DataLocation{StorageType: StorageTypeObjectStorage, Path: "my-bucket/backup"})
+	if rel, err := filepath.Rel(DefaultStagingPath, objLoc.Path); err != nil || strings.Contains(rel, string(filepath.Separator)) || !strings.HasPrefix(rel, "obj-") {
+		t.Errorf("Expected 1-level /tmp/transx-staging/obj-<id> staging path, got %s", objLoc.Path)
+	}
+
+	stagingLoc := createLocalStagingLocation(DataLocation{StorageType: StorageTypeFilesystem, Path: "/var/data/transx-unit-test-cleanup"})
 	fallbackPipeline := &Pipeline{
 		Name:              PipelineFilesystemTransfer,
 		Strategy:          StrategyRelay,
@@ -625,7 +650,7 @@ func TestPreFlightFallbackAndStagingCleanup(t *testing.T) {
 		t.Errorf("Expected staging directory %s to be cleaned up on success", stagingLoc.Path)
 	}
 
-	failStagingLoc := createLocalStagingLocation("/var/data/transx-unit-test-fail-preserve")
+	failStagingLoc := createLocalStagingLocation(DataLocation{StorageType: StorageTypeFilesystem, Path: "/var/data/transx-unit-test-fail-preserve"})
 	defer os.RemoveAll(failStagingLoc.Path)
 
 	failRelayPipeline := &Pipeline{
@@ -652,8 +677,10 @@ func TestPreFlightFallbackAndStagingCleanup(t *testing.T) {
 	if err := failRelayPipeline.Execute(); err == nil {
 		t.Fatalf("Expected failing relay pipeline to return error")
 	}
-	if _, err := os.Stat(failStagingLoc.Path); err != nil {
+	info, err := os.Stat(failStagingLoc.Path)
+	if err != nil {
 		t.Errorf("Expected staging directory %s to be preserved on failure for debugging, got err: %v", failStagingLoc.Path, err)
+	} else if info.Mode().Perm() != 0700 {
+		t.Errorf("Expected staging directory %s permissions 0700, got %o", failStagingLoc.Path, info.Mode().Perm())
 	}
 }
-

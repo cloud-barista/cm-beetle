@@ -7,7 +7,17 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
+
+var s3TransferHTTPClient = newS3TransferHTTPClient()
+
+// newS3TransferHTTPClient clones DefaultTransport with a 60s response header timeout.
+func newS3TransferHTTPClient() *http.Client {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.ResponseHeaderTimeout = 60 * time.Second
+	return &http.Client{Transport: transport}
+}
 
 // S3Executor implements Executor for S3 object storage transfers using presigned URLs.
 type S3Executor struct {
@@ -36,10 +46,10 @@ func (e *S3Executor) Execute(source, destination DataLocation) error {
 	switch {
 	case !srcIsS3 && dstIsS3:
 		// Filesystem -> S3 (upload)
-		return e.upload(source.Path, destination.Path, source.Filter)
+		return e.uploadObjects(source.Path, destination.Path, source.Filter)
 	case srcIsS3 && !dstIsS3:
 		// S3 -> Filesystem (download)
-		return e.download(source.Path, destination.Path, source.Filter)
+		return e.downloadObjects(source.Path, destination.Path, source.Filter)
 	case srcIsS3 && dstIsS3:
 		// S3 -> S3 (not implemented yet)
 		return fmt.Errorf("S3 to S3 transfer not implemented")
@@ -48,8 +58,8 @@ func (e *S3Executor) Execute(source, destination DataLocation) error {
 	}
 }
 
-// upload transfers local files to S3.
-func (e *S3Executor) upload(localPath, s3Path string, filter *FilterOption) error {
+// uploadObjects transfers local files as S3 objects.
+func (e *S3Executor) uploadObjects(localPath, s3Path string, filter *FilterOption) error {
 	files, err := e.listLocalFiles(localPath, filter)
 	if err != nil {
 		return fmt.Errorf("failed to list local files: %w", err)
@@ -73,7 +83,7 @@ func (e *S3Executor) upload(localPath, s3Path string, filter *FilterOption) erro
 		s3Key := filepath.Join(keyPrefix, relPath)
 		s3Key = strings.ReplaceAll(s3Key, "\\", "/") // Normalize to forward slashes
 
-		if err := e.uploadFile(file, s3Key); err != nil {
+		if err := e.uploadObject(file, s3Key); err != nil {
 			return fmt.Errorf("failed to upload %s: %w", file, err)
 		}
 	}
@@ -81,8 +91,8 @@ func (e *S3Executor) upload(localPath, s3Path string, filter *FilterOption) erro
 	return nil
 }
 
-// download transfers S3 objects to local filesystem.
-func (e *S3Executor) download(s3Path, localPath string, filter *FilterOption) error {
+// downloadObjects transfers S3 objects to the local filesystem.
+func (e *S3Executor) downloadObjects(s3Path, localPath string, filter *FilterOption) error {
 	// Ensure local destination directory exists before downloading any files.
 	// This is required so that the staging path is always present for subsequent
 	// pipeline steps even when the source bucket is empty.
@@ -112,7 +122,7 @@ func (e *S3Executor) download(s3Path, localPath string, filter *FilterOption) er
 			return fmt.Errorf("failed to create directory: %w", err)
 		}
 
-		if err := e.downloadFile(obj.Key, localFile); err != nil {
+		if err := e.downloadObject(obj.Key, localFile); err != nil {
 			return fmt.Errorf("failed to download %s: %w", obj.Key, err)
 		}
 	}
@@ -120,8 +130,8 @@ func (e *S3Executor) download(s3Path, localPath string, filter *FilterOption) er
 	return nil
 }
 
-// uploadFile uploads a single file using presigned URL.
-func (e *S3Executor) uploadFile(localPath, s3Key string) error {
+// uploadObject uploads a single object from a local file using a presigned URL.
+func (e *S3Executor) uploadObject(localPath, s3Key string) error {
 	result, err := e.Provider.GeneratePresignedURL("upload", s3Key)
 	if err != nil {
 		return fmt.Errorf("failed to generate presigned URL: %w", err)
@@ -149,7 +159,7 @@ func (e *S3Executor) uploadFile(localPath, s3Key string) error {
 		req.Header.Set(k, v)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := s3TransferHTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("upload request failed: %w", err)
 	}
@@ -163,14 +173,22 @@ func (e *S3Executor) uploadFile(localPath, s3Key string) error {
 	return nil
 }
 
-// downloadFile downloads a single file using presigned URL.
-func (e *S3Executor) downloadFile(s3Key, localPath string) error {
+// downloadObject downloads a single object to a local file using a presigned URL.
+func (e *S3Executor) downloadObject(s3Key, localPath string) error {
 	result, err := e.Provider.GeneratePresignedURL("download", s3Key)
 	if err != nil {
 		return fmt.Errorf("failed to generate presigned URL: %w", err)
 	}
 
-	resp, err := http.Get(result.URL)
+	req, err := http.NewRequest(http.MethodGet, result.URL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	for k, v := range result.RequiredHeaders {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := s3TransferHTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("download request failed: %w", err)
 	}

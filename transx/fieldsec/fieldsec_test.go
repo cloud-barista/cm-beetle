@@ -1,6 +1,9 @@
 package fieldsec
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 )
@@ -276,6 +279,48 @@ func TestPathOperations(t *testing.T) {
 	_, found = getFieldByPath(m, "nonexistent.path")
 	if found {
 		t.Error("Missing path should return false")
+	}
+}
+
+func TestDecryptMalformedNonceReturnsError(t *testing.T) {
+	store := NewKeyStore()
+	kp, err := store.GenerateKeyPair(5 * time.Minute)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	encrypted, err := encryptValue("secret-data", kp.PublicKey)
+	if err != nil {
+		t.Fatalf("encryptValue failed: %v", err)
+	}
+
+	rawJSON, err := base64.StdEncoding.DecodeString(encrypted)
+	if err != nil {
+		t.Fatalf("decode base64 failed: %v", err)
+	}
+
+	for _, tc := range []struct {
+		name  string
+		nonce []byte
+	}{
+		{name: "short nonce", nonce: []byte("short")},
+		{name: "long nonce", nonce: make([]byte, 32)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var payload encryptedPayload
+			if err := json.Unmarshal(rawJSON, &payload); err != nil {
+				t.Fatalf("unmarshal payload failed: %v", err)
+			}
+			payload.Nonce = tc.nonce
+			tamperedBytes, err := json.Marshal(payload)
+			if err != nil {
+				t.Fatalf("marshal payload failed: %v", err)
+			}
+			tampered := base64.StdEncoding.EncodeToString(tamperedBytes)
+			if _, err := decryptValue(tampered, kp.PrivateKey); err == nil || !strings.Contains(err.Error(), "invalid nonce length") {
+				t.Errorf("Expected invalid nonce length error, got: %v", err)
+			}
+		})
 	}
 }
 
