@@ -344,9 +344,10 @@ func (e *RsyncExecutor) verifyAgentFwdPreFlight(primarySSH, peerSSH *SSHConfig, 
 	}
 
 	sshOpts := e.buildRemoteSSHOptions(peerSSH)
+	peerTarget := shellQuote(fmt.Sprintf("%s@%s", peerUser, peerHost))
 	checkCmd := fmt.Sprintf(
-		"command -v rsync >/dev/null 2>&1 || exit 10; %s -o BatchMode=yes -o ConnectTimeout=5 %s@%s 'command -v rsync >/dev/null 2>&1 || exit 11'",
-		sshOpts, peerUser, peerHost,
+		"command -v rsync >/dev/null 2>&1 || exit 10; %s -o BatchMode=yes -o ConnectTimeout=5 %s 'command -v rsync >/dev/null 2>&1 || exit 11'",
+		sshOpts, peerTarget,
 	)
 
 	err := e.runRemoteSSHWithForwardedAgent(primarySSH, peerSSH, checkCmd, mode)
@@ -472,8 +473,8 @@ func (e *RsyncExecutor) ensureRemoteDirectory(destination DataLocation) {
 	if !isDirectoryPath(targetDir) {
 		targetDir = filepath.Dir(targetDir)
 	}
-	escaped := strings.ReplaceAll(targetDir, "'", "'\\''")
-	cmd := fmt.Sprintf("mkdir -p '%s' 2>/dev/null || (sudo -n mkdir -p '%s' && sudo -n chown $(id -un):$(id -gn) '%s') || true", escaped, escaped, escaped)
+	q := shellQuote(targetDir)
+	cmd := fmt.Sprintf("mkdir -p %s 2>/dev/null || (sudo -n mkdir -p %s && sudo -n chown $(id -un):$(id -gn) %s) || true", q, q, q)
 	_, _ = executeSSHCommand(cmd, destination.Filesystem.SSH)
 }
 
@@ -538,25 +539,26 @@ func (e *RsyncExecutor) buildRemoteRsyncCommand(source, destination DataLocation
 
 	sshOpts := e.buildRemoteSSHOptions(dstSSH)
 	if sshOpts != "" {
-		parts = append(parts, "-e", fmt.Sprintf("'%s'", sshOpts))
+		parts = append(parts, "-e", shellQuote(sshOpts))
 	}
 
 	if source.Filter != nil {
 		for _, pattern := range source.Filter.Include {
-			parts = append(parts, fmt.Sprintf("--include='%s'", pattern))
+			parts = append(parts, "--include="+shellQuote(pattern))
 		}
 		for _, pattern := range source.Filter.Exclude {
-			parts = append(parts, fmt.Sprintf("--exclude='%s'", pattern))
+			parts = append(parts, "--exclude="+shellQuote(pattern))
 		}
 	}
 
 	parts = append(parts, e.AdditionalArgs...)
+	parts = append(parts, "--")
 
 	srcPath := source.Path
 	if !strings.HasSuffix(srcPath, "/") && isDirectoryPath(srcPath) {
 		srcPath += "/"
 	}
-	parts = append(parts, srcPath)
+	parts = append(parts, shellQuote(srcPath))
 
 	dstUser := dstSSH.Username
 	if dstUser == "" {
@@ -567,7 +569,7 @@ func (e *RsyncExecutor) buildRemoteRsyncCommand(source, destination DataLocation
 		dstHost = dstHost[:idx]
 	}
 	dstPath := destination.Path
-	parts = append(parts, fmt.Sprintf("%s@%s:%s", dstUser, dstHost, dstPath))
+	parts = append(parts, shellQuote(fmt.Sprintf("%s@%s:%s", dstUser, dstHost, dstPath)))
 
 	return strings.Join(parts, " ")
 }
@@ -579,19 +581,20 @@ func (e *RsyncExecutor) buildRemoteRsyncPullCommand(source, destination DataLoca
 
 	sshOpts := e.buildRemoteSSHOptions(srcSSH)
 	if sshOpts != "" {
-		parts = append(parts, "-e", fmt.Sprintf("'%s'", sshOpts))
+		parts = append(parts, "-e", shellQuote(sshOpts))
 	}
 
 	if source.Filter != nil {
 		for _, pattern := range source.Filter.Include {
-			parts = append(parts, fmt.Sprintf("--include='%s'", pattern))
+			parts = append(parts, "--include="+shellQuote(pattern))
 		}
 		for _, pattern := range source.Filter.Exclude {
-			parts = append(parts, fmt.Sprintf("--exclude='%s'", pattern))
+			parts = append(parts, "--exclude="+shellQuote(pattern))
 		}
 	}
 
 	parts = append(parts, e.AdditionalArgs...)
+	parts = append(parts, "--")
 
 	srcUser := srcSSH.Username
 	if srcUser == "" {
@@ -605,8 +608,8 @@ func (e *RsyncExecutor) buildRemoteRsyncPullCommand(source, destination DataLoca
 	if !strings.HasSuffix(srcPath, "/") && isDirectoryPath(srcPath) {
 		srcPath += "/"
 	}
-	parts = append(parts, fmt.Sprintf("%s@%s:%s", srcUser, srcHost, srcPath))
-	parts = append(parts, destination.Path)
+	parts = append(parts, shellQuote(fmt.Sprintf("%s@%s:%s", srcUser, srcHost, srcPath)))
+	parts = append(parts, shellQuote(destination.Path))
 
 	return strings.Join(parts, " ")
 }
@@ -647,10 +650,16 @@ func (e *RsyncExecutor) buildLocalRsyncArgs(source, destination DataLocation) []
 	args = append(args, e.buildFilterArgs(source)...)
 	args = append(args, e.buildFilterArgs(destination)...)
 	args = append(args, e.AdditionalArgs...)
+	args = append(args, "--")
 	args = append(args, e.buildPath(source))
 	args = append(args, e.buildPath(destination))
 
 	return args
+}
+
+// shellQuote wraps s in POSIX single quotes, escaping embedded single quotes.
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
 }
 
 // buildPath returns the rsync path (user@host:path for SSH, or local path).

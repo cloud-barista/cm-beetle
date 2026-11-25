@@ -175,6 +175,10 @@ func (p *TumblebugProvider) ListObjects(prefix string) ([]ObjectInfo, error) {
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
+	if response.IsTruncated {
+		return nil, fmt.Errorf("tumblebug object list is truncated (osId: %s, count: %d): pagination is unsupported on this endpoint; use minio or spider access type for large buckets", p.osId, len(response.Contents))
+	}
+
 	// Filter objects by prefix (client-side filtering)
 	var objects []ObjectInfo
 	for _, obj := range response.Contents {
@@ -207,7 +211,8 @@ type tumblebugPresignedURLResponse struct {
 }
 
 type tumblebugListResponse struct {
-	Contents []tumblebugObjectEntry `json:"contents"`
+	IsTruncated bool                   `json:"isTruncated"`
+	Contents    []tumblebugObjectEntry `json:"contents"`
 }
 
 type tumblebugObjectEntry struct {

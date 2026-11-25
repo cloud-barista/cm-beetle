@@ -129,47 +129,66 @@ func (p *SpiderProvider) GeneratePresignedURL(action, key string) (PresignedURLR
 	return PresignedURLResult{URL: presignedURL}, nil
 }
 
-// ListObjects lists objects via CB-Spider S3 API.
+// ListObjects lists objects via CB-Spider S3 API with S3 marker pagination.
 // Uses GET /s3/{BucketName}?ConnectionName=xxx to list objects in bucket.
 func (p *SpiderProvider) ListObjects(prefix string) ([]ObjectInfo, error) {
-	// GET /s3/{BucketName}?ConnectionName=xxx&prefix=xxx
-	apiURL := fmt.Sprintf("%s/s3/%s?ConnectionName=%s",
-		p.endpoint, p.bucket, url.QueryEscape(p.connectionName))
-
-	if prefix != "" {
-		apiURL += "&prefix=" + url.QueryEscape(prefix)
-	}
-
-	req, err := http.NewRequest("GET", apiURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	// Apply authentication
-	if p.username != "" && p.password != "" {
-		req.SetBasicAuth(p.username, p.password)
-	} else if p.jwtToken != "" {
-		req.Header.Set("Authorization", "Bearer "+p.jwtToken)
-	}
-
+	const maxSpiderListPages = 10000
 	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("spider API request failed: %w", err)
-	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("spider API returned status %d: %s", resp.StatusCode, string(body))
+	var allObjects []ObjectInfo
+	marker := ""
+
+	for page := 0; page < maxSpiderListPages; page++ {
+		apiURL := fmt.Sprintf("%s/s3/%s?ConnectionName=%s",
+			p.endpoint, p.bucket, url.QueryEscape(p.connectionName))
+		if prefix != "" {
+			apiURL += "&prefix=" + url.QueryEscape(prefix)
+		}
+		if marker != "" {
+			apiURL += "&marker=" + url.QueryEscape(marker)
+		}
+
+		req, err := http.NewRequest("GET", apiURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
+
+		if p.username != "" && p.password != "" {
+			req.SetBasicAuth(p.username, p.password)
+		} else if p.jwtToken != "" {
+			req.Header.Set("Authorization", "Bearer "+p.jwtToken)
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("spider API request failed: %w", err)
+		}
+
+		body, readErr := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("spider API returned status %d: %s", resp.StatusCode, string(body))
+		}
+		if readErr != nil {
+			return nil, fmt.Errorf("failed to read response: %w", readErr)
+		}
+
+		pageObjects, isTruncated, nextMarker, err := parseSpiderListResponse(body)
+		if err != nil {
+			return nil, err
+		}
+		allObjects = append(allObjects, pageObjects...)
+
+		if !isTruncated {
+			return allObjects, nil
+		}
+		if nextMarker == "" || nextMarker == marker {
+			return nil, fmt.Errorf("spider object list is truncated but pagination marker did not advance (marker: %q)", marker)
+		}
+		marker = nextMarker
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response: %w", err)
-	}
-
-	return parseSpiderListResponse(body)
+	return nil, fmt.Errorf("spider object list exceeded %d pages (possible infinite pagination loop)", maxSpiderListPages)
 }
 
 // GetBucket returns the bucket name.
@@ -183,6 +202,8 @@ type spiderListResponse struct {
 	XMLName     xml.Name            `xml:"ListBucketResult"`
 	Name        string              `xml:"Name"`
 	Prefix      string              `xml:"Prefix"`
+	Marker      string              `xml:"Marker"`
+	NextMarker  string              `xml:"NextMarker"`
 	MaxKeys     int                 `xml:"MaxKeys"`
 	IsTruncated bool                `xml:"IsTruncated"`
 	Contents    []spiderObjectEntry `xml:"Contents"`
@@ -196,11 +217,11 @@ type spiderObjectEntry struct {
 	StorageClass string `xml:"StorageClass"`
 }
 
-// parseSpiderListResponse parses the CB-Spider S3 list objects response.
-func parseSpiderListResponse(body []byte) ([]ObjectInfo, error) {
+// parseSpiderListResponse parses one page of CB-Spider S3 list objects XML.
+func parseSpiderListResponse(body []byte) ([]ObjectInfo, bool, string, error) {
 	var result spiderListResponse
 	if err := xml.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("failed to parse XML response: %w", err)
+		return nil, false, "", fmt.Errorf("failed to parse XML response: %w", err)
 	}
 
 	var objects []ObjectInfo
@@ -213,7 +234,12 @@ func parseSpiderListResponse(body []byte) ([]ObjectInfo, error) {
 		})
 	}
 
-	return objects, nil
+	nextMarker := result.NextMarker
+	if nextMarker == "" && len(result.Contents) > 0 {
+		nextMarker = result.Contents[len(result.Contents)-1].Key
+	}
+
+	return objects, result.IsTruncated, nextMarker, nil
 }
 
 // spiderPresignedURLResponse represents CB-Spider presigned URL response.

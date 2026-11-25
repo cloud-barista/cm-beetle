@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 // ============================================================================
@@ -35,8 +37,12 @@ func (p *Pipeline) Execute() error {
 	for _, step := range p.Steps {
 		if step.Destination.IsLocal() && strings.HasPrefix(step.Destination.Path, DefaultStagingPath+"/") {
 			_ = os.RemoveAll(step.Destination.Path)
-			if err := os.MkdirAll(step.Destination.Path, 0755); err != nil {
+			if err := os.MkdirAll(step.Destination.Path, 0700); err != nil {
 				return fmt.Errorf("failed to prepare staging directory %s: %w", step.Destination.Path, err)
+			}
+			// Enforce 0700 after creation regardless of process umask.
+			if err := os.Chmod(step.Destination.Path, 0700); err != nil {
+				return fmt.Errorf("failed to set staging directory permissions %s: %w", step.Destination.Path, err)
 			}
 		}
 	}
@@ -228,7 +234,7 @@ func planFilesystemTransfer(model DataMigrationModel) (*Pipeline, error) {
 
 // planRelayFilesystemTransfer creates a two-step transfer via local staging (pull -> push).
 func planRelayFilesystemTransfer(model DataMigrationModel) (*Pipeline, error) {
-	stagingLoc := createLocalStagingLocation(model.Source.Path)
+	stagingLoc := createLocalStagingLocation(model.Source)
 
 	pullExec, err := NewRsyncExecutorWithMode(model.Source, stagingLoc, TransferModePull)
 	if err != nil {
@@ -269,7 +275,7 @@ func planRelayFilesystemTransfer(model DataMigrationModel) (*Pipeline, error) {
 
 // planObjectStorageTransfer handles objectstorage-to-objectstorage transfers via local staging.
 func planObjectStorageTransfer(model DataMigrationModel) (*Pipeline, error) {
-	stagingLoc := createLocalStagingLocation(model.Source.Path)
+	stagingLoc := createLocalStagingLocation(model.Source)
 
 	srcProvider, err := NewS3Provider(model.Source)
 	if err != nil {
@@ -343,7 +349,7 @@ func planFilesystemToObjectStorage(model DataMigrationModel) (*Pipeline, error) 
 		}, nil
 	}
 
-	stagingLoc := createLocalStagingLocation(model.Source.Path)
+	stagingLoc := createLocalStagingLocation(model.Source)
 	rsyncExec, err := NewRsyncExecutorWithMode(model.Source, stagingLoc, TransferModePull)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rsync executor: %w", err)
@@ -397,7 +403,7 @@ func planObjectStorageToFilesystem(model DataMigrationModel) (*Pipeline, error) 
 		}, nil
 	}
 
-	stagingLoc := createLocalStagingLocation(model.Source.Path)
+	stagingLoc := createLocalStagingLocation(model.Source)
 	rsyncExec, err := NewRsyncExecutorWithMode(stagingLoc, model.Destination, TransferModePush)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rsync executor: %w", err)
@@ -430,21 +436,13 @@ func planObjectStorageToFilesystem(model DataMigrationModel) (*Pipeline, error) 
 // Helper Functions
 // ============================================================================
 
-// createLocalStagingLocation creates an isolated local filesystem staging subdirectory under DefaultStagingPath.
-func createLocalStagingLocation(sourcePath string) DataLocation {
-	subDir := "root"
-	if bucket, _ := ParseBucketAndKey(sourcePath); bucket != "" {
-		cleanBucket := filepath.Base(bucket)
-		if cleanBucket != "" && cleanBucket != "." && cleanBucket != "/" {
-			subDir = cleanBucket
-		}
-	} else if sourcePath != "" {
-		cleanPath := filepath.Base(sourcePath)
-		if cleanPath != "" && cleanPath != "." && cleanPath != "/" {
-			subDir = cleanPath
-		}
+// createLocalStagingLocation creates an isolated 1-level staging directory under DefaultStagingPath.
+func createLocalStagingLocation(source DataLocation) DataLocation {
+	kind := "fs"
+	if source.IsObjectStorage() {
+		kind = "obj"
 	}
-	stagingPath := filepath.Join(DefaultStagingPath, subDir)
+	stagingPath := filepath.Join(DefaultStagingPath, fmt.Sprintf("%s-%s", kind, uuid.NewString()[:8]))
 	return DataLocation{
 		StorageType: StorageTypeFilesystem,
 		Path:        stagingPath,

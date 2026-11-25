@@ -217,9 +217,9 @@ type SSHConfig struct {
 	UseAgent bool `json:"useAgent,omitempty"`
 
 	// Rsync options
-	Archive    bool `json:"archive,omitempty" default:"true"`
-	Compress   bool `json:"compress,omitempty" default:"true"`
-	Partial    bool `json:"partial,omitempty" default:"true"`
+	Archive    bool `json:"archive" default:"true"`
+	Compress   bool `json:"compress" default:"true"`
+	Partial    bool `json:"partial" default:"true"`
 	MaxRetries int  `json:"maxRetries,omitempty" default:"3"`
 	Delete     bool `json:"delete,omitempty"`
 	Verbose    bool `json:"verbose,omitempty"`
