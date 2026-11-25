@@ -45,19 +45,20 @@ type CustomRoundTripper struct {
 	BasicAuthStr string
 }
 
-// RoundTrip executes a single HTTP transaction and adds custom headers.
+// RoundTrip executes a single HTTP transaction and clones the request before injecting headers.
 func (c *CustomRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	// Add the Basic Auth header to the request
-	req.Header.Set("Authorization", c.BasicAuthStr)
-	return c.Transport.RoundTrip(req)
+	cloned := req.Clone(req.Context())
+	cloned.Header.Set("Authorization", c.BasicAuthStr)
+	transport := c.Transport
+	if transport == nil {
+		transport = http.DefaultTransport
+	}
+	return transport.RoundTrip(cloned)
 }
 
 // Proxy returns a proxy middleware that forwards the request to the target server.
 func Proxy(config ProxyConfig) echo.MiddlewareFunc {
-
-	// basicAuthStr := BasicAuth(config.Username, config.Password)
-
-	return middleware.ProxyWithConfig(middleware.ProxyConfig{
+	proxyCfg := middleware.ProxyConfig{
 		Balancer: middleware.NewRoundRobinBalancer([]*middleware.ProxyTarget{
 			{
 				URL: config.URL,
@@ -81,6 +82,16 @@ func Proxy(config ProxyConfig) echo.MiddlewareFunc {
 			return false
 		},
 		Rewrite:        config.Rewrite,
+		RegexRewrite:   config.RegexRewrite,
 		ModifyResponse: config.ModifyResponse,
-	})
+	}
+
+	if config.Username != "" || config.Password != "" {
+		proxyCfg.Transport = &CustomRoundTripper{
+			Transport:    http.DefaultTransport,
+			BasicAuthStr: BasicAuth(config.Username, config.Password),
+		}
+	}
+
+	return middleware.ProxyWithConfig(proxyCfg)
 }
