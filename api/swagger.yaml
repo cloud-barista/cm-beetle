@@ -14537,7 +14537,7 @@ paths:
         - Request tracking is managed independently by Beetle using `reqId` (from `X-Request-Id`).
         - Outbound state-changing and recommendation calls to CB-Tumblebug are recorded in `subRequests[]` with `subReqId` (`{reqId}-{seq}`) and `tumblebugSource` (`cm-beetle:{reqId}`).
         - Use `brief=true` during high-frequency polling to omit large request/response bodies while still receiving `status`, `subRequestSummary`, and `subRequests`.
-        - Set `withTumblebug=true` to enrich each `subRequests[]` entry with live `upstreamStatus` and `upstreamProgress` from CB-Tumblebug `GET /request/{subReqId}`.
+        - Set `withTumblebug=true` to enrich active (`Handling`) `subRequests[]` entries with live `upstreamStatus` and `upstreamProgress` from CB-Tumblebug `GET /request/{subReqId}`.
 
         [Status Values]
         - Handling: Request is currently being processed
@@ -14568,8 +14568,8 @@ paths:
         name: withSubRequests
         type: boolean
       - default: false
-        description: 'Enrich subRequests with live upstream status/progress from CB-Tumblebug
-          (default: false)'
+        description: 'Enrich active (Handling) subRequests with live upstream status/progress
+          from CB-Tumblebug (default: false)'
         in: query
         name: withTumblebug
         type: boolean
