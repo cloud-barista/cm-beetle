@@ -7110,6 +7110,44 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.AvailabilityQuota": {
+            "type": "object",
+            "properties": {
+                "fitCount": {
+                    "description": "more instances of this type that fit",
+                    "type": "integer",
+                    "example": 320
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 640
+                },
+                "name": {
+                    "description": "quota name as the CSP calls it",
+                    "type": "string",
+                    "example": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances"
+                },
+                "perInstance": {
+                    "description": "what one instance of this type takes from the quota",
+                    "type": "integer",
+                    "example": 2
+                },
+                "scope": {
+                    "description": "region, or \"zone \u003cid\u003e\"",
+                    "type": "string",
+                    "example": "region"
+                },
+                "unit": {
+                    "type": "string",
+                    "example": "vCPU"
+                },
+                "used": {
+                    "description": "Used is omitted when the CSP did not report usage; FitCount then assumes nothing is in use",
+                    "type": "integer",
+                    "example": 0
+                }
+            }
+        },
         "cloudmodel.AvailabilityStatus": {
             "type": "string",
             "enum": [
@@ -7307,6 +7345,14 @@ const docTemplate = `{
                     "type": "string",
                     "example": "ami-01f71f215b23ba262"
                 },
+                "initScript": {
+                    "description": "InitScript overrides the Infra-level init script for this NodeGroup",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.InitScriptReq"
+                        }
+                    ]
+                },
                 "label": {
                     "description": "Label is for describing the object by keywords",
                     "type": "object",
@@ -7400,6 +7446,9 @@ const docTemplate = `{
                 "imageId": {
                     "description": "ImageType        string   ` + "`" + `json:\"imageType\"` + "`" + `",
                     "type": "string"
+                },
+                "initScript": {
+                    "$ref": "#/definitions/cloudmodel.InitScriptReq"
                 },
                 "label": {
                     "description": "Label is for describing the object by keywords",
@@ -7850,15 +7899,13 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Made in CB-TB"
                 },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
+                "initScript": {
+                    "description": "InitScript is the default init script for all NodeGroups (overridable per NodeGroup)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.InitScriptReq"
+                        }
+                    ]
                 },
                 "label": {
                     "description": "Label is for describing the object by keywords",
@@ -7889,17 +7936,13 @@ const docTemplate = `{
                     ],
                     "example": "continue"
                 },
-                "postCommandAsync": {
-                    "description": "PostCommandAsync (default false) returns the response as soon as nodes are\nprovisioned and runs post-deployment commands in the background. The response\nthen carries postCommandStatus=\"Running\" plus postCommandRequestId; observe with\nGET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}\nor by polling GET /ns/{nsId}/infra/{infraId}.",
-                    "type": "boolean",
-                    "example": false
-                },
-                "postCommands": {
-                    "description": "PostCommands are post-deployment command phases that bootstrap the Nodes.\nPhases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.\nA single command set is simply one phase: [{\"command\": [\"...\"]}]",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.PostCommandReq"
-                    }
+                "postScript": {
+                    "description": "PostScript is the post-deployment script that bootstraps the Nodes once they are up.\nIts phases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.PostScriptReq"
+                        }
+                    ]
                 },
                 "sgTemplateId": {
                     "description": "SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use\nwhen auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless\noverridden at the NodeGroup level. If empty, the default all-open behavior is used.",
@@ -7954,16 +7997,6 @@ const docTemplate = `{
                     "type": "string",
                     "example": "aws-ap-southeast-1"
                 },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
                 "label": {
                     "description": "Label is for describing the object by keywords",
                     "type": "object",
@@ -7992,37 +8025,34 @@ const docTemplate = `{
                 "placementAlgo": {
                     "type": "string"
                 },
-                "postCommandAsync": {
-                    "description": "PostCommandAsync echoes whether the commands run in the background",
-                    "type": "boolean"
-                },
-                "postCommandRequestId": {
-                    "description": "PostCommandRequestId is the streaming/tracking key of the post-deployment run\n(always set when post-deployment commands were requested, in both modes)",
-                    "type": "string",
-                    "example": "pc-infra01-1a2b3c"
-                },
-                "postCommandResults": {
-                    "description": "PostCommandResults holds per-phase outcomes",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.PostCommandPhaseResult"
-                    }
-                },
-                "postCommandStatus": {
-                    "description": "PostCommandStatus summarizes the post-deployment command outcome.\n\"Running\" means execution is still in progress (async mode): stream it with\nGET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}\nor poll this object until the status becomes terminal.",
+                "postScript": {
+                    "description": "PostScript echoes the requested post-deployment script",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.PostCommandStatus"
+                            "$ref": "#/definitions/cloudmodel.PostScriptReq"
+                        }
+                    ]
+                },
+                "postScriptRequestId": {
+                    "description": "PostScriptRequestId is the streaming/tracking key of the post-deployment run\n(always set when a post-deployment script was requested, in both modes)",
+                    "type": "string",
+                    "example": "ps-infra01-1a2b3c"
+                },
+                "postScriptResults": {
+                    "description": "PostScriptResults holds per-phase outcomes",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.PostScriptPhaseResult"
+                    }
+                },
+                "postScriptStatus": {
+                    "description": "PostScriptStatus summarizes the post-deployment script outcome.\n\"Running\" means execution is still in progress (async mode): stream it with\nGET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postScriptRequestId}\nor poll this object until the status becomes terminal.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.PostScriptStatus"
                         }
                     ],
                     "example": "Completed"
-                },
-                "postCommands": {
-                    "description": "PostCommands are the requested post-deployment command phases",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.PostCommandReq"
-                    }
                 },
                 "resourceType": {
                     "description": "ResourceType is the type of the resource",
@@ -8081,16 +8111,6 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Made in CB-TB"
                 },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
                 "label": {
                     "description": "Label is for describing the object by keywords",
                     "type": "object",
@@ -8122,17 +8142,13 @@ const docTemplate = `{
                     ],
                     "example": "continue"
                 },
-                "postCommandAsync": {
-                    "description": "PostCommandAsync runs post-deployment commands in the background",
-                    "type": "boolean",
-                    "example": false
-                },
-                "postCommands": {
-                    "description": "PostCommands are sequential post-deployment command phases that bootstrap the Nodes",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.PostCommandReq"
-                    }
+                "postScript": {
+                    "description": "PostScript is the post-deployment script that bootstraps the Nodes once they are up",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.PostScriptReq"
+                        }
+                    ]
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose",
@@ -8149,6 +8165,91 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/cloudmodel.SshCmdResultForAPI"
                     }
+                }
+            }
+        },
+        "cloudmodel.InitScriptReq": {
+            "type": "object",
+            "properties": {
+                "env": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "ROLE": "worker"
+                    }
+                },
+                "fromTemplateId": {
+                    "description": "FromTemplateId records the template the steps were copied from (set by CB-Tumblebug)",
+                    "type": "string",
+                    "example": "initscript-nginx"
+                },
+                "implicit": {
+                    "description": "Implicit is set by CB-Tumblebug when the request had no initScript; a rendering failure then\nfalls back to the CB-Spider default user data instead of failing the Node",
+                    "type": "boolean"
+                },
+                "mode": {
+                    "type": "string",
+                    "default": "default",
+                    "enum": [
+                        "default",
+                        "custom",
+                        "none"
+                    ],
+                    "example": "default"
+                },
+                "notify": {
+                    "description": "Notify false stops the Node from reporting its result to the notifier (default: report when one is registered)",
+                    "type": "boolean",
+                    "example": true
+                },
+                "script": {
+                    "type": "string",
+                    "example": "#!/bin/bash\napt-get install -y -qq jq"
+                },
+                "scripts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.InitScriptStep"
+                    }
+                },
+                "templateId": {
+                    "type": "string",
+                    "example": "initscript-nginx"
+                },
+                "userName": {
+                    "type": "string",
+                    "default": "cb-user",
+                    "example": "cb-user"
+                }
+            }
+        },
+        "cloudmodel.InitScriptStep": {
+            "type": "object",
+            "properties": {
+                "continueOnError": {
+                    "description": "ContinueOnError keeps running the next steps when this one fails; the Node then reports ok with a note",
+                    "type": "boolean",
+                    "example": false
+                },
+                "labelSelector": {
+                    "description": "LabelSelector runs the step only on Nodes whose labels match (e.g. \"role=gpu\"); empty runs everywhere",
+                    "type": "string",
+                    "example": "role=gpu"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "install-agent"
+                },
+                "script": {
+                    "type": "string",
+                    "example": "#!/bin/bash\napt-get install -y -qq jq"
+                },
+                "timeoutSec": {
+                    "description": "TimeoutSec stops the step after this many seconds (0: no limit); a timeout counts as a failure",
+                    "type": "integer",
+                    "example": 600
                 }
             }
         },
@@ -8686,6 +8787,23 @@ const docTemplate = `{
                 "imageId": {
                     "type": "string"
                 },
+                "initScript": {
+                    "$ref": "#/definitions/cloudmodel.InitScriptReq"
+                },
+                "initScriptMessage": {
+                    "type": "string"
+                },
+                "initScriptStatus": {
+                    "description": "InitScriptStatus and InitScriptMessage are read from the Node's stored init script result (not persisted here);\npending means the Node has an init script with reporting on but has not reported yet",
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "initializing",
+                        "ok",
+                        "fail"
+                    ],
+                    "example": "ok"
+                },
                 "label": {
                     "type": "object",
                     "additionalProperties": {
@@ -8694,11 +8812,6 @@ const docTemplate = `{
                 },
                 "location": {
                     "$ref": "#/definitions/cloudmodel.Location"
-                },
-                "monAgentStatus": {
-                    "description": "Montoring agent status",
-                    "type": "string",
-                    "example": "[installed, notInstalled, failed]"
                 },
                 "name": {
                     "description": "Name is human-readable string to represent the object",
@@ -8850,7 +8963,75 @@ const docTemplate = `{
                 "PlatformNA"
             ]
         },
-        "cloudmodel.PostCommandPhaseResult": {
+        "cloudmodel.PostScriptPhase": {
+            "type": "object",
+            "properties": {
+                "command": {
+                    "description": "Command is the list of commands to execute (not needed when TemplateId or Scripts is given)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
+                    ]
+                },
+                "continueOnError": {
+                    "description": "ContinueOnError keeps running the remaining phases when this phase fails (default: false)",
+                    "type": "boolean",
+                    "example": false
+                },
+                "env": {
+                    "description": "Env is exported to Command, TemplateId and Scripts",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "ROLE": "web"
+                    }
+                },
+                "labelSelector": {
+                    "description": "LabelSelector limits execution to nodes matching the selector (e.g. \"role=worker\")",
+                    "type": "string",
+                    "example": "role=worker"
+                },
+                "nodeGroupId": {
+                    "description": "NodeGroupId limits execution to one nodeGroup",
+                    "type": "string",
+                    "example": "g1"
+                },
+                "nodeId": {
+                    "description": "NodeId limits execution to a single node",
+                    "type": "string",
+                    "example": "g1-1"
+                },
+                "scripts": {
+                    "description": "Scripts runs these steps over SSH (same runner as TemplateId), appended after the template's steps",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.InitScriptStep"
+                    }
+                },
+                "templateId": {
+                    "description": "TemplateId runs an init script template over SSH instead of Command: its steps run in order as root with\nthe Node identity (TB_*) and Env exported, exactly like a first-boot init script",
+                    "type": "string",
+                    "example": "initscript-nginx"
+                },
+                "timeoutMinutes": {
+                    "description": "TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)\nIf not specified or set to 0, the default timeout (30 minutes) will be used",
+                    "type": "integer",
+                    "default": 30,
+                    "example": 30
+                },
+                "userName": {
+                    "description": "UserName is the SSH username to use for command execution",
+                    "type": "string",
+                    "example": "cb-user"
+                }
+            }
+        },
+        "cloudmodel.PostScriptPhaseResult": {
             "type": "object",
             "properties": {
                 "phase": {
@@ -8870,7 +9051,7 @@ const docTemplate = `{
                     "description": "Status is the aggregated outcome of this phase (Skipped when a previous phase stopped execution)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.PostCommandStatus"
+                            "$ref": "#/definitions/cloudmodel.PostScriptStatus"
                         }
                     ],
                     "example": "Completed"
@@ -8882,56 +9063,19 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.PostCommandReq": {
+        "cloudmodel.PostScriptReq": {
             "type": "object",
-            "required": [
-                "command"
-            ],
             "properties": {
-                "command": {
-                    "description": "Command is the list of commands to execute",
+                "phases": {
+                    "description": "Phases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector",
                     "type": "array",
                     "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
-                    ]
-                },
-                "continueOnError": {
-                    "description": "ContinueOnError keeps running the remaining phases when this phase fails (default: false)",
-                    "type": "boolean",
-                    "example": false
-                },
-                "labelSelector": {
-                    "description": "LabelSelector limits execution to nodes matching the selector (e.g. \"role=worker\")",
-                    "type": "string",
-                    "example": "role=worker"
-                },
-                "nodeGroupId": {
-                    "description": "NodeGroupId limits execution to one nodeGroup",
-                    "type": "string",
-                    "example": "g1"
-                },
-                "nodeId": {
-                    "description": "NodeId limits execution to a single node",
-                    "type": "string",
-                    "example": "g1-1"
-                },
-                "timeoutMinutes": {
-                    "description": "TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)\nIf not specified or set to 0, the default timeout (30 minutes) will be used",
-                    "type": "integer",
-                    "default": 30,
-                    "example": 30
-                },
-                "userName": {
-                    "description": "UserName is the SSH username to use for command execution",
-                    "type": "string",
-                    "example": "cb-user"
+                        "$ref": "#/definitions/cloudmodel.PostScriptPhase"
+                    }
                 }
             }
         },
-        "cloudmodel.PostCommandStatus": {
+        "cloudmodel.PostScriptStatus": {
             "type": "string",
             "enum": [
                 "None",
@@ -8939,15 +9083,17 @@ const docTemplate = `{
                 "CompletedWithErrors",
                 "Failed",
                 "Skipped",
-                "Running"
+                "Running",
+                "Interrupted"
             ],
             "x-enum-varnames": [
-                "PostCommandStatusNone",
-                "PostCommandStatusCompleted",
-                "PostCommandStatusCompletedWithErrors",
-                "PostCommandStatusFailed",
-                "PostCommandStatusSkipped",
-                "PostCommandStatusRunning"
+                "PostScriptStatusNone",
+                "PostScriptStatusCompleted",
+                "PostScriptStatusCompletedWithErrors",
+                "PostScriptStatusFailed",
+                "PostScriptStatusSkipped",
+                "PostScriptStatusRunning",
+                "PostScriptStatusInterrupted"
             ]
         },
         "cloudmodel.ProvisioningFailure": {
@@ -9351,6 +9497,10 @@ const docTemplate = `{
                 "acceleratorModel": {
                     "type": "string"
                 },
+                "acceleratorPartitionSize": {
+                    "type": "number",
+                    "example": 0.125
+                },
                 "acceleratorType": {
                     "type": "string"
                 },
@@ -9366,6 +9516,9 @@ const docTemplate = `{
                 },
                 "availabilityCheckedAt": {
                     "type": "string"
+                },
+                "availabilityQuota": {
+                    "$ref": "#/definitions/cloudmodel.AvailabilityQuota"
                 },
                 "availabilityReason": {
                     "type": "string"
@@ -9533,6 +9686,10 @@ const docTemplate = `{
                 "acceleratorModel": {
                     "type": "string",
                     "example": "NVIDIA Tesla V100"
+                },
+                "acceleratorPartitionSize": {
+                    "type": "number",
+                    "example": 0.125
                 },
                 "acceleratorType": {
                     "type": "string",
@@ -10148,16 +10305,6 @@ const docTemplate = `{
                     "type": "string",
                     "example": "aws-ap-southeast-1"
                 },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
                 "label": {
                     "description": "Label is for describing the object by keywords",
                     "type": "object",
@@ -10186,37 +10333,34 @@ const docTemplate = `{
                 "placementAlgo": {
                     "type": "string"
                 },
-                "postCommandAsync": {
-                    "description": "PostCommandAsync echoes whether the commands run in the background",
-                    "type": "boolean"
-                },
-                "postCommandRequestId": {
-                    "description": "PostCommandRequestId is the streaming/tracking key of the post-deployment run\n(always set when post-deployment commands were requested, in both modes)",
-                    "type": "string",
-                    "example": "pc-infra01-1a2b3c"
-                },
-                "postCommandResults": {
-                    "description": "PostCommandResults holds per-phase outcomes",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.PostCommandPhaseResult"
-                    }
-                },
-                "postCommandStatus": {
-                    "description": "PostCommandStatus summarizes the post-deployment command outcome.\n\"Running\" means execution is still in progress (async mode): stream it with\nGET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}\nor poll this object until the status becomes terminal.",
+                "postScript": {
+                    "description": "PostScript echoes the requested post-deployment script",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.PostCommandStatus"
+                            "$ref": "#/definitions/cloudmodel.PostScriptReq"
+                        }
+                    ]
+                },
+                "postScriptRequestId": {
+                    "description": "PostScriptRequestId is the streaming/tracking key of the post-deployment run\n(always set when a post-deployment script was requested, in both modes)",
+                    "type": "string",
+                    "example": "ps-infra01-1a2b3c"
+                },
+                "postScriptResults": {
+                    "description": "PostScriptResults holds per-phase outcomes",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.PostScriptPhaseResult"
+                    }
+                },
+                "postScriptStatus": {
+                    "description": "PostScriptStatus summarizes the post-deployment script outcome.\n\"Running\" means execution is still in progress (async mode): stream it with\nGET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postScriptRequestId}\nor poll this object until the status becomes terminal.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.PostScriptStatus"
                         }
                     ],
                     "example": "Completed"
-                },
-                "postCommands": {
-                    "description": "PostCommands are the requested post-deployment command phases",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.PostCommandReq"
-                    }
                 },
                 "resourceType": {
                     "description": "ResourceType is the type of the resource",
@@ -10264,15 +10408,13 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Made in CB-TB"
                 },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
+                "initScript": {
+                    "description": "InitScript is the default init script for all NodeGroups (overridable per NodeGroup)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.InitScriptReq"
+                        }
+                    ]
                 },
                 "label": {
                     "description": "Label is for describing the object by keywords",
@@ -10303,17 +10445,13 @@ const docTemplate = `{
                     ],
                     "example": "continue"
                 },
-                "postCommandAsync": {
-                    "description": "PostCommandAsync (default false) returns the response as soon as nodes are\nprovisioned and runs post-deployment commands in the background. The response\nthen carries postCommandStatus=\"Running\" plus postCommandRequestId; observe with\nGET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}\nor by polling GET /ns/{nsId}/infra/{infraId}.",
-                    "type": "boolean",
-                    "example": false
-                },
-                "postCommands": {
-                    "description": "PostCommands are post-deployment command phases that bootstrap the Nodes.\nPhases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.\nA single command set is simply one phase: [{\"command\": [\"...\"]}]",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.PostCommandReq"
-                    }
+                "postScript": {
+                    "description": "PostScript is the post-deployment script that bootstraps the Nodes once they are up.\nIts phases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.PostScriptReq"
+                        }
+                    ]
                 },
                 "sgTemplateId": {
                     "description": "SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use\nwhen auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless\noverridden at the NodeGroup level. If empty, the default all-open behavior is used.",
@@ -10368,16 +10506,6 @@ const docTemplate = `{
                     "type": "string",
                     "example": "aws-ap-southeast-1"
                 },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
                 "label": {
                     "description": "Label is for describing the object by keywords",
                     "type": "object",
@@ -10406,37 +10534,34 @@ const docTemplate = `{
                 "placementAlgo": {
                     "type": "string"
                 },
-                "postCommandAsync": {
-                    "description": "PostCommandAsync echoes whether the commands run in the background",
-                    "type": "boolean"
-                },
-                "postCommandRequestId": {
-                    "description": "PostCommandRequestId is the streaming/tracking key of the post-deployment run\n(always set when post-deployment commands were requested, in both modes)",
-                    "type": "string",
-                    "example": "pc-infra01-1a2b3c"
-                },
-                "postCommandResults": {
-                    "description": "PostCommandResults holds per-phase outcomes",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.PostCommandPhaseResult"
-                    }
-                },
-                "postCommandStatus": {
-                    "description": "PostCommandStatus summarizes the post-deployment command outcome.\n\"Running\" means execution is still in progress (async mode): stream it with\nGET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}\nor poll this object until the status becomes terminal.",
+                "postScript": {
+                    "description": "PostScript echoes the requested post-deployment script",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.PostCommandStatus"
+                            "$ref": "#/definitions/cloudmodel.PostScriptReq"
+                        }
+                    ]
+                },
+                "postScriptRequestId": {
+                    "description": "PostScriptRequestId is the streaming/tracking key of the post-deployment run\n(always set when a post-deployment script was requested, in both modes)",
+                    "type": "string",
+                    "example": "ps-infra01-1a2b3c"
+                },
+                "postScriptResults": {
+                    "description": "PostScriptResults holds per-phase outcomes",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.PostScriptPhaseResult"
+                    }
+                },
+                "postScriptStatus": {
+                    "description": "PostScriptStatus summarizes the post-deployment script outcome.\n\"Running\" means execution is still in progress (async mode): stream it with\nGET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postScriptRequestId}\nor poll this object until the status becomes terminal.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.PostScriptStatus"
                         }
                     ],
                     "example": "Completed"
-                },
-                "postCommands": {
-                    "description": "PostCommands are the requested post-deployment command phases",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.PostCommandReq"
-                    }
                 },
                 "resourceType": {
                     "description": "ResourceType is the type of the resource",
@@ -12658,6 +12783,44 @@ const docTemplate = `{
                     "description": "StatusURL is the relative URL to check the request status.",
                     "type": "string",
                     "example": "/beetle/request/1706500000000000000"
+                }
+            }
+        },
+        "model.AvailabilityQuota": {
+            "type": "object",
+            "properties": {
+                "fitCount": {
+                    "description": "more instances of this type that fit",
+                    "type": "integer",
+                    "example": 320
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 640
+                },
+                "name": {
+                    "description": "quota name as the CSP calls it",
+                    "type": "string",
+                    "example": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances"
+                },
+                "perInstance": {
+                    "description": "what one instance of this type takes from the quota",
+                    "type": "integer",
+                    "example": 2
+                },
+                "scope": {
+                    "description": "region, or \"zone \u003cid\u003e\"",
+                    "type": "string",
+                    "example": "region"
+                },
+                "unit": {
+                    "type": "string",
+                    "example": "vCPU"
+                },
+                "used": {
+                    "description": "Used is omitted when the CSP did not report usage; FitCount then assumes nothing is in use",
+                    "type": "integer",
+                    "example": 0
                 }
             }
         },
@@ -18907,6 +19070,10 @@ const docTemplate = `{
                 "acceleratorModel": {
                     "type": "string"
                 },
+                "acceleratorPartitionSize": {
+                    "type": "number",
+                    "example": 0.125
+                },
                 "acceleratorType": {
                     "type": "string"
                 },
@@ -18922,6 +19089,9 @@ const docTemplate = `{
                 },
                 "availabilityCheckedAt": {
                     "type": "string"
+                },
+                "availabilityQuota": {
+                    "$ref": "#/definitions/model.AvailabilityQuota"
                 },
                 "availabilityReason": {
                     "type": "string"
@@ -19323,10 +19493,6 @@ const docTemplate = `{
                 "infraName": {
                     "type": "string",
                     "example": "infra01"
-                },
-                "installMonAgent": {
-                    "type": "string",
-                    "example": "no"
                 },
                 "label": {
                     "type": "object",
