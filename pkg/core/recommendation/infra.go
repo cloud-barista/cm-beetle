@@ -210,7 +210,7 @@ func RecommendInfraWithDefaults(ctx context.Context, desiredCsp string, desiredR
 		shortIds := buildShortMachineIdMap(srcInfra.Nodes)
 		usedNames := make(map[string]bool, len(vmInfoList))
 		for j, nodegroupInfo := range vmInfoList {
-			ngName, _ := buildNodeGroupNameAndLineage(srcInfra.Nodes[j], shortIds, usedNames)
+			ngName, _ := buildNodeGroupNameAndSrcMachineId(srcInfra.Nodes[j], shortIds, usedNames)
 			tempCreateNodegroupReq := cloudmodel.CreateNodeGroupDynamicReq{
 				ConnectionName: fmt.Sprintf("%s-%s", desiredCsp, desiredRegion),
 				ImageId:        nodegroupInfo.vmOsImageId,
@@ -502,7 +502,7 @@ func RecommendInfra(ctx context.Context, desiredCsp string, desiredRegion string
 		// Use the source disk size as the base, with a CSP-specific minimum floor to avoid
 		// over-provisioning and keep costs low (e.g., AWS/GCP support as low as 10 GB).
 		rootDiskSize := max(int(node.RootDisk.TotalSize), getCspMinRootDiskSizeGB(csp))
-		ngName, origMachineId := buildNodeGroupNameAndLineage(node, shortIds, usedNames)
+		ngName, origMachineId := buildNodeGroupNameAndSrcMachineId(node, shortIds, usedNames)
 		tempCreateNodeGroupReq := cloudmodel.CreateNodeGroupReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
 			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, origMachineId),
@@ -639,7 +639,7 @@ func RecommendInfraCandidates(ctx context.Context, desiredCsp string, desiredReg
 		// Use the source disk size as the base, with a CSP-specific minimum floor to avoid
 		// over-provisioning and keep costs low (e.g., AWS/GCP support as low as 10 GB).
 		rootDiskSize := max(int(node.RootDisk.TotalSize), getCspMinRootDiskSizeGB(csp))
-		ngName, origMachineId := buildNodeGroupNameAndLineage(node, shortIds, usedNames)
+		ngName, origMachineId := buildNodeGroupNameAndSrcMachineId(node, shortIds, usedNames)
 		tempCreateNodeGroupReq := cloudmodel.CreateNodeGroupReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
 			Description:      fmt.Sprintf("Recommended VM %02d for %s", i+1, origMachineId),

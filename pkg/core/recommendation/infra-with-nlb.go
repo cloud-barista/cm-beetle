@@ -251,7 +251,7 @@ func RecommendInfraWithNlbCandidates(ctx context.Context, desiredCsp, desiredReg
 			continue
 		}
 
-		ngName, origMachineId := buildNodeGroupNameAndLineage(node, shortIds, usedNames)
+		ngName, origMachineId := buildNodeGroupNameAndSrcMachineId(node, shortIds, usedNames)
 
 		sg, sgErr := RecommendSecurityGroup(ctx, csp, region, node)
 		if sgErr != nil {
