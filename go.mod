@@ -17,13 +17,13 @@ replace github.com/cloud-barista/cm-beetle/imdl => ./imdl
 replace github.com/cloud-barista/cm-beetle/transx => ./transx
 
 require (
-	github.com/cloud-barista/cb-tumblebug v0.13.8
+	github.com/cloud-barista/cb-tumblebug v0.14.0
 	github.com/cloud-barista/cm-beetle/imdl v0.1.21
 	github.com/cloud-barista/cm-beetle/transx v0.1.4
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-playground/validator/v10 v10.30.2
 	github.com/go-resty/resty/v2 v2.17.2
-	github.com/labstack/echo/v4 v4.16.1
+	github.com/labstack/echo/v4 v4.16.3
 	github.com/minio/minio-go/v7 v7.1.0
 	github.com/rs/xid v1.6.0
 	github.com/rs/zerolog v1.35.1

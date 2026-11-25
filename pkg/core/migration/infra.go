@@ -268,21 +268,16 @@ func MigrateInfra(ctx context.Context, nsId string, targetInfraModel *cloudmodel
 	}
 	log.Debug().Msgf("tbInfraReq: %+v", tbInfraReq)
 
-	// Set post-command for stable infra provisioning if a user didn't set it
-	// If a user already set it, use it as is
-	if len(tbInfraReq.PostCommands) == 0 {
-		log.Debug().Msgf("Setting default post-command `uname -a` for stable Infra provisioning (nsId: %s)", nsId)
-
-		commands := []string{
-			"uname -a",
-		}
-		username := "cb-user"
-
-		tbInfraReq.PostCommands = []tbmodel.PostCommandReq{
-			{
-				InfraCmdReq: tbmodel.InfraCmdReq{
-					UserName: username,
-					Command:  commands,
+	// Set default post-script for stable infra provisioning if none was provided
+	if tbInfraReq.PostScript == nil || len(tbInfraReq.PostScript.Phases) == 0 {
+		log.Debug().Msgf("Setting default post-script `uname -a` for stable Infra provisioning (nsId: %s)", nsId)
+		tbInfraReq.PostScript = &tbmodel.PostScriptReq{
+			Phases: []tbmodel.PostScriptPhase{
+				{
+					InfraCmdReq: tbmodel.InfraCmdReq{
+						UserName: "cb-user",
+						Command:  []string{"uname -a"},
+					},
 				},
 			},
 		}
@@ -428,13 +423,16 @@ func MigrateInfraWithExisting(ctx context.Context, nsId string, targetInfraModel
 		return emptyRet, err
 	}
 
-	if len(tbInfraReq.PostCommands) == 0 {
-		log.Debug().Msgf("Setting default post-command `uname -a` for stable Infra provisioning (nsId: %s)", nsId)
-		tbInfraReq.PostCommands = []tbmodel.PostCommandReq{
-			{
-				InfraCmdReq: tbmodel.InfraCmdReq{
-					UserName: "cb-user",
-					Command:  []string{"uname -a"},
+	// Set default post-script for stable infra provisioning if none was provided
+	if tbInfraReq.PostScript == nil || len(tbInfraReq.PostScript.Phases) == 0 {
+		log.Debug().Msgf("Setting default post-script `uname -a` for stable Infra provisioning (nsId: %s)", nsId)
+		tbInfraReq.PostScript = &tbmodel.PostScriptReq{
+			Phases: []tbmodel.PostScriptPhase{
+				{
+					InfraCmdReq: tbmodel.InfraCmdReq{
+						UserName: "cb-user",
+						Command:  []string{"uname -a"},
+					},
 				},
 			},
 		}

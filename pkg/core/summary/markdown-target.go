@@ -81,7 +81,6 @@ func generateOverviewMarkdown(overview *TargetInfraOverview) string {
 	if overview.TotalNlbCount > 0 {
 		md.WriteString(fmt.Sprintf("| **Total NLBs** | %d |\n", overview.TotalNlbCount))
 	}
-	md.WriteString(fmt.Sprintf("| **Monitoring Agent** | %s |\n", overview.InstallMonAgent))
 
 	return md.String()
 }

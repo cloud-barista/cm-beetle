@@ -4,8 +4,8 @@ import "time"
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.13.8 (commit: 19e8e8fdc1a0668ddb8f4abf3f66c44eb25d782a)
-// * Synchronized: 2026-10-30
+// * Version: CB-Tumblebug v0.14.0 (commit: c05bc2c5b926859a04eac4d4e2a8c0db9e32ad4a)
+// * Synchronized: 2026-11-24 (no struct changes)
 
 // IID is a struct to handle Identifier Information of CSP resources from CB-Spider.
 type IID struct {

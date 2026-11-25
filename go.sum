@@ -85,6 +85,8 @@ github.com/cloud-barista/cb-log v0.9.0 h1:pti3gxl85NyqaEiQDF8Dba4zniOy9+6XMy7Jzv
 github.com/cloud-barista/cb-log v0.9.0/go.mod h1:nGgfTFMPwl1MpCO3FBjexUkNdOYA0BNJoyM9Pd0lMms=
 github.com/cloud-barista/cb-tumblebug v0.13.8 h1:I35WrvVlRD3bZtue0LufdyZzucfCGfObpc6adjJIvZ0=
 github.com/cloud-barista/cb-tumblebug v0.13.8/go.mod h1:vscxEXJAhrKWdYOqJdXfBnBQVmFQQOjKpkLD8EaSa4g=
+github.com/cloud-barista/cb-tumblebug v0.14.0 h1:nLq28T2/fa7kS+ARWzv92zrWISyn+aw4aBZ95065THc=
+github.com/cloud-barista/cb-tumblebug v0.14.0/go.mod h1:/kMlpdUwAAjUW0Z/Ur/roR2a4X1+zkjkjIxcANkK1N8=
 github.com/cloud-barista/ktcloudvpc-sdk-go v0.0.0-20260713072217-58ff4a0ab139 h1:4vZeAomyjMJKUVzseDoUaLkrQIXwN1eeqDSq3dhacWE=
 github.com/cloud-barista/ktcloudvpc-sdk-go v0.0.0-20260713072217-58ff4a0ab139/go.mod h1:KTct9zIiho4yDWKGVDz1Wde20bqXkH51o8EKfLzoyG8=
 github.com/cloud-barista/mc-terrarium v0.1.4 h1:w60hp6lEquL41/f1L08E9qchm7qL9hfiyr3AXASZIdI=
@@ -228,6 +230,8 @@ github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/labstack/echo/v4 v4.16.1 h1:h05NuF1GvNu6jSAZxOv++AdjD/NJK+mZdGy0thiiuns=
 github.com/labstack/echo/v4 v4.16.1/go.mod h1:V/EQaTVHYJH92QhbQe7kFQ4mjgcjxLQQUQtAN87zZdw=
+github.com/labstack/echo/v4 v4.16.3 h1:wAzM49wiBxHpZJQ621lminvdxbwfd1Cn6KwRThKV6nA=
+github.com/labstack/echo/v4 v4.16.3/go.mod h1:V/EQaTVHYJH92QhbQe7kFQ4mjgcjxLQQUQtAN87zZdw=
 github.com/labstack/gommon v0.5.0 h1:6VSQ2NOzsnEJ5W6+84E0RbcaDDmgB6NIAzWCczTEe6c=
 github.com/labstack/gommon v0.5.0/go.mod h1:Rzlg7HHy1maLfzBYGg9NZcVuz1sA68HHhLjhcEllYE0=
 github.com/leodido/go-urn v1.4.0 h1:WT9HwE9SGECu3lg4d/dIA+jxlljEa1/ffXKmRjqdmIQ=

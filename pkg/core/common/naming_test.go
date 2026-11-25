@@ -145,8 +145,10 @@ func TestDeepCopyRecommendedInfra(t *testing.T) {
 	orig.TargetInfra.NodeGroups[0].Label = map[string]string{"role": "db"}
 	orig.TargetInfra.NodeGroups[0].SubnetIds = []string{"mig-subnet-01"}
 	orig.TargetInfra.NodeGroups[0].DataDiskIds = []string{"disk-01"}
-	orig.TargetInfra.PostCommands = []cloudmodel.PostCommandReq{
-		{InfraCmdReq: cloudmodel.InfraCmdReq{Command: []string{"echo ok"}}},
+	orig.TargetInfra.PostScript = &cloudmodel.PostScriptReq{
+		Phases: []cloudmodel.PostScriptPhase{
+			{InfraCmdReq: cloudmodel.InfraCmdReq{Command: []string{"echo ok"}}},
+		},
 	}
 	orig.TargetSecurityGroupList[0].FirewallRules = &rules
 	orig.TargetSpecList = []cloudmodel.SpecInfo{
@@ -188,7 +190,7 @@ func TestDeepCopyRecommendedInfra(t *testing.T) {
 	copied.TargetInfra.NodeGroups[0].Label["role"] = "web"
 	copied.TargetInfra.NodeGroups[0].SubnetIds[0] = "mutated"
 	copied.TargetInfra.NodeGroups[0].DataDiskIds[0] = "mutated"
-	copied.TargetInfra.PostCommands[0].Command[0] = "mutated"
+	copied.TargetInfra.PostScript.Phases[0].Command[0] = "mutated"
 	(*copied.TargetSecurityGroupList[0].FirewallRules)[0].Ports = "8080"
 	copied.TargetSpecList[0].AvailableZones[0] = "zone-b"
 	*copied.TargetSpecList[0].AvailabilityCheckedAt = checkedAt.Add(time.Hour)
@@ -203,7 +205,7 @@ func TestDeepCopyRecommendedInfra(t *testing.T) {
 	assert.Equal(t, "db", orig.TargetInfra.NodeGroups[0].Label["role"])
 	assert.Equal(t, "mig-subnet-01", orig.TargetInfra.NodeGroups[0].SubnetIds[0])
 	assert.Equal(t, "disk-01", orig.TargetInfra.NodeGroups[0].DataDiskIds[0])
-	assert.Equal(t, "echo ok", orig.TargetInfra.PostCommands[0].Command[0])
+	assert.Equal(t, "echo ok", orig.TargetInfra.PostScript.Phases[0].Command[0])
 	assert.Equal(t, "22", (*orig.TargetSecurityGroupList[0].FirewallRules)[0].Ports)
 	assert.Equal(t, "zone-a", orig.TargetSpecList[0].AvailableZones[0])
 	assert.Equal(t, checkedAt, *orig.TargetSpecList[0].AvailabilityCheckedAt)
@@ -260,9 +262,11 @@ func TestOptionalReferencesSeededAndPropagated(t *testing.T) {
 	infra := sampleRecommendedInfra()
 	infra.TargetVNet.SubnetInfoList = append(infra.TargetVNet.SubnetInfoList, cloudmodel.SubnetReq{Name: "mig-subnet-02"})
 	infra.TargetInfra.NodeGroups[0].SubnetIds = []string{"mig-subnet-01", "mig-subnet-02"}
-	infra.TargetInfra.PostCommands = []cloudmodel.PostCommandReq{
-		{NodeGroupId: "ng-influxdb-back", InfraCmdReq: cloudmodel.InfraCmdReq{Command: []string{"echo targeted"}}},
-		{NodeGroupId: "", InfraCmdReq: cloudmodel.InfraCmdReq{Command: []string{"echo all"}}},
+	infra.TargetInfra.PostScript = &cloudmodel.PostScriptReq{
+		Phases: []cloudmodel.PostScriptPhase{
+			{NodeGroupId: "ng-influxdb-back", InfraCmdReq: cloudmodel.InfraCmdReq{Command: []string{"echo targeted"}}},
+			{NodeGroupId: "", InfraCmdReq: cloudmodel.InfraCmdReq{Command: []string{"echo all"}}},
+		},
 	}
 	infra.TargetNlbList = []cloudmodel.NlbReq{
 		{Type: "PUBLIC", TargetGroup: cloudmodel.NlbTargetGroupReq{NodeGroupId: "ng-influxdb-back"}},
@@ -270,8 +274,8 @@ func TestOptionalReferencesSeededAndPropagated(t *testing.T) {
 
 	seeded := ApplyNameSeed(infra, "prod")
 	assert.Equal(t, []string{"prod-mig-subnet-01", "prod-mig-subnet-02"}, seeded.TargetInfra.NodeGroups[0].SubnetIds)
-	assert.Equal(t, "prod-ng-influxdb-back", seeded.TargetInfra.PostCommands[0].NodeGroupId)
-	assert.Equal(t, "", seeded.TargetInfra.PostCommands[1].NodeGroupId)
+	assert.Equal(t, "prod-ng-influxdb-back", seeded.TargetInfra.PostScript.Phases[0].NodeGroupId)
+	assert.Equal(t, "", seeded.TargetInfra.PostScript.Phases[1].NodeGroupId)
 	assert.Equal(t, "prod-ng-influxdb-back", seeded.TargetNlbList[0].TargetGroup.NodeGroupId)
 	ok, detail := ValidateComposedNames(seeded)
 	require.True(t, ok, detail)
@@ -287,9 +291,9 @@ func TestOptionalReferencesSeededAndPropagated(t *testing.T) {
 	ok, _ = ValidateReferentialIntegrity(brokenNlb)
 	assert.False(t, ok)
 
-	brokenPostCmd := DeepCopyRecommendedInfra(infra)
-	brokenPostCmd.TargetInfra.PostCommands[0].NodeGroupId = "missing-ng"
-	ok, _ = ValidateReferentialIntegrity(brokenPostCmd)
+	brokenPostScript := DeepCopyRecommendedInfra(infra)
+	brokenPostScript.TargetInfra.PostScript.Phases[0].NodeGroupId = "missing-ng"
+	ok, _ = ValidateReferentialIntegrity(brokenPostScript)
 	assert.False(t, ok)
 }
 

@@ -42,10 +42,26 @@ func DeepCopyRecommendedInfra(infra cloudmodel.RecommendedInfra) cloudmodel.Reco
 		result.TargetInfra.NodeGroups[i].SubnetIds = slices.Clone(ng.SubnetIds)
 		result.TargetInfra.NodeGroups[i].SecurityGroupIds = slices.Clone(ng.SecurityGroupIds)
 		result.TargetInfra.NodeGroups[i].DataDiskIds = slices.Clone(ng.DataDiskIds)
+		if ng.InitScript != nil {
+			is := *ng.InitScript
+			is.Scripts = slices.Clone(ng.InitScript.Scripts)
+			is.Env = maps.Clone(ng.InitScript.Env)
+			if ng.InitScript.Notify != nil {
+				n := *ng.InitScript.Notify
+				is.Notify = &n
+			}
+			result.TargetInfra.NodeGroups[i].InitScript = &is
+		}
 	}
-	result.TargetInfra.PostCommands = slices.Clone(infra.TargetInfra.PostCommands)
-	for i, pc := range infra.TargetInfra.PostCommands {
-		result.TargetInfra.PostCommands[i].Command = slices.Clone(pc.Command)
+	if infra.TargetInfra.PostScript != nil {
+		ps := *infra.TargetInfra.PostScript
+		ps.Phases = slices.Clone(infra.TargetInfra.PostScript.Phases)
+		for i, phase := range infra.TargetInfra.PostScript.Phases {
+			ps.Phases[i].Command = slices.Clone(phase.Command)
+			ps.Phases[i].Scripts = slices.Clone(phase.Scripts)
+			ps.Phases[i].Env = maps.Clone(phase.Env)
+		}
+		result.TargetInfra.PostScript = &ps
 	}
 
 	result.TargetSpecList = slices.Clone(infra.TargetSpecList)
@@ -61,6 +77,10 @@ func DeepCopyRecommendedInfra(infra cloudmodel.RecommendedInfra) cloudmodel.Reco
 		if sp.AvailabilityRefreshAfter != nil {
 			t := *sp.AvailabilityRefreshAfter
 			result.TargetSpecList[i].AvailabilityRefreshAfter = &t
+		}
+		if sp.AvailabilityQuota != nil {
+			q := *sp.AvailabilityQuota
+			result.TargetSpecList[i].AvailabilityQuota = &q
 		}
 	}
 
@@ -139,7 +159,7 @@ func ApplyNameSeed(infra cloudmodel.RecommendedInfra, seed string) cloudmodel.Re
 		}
 	}
 
-	// 5. Update Infra, NodeGroups, and PostCommands
+	// 5. Update Infra, NodeGroups, and PostScript
 	result.TargetInfra.Name = ComposeName(infra.TargetInfra.Name, seed)
 	for i, ng := range result.TargetInfra.NodeGroups {
 		result.TargetInfra.NodeGroups[i].Name = ComposeName(ng.Name, seed)
@@ -153,8 +173,10 @@ func ApplyNameSeed(infra cloudmodel.RecommendedInfra, seed string) cloudmodel.Re
 			result.TargetInfra.NodeGroups[i].SecurityGroupIds[j] = ComposeName(sgId, seed)
 		}
 	}
-	for i, pc := range result.TargetInfra.PostCommands {
-		result.TargetInfra.PostCommands[i].NodeGroupId = ComposeName(pc.NodeGroupId, seed)
+	if result.TargetInfra.PostScript != nil {
+		for i, phase := range result.TargetInfra.PostScript.Phases {
+			result.TargetInfra.PostScript.Phases[i].NodeGroupId = ComposeName(phase.NodeGroupId, seed)
+		}
 	}
 
 	// 6. Update NLB target group NodeGroupId references
@@ -417,10 +439,12 @@ func ValidateReferentialIntegrity(infra cloudmodel.RecommendedInfra) (bool, stri
 		}
 	}
 
-	// Check optional PostCommand and NLB NodeGroupId references
-	for _, pc := range infra.TargetInfra.PostCommands {
-		if pc.NodeGroupId != "" && !nodeGroups[pc.NodeGroupId] {
-			return false, fmt.Sprintf("PostCommand refers to non-existent NodeGroup [%s]", pc.NodeGroupId)
+	// Check optional PostScript and NLB NodeGroupId references
+	if infra.TargetInfra.PostScript != nil {
+		for _, phase := range infra.TargetInfra.PostScript.Phases {
+			if phase.NodeGroupId != "" && !nodeGroups[phase.NodeGroupId] {
+				return false, fmt.Sprintf("PostScript phase refers to non-existent NodeGroup [%s]", phase.NodeGroupId)
+			}
 		}
 	}
 	for _, nlb := range infra.TargetNlbList {

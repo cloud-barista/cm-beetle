@@ -62,7 +62,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.13.8
+    image: cloudbaristaorg/cb-tumblebug:0.14.0
     container_name: cb-tumblebug
     # build:
     #   context: ${PROJECT_ROOT}/../cb-tumblebug
@@ -83,7 +83,6 @@ services:
     volumes:
       - ./cb-tumblebug/conf/:/app/conf/
       - ./cb-tumblebug/assets/:/app/assets/
-      - ./data/cb-tumblebug-container/meta_db/:/app/meta_db/
       - ./data/cb-tumblebug-container/log/:/app/log/
     environment:
       # - TB_ROOT_PATH=/app
@@ -212,7 +211,7 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.13.20
+    image: cloudbaristaorg/cb-spider:0.14.0
     container_name: cb-spider
     # build:
     #   context: ${PROJECT_ROOT}/../cb-spider
@@ -275,7 +274,7 @@ services:
   # CB-MapUI
   # This is the Map-based client for CB-Tumblebug.
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.13.14
+    image: cloudbaristaorg/cb-mapui:0.14.0
     container_name: cb-mapui
     # build:
     #   context: ${PROJECT_ROOT}/../cb-mapui
@@ -307,7 +306,7 @@ services:
   # TB-MCP (Tumblebug Model Context Protocol Server)
   # This provides MCP interface for CB-Tumblebug to work with AI assistants like Claude
   # cb-tumblebug-mcp-server:
-  #   # image: cloudbaristaorg/cb-tumblebug-mcp-server:0.13.8
+  #   # image: cloudbaristaorg/cb-tumblebug-mcp-server:0.14.0
   #   build:
   #     context: ${PROJECT_ROOT}/../cb-tumblebug/src/interface/mcp
   #     dockerfile: Dockerfile

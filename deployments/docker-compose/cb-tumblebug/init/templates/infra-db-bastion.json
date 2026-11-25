@@ -3,7 +3,6 @@
   "name": "infra-db-bastion",
   "description": "Multi-CSP DB Bastion template for secure in-VPC RDBMS access and testing. Contains lightweight verified specs/images per CSP with MySQL/MariaDB client pre-installed.",
   "infraDynamicReq": {
-    "installMonAgent": "no",
     "nodeGroups": [
       {
         "name": "g-aws",
@@ -79,13 +78,15 @@
         "rootDiskSize": 40
       }
     ],
-    "postCommands": [
-      {
-        "command": [
-          "for i in 1 2 3 4 5 6 7 8 9 10; do sudo apt-get update -y && (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-client netcat-openbsd || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mariadb-client netcat-openbsd) && break || (sudo yum install -y mariadb nc && break) || sleep 5; done"
-        ]
-      }
-    ]
+    "postScript": {
+      "phases": [
+        {
+          "command": [
+            "for i in 1 2 3 4 5 6 7 8 9 10; do sudo apt-get update -y && (sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-client netcat-openbsd || sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mariadb-client netcat-openbsd) && break || (sudo yum install -y mariadb nc && break) || sleep 5; done"
+          ]
+        }
+      ]
+    }
   }
 }
 

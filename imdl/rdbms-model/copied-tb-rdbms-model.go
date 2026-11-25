@@ -4,9 +4,9 @@ import "time"
 
 // * To avoid circular/version dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.13.8 (commit: 19e8e8fdc1a0668ddb8f4abf3f66c44eb25d782a)
+// * Version: CB-Tumblebug v0.14.0 (commit: c05bc2c5b926859a04eac4d4e2a8c0db9e32ad4a)
 // * Source: CB-Tumblebug (src/core/model/rdbms.go, src/core/model/common.go, src/core/model/net.go)
-// * Synchronized: 2026-10-30 (RDBMSInfo, RDBMSListResponse, RDBMSCreateRequest, RDBMSCapabilityResponse, RDBMSSupportResponse, RDBMSDatabaseCreateReq, RDBMSSecureTransportInfo, etc.)
+// * Synchronized: 2026-11-24 (no struct field changes from v0.13.8; comment aligned on NHNDBSGToAllowAllInbound)
 
 // StorageSizeRange defines the minimum and maximum storage capacity in Tumblebug format.
 type StorageSizeRange struct {
