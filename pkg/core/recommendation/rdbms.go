@@ -57,11 +57,9 @@ func ValidateRDBMS(ctx context.Context, nsId string, req rdbmsmodel.RDBMSCreateR
 		return emptyRes, fmt.Errorf("connectionName is required")
 	}
 
-	tbSess := tbclient.NewSession().SetContext(ctx)
-
 	// 1. Referential & Cross-connection check for VNet
 	if req.VNetId != "" {
-		vNetInfo, err := tbSess.ReadVNet(nsId, req.VNetId)
+		vNetInfo, err := tbclient.NewSession().SetContext(ctx).ReadVNet(nsId, req.VNetId)
 		if err == nil && vNetInfo.Id != "" {
 			if vNetInfo.ConnectionName != "" && !strings.EqualFold(vNetInfo.ConnectionName, targetConn) {
 				return emptyRes, fmt.Errorf("cross-connection mismatch: VNet '%s' belongs to connection '%s', but RDBMS target connection is '%s'",
@@ -76,7 +74,7 @@ func ValidateRDBMS(ctx context.Context, nsId string, req rdbmsmodel.RDBMSCreateR
 			if sgId == "" {
 				continue
 			}
-			sgInfo, err := tbSess.ReadSecurityGroup(nsId, sgId)
+			sgInfo, err := tbclient.NewSession().SetContext(ctx).ReadSecurityGroup(nsId, sgId)
 			if err == nil && sgInfo.Id != "" {
 				if sgInfo.ConnectionName != "" && !strings.EqualFold(sgInfo.ConnectionName, targetConn) {
 					return emptyRes, fmt.Errorf("cross-connection mismatch: SecurityGroup '%s' belongs to connection '%s', but RDBMS target connection is '%s'",
@@ -111,7 +109,7 @@ func ValidateRDBMS(ctx context.Context, nsId string, req rdbmsmodel.RDBMSCreateR
 	// 5. Pass to Tumblebug for live CSP capability strict dry-run validation (autoFillDefaults=false)
 	req.AutoFillDefaults = false
 	log.Info().Str("nsId", nsId).Str("rdbmsName", req.Name).Str("connection", targetConn).Msg("Validating RDBMS create request via CB-Tumblebug (strict mode: autoFillDefaults=false)")
-	return tbSess.ValidateRDBMS(nsId, req)
+	return tbclient.NewSession().SetContext(ctx).ValidateRDBMS(nsId, req)
 }
 
 // resolveSourceRDBMSInstanceName determines the display/instance name of a source RDBMS for logging and target mapping.
@@ -447,8 +445,7 @@ func RecommendRDBMS(ctx context.Context, desiredCsp, desiredRegion string, sourc
 	}
 
 	// 2. Fetch CSP support info from Tumblebug & Validate CSP support
-	tbSess := tbclient.NewSession().SetContext(ctx)
-	supportResp, err := tbSess.GetRDBMSSupport(desiredCsp)
+	supportResp, err := tbclient.NewSession().SetContext(ctx).GetRDBMSSupport(desiredCsp)
 	if err != nil {
 		log.Warn().Err(err).Str("csp", desiredCsp).Msg("Failed to fetch CSP RDBMS support info from Tumblebug")
 		return emptyRes, fmt.Errorf("failed to fetch RDBMS support info for CSP '%s': %w", desiredCsp, err)
@@ -484,7 +481,7 @@ func RecommendRDBMS(ctx context.Context, desiredCsp, desiredRegion string, sourc
 
 		// Fetch engine-specific live capability from Tumblebug
 		connName := fmt.Sprintf("%s-%s", desiredCsp, desiredRegion)
-		capaResp, capErr := tbSess.GetRDBMSCapability(connName, targetEngine)
+		capaResp, capErr := tbclient.NewSession().SetContext(ctx).GetRDBMSCapability(connName, targetEngine)
 		if capErr != nil {
 			log.Warn().Err(capErr).Str("connectionName", connName).Str("engine", targetEngine).Msg("Failed to fetch live RDBMS capability from Tumblebug")
 			return emptyRes, fmt.Errorf("failed to retrieve live RDBMS capability for connection '%s' and engine '%s': %w", connName, targetEngine, capErr)

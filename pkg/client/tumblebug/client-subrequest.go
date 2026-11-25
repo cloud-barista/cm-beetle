@@ -172,7 +172,7 @@ func classifySubRequestResource(parts []string) string {
 	if parts[0] == "k8sClusterRecommendNode" {
 		return "k8sNodeSpec"
 	}
-	if parts[0] == "reviewSpecImagePair" {
+	if parts[0] == "specImagePairReview" {
 		return "specImageReview"
 	}
 	if parts[0] == "ns" && len(parts) >= 3 {

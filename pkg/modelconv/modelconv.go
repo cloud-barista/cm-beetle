@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 // ConvertWithUpcast converts source value T into target struct U with reflect-based legacy field migration.
@@ -156,34 +157,52 @@ func validateMapTypes(sourceType, targetType reflect.Type) error {
 	return validateReflectTypes(sourceType.Elem(), targetType.Elem())
 }
 
-// getFieldMap creates a map of field names to field types
+// getFieldMap creates a map of JSON field names to exported struct fields, flattening anonymous embedded structs.
 func getFieldMap(structType reflect.Type) map[string]reflect.StructField {
 	fieldMap := make(map[string]reflect.StructField)
+	collectFieldMap(structType, fieldMap)
+	return fieldMap
+}
+
+// collectFieldMap populates fieldMap matching encoding/json rules (outer fields shadow embedded ones).
+func collectFieldMap(structType reflect.Type, fieldMap map[string]reflect.StructField) {
+	var embedded []reflect.Type
 
 	for i := 0; i < structType.NumField(); i++ {
 		field := structType.Field(i)
+		if !field.IsExported() && !field.Anonymous {
+			continue
+		}
 
-		// Use JSON tag if available, otherwise use field name
 		jsonTag := field.Tag.Get("json")
-		if jsonTag != "" && jsonTag != "-" {
-			// Remove omitempty and other options
-			commaIdx := -1
-			for j, char := range jsonTag {
-				if char == ',' {
-					commaIdx = j
-					break
-				}
+		if jsonTag == "-" {
+			continue
+		}
+
+		tagName, _, _ := strings.Cut(jsonTag, ",")
+		if field.Anonymous && tagName == "" {
+			embeddedType := field.Type
+			if embeddedType.Kind() == reflect.Ptr {
+				embeddedType = embeddedType.Elem()
 			}
-			if commaIdx != -1 {
-				jsonTag = jsonTag[:commaIdx]
+			if embeddedType.Kind() == reflect.Struct {
+				embedded = append(embedded, embeddedType)
 			}
-			fieldMap[jsonTag] = field
-		} else {
-			fieldMap[field.Name] = field
+			continue
+		}
+
+		key := field.Name
+		if tagName != "" {
+			key = tagName
+		}
+		if _, exists := fieldMap[key]; !exists {
+			fieldMap[key] = field
 		}
 	}
 
-	return fieldMap
+	for _, embeddedType := range embedded {
+		collectFieldMap(embeddedType, fieldMap)
+	}
 }
 
 // isNil checks if a value is nil

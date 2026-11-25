@@ -217,9 +217,9 @@ func RecommendInfraWithDefaults(ctx context.Context, desiredCsp string, desiredR
 				SpecId:         nodegroupInfo.vmSpecId,
 				Description:    "a recommended virtual machine",
 				Name:           ngName,
-				RootDiskSize:   0,                                                       // TBD
-				RootDiskType:   "",                                                      // TBD
-				NodeGroupSize:  1,                                                       // TBD
+				RootDiskSize:   0,  // TBD
+				RootDiskType:   "", // TBD
+				NodeGroupSize:  1,  // TBD
 			}
 			tempVmInfraInfo.TargetInfra.NodeGroups = append(tempVmInfraInfo.TargetInfra.NodeGroups, tempCreateNodegroupReq)
 		}
@@ -511,14 +511,14 @@ func RecommendInfra(ctx context.Context, desiredCsp string, desiredRegion string
 			CspImageName:     resolvedCspImageName, // Set only when review resolved a newer image; TumbleBug sends this to Spider instead of looking up via ImageId.
 			VNetId:           recommendedVmInfra.TargetVNet.Name,
 			SubnetId:         firstSubnetId,
-			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
+			SecurityGroupIds: []string{recommendedSg.Name}, // Set the security group ID
 			Name:             ngName,
-			RootDiskType:     suggestedSystemDisk,                                  // Confirmed-available disk type from specImagePairReview; empty → CSP default
-			RootDiskSize:     rootDiskSize,                                         // max(source disk size, CSP minimum) to keep costs low
-			SshKeyId:         recommendedVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
-			NodeUserName:     "",                                                   // TBD: Set the VM user name if needed
-			NodeUserPassword: "",                                                   // TBD
-			NodeGroupSize:    1,                                                    // TBD
+			RootDiskType:     suggestedSystemDisk,                  // Confirmed-available disk type from specImagePairReview; empty → CSP default
+			RootDiskSize:     rootDiskSize,                         // max(source disk size, CSP minimum) to keep costs low
+			SshKeyId:         recommendedVmInfra.TargetSshKey.Name, // Set the SSH key ID
+			NodeUserName:     "",                                   // TBD: Set the VM user name if needed
+			NodeUserPassword: "",                                   // TBD
+			NodeGroupSize:    1,                                    // TBD
 			Label: map[string]string{
 				lineage.LabelSourceMachineIds: origMachineId,
 			},
@@ -646,12 +646,12 @@ func RecommendInfraCandidates(ctx context.Context, desiredCsp string, desiredReg
 			VNetId:           skeletonVmInfra.TargetVNet.Name,
 			SubnetId:         firstSubnetId,
 			Name:             ngName,
-			RootDiskType:     "",                                                // Set "" or default to use CSP's default
-			RootDiskSize:     rootDiskSize,                                      // max(source disk size, CSP minimum) to keep costs low
-			SshKeyId:         skeletonVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
-			NodeUserName:     "",                                                // TBD: Set the VM user name if needed
-			NodeUserPassword: "",                                                // TBD
-			NodeGroupSize:    1,                                                 // Default: 1
+			RootDiskType:     "",                                // Set "" or default to use CSP's default
+			RootDiskSize:     rootDiskSize,                      // max(source disk size, CSP minimum) to keep costs low
+			SshKeyId:         skeletonVmInfra.TargetSshKey.Name, // Set the SSH key ID
+			NodeUserName:     "",                                // TBD: Set the VM user name if needed
+			NodeUserPassword: "",                                // TBD
+			NodeGroupSize:    1,                                 // Default: 1
 			Label: map[string]string{
 				lineage.LabelSourceMachineIds: origMachineId,
 			},
@@ -786,9 +786,6 @@ func RecommendInfraCandidates(ctx context.Context, desiredCsp string, desiredReg
 		}
 	}
 
-	var deduplicatedVmSpecList = []cloudmodel.SpecInfo{}
-	var deduplicatedVmOsImageList = []cloudmodel.ImageInfo{}
-
 	// Calculate the actual limit based on the maximum number of compatible pairs across all servers
 	actualLimit := 0
 	for _, compatiblePairs := range compatiblePairsForEachServer {
@@ -829,6 +826,9 @@ func RecommendInfraCandidates(ctx context.Context, desiredCsp string, desiredReg
 		// Create a copy of the skeleton NodeGroup List
 		tempNodeGroupList := make([]cloudmodel.CreateNodeGroupReq, len(skeletonNodegroupList))
 		copy(tempNodeGroupList, skeletonNodegroupList)
+
+		deduplicatedVmSpecList := []cloudmodel.SpecInfo{}
+		deduplicatedVmOsImageList := []cloudmodel.ImageInfo{}
 
 		var selectedVmSpec cloudmodel.SpecInfo
 		var selectedVmOsImage cloudmodel.ImageInfo
@@ -1007,4 +1007,3 @@ func RecommendInfraCandidates(ctx context.Context, desiredCsp string, desiredReg
 
 	return recommendedVmInfraCandidates, nil
 }
-

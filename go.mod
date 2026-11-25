@@ -19,7 +19,7 @@ replace github.com/cloud-barista/cm-beetle/transx => ./transx
 require (
 	github.com/cloud-barista/cb-tumblebug v0.14.0
 	github.com/cloud-barista/cm-beetle/imdl v0.1.22
-	github.com/cloud-barista/cm-beetle/transx v0.1.4
+	github.com/cloud-barista/cm-beetle/transx v0.1.5
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-playground/validator/v10 v10.30.2
 	github.com/go-resty/resty/v2 v2.17.2

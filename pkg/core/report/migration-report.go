@@ -234,16 +234,25 @@ func buildMigrationMappings(sourceSummary *summary.SourceInfraSummary, targetSum
 	return mappings
 }
 
+// safeRatio divides target by source, returning 0 when source is non-positive.
+func safeRatio(target, source float64) float64 {
+	if source <= 0 {
+		return 0
+	}
+	return target / source
+}
+
 // analyzeResourceChanges analyzes changes between source and target resources
 func analyzeResourceChanges(sourceNode summary.SourceServerInfo, targetVM summary.SummaryVmInfo) ResourceChangeAnalysis {
 	// CPU Change
+	cpuRatio := safeRatio(float64(targetVM.Spec.VCpus), float64(sourceNode.CPU.Cores))
 	cpuChange := ResourceChange{
 		ResourceType: "CPU",
 		SourceValue:  fmt.Sprintf("%d cores", sourceNode.CPU.Cores),
 		TargetValue:  fmt.Sprintf("%d vCPU", targetVM.Spec.VCpus),
 		ChangeType:   determineChangeType(float64(sourceNode.CPU.Cores), float64(targetVM.Spec.VCpus)),
-		ChangeRatio:  float64(targetVM.Spec.VCpus) / float64(sourceNode.CPU.Cores),
-		Description:  fmt.Sprintf("%+d cores (%.1fx)", targetVM.Spec.VCpus-sourceNode.CPU.Cores, float64(targetVM.Spec.VCpus)/float64(sourceNode.CPU.Cores)),
+		ChangeRatio:  cpuRatio,
+		Description:  fmt.Sprintf("%+d cores (%.1fx)", targetVM.Spec.VCpus-sourceNode.CPU.Cores, cpuRatio),
 	}
 
 	// Memory Change
@@ -252,7 +261,7 @@ func analyzeResourceChanges(sourceNode summary.SourceServerInfo, targetVM summar
 		SourceValue:  fmt.Sprintf("%d GB", sourceNode.Memory.TotalGB),
 		TargetValue:  fmt.Sprintf("%.1f GB", targetVM.Spec.MemoryGiB),
 		ChangeType:   determineChangeType(float64(sourceNode.Memory.TotalGB), float64(targetVM.Spec.MemoryGiB)),
-		ChangeRatio:  float64(targetVM.Spec.MemoryGiB) / float64(sourceNode.Memory.TotalGB),
+		ChangeRatio:  safeRatio(float64(targetVM.Spec.MemoryGiB), float64(sourceNode.Memory.TotalGB)),
 		Description:  "Same",
 	}
 	if sourceNode.Memory.TotalGB != int(targetVM.Spec.MemoryGiB) {
@@ -266,7 +275,7 @@ func analyzeResourceChanges(sourceNode summary.SourceServerInfo, targetVM summar
 		SourceValue:  fmt.Sprintf("%d GB %s", sourceNode.Disk.TotalGB, sourceNode.Disk.Type),
 		TargetValue:  fmt.Sprintf("%d GB (root disk)", rootDiskGB),
 		ChangeType:   determineChangeType(float64(sourceNode.Disk.TotalGB), float64(rootDiskGB)),
-		ChangeRatio:  float64(rootDiskGB) / float64(sourceNode.Disk.TotalGB),
+		ChangeRatio:  safeRatio(float64(rootDiskGB), float64(sourceNode.Disk.TotalGB)),
 		Description:  fmt.Sprintf("%+d GB (root disk only)", rootDiskGB-sourceNode.Disk.TotalGB),
 	}
 

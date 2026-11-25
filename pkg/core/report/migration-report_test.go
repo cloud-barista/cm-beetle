@@ -263,3 +263,22 @@ func TestMigrationReportGPUOmitemptyAndMarkdown(t *testing.T) {
 	}
 }
 
+func TestAnalyzeResourceChangesZeroSourceDenominators(t *testing.T) {
+	sourceNode := summary.SourceServerInfo{
+		CPU:    summary.SourceCPUInfo{Cores: 0},
+		Memory: summary.SourceMemoryInfo{TotalGB: 0},
+		Disk:   summary.SourceDiskInfo{TotalGB: 0, Type: "SSD"},
+	}
+	targetVM := summary.SummaryVmInfo{
+		Spec: summary.SummaryVmSpecInfo{VCpus: 4, MemoryGiB: 16},
+	}
+
+	changes := analyzeResourceChanges(sourceNode, targetVM)
+	if changes.CPUChange.ChangeRatio != 0 || changes.MemoryChange.ChangeRatio != 0 || changes.StorageChange.ChangeRatio != 0 {
+		t.Fatalf("expected zero ChangeRatio on zero source denominators, got cpu=%v mem=%v disk=%v",
+			changes.CPUChange.ChangeRatio, changes.MemoryChange.ChangeRatio, changes.StorageChange.ChangeRatio)
+	}
+	if _, err := json.Marshal(changes); err != nil {
+		t.Fatalf("json.Marshal(changes) failed on zero source denominators: %v", err)
+	}
+}
