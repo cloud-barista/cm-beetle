@@ -6098,7 +6098,7 @@
         },
         "/request/{reqId}": {
             "get": {
-                "description": "Retrieves the details of a specific API request tracked by Beetle, including correlated outbound CB-Tumblebug sub-requests.\n\n[Note]\n- Request tracking is managed independently by Beetle using `reqId` (from `X-Request-Id`).\n- Outbound state-changing and recommendation calls to CB-Tumblebug are recorded in `subRequests[]` with `subReqId` (`{reqId}-{seq}`) and `tumblebugSource` (`cm-beetle:{reqId}`).\n- Use `brief=true` during high-frequency polling to omit large request/response bodies while still receiving `status`, `subRequestSummary`, and `subRequests`.\n- Set `withTumblebug=true` to enrich each `subRequests[]` entry with live `upstreamStatus` and `upstreamProgress` from CB-Tumblebug `GET /request/{subReqId}`.\n\n[Status Values]\n- Handling: Request is currently being processed\n- Success: Request completed successfully\n- Error: Request failed with an error\n\n[Retry Information]\n- retry.retryable: Whether the failed request can be retried (present only for retriable errors)\n- retry.retryAfter: Suggested retry delay in seconds\n- retry.retryReason: Human-readable reason for retry requirement (e.g., \"Rate Limit Exceeded\")",
+                "description": "Retrieves the details of a specific API request tracked by Beetle, including correlated outbound CB-Tumblebug sub-requests.\n\n[Note]\n- Request tracking is managed independently by Beetle using `reqId` (from `X-Request-Id`).\n- Outbound state-changing and recommendation calls to CB-Tumblebug are recorded in `subRequests[]` with `subReqId` (`{reqId}-{seq}`) and `tumblebugSource` (`cm-beetle:{reqId}`).\n- Use `brief=true` during high-frequency polling to omit large request/response bodies while still receiving `status`, `subRequestSummary`, and `subRequests`.\n- Set `withTumblebug=true` to enrich active (`Handling`) `subRequests[]` entries with live `upstreamStatus` and `upstreamProgress` from CB-Tumblebug `GET /request/{subReqId}`.\n\n[Status Values]\n- Handling: Request is currently being processed\n- Success: Request completed successfully\n- Error: Request failed with an error\n\n[Retry Information]\n- retry.retryable: Whether the failed request can be retried (present only for retriable errors)\n- retry.retryAfter: Suggested retry delay in seconds\n- retry.retryReason: Human-readable reason for retry requirement (e.g., \"Rate Limit Exceeded\")",
                 "consumes": [
                     "application/json"
                 ],
@@ -6135,7 +6135,7 @@
                     {
                         "type": "boolean",
                         "default": false,
-                        "description": "Enrich subRequests with live upstream status/progress from CB-Tumblebug (default: false)",
+                        "description": "Enrich active (Handling) subRequests with live upstream status/progress from CB-Tumblebug (default: false)",
                         "name": "withTumblebug",
                         "in": "query"
                     }
