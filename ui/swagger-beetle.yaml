@@ -187,6 +187,36 @@ definitions:
         example: 1.1.0
         type: string
     type: object
+  cloudmodel.AvailabilityQuota:
+    properties:
+      fitCount:
+        description: more instances of this type that fit
+        example: 320
+        type: integer
+      limit:
+        example: 640
+        type: integer
+      name:
+        description: quota name as the CSP calls it
+        example: Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances
+        type: string
+      perInstance:
+        description: what one instance of this type takes from the quota
+        example: 2
+        type: integer
+      scope:
+        description: region, or "zone <id>"
+        example: region
+        type: string
+      unit:
+        example: vCPU
+        type: string
+      used:
+        description: Used is omitted when the CSP did not report usage; FitCount then
+          assumes nothing is in use
+        example: 0
+        type: integer
+    type: object
   cloudmodel.AvailabilityStatus:
     enum:
     - Available
@@ -358,6 +388,10 @@ definitions:
         description: ImageId is field for id of a image in common namespace
         example: ami-01f71f215b23ba262
         type: string
+      initScript:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.InitScriptReq'
+        description: InitScript overrides the Infra-level init script for this NodeGroup
       label:
         additionalProperties:
           type: string
@@ -442,6 +476,8 @@ definitions:
       imageId:
         description: ImageType        string   `json:"imageType"`
         type: string
+      initScript:
+        $ref: '#/definitions/cloudmodel.InitScriptReq'
       label:
         additionalProperties:
           type: string
@@ -799,15 +835,11 @@ definitions:
       description:
         example: Made in CB-TB
         type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
+      initScript:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.InitScriptReq'
+        description: InitScript is the default init script for all NodeGroups (overridable
+          per NodeGroup)
       label:
         additionalProperties:
           type: string
@@ -862,23 +894,12 @@ definitions:
         - refine
         example: continue
         type: string
-      postCommandAsync:
+      postScript:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.PostScriptReq'
         description: |-
-          PostCommandAsync (default false) returns the response as soon as nodes are
-          provisioned and runs post-deployment commands in the background. The response
-          then carries postCommandStatus="Running" plus postCommandRequestId; observe with
-          GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}
-          or by polling GET /ns/{nsId}/infra/{infraId}.
-        example: false
-        type: boolean
-      postCommands:
-        description: |-
-          PostCommands are post-deployment command phases that bootstrap the Nodes.
-          Phases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.
-          A single command set is simply one phase: [{"command": ["..."]}]
-        items:
-          $ref: '#/definitions/cloudmodel.PostCommandReq'
-        type: array
+          PostScript is the post-deployment script that bootstraps the Nodes once they are up.
+          Its phases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.
       sgTemplateId:
         description: |-
           SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use
@@ -930,15 +951,6 @@ definitions:
         description: Id is unique identifier for the object
         example: aws-ap-southeast-1
         type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
       label:
         additionalProperties:
           type: string
@@ -960,34 +972,30 @@ definitions:
         type: array
       placementAlgo:
         type: string
-      postCommandAsync:
-        description: PostCommandAsync echoes whether the commands run in the background
-        type: boolean
-      postCommandRequestId:
-        description: |-
-          PostCommandRequestId is the streaming/tracking key of the post-deployment run
-          (always set when post-deployment commands were requested, in both modes)
-        example: pc-infra01-1a2b3c
-        type: string
-      postCommandResults:
-        description: PostCommandResults holds per-phase outcomes
-        items:
-          $ref: '#/definitions/cloudmodel.PostCommandPhaseResult'
-        type: array
-      postCommandStatus:
+      postScript:
         allOf:
-        - $ref: '#/definitions/cloudmodel.PostCommandStatus'
+        - $ref: '#/definitions/cloudmodel.PostScriptReq'
+        description: PostScript echoes the requested post-deployment script
+      postScriptRequestId:
         description: |-
-          PostCommandStatus summarizes the post-deployment command outcome.
+          PostScriptRequestId is the streaming/tracking key of the post-deployment run
+          (always set when a post-deployment script was requested, in both modes)
+        example: ps-infra01-1a2b3c
+        type: string
+      postScriptResults:
+        description: PostScriptResults holds per-phase outcomes
+        items:
+          $ref: '#/definitions/cloudmodel.PostScriptPhaseResult'
+        type: array
+      postScriptStatus:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.PostScriptStatus'
+        description: |-
+          PostScriptStatus summarizes the post-deployment script outcome.
           "Running" means execution is still in progress (async mode): stream it with
-          GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}
+          GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postScriptRequestId}
           or poll this object until the status becomes terminal.
         example: Completed
-      postCommands:
-        description: PostCommands are the requested post-deployment command phases
-        items:
-          $ref: '#/definitions/cloudmodel.PostCommandReq'
-        type: array
       resourceType:
         description: ResourceType is the type of the resource
         type: string
@@ -1027,15 +1035,6 @@ definitions:
       description:
         example: Made in CB-TB
         type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:yes)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
       label:
         additionalProperties:
           type: string
@@ -1063,16 +1062,11 @@ definitions:
         - refine
         example: continue
         type: string
-      postCommandAsync:
-        description: PostCommandAsync runs post-deployment commands in the background
-        example: false
-        type: boolean
-      postCommands:
-        description: PostCommands are sequential post-deployment command phases that
-          bootstrap the Nodes
-        items:
-          $ref: '#/definitions/cloudmodel.PostCommandReq'
-        type: array
+      postScript:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.PostScriptReq'
+        description: PostScript is the post-deployment script that bootstraps the
+          Nodes once they are up
       systemLabel:
         description: SystemLabel is for describing the infra in a keyword (any string
           can be used) for special System purpose
@@ -1088,6 +1082,80 @@ definitions:
         items:
           $ref: '#/definitions/cloudmodel.SshCmdResultForAPI'
         type: array
+    type: object
+  cloudmodel.InitScriptReq:
+    properties:
+      env:
+        additionalProperties:
+          type: string
+        example:
+          ROLE: worker
+        type: object
+      fromTemplateId:
+        description: FromTemplateId records the template the steps were copied from
+          (set by CB-Tumblebug)
+        example: initscript-nginx
+        type: string
+      implicit:
+        description: |-
+          Implicit is set by CB-Tumblebug when the request had no initScript; a rendering failure then
+          falls back to the CB-Spider default user data instead of failing the Node
+        type: boolean
+      mode:
+        default: default
+        enum:
+        - default
+        - custom
+        - none
+        example: default
+        type: string
+      notify:
+        description: 'Notify false stops the Node from reporting its result to the
+          notifier (default: report when one is registered)'
+        example: true
+        type: boolean
+      script:
+        example: |-
+          #!/bin/bash
+          apt-get install -y -qq jq
+        type: string
+      scripts:
+        items:
+          $ref: '#/definitions/cloudmodel.InitScriptStep'
+        type: array
+      templateId:
+        example: initscript-nginx
+        type: string
+      userName:
+        default: cb-user
+        example: cb-user
+        type: string
+    type: object
+  cloudmodel.InitScriptStep:
+    properties:
+      continueOnError:
+        description: ContinueOnError keeps running the next steps when this one fails;
+          the Node then reports ok with a note
+        example: false
+        type: boolean
+      labelSelector:
+        description: LabelSelector runs the step only on Nodes whose labels match
+          (e.g. "role=gpu"); empty runs everywhere
+        example: role=gpu
+        type: string
+      name:
+        example: install-agent
+        type: string
+      script:
+        example: |-
+          #!/bin/bash
+          apt-get install -y -qq jq
+        type: string
+      timeoutSec:
+        description: 'TimeoutSec stops the step after this many seconds (0: no limit);
+          a timeout counts as a failure'
+        example: 600
+        type: integer
     type: object
   cloudmodel.K8sClusterReq:
     properties:
@@ -1473,16 +1541,27 @@ definitions:
         $ref: '#/definitions/cloudmodel.ImageSummary'
       imageId:
         type: string
+      initScript:
+        $ref: '#/definitions/cloudmodel.InitScriptReq'
+      initScriptMessage:
+        type: string
+      initScriptStatus:
+        description: |-
+          InitScriptStatus and InitScriptMessage are read from the Node's stored init script result (not persisted here);
+          pending means the Node has an init script with reporting on but has not reported yet
+        enum:
+        - pending
+        - initializing
+        - ok
+        - fail
+        example: ok
+        type: string
       label:
         additionalProperties:
           type: string
         type: object
       location:
         $ref: '#/definitions/cloudmodel.Location'
-      monAgentStatus:
-        description: Montoring agent status
-        example: '[installed, notInstalled, failed]'
-        type: string
       name:
         description: Name is human-readable string to represent the object
         example: aws-ap-southeast-1
@@ -1593,31 +1672,11 @@ definitions:
     - Linux_UNIX
     - Windows
     - PlatformNA
-  cloudmodel.PostCommandPhaseResult:
-    properties:
-      phase:
-        description: Phase is the 1-based execution order
-        example: 1
-        type: integer
-      results:
-        allOf:
-        - $ref: '#/definitions/cloudmodel.InfraSshCmdResultForAPI'
-        description: Results holds per-node command results
-      status:
-        allOf:
-        - $ref: '#/definitions/cloudmodel.PostCommandStatus'
-        description: Status is the aggregated outcome of this phase (Skipped when
-          a previous phase stopped execution)
-        example: Completed
-      target:
-        description: Target echoes the scope this phase ran against
-        example: nodeGroupId=control
-        type: string
-    type: object
-  cloudmodel.PostCommandReq:
+  cloudmodel.PostScriptPhase:
     properties:
       command:
-        description: Command is the list of commands to execute
+        description: Command is the list of commands to execute (not needed when TemplateId
+          or Scripts is given)
         example:
         - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
           is: $client_ip'
@@ -1629,6 +1688,13 @@ definitions:
           phase fails (default: false)'
         example: false
         type: boolean
+      env:
+        additionalProperties:
+          type: string
+        description: Env is exported to Command, TemplateId and Scripts
+        example:
+          ROLE: web
+        type: object
       labelSelector:
         description: LabelSelector limits execution to nodes matching the selector
           (e.g. "role=worker")
@@ -1642,6 +1708,18 @@ definitions:
         description: NodeId limits execution to a single node
         example: g1-1
         type: string
+      scripts:
+        description: Scripts runs these steps over SSH (same runner as TemplateId),
+          appended after the template's steps
+        items:
+          $ref: '#/definitions/cloudmodel.InitScriptStep'
+        type: array
+      templateId:
+        description: |-
+          TemplateId runs an init script template over SSH instead of Command: its steps run in order as root with
+          the Node identity (TB_*) and Env exported, exactly like a first-boot init script
+        example: initscript-nginx
+        type: string
       timeoutMinutes:
         default: 30
         description: |-
@@ -1653,10 +1731,38 @@ definitions:
         description: UserName is the SSH username to use for command execution
         example: cb-user
         type: string
-    required:
-    - command
     type: object
-  cloudmodel.PostCommandStatus:
+  cloudmodel.PostScriptPhaseResult:
+    properties:
+      phase:
+        description: Phase is the 1-based execution order
+        example: 1
+        type: integer
+      results:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.InfraSshCmdResultForAPI'
+        description: Results holds per-node command results
+      status:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.PostScriptStatus'
+        description: Status is the aggregated outcome of this phase (Skipped when
+          a previous phase stopped execution)
+        example: Completed
+      target:
+        description: Target echoes the scope this phase ran against
+        example: nodeGroupId=control
+        type: string
+    type: object
+  cloudmodel.PostScriptReq:
+    properties:
+      phases:
+        description: Phases run sequentially; each may target a nodeGroupId, nodeId,
+          or labelSelector
+        items:
+          $ref: '#/definitions/cloudmodel.PostScriptPhase'
+        type: array
+    type: object
+  cloudmodel.PostScriptStatus:
     enum:
     - None
     - Completed
@@ -1664,14 +1770,16 @@ definitions:
     - Failed
     - Skipped
     - Running
+    - Interrupted
     type: string
     x-enum-varnames:
-    - PostCommandStatusNone
-    - PostCommandStatusCompleted
-    - PostCommandStatusCompletedWithErrors
-    - PostCommandStatusFailed
-    - PostCommandStatusSkipped
-    - PostCommandStatusRunning
+    - PostScriptStatusNone
+    - PostScriptStatusCompleted
+    - PostScriptStatusCompletedWithErrors
+    - PostScriptStatusFailed
+    - PostScriptStatusSkipped
+    - PostScriptStatusRunning
+    - PostScriptStatusInterrupted
   cloudmodel.ProvisioningFailure:
     properties:
       attemptedZone:
@@ -1959,6 +2067,9 @@ definitions:
         type: number
       acceleratorModel:
         type: string
+      acceleratorPartitionSize:
+        example: 0.125
+        type: number
       acceleratorType:
         type: string
       architecture:
@@ -1970,6 +2081,8 @@ definitions:
         type: array
       availabilityCheckedAt:
         type: string
+      availabilityQuota:
+        $ref: '#/definitions/cloudmodel.AvailabilityQuota'
       availabilityReason:
         type: string
       availabilityRefreshAfter:
@@ -2088,6 +2201,9 @@ definitions:
       acceleratorModel:
         example: NVIDIA Tesla V100
         type: string
+      acceleratorPartitionSize:
+        example: 0.125
+        type: number
       acceleratorType:
         example: GPU
         type: string
@@ -2518,15 +2634,6 @@ definitions:
         description: Id is unique identifier for the object
         example: aws-ap-southeast-1
         type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
       label:
         additionalProperties:
           type: string
@@ -2548,34 +2655,30 @@ definitions:
         type: array
       placementAlgo:
         type: string
-      postCommandAsync:
-        description: PostCommandAsync echoes whether the commands run in the background
-        type: boolean
-      postCommandRequestId:
-        description: |-
-          PostCommandRequestId is the streaming/tracking key of the post-deployment run
-          (always set when post-deployment commands were requested, in both modes)
-        example: pc-infra01-1a2b3c
-        type: string
-      postCommandResults:
-        description: PostCommandResults holds per-phase outcomes
-        items:
-          $ref: '#/definitions/cloudmodel.PostCommandPhaseResult'
-        type: array
-      postCommandStatus:
+      postScript:
         allOf:
-        - $ref: '#/definitions/cloudmodel.PostCommandStatus'
+        - $ref: '#/definitions/cloudmodel.PostScriptReq'
+        description: PostScript echoes the requested post-deployment script
+      postScriptRequestId:
         description: |-
-          PostCommandStatus summarizes the post-deployment command outcome.
+          PostScriptRequestId is the streaming/tracking key of the post-deployment run
+          (always set when a post-deployment script was requested, in both modes)
+        example: ps-infra01-1a2b3c
+        type: string
+      postScriptResults:
+        description: PostScriptResults holds per-phase outcomes
+        items:
+          $ref: '#/definitions/cloudmodel.PostScriptPhaseResult'
+        type: array
+      postScriptStatus:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.PostScriptStatus'
+        description: |-
+          PostScriptStatus summarizes the post-deployment script outcome.
           "Running" means execution is still in progress (async mode): stream it with
-          GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}
+          GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postScriptRequestId}
           or poll this object until the status becomes terminal.
         example: Completed
-      postCommands:
-        description: PostCommands are the requested post-deployment command phases
-        items:
-          $ref: '#/definitions/cloudmodel.PostCommandReq'
-        type: array
       resourceType:
         description: ResourceType is the type of the resource
         type: string
@@ -2608,15 +2711,11 @@ definitions:
       description:
         example: Made in CB-TB
         type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
+      initScript:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.InitScriptReq'
+        description: InitScript is the default init script for all NodeGroups (overridable
+          per NodeGroup)
       label:
         additionalProperties:
           type: string
@@ -2671,23 +2770,12 @@ definitions:
         - refine
         example: continue
         type: string
-      postCommandAsync:
+      postScript:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.PostScriptReq'
         description: |-
-          PostCommandAsync (default false) returns the response as soon as nodes are
-          provisioned and runs post-deployment commands in the background. The response
-          then carries postCommandStatus="Running" plus postCommandRequestId; observe with
-          GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}
-          or by polling GET /ns/{nsId}/infra/{infraId}.
-        example: false
-        type: boolean
-      postCommands:
-        description: |-
-          PostCommands are post-deployment command phases that bootstrap the Nodes.
-          Phases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.
-          A single command set is simply one phase: [{"command": ["..."]}]
-        items:
-          $ref: '#/definitions/cloudmodel.PostCommandReq'
-        type: array
+          PostScript is the post-deployment script that bootstraps the Nodes once they are up.
+          Its phases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.
       sgTemplateId:
         description: |-
           SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use
@@ -2739,15 +2827,6 @@ definitions:
         description: Id is unique identifier for the object
         example: aws-ap-southeast-1
         type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
       label:
         additionalProperties:
           type: string
@@ -2769,34 +2848,30 @@ definitions:
         type: array
       placementAlgo:
         type: string
-      postCommandAsync:
-        description: PostCommandAsync echoes whether the commands run in the background
-        type: boolean
-      postCommandRequestId:
-        description: |-
-          PostCommandRequestId is the streaming/tracking key of the post-deployment run
-          (always set when post-deployment commands were requested, in both modes)
-        example: pc-infra01-1a2b3c
-        type: string
-      postCommandResults:
-        description: PostCommandResults holds per-phase outcomes
-        items:
-          $ref: '#/definitions/cloudmodel.PostCommandPhaseResult'
-        type: array
-      postCommandStatus:
+      postScript:
         allOf:
-        - $ref: '#/definitions/cloudmodel.PostCommandStatus'
+        - $ref: '#/definitions/cloudmodel.PostScriptReq'
+        description: PostScript echoes the requested post-deployment script
+      postScriptRequestId:
         description: |-
-          PostCommandStatus summarizes the post-deployment command outcome.
+          PostScriptRequestId is the streaming/tracking key of the post-deployment run
+          (always set when a post-deployment script was requested, in both modes)
+        example: ps-infra01-1a2b3c
+        type: string
+      postScriptResults:
+        description: PostScriptResults holds per-phase outcomes
+        items:
+          $ref: '#/definitions/cloudmodel.PostScriptPhaseResult'
+        type: array
+      postScriptStatus:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.PostScriptStatus'
+        description: |-
+          PostScriptStatus summarizes the post-deployment script outcome.
           "Running" means execution is still in progress (async mode): stream it with
-          GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}
+          GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postScriptRequestId}
           or poll this object until the status becomes terminal.
         example: Completed
-      postCommands:
-        description: PostCommands are the requested post-deployment command phases
-        items:
-          $ref: '#/definitions/cloudmodel.PostCommandReq'
-        type: array
       resourceType:
         description: ResourceType is the type of the resource
         type: string
@@ -4334,6 +4409,36 @@ definitions:
         example: /beetle/request/1706500000000000000
         type: string
     type: object
+  model.AvailabilityQuota:
+    properties:
+      fitCount:
+        description: more instances of this type that fit
+        example: 320
+        type: integer
+      limit:
+        example: 640
+        type: integer
+      name:
+        description: quota name as the CSP calls it
+        example: Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances
+        type: string
+      perInstance:
+        description: what one instance of this type takes from the quota
+        example: 2
+        type: integer
+      scope:
+        description: region, or "zone <id>"
+        example: region
+        type: string
+      unit:
+        example: vCPU
+        type: string
+      used:
+        description: Used is omitted when the CSP did not report usage; FitCount then
+          assumes nothing is in use
+        example: 0
+        type: integer
+    type: object
   model.AvailabilityStatus:
     enum:
     - Available
@@ -5726,6 +5831,25 @@ definitions:
     - name
     - version
     type: object
+  onpremisemodel.ListeningPortProperty:
+    properties:
+      bindAddress:
+        description: Local bind address (e.g., "0.0.0.0", "::", "127.0.0.1")
+        example: 0.0.0.0
+        type: string
+      port:
+        description: Listening port number
+        example: 8080
+        type: integer
+      processName:
+        description: Owning process name if available
+        example: nginx
+        type: string
+      protocol:
+        description: Transport protocol (e.g., "tcp", "udp")
+        example: tcp
+        type: string
+    type: object
   onpremisemodel.MemoryProperty:
     properties:
       available:
@@ -5892,6 +6016,11 @@ definitions:
       interfaces:
         items:
           $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
+        type: array
+      listeningPorts:
+        description: Listening TCP/UDP sockets on the node
+        items:
+          $ref: '#/definitions/onpremisemodel.ListeningPortProperty'
         type: array
       machineId:
         description: Unique identifier for the node (e.g., UUID)
@@ -8795,6 +8924,9 @@ definitions:
         type: number
       acceleratorModel:
         type: string
+      acceleratorPartitionSize:
+        example: 0.125
+        type: number
       acceleratorType:
         type: string
       architecture:
@@ -8806,6 +8938,8 @@ definitions:
         type: array
       availabilityCheckedAt:
         type: string
+      availabilityQuota:
+        $ref: '#/definitions/model.AvailabilityQuota'
       availabilityReason:
         type: string
       availabilityRefreshAfter:
@@ -9098,9 +9232,6 @@ definitions:
         type: string
       infraName:
         example: infra01
-        type: string
-      installMonAgent:
-        example: "no"
         type: string
       label:
         additionalProperties:
@@ -9856,7 +9987,9 @@ paths:
         * Encrypted requests include `encryptionKeyId` field
         * Server automatically detects and decrypts encrypted requests
 
-        [Examples]
+        [Examples & Guides]
+        * Data Transfer Feature Guide (hooks & workflows): https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/data-transfer.md
+        * Post-Migration Managed RDBMS Data Transfer (Public & Private): https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#post-migration-data-transfer-guide-public-vs-private-rdbms
         * Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
       operationId: MigrateData
       parameters:
@@ -10940,6 +11073,8 @@ paths:
         By default this API runs synchronously. Send header `Prefer: respond-async` to run it
         asynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes, or 35-45+ minutes for IBM dedicated flavors): receive 202 Accepted with a reqId.
         - IBM Cloud Databases hosting note: 'multitenant' shared model provisions in ~10 minutes, whereas Dedicated flavors ('b3c.*') take 35-45+ minutes. Ensure client/proxy timeouts are configured for >= 50 minutes if calling synchronously with dedicated flavors.
+        - Private RDBMS (`publicAccess=false`, requires CB-Tumblebug v0.13.9+): on SQL-only CSPs (AWS, IBM), remote logical database creation is skipped with a warning log. Perform schema/data transfer inside the target VPC/VNet via `POST /migration/data` (`transx` hooks) or CM-Centipede.
+        - Guide (Private RDBMS & Post-Migration Data Transfer): https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#post-migration-data-transfer-guide-public-vs-private-rdbms
       operationId: MigrateRDBMS
       parameters:
       - default: mig01
@@ -11027,6 +11162,10 @@ paths:
           description: Invalid request parameters
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: RDBMS instance not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error
           schema:
@@ -11063,6 +11202,10 @@ paths:
           description: Invalid request parameters
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: RDBMS instance not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error
           schema:
@@ -11074,8 +11217,10 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve the list of logical databases inside an existing managed
-        RDBMS instance
+      description: |-
+        Retrieve the list of logical databases inside an existing managed RDBMS instance.
+        Private RDBMS (publicAccess=false, requires CB-Tumblebug v0.13.9+): returns 422 Unprocessable Entity immediately for SQL-only CSPs (AWS, IBM) that have no native logical database API.
+        See: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#private-mode-publicaccessfalse-fast-fail-policy
       operationId: ListRDBMSDatabases
       parameters:
       - default: mig01
@@ -11110,6 +11255,15 @@ paths:
           description: Invalid request parameters
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: RDBMS instance not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "422":
+          description: Unprocessable Entity - operation requires direct SQL access
+            on a private RDBMS (publicAccess=false)
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error
           schema:
@@ -11120,8 +11274,10 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new logical database inside an existing managed RDBMS
-        instance
+      description: |-
+        Create a new logical database inside an existing managed RDBMS instance.
+        Private RDBMS (publicAccess=false, requires CB-Tumblebug v0.13.9+): returns 422 Unprocessable Entity immediately when the target CSP or charset/collation options require direct SQL access (AWS, IBM, Azure charset-only, Tencent collation, NCP/NHN charset or collation).
+        See: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#private-mode-publicaccessfalse-fast-fail-policy
       operationId: CreateRDBMSDatabase
       parameters:
       - default: mig01
@@ -11162,6 +11318,15 @@ paths:
           description: Invalid request parameters
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: RDBMS instance not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "422":
+          description: Unprocessable Entity - operation requires direct SQL access
+            on a private RDBMS (publicAccess=false)
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error
           schema:
@@ -11173,7 +11338,10 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Delete a logical database inside an existing managed RDBMS instance
+      description: |-
+        Delete a logical database inside an existing managed RDBMS instance.
+        Private RDBMS (publicAccess=false, requires CB-Tumblebug v0.13.9+): returns 422 Unprocessable Entity immediately for SQL-only CSPs (AWS, IBM) that have no native logical database API.
+        See: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#private-mode-publicaccessfalse-fast-fail-policy
       operationId: DeleteRDBMSDatabase
       parameters:
       - default: mig01
@@ -11213,6 +11381,15 @@ paths:
           description: Invalid request parameters
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: RDBMS instance not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "422":
+          description: Unprocessable Entity - operation requires direct SQL access
+            on a private RDBMS (publicAccess=false)
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error
           schema:
@@ -11224,8 +11401,10 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieve live TLS enforcement status, active cipher, and server
-        CA certificate via CB-Tumblebug and CB-Spider
+      description: |-
+        Retrieve live TLS enforcement status, active cipher, and server CA certificate via CB-Tumblebug and CB-Spider.
+        Private RDBMS (publicAccess=false, requires CB-Tumblebug v0.13.9+): returns 422 Unprocessable Entity immediately across all CSPs because TLS/SQL probing requires direct network reachability to the DB port.
+        See: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#post-migration-data-transfer-guide-public-vs-private-rdbms
       operationId: GetRDBMSSecureTransport
       parameters:
       - default: mig01
@@ -11258,6 +11437,15 @@ paths:
             $ref: '#/definitions/model.ApiResponse-rdbmsmodel_RDBMSSecureTransportInfo'
         "400":
           description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: RDBMS instance not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "422":
+          description: Unprocessable Entity - secure-transport probing requires direct
+            TLS/SQL access on a private RDBMS (publicAccess=false)
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
@@ -13431,6 +13619,8 @@ paths:
         [Note] The recommended instance names use default patterns (`mig-rdbms-01`, `mig-rdbms-02`, ...).
         - To apply a naming prefix at migration time, use the `nameSeed` query parameter on the migration API.
         - IBM Cloud Databases hosting note: defaults to 'multitenant' shared model for fast provisioning (~10 minutes). Dedicated host flavors ('b3c.*') take 35-45+ minutes.
+        - Private RDBMS (`publicAccess=false`, requires CB-Tumblebug v0.13.9+): preserves original `charset`/`collation` for Tencent and Azure without silent mutation and emits `warnings` when direct SQL would trigger HTTP 422 (AWS, IBM, Tencent with collation, Azure charset-only).
+        - Guide: https://github.com/cloud-barista/cm-beetle/blob/main/docs/feature-guide/middleware-rdbms.md#private-mode-publicaccessfalse-fast-fail-policy
       operationId: RecommendRDBMS
       parameters:
       - description: Specify source RDBMS instances to be migrated
@@ -14347,7 +14537,7 @@ paths:
         - Request tracking is managed independently by Beetle using `reqId` (from `X-Request-Id`).
         - Outbound state-changing and recommendation calls to CB-Tumblebug are recorded in `subRequests[]` with `subReqId` (`{reqId}-{seq}`) and `tumblebugSource` (`cm-beetle:{reqId}`).
         - Use `brief=true` during high-frequency polling to omit large request/response bodies while still receiving `status`, `subRequestSummary`, and `subRequests`.
-        - Set `withTumblebug=true` to enrich each `subRequests[]` entry with live `upstreamStatus` and `upstreamProgress` from CB-Tumblebug `GET /request/{subReqId}`.
+        - Set `withTumblebug=true` to enrich active (`Handling`) `subRequests[]` entries with live `upstreamStatus` and `upstreamProgress` from CB-Tumblebug `GET /request/{subReqId}`.
 
         [Status Values]
         - Handling: Request is currently being processed
@@ -14378,8 +14568,8 @@ paths:
         name: withSubRequests
         type: boolean
       - default: false
-        description: 'Enrich subRequests with live upstream status/progress from CB-Tumblebug
-          (default: false)'
+        description: 'Enrich active (Handling) subRequests with live upstream status/progress
+          from CB-Tumblebug (default: false)'
         in: query
         name: withTumblebug
         type: boolean

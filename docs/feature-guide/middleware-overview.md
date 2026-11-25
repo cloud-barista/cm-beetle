@@ -8,7 +8,7 @@ This document covers support for managed middleware resources (NLB, DBMS / Manag
 | ----------------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :-------: | :-: | :-: | :-: |
 | Object Storage          | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     | ✅  | ✅  | ✅  |
 | NLB                     | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    📅     | ✅  | ✅  | 📅  |
-| Managed RDBMS (MySQL)   | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     | ✅  | ✅  | ❌  |
+| Managed RDBMS (MySQL)   | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    🚧     | ✅  | ✅  | ❌  |
 | Managed RDBMS (MariaDB) | ✅  |  ❌   | ❌  |   ✅    |   ❌    | ❌  |    ✅     | ❌  | ✅  | ❌  |
 
 ## Object Storage
@@ -34,10 +34,12 @@ See also: [Managed RDBMS Feature Guide](middleware-rdbms.md)
 | :----------------------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :-------: | :----------------: | :-: | :-: |
 | Support & Capability Discovery | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     |         ✅         | ✅  | ❌  |
 | Recommendation & Validation    | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     |         ✅         | ✅  | ❌  |
-| Migration & Provisioning       | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     |         ✅         | ✅  | ❌  |
-| Logical Database CRUD          | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     |         ✅         | ✅  | ❌  |
-| Internal Data I/O              | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     |         ✅         | ✅  | ❌  |
-| External Data I/O              | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     | N/A (Private only) | ✅  | ❌  |
+| Migration & Provisioning       | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    🚧     |         ✅         | ✅  | ❌  |
+| Logical Database CRUD          | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    🚧     |         ✅         | ✅  | ❌  |
+| Internal Data I/O              | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    🚧     |         ✅         | ✅  | ❌  |
+| External Data I/O              | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    🚧     | N/A (Private only) | ✅  | ❌  |
+
+> - **OpenStack (MySQL 8.4)**: Provisioning is currently in progress (🚧) due to an OpenStack Trove MySQL 8.4 `EnableRootUser` authentication plugin (`mysql_native_password`) failure ([cb-spider#1941](https://github.com/cloud-barista/cb-spider/issues/1941)).
 
 ### MariaDB
 
@@ -50,7 +52,7 @@ See also: [Managed RDBMS Feature Guide](middleware-rdbms.md)
 | Internal Data I/O              | ✅  |  ❌   | ❌  |   ✅    |   ❌    | ❌  |    ✅     | ❌  | ✅  | ❌  |
 | External Data I/O              | ✅  |  ❌   | ❌  |   ✅    |   ❌    | ❌  |    ✅     | ❌  | ✅  | ❌  |
 
-> - **Supported CSPs**: MariaDB managed services are natively supported by **AWS** (RDS), **Alibaba** (ApsaraDB), **NHN** (RDS), and **OpenStack** (Trove v10.4).
+> - **Supported CSPs**: MariaDB managed services are natively supported by **AWS** (RDS), **Alibaba** (ApsaraDB), **NHN** (RDS), and **OpenStack** (Trove v11.4).
 > - **Automatic Compatibility Fallback**: For other CSPs (Azure, GCP, Tencent, IBM, NCP, KT) that do not offer native MariaDB services, CM-Beetle automatically recommends MySQL as a binary-compatible fallback with actionable warnings.
 
 ## Network Load Balancer (NLB)
@@ -89,4 +91,5 @@ See also: [NLB Feature Guide](middleware-nlb.md)
 
 ## Roadmap
 
+- 🚧 **In Progress**: Managed RDBMS MySQL (OpenStack Trove MySQL 8.4, [cb-spider#1941](https://github.com/cloud-barista/cb-spider/issues/1941))
 - 📅 **Planned**: NLB (OpenStack, KT)

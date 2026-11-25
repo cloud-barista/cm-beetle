@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-11-03 07:47:42
+**Generated At:** 2026-11-25 09:20:42
 
 **Namespace:** mig01
 
@@ -21,7 +21,6 @@
 | **Running VMs** | 3 |
 | **Stopped VMs** | 0 |
 | **Total NLBs** | 1 |
-| **Monitoring Agent** |  |
 
 ## Compute Resources
 
@@ -42,9 +41,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | tbadk2iui8mcqcq39okd | Running | 2 vCPU, 2.0 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21) | **VNet:** my03-mig-vnet-01<br>**Subnet:** my03-mig-subnet-01<br>**Public IP:** 34.64.54.69<br>**Private IP:** 10.0.1.4<br>**SGs:** my03-mig-sg-02<br>**SSH:** my03-mig-sshkey-01 |
-| my03-ng-influxdb-back-1 | tbosjonktf0ju67ngpa3 | Running | 4 vCPU, 16.0 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21) | **VNet:** my03-mig-vnet-01<br>**Subnet:** my03-mig-subnet-01<br>**Public IP:** 8.230.27.190<br>**Private IP:** 10.0.1.3<br>**SGs:** my03-mig-sg-01<br>**SSH:** my03-mig-sshkey-01 |
-| my03-ng-influxdb-back-2 | tbck4bkd5ptgfbl199pj | Running | 4 vCPU, 16.0 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21) | **VNet:** my03-mig-vnet-01<br>**Subnet:** my03-mig-subnet-01<br>**Public IP:** 34.22.67.165<br>**Private IP:** 10.0.1.2<br>**SGs:** my03-mig-sg-01<br>**SSH:** my03-mig-sshkey-01 |
+| my03-ng-influxdb-back-1 | tbjg90vgd6kbujirukfr | Running | 4 vCPU, 16.0 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21) | **VNet:** my03-mig-vnet-01<br>**Subnet:** my03-mig-subnet-01<br>**Public IP:** 34.64.48.98<br>**Private IP:** 10.0.1.4<br>**SGs:** my03-mig-sg-01<br>**SSH:** my03-mig-sshkey-01 |
+| my03-ng-influxdb-back-2 | tb1lee0l2cp9nso74pq6 | Running | 4 vCPU, 16.0 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21) | **VNet:** my03-mig-vnet-01<br>**Subnet:** my03-mig-subnet-01<br>**Public IP:** 34.158.205.11<br>**Private IP:** 10.0.1.2<br>**SGs:** my03-mig-sg-01<br>**SSH:** my03-mig-sshkey-01 |
+| my03-ng-ip-10-0-1-30-62161624-1 | tbr066qbkvoha4fjthgs | Running | 2 vCPU, 2.0 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21) | **VNet:** my03-mig-vnet-01<br>**Subnet:** my03-mig-subnet-01<br>**Public IP:** 34.22.89.144<br>**Private IP:** 10.0.1.3<br>**SGs:** my03-mig-sg-02<br>**SSH:** my03-mig-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +55,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my03-mig-vnet-01 |
-| **CSP VNet ID** | tbr3nelub33c1khtsmap |
+| **CSP VNet ID** | tb5dn9aum2qip3phdv8n |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | gcp-asia-northeast3 |
 | **Subnet Count** | 1 |
@@ -65,7 +64,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my03-mig-subnet-01 | tb7mjg75dtuc0r013vhc | 10.0.1.0/24 |  |
+| my03-mig-subnet-01 | tbgi6cba5avpr77flia4 | 10.0.1.0/24 |  |
 
 ### Network Load Balancers (NLB)
 
@@ -74,11 +73,11 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my03-ng-influxdb-back |
-| **CSP NLB Name** | tbro52m6fqs4hj9kopdi |
-| **CSP NLB ID** | tbro52m6fqs4hj9kopdi |
+| **CSP NLB Name** | tbiu3c4ki47g9gl6fr82 |
+| **CSP NLB ID** | tbiu3c4ki47g9gl6fr82 |
 | **Type / Scope** |  / REGION |
 | **Connection** | gcp-asia-northeast3 |
-| **Listener** | TCP:8086 (IP: 34.64.134.61) |
+| **Listener** | TCP:8086 (IP: 34.50.41.226) |
 | **Target Group** | TCP:8086 (Node Group: my03-ng-influxdb-back, 2 nodes) |
 | **Health Checker** | HTTP:8086 (Interval: 10s, Timeout: 10s, Threshold: 3) |
 
@@ -86,8 +85,8 @@
 
 | Node Name | CSP VM ID | Private IP | Public IP | Status |
 |-----------|-----------|------------|-----------|--------|
-| my03-ng-influxdb-back-1 | tbosjonktf0ju67ngpa3 | 10.0.1.3 | 8.230.27.190 | Running |
-| my03-ng-influxdb-back-2 | tbck4bkd5ptgfbl199pj | 10.0.1.2 | 34.22.67.165 | Running |
+| my03-ng-influxdb-back-1 | tbjg90vgd6kbujirukfr | 10.0.1.4 | 34.64.48.98 | Running |
+| my03-ng-influxdb-back-2 | tb1lee0l2cp9nso74pq6 | 10.0.1.2 | 34.158.205.11 | Running |
 
 
 ## Security Resources
@@ -96,7 +95,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my03-mig-sshkey-01 | tbsslk45sts0rjvmkip5 |  |  |
+| my03-mig-sshkey-01 | tbdnf6sndttnf336lgim |  |  |
 
 ### Security Groups
 
@@ -105,7 +104,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my03-mig-sg-01 |
-| **CSP Security Group ID** | tbe6hu7h8nt311q3edve |
+| **CSP Security Group ID** | tb9uu0hejtsjn923sfvd |
 | **VNet** | my03-mig-vnet-01 |
 | **Rule Count** | 6 rules |
 
@@ -125,7 +124,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my03-mig-sg-02 |
-| **CSP Security Group ID** | tbp1fk96uikhg6f6tb7r |
+| **CSP Security Group ID** | tbplq2umhkn1upbkpp57 |
 | **VNet** | my03-mig-vnet-01 |
 | **Rule Count** | 4 rules |
 
@@ -159,8 +158,8 @@
 
 | VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
 |---------|------|-----------------|------------------|
-| my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | n2-highcpu-2 | $0.0921 | $66.29 |
 | my03-ng-influxdb-back-1 | n4-standard-4 | $0.2330 | $167.73 |
 | my03-ng-influxdb-back-2 | n4-standard-4 | $0.2330 | $167.73 |
+| my03-ng-ip-10-0-1-30-62161624-1 | n2-highcpu-2 | $0.0921 | $66.29 |
 
 

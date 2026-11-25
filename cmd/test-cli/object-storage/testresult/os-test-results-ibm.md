@@ -7,17 +7,17 @@
 
 ### Environment
 
-- CM-Beetle: v0.6.4+ (95cc61d)
-- CB-Tumblebug: v0.13.8
+- CM-Beetle: v0.6.5+ (83361e8)
+- CB-Tumblebug: v0.14.0
 - Target CSP: IBM
 - Target Region: au-syd
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Name Seed: my
 - Test CLI: Custom automated testing tool
-- Test Date: November 11, 2026
-- Test Time: 13:00:09 KST
-- Test Execution: 2026-11-11 13:00:09 KST
+- Test Date: November 25, 2026
+- Test Time: 18:37:15 KST
+- Test Execution: 2026-11-25 18:37:15 KST
 
 ### Scenario
 
@@ -37,18 +37,18 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 3ms | Pass |
-| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 2m41.75s | Pass |
-| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 7ms | Pass |
-| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 2.106s | Pass |
-| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 4.61s | Pass |
-| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 28.168s | Pass |
+| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 7ms | Pass |
+| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 2m46.377s | Pass |
+| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 14ms | Pass |
+| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 1.212s | Pass |
+| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 3.873s | Pass |
+| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 28.193s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 3m21.649301493s
+**Total Duration**: 3m24.68304523s
 
-*Test executed on November 11, 2026 at 13:00:09 KST (2026-11-11 13:00:09 KST) using CM-Beetle automated test CLI*
+*Test executed on November 25, 2026 at 18:37:15 KST (2026-11-25 18:37:15 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -323,13 +323,13 @@
       {
         "conditions": [
           {
-            "lastTransitionTime": "2026-11-11T04:00:26Z",
+            "lastTransitionTime": "2026-11-25T09:37:29Z",
             "reason": "Available",
             "status": "True",
             "type": "Ready"
           },
           {
-            "lastTransitionTime": "2026-11-11T04:00:26Z",
+            "lastTransitionTime": "2026-11-25T09:37:29Z",
             "reason": "Available",
             "status": "True",
             "type": "Synced"
@@ -365,26 +365,26 @@
           "verified": true
         },
         "connectionName": "ibm-au-syd",
-        "cspResourceId": "tbns38hdccs95asu615f",
-        "cspResourceName": "tbns38hdccs95asu615f",
+        "cspResourceId": "tb97urd3lf2b6nkm0npe",
+        "cspResourceName": "tb97urd3lf2b6nkm0npe",
         "description": "Created by CM-Beetle",
         "id": "my-os-01",
         "maxKeys": 1000,
         "name": "my-os-01",
         "resourceType": "objectStorage",
         "status": "Available",
-        "uid": "tbns38hdccs95asu615f"
+        "uid": "tb97urd3lf2b6nkm0npe"
       },
       {
         "conditions": [
           {
-            "lastTransitionTime": "2026-11-11T04:00:39Z",
+            "lastTransitionTime": "2026-11-25T09:37:42Z",
             "reason": "Available",
             "status": "True",
             "type": "Ready"
           },
           {
-            "lastTransitionTime": "2026-11-11T04:00:39Z",
+            "lastTransitionTime": "2026-11-25T09:37:42Z",
             "reason": "Available",
             "status": "True",
             "type": "Synced"
@@ -420,15 +420,15 @@
           "verified": true
         },
         "connectionName": "ibm-au-syd",
-        "cspResourceId": "tbei2j4r62g6uv7eppsq",
-        "cspResourceName": "tbei2j4r62g6uv7eppsq",
+        "cspResourceId": "tbovjnefinjceqvapdbs",
+        "cspResourceName": "tbovjnefinjceqvapdbs",
         "description": "Created by CM-Beetle",
         "id": "my-os-02",
         "maxKeys": 1000,
         "name": "my-os-02",
         "resourceType": "objectStorage",
         "status": "Available",
-        "uid": "tbei2j4r62g6uv7eppsq"
+        "uid": "tbovjnefinjceqvapdbs"
       }
     ],
     "status": "created"
@@ -511,13 +511,13 @@
   "data": {
     "conditions": [
       {
-        "lastTransitionTime": "2026-11-11T04:00:26Z",
+        "lastTransitionTime": "2026-11-25T09:37:29Z",
         "reason": "Available",
         "status": "True",
         "type": "Ready"
       },
       {
-        "lastTransitionTime": "2026-11-11T04:00:26Z",
+        "lastTransitionTime": "2026-11-25T09:37:29Z",
         "reason": "Available",
         "status": "True",
         "type": "Synced"
@@ -553,15 +553,15 @@
       "verified": true
     },
     "connectionName": "ibm-au-syd",
-    "cspResourceId": "tbns38hdccs95asu615f",
-    "cspResourceName": "tbns38hdccs95asu615f",
+    "cspResourceId": "tb97urd3lf2b6nkm0npe",
+    "cspResourceName": "tb97urd3lf2b6nkm0npe",
     "description": "Created by CM-Beetle",
     "id": "my-os-01",
     "maxKeys": 1000,
     "name": "my-os-01",
     "resourceType": "objectStorage",
     "status": "Available",
-    "uid": "tbns38hdccs95asu615f"
+    "uid": "tb97urd3lf2b6nkm0npe"
   },
   "success": true
 }

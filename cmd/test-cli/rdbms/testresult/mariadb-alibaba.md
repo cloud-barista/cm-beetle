@@ -1,9 +1,10 @@
 # Managed RDBMS (MariaDB) Test Report: ALIBABA (ap-northeast-2)
 
 - **Test Case:** Alibaba AP-Northeast-2 (Seoul) MariaDB Test
-- **Date & Time:** 2026-10-19 10:54:05
+- **Access Mode:** Public (publicAccess=true)
+- **Date & Time:** 2026-11-25 19:27:54
 - **Namespace:** `default`
-- **Total Duration:** 16m26.745s
+- **Total Duration:** 15m35.363s
 - **Overall Status:** ✅ PASSED
 
 ## Environment and Scenario
@@ -12,7 +13,7 @@
 - **Target CSP:** ALIBABA
 - **Target Region:** `ap-northeast-2`
 - **Namespace:** `default`
-- **Test Date:** 2026-10-19 10:54:05
+- **Test Date:** 2026-11-25 19:27:54
 
 ### Scenario & Tested APIs
 1. **Pre-flight Spec & Image Review**: `POST /tumblebug/specImagePairReview`
@@ -34,12 +35,12 @@
 ## Execution Steps & API Traces
 
 ### 1. Tumblebug POST /specImagePairReview (Pre-flight Spec & Image Review) [✅ SUCCESS]
-- **Duration:** 3.544s
+- **Duration:** 1.862s
 - **Request URL:** `http://localhost:1323/tumblebug/specImagePairReview`
 ```json
 // Request Body
 {
-  "imageId": "ubuntu_24_04_x64_20G_alibase_20260810.vhd",
+  "imageId": "ubuntu_24_04_x64_20G_alibase_20260916.vhd",
   "specId": "alibaba+ap-northeast-2+ecs.e-c1m2.large"
 }
 ```
@@ -48,20 +49,25 @@
 {
   "availability": {
     "available": true,
+    "cached": true,
     "instanceType": "ecs.e-c1m2.large",
     "provider": "alibaba",
-    "queriedAt": "2026-10-19T01:54:08.238328507Z",
+    "queriedAt": "2026-11-25T10:27:55.738422136Z",
+    "refreshAfter": "2026-11-25T11:27:55.738422136Z",
     "region": "ap-northeast-2",
     "source": "alibaba:DescribeAvailableResource",
+    "status": "Available",
+    "ttlSeconds": 3600,
     "zones": [
       {
         "available": true,
         "status": "Available",
         "supportedDisks": [
+          "cloud_essd_entry",
           "cloud_auto",
           "cloud_essd"
         ],
-        "zoneId": "ap-northeast-2b"
+        "zoneId": "ap-northeast-2a"
       },
       {
         "available": true,
@@ -76,11 +82,10 @@
         "available": true,
         "status": "Available",
         "supportedDisks": [
-          "cloud_essd_entry",
           "cloud_auto",
           "cloud_essd"
         ],
-        "zoneId": "ap-northeast-2a"
+        "zoneId": "ap-northeast-2b"
       }
     ]
   },
@@ -90,8 +95,8 @@
     "commandHistory": null,
     "connectionName": "alibaba-us-west-1",
     "creationDate": "",
-    "cspImageName": "ubuntu_24_04_x64_20G_alibase_20260916.vhd",
-    "description": "Kernel version is 6.8.0-137-generic, 2026.8.13",
+    "cspImageName": "ubuntu_24_04_x64_20G_alibase_20261016.vhd",
+    "description": "Kernel version is 6.8.0-139-generic, 2026.9.17",
     "details": [
       {
         "key": "BootMode",
@@ -99,7 +104,7 @@
       },
       {
         "key": "ImageId",
-        "value": "ubuntu_24_04_x64_20G_alibase_20260810.vhd"
+        "value": "ubuntu_24_04_x64_20G_alibase_20260916.vhd"
       },
       {
         "key": "ImageOwnerAlias",
@@ -131,7 +136,7 @@
       },
       {
         "key": "Description",
-        "value": "Kernel version is 6.8.0-137-generic, 2026.8.13"
+        "value": "Kernel version is 6.8.0-139-generic, 2026.9.17"
       },
       {
         "key": "Usage",
@@ -147,7 +152,7 @@
       },
       {
         "key": "ImageVersion",
-        "value": "v2026.8.13"
+        "value": "v2026.9.17"
       },
       {
         "key": "OSType",
@@ -163,7 +168,7 @@
       },
       {
         "key": "CreationTime",
-        "value": "2026-08-13T01:49:37Z"
+        "value": "2026-09-17T05:15:31Z"
       },
       {
         "key": "Progress",
@@ -175,7 +180,7 @@
       },
       {
         "key": "ImageName",
-        "value": "ubuntu_24_04_x64_20G_alibase_20260810.vhd"
+        "value": "ubuntu_24_04_x64_20G_alibase_20260916.vhd"
       },
       {
         "key": "Status",
@@ -206,15 +211,15 @@
         "value": "{DiskDeviceMapping:[]}"
       }
     ],
-    "fetchedTime": "2026.08.21 13:58:28 Fri",
-    "id": "ubuntu_24_04_x64_20G_alibase_20260810.vhd",
+    "fetchedTime": "2026.10.29 04:25:32 Thu",
+    "id": "ubuntu_24_04_x64_20G_alibase_20260916.vhd",
     "imageStatus": "Available",
     "infraType": "",
     "isBasicGpuImage": false,
     "isBasicImage": true,
     "isGPUImage": false,
     "isKubernetesImage": false,
-    "name": "ubuntu_24_04_x64_20G_alibase_20260810.vhd",
+    "name": "ubuntu_24_04_x64_20G_alibase_20260916.vhd",
     "namespace": "system",
     "osArchitecture": "x86_64",
     "osDiskSizeGB": 20,
@@ -226,26 +231,20 @@
     "regionList": [
       "ap-northeast-1",
       "ap-northeast-2",
-      "ap-southeast-1",
       "ap-southeast-3",
       "ap-southeast-5",
       "ap-southeast-6",
       "ap-southeast-7",
       "ap-southeast-8",
       "cn-beijing",
-      "cn-chengdu",
       "cn-fuzhou",
       "cn-guangzhou",
-      "cn-hangzhou",
       "cn-heyuan",
-      "cn-hongkong",
       "cn-huhehaote",
       "cn-nanjing",
-      "cn-qingdao",
       "cn-shanghai",
       "cn-shenzhen",
       "cn-wuhan-lr",
-      "cn-wulanchabu",
       "cn-zhangjiakou",
       "cn-zhongwei",
       "eu-central-1",
@@ -261,14 +260,14 @@
     "sourceCspImageName": "",
     "sourceNodeUid": "",
     "systemLabel": "",
-    "uid": "tbm30neucqi9cs1ci7ut"
+    "uid": "tbovbcl1usnmuihjr6f5"
   },
-  "imageId": "ubuntu_24_04_x64_20G_alibase_20260810.vhd",
+  "imageId": "ubuntu_24_04_x64_20G_alibase_20260916.vhd",
   "imageValidation": {
-    "cspResourceId": "ubuntu_24_04_x64_20G_alibase_20260916.vhd",
+    "cspResourceId": "ubuntu_24_04_x64_20G_alibase_20261016.vhd",
     "isAvailable": true,
-    "resourceId": "ubuntu_24_04_x64_20G_alibase_20260810.vhd",
-    "resourceName": "ubuntu_24_04_x64_20G_alibase_20260810.vhd",
+    "resourceId": "ubuntu_24_04_x64_20G_alibase_20260916.vhd",
+    "resourceName": "ubuntu_24_04_x64_20G_alibase_20260916.vhd",
     "status": "Available"
   },
   "isValid": true,
@@ -277,6 +276,14 @@
   "regionName": "ap-northeast-2",
   "specDetails": {
     "architecture": "x86_64",
+    "availabilityCheckedAt": "2026-11-25T10:27:55.738422136Z",
+    "availabilityRefreshAfter": "2026-11-25T11:27:55.738422136Z",
+    "availabilityStatus": "Available",
+    "availableZones": [
+      "ap-northeast-2a",
+      "ap-northeast-2b",
+      "ap-northeast-2c"
+    ],
     "connectionName": "alibaba-ap-northeast-2",
     "costPerHour": 0.0356,
     "cspSpecName": "ecs.e-c1m2.large",
@@ -309,7 +316,7 @@
     "rootDiskSize": -1,
     "rootDiskType": "",
     "systemLabel": "auto-gen",
-    "uid": "tba6uee340r6ln51e0hd",
+    "uid": "tbo04el2f2u3pljoa4hq",
     "vCPU": 2
   },
   "specId": "alibaba+ap-northeast-2+ecs.e-c1m2.large",
@@ -321,13 +328,13 @@
     "status": "Available"
   },
   "status": "OK",
-  "suggestedSystemDisk": "cloud_auto",
-  "suggestedZone": "ap-northeast-2b"
+  "suggestedSystemDisk": "cloud_essd_entry",
+  "suggestedZone": "ap-northeast-2a"
 }
 ```
 
 ### 2. Tumblebug POST /resources/vNet (Create VNet & Subnets) [✅ SUCCESS]
-- **Duration:** 7.263s
+- **Duration:** 7.4s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/vNet`
 ```json
 // Request Body
@@ -352,19 +359,19 @@
   "cidrBlock": "10.13.0.0/16",
   "conditions": [
     {
-      "lastTransitionTime": "2026-10-19T01:54:13Z",
+      "lastTransitionTime": "2026-11-25T10:28:03Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-10-19T01:54:13Z",
+      "lastTransitionTime": "2026-11-25T10:28:03Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
     },
     {
-      "lastTransitionTime": "2026-10-19T01:54:13Z",
+      "lastTransitionTime": "2026-11-25T10:28:03Z",
       "reason": "AllReady",
       "status": "True",
       "type": "ChildrenReady"
@@ -399,15 +406,15 @@
     "verified": true
   },
   "connectionName": "alibaba-ap-northeast-2",
-  "cspResourceId": "vpc-mj75yufyvk3dkquefouu3",
-  "cspResourceName": "tbos3nb9baei6v0or5qt",
+  "cspResourceId": "vpc-mj7fosavcqa9tajq8qsyy",
+  "cspResourceName": "tbmn0752el49bmc647rn",
   "description": "Pre-requisite VNet for CM-Beetle RDBMS test",
   "id": "test-rdbms-vnet-mariadb-alibaba",
   "isAutoGenerated": false,
   "keyValueList": [
     {
       "key": "CreationTime",
-      "value": "2026-10-19T01:54:07Z"
+      "value": "2026-11-25T10:27:55Z"
     },
     {
       "key": "Status",
@@ -415,7 +422,7 @@
     },
     {
       "key": "VpcId",
-      "value": "vpc-mj75yufyvk3dkquefouu3"
+      "value": "vpc-mj7fosavcqa9tajq8qsyy"
     },
     {
       "key": "IsDefault",
@@ -435,11 +442,11 @@
     },
     {
       "key": "VpcName",
-      "value": "tbos3nb9baei6v0or5qt"
+      "value": "tbmn0752el49bmc647rn"
     },
     {
       "key": "VRouterId",
-      "value": "vrt-mj78qy4uj4xjrcrbcsd24"
+      "value": "vrt-mj7geazw9m9822uysc7jf"
     },
     {
       "key": "CidrBlock",
@@ -471,7 +478,7 @@
     },
     {
       "key": "VSwitchIds",
-      "value": "{VSwitchId:[vsw-mj773d4fsaok8u6t1ktp6]}"
+      "value": "{VSwitchId:[vsw-mj7mlhi0t2mhxca0s54s7]}"
     },
     {
       "key": "SecondaryCidrBlocks",
@@ -487,7 +494,7 @@
     },
     {
       "key": "RouterTableIds",
-      "value": "{RouterTableIds:[vtb-mj7iwq3jmj6ilak9ugzdp]}"
+      "value": "{RouterTableIds:[vtb-mj7osfow5k73c8wrvhsfg]}"
     },
     {
       "key": "Tags",
@@ -505,13 +512,13 @@
     {
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T01:54:13Z",
+          "lastTransitionTime": "2026-11-25T10:28:03Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T01:54:13Z",
+          "lastTransitionTime": "2026-11-25T10:28:03Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -546,17 +553,17 @@
         "verified": true
       },
       "connectionName": "alibaba-ap-northeast-2",
-      "cspResourceId": "vsw-mj773d4fsaok8u6t1ktp6",
-      "cspResourceName": "tb6vlmhn4els1b6mud6s",
-      "cspVNetId": "vpc-mj75yufyvk3dkquefouu3",
-      "cspVNetName": "tbos3nb9baei6v0or5qt",
+      "cspResourceId": "vsw-mj7mlhi0t2mhxca0s54s7",
+      "cspResourceName": "tbothpirh3am43b8ta16",
+      "cspVNetId": "vpc-mj7fosavcqa9tajq8qsyy",
+      "cspVNetName": "tbmn0752el49bmc647rn",
       "description": "",
       "id": "subnet-1",
       "ipv4_CIDR": "10.13.1.0/24",
       "keyValueList": [
         {
           "key": "VpcId",
-          "value": "vpc-mj75yufyvk3dkquefouu3"
+          "value": "vpc-mj7fosavcqa9tajq8qsyy"
         },
         {
           "key": "Status",
@@ -564,7 +571,7 @@
         },
         {
           "key": "CreationTime",
-          "value": "2026-10-19T01:54:10Z"
+          "value": "2026-11-25T10:27:58Z"
         },
         {
           "key": "IsDefault",
@@ -580,7 +587,7 @@
         },
         {
           "key": "VSwitchId",
-          "value": "vsw-mj773d4fsaok8u6t1ktp6"
+          "value": "vsw-mj7mlhi0t2mhxca0s54s7"
         },
         {
           "key": "CidrBlock",
@@ -596,7 +603,7 @@
         },
         {
           "key": "VSwitchName",
-          "value": "tb6vlmhn4els1b6mud6s"
+          "value": "tbothpirh3am43b8ta16"
         },
         {
           "key": "EnabledIpv6",
@@ -604,7 +611,7 @@
         },
         {
           "key": "RouteTable",
-          "value": "{ResourceGroupId:,CreationTime:,Status:,RouteTableType:System,VRouterId:,RouteTableId:vtb-mj7iwq3jmj6ilak9ugzdp,VSwitchIds:{VSwitchId:null},RouteEntrys:{RouteEntry:null}}"
+          "value": "{ResourceGroupId:,CreationTime:,Status:,RouteTableType:System,VRouterId:,RouteTableId:vtb-mj7osfow5k73c8wrvhsfg,VSwitchIds:{VSwitchId:null},RouteEntrys:{RouteEntry:null}}"
         },
         {
           "key": "Tags",
@@ -614,17 +621,17 @@
       "name": "subnet-1",
       "resourceType": "subnet",
       "status": "Available",
-      "uid": "tb6vlmhn4els1b6mud6s",
+      "uid": "tbothpirh3am43b8ta16",
       "zone": "ap-northeast-2a"
     }
   ],
   "systemLabel": "",
-  "uid": "tbos3nb9baei6v0or5qt"
+  "uid": "tbmn0752el49bmc647rn"
 }
 ```
 
 ### 3. Tumblebug POST /resources/securityGroup (Create SecurityGroup) [✅ SUCCESS]
-- **Duration:** 746ms
+- **Duration:** 871ms
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/securityGroup`
 ```json
 // Request Body
@@ -682,8 +689,8 @@
     "verified": true
   },
   "connectionName": "alibaba-ap-northeast-2",
-  "cspResourceId": "sg-mj763vbw0y3ix2zjz1bt",
-  "cspResourceName": "tbhhdh8np9dpjlhcre98",
+  "cspResourceId": "sg-mj7e5z2uqzhddk96jr8c",
+  "cspResourceName": "tb9ehgnl877annadvmc6",
   "description": "Pre-requisite SecurityGroup for CM-Beetle RDBMS test",
   "firewallRules": [
     {
@@ -710,15 +717,15 @@
   "keyValueList": [
     {
       "key": "SecurityGroupId",
-      "value": "sg-mj763vbw0y3ix2zjz1bt"
+      "value": "sg-mj7e5z2uqzhddk96jr8c"
     },
     {
       "key": "SecurityGroupName",
-      "value": "tbhhdh8np9dpjlhcre98"
+      "value": "tb9ehgnl877annadvmc6"
     },
     {
       "key": "Description",
-      "value": "tbhhdh8np9dpjlhcre98"
+      "value": "tb9ehgnl877annadvmc6"
     },
     {
       "key": "SecurityGroupType",
@@ -726,11 +733,11 @@
     },
     {
       "key": "VpcId",
-      "value": "vpc-mj75yufyvk3dkquefouu3"
+      "value": "vpc-mj7fosavcqa9tajq8qsyy"
     },
     {
       "key": "CreationTime",
-      "value": "2026-10-19T01:54:13Z"
+      "value": "2026-11-25T10:28:02Z"
     },
     {
       "key": "EcsCount",
@@ -764,13 +771,13 @@
   "name": "test-rdbms-sg-mariadb-alibaba",
   "resourceType": "securityGroup",
   "systemLabel": "",
-  "uid": "tbhhdh8np9dpjlhcre98",
+  "uid": "tb9ehgnl877annadvmc6",
   "vNetId": "test-rdbms-vnet-mariadb-alibaba"
 }
 ```
 
 ### 4. Beetle GET RDBMS Support [✅ SUCCESS]
-- **Duration:** 5ms
+- **Duration:** 6ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/support?providerName=alibaba`
 ```json
 // Response Body
@@ -792,7 +799,7 @@
 ```
 
 ### 5. Beetle GET RDBMS Capability [✅ SUCCESS]
-- **Duration:** 44.262s
+- **Duration:** 40.459s
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/capability?connectionName=alibaba-ap-northeast-2&dbEngine=mariadb`
 ```json
 // Response Body
@@ -1136,7 +1143,7 @@
 ```
 
 ### 7. Beetle POST Validate RDBMS Recommendation [✅ SUCCESS]
-- **Duration:** 31.053s
+- **Duration:** 20.983s
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/validate?nsId=default`
 ```json
 // Request Body
@@ -1189,7 +1196,7 @@
 ```
 
 ### 8. Beetle POST Migrate RDBMS (Provisioning) [✅ SUCCESS]
-- **Duration:** 3m1.023s
+- **Duration:** 2m30.505s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms?nameSeed=test`
 ```json
 // Request Body
@@ -1244,22 +1251,22 @@
 ```
 
 ### 9. Beetle GET RDBMS Info [✅ SUCCESS]
-- **Duration:** 8ms
+- **Duration:** 12ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-alibaba`
 ```json
 // Response Body
 {
   "backupRetentionDays": 7,
-  "backupTime": "11:00Z-12:00Z",
+  "backupTime": "09:00Z-10:00Z",
   "conditions": [
     {
-      "lastTransitionTime": "2026-10-19T01:58:12Z",
+      "lastTransitionTime": "2026-11-25T10:31:22Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-10-19T01:58:12Z",
+      "lastTransitionTime": "2026-11-25T10:31:22Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
@@ -1294,17 +1301,279 @@
     "verified": true
   },
   "connectionName": "alibaba-ap-northeast-2",
-  "cspResourceId": "rm-mj7b2xfo2q994pr91",
-  "cspResourceName": "tb26kia2eqnp7rdsts1r",
+  "cspResourceId": "rm-mj7yv170t22mnj1bz",
+  "cspResourceName": "tbg504bm99cilsq7lbb2",
   "dbEngine": "mariadb",
   "dbEngineVersion": "10.6",
   "dbInstanceSpec": "mariadb.n2.medium.2c",
   "dbInstanceType": "HighAvailability",
   "deletionProtection": false,
   "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-  "endpoint": "43.108.67.54:3306",
+  "endpoint": "43.108.66.115:3306",
   "highAvailability": true,
   "id": "test-rdbms-mariadb-alibaba",
+  "keyValueList": [
+    {
+      "key": "Engine",
+      "value": "MariaDB"
+    },
+    {
+      "key": "DBInstanceDiskUsed",
+      "value": "0"
+    },
+    {
+      "key": "AdvancedFeatures",
+      "value": "LinkedServer,DistributeTransaction"
+    },
+    {
+      "key": "VpcCloudInstanceId",
+      "value": "rm-mj7yv170t22mnj1bz-20261125182909"
+    },
+    {
+      "key": "DBInstanceNetType",
+      "value": "Intranet"
+    },
+    {
+      "key": "DBInstanceClass",
+      "value": "mariadb.n2.medium.2c"
+    },
+    {
+      "key": "MaxIOMBPS",
+      "value": "128"
+    },
+    {
+      "key": "DBMaxQuantity",
+      "value": "99999"
+    },
+    {
+      "key": "DBInstanceCPU",
+      "value": "2"
+    },
+    {
+      "key": "MaxConnections",
+      "value": "4000"
+    },
+    {
+      "key": "InstanceNetworkType",
+      "value": "VPC"
+    },
+    {
+      "key": "MultipleTempUpgrade",
+      "value": "false"
+    },
+    {
+      "key": "DBInstanceType",
+      "value": "Primary"
+    },
+    {
+      "key": "DBInstanceId",
+      "value": "rm-mj7yv170t22mnj1bz"
+    },
+    {
+      "key": "VpcId",
+      "value": "vpc-mj7fosavcqa9tajq8qsyy"
+    },
+    {
+      "key": "DBInstanceMemory",
+      "value": "4096"
+    },
+    {
+      "key": "DBInstanceStorageType",
+      "value": "cloud_essd"
+    },
+    {
+      "key": "SecurityIPList",
+      "value": "0.0.0.0/0"
+    },
+    {
+      "key": "SupportUpgradeAccountType",
+      "value": "No"
+    },
+    {
+      "key": "MaxIOPS",
+      "value": "7550"
+    },
+    {
+      "key": "TipsLevel",
+      "value": "1"
+    },
+    {
+      "key": "MaintainTime",
+      "value": "18:00Z-22:00Z"
+    },
+    {
+      "key": "EngineVersion",
+      "value": "10.6"
+    },
+    {
+      "key": "InstructionSetArch",
+      "value": "x86"
+    },
+    {
+      "key": "PayType",
+      "value": "Postpaid"
+    },
+    {
+      "key": "BurstingEnabled",
+      "value": "false"
+    },
+    {
+      "key": "Tips",
+      "value": "ok"
+    },
+    {
+      "key": "DBInstanceStorage",
+      "value": "100"
+    },
+    {
+      "key": "KindCode",
+      "value": "18"
+    },
+    {
+      "key": "ColdDataEnabled",
+      "value": "false"
+    },
+    {
+      "key": "SupportCreateSuperAccount",
+      "value": "No"
+    },
+    {
+      "key": "CurrentKernelVersion",
+      "value": "mariadb106_20260531"
+    },
+    {
+      "key": "ZoneId",
+      "value": "ap-northeast-2a"
+    },
+    {
+      "key": "IPType",
+      "value": "IPv4"
+    },
+    {
+      "key": "ConnectionMode",
+      "value": "Standard"
+    },
+    {
+      "key": "MasterZone",
+      "value": "ap-northeast-2a"
+    },
+    {
+      "key": "LockMode",
+      "value": "Unlock"
+    },
+    {
+      "key": "CanTempUpgrade",
+      "value": "false"
+    },
+    {
+      "key": "Category",
+      "value": "HighAvailability"
+    },
+    {
+      "key": "InsId",
+      "value": "1"
+    },
+    {
+      "key": "DBInstanceDescription",
+      "value": "tbg504bm99cilsq7lbb2"
+    },
+    {
+      "key": "AccountType",
+      "value": "Mix"
+    },
+    {
+      "key": "RegionId",
+      "value": "ap-northeast-2"
+    },
+    {
+      "key": "ConsoleVersion",
+      "value": "0"
+    },
+    {
+      "key": "ResourceGroupId",
+      "value": "rg-acfnvekhilw5kmy"
+    },
+    {
+      "key": "DispenseMode",
+      "value": "MultiAVZDispenseMode"
+    },
+    {
+      "key": "TempUpgradeRecoveryMemory",
+      "value": "0"
+    },
+    {
+      "key": "ProxyType",
+      "value": "0"
+    },
+    {
+      "key": "AccountMaxQuantity",
+      "value": "99999"
+    },
+    {
+      "key": "Port",
+      "value": "3306"
+    },
+    {
+      "key": "VSwitchId",
+      "value": "vsw-mj7mlhi0t2mhxca0s54s7"
+    },
+    {
+      "key": "CreationTime",
+      "value": "2026-11-25T10:29:13Z"
+    },
+    {
+      "key": "SecurityIPMode",
+      "value": "normal"
+    },
+    {
+      "key": "DBInstanceClassType",
+      "value": "x"
+    },
+    {
+      "key": "DBInstanceStatus",
+      "value": "Running"
+    },
+    {
+      "key": "ConnectionString",
+      "value": "rm-mj7yv170t22mnj1bz.mariadb.ap-northeast-2.rds.aliyuncs.com"
+    },
+    {
+      "key": "TempUpgradeRecoveryCpu",
+      "value": "0"
+    },
+    {
+      "key": "AvailabilityValue",
+      "value": "100.0%"
+    },
+    {
+      "key": "DeletionProtection",
+      "value": "false"
+    },
+    {
+      "key": "Extra",
+      "value": "{ReplicaGroupStatus:,ActiveReplicaDBInstanceID:,ReplicaGroupID:,RecoveryModel:,DBInstanceIds:{DBInstanceId:[]}}"
+    },
+    {
+      "key": "ServerlessConfig",
+      "value": "{ScaleMin:,ScaleMax:,AutoPause:false,SwitchForce:false}"
+    },
+    {
+      "key": "BabelfishConfig",
+      "value": "{BabelfishEnabled:,MigrationMode:}"
+    },
+    {
+      "key": "DBClusterNodes",
+      "value": "{DBClusterNode:[]}"
+    },
+    {
+      "key": "ReadOnlyDBInstanceIds",
+      "value": "{ReadOnlyDBInstanceId:[]}"
+    },
+    {
+      "key": "SlaveZones",
+      "value": "{SlaveZone:[{ZoneId:ap-northeast-2a}]}"
+    }
+  ],
   "name": "test-rdbms-mariadb-alibaba",
   "publicAccess": true,
   "resourceType": "rdbms",
@@ -1317,13 +1586,13 @@
   "subnetIds": [
     "subnet-1"
   ],
-  "uid": "tb26kia2eqnp7rdsts1r",
+  "uid": "tbg504bm99cilsq7lbb2",
   "vNetId": "test-rdbms-vnet-mariadb-alibaba"
 }
 ```
 
 ### 10. Beetle GET RDBMS List [✅ SUCCESS]
-- **Duration:** 8ms
+- **Duration:** 21ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms`
 ```json
 // Response Body
@@ -1331,16 +1600,16 @@
   "rdbms": [
     {
       "backupRetentionDays": 7,
-      "backupTime": "11:00Z-12:00Z",
+      "backupTime": "09:00Z-10:00Z",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T01:58:12Z",
+          "lastTransitionTime": "2026-11-25T10:31:22Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T01:58:12Z",
+          "lastTransitionTime": "2026-11-25T10:31:22Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -1375,17 +1644,279 @@
         "verified": true
       },
       "connectionName": "alibaba-ap-northeast-2",
-      "cspResourceId": "rm-mj7b2xfo2q994pr91",
-      "cspResourceName": "tb26kia2eqnp7rdsts1r",
+      "cspResourceId": "rm-mj7yv170t22mnj1bz",
+      "cspResourceName": "tbg504bm99cilsq7lbb2",
       "dbEngine": "mariadb",
       "dbEngineVersion": "10.6",
       "dbInstanceSpec": "mariadb.n2.medium.2c",
       "dbInstanceType": "HighAvailability",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "43.108.67.54:3306",
+      "endpoint": "43.108.66.115:3306",
       "highAvailability": true,
       "id": "test-rdbms-mariadb-alibaba",
+      "keyValueList": [
+        {
+          "key": "Engine",
+          "value": "MariaDB"
+        },
+        {
+          "key": "DBInstanceDiskUsed",
+          "value": "0"
+        },
+        {
+          "key": "AdvancedFeatures",
+          "value": "LinkedServer,DistributeTransaction"
+        },
+        {
+          "key": "VpcCloudInstanceId",
+          "value": "rm-mj7yv170t22mnj1bz-20261125182909"
+        },
+        {
+          "key": "DBInstanceNetType",
+          "value": "Intranet"
+        },
+        {
+          "key": "DBInstanceClass",
+          "value": "mariadb.n2.medium.2c"
+        },
+        {
+          "key": "MaxIOMBPS",
+          "value": "128"
+        },
+        {
+          "key": "DBMaxQuantity",
+          "value": "99999"
+        },
+        {
+          "key": "DBInstanceCPU",
+          "value": "2"
+        },
+        {
+          "key": "MaxConnections",
+          "value": "4000"
+        },
+        {
+          "key": "InstanceNetworkType",
+          "value": "VPC"
+        },
+        {
+          "key": "MultipleTempUpgrade",
+          "value": "false"
+        },
+        {
+          "key": "DBInstanceType",
+          "value": "Primary"
+        },
+        {
+          "key": "DBInstanceId",
+          "value": "rm-mj7yv170t22mnj1bz"
+        },
+        {
+          "key": "VpcId",
+          "value": "vpc-mj7fosavcqa9tajq8qsyy"
+        },
+        {
+          "key": "DBInstanceMemory",
+          "value": "4096"
+        },
+        {
+          "key": "DBInstanceStorageType",
+          "value": "cloud_essd"
+        },
+        {
+          "key": "SecurityIPList",
+          "value": "0.0.0.0/0"
+        },
+        {
+          "key": "SupportUpgradeAccountType",
+          "value": "No"
+        },
+        {
+          "key": "MaxIOPS",
+          "value": "7550"
+        },
+        {
+          "key": "TipsLevel",
+          "value": "1"
+        },
+        {
+          "key": "MaintainTime",
+          "value": "18:00Z-22:00Z"
+        },
+        {
+          "key": "EngineVersion",
+          "value": "10.6"
+        },
+        {
+          "key": "InstructionSetArch",
+          "value": "x86"
+        },
+        {
+          "key": "PayType",
+          "value": "Postpaid"
+        },
+        {
+          "key": "BurstingEnabled",
+          "value": "false"
+        },
+        {
+          "key": "Tips",
+          "value": "ok"
+        },
+        {
+          "key": "DBInstanceStorage",
+          "value": "100"
+        },
+        {
+          "key": "KindCode",
+          "value": "18"
+        },
+        {
+          "key": "ColdDataEnabled",
+          "value": "false"
+        },
+        {
+          "key": "SupportCreateSuperAccount",
+          "value": "No"
+        },
+        {
+          "key": "CurrentKernelVersion",
+          "value": "mariadb106_20260531"
+        },
+        {
+          "key": "ZoneId",
+          "value": "ap-northeast-2a"
+        },
+        {
+          "key": "IPType",
+          "value": "IPv4"
+        },
+        {
+          "key": "ConnectionMode",
+          "value": "Standard"
+        },
+        {
+          "key": "MasterZone",
+          "value": "ap-northeast-2a"
+        },
+        {
+          "key": "LockMode",
+          "value": "Unlock"
+        },
+        {
+          "key": "CanTempUpgrade",
+          "value": "false"
+        },
+        {
+          "key": "Category",
+          "value": "HighAvailability"
+        },
+        {
+          "key": "InsId",
+          "value": "1"
+        },
+        {
+          "key": "DBInstanceDescription",
+          "value": "tbg504bm99cilsq7lbb2"
+        },
+        {
+          "key": "AccountType",
+          "value": "Mix"
+        },
+        {
+          "key": "RegionId",
+          "value": "ap-northeast-2"
+        },
+        {
+          "key": "ConsoleVersion",
+          "value": "0"
+        },
+        {
+          "key": "ResourceGroupId",
+          "value": "rg-acfnvekhilw5kmy"
+        },
+        {
+          "key": "DispenseMode",
+          "value": "MultiAVZDispenseMode"
+        },
+        {
+          "key": "TempUpgradeRecoveryMemory",
+          "value": "0"
+        },
+        {
+          "key": "ProxyType",
+          "value": "0"
+        },
+        {
+          "key": "AccountMaxQuantity",
+          "value": "99999"
+        },
+        {
+          "key": "Port",
+          "value": "3306"
+        },
+        {
+          "key": "VSwitchId",
+          "value": "vsw-mj7mlhi0t2mhxca0s54s7"
+        },
+        {
+          "key": "CreationTime",
+          "value": "2026-11-25T10:29:13Z"
+        },
+        {
+          "key": "SecurityIPMode",
+          "value": "normal"
+        },
+        {
+          "key": "DBInstanceClassType",
+          "value": "x"
+        },
+        {
+          "key": "DBInstanceStatus",
+          "value": "Running"
+        },
+        {
+          "key": "ConnectionString",
+          "value": "rm-mj7yv170t22mnj1bz.mariadb.ap-northeast-2.rds.aliyuncs.com"
+        },
+        {
+          "key": "TempUpgradeRecoveryCpu",
+          "value": "0"
+        },
+        {
+          "key": "AvailabilityValue",
+          "value": "100.0%"
+        },
+        {
+          "key": "DeletionProtection",
+          "value": "false"
+        },
+        {
+          "key": "Extra",
+          "value": "{ReplicaGroupStatus:,ActiveReplicaDBInstanceID:,ReplicaGroupID:,RecoveryModel:,DBInstanceIds:{DBInstanceId:[]}}"
+        },
+        {
+          "key": "ServerlessConfig",
+          "value": "{ScaleMin:,ScaleMax:,AutoPause:false,SwitchForce:false}"
+        },
+        {
+          "key": "BabelfishConfig",
+          "value": "{BabelfishEnabled:,MigrationMode:}"
+        },
+        {
+          "key": "DBClusterNodes",
+          "value": "{DBClusterNode:[]}"
+        },
+        {
+          "key": "ReadOnlyDBInstanceIds",
+          "value": "{ReadOnlyDBInstanceId:[]}"
+        },
+        {
+          "key": "SlaveZones",
+          "value": "{SlaveZone:[{ZoneId:ap-northeast-2a}]}"
+        }
+      ],
       "name": "test-rdbms-mariadb-alibaba",
       "publicAccess": true,
       "resourceType": "rdbms",
@@ -1398,22 +1929,22 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tb26kia2eqnp7rdsts1r",
+      "uid": "tbg504bm99cilsq7lbb2",
       "vNetId": "test-rdbms-vnet-mariadb-alibaba"
     },
     {
       "backupRetentionDays": 7,
-      "backupTime": "19:07-19:37",
+      "backupTime": "15:06-15:36",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T01:56:15Z",
+          "lastTransitionTime": "2026-11-25T10:29:09Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T01:56:15Z",
+          "lastTransitionTime": "2026-11-25T10:29:09Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -1450,8 +1981,8 @@
         "verified": true
       },
       "connectionName": "aws-ap-northeast-2",
-      "cspResourceId": "tbt2u5olvrjvkdr9ks9h",
-      "cspResourceName": "tbt2u5olvrjvkdr9ks9h",
+      "cspResourceId": "tb55rm4aqne7bvtmh109",
+      "cspResourceName": "tb55rm4aqne7bvtmh109",
       "dbEngine": "mariadb",
       "dbEngineVersion": "10.6.28",
       "dbInstanceSpec": "db.t3.medium",
@@ -1461,6 +1992,148 @@
       "highAvailability": false,
       "id": "test-rdbms-mariadb-aws",
       "iops": "3000",
+      "keyValueList": [
+        {
+          "key": "ActivityStreamStatus",
+          "value": "stopped"
+        },
+        {
+          "key": "AllocatedStorage",
+          "value": "100"
+        },
+        {
+          "key": "AutoMinorVersionUpgrade",
+          "value": "true"
+        },
+        {
+          "key": "AvailabilityZone",
+          "value": "ap-northeast-2c"
+        },
+        {
+          "key": "BackupRetentionPeriod",
+          "value": "7"
+        },
+        {
+          "key": "CACertificateIdentifier",
+          "value": "rds-ca-rsa2048-g1"
+        },
+        {
+          "key": "CopyTagsToSnapshot",
+          "value": "false"
+        },
+        {
+          "key": "CustomerOwnedIpEnabled",
+          "value": "false"
+        },
+        {
+          "key": "DBInstanceArn",
+          "value": "arn:aws:rds:ap-northeast-2:635484366616:db:tb55rm4aqne7bvtmh109"
+        },
+        {
+          "key": "DBInstanceClass",
+          "value": "db.t3.medium"
+        },
+        {
+          "key": "DBInstanceIdentifier",
+          "value": "tb55rm4aqne7bvtmh109"
+        },
+        {
+          "key": "DBInstanceStatus",
+          "value": "creating"
+        },
+        {
+          "key": "DBParameterGroups",
+          "value": "{DBParameterGroupName:default.mariadb10.6,ParameterApplyStatus:in-sync}"
+        },
+        {
+          "key": "DBSubnetGroup",
+          "value": "{DBSubnetGroupArn:null,DBSubnetGroupDescription:CB-Spider RDBMS subnet group for cb-spider-tb55rm4aqne7bvtmh109,DBSubnetGroupName:cb-spider-tb55rm4aqne7bvtmh109,SubnetGroupStatus:Complete,Subnets:[{SubnetAvailabilityZone:{Name:ap-northeast-2a},SubnetIdentifier:subnet-0332b3b067d7b2be3,SubnetOutpost:{Arn:null},SubnetStatus:Active},{SubnetAvailabilityZone:{Name:ap-northeast-2c},SubnetIdentifier:subnet-0fcd6322d6b4d1720,SubnetOutpost:{Arn:null},SubnetStatus:Active}],VpcId:vpc-0df32b14dbcdda989}"
+        },
+        {
+          "key": "DbInstancePort",
+          "value": "0"
+        },
+        {
+          "key": "DbiResourceId",
+          "value": "db-6S54HILSY73L2WFC6GXJJLPUJM"
+        },
+        {
+          "key": "DeletionProtection",
+          "value": "false"
+        },
+        {
+          "key": "Engine",
+          "value": "mariadb"
+        },
+        {
+          "key": "EngineVersion",
+          "value": "10.6.28"
+        },
+        {
+          "key": "IAMDatabaseAuthenticationEnabled",
+          "value": "false"
+        },
+        {
+          "key": "Iops",
+          "value": "3000"
+        },
+        {
+          "key": "LicenseModel",
+          "value": "general-public-license"
+        },
+        {
+          "key": "MasterUsername",
+          "value": "root"
+        },
+        {
+          "key": "MonitoringInterval",
+          "value": "0"
+        },
+        {
+          "key": "MultiAZ",
+          "value": "false"
+        },
+        {
+          "key": "OptionGroupMemberships",
+          "value": "{OptionGroupName:default:mariadb-10-6,Status:in-sync}"
+        },
+        {
+          "key": "PendingModifiedValues",
+          "value": "{AllocatedStorage:null,BackupRetentionPeriod:null,CACertificateIdentifier:null,DBInstanceClass:null,DBInstanceIdentifier:null,DBSubnetGroupName:null,EngineVersion:null,IAMDatabaseAuthenticationEnabled:null,Iops:null,LicenseModel:null,MasterUserPassword:****,MultiAZ:null,PendingCloudwatchLogsExports:null,Port:null,ProcessorFeatures:null,StorageType:null}"
+        },
+        {
+          "key": "PerformanceInsightsEnabled",
+          "value": "false"
+        },
+        {
+          "key": "PreferredBackupWindow",
+          "value": "15:06-15:36"
+        },
+        {
+          "key": "PreferredMaintenanceWindow",
+          "value": "sun:16:40-sun:17:10"
+        },
+        {
+          "key": "PubliclyAccessible",
+          "value": "true"
+        },
+        {
+          "key": "StorageEncrypted",
+          "value": "false"
+        },
+        {
+          "key": "StorageType",
+          "value": "gp3"
+        },
+        {
+          "key": "TagList",
+          "value": "{Key:Name,Value:tb55rm4aqne7bvtmh109}"
+        },
+        {
+          "key": "VpcSecurityGroups",
+          "value": "{Status:active,VpcSecurityGroupId:sg-0dec51a4099d5aa2c}"
+        }
+      ],
       "name": "test-rdbms-mariadb-aws",
       "publicAccess": true,
       "resourceType": "rdbms",
@@ -1477,24 +2150,24 @@
       "tagList": [
         {
           "key": "Name",
-          "value": "tbt2u5olvrjvkdr9ks9h"
+          "value": "tb55rm4aqne7bvtmh109"
         }
       ],
-      "uid": "tbt2u5olvrjvkdr9ks9h",
+      "uid": "tb55rm4aqne7bvtmh109",
       "vNetId": "test-rdbms-vnet-mariadb-aws"
     },
     {
       "backupRetentionDays": 7,
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T01:54:48Z",
+          "lastTransitionTime": "2026-11-25T10:28:37Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T01:54:48Z",
+          "lastTransitionTime": "2026-11-25T10:28:37Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -1549,15 +2222,82 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tb50vr0addminmu2a8ql",
+      "uid": "tb5jnso3laaus5n58f8i",
       "vNetId": "test-rdbms-vnet-mariadb-nhn"
+    },
+    {
+      "backupRetentionDays": 7,
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-25T10:28:03Z",
+          "message": "RDBMS creation in progress",
+          "reason": "Creating",
+          "status": "False",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2026-11-25T10:28:03Z",
+          "reason": "Creating",
+          "status": "False",
+          "type": "Synced"
+        }
+      ],
+      "connectionConfig": {
+        "configName": "openstack-regionone",
+        "credentialHolder": "admin",
+        "credentialName": "openstack",
+        "driverName": "openstack-driver-v1.0.so",
+        "providerName": "openstack",
+        "regionDetail": {
+          "description": "Korea Daejeon (Internal)",
+          "location": {
+            "display": "South Korea (Daejeon)",
+            "latitude": 36.3804,
+            "longitude": 127.365
+          },
+          "regionId": "RegionOne",
+          "regionName": "regionone",
+          "zones": [
+            "nova"
+          ]
+        },
+        "regionRepresentative": true,
+        "regionZoneInfo": {
+          "assignedRegion": "RegionOne",
+          "assignedZone": "nova"
+        },
+        "regionZoneInfoName": "openstack-regionone",
+        "verified": true
+      },
+      "connectionName": "openstack-regionone",
+      "dbEngine": "mariadb",
+      "dbEngineVersion": "11.4",
+      "dbInstanceSpec": "m1.medium",
+      "deletionProtection": false,
+      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
+      "highAvailability": false,
+      "id": "test-rdbms-mariadb-openstack",
+      "name": "test-rdbms-mariadb-openstack",
+      "publicAccess": true,
+      "resourceType": "rdbms",
+      "securityGroupIds": [
+        "test-rdbms-sg-openstack"
+      ],
+      "status": "Creating",
+      "storageSize": 100,
+      "storageType": "RBD",
+      "subnetIds": [
+        "subnet-1"
+      ],
+      "uid": "tb0lg7ct0lnh5v9libpg",
+      "vNetId": "test-rdbms-vnet-openstack"
     }
   ]
 }
 ```
 
 ### 11. Beetle POST Create Logical Database [✅ SUCCESS]
-- **Duration:** 901ms
+- **Duration:** 1.049s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-alibaba/database`
 ```json
 // Request Body
@@ -1575,20 +2315,20 @@
 ```
 
 ### 12. Beetle GET List Logical Databases [✅ SUCCESS]
-- **Duration:** 794ms
+- **Duration:** 1.611s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-alibaba/database`
 ```json
 // Response Body
 {
   "databases": [
-    "sampledb_dyn",
-    "sampledb"
+    "sampledb",
+    "sampledb_dyn"
   ]
 }
 ```
 
 ### 13. Beetle GET Secure Transport Info [✅ SUCCESS]
-- **Duration:** 1.34s
+- **Duration:** 806ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-alibaba/secure-transport`
 ```json
 // Response Body
@@ -1620,7 +2360,7 @@
 ```
 
 ### 15. Data I/O Test (Internal VPC VM) [✅ SUCCESS]
-- **Duration:** 2m48.72s
+- **Duration:** 2m42.692s
 ```json
 // Response Body
 {
@@ -1629,16 +2369,16 @@
 ```
 
 ### 16. Beetle DELETE Logical Database [✅ SUCCESS]
-- **Duration:** 17.105s
+- **Duration:** 17.153s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-alibaba/database/sampledb`
 
 ### 17. Beetle DELETE RDBMS Instance [✅ SUCCESS]
-- **Duration:** 8m41.609s
+- **Duration:** 8m41.532s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-alibaba?option=force`
 
 ### 18. Tumblebug DELETE /resources/securityGroup [✅ SUCCESS]
-- **Duration:** 1.04s
+- **Duration:** 917ms
 
 ### 19. Tumblebug DELETE /resources/vNet [✅ SUCCESS]
-- **Duration:** 7.311s
+- **Duration:** 7.469s
 

@@ -1,9 +1,10 @@
 # Managed RDBMS (MariaDB) Test Report: OPENSTACK (RegionOne)
 
 - **Test Case:** OpenStack RegionOne MariaDB Test
-- **Date & Time:** 2026-09-08 15:43:26
+- **Access Mode:** Public (publicAccess=true)
+- **Date & Time:** 2026-11-25 19:27:54
 - **Namespace:** `default`
-- **Total Duration:** 14m49.646s
+- **Total Duration:** 10m48.978s
 - **Overall Status:** ✅ PASSED
 
 ## Environment and Scenario
@@ -12,7 +13,7 @@
 - **Target CSP:** OPENSTACK
 - **Target Region:** `RegionOne`
 - **Namespace:** `default`
-- **Test Date:** 2026-09-08 15:43:26
+- **Test Date:** 2026-11-25 19:27:54
 
 ### Scenario & Tested APIs
 1. **Pre-flight Spec & Image Review**: `POST /tumblebug/specImagePairReview`
@@ -24,22 +25,23 @@
 7. **Migrate RDBMS (Provisioning)**: `POST /beetle/migration/middleware/ns/{nsId}/rdbms`
 8. **Get RDBMS Info & List**: `GET /beetle/migration/middleware/ns/{nsId}/rdbms`
 9. **Create Logical Database**: `POST /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database`
-10. **External Data I/O**: Direct TCP/SQL connectivity test
-11. **Internal Data I/O**: SQL execution via internal Runner VM (`POST /tumblebug/ns/{nsId}/infra`)
-12. **Delete Logical Database**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{databaseName}`
-13. **Delete RDBMS**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}`
-14. **Delete Pre-requisite SG & VNet**: `DELETE /tumblebug/ns/{nsId}/resources/securityGroup/{sgId}`, `DELETE /tumblebug/ns/{nsId}/resources/vNet/{vNetId}`
+10. **Get Secure Transport Info**: `GET /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/secure-transport`
+11. **External Data I/O**: Direct TCP/SQL connectivity & TLS handshake test
+12. **Internal Data I/O**: SQL execution via internal Runner VM (`POST /tumblebug/ns/{nsId}/infra`)
+13. **Delete Logical Database**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{databaseName}`
+14. **Delete RDBMS**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}`
+15. **Delete Pre-requisite SG & VNet**: `DELETE /tumblebug/ns/{nsId}/resources/securityGroup/{sgId}`, `DELETE /tumblebug/ns/{nsId}/resources/vNet/{vNetId}`
 
 ## Execution Steps & API Traces
 
 ### 1. Tumblebug POST /specImagePairReview (Pre-flight Spec & Image Review) [✅ SUCCESS]
-- **Duration:** 2.83s
+- **Duration:** 1.163s
 - **Request URL:** `http://localhost:1323/tumblebug/specImagePairReview`
 ```json
 // Request Body
 {
   "imageId": "78d90dae-d21d-4606-a9dd-c1268e321864",
-  "specId": "openstack+regionone+m1.large"
+  "specId": "openstack+regionone+m1.xlarge"
 }
 ```
 ```json
@@ -122,17 +124,17 @@
         "value": "3758096384"
       }
     ],
-    "fetchedTime": "2026.08.21 13:57:14 Fri",
+    "fetchedTime": "2026.10.29 04:24:54 Thu",
     "id": "78d90dae-d21d-4606-a9dd-c1268e321864",
     "imageStatus": "Available",
     "infraType": "",
     "isBasicGpuImage": false,
-    "isBasicImage": false,
+    "isBasicImage": true,
     "isGPUImage": false,
     "isKubernetesImage": false,
     "name": "78d90dae-d21d-4606-a9dd-c1268e321864",
     "namespace": "system",
-    "osArchitecture": "na",
+    "osArchitecture": "x86_64",
     "osDiskSizeGB": 0,
     "osDiskType": "NA",
     "osDistribution": "ubuntu-24.04",
@@ -146,7 +148,7 @@
     "sourceCspImageName": "",
     "sourceNodeUid": "",
     "systemLabel": "",
-    "uid": "tbglac0fmf7lvmmuu60t"
+    "uid": "tbde4jmfid1fbfeg61gi"
   },
   "imageId": "78d90dae-d21d-4606-a9dd-c1268e321864",
   "imageValidation": {
@@ -157,30 +159,31 @@
     "status": "Available"
   },
   "isValid": true,
-  "message": "Spec and image pair is valid for provisioning",
+  "message": "Spec and image pair is valid but has warnings",
   "providerName": "openstack",
   "regionName": "regionone",
   "specDetails": {
     "architecture": "x86_64",
+    "availabilityStatus": "Unverified",
     "connectionName": "openstack-regionone",
     "costPerHour": -1,
-    "cspSpecName": "m1.large",
+    "cspSpecName": "m1.xlarge",
     "details": [
       {
         "key": "ID",
-        "value": "d0e47e56-adbc-414c-932c-d734f6fb4acb"
+        "value": "61b7f2ff-c21c-4216-b5ca-dbda45b551da"
       },
       {
         "key": "Disk",
-        "value": "80"
+        "value": "160"
       },
       {
         "key": "RAM",
-        "value": "8192"
+        "value": "16384"
       },
       {
         "key": "Name",
-        "value": "m1.large"
+        "value": "m1.xlarge"
       },
       {
         "key": "RxTxFactor",
@@ -188,7 +191,7 @@
       },
       {
         "key": "VCPUs",
-        "value": "4"
+        "value": "8"
       },
       {
         "key": "IsPublic",
@@ -199,7 +202,7 @@
         "value": "0"
       }
     ],
-    "diskSizeGB": 80,
+    "diskSizeGB": 160,
     "evaluationScore01": -1,
     "evaluationScore02": -1,
     "evaluationScore03": -1,
@@ -210,35 +213,39 @@
     "evaluationScore08": -1,
     "evaluationScore09": -1,
     "evaluationScore10": -1,
-    "id": "openstack+regionone+m1.large",
+    "id": "openstack+regionone+m1.xlarge",
     "infraType": "node",
-    "memoryGiB": 8,
-    "name": "openstack+regionone+m1.large",
+    "memoryGiB": 16,
+    "name": "openstack+regionone+m1.xlarge",
     "namespace": "system",
     "providerName": "openstack",
     "regionLatitude": 36.3804,
     "regionLongitude": 127.365,
     "regionName": "regionone",
-    "rootDiskSize": 80,
+    "rootDiskSize": 160,
     "rootDiskType": "",
     "systemLabel": "auto-gen",
-    "uid": "tb6if7bvagid4j8na7t1",
-    "vCPU": 4
+    "uid": "tbmeg4q8vljrvg05vr35",
+    "vCPU": 8
   },
-  "specId": "openstack+regionone+m1.large",
+  "specId": "openstack+regionone+m1.xlarge",
   "specValidation": {
-    "cspResourceId": "m1.large",
+    "cspResourceId": "m1.xlarge",
     "isAvailable": true,
-    "resourceId": "openstack+regionone+m1.large",
-    "resourceName": "m1.large",
+    "message": "no availability checker registered for provider; assumed available",
+    "resourceId": "openstack+regionone+m1.xlarge",
+    "resourceName": "m1.xlarge",
     "status": "Available"
   },
-  "status": "OK"
+  "status": "Warning",
+  "warnings": [
+    "Zone availability notice for 'm1.xlarge': no availability checker registered for provider; assumed available"
+  ]
 }
 ```
 
 ### 2. Tumblebug POST /resources/vNet (Create VNet & Subnets) [✅ SUCCESS]
-- **Duration:** 35.633s
+- **Duration:** 4.538s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/vNet`
 ```json
 // Request Body
@@ -263,19 +270,19 @@
   "cidrBlock": "OpenStack VPC does not support IPv4_CIDR",
   "conditions": [
     {
-      "lastTransitionTime": "2026-09-08T06:43:33Z",
+      "lastTransitionTime": "2026-11-25T10:27:59Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-09-08T06:43:33Z",
+      "lastTransitionTime": "2026-11-25T10:27:59Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
     },
     {
-      "lastTransitionTime": "2026-09-08T06:43:33Z",
+      "lastTransitionTime": "2026-11-25T10:27:59Z",
       "reason": "AllReady",
       "status": "True",
       "type": "ChildrenReady"
@@ -309,15 +316,15 @@
     "verified": true
   },
   "connectionName": "openstack-regionone",
-  "cspResourceId": "f151966d-2e0f-40b8-9af4-668c0c83e688",
-  "cspResourceName": "tbl4dca47i5buvbsnga2",
+  "cspResourceId": "54d61f70-86f8-44c3-ac0e-6b7ad2ec93b7",
+  "cspResourceName": "tb32rr079fkjibbii4r5",
   "description": "Pre-requisite VNet for CM-Beetle RDBMS test",
   "id": "test-rdbms-vnet-openstack",
   "isAutoGenerated": false,
   "keyValueList": [
     {
       "key": "Network",
-      "value": "{id:f151966d-2e0f-40b8-9af4-668c0c83e688,name:tbl4dca47i5buvbsnga2,description:,admin_state_up:true,status:ACTIVE,subnets:[67d6f411-2c88-400a-9bfd-614912f43141],tenant_id:1b513759820b4fb497fac0661d81c347,project_id:1b513759820b4fb497fac0661d81c347,shared:false,availability_zone_hints:[nova],tags:[],revision_number:2}"
+      "value": "{id:54d61f70-86f8-44c3-ac0e-6b7ad2ec93b7,name:tb32rr079fkjibbii4r5,description:,admin_state_up:true,status:ACTIVE,subnets:[7fa67170-ae05-4108-bf47-1cbfcc864346],tenant_id:1b513759820b4fb497fac0661d81c347,project_id:1b513759820b4fb497fac0661d81c347,shared:false,availability_zone_hints:[nova],tags:[],revision_number:2}"
     },
     {
       "key": "NetworkExternalExt",
@@ -331,13 +338,13 @@
     {
       "conditions": [
         {
-          "lastTransitionTime": "2026-09-08T06:43:33Z",
+          "lastTransitionTime": "2026-11-25T10:27:59Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-09-08T06:43:33Z",
+          "lastTransitionTime": "2026-11-25T10:27:59Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -371,25 +378,25 @@
         "verified": true
       },
       "connectionName": "openstack-regionone",
-      "cspResourceId": "67d6f411-2c88-400a-9bfd-614912f43141",
-      "cspResourceName": "tb7jh1hfaaomjs07t0jj",
-      "cspVNetId": "f151966d-2e0f-40b8-9af4-668c0c83e688",
-      "cspVNetName": "tbl4dca47i5buvbsnga2",
+      "cspResourceId": "7fa67170-ae05-4108-bf47-1cbfcc864346",
+      "cspResourceName": "tbg344iv8s8oo8l9q4o7",
+      "cspVNetId": "54d61f70-86f8-44c3-ac0e-6b7ad2ec93b7",
+      "cspVNetName": "tb32rr079fkjibbii4r5",
       "description": "",
       "id": "subnet-1",
       "ipv4_CIDR": "10.6.1.0/24",
       "keyValueList": [
         {
           "key": "ID",
-          "value": "67d6f411-2c88-400a-9bfd-614912f43141"
+          "value": "7fa67170-ae05-4108-bf47-1cbfcc864346"
         },
         {
           "key": "NetworkID",
-          "value": "f151966d-2e0f-40b8-9af4-668c0c83e688"
+          "value": "54d61f70-86f8-44c3-ac0e-6b7ad2ec93b7"
         },
         {
           "key": "Name",
-          "value": "tb7jh1hfaaomjs07t0jj"
+          "value": "tbg344iv8s8oo8l9q4o7"
         },
         {
           "key": "IPVersion",
@@ -435,16 +442,16 @@
       "name": "subnet-1",
       "resourceType": "subnet",
       "status": "Available",
-      "uid": "tb7jh1hfaaomjs07t0jj"
+      "uid": "tbg344iv8s8oo8l9q4o7"
     }
   ],
   "systemLabel": "",
-  "uid": "tbl4dca47i5buvbsnga2"
+  "uid": "tb32rr079fkjibbii4r5"
 }
 ```
 
 ### 3. Tumblebug POST /resources/securityGroup (Create SecurityGroup) [✅ SUCCESS]
-- **Duration:** 16.761s
+- **Duration:** 4.552s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/securityGroup`
 ```json
 // Request Body
@@ -501,21 +508,21 @@
     "verified": true
   },
   "connectionName": "openstack-regionone",
-  "cspResourceId": "b0865764-3cb9-496a-b7bf-afa70fcb111d",
-  "cspResourceName": "tbvivtovu0gt2mijf37n",
+  "cspResourceId": "8ebd3c41-e333-402d-86ea-f43ae9cfd37a",
+  "cspResourceName": "tbl5dr9kg1n59e77tm0n",
   "description": "Pre-requisite SecurityGroup for CM-Beetle RDBMS test",
   "firewallRules": [
-    {
-      "CIDR": "0.0.0.0/0",
-      "Direction": "inbound",
-      "Port": "3306",
-      "Protocol": "TCP"
-    },
     {
       "CIDR": "0.0.0.0/0",
       "Direction": "outbound",
       "Port": "",
       "Protocol": "ALL"
+    },
+    {
+      "CIDR": "0.0.0.0/0",
+      "Direction": "inbound",
+      "Port": "3306",
+      "Protocol": "TCP"
     },
     {
       "CIDR": "::/0",
@@ -535,7 +542,7 @@
   "keyValueList": [
     {
       "key": "IId",
-      "value": "{NameId:tbvivtovu0gt2mijf37n,SystemId:b0865764-3cb9-496a-b7bf-afa70fcb111d}"
+      "value": "{NameId:tbl5dr9kg1n59e77tm0n,SystemId:8ebd3c41-e333-402d-86ea-f43ae9cfd37a}"
     },
     {
       "key": "VpcIID",
@@ -543,19 +550,19 @@
     },
     {
       "key": "SecurityRules",
-      "value": "[{Direction:inbound,IPProtocol:tcp,FromPort:3306,ToPort:3306,CIDR:0.0.0.0/0},{Direction:outbound,IPProtocol:all,FromPort:-1,ToPort:-1,CIDR:0.0.0.0/0},{Direction:outbound,IPProtocol:all,FromPort:-1,ToPort:-1,CIDR:::/0},{Direction:inbound,IPProtocol:tcp,FromPort:22,ToPort:22,CIDR:0.0.0.0/0}]"
+      "value": "[{Direction:outbound,IPProtocol:all,FromPort:-1,ToPort:-1,CIDR:0.0.0.0/0},{Direction:inbound,IPProtocol:tcp,FromPort:3306,ToPort:3306,CIDR:0.0.0.0/0},{Direction:outbound,IPProtocol:all,FromPort:-1,ToPort:-1,CIDR:::/0},{Direction:inbound,IPProtocol:tcp,FromPort:22,ToPort:22,CIDR:0.0.0.0/0}]"
     }
   ],
   "name": "test-rdbms-sg-openstack",
   "resourceType": "securityGroup",
   "systemLabel": "",
-  "uid": "tbvivtovu0gt2mijf37n",
+  "uid": "tbl5dr9kg1n59e77tm0n",
   "vNetId": "test-rdbms-vnet-openstack"
 }
 ```
 
 ### 4. Beetle GET RDBMS Support [✅ SUCCESS]
-- **Duration:** 4ms
+- **Duration:** 6ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/support?providerName=openstack`
 ```json
 // Response Body
@@ -564,7 +571,7 @@
   "supports": {
     "openstack": {
       "dbOperationMethod": "cspNativeApi",
-      "note": "An earlier v0.12.44 test run requested MariaDB 10.6 and failed ('Datastore version 10.6 cannot be found'). CB-Spider's rdbms-mariadb-test README clarifies the correct reference version for this Trove environment is 10.4, not 10.6 — confirmed Available in a 2026-08-18 run (m1.small/20GB, 3m58s). The datastore was never actually missing; 10.6 was simply the wrong version to request.",
+      "note": "CB-Spider v0.13.15 (#1873, fixing #1866) retries admin privilege GRANT with exponential backoff after Trove reports ACTIVE to prevent Error 1044; in private mode (PublicAccess=false), CB-Spider (#1890) skips this direct-SQL GRANT step. OpenStack Trove 2025.2 (Flamingo) active datastore versions are MySQL 8.4 and MariaDB 11.4.",
       "storageTypeSelectable": true,
       "supported": true,
       "supportedDBEngines": [
@@ -577,7 +584,7 @@
 ```
 
 ### 5. Beetle GET RDBMS Capability [✅ SUCCESS]
-- **Duration:** 4.402s
+- **Duration:** 1.132s
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/capability?connectionName=openstack-regionone&dbEngine=mariadb`
 ```json
 // Response Body
@@ -669,7 +676,7 @@
           "constraints": "Minimum 1GB storage.",
           "description": "Ceph RADOS Block Device storage (if available in deployment).",
           "displayName": "Ceph RBD",
-          "minSize": 1,
+          "minSizeGB": 1,
           "recommendationLevel": "standard",
           "storageType": "RBD"
         },
@@ -677,7 +684,7 @@
           "constraints": "Minimum 1GB storage.",
           "description": "Default storage type provided by OpenStack deployment. Actual backend depends on deployment configuration.",
           "displayName": "Default Storage",
-          "minSize": 1,
+          "minSizeGB": 1,
           "recommendationLevel": "standard",
           "storageType": "__DEFAULT__"
         }
@@ -687,7 +694,7 @@
     "regionName": "RegionOne",
     "requiresSecurityGroup": false,
     "requiresSubnet": false,
-    "storageSizeRange": {
+    "storageSizeRangeGB": {
       "max": -1,
       "min": 1
     },
@@ -696,7 +703,8 @@
       "__DEFAULT__"
     ],
     "supportedVersions": [
-      "10.4"
+      "10.4",
+      "11.4"
     ],
     "supportsBackup": true,
     "supportsDeletionProtection": false,
@@ -711,7 +719,7 @@
 ```
 
 ### 6. Beetle POST Recommend RDBMS [✅ SUCCESS]
-- **Duration:** 12ms
+- **Duration:** 8ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms`
 ```json
 // Request Body
@@ -725,7 +733,7 @@
     {
       "dbEngine": {
         "engine": "mariadb",
-        "engineVersion": "10.4",
+        "engineVersion": "11.4",
         "port": 3306,
         "role": "primary"
       },
@@ -789,11 +797,13 @@
       "backupRetentionDays": 7,
       "databases": [
         {
+          "charset": "utf8mb4",
+          "collation": "utf8mb4_unicode_ci",
           "databaseName": "sampledb"
         }
       ],
       "dbEngine": "mariadb",
-      "dbEngineVersion": "10.4",
+      "dbEngineVersion": "11.4",
       "dbInstanceSpec": "m1.medium",
       "highAvailability": false,
       "publicAccess": true,
@@ -818,7 +828,7 @@
 ```
 
 ### 7. Beetle POST Validate RDBMS Recommendation [✅ SUCCESS]
-- **Duration:** 28ms
+- **Duration:** 22ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/validate?nsId=default`
 ```json
 // Request Body
@@ -828,7 +838,7 @@
   "autoFillDefaults": true,
   "connectionName": "openstack-regionone",
   "dbEngine": "mariadb",
-  "dbEngineVersion": "10.4",
+  "dbEngineVersion": "11.4",
   "dbInstanceSpec": "m1.medium",
   "name": "rdbms-mariadb-openstack",
   "publicAccess": true,
@@ -851,7 +861,7 @@
     "adminUserPassword": "******",
     "connectionName": "openstack-regionone",
     "dbEngine": "mariadb",
-    "dbEngineVersion": "10.4",
+    "dbEngineVersion": "11.4",
     "dbInstanceSpec": "m1.medium",
     "name": "rdbms-mariadb-openstack",
     "publicAccess": true,
@@ -871,7 +881,7 @@
 ```
 
 ### 8. Beetle POST Migrate RDBMS (Provisioning) [✅ SUCCESS]
-- **Duration:** 4m22.061s
+- **Duration:** 3m45.728s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms?nameSeed=test`
 ```json
 // Request Body
@@ -889,11 +899,13 @@
       "backupRetentionDays": 7,
       "databases": [
         {
+          "charset": "utf8mb4",
+          "collation": "utf8mb4_unicode_ci",
           "databaseName": "sampledb"
         }
       ],
       "dbEngine": "mariadb",
-      "dbEngineVersion": "10.4",
+      "dbEngineVersion": "11.4",
       "dbInstanceSpec": "m1.medium",
       "highAvailability": false,
       "publicAccess": true,
@@ -925,22 +937,21 @@
 ```
 
 ### 9. Beetle GET RDBMS Info [✅ SUCCESS]
-- **Duration:** 4.211s
+- **Duration:** 1.233s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-openstack`
 ```json
 // Response Body
 {
-  "adminUserName": "admin",
   "backupTime": "NA",
   "conditions": [
     {
-      "lastTransitionTime": "2026-09-08T06:48:13Z",
+      "lastTransitionTime": "2026-11-25T10:31:29Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-09-08T06:48:13Z",
+      "lastTransitionTime": "2026-11-25T10:31:29Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
@@ -974,17 +985,27 @@
     "verified": true
   },
   "connectionName": "openstack-regionone",
-  "cspResourceId": "d2328034-37e8-44e8-8a45-aa85c7e74c8b",
-  "cspResourceName": "tbnvbqr3580esmlmfp3q",
+  "cspResourceId": "66740741-d1a0-41c9-b770-a78e8b885198",
+  "cspResourceName": "tb0lg7ct0lnh5v9libpg",
   "dbEngine": "mariadb",
-  "dbEngineVersion": "10.4",
+  "dbEngineVersion": "11.4",
   "dbInstanceSpec": "m1.medium",
   "dbInstanceType": "NA",
   "deletionProtection": false,
   "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-  "endpoint": "183.111.177.148:3306",
+  "endpoint": "183.111.177.152:3306",
   "highAvailability": false,
   "id": "test-rdbms-mariadb-openstack",
+  "keyValueList": [
+    {
+      "key": "Hostname",
+      "value": ""
+    },
+    {
+      "key": "VolumeUsed",
+      "value": "0.10"
+    }
+  ],
   "name": "test-rdbms-mariadb-openstack",
   "publicAccess": true,
   "resourceType": "rdbms",
@@ -997,31 +1018,30 @@
   "subnetIds": [
     "subnet-1"
   ],
-  "uid": "tbnvbqr3580esmlmfp3q",
+  "uid": "tb0lg7ct0lnh5v9libpg",
   "vNetId": "test-rdbms-vnet-openstack"
 }
 ```
 
 ### 10. Beetle GET RDBMS List [✅ SUCCESS]
-- **Duration:** 4ms
+- **Duration:** 32ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms`
 ```json
 // Response Body
 {
   "rdbms": [
     {
-      "adminUserName": "dbadmin",
       "backupRetentionDays": 7,
-      "backupTime": "17:00Z-18:00Z",
+      "backupTime": "09:00Z-10:00Z",
       "conditions": [
         {
-          "lastTransitionTime": "2026-09-08T06:47:12Z",
+          "lastTransitionTime": "2026-11-25T10:31:22Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-09-08T06:47:12Z",
+          "lastTransitionTime": "2026-11-25T10:31:22Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -1056,22 +1076,284 @@
         "verified": true
       },
       "connectionName": "alibaba-ap-northeast-2",
-      "cspResourceId": "rm-mj7on13jbb97vg9bq",
-      "cspResourceName": "tbeo4ttttknb54tko9dp",
+      "cspResourceId": "rm-mj7yv170t22mnj1bz",
+      "cspResourceName": "tbg504bm99cilsq7lbb2",
       "dbEngine": "mariadb",
       "dbEngineVersion": "10.6",
       "dbInstanceSpec": "mariadb.n2.medium.2c",
       "dbInstanceType": "HighAvailability",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "43.108.66.51:3306",
+      "endpoint": "43.108.66.115:3306",
       "highAvailability": true,
       "id": "test-rdbms-mariadb-alibaba",
+      "keyValueList": [
+        {
+          "key": "Engine",
+          "value": "MariaDB"
+        },
+        {
+          "key": "DBInstanceDiskUsed",
+          "value": "0"
+        },
+        {
+          "key": "AdvancedFeatures",
+          "value": "LinkedServer,DistributeTransaction"
+        },
+        {
+          "key": "VpcCloudInstanceId",
+          "value": "rm-mj7yv170t22mnj1bz-20261125182909"
+        },
+        {
+          "key": "DBInstanceNetType",
+          "value": "Intranet"
+        },
+        {
+          "key": "DBInstanceClass",
+          "value": "mariadb.n2.medium.2c"
+        },
+        {
+          "key": "MaxIOMBPS",
+          "value": "128"
+        },
+        {
+          "key": "DBMaxQuantity",
+          "value": "99999"
+        },
+        {
+          "key": "DBInstanceCPU",
+          "value": "2"
+        },
+        {
+          "key": "MaxConnections",
+          "value": "4000"
+        },
+        {
+          "key": "InstanceNetworkType",
+          "value": "VPC"
+        },
+        {
+          "key": "MultipleTempUpgrade",
+          "value": "false"
+        },
+        {
+          "key": "DBInstanceType",
+          "value": "Primary"
+        },
+        {
+          "key": "DBInstanceId",
+          "value": "rm-mj7yv170t22mnj1bz"
+        },
+        {
+          "key": "VpcId",
+          "value": "vpc-mj7fosavcqa9tajq8qsyy"
+        },
+        {
+          "key": "DBInstanceMemory",
+          "value": "4096"
+        },
+        {
+          "key": "DBInstanceStorageType",
+          "value": "cloud_essd"
+        },
+        {
+          "key": "SecurityIPList",
+          "value": "0.0.0.0/0"
+        },
+        {
+          "key": "SupportUpgradeAccountType",
+          "value": "No"
+        },
+        {
+          "key": "MaxIOPS",
+          "value": "7550"
+        },
+        {
+          "key": "TipsLevel",
+          "value": "1"
+        },
+        {
+          "key": "MaintainTime",
+          "value": "18:00Z-22:00Z"
+        },
+        {
+          "key": "EngineVersion",
+          "value": "10.6"
+        },
+        {
+          "key": "InstructionSetArch",
+          "value": "x86"
+        },
+        {
+          "key": "PayType",
+          "value": "Postpaid"
+        },
+        {
+          "key": "BurstingEnabled",
+          "value": "false"
+        },
+        {
+          "key": "Tips",
+          "value": "ok"
+        },
+        {
+          "key": "DBInstanceStorage",
+          "value": "100"
+        },
+        {
+          "key": "KindCode",
+          "value": "18"
+        },
+        {
+          "key": "ColdDataEnabled",
+          "value": "false"
+        },
+        {
+          "key": "SupportCreateSuperAccount",
+          "value": "No"
+        },
+        {
+          "key": "CurrentKernelVersion",
+          "value": "mariadb106_20260531"
+        },
+        {
+          "key": "ZoneId",
+          "value": "ap-northeast-2a"
+        },
+        {
+          "key": "IPType",
+          "value": "IPv4"
+        },
+        {
+          "key": "ConnectionMode",
+          "value": "Standard"
+        },
+        {
+          "key": "MasterZone",
+          "value": "ap-northeast-2a"
+        },
+        {
+          "key": "LockMode",
+          "value": "Unlock"
+        },
+        {
+          "key": "CanTempUpgrade",
+          "value": "false"
+        },
+        {
+          "key": "Category",
+          "value": "HighAvailability"
+        },
+        {
+          "key": "InsId",
+          "value": "1"
+        },
+        {
+          "key": "DBInstanceDescription",
+          "value": "tbg504bm99cilsq7lbb2"
+        },
+        {
+          "key": "AccountType",
+          "value": "Mix"
+        },
+        {
+          "key": "RegionId",
+          "value": "ap-northeast-2"
+        },
+        {
+          "key": "ConsoleVersion",
+          "value": "0"
+        },
+        {
+          "key": "ResourceGroupId",
+          "value": "rg-acfnvekhilw5kmy"
+        },
+        {
+          "key": "DispenseMode",
+          "value": "MultiAVZDispenseMode"
+        },
+        {
+          "key": "TempUpgradeRecoveryMemory",
+          "value": "0"
+        },
+        {
+          "key": "ProxyType",
+          "value": "0"
+        },
+        {
+          "key": "AccountMaxQuantity",
+          "value": "99999"
+        },
+        {
+          "key": "Port",
+          "value": "3306"
+        },
+        {
+          "key": "VSwitchId",
+          "value": "vsw-mj7mlhi0t2mhxca0s54s7"
+        },
+        {
+          "key": "CreationTime",
+          "value": "2026-11-25T10:29:13Z"
+        },
+        {
+          "key": "SecurityIPMode",
+          "value": "normal"
+        },
+        {
+          "key": "DBInstanceClassType",
+          "value": "x"
+        },
+        {
+          "key": "DBInstanceStatus",
+          "value": "Running"
+        },
+        {
+          "key": "ConnectionString",
+          "value": "rm-mj7yv170t22mnj1bz.mariadb.ap-northeast-2.rds.aliyuncs.com"
+        },
+        {
+          "key": "TempUpgradeRecoveryCpu",
+          "value": "0"
+        },
+        {
+          "key": "AvailabilityValue",
+          "value": "100.0%"
+        },
+        {
+          "key": "DeletionProtection",
+          "value": "false"
+        },
+        {
+          "key": "Extra",
+          "value": "{ReplicaGroupStatus:,ActiveReplicaDBInstanceID:,ReplicaGroupID:,RecoveryModel:,DBInstanceIds:{DBInstanceId:[]}}"
+        },
+        {
+          "key": "ServerlessConfig",
+          "value": "{ScaleMin:,ScaleMax:,AutoPause:false,SwitchForce:false}"
+        },
+        {
+          "key": "BabelfishConfig",
+          "value": "{BabelfishEnabled:,MigrationMode:}"
+        },
+        {
+          "key": "DBClusterNodes",
+          "value": "{DBClusterNode:[]}"
+        },
+        {
+          "key": "ReadOnlyDBInstanceIds",
+          "value": "{ReadOnlyDBInstanceId:[]}"
+        },
+        {
+          "key": "SlaveZones",
+          "value": "{SlaveZone:[{ZoneId:ap-northeast-2a}]}"
+        }
+      ],
       "name": "test-rdbms-mariadb-alibaba",
       "publicAccess": true,
       "resourceType": "rdbms",
       "securityGroupIds": [
-        "test-rdbms-sg-alibaba"
+        "test-rdbms-sg-mariadb-alibaba"
       ],
       "status": "Available",
       "storageSize": 100,
@@ -1079,23 +1361,22 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tbeo4ttttknb54tko9dp",
-      "vNetId": "test-rdbms-vnet-alibaba"
+      "uid": "tbg504bm99cilsq7lbb2",
+      "vNetId": "test-rdbms-vnet-mariadb-alibaba"
     },
     {
-      "adminUserName": "root",
       "backupRetentionDays": 7,
-      "backupTime": "15:59-16:29",
+      "backupTime": "15:06-15:36",
       "conditions": [
         {
-          "lastTransitionTime": "2026-09-08T06:45:07Z",
+          "lastTransitionTime": "2026-11-25T10:29:09Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-09-08T06:45:07Z",
+          "lastTransitionTime": "2026-11-25T10:29:09Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -1132,10 +1413,10 @@
         "verified": true
       },
       "connectionName": "aws-ap-northeast-2",
-      "cspResourceId": "tb73s3vujjccjaid9hl8",
-      "cspResourceName": "tb73s3vujjccjaid9hl8",
+      "cspResourceId": "tb55rm4aqne7bvtmh109",
+      "cspResourceName": "tb55rm4aqne7bvtmh109",
       "dbEngine": "mariadb",
-      "dbEngineVersion": "10.6.27",
+      "dbEngineVersion": "10.6.28",
       "dbInstanceSpec": "db.t3.medium",
       "dbInstanceType": "Primary",
       "deletionProtection": false,
@@ -1143,11 +1424,153 @@
       "highAvailability": false,
       "id": "test-rdbms-mariadb-aws",
       "iops": "3000",
+      "keyValueList": [
+        {
+          "key": "ActivityStreamStatus",
+          "value": "stopped"
+        },
+        {
+          "key": "AllocatedStorage",
+          "value": "100"
+        },
+        {
+          "key": "AutoMinorVersionUpgrade",
+          "value": "true"
+        },
+        {
+          "key": "AvailabilityZone",
+          "value": "ap-northeast-2c"
+        },
+        {
+          "key": "BackupRetentionPeriod",
+          "value": "7"
+        },
+        {
+          "key": "CACertificateIdentifier",
+          "value": "rds-ca-rsa2048-g1"
+        },
+        {
+          "key": "CopyTagsToSnapshot",
+          "value": "false"
+        },
+        {
+          "key": "CustomerOwnedIpEnabled",
+          "value": "false"
+        },
+        {
+          "key": "DBInstanceArn",
+          "value": "arn:aws:rds:ap-northeast-2:635484366616:db:tb55rm4aqne7bvtmh109"
+        },
+        {
+          "key": "DBInstanceClass",
+          "value": "db.t3.medium"
+        },
+        {
+          "key": "DBInstanceIdentifier",
+          "value": "tb55rm4aqne7bvtmh109"
+        },
+        {
+          "key": "DBInstanceStatus",
+          "value": "creating"
+        },
+        {
+          "key": "DBParameterGroups",
+          "value": "{DBParameterGroupName:default.mariadb10.6,ParameterApplyStatus:in-sync}"
+        },
+        {
+          "key": "DBSubnetGroup",
+          "value": "{DBSubnetGroupArn:null,DBSubnetGroupDescription:CB-Spider RDBMS subnet group for cb-spider-tb55rm4aqne7bvtmh109,DBSubnetGroupName:cb-spider-tb55rm4aqne7bvtmh109,SubnetGroupStatus:Complete,Subnets:[{SubnetAvailabilityZone:{Name:ap-northeast-2a},SubnetIdentifier:subnet-0332b3b067d7b2be3,SubnetOutpost:{Arn:null},SubnetStatus:Active},{SubnetAvailabilityZone:{Name:ap-northeast-2c},SubnetIdentifier:subnet-0fcd6322d6b4d1720,SubnetOutpost:{Arn:null},SubnetStatus:Active}],VpcId:vpc-0df32b14dbcdda989}"
+        },
+        {
+          "key": "DbInstancePort",
+          "value": "0"
+        },
+        {
+          "key": "DbiResourceId",
+          "value": "db-6S54HILSY73L2WFC6GXJJLPUJM"
+        },
+        {
+          "key": "DeletionProtection",
+          "value": "false"
+        },
+        {
+          "key": "Engine",
+          "value": "mariadb"
+        },
+        {
+          "key": "EngineVersion",
+          "value": "10.6.28"
+        },
+        {
+          "key": "IAMDatabaseAuthenticationEnabled",
+          "value": "false"
+        },
+        {
+          "key": "Iops",
+          "value": "3000"
+        },
+        {
+          "key": "LicenseModel",
+          "value": "general-public-license"
+        },
+        {
+          "key": "MasterUsername",
+          "value": "root"
+        },
+        {
+          "key": "MonitoringInterval",
+          "value": "0"
+        },
+        {
+          "key": "MultiAZ",
+          "value": "false"
+        },
+        {
+          "key": "OptionGroupMemberships",
+          "value": "{OptionGroupName:default:mariadb-10-6,Status:in-sync}"
+        },
+        {
+          "key": "PendingModifiedValues",
+          "value": "{AllocatedStorage:null,BackupRetentionPeriod:null,CACertificateIdentifier:null,DBInstanceClass:null,DBInstanceIdentifier:null,DBSubnetGroupName:null,EngineVersion:null,IAMDatabaseAuthenticationEnabled:null,Iops:null,LicenseModel:null,MasterUserPassword:****,MultiAZ:null,PendingCloudwatchLogsExports:null,Port:null,ProcessorFeatures:null,StorageType:null}"
+        },
+        {
+          "key": "PerformanceInsightsEnabled",
+          "value": "false"
+        },
+        {
+          "key": "PreferredBackupWindow",
+          "value": "15:06-15:36"
+        },
+        {
+          "key": "PreferredMaintenanceWindow",
+          "value": "sun:16:40-sun:17:10"
+        },
+        {
+          "key": "PubliclyAccessible",
+          "value": "true"
+        },
+        {
+          "key": "StorageEncrypted",
+          "value": "false"
+        },
+        {
+          "key": "StorageType",
+          "value": "gp3"
+        },
+        {
+          "key": "TagList",
+          "value": "{Key:Name,Value:tb55rm4aqne7bvtmh109}"
+        },
+        {
+          "key": "VpcSecurityGroups",
+          "value": "{Status:active,VpcSecurityGroupId:sg-0dec51a4099d5aa2c}"
+        }
+      ],
       "name": "test-rdbms-mariadb-aws",
       "publicAccess": true,
       "resourceType": "rdbms",
       "securityGroupIds": [
-        "test-rdbms-sg-aws"
+        "test-rdbms-sg-mariadb-aws"
       ],
       "status": "Creating",
       "storageSize": 100,
@@ -1159,25 +1582,24 @@
       "tagList": [
         {
           "key": "Name",
-          "value": "tb73s3vujjccjaid9hl8"
+          "value": "tb55rm4aqne7bvtmh109"
         }
       ],
-      "uid": "tb73s3vujjccjaid9hl8",
-      "vNetId": "test-rdbms-vnet-aws"
+      "uid": "tb55rm4aqne7bvtmh109",
+      "vNetId": "test-rdbms-vnet-mariadb-aws"
     },
     {
-      "adminUserName": "myadmin",
       "backupRetentionDays": 7,
       "conditions": [
         {
-          "lastTransitionTime": "2026-09-08T06:44:50Z",
+          "lastTransitionTime": "2026-11-25T10:28:37Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-09-08T06:44:50Z",
+          "lastTransitionTime": "2026-11-25T10:28:37Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -1224,7 +1646,7 @@
       "publicAccess": true,
       "resourceType": "rdbms",
       "securityGroupIds": [
-        "test-rdbms-sg-nhn"
+        "test-rdbms-sg-mariadb-nhn"
       ],
       "status": "Creating",
       "storageSize": 100,
@@ -1232,21 +1654,20 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tb5orqrpujtia47vn84d",
-      "vNetId": "test-rdbms-vnet-nhn"
+      "uid": "tb5jnso3laaus5n58f8i",
+      "vNetId": "test-rdbms-vnet-mariadb-nhn"
     },
     {
-      "adminUserName": "admin",
       "backupTime": "NA",
       "conditions": [
         {
-          "lastTransitionTime": "2026-09-08T06:48:13Z",
+          "lastTransitionTime": "2026-11-25T10:31:29Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-09-08T06:48:13Z",
+          "lastTransitionTime": "2026-11-25T10:31:29Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -1280,17 +1701,27 @@
         "verified": true
       },
       "connectionName": "openstack-regionone",
-      "cspResourceId": "d2328034-37e8-44e8-8a45-aa85c7e74c8b",
-      "cspResourceName": "tbnvbqr3580esmlmfp3q",
+      "cspResourceId": "66740741-d1a0-41c9-b770-a78e8b885198",
+      "cspResourceName": "tb0lg7ct0lnh5v9libpg",
       "dbEngine": "mariadb",
-      "dbEngineVersion": "10.4",
+      "dbEngineVersion": "11.4",
       "dbInstanceSpec": "m1.medium",
       "dbInstanceType": "NA",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "183.111.177.148:3306",
+      "endpoint": "183.111.177.152:3306",
       "highAvailability": false,
       "id": "test-rdbms-mariadb-openstack",
+      "keyValueList": [
+        {
+          "key": "Hostname",
+          "value": ""
+        },
+        {
+          "key": "VolumeUsed",
+          "value": "0.10"
+        }
+      ],
       "name": "test-rdbms-mariadb-openstack",
       "publicAccess": true,
       "resourceType": "rdbms",
@@ -1303,7 +1734,7 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tbnvbqr3580esmlmfp3q",
+      "uid": "tb0lg7ct0lnh5v9libpg",
       "vNetId": "test-rdbms-vnet-openstack"
     }
   ]
@@ -1311,12 +1742,13 @@
 ```
 
 ### 11. Beetle POST Create Logical Database [✅ SUCCESS]
-- **Duration:** 5.678s
+- **Duration:** 8.038s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-openstack/database`
 ```json
 // Request Body
 {
-  "adminUserPassword": "******",
+  "charset": "utf8mb4",
+  "collation": "utf8mb4_unicode_ci",
   "databaseName": "sampledb_dyn"
 }
 ```
@@ -1329,7 +1761,7 @@
 ```
 
 ### 12. Beetle GET List Logical Databases [✅ SUCCESS]
-- **Duration:** 9.344s
+- **Duration:** 3.536s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-openstack/database`
 ```json
 // Response Body
@@ -1341,8 +1773,31 @@
 }
 ```
 
-### 13. Data I/O Test (External Remote) [✅ SUCCESS]
-- **Duration:** 74ms
+### 13. Beetle GET Secure Transport Info [✅ SUCCESS]
+- **Duration:** 2.287s
+- **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-openstack/secure-transport`
+```json
+// Response Body
+{
+  "caCertificate": {
+    "isSelfSigned": false,
+    "issuer": "CN=MariaDB Server",
+    "notAfter": "2036-11-22T10:31:03Z",
+    "pem": "-----BEGIN CERTIFICATE-----\nMIIEqzCCApOgAwIBAgIBADANBgkqhkiG9w0BAQsFADAZMRcwFQYDVQQDDA5NYXJp\nYURCIFNlcnZlcjAeFw0yNjExMjUxMDMxMDNaFw0zNjExMjIxMDMxMDNaMBkxFzAV\nBgNVBAMMDk1hcmlhREIgU2VydmVyMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIIC\nCgKCAgEAiC3AlT4BN/dZntOD2VI8bFjjyqV6zNfsBb3AiMdBdJUcqRaBLtTFt+T/\niMRF+r4qSXbhI9oEcGlaMsLHTdGDIEu8YM3GygXZrlUP5+M6H5ISiXBWvA1Ewkwi\nAmxDjNuTKKSgipbaWiIeSFpUfw8PWZmrk6GgqpGtAZd39ubABzdgfxandEplk32w\nHAapmch7IvWDD6iHUE1YKMctV+HG0xsexsOczuzWyRwlJMZQt1SnXhfb1Bej3jTy\nFUBR28C8edjzzjJ/2s61SA8sYcqnFTu959DckOSzFpBYajo2bYZF5in0F2j0JOWr\np23asDpYogdvb3gQG4PPEOel+QXFghq9K5M9VWyBu1UjrC2Q5T1Udm6P9FV3UmXd\nt4/IGcrxody3c2d+2v+cobKunyxw5Ml7SEg+OqC8EHLf0g2/SZoIP51AFZFfGrbd\nOQpoErlPQcLEXd3oOgHq5XeY6lwprkOo2/1SC1mshVfavh00alSvrgOO+caEsysI\n8nAJmyFjsx8Ow5e0Xwe2MiByKTaAQsRF0iqzlVTD36xjVXnSkBeSOndZNbcegfyp\nvJ8ayqaj1+caykjsb18te/3ch2Vc81l/LL/xraXtjhixM7AwggjreFpnKBVlns5O\nmBgsWReRdrXtf44rj4ikWSlGQYjDhWfVRxEDwv48efWW2xSmKukCAwEAATANBgkq\nhkiG9w0BAQsFAAOCAgEAInMqvkpFnnfIoj7xOrXBI4UtVNIv+6CuCxuNAD4buv79\nW0iEgwKOI/LFZyGHMuOAbpEaIqqtY8lAN456Kcc4L5jEEsldcJDdLgINlFRpeGZA\nW+OSvralA/wgdnfMOyEWW07R5TakXHNsFuO9zf5H2tUBkOKxOcgUUaZIztdqWItS\nT88g1hbtuOjNjU3sQbiAJ0ak+UjGQUPPKNaCkUXCqHjgSBNvogm9jKzYDVPbQw2R\nu7TdcTh6h7NBFFYV7vMtDHQss8P+TOM+KT+zTcnZDqw6QlKKTxlffa+MLkxzo1As\nWCQcP0ZgPO4bQIBOQaVZgJcq4wBU/stBlRMASZE24WmaIqfKL8rMhbtTNvW1Jr/v\n1SuuaODS+9Ks8j9wuDe8TDhtTZxry9Lu7msnCEDb0Seb2E2rMR+CpYoDEAypcj8G\nClHIc89PZz/huh8tA2VydLMAEVcPpAvUPHYmwPRDsj11pDpG8oWC16VQHeeHud8i\nsbtMn+k1SMo+oSMK5yB2h/bxY8Kvw0DmZ7AvdNc+TUl+j3DnHEbsleoN0Pc+UYmB\n+dfXxZQJqH2zZ+lAXGEVI6HDSoo3dP8fC41NnvRZPtygnWSQ19DXVxHPgeyJSNKa\nLsmUTKu+o0DMK43zX7EIjfQpbRcIXHVJUKsraUEiRm74HcLrTw1ObamAdPCyVwY=\n-----END CERTIFICATE-----\n",
+    "subject": "CN=MariaDB Server"
+  },
+  "enforced": false,
+  "engine": "mariadb",
+  "recommendedSSLMode": "VERIFY_CA",
+  "requireSecureTransport": "OFF",
+  "rules": "",
+  "tlsCipher": "TLS_AES_128_GCM_SHA256",
+  "tlsInUse": true
+}
+```
+
+### 14. Data I/O Test (External Remote) [✅ SUCCESS]
+- **Duration:** 36ms
 ```json
 // Response Body
 {
@@ -1350,8 +1805,8 @@
 }
 ```
 
-### 14. Data I/O Test (Internal VPC VM) [✅ SUCCESS]
-- **Duration:** 6m1.084s
+### 15. Data I/O Test (Internal VPC VM) [✅ SUCCESS]
+- **Duration:** 5m19.15s
 ```json
 // Response Body
 {
@@ -1359,17 +1814,17 @@
 }
 ```
 
-### 15. Beetle DELETE Logical Database [✅ SUCCESS]
-- **Duration:** 44.823s
+### 16. Beetle DELETE Logical Database [✅ SUCCESS]
+- **Duration:** 19.419s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-openstack/database/sampledb`
 
-### 16. Beetle DELETE RDBMS Instance [✅ SUCCESS]
-- **Duration:** 1m55.506s
+### 17. Beetle DELETE RDBMS Instance [✅ SUCCESS]
+- **Duration:** 51.645s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-mariadb-openstack?option=force`
 
-### 17. Tumblebug DELETE /resources/securityGroup [✅ SUCCESS]
-- **Duration:** 12.083s
+### 18. Tumblebug DELETE /resources/securityGroup [✅ SUCCESS]
+- **Duration:** 2.301s
 
-### 18. Tumblebug DELETE /resources/vNet [✅ SUCCESS]
-- **Duration:** 15.106s
+### 19. Tumblebug DELETE /resources/vNet [✅ SUCCESS]
+- **Duration:** 4.154s
 

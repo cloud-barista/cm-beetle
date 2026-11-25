@@ -12,9 +12,9 @@ go 1.26.2
 // 5. !Importance! After building/testing, make sure to restore(remove/comment) the changes by step 1-3.
 // replace github.com/cloud-barista/cb-tumblebug => ../cb-tumblebug
 
-replace github.com/cloud-barista/cm-beetle/imdl => ./imdl
+// replace github.com/cloud-barista/cm-beetle/imdl => ./imdl
 
-replace github.com/cloud-barista/cm-beetle/transx => ./transx
+// replace github.com/cloud-barista/cm-beetle/transx => ./transx
 
 require (
 	github.com/cloud-barista/cb-tumblebug v0.14.0
@@ -63,11 +63,13 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.21 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.21 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.6 // indirect
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.56.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.296.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.7 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.21 // indirect
 	github.com/aws/aws-sdk-go-v2/service/pricing v1.41.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.62.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/servicequotas v1.34.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.0.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.30.15 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.19 // indirect

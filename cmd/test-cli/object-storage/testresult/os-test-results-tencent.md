@@ -7,17 +7,17 @@
 
 ### Environment
 
-- CM-Beetle: v0.6.4+ (95cc61d)
-- CB-Tumblebug: v0.13.8
+- CM-Beetle: v0.6.5+ (83361e8)
+- CB-Tumblebug: v0.14.0
 - Target CSP: TENCENT
 - Target Region: ap-seoul
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Name Seed: my
 - Test CLI: Custom automated testing tool
-- Test Date: November 11, 2026
-- Test Time: 12:59:26 KST
-- Test Execution: 2026-11-11 12:59:26 KST
+- Test Date: November 25, 2026
+- Test Time: 18:36:31 KST
+- Test Execution: 2026-11-25 18:36:31 KST
 
 ### Scenario
 
@@ -37,18 +37,18 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 3ms | Pass |
-| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 26.296s | Pass |
-| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 12ms | Pass |
-| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 415ms | Pass |
-| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 1.104s | Pass |
-| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 15.098s | Pass |
+| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 17ms | Pass |
+| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 24.276s | Pass |
+| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 19ms | Pass |
+| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 312ms | Pass |
+| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 740ms | Pass |
+| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 16.137s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 47.935760538s
+**Total Duration**: 46.507078734s
 
-*Test executed on November 11, 2026 at 12:59:26 KST (2026-11-11 12:59:26 KST) using CM-Beetle automated test CLI*
+*Test executed on November 25, 2026 at 18:36:31 KST (2026-11-25 18:36:31 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -323,13 +323,13 @@
       {
         "conditions": [
           {
-            "lastTransitionTime": "2026-11-11T03:59:32Z",
+            "lastTransitionTime": "2026-11-25T09:36:35Z",
             "reason": "Available",
             "status": "True",
             "type": "Ready"
           },
           {
-            "lastTransitionTime": "2026-11-11T03:59:32Z",
+            "lastTransitionTime": "2026-11-25T09:36:35Z",
             "reason": "Available",
             "status": "True",
             "type": "Synced"
@@ -364,26 +364,26 @@
           "verified": true
         },
         "connectionName": "tencent-ap-seoul",
-        "cspResourceId": "tbqi46tjo57i3gkh4j54-1383606637",
-        "cspResourceName": "tbqi46tjo57i3gkh4j54",
+        "cspResourceId": "tbm59n96l6ihq1dl0lr9-1383606637",
+        "cspResourceName": "tbm59n96l6ihq1dl0lr9",
         "description": "Created by CM-Beetle",
         "id": "my-os-01",
         "maxKeys": 1000,
         "name": "my-os-01",
         "resourceType": "objectStorage",
         "status": "Available",
-        "uid": "tbqi46tjo57i3gkh4j54"
+        "uid": "tbm59n96l6ihq1dl0lr9"
       },
       {
         "conditions": [
           {
-            "lastTransitionTime": "2026-11-11T03:59:32Z",
+            "lastTransitionTime": "2026-11-25T09:36:37Z",
             "reason": "Available",
             "status": "True",
             "type": "Ready"
           },
           {
-            "lastTransitionTime": "2026-11-11T03:59:32Z",
+            "lastTransitionTime": "2026-11-25T09:36:37Z",
             "reason": "Available",
             "status": "True",
             "type": "Synced"
@@ -418,15 +418,15 @@
           "verified": true
         },
         "connectionName": "tencent-ap-seoul",
-        "cspResourceId": "tb7107hn6ct973devmdm-1383606637",
-        "cspResourceName": "tb7107hn6ct973devmdm",
+        "cspResourceId": "tb6d1d19v4nki1ljh8fp-1383606637",
+        "cspResourceName": "tb6d1d19v4nki1ljh8fp",
         "description": "Created by CM-Beetle",
         "id": "my-os-02",
         "maxKeys": 1000,
         "name": "my-os-02",
         "resourceType": "objectStorage",
         "status": "Available",
-        "uid": "tb7107hn6ct973devmdm"
+        "uid": "tb6d1d19v4nki1ljh8fp"
       }
     ],
     "status": "created"
@@ -509,13 +509,13 @@
   "data": {
     "conditions": [
       {
-        "lastTransitionTime": "2026-11-11T03:59:32Z",
+        "lastTransitionTime": "2026-11-25T09:36:35Z",
         "reason": "Available",
         "status": "True",
         "type": "Ready"
       },
       {
-        "lastTransitionTime": "2026-11-11T03:59:32Z",
+        "lastTransitionTime": "2026-11-25T09:36:35Z",
         "reason": "Available",
         "status": "True",
         "type": "Synced"
@@ -550,15 +550,15 @@
       "verified": true
     },
     "connectionName": "tencent-ap-seoul",
-    "cspResourceId": "tbqi46tjo57i3gkh4j54-1383606637",
-    "cspResourceName": "tbqi46tjo57i3gkh4j54",
+    "cspResourceId": "tbm59n96l6ihq1dl0lr9-1383606637",
+    "cspResourceName": "tbm59n96l6ihq1dl0lr9",
     "description": "Created by CM-Beetle",
     "id": "my-os-01",
     "maxKeys": 1000,
     "name": "my-os-01",
     "resourceType": "objectStorage",
     "status": "Available",
-    "uid": "tbqi46tjo57i3gkh4j54"
+    "uid": "tbm59n96l6ihq1dl0lr9"
   },
   "success": true
 }

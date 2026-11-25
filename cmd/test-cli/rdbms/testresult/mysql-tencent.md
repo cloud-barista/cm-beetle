@@ -1,9 +1,10 @@
 # Managed RDBMS (MySQL) Test Report: TENCENT (ap-seoul)
 
 - **Test Case:** Tencent AP-Seoul MySQL Test
-- **Date & Time:** 2026-10-19 09:49:54
+- **Access Mode:** Public (publicAccess=true)
+- **Date & Time:** 2026-11-25 18:54:32
 - **Namespace:** `default`
-- **Total Duration:** 11m13.5s
+- **Total Duration:** 12m29.896s
 - **Overall Status:** ✅ PASSED
 
 ## Environment and Scenario
@@ -12,7 +13,7 @@
 - **Target CSP:** TENCENT
 - **Target Region:** `ap-seoul`
 - **Namespace:** `default`
-- **Test Date:** 2026-10-19 09:49:54
+- **Test Date:** 2026-11-25 18:54:32
 
 ### Scenario & Tested APIs
 1. **Pre-flight Spec & Image Review**: `POST /tumblebug/specImagePairReview`
@@ -34,7 +35,7 @@
 ## Execution Steps & API Traces
 
 ### 1. Tumblebug POST /specImagePairReview (Pre-flight Spec & Image Review) [✅ SUCCESS]
-- **Duration:** 3.257s
+- **Duration:** 2.858s
 - **Request URL:** `http://localhost:1323/tumblebug/specImagePairReview`
 ```json
 // Request Body
@@ -48,11 +49,24 @@
 {
   "availability": {
     "available": true,
+    "cached": true,
     "instanceType": "SA2.MEDIUM4",
     "provider": "tencent",
-    "queriedAt": "2026-10-19T00:49:56.922719315Z",
+    "queriedAt": "2026-11-25T09:54:33.927733455Z",
+    "quota": {
+      "fitCount": 60,
+      "limit": 60,
+      "name": "postpaid instances",
+      "perInstance": 1,
+      "scope": "zone ap-seoul-1",
+      "unit": "instances",
+      "used": 0
+    },
+    "refreshAfter": "2026-11-25T09:59:33.927733455Z",
     "region": "ap-seoul",
     "source": "tencent:DescribeZoneInstanceConfigInfos",
+    "status": "Available",
+    "ttlSeconds": 300,
     "zones": [
       {
         "available": true,
@@ -124,7 +138,7 @@
         "value": "false"
       }
     ],
-    "fetchedTime": "2026.08.21 13:57:36 Fri",
+    "fetchedTime": "2026.10.29 04:25:24 Thu",
     "id": "img-7rotv4ux",
     "imageStatus": "Available",
     "infraType": "",
@@ -164,7 +178,7 @@
     "sourceCspImageName": "",
     "sourceNodeUid": "",
     "systemLabel": "",
-    "uid": "tbm5u74berjs1hfbpgol"
+    "uid": "tbrtv38m36npv5tcj4qk"
   },
   "imageId": "img-7rotv4ux",
   "imageValidation": {
@@ -180,6 +194,22 @@
   "regionName": "ap-seoul",
   "specDetails": {
     "architecture": "x86_64",
+    "availabilityCheckedAt": "2026-11-25T09:54:33.927733455Z",
+    "availabilityQuota": {
+      "fitCount": 60,
+      "limit": 60,
+      "name": "postpaid instances",
+      "perInstance": 1,
+      "scope": "zone ap-seoul-1",
+      "unit": "instances",
+      "used": 0
+    },
+    "availabilityRefreshAfter": "2026-11-25T09:59:33.927733455Z",
+    "availabilityStatus": "Available",
+    "availableZones": [
+      "ap-seoul-1",
+      "ap-seoul-2"
+    ],
     "connectionName": "tencent-ap-seoul",
     "costPerHour": 0.04,
     "cspSpecName": "SA2.MEDIUM4",
@@ -222,11 +252,15 @@
       },
       {
         "key": "Status",
-        "value": "SELL"
+        "value": "SOLD_OUT"
       },
       {
         "key": "Price",
         "value": "{UnitPrice:0.04,ChargeUnit:HOUR,Discount:20,UnitPriceDiscount:0.008,UnitPriceSecondStep:0.04,UnitPriceDiscountSecondStep:0.008,UnitPriceThirdStep:0.04,UnitPriceDiscountThirdStep:0.008}"
+      },
+      {
+        "key": "SoldOutReason",
+        "value": "ResourcesSoldOut.SpecifiedInstanceType"
       },
       {
         "key": "InstanceBandwidth",
@@ -262,7 +296,7 @@
       },
       {
         "key": "StatusCategory",
-        "value": "UnderStock"
+        "value": "WithoutStock"
       }
     ],
     "diskSizeGB": -1,
@@ -288,7 +322,7 @@
     "rootDiskSize": -1,
     "rootDiskType": "",
     "systemLabel": "auto-gen",
-    "uid": "tbus5den09dtgg280ngk",
+    "uid": "tbn11n2ns4e170ammcfs",
     "vCPU": 2
   },
   "specId": "tencent+ap-seoul+sa2.medium4",
@@ -305,7 +339,7 @@
 ```
 
 ### 2. Tumblebug POST /resources/vNet (Create VNet & Subnets) [✅ SUCCESS]
-- **Duration:** 2.614s
+- **Duration:** 2.811s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/vNet`
 ```json
 // Request Body
@@ -330,19 +364,19 @@
   "cidrBlock": "10.4.0.0/16",
   "conditions": [
     {
-      "lastTransitionTime": "2026-10-19T00:50:00Z",
+      "lastTransitionTime": "2026-11-25T09:54:36Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-10-19T00:50:00Z",
+      "lastTransitionTime": "2026-11-25T09:54:36Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
     },
     {
-      "lastTransitionTime": "2026-10-19T00:50:00Z",
+      "lastTransitionTime": "2026-11-25T09:54:36Z",
       "reason": "AllReady",
       "status": "True",
       "type": "ChildrenReady"
@@ -377,19 +411,19 @@
     "verified": true
   },
   "connectionName": "tencent-ap-seoul",
-  "cspResourceId": "vpc-lcxr863w",
-  "cspResourceName": "tb3l2demf8rd5uesahif",
+  "cspResourceId": "vpc-7yqgk5bc",
+  "cspResourceName": "tbtk14i64e4uqhcbtrgi",
   "description": "Pre-requisite VNet for CM-Beetle RDBMS test",
   "id": "test-rdbms-vnet-tencent",
   "isAutoGenerated": false,
   "keyValueList": [
     {
       "key": "VpcName",
-      "value": "tb3l2demf8rd5uesahif"
+      "value": "tbtk14i64e4uqhcbtrgi"
     },
     {
       "key": "VpcId",
-      "value": "vpc-lcxr863w"
+      "value": "vpc-7yqgk5bc"
     },
     {
       "key": "CidrBlock",
@@ -405,7 +439,7 @@
     },
     {
       "key": "CreatedTime",
-      "value": "2026-10-19 08:49:57"
+      "value": "2026-11-25 17:54:34"
     },
     {
       "key": "DnsServerSet",
@@ -413,7 +447,7 @@
     },
     {
       "key": "DhcpOptionsId",
-      "value": "dopt-10uu6j4h"
+      "value": "dopt-p7yzs2wn"
     },
     {
       "key": "EnableDhcp",
@@ -435,13 +469,13 @@
     {
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:00Z",
+          "lastTransitionTime": "2026-11-25T09:54:36Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:00Z",
+          "lastTransitionTime": "2026-11-25T09:54:36Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -476,25 +510,25 @@
         "verified": true
       },
       "connectionName": "tencent-ap-seoul",
-      "cspResourceId": "subnet-pyt94ok7",
-      "cspResourceName": "tbp9alan8inqj07robd1",
-      "cspVNetId": "vpc-lcxr863w",
-      "cspVNetName": "tb3l2demf8rd5uesahif",
+      "cspResourceId": "subnet-f4cf8dsh",
+      "cspResourceName": "tbu4rb2gqbn6jnmi557d",
+      "cspVNetId": "vpc-7yqgk5bc",
+      "cspVNetName": "tbtk14i64e4uqhcbtrgi",
       "description": "",
       "id": "subnet-1",
       "ipv4_CIDR": "10.4.1.0/24",
       "keyValueList": [
         {
           "key": "VpcId",
-          "value": "vpc-lcxr863w"
+          "value": "vpc-7yqgk5bc"
         },
         {
           "key": "SubnetId",
-          "value": "subnet-pyt94ok7"
+          "value": "subnet-f4cf8dsh"
         },
         {
           "key": "SubnetName",
-          "value": "tbp9alan8inqj07robd1"
+          "value": "tbu4rb2gqbn6jnmi557d"
         },
         {
           "key": "CidrBlock",
@@ -514,11 +548,11 @@
         },
         {
           "key": "RouteTableId",
-          "value": "rtb-65j7pbhl"
+          "value": "rtb-cu09d0xv"
         },
         {
           "key": "CreatedTime",
-          "value": "2026-10-19 08:49:59"
+          "value": "2026-11-25 17:54:34"
         },
         {
           "key": "AvailableIpAddressCount",
@@ -540,16 +574,16 @@
       "name": "subnet-1",
       "resourceType": "subnet",
       "status": "Available",
-      "uid": "tbp9alan8inqj07robd1"
+      "uid": "tbu4rb2gqbn6jnmi557d"
     }
   ],
   "systemLabel": "",
-  "uid": "tb3l2demf8rd5uesahif"
+  "uid": "tbtk14i64e4uqhcbtrgi"
 }
 ```
 
 ### 3. Tumblebug POST /resources/securityGroup (Create SecurityGroup) [✅ SUCCESS]
-- **Duration:** 19.358s
+- **Duration:** 22.393s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/securityGroup`
 ```json
 // Request Body
@@ -607,8 +641,8 @@
     "verified": true
   },
   "connectionName": "tencent-ap-seoul",
-  "cspResourceId": "sg-az144vsh",
-  "cspResourceName": "tb0obnhkt6oe2i8iq5s2",
+  "cspResourceId": "sg-mpikmp9v",
+  "cspResourceName": "tbl39govn1etj0eo22tq",
   "description": "Pre-requisite SecurityGroup for CM-Beetle RDBMS test",
   "firewallRules": [
     {
@@ -636,13 +670,13 @@
   "name": "test-rdbms-sg-tencent",
   "resourceType": "securityGroup",
   "systemLabel": "",
-  "uid": "tb0obnhkt6oe2i8iq5s2",
+  "uid": "tbl39govn1etj0eo22tq",
   "vNetId": "test-rdbms-vnet-tencent"
 }
 ```
 
 ### 4. Beetle GET RDBMS Support [✅ SUCCESS]
-- **Duration:** 14ms
+- **Duration:** 7ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/support?providerName=tencent`
 ```json
 // Response Body
@@ -664,7 +698,7 @@
 ```
 
 ### 5. Beetle GET RDBMS Capability [✅ SUCCESS]
-- **Duration:** 4.85s
+- **Duration:** 3.231s
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/capability?connectionName=tencent-ap-seoul&dbEngine=mysql`
 ```json
 // Response Body
@@ -718,8 +752,8 @@
         "memSizeMiB": "2048",
         "name": "2000",
         "storageSizeRangeGB": {
-          "max": 3000,
-          "min": 25
+          "max": 30000,
+          "min": 20
         },
         "vCpuClockGHz": "-1",
         "vCpuCount": "1"
@@ -758,11 +792,11 @@
         "memSizeMiB": "16384",
         "name": "16000",
         "storageSizeRangeGB": {
-          "max": 4000,
-          "min": 25
+          "max": 32000,
+          "min": 20
         },
         "vCpuClockGHz": "-1",
-        "vCpuCount": "4"
+        "vCpuCount": "2"
       },
       {
         "memSizeMiB": "24576",
@@ -792,17 +826,17 @@
           "min": 25
         },
         "vCpuClockGHz": "-1",
-        "vCpuCount": "12"
+        "vCpuCount": "24"
       },
       {
         "memSizeMiB": "65536",
         "name": "64000",
         "storageSizeRangeGB": {
-          "max": 32000,
-          "min": 20
+          "max": 6000,
+          "min": 25
         },
         "vCpuClockGHz": "-1",
-        "vCpuCount": "32"
+        "vCpuCount": "8"
       },
       {
         "memSizeMiB": "73728",
@@ -822,7 +856,7 @@
           "min": 25
         },
         "vCpuClockGHz": "-1",
-        "vCpuCount": "48"
+        "vCpuCount": "16"
       },
       {
         "memSizeMiB": "131072",
@@ -832,7 +866,7 @@
           "min": 20
         },
         "vCpuClockGHz": "-1",
-        "vCpuCount": "32"
+        "vCpuCount": "64"
       },
       {
         "memSizeMiB": "147456",
@@ -858,11 +892,11 @@
         "memSizeMiB": "196608",
         "name": "192000",
         "storageSizeRangeGB": {
-          "max": 12000,
-          "min": 25
+          "max": 32000,
+          "min": 20
         },
         "vCpuClockGHz": "-1",
-        "vCpuCount": "24"
+        "vCpuCount": "48"
       },
       {
         "memSizeMiB": "229376",
@@ -888,11 +922,11 @@
         "memSizeMiB": "262144",
         "name": "256000",
         "storageSizeRangeGB": {
-          "max": 32000,
-          "min": 20
+          "max": 12000,
+          "min": 25
         },
         "vCpuClockGHz": "-1",
-        "vCpuCount": "32"
+        "vCpuCount": "64"
       },
       {
         "memSizeMiB": "294912",
@@ -922,7 +956,7 @@
           "min": 25
         },
         "vCpuClockGHz": "-1",
-        "vCpuCount": "64"
+        "vCpuCount": "48"
       },
       {
         "memSizeMiB": "458752",
@@ -1048,7 +1082,7 @@
 ```
 
 ### 6. Beetle POST Recommend RDBMS [✅ SUCCESS]
-- **Duration:** 4ms
+- **Duration:** 3ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms`
 ```json
 // Request Body
@@ -1154,7 +1188,7 @@
 ```
 
 ### 7. Beetle POST Validate RDBMS Recommendation [✅ SUCCESS]
-- **Duration:** 21ms
+- **Duration:** 13ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/validate?nsId=default`
 ```json
 // Request Body
@@ -1207,7 +1241,7 @@
 ```
 
 ### 8. Beetle POST Migrate RDBMS (Provisioning) [✅ SUCCESS]
-- **Duration:** 4m5.222s
+- **Duration:** 5m5.05s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms?nameSeed=test`
 ```json
 // Request Body
@@ -1260,7 +1294,7 @@
 ```
 
 ### 9. Beetle GET RDBMS Info [✅ SUCCESS]
-- **Duration:** 4ms
+- **Duration:** 17ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-tencent`
 ```json
 // Response Body
@@ -1269,13 +1303,13 @@
   "backupTime": "00:00-12:00",
   "conditions": [
     {
-      "lastTransitionTime": "2026-10-19T00:54:07Z",
+      "lastTransitionTime": "2026-11-25T09:59:46Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-10-19T00:54:07Z",
+      "lastTransitionTime": "2026-11-25T09:59:46Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
@@ -1310,17 +1344,175 @@
     "verified": true
   },
   "connectionName": "tencent-ap-seoul",
-  "cspResourceId": "cdb-d1hzepv8",
-  "cspResourceName": "tbvl2gccnqjborsmdd2u",
+  "cspResourceId": "cdb-q1mk2sbg",
+  "cspResourceName": "tbjgc7odeet6a3manird",
   "dbEngine": "mysql",
   "dbEngineVersion": "8.0",
   "dbInstanceSpec": "4000",
   "dbInstanceType": "NA",
   "deletionProtection": false,
   "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-  "endpoint": "kr-cdb-d1hzepv8.sql.tencentcdb.com:21946",
+  "endpoint": "kr-cdb-q1mk2sbg.sql.tencentcdb.com:24489",
   "highAvailability": false,
   "id": "test-rdbms-tencent",
+  "keyValueList": [
+    {
+      "key": "WanStatus",
+      "value": "1"
+    },
+    {
+      "key": "Zone",
+      "value": "ap-seoul-1"
+    },
+    {
+      "key": "InitFlag",
+      "value": "1"
+    },
+    {
+      "key": "Memory",
+      "value": "4000"
+    },
+    {
+      "key": "Status",
+      "value": "1"
+    },
+    {
+      "key": "VpcId",
+      "value": "9730283"
+    },
+    {
+      "key": "InstanceId",
+      "value": "cdb-q1mk2sbg"
+    },
+    {
+      "key": "Volume",
+      "value": "100"
+    },
+    {
+      "key": "AutoRenew",
+      "value": "0"
+    },
+    {
+      "key": "ProtectMode",
+      "value": "0"
+    },
+    {
+      "key": "SubnetId",
+      "value": "820587"
+    },
+    {
+      "key": "InstanceType",
+      "value": "1"
+    },
+    {
+      "key": "ProjectId",
+      "value": "0"
+    },
+    {
+      "key": "Region",
+      "value": "ap-seoul"
+    },
+    {
+      "key": "DeadlineTime",
+      "value": "0000-00-00 00:00:00"
+    },
+    {
+      "key": "DeployMode",
+      "value": "0"
+    },
+    {
+      "key": "TaskStatus",
+      "value": "0"
+    },
+    {
+      "key": "DeviceType",
+      "value": "CLOUD_NATIVE_CLUSTER"
+    },
+    {
+      "key": "EngineVersion",
+      "value": "8.0"
+    },
+    {
+      "key": "InstanceName",
+      "value": "tbjgc7odeet6a3manird"
+    },
+    {
+      "key": "WanDomain",
+      "value": "kr-cdb-q1mk2sbg.sql.tencentcdb.com"
+    },
+    {
+      "key": "WanPort",
+      "value": "24489"
+    },
+    {
+      "key": "PayType",
+      "value": "1"
+    },
+    {
+      "key": "CreateTime",
+      "value": "2026-11-25 17:55:12"
+    },
+    {
+      "key": "Vip",
+      "value": "10.4.1.13"
+    },
+    {
+      "key": "Vport",
+      "value": "3306"
+    },
+    {
+      "key": "CdbError",
+      "value": "0"
+    },
+    {
+      "key": "UniqVpcId",
+      "value": "vpc-7yqgk5bc"
+    },
+    {
+      "key": "UniqSubnetId",
+      "value": "subnet-f4cf8dsh"
+    },
+    {
+      "key": "Cpu",
+      "value": "2"
+    },
+    {
+      "key": "Qps",
+      "value": "4400"
+    },
+    {
+      "key": "ZoneId",
+      "value": "180001"
+    },
+    {
+      "key": "InstanceNodes",
+      "value": "2"
+    },
+    {
+      "key": "EngineType",
+      "value": "InnoDB"
+    },
+    {
+      "key": "MaxDelayTime",
+      "value": "0"
+    },
+    {
+      "key": "DiskType",
+      "value": "CLOUD_HSSD"
+    },
+    {
+      "key": "ExpandCpu",
+      "value": "0"
+    },
+    {
+      "key": "DeviceBandwidth",
+      "value": "0"
+    },
+    {
+      "key": "DestroyProtect",
+      "value": "off"
+    }
+  ],
   "name": "test-rdbms-tencent",
   "publicAccess": true,
   "resourceType": "rdbms",
@@ -1333,13 +1525,13 @@
   "subnetIds": [
     "subnet-1"
   ],
-  "uid": "tbvl2gccnqjborsmdd2u",
+  "uid": "tbjgc7odeet6a3manird",
   "vNetId": "test-rdbms-vnet-tencent"
 }
 ```
 
 ### 10. Beetle GET RDBMS List [✅ SUCCESS]
-- **Duration:** 6ms
+- **Duration:** 34ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms`
 ```json
 // Response Body
@@ -1347,17 +1539,85 @@
   "rdbms": [
     {
       "backupRetentionDays": 7,
-      "backupTime": "17:34-18:04",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:49Z",
+          "lastTransitionTime": "2026-11-25T09:59:03Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:49Z",
+          "lastTransitionTime": "2026-11-25T09:59:03Z",
+          "reason": "Creating",
+          "status": "False",
+          "type": "Synced"
+        }
+      ],
+      "connectionConfig": {
+        "configName": "alibaba-ap-northeast-2",
+        "credentialHolder": "admin",
+        "credentialName": "alibaba",
+        "driverName": "alibaba-driver-v1.0.so",
+        "providerName": "alibaba",
+        "regionDetail": {
+          "description": "South Korea (Seoul)",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "regionId": "ap-northeast-2",
+          "regionName": "ap-northeast-2",
+          "zones": [
+            "ap-northeast-2a",
+            "ap-northeast-2b"
+          ]
+        },
+        "regionRepresentative": true,
+        "regionZoneInfo": {
+          "assignedRegion": "ap-northeast-2",
+          "assignedZone": "ap-northeast-2a"
+        },
+        "regionZoneInfoName": "alibaba-ap-northeast-2",
+        "verified": true
+      },
+      "connectionName": "alibaba-ap-northeast-2",
+      "dbEngine": "mysql",
+      "dbEngineVersion": "8.0",
+      "dbInstanceSpec": "mysql.n2.medium.1",
+      "deletionProtection": false,
+      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
+      "highAvailability": false,
+      "id": "test-rdbms-alibaba",
+      "name": "test-rdbms-alibaba",
+      "publicAccess": true,
+      "resourceType": "rdbms",
+      "securityGroupIds": [
+        "test-rdbms-sg-alibaba"
+      ],
+      "status": "Creating",
+      "storageSize": 100,
+      "storageType": "cloud_auto",
+      "subnetIds": [
+        "subnet-1"
+      ],
+      "uid": "tbc066ftkd9ijporkvrq",
+      "vNetId": "test-rdbms-vnet-alibaba"
+    },
+    {
+      "backupRetentionDays": 7,
+      "backupTime": "16:23-16:53",
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-25T09:55:24Z",
+          "message": "RDBMS creation in progress",
+          "reason": "Creating",
+          "status": "False",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2026-11-25T09:55:24Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -1394,17 +1654,168 @@
         "verified": true
       },
       "connectionName": "aws-ap-northeast-2",
-      "cspResourceId": "tbmo5d06mbrtcdfjposi",
-      "cspResourceName": "tbmo5d06mbrtcdfjposi",
+      "cspResourceId": "tbvtoteol9rtlis035nc",
+      "cspResourceName": "tbvtoteol9rtlis035nc",
       "dbEngine": "mysql",
       "dbEngineVersion": "8.0.46-rds.20260908",
       "dbInstanceSpec": "db.t3.medium",
       "dbInstanceType": "Primary",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
+      "endpoint": "tbvtoteol9rtlis035nc.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com:3306",
       "highAvailability": false,
       "id": "test-rdbms-aws",
       "iops": "3000",
+      "keyValueList": [
+        {
+          "key": "ActivityStreamStatus",
+          "value": "stopped"
+        },
+        {
+          "key": "AllocatedStorage",
+          "value": "100"
+        },
+        {
+          "key": "AutoMinorVersionUpgrade",
+          "value": "true"
+        },
+        {
+          "key": "AvailabilityZone",
+          "value": "ap-northeast-2c"
+        },
+        {
+          "key": "BackupRetentionPeriod",
+          "value": "7"
+        },
+        {
+          "key": "CACertificateIdentifier",
+          "value": "rds-ca-rsa2048-g1"
+        },
+        {
+          "key": "CopyTagsToSnapshot",
+          "value": "false"
+        },
+        {
+          "key": "CustomerOwnedIpEnabled",
+          "value": "false"
+        },
+        {
+          "key": "DBInstanceArn",
+          "value": "arn:aws:rds:ap-northeast-2:635484366616:db:tbvtoteol9rtlis035nc"
+        },
+        {
+          "key": "DBInstanceClass",
+          "value": "db.t3.medium"
+        },
+        {
+          "key": "DBInstanceIdentifier",
+          "value": "tbvtoteol9rtlis035nc"
+        },
+        {
+          "key": "DBInstanceStatus",
+          "value": "configuring-enhanced-monitoring"
+        },
+        {
+          "key": "DBParameterGroups",
+          "value": "{DBParameterGroupName:default.mysql8.0,ParameterApplyStatus:in-sync}"
+        },
+        {
+          "key": "DBSubnetGroup",
+          "value": "{DBSubnetGroupArn:null,DBSubnetGroupDescription:CB-Spider RDBMS subnet group for cb-spider-tbvtoteol9rtlis035nc,DBSubnetGroupName:cb-spider-tbvtoteol9rtlis035nc,SubnetGroupStatus:Complete,Subnets:[{SubnetAvailabilityZone:{Name:ap-northeast-2a},SubnetIdentifier:subnet-0cc10b17b6ec493e1,SubnetOutpost:{Arn:null},SubnetStatus:Active},{SubnetAvailabilityZone:{Name:ap-northeast-2c},SubnetIdentifier:subnet-0d95aacbfb1b0dbeb,SubnetOutpost:{Arn:null},SubnetStatus:Active}],VpcId:vpc-014472542cc87bfa5}"
+        },
+        {
+          "key": "DbInstancePort",
+          "value": "0"
+        },
+        {
+          "key": "DbiResourceId",
+          "value": "db-YIQ2PUCPDSN5UZ6AP34UZKPPJI"
+        },
+        {
+          "key": "DeletionProtection",
+          "value": "false"
+        },
+        {
+          "key": "Endpoint",
+          "value": "{Address:tbvtoteol9rtlis035nc.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com,HostedZoneId:ZLA2NUCOLGUUR,Port:3306}"
+        },
+        {
+          "key": "Engine",
+          "value": "mysql"
+        },
+        {
+          "key": "EngineVersion",
+          "value": "8.0.46-rds.20260908"
+        },
+        {
+          "key": "IAMDatabaseAuthenticationEnabled",
+          "value": "false"
+        },
+        {
+          "key": "InstanceCreateTime",
+          "value": "2026-11-25T09:58:58.611Z"
+        },
+        {
+          "key": "Iops",
+          "value": "3000"
+        },
+        {
+          "key": "LicenseModel",
+          "value": "general-public-license"
+        },
+        {
+          "key": "MasterUsername",
+          "value": "admin"
+        },
+        {
+          "key": "MonitoringInterval",
+          "value": "0"
+        },
+        {
+          "key": "MultiAZ",
+          "value": "false"
+        },
+        {
+          "key": "OptionGroupMemberships",
+          "value": "{OptionGroupName:default:mysql-8-0,Status:in-sync}"
+        },
+        {
+          "key": "PendingModifiedValues",
+          "value": "{AllocatedStorage:null,BackupRetentionPeriod:null,CACertificateIdentifier:null,DBInstanceClass:null,DBInstanceIdentifier:null,DBSubnetGroupName:null,EngineVersion:null,IAMDatabaseAuthenticationEnabled:null,Iops:null,LicenseModel:null,MasterUserPassword:null,MultiAZ:null,PendingCloudwatchLogsExports:null,Port:null,ProcessorFeatures:null,StorageType:null}"
+        },
+        {
+          "key": "PerformanceInsightsEnabled",
+          "value": "false"
+        },
+        {
+          "key": "PreferredBackupWindow",
+          "value": "16:23-16:53"
+        },
+        {
+          "key": "PreferredMaintenanceWindow",
+          "value": "mon:14:06-mon:14:36"
+        },
+        {
+          "key": "PubliclyAccessible",
+          "value": "true"
+        },
+        {
+          "key": "StorageEncrypted",
+          "value": "false"
+        },
+        {
+          "key": "StorageType",
+          "value": "gp3"
+        },
+        {
+          "key": "TagList",
+          "value": "{Key:Name,Value:tbvtoteol9rtlis035nc}"
+        },
+        {
+          "key": "VpcSecurityGroups",
+          "value": "{Status:active,VpcSecurityGroupId:sg-00fbbe9cd2de98ea2}"
+        }
+      ],
       "name": "test-rdbms-aws",
       "publicAccess": true,
       "resourceType": "rdbms",
@@ -1421,26 +1832,26 @@
       "tagList": [
         {
           "key": "Name",
-          "value": "tbmo5d06mbrtcdfjposi"
+          "value": "tbvtoteol9rtlis035nc"
         }
       ],
-      "uid": "tbmo5d06mbrtcdfjposi",
+      "uid": "tbvtoteol9rtlis035nc",
       "vNetId": "test-rdbms-vnet-aws"
     },
     {
       "backupRetentionDays": 7,
+      "backupTime": "AUTO",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:27Z",
-          "message": "RDBMS creation in progress",
-          "reason": "Creating",
-          "status": "False",
+          "lastTransitionTime": "2026-11-25T09:59:42Z",
+          "reason": "Available",
+          "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:27Z",
-          "reason": "Creating",
-          "status": "False",
+          "lastTransitionTime": "2026-11-25T09:59:42Z",
+          "reason": "Available",
+          "status": "True",
           "type": "Synced"
         }
       ],
@@ -1474,39 +1885,74 @@
         "verified": true
       },
       "connectionName": "azure-koreacentral",
+      "cspResourceId": "tbqt11ul0jr723gfs0im",
+      "cspResourceName": "tbqt11ul0jr723gfs0im",
       "dbEngine": "mysql",
       "dbEngineVersion": "8.0.21",
       "dbInstanceSpec": "Standard_B2s",
+      "dbInstanceType": "Burstable",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
+      "endpoint": "tbqt11ul0jr723gfs0im.mysql.database.azure.com:3306",
       "highAvailability": false,
       "id": "test-rdbms-azure",
+      "keyValueList": [
+        {
+          "key": "Location",
+          "value": "Korea Central"
+        },
+        {
+          "key": "Properties",
+          "value": "{administratorLogin:dbadmin,availabilityZone:1,backup:{backupRetentionDays:7,earliestRestoreDate:2026-11-25T10:05:13.3889866Z,geoRedundantBackup:Disabled},fullyQualifiedDomainName:tbqt11ul0jr723gfs0im.mysql.database.azure.com,highAvailability:{mode:Disabled,standbyAvailabilityZone:,state:NotEnabled},maintenanceWindow:{customWindow:Disabled,dayOfWeek:0,startHour:0,startMinute:0},network:{publicNetworkAccess:Enabled},replicaCapacity:10,replicationRole:None,state:Ready,storage:{autoGrow:Enabled,iops:600,storageSizeGB:100,storageSku:Premium_LRS},version:8.0.21}"
+        },
+        {
+          "key": "SKU",
+          "value": "{name:Standard_B2s,tier:Burstable}"
+        },
+        {
+          "key": "ID",
+          "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.DBforMySQL/flexibleServers/tbqt11ul0jr723gfs0im"
+        },
+        {
+          "key": "Name",
+          "value": "tbqt11ul0jr723gfs0im"
+        },
+        {
+          "key": "SystemData",
+          "value": "{createdAt:2026-11-25T09:55:13.3889866Z}"
+        },
+        {
+          "key": "Type",
+          "value": "Microsoft.DBforMySQL/flexibleServers"
+        }
+      ],
       "name": "test-rdbms-azure",
       "publicAccess": true,
       "resourceType": "rdbms",
       "securityGroupIds": [
         "test-rdbms-sg-azure"
       ],
-      "status": "Creating",
+      "status": "Available",
       "storageSize": 100,
+      "storageType": "Premium_LRS",
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tb30d3dnjrhkt7rajm80",
+      "uid": "tbqt11ul0jr723gfs0im",
       "vNetId": "test-rdbms-vnet-azure"
     },
     {
       "backupRetentionDays": 7,
-      "backupTime": "20:00",
+      "backupTime": "16:00",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:54:00Z",
+          "lastTransitionTime": "2026-11-25T09:58:37Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:54:00Z",
+          "lastTransitionTime": "2026-11-25T09:58:37Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -1543,8 +1989,8 @@
         "verified": true
       },
       "connectionName": "gcp-us-central1",
-      "cspResourceId": "tbj7djjk245lg59evd6k",
-      "cspResourceName": "tbj7djjk245lg59evd6k",
+      "cspResourceId": "tbc0aj584ko18830vb1j",
+      "cspResourceName": "tbc0aj584ko18830vb1j",
       "dbEngine": "mysql",
       "dbEngineVersion": "8.0",
       "dbInstanceSpec": "db-n1-standard-2",
@@ -1552,9 +1998,127 @@
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
       "encryption": true,
-      "endpoint": "34.9.134.166:3306",
+      "endpoint": "136.80.5.81:3306",
       "highAvailability": false,
       "id": "test-rdbms-gcp",
+      "keyValueList": [
+        {
+          "key": "BackendType",
+          "value": "SECOND_GEN"
+        },
+        {
+          "key": "ConnectionName",
+          "value": "ykkim-etri:us-central1:tbc0aj584ko18830vb1j"
+        },
+        {
+          "key": "CreateTime",
+          "value": "2026-11-25T09:55:37.790Z"
+        },
+        {
+          "key": "CurrentDiskSize",
+          "value": "0"
+        },
+        {
+          "key": "DatabaseInstalledVersion",
+          "value": "MYSQL_8_0_46"
+        },
+        {
+          "key": "DatabaseVersion",
+          "value": "MYSQL_8_0"
+        },
+        {
+          "key": "Etag",
+          "value": "74c240921252e7aa3276e6b5dc8adb3ebefa361edcf0d4a331a9eee4d0012ea1"
+        },
+        {
+          "key": "GceZone",
+          "value": "us-central1-c"
+        },
+        {
+          "key": "GeminiConfig",
+          "value": "{flagRecommenderEnabled:true}"
+        },
+        {
+          "key": "IncludeReplicasForMajorVersionUpgrade",
+          "value": "false"
+        },
+        {
+          "key": "InstanceType",
+          "value": "CLOUD_SQL_INSTANCE"
+        },
+        {
+          "key": "IpAddresses",
+          "value": "{ipAddress:136.80.5.81,type:PRIMARY}"
+        },
+        {
+          "key": "Kind",
+          "value": "sql#instance"
+        },
+        {
+          "key": "MaintenanceVersion",
+          "value": "MYSQL_8_0_46.R20261013.02_15"
+        },
+        {
+          "key": "MaxDiskSize",
+          "value": "0"
+        },
+        {
+          "key": "Name",
+          "value": "tbc0aj584ko18830vb1j"
+        },
+        {
+          "key": "NodeCount",
+          "value": "0"
+        },
+        {
+          "key": "Project",
+          "value": "ykkim-etri"
+        },
+        {
+          "key": "Region",
+          "value": "us-central1"
+        },
+        {
+          "key": "SatisfiesPzi",
+          "value": "true"
+        },
+        {
+          "key": "SatisfiesPzs",
+          "value": "false"
+        },
+        {
+          "key": "SelfLink",
+          "value": "https://sqladmin.googleapis.com/sql/v1beta4/projects/GCP_PROJECT_ID/instances/tbc0aj584ko18830vb1j"
+        },
+        {
+          "key": "ServerCaCert",
+          "value": "{cert:-----BEGIN CERTIFICATE-----\\nMIIDcTCCAlmgAwIBAgIBADANBgkqhkiG9w0BAQsFADBwMS0wKwYDVQQuEyRhODg2\\nMWU3Ni0xYjRmLTRlZmItYmM4My0zOTZiYmZlZGEwNWIxHDAaBgNVBAMTE0Nsb3Vk\\nIFNRTCBTZXJ2ZXIgQ0ExFDASBgNVBAoTC0dvb2dsZSwgSW5jMQswCQYDVQQGEwJV\\nUzAeFw0yNjExMjUwOTU1MjZaFw0zNjExMjIwOTU2MjZaMHAxLTArBgNVBC4TJGE4\\nODYxZTc2LTFiNGYtNGVmYi1iYzgzLTM5NmJiZmVkYTA1YjEcMBoGA1UEAxMTQ2xv\\ndWQgU1FMIFNlcnZlciBDQTEUMBIGA1UEChMLR29vZ2xlLCBJbmMxCzAJBgNVBAYT\\nAlVTMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAilpdp2ZUIpAlxNob\\nmpLtJjEGEMvs0V77gI+27HmvrWkNOT3ppFhxLEnvsqdzKbVzSvD3ptPYm7zqiAoX\\nthlJ0LFmSUVw5ViP6EiTtywMiG0QNbt7UUSvU849j96MYN3h2wTJZgKm0co26Vxw\\ndZ2W4TK8WKOD5BF9vCGSkJVkpF1xPzOFl231DYm0KLrBRM4rMThSwB3ICifQiUso\\nlnIgiLZtdcEd1dXm1E8SMaAva6S7J3nd1SKpypnaCr4B3STY5wUEu8OXhDvYfzId\\nlRfEH5r0xptyIZjAR6ZrfcAUhTtOHSvSakaf9aSwzZnjEaYiO6dSHx0UhwH+gIxF\\n4jWwvQIDAQABoxYwFDASBgNVHRMBAf8ECDAGAQH/AgEAMA0GCSqGSIb3DQEBCwUA\\nA4IBAQByQWdUNDPEyiGz5HCpboeKwSmCrYxuM5JzORuaj6yJY3G7TPKnYb4ltM+6\\nU5d99PArl09QgNt6RNWyVdqp+/QycPwadArcS5G+1z/Md6yfp6/KlMD1cuxtxxsS\\nl4vGbaTAwUT5ldwQ3HfyZFnQfWyMTr7f4fwsrJkyjTPetPIqYHQgg63qbyucFiut\\nT+XkL+oQU41uSH9SHZ9iqJwTK+UFYi3d0cu2ex9ouf8YDihNn60sLKZiwHkYM5aj\\n0919+nHI2xXAwZi9+Qjo8VL5qxJK4U2tUUAu06NRnWTc+khUOI9qy3D5YjglqmV1\\nMb5SVhJd+pwMe1BK/zMlEOpk2Z3D\\n-----END CERTIFICATE-----,certSerialNumber:0,commonName:C=US,O=Google\\\\, Inc,CN=Cloud SQL Server CA,dnQualifier=a8861e76-1b4f-4efb-bc83-396bbfeda05b,createTime:2026-11-25T09:55:26.377Z,expirationTime:2036-11-22T09:56:26.377Z,instance:tbc0aj584ko18830vb1j,kind:sql#sslCert,sha1Fingerprint:6a34e29353b85234b2b6769082c46082deded54a}"
+        },
+        {
+          "key": "ServiceAccountEmailAddress",
+          "value": "MASKED_EMAIL"
+        },
+        {
+          "key": "Settings",
+          "value": "{activationPolicy:ALWAYS,availabilityType:ZONAL,backupConfiguration:{backupRetentionSettings:{retainedBackups:7,retentionUnit:COUNT},backupTier:STANDARD,enabled:true,kind:sql#backupConfiguration,startTime:16:00,transactionLogRetentionDays:7,transactionalLogStorageState:TRANSACTIONAL_LOG_STORAGE_STATE_UNSPECIFIED},connectorEnforcement:NOT_REQUIRED,dataDiskSizeGb:100,dataDiskType:PD_SSD,edition:ENTERPRISE,enableDataplexIntegration:true,ipConfiguration:{authorizedNetworks:[{kind:sql#aclEntry,name:AllowAll,value:0.0.0.0/0}],ipv4Enabled:true,serverCaMode:GOOGLE_MANAGED_INTERNAL_CA,serverCertificateRotationMode:SERVER_CERTIFICATE_ROTATION_MODE_UNSPECIFIED,sslMode:ALLOW_UNENCRYPTED_AND_ENCRYPTED},kind:sql#settings,locationPreference:{kind:sql#locationPreference,zone:us-central1-c},pricingPlan:PER_USE,replicationLagMaxSeconds:31536000,replicationType:SYNCHRONOUS,settingsVersion:1,storageAutoResize:true,tier:db-n1-standard-2}"
+        },
+        {
+          "key": "SqlNetworkArchitecture",
+          "value": "NEW_NETWORK_ARCHITECTURE"
+        },
+        {
+          "key": "State",
+          "value": "RUNNABLE"
+        },
+        {
+          "key": "SwitchTransactionLogsToCloudStorageEnabled",
+          "value": "false"
+        },
+        {
+          "key": "UpgradableDatabaseVersions",
+          "value": "{displayName:MySQL 8.0.18,majorVersion:MYSQL_8_0,name:MYSQL_8_0_18}; {displayName:MySQL 8.0.26,majorVersion:MYSQL_8_0,name:MYSQL_8_0_26}; {displayName:MySQL 8.0.27,majorVersion:MYSQL_8_0,name:MYSQL_8_0_27}; {displayName:MySQL 8.0.28,majorVersion:MYSQL_8_0,name:MYSQL_8_0_28}; {displayName:MySQL 8.0.29,majorVersion:MYSQL_8_0,name:MYSQL_8_0_29}; {displayName:MySQL 8.0.30,majorVersion:MYSQL_8_0,name:MYSQL_8_0_30}; {displayName:MySQL 8.0.31,majorVersion:MYSQL_8_0,name:MYSQL_8_0_31}; {displayName:MySQL 8.0.32,majorVersion:MYSQL_8_0,name:MYSQL_8_0_32}; {displayName:MySQL 8.0.33,majorVersion:MYSQL_8_0,name:MYSQL_8_0_33}; {displayName:MySQL 8.0.34,majorVersion:MYSQL_8_0,name:MYSQL_8_0_34}; {displayName:MySQL 8.0.35,majorVersion:MYSQL_8_0,name:MYSQL_8_0_35}; {displayName:MySQL 8.0.36,majorVersion:MYSQL_8_0,name:MYSQL_8_0_36}; {displayName:MySQL 8.0.37,majorVersion:MYSQL_8_0,name:MYSQL_8_0_37}; {displayName:MySQL 8.0.39,majorVersion:MYSQL_8_0,name:MYSQL_8_0_39}; {displayName:MySQL 8.0.40,majorVersion:MYSQL_8_0,name:MYSQL_8_0_40}; {displayName:MySQL 8.0.41,majorVersion:MYSQL_8_0,name:MYSQL_8_0_41}; {displayName:MySQL 8.0.42,majorVersion:MYSQL_8_0,name:MYSQL_8_0_42}; {displayName:MySQL 8.0.43,majorVersion:MYSQL_8_0,name:MYSQL_8_0_43}; {displayName:MySQL 8.0.44,majorVersion:MYSQL_8_0,name:MYSQL_8_0_44}; {displayName:MySQL 8.0.45,majorVersion:MYSQL_8_0,name:MYSQL_8_0_45}; {displayName:MySQL 8.4,majorVersion:MYSQL_8_4,name:MYSQL_8_4}"
+        }
+      ],
       "name": "test-rdbms-gcp",
       "publicAccess": true,
       "resourceType": "rdbms",
@@ -1567,20 +2131,20 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tbj7djjk245lg59evd6k",
+      "uid": "tbc0aj584ko18830vb1j",
       "vNetId": "test-rdbms-vnet-gcp"
     },
     {
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:27Z",
+          "lastTransitionTime": "2026-11-25T09:55:07Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:27Z",
+          "lastTransitionTime": "2026-11-25T09:55:07Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -1634,21 +2198,21 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tblp8rdv0nfnboaibv38",
+      "uid": "tbun4h3ej4rgndeesotl",
       "vNetId": "test-rdbms-vnet-ibm"
     },
     {
       "backupRetentionDays": 7,
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:44Z",
+          "lastTransitionTime": "2026-11-25T09:55:13Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:44Z",
+          "lastTransitionTime": "2026-11-25T09:55:13Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -1702,21 +2266,21 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tbs39bb5093bjft6118j",
+      "uid": "tbpth30tovigfplksoib",
       "vNetId": "test-rdbms-vnet-ncp"
     },
     {
       "backupRetentionDays": 7,
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:39Z",
+          "lastTransitionTime": "2026-11-25T09:55:13Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:39Z",
+          "lastTransitionTime": "2026-11-25T09:55:13Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -1771,21 +2335,88 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tb2s1h0bch71jggm9aqn",
+      "uid": "tbsn6ljiu7npo3re8iqr",
       "vNetId": "test-rdbms-vnet-nhn"
+    },
+    {
+      "backupRetentionDays": 7,
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-25T09:54:55Z",
+          "message": "RDBMS creation in progress",
+          "reason": "Creating",
+          "status": "False",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2026-11-25T09:54:55Z",
+          "reason": "Creating",
+          "status": "False",
+          "type": "Synced"
+        }
+      ],
+      "connectionConfig": {
+        "configName": "openstack-regionone",
+        "credentialHolder": "admin",
+        "credentialName": "openstack",
+        "driverName": "openstack-driver-v1.0.so",
+        "providerName": "openstack",
+        "regionDetail": {
+          "description": "Korea Daejeon (Internal)",
+          "location": {
+            "display": "South Korea (Daejeon)",
+            "latitude": 36.3804,
+            "longitude": 127.365
+          },
+          "regionId": "RegionOne",
+          "regionName": "regionone",
+          "zones": [
+            "nova"
+          ]
+        },
+        "regionRepresentative": true,
+        "regionZoneInfo": {
+          "assignedRegion": "RegionOne",
+          "assignedZone": "nova"
+        },
+        "regionZoneInfoName": "openstack-regionone",
+        "verified": true
+      },
+      "connectionName": "openstack-regionone",
+      "dbEngine": "mysql",
+      "dbEngineVersion": "8.4",
+      "dbInstanceSpec": "m1.medium",
+      "deletionProtection": false,
+      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
+      "highAvailability": false,
+      "id": "test-rdbms-openstack",
+      "name": "test-rdbms-openstack",
+      "publicAccess": true,
+      "resourceType": "rdbms",
+      "securityGroupIds": [
+        "test-rdbms-sg-openstack"
+      ],
+      "status": "Creating",
+      "storageSize": 100,
+      "storageType": "RBD",
+      "subnetIds": [
+        "subnet-1"
+      ],
+      "uid": "tbvg10m2pcf9d7qe09hr",
+      "vNetId": "test-rdbms-vnet-openstack"
     },
     {
       "backupRetentionDays": 7,
       "backupTime": "00:00-12:00",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:54:07Z",
+          "lastTransitionTime": "2026-11-25T09:59:46Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:54:07Z",
+          "lastTransitionTime": "2026-11-25T09:59:46Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -1820,17 +2451,175 @@
         "verified": true
       },
       "connectionName": "tencent-ap-seoul",
-      "cspResourceId": "cdb-d1hzepv8",
-      "cspResourceName": "tbvl2gccnqjborsmdd2u",
+      "cspResourceId": "cdb-q1mk2sbg",
+      "cspResourceName": "tbjgc7odeet6a3manird",
       "dbEngine": "mysql",
       "dbEngineVersion": "8.0",
       "dbInstanceSpec": "4000",
       "dbInstanceType": "NA",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "kr-cdb-d1hzepv8.sql.tencentcdb.com:21946",
+      "endpoint": "kr-cdb-q1mk2sbg.sql.tencentcdb.com:24489",
       "highAvailability": false,
       "id": "test-rdbms-tencent",
+      "keyValueList": [
+        {
+          "key": "WanStatus",
+          "value": "1"
+        },
+        {
+          "key": "Zone",
+          "value": "ap-seoul-1"
+        },
+        {
+          "key": "InitFlag",
+          "value": "1"
+        },
+        {
+          "key": "Memory",
+          "value": "4000"
+        },
+        {
+          "key": "Status",
+          "value": "1"
+        },
+        {
+          "key": "VpcId",
+          "value": "9730283"
+        },
+        {
+          "key": "InstanceId",
+          "value": "cdb-q1mk2sbg"
+        },
+        {
+          "key": "Volume",
+          "value": "100"
+        },
+        {
+          "key": "AutoRenew",
+          "value": "0"
+        },
+        {
+          "key": "ProtectMode",
+          "value": "0"
+        },
+        {
+          "key": "SubnetId",
+          "value": "820587"
+        },
+        {
+          "key": "InstanceType",
+          "value": "1"
+        },
+        {
+          "key": "ProjectId",
+          "value": "0"
+        },
+        {
+          "key": "Region",
+          "value": "ap-seoul"
+        },
+        {
+          "key": "DeadlineTime",
+          "value": "0000-00-00 00:00:00"
+        },
+        {
+          "key": "DeployMode",
+          "value": "0"
+        },
+        {
+          "key": "TaskStatus",
+          "value": "0"
+        },
+        {
+          "key": "DeviceType",
+          "value": "CLOUD_NATIVE_CLUSTER"
+        },
+        {
+          "key": "EngineVersion",
+          "value": "8.0"
+        },
+        {
+          "key": "InstanceName",
+          "value": "tbjgc7odeet6a3manird"
+        },
+        {
+          "key": "WanDomain",
+          "value": "kr-cdb-q1mk2sbg.sql.tencentcdb.com"
+        },
+        {
+          "key": "WanPort",
+          "value": "24489"
+        },
+        {
+          "key": "PayType",
+          "value": "1"
+        },
+        {
+          "key": "CreateTime",
+          "value": "2026-11-25 17:55:12"
+        },
+        {
+          "key": "Vip",
+          "value": "10.4.1.13"
+        },
+        {
+          "key": "Vport",
+          "value": "3306"
+        },
+        {
+          "key": "CdbError",
+          "value": "0"
+        },
+        {
+          "key": "UniqVpcId",
+          "value": "vpc-7yqgk5bc"
+        },
+        {
+          "key": "UniqSubnetId",
+          "value": "subnet-f4cf8dsh"
+        },
+        {
+          "key": "Cpu",
+          "value": "2"
+        },
+        {
+          "key": "Qps",
+          "value": "4400"
+        },
+        {
+          "key": "ZoneId",
+          "value": "180001"
+        },
+        {
+          "key": "InstanceNodes",
+          "value": "2"
+        },
+        {
+          "key": "EngineType",
+          "value": "InnoDB"
+        },
+        {
+          "key": "MaxDelayTime",
+          "value": "0"
+        },
+        {
+          "key": "DiskType",
+          "value": "CLOUD_HSSD"
+        },
+        {
+          "key": "ExpandCpu",
+          "value": "0"
+        },
+        {
+          "key": "DeviceBandwidth",
+          "value": "0"
+        },
+        {
+          "key": "DestroyProtect",
+          "value": "off"
+        }
+      ],
       "name": "test-rdbms-tencent",
       "publicAccess": true,
       "resourceType": "rdbms",
@@ -1843,7 +2632,7 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tbvl2gccnqjborsmdd2u",
+      "uid": "tbjgc7odeet6a3manird",
       "vNetId": "test-rdbms-vnet-tencent"
     }
   ]
@@ -1851,7 +2640,7 @@
 ```
 
 ### 11. Beetle POST Create Logical Database [✅ SUCCESS]
-- **Duration:** 1.125s
+- **Duration:** 1.066s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-tencent/database`
 ```json
 // Request Body
@@ -1870,7 +2659,7 @@
 ```
 
 ### 12. Beetle GET List Logical Databases [✅ SUCCESS]
-- **Duration:** 2.158s
+- **Duration:** 1.855s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-tencent/database`
 ```json
 // Response Body
@@ -1883,7 +2672,7 @@
 ```
 
 ### 13. Beetle GET Secure Transport Info [✅ SUCCESS]
-- **Duration:** 1.094s
+- **Duration:** 1.11s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-tencent/secure-transport`
 ```json
 // Response Body
@@ -1906,7 +2695,7 @@
 ```
 
 ### 14. Data I/O Test (External Remote) [✅ SUCCESS]
-- **Duration:** 6ms
+- **Duration:** 8ms
 ```json
 // Response Body
 {
@@ -1915,7 +2704,7 @@
 ```
 
 ### 15. Data I/O Test (Internal VPC VM) [✅ SUCCESS]
-- **Duration:** 3m31.762s
+- **Duration:** 3m35.206s
 ```json
 // Response Body
 {
@@ -1924,16 +2713,16 @@
 ```
 
 ### 16. Beetle DELETE Logical Database [✅ SUCCESS]
-- **Duration:** 17.987s
+- **Duration:** 8.346s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-tencent/database/sampledb`
 
 ### 17. Beetle DELETE RDBMS Instance [✅ SUCCESS]
-- **Duration:** 2m29.657s
+- **Duration:** 2m30.196s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-tencent?option=force`
 
 ### 18. Tumblebug DELETE /resources/securityGroup [✅ SUCCESS]
-- **Duration:** 11.711s
+- **Duration:** 32.22s
 
 ### 19. Tumblebug DELETE /resources/vNet [✅ SUCCESS]
-- **Duration:** 2.65s
+- **Duration:** 3.471s
 
