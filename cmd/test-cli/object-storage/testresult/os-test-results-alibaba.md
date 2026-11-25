@@ -7,17 +7,17 @@
 
 ### Environment
 
-- CM-Beetle: v0.6.4+ (95cc61d)
-- CB-Tumblebug: v0.13.8
+- CM-Beetle: v0.6.5+ (83361e8)
+- CB-Tumblebug: v0.14.0
 - Target CSP: ALIBABA
 - Target Region: ap-northeast-2
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Name Seed: my
 - Test CLI: Custom automated testing tool
-- Test Date: November 11, 2026
-- Test Time: 12:58:50 KST
-- Test Execution: 2026-11-11 12:58:50 KST
+- Test Date: November 25, 2026
+- Test Time: 18:35:55 KST
+- Test Execution: 2026-11-25 18:35:55 KST
 
 ### Scenario
 
@@ -37,18 +37,18 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 3ms | Pass |
-| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 23.539s | Pass |
-| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 16ms | Pass |
-| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 368ms | Pass |
-| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 457ms | Pass |
-| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 9.117s | Pass |
+| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 9ms | Pass |
+| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 22.796s | Pass |
+| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 17ms | Pass |
+| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 390ms | Pass |
+| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 424ms | Pass |
+| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 8.606s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 38.506483799s
+**Total Duration**: 37.247696601s
 
-*Test executed on November 11, 2026 at 12:58:50 KST (2026-11-11 12:58:50 KST) using CM-Beetle automated test CLI*
+*Test executed on November 25, 2026 at 18:35:55 KST (2026-11-25 18:35:55 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -323,13 +323,13 @@
       {
         "conditions": [
           {
-            "lastTransitionTime": "2026-11-11T03:58:56Z",
+            "lastTransitionTime": "2026-11-25T09:36:00Z",
             "reason": "Available",
             "status": "True",
             "type": "Ready"
           },
           {
-            "lastTransitionTime": "2026-11-11T03:58:56Z",
+            "lastTransitionTime": "2026-11-25T09:36:00Z",
             "reason": "Available",
             "status": "True",
             "type": "Synced"
@@ -364,26 +364,26 @@
           "verified": true
         },
         "connectionName": "alibaba-ap-northeast-2",
-        "cspResourceId": "tbmhqo1jq0jrc2rmqfj3",
-        "cspResourceName": "tbmhqo1jq0jrc2rmqfj3",
+        "cspResourceId": "tb8m0m1hk1e6scl5df4e",
+        "cspResourceName": "tb8m0m1hk1e6scl5df4e",
         "description": "Created by CM-Beetle",
         "id": "my-os-01",
         "maxKeys": 1000,
         "name": "my-os-01",
         "resourceType": "objectStorage",
         "status": "Available",
-        "uid": "tbmhqo1jq0jrc2rmqfj3"
+        "uid": "tb8m0m1hk1e6scl5df4e"
       },
       {
         "conditions": [
           {
-            "lastTransitionTime": "2026-11-11T03:58:58Z",
+            "lastTransitionTime": "2026-11-25T09:36:02Z",
             "reason": "Available",
             "status": "True",
             "type": "Ready"
           },
           {
-            "lastTransitionTime": "2026-11-11T03:58:58Z",
+            "lastTransitionTime": "2026-11-25T09:36:02Z",
             "reason": "Available",
             "status": "True",
             "type": "Synced"
@@ -418,15 +418,15 @@
           "verified": true
         },
         "connectionName": "alibaba-ap-northeast-2",
-        "cspResourceId": "tbou39gd0qv8p8h6098h",
-        "cspResourceName": "tbou39gd0qv8p8h6098h",
+        "cspResourceId": "tbls5ho2jmgphb10m7un",
+        "cspResourceName": "tbls5ho2jmgphb10m7un",
         "description": "Created by CM-Beetle",
         "id": "my-os-02",
         "maxKeys": 1000,
         "name": "my-os-02",
         "resourceType": "objectStorage",
         "status": "Available",
-        "uid": "tbou39gd0qv8p8h6098h"
+        "uid": "tbls5ho2jmgphb10m7un"
       }
     ],
     "status": "created"
@@ -509,13 +509,13 @@
   "data": {
     "conditions": [
       {
-        "lastTransitionTime": "2026-11-11T03:58:56Z",
+        "lastTransitionTime": "2026-11-25T09:36:00Z",
         "reason": "Available",
         "status": "True",
         "type": "Ready"
       },
       {
-        "lastTransitionTime": "2026-11-11T03:58:56Z",
+        "lastTransitionTime": "2026-11-25T09:36:00Z",
         "reason": "Available",
         "status": "True",
         "type": "Synced"
@@ -550,15 +550,15 @@
       "verified": true
     },
     "connectionName": "alibaba-ap-northeast-2",
-    "cspResourceId": "tbmhqo1jq0jrc2rmqfj3",
-    "cspResourceName": "tbmhqo1jq0jrc2rmqfj3",
+    "cspResourceId": "tb8m0m1hk1e6scl5df4e",
+    "cspResourceName": "tb8m0m1hk1e6scl5df4e",
     "description": "Created by CM-Beetle",
     "id": "my-os-01",
     "maxKeys": 1000,
     "name": "my-os-01",
     "resourceType": "objectStorage",
     "status": "Available",
-    "uid": "tbmhqo1jq0jrc2rmqfj3"
+    "uid": "tb8m0m1hk1e6scl5df4e"
   },
   "success": true
 }

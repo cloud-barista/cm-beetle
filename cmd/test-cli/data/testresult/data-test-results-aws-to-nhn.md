@@ -7,8 +7,8 @@
 
 ### Environment
 
-- CM-Beetle: v0.5.2+ (1c7e6cd)
-- CB-Tumblebug: v0.12.19
+- CM-Beetle: v0.6.5+ (83361e8)
+- CB-Tumblebug: v0.14.0
 - Source CSP: AWS
 - Source Region: ap-northeast-2
 - Target CSP: NHN
@@ -19,9 +19,9 @@
 - Namespace: mig01
 - Name Seed: data01
 - Test CLI: CM-Beetle data migration automated test CLI
-- Test Date: June 24, 2026
-- Test Time: 20:02:36 KST
-- Test Execution: 2026-06-24 20:02:36 KST
+- Test Date: November 25, 2026
+- Test Time: 18:51:48 KST
+- Test Execution: 2026-11-25 18:51:48 KST
 
 ### Scenario
 
@@ -50,16 +50,16 @@
 
 | Step | Endpoint / Description | Status | Duration | Details |
 |------|------------------------|--------|----------|---------|
-| 1 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` (target) | ✅ **PASS** | 942ms | Pass |
-| 2 | `POST /beetle/migration/data` (migrate: source OS → target OS, encrypted, async) | ✅ **PASS** | 10.109s | Pass |
-| 3 | Verify migrated data (compare source and target object lists) | ✅ **PASS** | 1.557s | Pass |
-| 4 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{targetOsId}` (cleanup) | ✅ **PASS** | 5.117s | Pass |
+| 1 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` (target) | ✅ **PASS** | 514ms | Pass |
+| 2 | `POST /beetle/migration/data` (migrate: source OS → target OS, encrypted, async) | ✅ **PASS** | 20.127s | Pass |
+| 3 | Verify migrated data (compare source and target object lists) | ✅ **PASS** | 850ms | Pass |
+| 4 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{targetOsId}` (cleanup) | ✅ **PASS** | 5.082s | Pass |
 
 **Overall Result**: 4/4 steps passed ✅
 
-**Total Duration**: 23.730478385s
+**Total Duration**: 32.577760014s
 
-*Test executed on June 24, 2026 at 20:02:36 KST (2026-06-24 20:02:36 KST) using CM-Beetle automated test CLI*
+*Test executed on November 25, 2026 at 18:51:48 KST (2026-11-25 18:51:48 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -106,6 +106,78 @@
 #### 1.2 API Response Information
 
 - **Status**: ✅ **SUCCESS** (HTTP 201 Created)
+
+<details>
+<summary>Response Body</summary>
+
+```json
+{
+  "data": {
+    "description": "Successfully created 1 object storage(s)",
+    "objectStorage": [
+      {
+        "conditions": [
+          {
+            "lastTransitionTime": "2026-11-25T09:51:51Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2026-11-25T09:51:51Z",
+            "reason": "Available",
+            "status": "True",
+            "type": "Synced"
+          }
+        ],
+        "connectionConfig": {
+          "configName": "nhn-kr1",
+          "credentialHolder": "admin",
+          "credentialName": "nhn",
+          "driverName": "nhn-driver-v1.0.so",
+          "providerName": "nhn",
+          "regionDetail": {
+            "description": "Pangyo (South Korea)",
+            "location": {
+              "display": "Pangyo (South Korea)",
+              "latitude": 37.390889,
+              "longitude": 127.096792
+            },
+            "regionId": "KR1",
+            "regionName": "kr1",
+            "zones": [
+              "kr-pub-a",
+              "kr-pub-b"
+            ]
+          },
+          "regionRepresentative": true,
+          "regionZoneInfo": {
+            "assignedRegion": "KR1",
+            "assignedZone": "kr-pub-a"
+          },
+          "regionZoneInfoName": "nhn-kr1",
+          "verified": true
+        },
+        "connectionName": "nhn-kr1",
+        "cspResourceId": "tbf5j21kea6g3caldh44",
+        "cspResourceName": "tbf5j21kea6g3caldh44",
+        "description": "Created by CM-Beetle",
+        "id": "data01-cm-beetle-test-bucket",
+        "maxKeys": 1000,
+        "name": "data01-cm-beetle-test-bucket",
+        "resourceType": "objectStorage",
+        "status": "Available",
+        "uid": "tbf5j21kea6g3caldh44"
+      }
+    ],
+    "status": "created"
+  },
+  "message": "Successfully created 1 object storage(s)",
+  "success": true
+}
+```
+
+</details>
 
 ### Step 2: Migrate data (source OS → target OS, encrypted)
 
@@ -166,17 +238,17 @@
 #### 2.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
-- **Duration**: 10.109s
-- **Note**: Initial response was `202 Accepted` (status: `Handling`). The test CLI polled `GET /beetle/request/1782298963908270788` every 10s (timeout: 600s) until migration completed with status `Success`. Step 3 was then executed.
+- **Duration**: 20.127s
+- **Note**: Initial response was `202 Accepted` (status: `Handling`). The test CLI polled `GET /beetle/request/1795600314657594401` every 10s (timeout: 600s) until migration completed with status `Success`. Step 3 was then executed.
 <details>
 <summary>Initial Response Body (202 Accepted)</summary>
 
 ```json
 {
   "data": {
-    "reqId": "1782298963908270788",
+    "reqId": "1795600314657594401",
     "status": "Handling",
-    "statusUrl": "/beetle/request/1782298963908270788"
+    "statusUrl": "/beetle/request/1795600314657594401"
   },
   "message": "Migration started. Use GET /request/{reqId} to check status.",
   "success": true
@@ -352,7 +424,7 @@
 - **Source objects**: 25
 - **Target objects**: 25
 - **Matched**: 25/25 ✅
-- **Duration**: 1.557s
+- **Duration**: 850ms
 
 ### Step 4: Delete target object storage (cleanup)
 

@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-11-03 07:47:47*
+*Report generated: 2026-11-25 09:20:47*
 
 ---
 
@@ -37,7 +37,7 @@ Summary of key infrastructure resources created or configured in the target clou
 | # | Resource Type | Count | Status | Details |
 |---|---------------|-------|--------|----------|
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
-| 2 | **VM Spec** | 2 | ✅ Selected | n4-standard-4, n2-highcpu-2 |
+| 2 | **VM Spec** | 2 | ✅ Selected | n2-highcpu-2, n4-standard-4 |
 | 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
 | 4 | **VNet (VPC)** | 1 | ✅ Created | my03-mig-vnet-01, CIDR: 10.0.0.0/21 |
 | 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my03-mig-vnet-01) |
@@ -53,9 +53,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** tbadk2iui8mcqcq39okd<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
-| 2 | **VM Name:** my03-ng-influxdb-back-1<br>**VM ID:** tbosjonktf0ju67ngpa3<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
-| 3 | **VM Name:** my03-ng-influxdb-back-2<br>**VM ID:** tbck4bkd5ptgfbl199pj<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
+| 1 | **VM Name:** my03-ng-influxdb-back-1<br>**VM ID:** tbjg90vgd6kbujirukfr<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| 2 | **VM Name:** my03-ng-influxdb-back-2<br>**VM ID:** tb1lee0l2cp9nso74pq6<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
+| 3 | **VM Name:** my03-ng-ip-10-0-1-30-62161624-1<br>**VM ID:** tbr066qbkvoha4fjthgs<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
 
 ---
 
@@ -65,9 +65,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | VM Spec | Source Server | Source Server Spec |
 |-----|-------------|---------|---------------|--------------------|
-| 1 | my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** n2-highcpu-2<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 2 GB<br>**Root Disk:** 8 GB |
-| 2 | my03-ng-influxdb-back-1 | **Spec ID:** n4-standard-4<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 30 GB |
-| 3 | my03-ng-influxdb-back-2 | **Spec ID:** n4-standard-4<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 8 GB<br>**Root Disk:** 30 GB |
+| 1 | my03-ng-influxdb-back-1 | **Spec ID:** n4-standard-4<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 30 GB |
+| 2 | my03-ng-influxdb-back-2 | **Spec ID:** n4-standard-4<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 8 GB<br>**Root Disk:** 30 GB |
+| 3 | my03-ng-ip-10-0-1-30-62161624-1 | **Spec ID:** n2-highcpu-2<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 2 GB<br>**Root Disk:** 8 GB |
 
 ---
 
@@ -77,9 +77,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | VM OS Image Info | Source Server | Source OS |
 |-----|-------------|------------------|---------------|-----------|
-| 1 | my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
-| 2 | my03-ng-influxdb-back-1 | **Image ID:** https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
-| 3 | my03-ng-influxdb-back-2 | **Image ID:** https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21 | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 1 | my03-ng-influxdb-back-1 | **Image ID:** https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 2 | my03-ng-influxdb-back-2 | **Image ID:** https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21 | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 3 | my03-ng-ip-10-0-1-30-62161624-1 | **Image ID:** https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
 
 ---
 
@@ -89,7 +89,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my03-mig-sg-01
 
-**CSP ID:** tbe6hu7h8nt311q3edve | **VNet:** my03-mig-vnet-01 | **Rules:** 6
+**CSP ID:** tb9uu0hejtsjn923sfvd | **VNet:** my03-mig-vnet-01 | **Rules:** 6
 
 **Assigned VMs:**
 
@@ -111,11 +111,11 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my03-mig-sg-02
 
-**CSP ID:** tbp1fk96uikhg6f6tb7r | **VNet:** my03-mig-vnet-01 | **Rules:** 4
+**CSP ID:** tbplq2umhkn1upbkpp57 | **VNet:** my03-mig-vnet-01 | **Rules:** 4
 
 **Assigned VMs:**
 
-- **VM:** my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1
+- **VM:** my03-ng-ip-10-0-1-30-62161624-1
   - **Source Server:** **Hostname:** ip-10-0-1-30, **Machine ID:** ec268ed7-821e-9d73-e79f-961262161624
 
 **Security Rules:**
@@ -137,13 +137,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my03-mig-vnet-01<br>**ID:** tbr3nelub33c1khtsmap | 10.0.0.0/21 |
+| 1 | **Name:** my03-mig-vnet-01<br>**ID:** tb5dn9aum2qip3phdv8n | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my03-mig-subnet-01<br>**ID:** tb7mjg75dtuc0r013vhc | 10.0.1.0/24 | my03-mig-vnet-01 |
+| 1 | **Name:** my03-mig-subnet-01<br>**ID:** tbgi6cba5avpr77flia4 | 10.0.1.0/24 | my03-mig-vnet-01 |
 
 ### Source Network Information
 
@@ -211,9 +211,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | Property | Source (On-Premise) | Target (Cloud NLB) | Note |
 |----------|---------------------|--------------------|------|
-| **Load Balancer / Name** | haproxy (Host: ip-10-0-1-30) | my03-ng-influxdb-back (CSP ID: tbro52m6fqs4hj9kopdi) | Replaced by managed NLB |
+| **Load Balancer / Name** | haproxy (Host: ip-10-0-1-30) | my03-ng-influxdb-back (CSP ID: tbiu3c4ki47g9gl6fr82) | Replaced by managed NLB |
 | **Type / Scope** | Software LB |  / REGION | Cloud-native NLB |
-| **Frontend Listener** | *:9999 (TCP) | TCP:8086 | IP: 34.64.134.61; Port adjusted (9999 -> 8086) for CSP constraint |
+| **Frontend Listener** | *:9999 (TCP) | TCP:8086 | IP: 34.50.41.226; Port adjusted (9999 -> 8086) for CSP constraint |
 | **Backend / Target Group** | influxdb_back (TCP:8086, roundrobin) | my03-ng-influxdb-back (TCP:8086, 2 nodes) | Target Group attached to NodeGroup |
 | **Health Check** | Enabled (Interval: 10s, Timeout: 10s, Threshold: 3) | HTTP:8086 (Interval: 10s, Timeout: 10s, Threshold: 3) | Preserved |
 
@@ -221,11 +221,11 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Source Backend Server | Source Endpoint | Target Node | Target CSP VM ID | Target Private IP | Target Public IP | Target Port | Status |
 |-----|-----------------------|-----------------|-------------|------------------|-------------------|------------------|-------------|--------|
-| 1 | influx1 (ip-10-0-1-221) | 10.0.1.221:8086 | my03-ng-influxdb-back-1 | tbosjonktf0ju67ngpa3 | 10.0.1.3 | 8.230.27.190 | 8086 | Running |
-| 2 | influx2 (ip-10-0-1-138) | 10.0.1.138:8086 | my03-ng-influxdb-back-2 | tbck4bkd5ptgfbl199pj | 10.0.1.2 | 34.22.67.165 | 8086 | Running |
+| 1 | influx1 (ip-10-0-1-221) | 10.0.1.221:8086 | my03-ng-influxdb-back-1 | tbjg90vgd6kbujirukfr | 10.0.1.4 | 34.64.48.98 | 8086 | Running |
+| 2 | influx2 (ip-10-0-1-138) | 10.0.1.138:8086 | my03-ng-influxdb-back-2 | tb1lee0l2cp9nso74pq6 | 10.0.1.2 | 34.158.205.11 | 8086 | Running |
 
 **Migration Notes:**
-- On-premise haproxy on ip-10-0-1-30 (migrated to my03-ng-ec268ed7-821e-9d73-e79f-961262161624-1) is replaced by cloud-managed NLB.
+- On-premise haproxy on ip-10-0-1-30 (migrated to my03-ng-ip-10-0-1-30-62161624-1) is replaced by cloud-managed NLB.
 - Listener port was adjusted from 9999 to 8086 due to GCP forwarding rule port constraints.
 
 ---
@@ -238,7 +238,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my03-mig-sshkey-01 | tbsslk45sts0rjvmkip5 |  | Used by all 3 VMs |
+| 1 | my03-mig-sshkey-01 | tbdnf6sndttnf336lgim |  | Used by all 3 VMs |
 
 ---
 

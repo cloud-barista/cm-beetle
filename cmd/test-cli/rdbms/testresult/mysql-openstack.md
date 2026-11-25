@@ -1,10 +1,11 @@
 # Managed RDBMS (MySQL) Test Report: OPENSTACK (RegionOne)
 
 - **Test Case:** OpenStack RegionOne MySQL Test
-- **Date & Time:** 2026-09-08 14:26:43
+- **Access Mode:** Public (publicAccess=true)
+- **Date & Time:** 2026-11-25 18:54:32
 - **Namespace:** `default`
-- **Total Duration:** 16m52.72s
-- **Overall Status:** ✅ PASSED
+- **Total Duration:** 5m52.794s
+- **Overall Status:** ❌ FAILED
 
 ## Environment and Scenario
 
@@ -12,7 +13,7 @@
 - **Target CSP:** OPENSTACK
 - **Target Region:** `RegionOne`
 - **Namespace:** `default`
-- **Test Date:** 2026-09-08 14:26:43
+- **Test Date:** 2026-11-25 18:54:32
 
 ### Scenario & Tested APIs
 1. **Pre-flight Spec & Image Review**: `POST /tumblebug/specImagePairReview`
@@ -24,16 +25,17 @@
 7. **Migrate RDBMS (Provisioning)**: `POST /beetle/migration/middleware/ns/{nsId}/rdbms`
 8. **Get RDBMS Info & List**: `GET /beetle/migration/middleware/ns/{nsId}/rdbms`
 9. **Create Logical Database**: `POST /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database`
-10. **External Data I/O**: Direct TCP/SQL connectivity test
-11. **Internal Data I/O**: SQL execution via internal Runner VM (`POST /tumblebug/ns/{nsId}/infra`)
-12. **Delete Logical Database**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{databaseName}`
-13. **Delete RDBMS**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}`
-14. **Delete Pre-requisite SG & VNet**: `DELETE /tumblebug/ns/{nsId}/resources/securityGroup/{sgId}`, `DELETE /tumblebug/ns/{nsId}/resources/vNet/{vNetId}`
+10. **Get Secure Transport Info**: `GET /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/secure-transport`
+11. **External Data I/O**: Direct TCP/SQL connectivity & TLS handshake test
+12. **Internal Data I/O**: SQL execution via internal Runner VM (`POST /tumblebug/ns/{nsId}/infra`)
+13. **Delete Logical Database**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{databaseName}`
+14. **Delete RDBMS**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}`
+15. **Delete Pre-requisite SG & VNet**: `DELETE /tumblebug/ns/{nsId}/resources/securityGroup/{sgId}`, `DELETE /tumblebug/ns/{nsId}/resources/vNet/{vNetId}`
 
 ## Execution Steps & API Traces
 
 ### 1. Tumblebug POST /specImagePairReview (Pre-flight Spec & Image Review) [✅ SUCCESS]
-- **Duration:** 4.271s
+- **Duration:** 5.043s
 - **Request URL:** `http://localhost:1323/tumblebug/specImagePairReview`
 ```json
 // Request Body
@@ -122,17 +124,17 @@
         "value": "3758096384"
       }
     ],
-    "fetchedTime": "2026.08.21 13:57:14 Fri",
+    "fetchedTime": "2026.10.29 04:24:54 Thu",
     "id": "78d90dae-d21d-4606-a9dd-c1268e321864",
     "imageStatus": "Available",
     "infraType": "",
     "isBasicGpuImage": false,
-    "isBasicImage": false,
+    "isBasicImage": true,
     "isGPUImage": false,
     "isKubernetesImage": false,
     "name": "78d90dae-d21d-4606-a9dd-c1268e321864",
     "namespace": "system",
-    "osArchitecture": "na",
+    "osArchitecture": "x86_64",
     "osDiskSizeGB": 0,
     "osDiskType": "NA",
     "osDistribution": "ubuntu-24.04",
@@ -146,7 +148,7 @@
     "sourceCspImageName": "",
     "sourceNodeUid": "",
     "systemLabel": "",
-    "uid": "tbglac0fmf7lvmmuu60t"
+    "uid": "tbde4jmfid1fbfeg61gi"
   },
   "imageId": "78d90dae-d21d-4606-a9dd-c1268e321864",
   "imageValidation": {
@@ -157,11 +159,12 @@
     "status": "Available"
   },
   "isValid": true,
-  "message": "Spec and image pair is valid for provisioning",
+  "message": "Spec and image pair is valid but has warnings",
   "providerName": "openstack",
   "regionName": "regionone",
   "specDetails": {
     "architecture": "x86_64",
+    "availabilityStatus": "Unverified",
     "connectionName": "openstack-regionone",
     "costPerHour": -1,
     "cspSpecName": "m1.xlarge",
@@ -222,23 +225,27 @@
     "rootDiskSize": 160,
     "rootDiskType": "",
     "systemLabel": "auto-gen",
-    "uid": "tbvjd3kh694j58q8qflg",
+    "uid": "tbmeg4q8vljrvg05vr35",
     "vCPU": 8
   },
   "specId": "openstack+regionone+m1.xlarge",
   "specValidation": {
     "cspResourceId": "m1.xlarge",
     "isAvailable": true,
+    "message": "no availability checker registered for provider; assumed available",
     "resourceId": "openstack+regionone+m1.xlarge",
     "resourceName": "m1.xlarge",
     "status": "Available"
   },
-  "status": "OK"
+  "status": "Warning",
+  "warnings": [
+    "Zone availability notice for 'm1.xlarge': no availability checker registered for provider; assumed available"
+  ]
 }
 ```
 
 ### 2. Tumblebug POST /resources/vNet (Create VNet & Subnets) [✅ SUCCESS]
-- **Duration:** 21.339s
+- **Duration:** 5.868s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/vNet`
 ```json
 // Request Body
@@ -263,19 +270,19 @@
   "cidrBlock": "OpenStack VPC does not support IPv4_CIDR",
   "conditions": [
     {
-      "lastTransitionTime": "2026-09-08T05:26:53Z",
+      "lastTransitionTime": "2026-11-25T09:54:41Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-09-08T05:26:53Z",
+      "lastTransitionTime": "2026-11-25T09:54:41Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
     },
     {
-      "lastTransitionTime": "2026-09-08T05:26:53Z",
+      "lastTransitionTime": "2026-11-25T09:54:41Z",
       "reason": "AllReady",
       "status": "True",
       "type": "ChildrenReady"
@@ -309,15 +316,15 @@
     "verified": true
   },
   "connectionName": "openstack-regionone",
-  "cspResourceId": "4d1c8b58-2bb6-4973-954c-11bd139a6b34",
-  "cspResourceName": "tbkvkgq0tarc0e1505ag",
+  "cspResourceId": "610d9ec6-fb89-432f-b305-548bd3ab6239",
+  "cspResourceName": "tbt8kff7smtk4m1rt9da",
   "description": "Pre-requisite VNet for CM-Beetle RDBMS test",
   "id": "test-rdbms-vnet-openstack",
   "isAutoGenerated": false,
   "keyValueList": [
     {
       "key": "Network",
-      "value": "{id:4d1c8b58-2bb6-4973-954c-11bd139a6b34,name:tbkvkgq0tarc0e1505ag,description:,admin_state_up:true,status:ACTIVE,subnets:[c1c4a150-d1f2-4fea-9c82-95ae61358465],tenant_id:1b513759820b4fb497fac0661d81c347,project_id:1b513759820b4fb497fac0661d81c347,shared:false,availability_zone_hints:[nova],tags:[],revision_number:2}"
+      "value": "{id:610d9ec6-fb89-432f-b305-548bd3ab6239,name:tbt8kff7smtk4m1rt9da,description:,admin_state_up:true,status:ACTIVE,subnets:[cf2c3227-db7a-47ca-9e75-5f807bb7fa6a],tenant_id:1b513759820b4fb497fac0661d81c347,project_id:1b513759820b4fb497fac0661d81c347,shared:false,availability_zone_hints:[nova],tags:[],revision_number:2}"
     },
     {
       "key": "NetworkExternalExt",
@@ -331,13 +338,13 @@
     {
       "conditions": [
         {
-          "lastTransitionTime": "2026-09-08T05:26:53Z",
+          "lastTransitionTime": "2026-11-25T09:54:41Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-09-08T05:26:53Z",
+          "lastTransitionTime": "2026-11-25T09:54:41Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -371,25 +378,25 @@
         "verified": true
       },
       "connectionName": "openstack-regionone",
-      "cspResourceId": "c1c4a150-d1f2-4fea-9c82-95ae61358465",
-      "cspResourceName": "tbjr6rsj27df99r5fkm0",
-      "cspVNetId": "4d1c8b58-2bb6-4973-954c-11bd139a6b34",
-      "cspVNetName": "tbkvkgq0tarc0e1505ag",
+      "cspResourceId": "cf2c3227-db7a-47ca-9e75-5f807bb7fa6a",
+      "cspResourceName": "tbndb4l4ugej0k8o96j0",
+      "cspVNetId": "610d9ec6-fb89-432f-b305-548bd3ab6239",
+      "cspVNetName": "tbt8kff7smtk4m1rt9da",
       "description": "",
       "id": "subnet-1",
       "ipv4_CIDR": "10.6.1.0/24",
       "keyValueList": [
         {
           "key": "ID",
-          "value": "c1c4a150-d1f2-4fea-9c82-95ae61358465"
+          "value": "cf2c3227-db7a-47ca-9e75-5f807bb7fa6a"
         },
         {
           "key": "NetworkID",
-          "value": "4d1c8b58-2bb6-4973-954c-11bd139a6b34"
+          "value": "610d9ec6-fb89-432f-b305-548bd3ab6239"
         },
         {
           "key": "Name",
-          "value": "tbjr6rsj27df99r5fkm0"
+          "value": "tbndb4l4ugej0k8o96j0"
         },
         {
           "key": "IPVersion",
@@ -435,16 +442,16 @@
       "name": "subnet-1",
       "resourceType": "subnet",
       "status": "Available",
-      "uid": "tbjr6rsj27df99r5fkm0"
+      "uid": "tbndb4l4ugej0k8o96j0"
     }
   ],
   "systemLabel": "",
-  "uid": "tbkvkgq0tarc0e1505ag"
+  "uid": "tbt8kff7smtk4m1rt9da"
 }
 ```
 
 ### 3. Tumblebug POST /resources/securityGroup (Create SecurityGroup) [✅ SUCCESS]
-- **Duration:** 13.539s
+- **Duration:** 10.455s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/securityGroup`
 ```json
 // Request Body
@@ -501,22 +508,10 @@
     "verified": true
   },
   "connectionName": "openstack-regionone",
-  "cspResourceId": "b189669c-3e1b-4d20-963a-061d4edccd3e",
-  "cspResourceName": "tbpfhlvkmpve7l8uanl4",
+  "cspResourceId": "217f103b-7729-437a-9afe-bcb6f6f9cc08",
+  "cspResourceName": "tboms2eu6utc1kt0lhmh",
   "description": "Pre-requisite SecurityGroup for CM-Beetle RDBMS test",
   "firewallRules": [
-    {
-      "CIDR": "::/0",
-      "Direction": "outbound",
-      "Port": "",
-      "Protocol": "ALL"
-    },
-    {
-      "CIDR": "0.0.0.0/0",
-      "Direction": "inbound",
-      "Port": "3306",
-      "Protocol": "TCP"
-    },
     {
       "CIDR": "0.0.0.0/0",
       "Direction": "inbound",
@@ -528,6 +523,18 @@
       "Direction": "outbound",
       "Port": "",
       "Protocol": "ALL"
+    },
+    {
+      "CIDR": "0.0.0.0/0",
+      "Direction": "inbound",
+      "Port": "3306",
+      "Protocol": "TCP"
+    },
+    {
+      "CIDR": "::/0",
+      "Direction": "outbound",
+      "Port": "",
+      "Protocol": "ALL"
     }
   ],
   "id": "test-rdbms-sg-openstack",
@@ -535,7 +542,7 @@
   "keyValueList": [
     {
       "key": "IId",
-      "value": "{NameId:tbpfhlvkmpve7l8uanl4,SystemId:b189669c-3e1b-4d20-963a-061d4edccd3e}"
+      "value": "{NameId:tboms2eu6utc1kt0lhmh,SystemId:217f103b-7729-437a-9afe-bcb6f6f9cc08}"
     },
     {
       "key": "VpcIID",
@@ -543,19 +550,19 @@
     },
     {
       "key": "SecurityRules",
-      "value": "[{Direction:outbound,IPProtocol:all,FromPort:-1,ToPort:-1,CIDR:::/0},{Direction:inbound,IPProtocol:tcp,FromPort:3306,ToPort:3306,CIDR:0.0.0.0/0},{Direction:inbound,IPProtocol:tcp,FromPort:22,ToPort:22,CIDR:0.0.0.0/0},{Direction:outbound,IPProtocol:all,FromPort:-1,ToPort:-1,CIDR:0.0.0.0/0}]"
+      "value": "[{Direction:inbound,IPProtocol:tcp,FromPort:22,ToPort:22,CIDR:0.0.0.0/0},{Direction:outbound,IPProtocol:all,FromPort:-1,ToPort:-1,CIDR:0.0.0.0/0},{Direction:inbound,IPProtocol:tcp,FromPort:3306,ToPort:3306,CIDR:0.0.0.0/0},{Direction:outbound,IPProtocol:all,FromPort:-1,ToPort:-1,CIDR:::/0}]"
     }
   ],
   "name": "test-rdbms-sg-openstack",
   "resourceType": "securityGroup",
   "systemLabel": "",
-  "uid": "tbpfhlvkmpve7l8uanl4",
+  "uid": "tboms2eu6utc1kt0lhmh",
   "vNetId": "test-rdbms-vnet-openstack"
 }
 ```
 
 ### 4. Beetle GET RDBMS Support [✅ SUCCESS]
-- **Duration:** 52ms
+- **Duration:** 4ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/support?providerName=openstack`
 ```json
 // Response Body
@@ -564,7 +571,7 @@
   "supports": {
     "openstack": {
       "dbOperationMethod": "cspNativeApi",
-      "note": "An earlier v0.12.44 test run requested MariaDB 10.6 and failed ('Datastore version 10.6 cannot be found'). CB-Spider's rdbms-mariadb-test README clarifies the correct reference version for this Trove environment is 10.4, not 10.6 — confirmed Available in a 2026-08-18 run (m1.small/20GB, 3m58s). The datastore was never actually missing; 10.6 was simply the wrong version to request.",
+      "note": "CB-Spider v0.13.15 (#1873, fixing #1866) retries admin privilege GRANT with exponential backoff after Trove reports ACTIVE to prevent Error 1044; in private mode (PublicAccess=false), CB-Spider (#1890) skips this direct-SQL GRANT step. OpenStack Trove 2025.2 (Flamingo) active datastore versions are MySQL 8.4 and MariaDB 11.4.",
       "storageTypeSelectable": true,
       "supported": true,
       "supportedDBEngines": [
@@ -577,7 +584,7 @@
 ```
 
 ### 5. Beetle GET RDBMS Capability [✅ SUCCESS]
-- **Duration:** 2.605s
+- **Duration:** 4.024s
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/capability?connectionName=openstack-regionone&dbEngine=mysql`
 ```json
 // Response Body
@@ -669,7 +676,7 @@
           "constraints": "Minimum 1GB storage.",
           "description": "Ceph RADOS Block Device storage (if available in deployment).",
           "displayName": "Ceph RBD",
-          "minSize": 1,
+          "minSizeGB": 1,
           "recommendationLevel": "standard",
           "storageType": "RBD"
         },
@@ -677,7 +684,7 @@
           "constraints": "Minimum 1GB storage.",
           "description": "Default storage type provided by OpenStack deployment. Actual backend depends on deployment configuration.",
           "displayName": "Default Storage",
-          "minSize": 1,
+          "minSizeGB": 1,
           "recommendationLevel": "standard",
           "storageType": "__DEFAULT__"
         }
@@ -687,7 +694,7 @@
     "regionName": "RegionOne",
     "requiresSecurityGroup": false,
     "requiresSubnet": false,
-    "storageSizeRange": {
+    "storageSizeRangeGB": {
       "max": -1,
       "min": 1
     },
@@ -696,7 +703,8 @@
       "__DEFAULT__"
     ],
     "supportedVersions": [
-      "5.7.29"
+      "5.7.29",
+      "8.4"
     ],
     "supportsBackup": true,
     "supportsDeletionProtection": false,
@@ -711,7 +719,7 @@
 ```
 
 ### 6. Beetle POST Recommend RDBMS [✅ SUCCESS]
-- **Duration:** 13ms
+- **Duration:** 6ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms`
 ```json
 // Request Body
@@ -789,11 +797,13 @@
       "backupRetentionDays": 7,
       "databases": [
         {
+          "charset": "utf8mb4",
+          "collation": "utf8mb4_unicode_ci",
           "databaseName": "sampledb"
         }
       ],
       "dbEngine": "mysql",
-      "dbEngineVersion": "5.7.29",
+      "dbEngineVersion": "8.4",
       "dbInstanceSpec": "m1.medium",
       "highAvailability": false,
       "publicAccess": true,
@@ -812,14 +822,14 @@
     }
   ],
   "warnings": [
-    "Requested mysql version '8.0' is not directly supported on target cloud; recommended closest available version '5.7.29' (supported versions: [5.7.29]).",
+    "Requested mysql version '8.0' is not directly supported on target cloud; recommended closest available version '8.4' (supported versions: [5.7.29 8.4]).",
     "Storage type 'SSD' requested for instance 'Source MySQL 01' is not directly offered on openstack; recommended closest available storage type 'RBD' (available: [RBD __DEFAULT__])."
   ]
 }
 ```
 
 ### 7. Beetle POST Validate RDBMS Recommendation [✅ SUCCESS]
-- **Duration:** 24ms
+- **Duration:** 21ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/validate?nsId=default`
 ```json
 // Request Body
@@ -829,7 +839,7 @@
   "autoFillDefaults": true,
   "connectionName": "openstack-regionone",
   "dbEngine": "mysql",
-  "dbEngineVersion": "5.7.29",
+  "dbEngineVersion": "8.4",
   "dbInstanceSpec": "m1.medium",
   "name": "rdbms-openstack",
   "publicAccess": true,
@@ -852,7 +862,7 @@
     "adminUserPassword": "******",
     "connectionName": "openstack-regionone",
     "dbEngine": "mysql",
-    "dbEngineVersion": "5.7.29",
+    "dbEngineVersion": "8.4",
     "dbInstanceSpec": "m1.medium",
     "name": "rdbms-openstack",
     "publicAccess": true,
@@ -871,8 +881,8 @@
 }
 ```
 
-### 8. Beetle POST Migrate RDBMS (Provisioning) [✅ SUCCESS]
-- **Duration:** 4m28.214s
+### 8. Beetle POST Migrate RDBMS (Provisioning) [❌ FAILED (err: <nil>, body: {"success":false,"error":"failed to provision managed RDBMS 'test-rdbms-openstack': API Error: 500 Internal Server Error (Body: {\"message\":\"failed to create RDBMS 'test-rdbms-openstack': EnableRootUser for instance 018e8043-1df6-4b47-8d33-eb41d7a66e46 failed: Expected HTTP response code [200] when accessing [POST http://183.111.177.131:8779/v1.0/1b513759820b4fb497fac0661d81c347/instances/018e8043-1df6-4b47-8d33-eb41d7a66e46/root], but got 400 instead: {badRequest: {code: 400, message: An error occurred communicating with the guest: (pymysql.err.OperationalError) (1524, \\\\\\\\Plugin 'mysql_native_password' is not loaded\\\\\\\\)\\\\ [SQL: ALTER USER 'root'@'%%' IDENTIFIED WITH mysql_native_password BY 'u1trKVeSzS4dt7cxXrpMzXkeqK6nrzGxwwv3';]\\\\ (Background on this error at: https://sqlalche.me/e/20/e3q8).}} (partially-created RDBMS was rolled back and deleted) (from cb-spider:1024/spider/rdbms (500 Internal Server Error))\"}\n)"})]
+- **Duration:** 5m17.786s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms?nameSeed=test`
 ```json
 // Request Body
@@ -890,11 +900,13 @@
       "backupRetentionDays": 7,
       "databases": [
         {
+          "charset": "utf8mb4",
+          "collation": "utf8mb4_unicode_ci",
           "databaseName": "sampledb"
         }
       ],
       "dbEngine": "mysql",
-      "dbEngineVersion": "5.7.29",
+      "dbEngineVersion": "8.4",
       "dbInstanceSpec": "m1.medium",
       "highAvailability": false,
       "publicAccess": true,
@@ -913,307 +925,43 @@
     }
   ],
   "warnings": [
-    "Requested mysql version '8.0' is not directly supported on target cloud; recommended closest available version '5.7.29' (supported versions: [5.7.29]).",
+    "Requested mysql version '8.0' is not directly supported on target cloud; recommended closest available version '8.4' (supported versions: [5.7.29 8.4]).",
     "Storage type 'SSD' requested for instance 'Source MySQL 01' is not directly offered on openstack; recommended closest available storage type 'RBD' (available: [RBD __DEFAULT__])."
   ]
 }
 ```
-```json
-// Response Body
-{
-  "message": "Managed RDBMS instances created successfully",
-  "success": true
-}
-```
 
-### 9. Beetle GET RDBMS Info [✅ SUCCESS]
-- **Duration:** 3.486s
-- **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-openstack`
-```json
-// Response Body
-{
-  "adminUserName": "admin",
-  "backupTime": "NA",
-  "conditions": [
-    {
-      "lastTransitionTime": "2026-09-08T05:31:20Z",
-      "reason": "Available",
-      "status": "True",
-      "type": "Ready"
-    },
-    {
-      "lastTransitionTime": "2026-09-08T05:31:20Z",
-      "reason": "Available",
-      "status": "True",
-      "type": "Synced"
-    }
-  ],
-  "connectionConfig": {
-    "configName": "openstack-regionone",
-    "credentialHolder": "admin",
-    "credentialName": "openstack",
-    "driverName": "openstack-driver-v1.0.so",
-    "providerName": "openstack",
-    "regionDetail": {
-      "description": "Korea Daejeon (Internal)",
-      "location": {
-        "display": "South Korea (Daejeon)",
-        "latitude": 36.3804,
-        "longitude": 127.365
-      },
-      "regionId": "RegionOne",
-      "regionName": "regionone",
-      "zones": [
-        "nova"
-      ]
-    },
-    "regionRepresentative": true,
-    "regionZoneInfo": {
-      "assignedRegion": "RegionOne",
-      "assignedZone": "nova"
-    },
-    "regionZoneInfoName": "openstack-regionone",
-    "verified": true
-  },
-  "connectionName": "openstack-regionone",
-  "cspResourceId": "c42f210d-ab82-4aa4-ac9c-38b411179db0",
-  "cspResourceName": "tbuhibbvt08qje8v0hul",
-  "dbEngine": "mysql",
-  "dbEngineVersion": "5.7.29",
-  "dbInstanceSpec": "m1.medium",
-  "dbInstanceType": "NA",
-  "deletionProtection": false,
-  "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-  "endpoint": "183.111.177.136:3306",
-  "highAvailability": false,
-  "id": "test-rdbms-openstack",
-  "name": "test-rdbms-openstack",
-  "publicAccess": true,
-  "resourceType": "rdbms",
-  "securityGroupIds": [
-    "test-rdbms-sg-openstack"
-  ],
-  "status": "Available",
-  "storageSize": 100,
-  "storageType": "NA",
-  "subnetIds": [
-    "subnet-1"
-  ],
-  "uid": "tbuhibbvt08qje8v0hul",
-  "vNetId": "test-rdbms-vnet-openstack"
-}
-```
+### 9. Beetle GET RDBMS Info [⚪ SKIPPED (Skipped because RDBMS was not created)]
+- **Duration:** 0s
 
-### 10. Beetle GET RDBMS List [✅ SUCCESS]
-- **Duration:** 13ms
-- **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms`
-```json
-// Response Body
-{
-  "rdbms": [
-    {
-      "adminUserName": "admin",
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-09-08T05:27:26Z",
-          "message": "RDBMS creation in progress",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-09-08T05:27:26Z",
-          "reason": "Creating",
-          "status": "False",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "ibm-us-south",
-        "credentialHolder": "admin",
-        "credentialName": "ibm",
-        "driverName": "ibm-driver-v1.0.so",
-        "providerName": "ibm",
-        "regionDetail": {
-          "description": "us-south",
-          "location": {
-            "display": "Dallas USA",
-            "latitude": 32.81248,
-            "longitude": -96.77619
-          },
-          "regionId": "us-south",
-          "regionName": "us-south",
-          "zones": [
-            "us-south-1",
-            "us-south-2",
-            "us-south-3"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "us-south",
-          "assignedZone": "us-south-1"
-        },
-        "regionZoneInfoName": "ibm-us-south",
-        "verified": true
-      },
-      "connectionName": "ibm-us-south",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "8.4",
-      "dbInstanceSpec": "b3c.4x16.encrypted",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "highAvailability": false,
-      "id": "test-rdbms-ibm",
-      "name": "test-rdbms-ibm",
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-ibm"
-      ],
-      "status": "Creating",
-      "storageSize": 100,
-      "subnetIds": [
-        "subnet-1"
-      ],
-      "uid": "tbbl4kdjt619j4klbvjc",
-      "vNetId": "test-rdbms-vnet-ibm"
-    },
-    {
-      "adminUserName": "admin",
-      "backupTime": "NA",
-      "conditions": [
-        {
-          "lastTransitionTime": "2026-09-08T05:31:20Z",
-          "reason": "Available",
-          "status": "True",
-          "type": "Ready"
-        },
-        {
-          "lastTransitionTime": "2026-09-08T05:31:20Z",
-          "reason": "Available",
-          "status": "True",
-          "type": "Synced"
-        }
-      ],
-      "connectionConfig": {
-        "configName": "openstack-regionone",
-        "credentialHolder": "admin",
-        "credentialName": "openstack",
-        "driverName": "openstack-driver-v1.0.so",
-        "providerName": "openstack",
-        "regionDetail": {
-          "description": "Korea Daejeon (Internal)",
-          "location": {
-            "display": "South Korea (Daejeon)",
-            "latitude": 36.3804,
-            "longitude": 127.365
-          },
-          "regionId": "RegionOne",
-          "regionName": "regionone",
-          "zones": [
-            "nova"
-          ]
-        },
-        "regionRepresentative": true,
-        "regionZoneInfo": {
-          "assignedRegion": "RegionOne",
-          "assignedZone": "nova"
-        },
-        "regionZoneInfoName": "openstack-regionone",
-        "verified": true
-      },
-      "connectionName": "openstack-regionone",
-      "cspResourceId": "c42f210d-ab82-4aa4-ac9c-38b411179db0",
-      "cspResourceName": "tbuhibbvt08qje8v0hul",
-      "dbEngine": "mysql",
-      "dbEngineVersion": "5.7.29",
-      "dbInstanceSpec": "m1.medium",
-      "dbInstanceType": "NA",
-      "deletionProtection": false,
-      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "183.111.177.136:3306",
-      "highAvailability": false,
-      "id": "test-rdbms-openstack",
-      "name": "test-rdbms-openstack",
-      "publicAccess": true,
-      "resourceType": "rdbms",
-      "securityGroupIds": [
-        "test-rdbms-sg-openstack"
-      ],
-      "status": "Available",
-      "storageSize": 100,
-      "storageType": "NA",
-      "subnetIds": [
-        "subnet-1"
-      ],
-      "uid": "tbuhibbvt08qje8v0hul",
-      "vNetId": "test-rdbms-vnet-openstack"
-    }
-  ]
-}
-```
+### 10. Beetle GET RDBMS List [⚪ SKIPPED (Skipped because RDBMS was not created)]
+- **Duration:** 0s
 
-### 11. Beetle POST Create Logical Database [✅ SUCCESS]
-- **Duration:** 4.538s
-- **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-openstack/database`
-```json
-// Request Body
-{
-  "adminUserPassword": "******",
-  "databaseName": "sampledb_dyn"
-}
-```
-```json
-// Response Body
-{
-  "message": "Logical database 'sampledb_dyn' created successfully",
-  "success": true
-}
-```
+### 11. Beetle POST Create Logical Database [⚪ SKIPPED (Skipped because RDBMS was not created)]
+- **Duration:** 0s
 
-### 12. Beetle GET List Logical Databases [✅ SUCCESS]
-- **Duration:** 8.026s
-- **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-openstack/database`
-```json
-// Response Body
-{
-  "databases": [
-    "sampledb",
-    "sampledb_dyn"
-  ]
-}
-```
+### 12. Beetle GET List Logical Databases [⚪ SKIPPED (Skipped because RDBMS was not created)]
+- **Duration:** 0s
 
-### 13. Data I/O Test (External Remote) [✅ SUCCESS]
-- **Duration:** 75ms
-```json
-// Response Body
-{
-  "result": "External SQL write/read/verify/drop cycle succeeded"
-}
-```
+### 13. Beetle GET Secure Transport Info [⚪ SKIPPED (Skipped because RDBMS was not created)]
+- **Duration:** 0s
 
-### 14. Data I/O Test (Internal VPC VM) [✅ SUCCESS]
-- **Duration:** 8m45.029s
-```json
-// Response Body
-{
-  "result": "Pass"
-}
-```
+### 14. Data I/O Test (External Remote) [⚪ SKIPPED (Skipped: RDBMS endpoint unavailable)]
+- **Duration:** 0s
 
-### 15. Beetle DELETE Logical Database [✅ SUCCESS]
-- **Duration:** 39.026s
-- **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-openstack/database/sampledb`
+### 15. Data I/O Test (Internal VPC VM) [⚪ SKIPPED (Skipped: Pre-requisite infrastructure or endpoint missing)]
+- **Duration:** 0s
 
-### 16. Beetle DELETE RDBMS Instance [✅ SUCCESS]
-- **Duration:** 1m51.651s
+### 16. Beetle DELETE Logical Database [⚪ SKIPPED ()]
+- **Duration:** 0s
+
+### 17. Beetle DELETE RDBMS Instance [✅ SUCCESS]
+- **Duration:** 38ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-openstack?option=force`
 
-### 17. Tumblebug DELETE /resources/securityGroup [✅ SUCCESS]
-- **Duration:** 3.704s
+### 18. Tumblebug DELETE /resources/securityGroup [✅ SUCCESS]
+- **Duration:** 3.193s
 
-### 18. Tumblebug DELETE /resources/vNet [✅ SUCCESS]
-- **Duration:** 7.112s
+### 19. Tumblebug DELETE /resources/vNet [✅ SUCCESS]
+- **Duration:** 6.356s
 

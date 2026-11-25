@@ -7,17 +7,17 @@
 
 ### Environment
 
-- CM-Beetle: v0.6.4+ (95cc61d)
-- CB-Tumblebug: v0.13.8
+- CM-Beetle: v0.6.5+ (83361e8)
+- CB-Tumblebug: v0.14.0
 - Target CSP: AZURE
 - Target Region: koreasouth
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Name Seed: my
 - Test CLI: Custom automated testing tool
-- Test Date: November 11, 2026
-- Test Time: 12:58:03 KST
-- Test Execution: 2026-11-11 12:58:03 KST
+- Test Date: November 25, 2026
+- Test Time: 18:35:18 KST
+- Test Execution: 2026-11-25 18:35:18 KST
 
 ### Scenario
 
@@ -37,18 +37,18 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 4ms | Pass |
-| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 1.02s | Pass |
-| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 4ms | Pass |
-| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 39ms | Pass |
-| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 77ms | Pass |
-| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 6.354s | Pass |
+| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 10ms | Pass |
+| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 185ms | Pass |
+| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 19ms | Pass |
+| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 72ms | Pass |
+| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 50ms | Pass |
+| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 6.142s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 12.504580615s
+**Total Duration**: 11.484971344s
 
-*Test executed on November 11, 2026 at 12:58:03 KST (2026-11-11 12:58:03 KST) using CM-Beetle automated test CLI*
+*Test executed on November 25, 2026 at 18:35:18 KST (2026-11-25 18:35:18 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -253,13 +253,13 @@
       {
         "conditions": [
           {
-            "lastTransitionTime": "2026-11-11T03:58:06Z",
+            "lastTransitionTime": "2026-11-25T09:35:21Z",
             "reason": "Available",
             "status": "True",
             "type": "Ready"
           },
           {
-            "lastTransitionTime": "2026-11-11T03:58:06Z",
+            "lastTransitionTime": "2026-11-25T09:35:21Z",
             "reason": "Available",
             "status": "True",
             "type": "Synced"
@@ -291,26 +291,26 @@
           "verified": true
         },
         "connectionName": "azure-koreasouth",
-        "cspResourceId": "tbg2d8ikd9udfti3ndc0",
-        "cspResourceName": "tbg2d8ikd9udfti3ndc0",
+        "cspResourceId": "tbcio4ik96pa9g5e9bsd",
+        "cspResourceName": "tbcio4ik96pa9g5e9bsd",
         "description": "Created by CM-Beetle",
         "id": "my-os-01",
         "maxKeys": 1000,
         "name": "my-os-01",
         "resourceType": "objectStorage",
         "status": "Available",
-        "uid": "tbg2d8ikd9udfti3ndc0"
+        "uid": "tbcio4ik96pa9g5e9bsd"
       },
       {
         "conditions": [
           {
-            "lastTransitionTime": "2026-11-11T03:58:07Z",
+            "lastTransitionTime": "2026-11-25T09:35:21Z",
             "reason": "Available",
             "status": "True",
             "type": "Ready"
           },
           {
-            "lastTransitionTime": "2026-11-11T03:58:07Z",
+            "lastTransitionTime": "2026-11-25T09:35:21Z",
             "reason": "Available",
             "status": "True",
             "type": "Synced"
@@ -342,15 +342,15 @@
           "verified": true
         },
         "connectionName": "azure-koreasouth",
-        "cspResourceId": "tbmd242rd6jqro7pubdk",
-        "cspResourceName": "tbmd242rd6jqro7pubdk",
+        "cspResourceId": "tbv4k79vp2eqh66a4355",
+        "cspResourceName": "tbv4k79vp2eqh66a4355",
         "description": "Created by CM-Beetle",
         "id": "my-os-02",
         "maxKeys": 1000,
         "name": "my-os-02",
         "resourceType": "objectStorage",
         "status": "Available",
-        "uid": "tbmd242rd6jqro7pubdk"
+        "uid": "tbv4k79vp2eqh66a4355"
       }
     ],
     "status": "created"
@@ -433,13 +433,13 @@
   "data": {
     "conditions": [
       {
-        "lastTransitionTime": "2026-11-11T03:58:06Z",
+        "lastTransitionTime": "2026-11-25T09:35:21Z",
         "reason": "Available",
         "status": "True",
         "type": "Ready"
       },
       {
-        "lastTransitionTime": "2026-11-11T03:58:06Z",
+        "lastTransitionTime": "2026-11-25T09:35:21Z",
         "reason": "Available",
         "status": "True",
         "type": "Synced"
@@ -471,15 +471,15 @@
       "verified": true
     },
     "connectionName": "azure-koreasouth",
-    "cspResourceId": "tbg2d8ikd9udfti3ndc0",
-    "cspResourceName": "tbg2d8ikd9udfti3ndc0",
+    "cspResourceId": "tbcio4ik96pa9g5e9bsd",
+    "cspResourceName": "tbcio4ik96pa9g5e9bsd",
     "description": "Created by CM-Beetle",
     "id": "my-os-01",
     "maxKeys": 1000,
     "name": "my-os-01",
     "resourceType": "objectStorage",
     "status": "Available",
-    "uid": "tbg2d8ikd9udfti3ndc0"
+    "uid": "tbcio4ik96pa9g5e9bsd"
   },
   "success": true
 }

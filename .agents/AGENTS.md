@@ -53,3 +53,15 @@
    - Replace `—` with standard colons (`:`), commas (`,`), parentheses (`(...)`), or standard hyphens (`-`).
    - Replace `·` with commas (`,`), slashes (`/`), or natural conjunctions (`및`, `와`, `과`, `and`).
 
+## Pull Request & Auto-Merge Rules
+
+1. **Manual Push, PR, and Merge by Default**:
+   - For core logic, API, UI, and other general changes, `git push`, PR creation, `/approve`, and merging are handled manually by the user.
+   - Do not push branches, open PRs, or post `/approve` unless the user explicitly asks.
+2. **Wait for CI Checks Before `/approve` (Explicit Submodule Releases Only)**:
+   - When the user explicitly requests automated PR, merge, and tagging (such as `imdl` or `transx` submodule releases), never post `/approve` immediately after creating a PR.
+   - First monitor PR check runs until every required CI workflow finishes with `success`, and only then post `/approve` (`.github/workflows/auto-merge.yml` triggers on `issue_comment` and retries merge for only ~60 seconds).
+3. **PR Title & Description**:
+   - Use a conventional commit title (`<= 50` chars), since `.github/workflows/auto-merge.yml` sets `MERGE_COMMIT_MESSAGE: "pull-request-title"`.
+   - Reuse the commit message body verbatim as the PR description unless asked otherwise.
+

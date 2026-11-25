@@ -55,7 +55,7 @@ CM-Beetle Managed RDBMS supports multi-cloud database provisioning across 9 majo
 
 ### 1. MySQL Support Matrix
 
-MySQL is verified and supported across all 9 CSPs:
+MySQL is verified across 8 CSPs, with OpenStack (MySQL 8.4) currently in progress (🚧):
 
 | CSP           | Service Brand                    | Supported Versions     |   Access Mode    | Subnet Requirement                              | Provisioning Characteristics                                              |
 | :------------ | :------------------------------- | :--------------------- | :--------------: | :---------------------------------------------- | :------------------------------------------------------------------------ |
@@ -67,7 +67,7 @@ MySQL is verified and supported across all 9 CSPs:
 | **IBM**       | IBM Cloud Databases for MySQL    | 8.4 (replaces 8.0)     | Public / Private | Resource Group / VPC bound                      | `multitenant` (~9-10m) vs dedicated `b3c.*` (35-45+m) hosting models      |
 | **NCP**       | NAVER Cloud DB for MySQL         | 8.0 (8.0.36)           |   Private Only   | Single Subnet + Dedicated DB Port               | Private access enforced; verified via Internal Runner VM                  |
 | **NHN**       | NHN Cloud RDS for MySQL          | 8.4, 8.0, 5.7          | Public / Private | Standard VPC Subnet                             | Dedicated DB Security Group required (nhnDBSGToAllowAllInbound supported) |
-| **OpenStack** | OpenStack Trove (MySQL)          | 5.7.29                 | Public / Private | Standard VPC Subnet / Floating IP               | Flexible private cloud deployment; verified external & internal SQL I/O   |
+| **OpenStack** | OpenStack Trove (MySQL)          | 8.4 (🚧), 5.7.29       | Public / Private | Standard VPC Subnet / Floating IP               | In progress: Trove MySQL 8.4 EnableRootUser fails (`mysql_native_password` plugin not loaded; [cb-spider#1941](https://github.com/cloud-barista/cb-spider/issues/1941)) |
 
 ### 2. MariaDB Support Matrix
 
@@ -78,7 +78,7 @@ MariaDB is natively supported across 4 CSPs:
 | **AWS**       | Amazon RDS for MariaDB             | 10.5, 10.6, 10.11, 11.4, 11.8 | Public / Private | Multi-AZ Subnet Group (>= 2 subnets across AZs) | Automated failover, parameter group customization |
 | **Alibaba**   | Alibaba Cloud ApsaraDB for MariaDB | 10.6, 10.3                    | Public / Private | VNet Subnet Binding                             | High-availability primary/standby architecture    |
 | **NHN**       | NHN Cloud RDS for MariaDB          | 10.6, 10.11, 11.4 (10.3~11.8) | Public / Private | Standard VPC Subnet                             | AppKey credential integration required            |
-| **OpenStack** | OpenStack Trove (MariaDB)          | 10.4                          | Public / Private | Standard VPC Subnet / Floating IP               | Reference version 10.4 in RegionOne datastore     |
+| **OpenStack** | OpenStack Trove (MariaDB)          | 11.4                          | Public / Private | Standard VPC Subnet / Floating IP               | Reference version 11.4 in RegionOne datastore; verified external and internal SQL I/O |
 
 > [!NOTE]
 > **Automatic Compatibility Fallback**:

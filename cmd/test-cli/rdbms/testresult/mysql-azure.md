@@ -1,9 +1,10 @@
 # Managed RDBMS (MySQL) Test Report: AZURE (koreacentral)
 
 - **Test Case:** Azure KoreaCentral MySQL Test
-- **Date & Time:** 2026-10-19 09:49:54
+- **Access Mode:** Public (publicAccess=true)
+- **Date & Time:** 2026-11-25 18:54:32
 - **Namespace:** `default`
-- **Total Duration:** 11m31.451s
+- **Total Duration:** 12m47.75s
 - **Overall Status:** ✅ PASSED
 
 ## Environment and Scenario
@@ -12,7 +13,7 @@
 - **Target CSP:** AZURE
 - **Target Region:** `koreacentral`
 - **Namespace:** `default`
-- **Test Date:** 2026-10-19 09:49:54
+- **Test Date:** 2026-11-25 18:54:32
 
 ### Scenario & Tested APIs
 1. **Pre-flight Spec & Image Review**: `POST /tumblebug/specImagePairReview`
@@ -34,13 +35,13 @@
 ## Execution Steps & API Traces
 
 ### 1. Tumblebug POST /specImagePairReview (Pre-flight Spec & Image Review) [✅ SUCCESS]
-- **Duration:** 5.133s
+- **Duration:** 5.225s
 - **Request URL:** `http://localhost:1323/tumblebug/specImagePairReview`
 ```json
 // Request Body
 {
-  "imageId": "Canonical:ubuntu-24_04-lts:minimal-arm64:24.04.202608100",
-  "specId": "azure+koreacentral+standard_d2ps_v6"
+  "imageId": "Canonical:ubuntu-24_04-lts:server:24.04.202610210",
+  "specId": "azure+koreacentral+standard_b2als_v2"
 }
 ```
 ```json
@@ -48,20 +49,50 @@
 {
   "availability": {
     "available": true,
-    "instanceType": "Standard_D2ps_v6",
+    "cached": true,
+    "instanceType": "Standard_B2als_v2",
     "provider": "azure",
-    "queriedAt": "2026-10-19T00:49:59.093048863Z",
+    "queriedAt": "2026-11-25T09:54:34.484276376Z",
+    "quota": {
+      "fitCount": 25,
+      "limit": 50,
+      "name": "standardBasv2Family",
+      "perInstance": 2,
+      "scope": "region",
+      "unit": "vCPU",
+      "used": 0
+    },
+    "refreshAfter": "2026-11-25T09:59:34.484276376Z",
     "region": "koreacentral",
-    "source": "azure:CheckSpecAvailability"
+    "source": "azure:CheckSpecAvailability",
+    "status": "Available",
+    "ttlSeconds": 300,
+    "zones": [
+      {
+        "available": true,
+        "status": "Available",
+        "zoneId": "3"
+      },
+      {
+        "available": true,
+        "status": "Available",
+        "zoneId": "1"
+      },
+      {
+        "available": true,
+        "status": "Available",
+        "zoneId": "2"
+      }
+    ]
   },
   "connectionName": "azure-koreacentral",
-  "estimatedCost": "$0.0914/hour",
+  "estimatedCost": "$0.0468/hour",
   "imageDetails": {
     "commandHistory": null,
     "connectionName": "azure-australiacentral",
     "creationDate": "",
-    "cspImageName": "Canonical:ubuntu-24_04-lts:minimal-arm64:24.04.202610160",
-    "description": "",
+    "cspImageName": "Canonical:ubuntu-24_04-lts:server:24.04.202611170",
+    "description": "Server LTS",
     "details": [
       {
         "key": "Location",
@@ -77,15 +108,15 @@
       },
       {
         "key": "SKU",
-        "value": "minimal-arm64"
+        "value": "server"
       },
       {
         "key": "Version",
-        "value": "24.04.202608100"
+        "value": "24.04.202610210"
       },
       {
         "key": "ID",
-        "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/Providers/Microsoft.Compute/Locations/AustraliaCentral/Publishers/Canonical/ArtifactTypes/VMImage/Offers/ubuntu-24_04-lts/Skus/minimal-arm64/Versions/24.04.202608100"
+        "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/Providers/Microsoft.Compute/Locations/AustraliaCentral/Publishers/Canonical/ArtifactTypes/VMImage/Offers/ubuntu-24_04-lts/Skus/server/Versions/24.04.202610210"
       },
       {
         "key": "HyperVGeneration",
@@ -104,20 +135,20 @@
         "value": "Active"
       }
     ],
-    "fetchedTime": "2026.08.21 14:01:58 Fri",
-    "id": "Canonical:ubuntu-24_04-lts:minimal-arm64:24.04.202608100",
+    "fetchedTime": "2026.10.29 04:34:25 Thu",
+    "id": "Canonical:ubuntu-24_04-lts:server:24.04.202610210",
     "imageStatus": "Available",
     "infraType": "",
     "isBasicGpuImage": false,
     "isBasicImage": true,
     "isGPUImage": false,
     "isKubernetesImage": false,
-    "name": "Canonical:ubuntu-24_04-lts:minimal-arm64:24.04.202608100",
+    "name": "Canonical:ubuntu-24_04-lts:server:24.04.202610210",
     "namespace": "system",
-    "osArchitecture": "arm64",
+    "osArchitecture": "x86_64",
     "osDiskSizeGB": -1,
     "osDiskType": "default",
-    "osDistribution": "Canonical:ubuntu-24_04-lts:minimal-arm64:24.04.202608100",
+    "osDistribution": "Canonical:ubuntu-24_04-lts:server:24.04.202610210",
     "osPlatform": "Linux/UNIX",
     "osType": "Ubuntu 24.04",
     "providerName": "azure",
@@ -127,15 +158,15 @@
     "resourceType": "image",
     "sourceCspImageName": "",
     "sourceNodeUid": "",
-    "systemLabel": "",
-    "uid": "tb65d9cf6b2qanmqmpf1"
+    "systemLabel": "from-assets",
+    "uid": "tbm7el5o8iv7q202l982"
   },
-  "imageId": "Canonical:ubuntu-24_04-lts:minimal-arm64:24.04.202608100",
+  "imageId": "Canonical:ubuntu-24_04-lts:server:24.04.202610210",
   "imageValidation": {
-    "cspResourceId": "Canonical:ubuntu-24_04-lts:minimal-arm64:24.04.202610160",
+    "cspResourceId": "Canonical:ubuntu-24_04-lts:server:24.04.202611170",
     "isAvailable": true,
-    "resourceId": "Canonical:ubuntu-24_04-lts:minimal-arm64:24.04.202608100",
-    "resourceName": "Canonical:ubuntu-24_04-lts:minimal-arm64:24.04.202608100",
+    "resourceId": "Canonical:ubuntu-24_04-lts:server:24.04.202610210",
+    "resourceName": "Canonical:ubuntu-24_04-lts:server:24.04.202610210",
     "status": "Available"
   },
   "isValid": true,
@@ -143,22 +174,39 @@
   "providerName": "azure",
   "regionName": "koreacentral",
   "specDetails": {
-    "architecture": "arm64",
+    "architecture": "x86_64",
+    "availabilityCheckedAt": "2026-11-25T09:54:34.484276376Z",
+    "availabilityQuota": {
+      "fitCount": 25,
+      "limit": 50,
+      "name": "standardBasv2Family",
+      "perInstance": 2,
+      "scope": "region",
+      "unit": "vCPU",
+      "used": 0
+    },
+    "availabilityRefreshAfter": "2026-11-25T09:59:34.484276376Z",
+    "availabilityStatus": "Available",
+    "availableZones": [
+      "1",
+      "2",
+      "3"
+    ],
     "connectionName": "azure-koreacentral",
-    "costPerHour": 0.0914,
-    "cspSpecName": "Standard_D2ps_v6",
+    "costPerHour": 0.0468,
+    "cspSpecName": "Standard_B2als_v2",
     "details": [
       {
         "key": "MaxDataDiskCount",
-        "value": "8"
+        "value": "4"
       },
       {
         "key": "MemoryInMB",
-        "value": "8192"
+        "value": "4096"
       },
       {
         "key": "Name",
-        "value": "Standard_D2ps_v6"
+        "value": "Standard_B2als_v2"
       },
       {
         "key": "NumberOfCores",
@@ -190,11 +238,7 @@
       },
       {
         "key": "HyperVGenerations",
-        "value": "V2"
-      },
-      {
-        "key": "DiskControllerTypes",
-        "value": "SCSI"
+        "value": "V1,V2"
       },
       {
         "key": "SupportedCapacityReservationTypes",
@@ -202,18 +246,22 @@
       },
       {
         "key": "MemoryGB",
-        "value": "8"
+        "value": "4"
       },
       {
         "key": "MaxDataDiskCount",
-        "value": "8"
+        "value": "4"
       },
       {
         "key": "CpuArchitectureType",
-        "value": "Arm64"
+        "value": "x64"
       },
       {
         "key": "LowPriorityCapable",
+        "value": "True"
+      },
+      {
+        "key": "HibernationSupported",
         "value": "True"
       },
       {
@@ -234,7 +282,7 @@
       },
       {
         "key": "vCPUsPerCore",
-        "value": "1"
+        "value": "2"
       },
       {
         "key": "CombinedTempDiskAndCachedIOPS",
@@ -254,7 +302,7 @@
       },
       {
         "key": "UncachedDiskBytesPerSecond",
-        "value": "106000000"
+        "value": "85000000"
       },
       {
         "key": "EphemeralOSDiskSupported",
@@ -290,19 +338,19 @@
       },
       {
         "key": "LocationInfo_0_Zone_0",
-        "value": "2"
-      },
-      {
-        "key": "LocationInfo_0_Zone_1",
         "value": "3"
       },
       {
-        "key": "LocationInfo_0_Zone_2",
+        "key": "LocationInfo_0_Zone_1",
         "value": "1"
       },
       {
+        "key": "LocationInfo_0_Zone_2",
+        "value": "2"
+      },
+      {
         "key": "Family",
-        "value": "StandardDpsv6Family"
+        "value": "standardBasv2Family"
       },
       {
         "key": "Tier",
@@ -310,7 +358,7 @@
       },
       {
         "key": "Size",
-        "value": "D2ps_v6"
+        "value": "B2als_v2"
       },
       {
         "key": "ResourceType",
@@ -327,10 +375,10 @@
     "evaluationScore08": -1,
     "evaluationScore09": -1,
     "evaluationScore10": -1,
-    "id": "azure+koreacentral+standard_d2ps_v6",
+    "id": "azure+koreacentral+standard_b2als_v2",
     "infraType": "node",
-    "memoryGiB": 7.8125,
-    "name": "azure+koreacentral+standard_d2ps_v6",
+    "memoryGiB": 4,
+    "name": "azure+koreacentral+standard_b2als_v2",
     "namespace": "system",
     "providerName": "azure",
     "regionLatitude": 37.5665,
@@ -339,23 +387,24 @@
     "rootDiskSize": 0,
     "rootDiskType": "",
     "systemLabel": "auto-gen",
-    "uid": "tbahqjlrbu2ab7hk6kqr",
+    "uid": "tb4fm9rbtluo2mp32cgg",
     "vCPU": 2
   },
-  "specId": "azure+koreacentral+standard_d2ps_v6",
+  "specId": "azure+koreacentral+standard_b2als_v2",
   "specValidation": {
-    "cspResourceId": "Standard_D2ps_v6",
+    "cspResourceId": "Standard_B2als_v2",
     "isAvailable": true,
-    "resourceId": "azure+koreacentral+standard_d2ps_v6",
-    "resourceName": "Standard_D2ps_v6",
+    "resourceId": "azure+koreacentral+standard_b2als_v2",
+    "resourceName": "Standard_B2als_v2",
     "status": "Available"
   },
-  "status": "OK"
+  "status": "OK",
+  "suggestedZone": "3"
 }
 ```
 
 ### 2. Tumblebug POST /resources/vNet (Create VNet & Subnets) [✅ SUCCESS]
-- **Duration:** 20.391s
+- **Duration:** 11.784s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/vNet`
 ```json
 // Request Body
@@ -380,19 +429,19 @@
   "cidrBlock": "10.1.0.0/16",
   "conditions": [
     {
-      "lastTransitionTime": "2026-10-19T00:50:19Z",
+      "lastTransitionTime": "2026-11-25T09:54:47Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-10-19T00:50:19Z",
+      "lastTransitionTime": "2026-11-25T09:54:47Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
     },
     {
-      "lastTransitionTime": "2026-10-19T00:50:19Z",
+      "lastTransitionTime": "2026-11-25T09:54:47Z",
       "reason": "AllReady",
       "status": "True",
       "type": "ChildrenReady"
@@ -428,15 +477,15 @@
     "verified": true
   },
   "connectionName": "azure-koreacentral",
-  "cspResourceId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/tbfsbq1rka35sm2b9of3",
-  "cspResourceName": "tbfsbq1rka35sm2b9of3",
+  "cspResourceId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/tbob9pv4a0t0r36rukkk",
+  "cspResourceName": "tbob9pv4a0t0r36rukkk",
   "description": "Pre-requisite VNet for CM-Beetle RDBMS test",
   "id": "test-rdbms-vnet-azure",
   "isAutoGenerated": false,
   "keyValueList": [
     {
       "key": "ID",
-      "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/tbfsbq1rka35sm2b9of3"
+      "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/tbob9pv4a0t0r36rukkk"
     },
     {
       "key": "Location",
@@ -444,15 +493,15 @@
     },
     {
       "key": "Properties",
-      "value": "{addressSpace:{addressPrefixes:[10.1.0.0/16]},enableDdosProtection:false,privateEndpointVNetPolicies:Disabled,provisioningState:Succeeded,resourceGuid:6ae16524-5857-4116-b0d6-fbd6c63506f3,subnets:[{etag:W/\\2277d07f-0762-48e2-a2ed-0f22ad5761d5\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/tbfsbq1rka35sm2b9of3/subnets/tbivpcjia3vr2isko4bj,name:tbivpcjia3vr2isko4bj,properties:{addressPrefix:10.1.1.0/24,delegations:[],privateEndpointNetworkPolicies:Disabled,privateLinkServiceNetworkPolicies:Enabled,provisioningState:Succeeded,serviceEndpoints:[{locations:[koreacentral,koreasouth],provisioningState:Succeeded,service:Microsoft.Storage}]},type:Microsoft.Network/virtualNetworks/subnets}],virtualNetworkPeerings:[]}"
+      "value": "{addressSpace:{addressPrefixes:[10.1.0.0/16]},enableDdosProtection:false,privateEndpointVNetPolicies:Disabled,provisioningState:Succeeded,resourceGuid:07b4f7de-b0b5-401e-8163-3a664149c260,subnets:[{etag:W/\\d72c9434-a01a-4040-a52f-cd357b00e2d3\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/tbob9pv4a0t0r36rukkk/subnets/tba98ditvus0csab9vbk,name:tba98ditvus0csab9vbk,properties:{addressPrefix:10.1.1.0/24,delegations:[],privateEndpointNetworkPolicies:Disabled,privateLinkServiceNetworkPolicies:Enabled,provisioningState:Succeeded,serviceEndpoints:[{locations:[koreacentral,koreasouth],provisioningState:Succeeded,service:Microsoft.Storage}]},type:Microsoft.Network/virtualNetworks/subnets}],virtualNetworkPeerings:[]}"
     },
     {
       "key": "Etag",
-      "value": "W/\\2277d07f-0762-48e2-a2ed-0f22ad5761d5\\"
+      "value": "W/\\d72c9434-a01a-4040-a52f-cd357b00e2d3\\"
     },
     {
       "key": "Name",
-      "value": "tbfsbq1rka35sm2b9of3"
+      "value": "tbob9pv4a0t0r36rukkk"
     },
     {
       "key": "Type",
@@ -466,13 +515,13 @@
     {
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:19Z",
+          "lastTransitionTime": "2026-11-25T09:54:47Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:19Z",
+          "lastTransitionTime": "2026-11-25T09:54:47Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -508,21 +557,21 @@
         "verified": true
       },
       "connectionName": "azure-koreacentral",
-      "cspResourceId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/tbfsbq1rka35sm2b9of3/subnets/tbivpcjia3vr2isko4bj",
-      "cspResourceName": "tbivpcjia3vr2isko4bj",
-      "cspVNetId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/tbfsbq1rka35sm2b9of3",
-      "cspVNetName": "tbfsbq1rka35sm2b9of3",
+      "cspResourceId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/tbob9pv4a0t0r36rukkk/subnets/tba98ditvus0csab9vbk",
+      "cspResourceName": "tba98ditvus0csab9vbk",
+      "cspVNetId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/tbob9pv4a0t0r36rukkk",
+      "cspVNetName": "tbob9pv4a0t0r36rukkk",
       "description": "",
       "id": "subnet-1",
       "ipv4_CIDR": "10.1.1.0/24",
       "keyValueList": [
         {
           "key": "ID",
-          "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/tbfsbq1rka35sm2b9of3/subnets/tbivpcjia3vr2isko4bj"
+          "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/tbob9pv4a0t0r36rukkk/subnets/tba98ditvus0csab9vbk"
         },
         {
           "key": "Name",
-          "value": "tbivpcjia3vr2isko4bj"
+          "value": "tba98ditvus0csab9vbk"
         },
         {
           "key": "Properties",
@@ -534,22 +583,22 @@
         },
         {
           "key": "Etag",
-          "value": "W/\\2277d07f-0762-48e2-a2ed-0f22ad5761d5\\"
+          "value": "W/\\d72c9434-a01a-4040-a52f-cd357b00e2d3\\"
         }
       ],
       "name": "subnet-1",
       "resourceType": "subnet",
       "status": "Available",
-      "uid": "tbivpcjia3vr2isko4bj"
+      "uid": "tba98ditvus0csab9vbk"
     }
   ],
   "systemLabel": "",
-  "uid": "tbfsbq1rka35sm2b9of3"
+  "uid": "tbob9pv4a0t0r36rukkk"
 }
 ```
 
 ### 3. Tumblebug POST /resources/securityGroup (Create SecurityGroup) [✅ SUCCESS]
-- **Duration:** 3.036s
+- **Duration:** 3.224s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/securityGroup`
 ```json
 // Request Body
@@ -608,8 +657,8 @@
     "verified": true
   },
   "connectionName": "azure-koreacentral",
-  "cspResourceId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbhmeionq5lckban2jvh",
-  "cspResourceName": "tbhmeionq5lckban2jvh",
+  "cspResourceId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbbrvi8emks31hq0cjig",
+  "cspResourceName": "tbbrvi8emks31hq0cjig",
   "description": "Pre-requisite SecurityGroup for CM-Beetle RDBMS test",
   "firewallRules": [
     {
@@ -636,7 +685,7 @@
   "keyValueList": [
     {
       "key": "ID",
-      "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbhmeionq5lckban2jvh"
+      "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbbrvi8emks31hq0cjig"
     },
     {
       "key": "Location",
@@ -644,15 +693,15 @@
     },
     {
       "key": "Properties",
-      "value": "{defaultSecurityRules:[{etag:W/\\a125fbff-1dd0-417d-915e-574a8ce8790d\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbhmeionq5lckban2jvh/defaultSecurityRules/AllowVnetInBound,name:AllowVnetInBound,properties:{access:Allow,description:Allow inbound traffic from all VMs in VNET,destinationAddressPrefix:VirtualNetwork,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Inbound,priority:65000,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:VirtualNetwork,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/defaultSecurityRules},{etag:W/\\a125fbff-1dd0-417d-915e-574a8ce8790d\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbhmeionq5lckban2jvh/defaultSecurityRules/AllowAzureLoadBalancerInBound,name:AllowAzureLoadBalancerInBound,properties:{access:Allow,description:Allow inbound traffic from azure load balancer,destinationAddressPrefix:*,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Inbound,priority:65001,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:AzureLoadBalancer,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/defaultSecurityRules},{etag:W/\\a125fbff-1dd0-417d-915e-574a8ce8790d\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbhmeionq5lckban2jvh/defaultSecurityRules/DenyAllInBound,name:DenyAllInBound,properties:{access:Deny,description:Deny all inbound traffic,destinationAddressPrefix:*,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Inbound,priority:65500,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:*,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/defaultSecurityRules},{etag:W/\\a125fbff-1dd0-417d-915e-574a8ce8790d\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbhmeionq5lckban2jvh/defaultSecurityRules/AllowVnetOutBound,name:AllowVnetOutBound,properties:{access:Allow,description:Allow outbound traffic from all VMs to all VMs in VNET,destinationAddressPrefix:VirtualNetwork,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Outbound,priority:65000,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:VirtualNetwork,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/defaultSecurityRules},{etag:W/\\a125fbff-1dd0-417d-915e-574a8ce8790d\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbhmeionq5lckban2jvh/defaultSecurityRules/AllowInternetOutBound,name:AllowInternetOutBound,properties:{access:Allow,description:Allow outbound traffic from all VMs to Internet,destinationAddressPrefix:Internet,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Outbound,priority:65001,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:*,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/defaultSecurityRules},{etag:W/\\a125fbff-1dd0-417d-915e-574a8ce8790d\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbhmeionq5lckban2jvh/defaultSecurityRules/DenyAllOutBound,name:DenyAllOutBound,properties:{access:Deny,description:Deny all outbound traffic,destinationAddressPrefix:*,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Outbound,priority:65500,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:*,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/defaultSecurityRules}],provisioningState:Succeeded,resourceGuid:3e95c08f-2610-4333-8b12-3e2be4e5ee1a,securityRules:[{etag:W/\\a125fbff-1dd0-417d-915e-574a8ce8790d\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbhmeionq5lckban2jvh/securityRules/inbound-rules-90328-3306-3306-TCP,name:inbound-rules-90328-3306-3306-TCP,properties:{access:Allow,destinationAddressPrefix:*,destinationAddressPrefixes:[],destinationPortRange:3306,destinationPortRanges:[],direction:Inbound,priority:100,protocol:Tcp,provisioningState:Succeeded,sourceAddressPrefix:0.0.0.0/0,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/securityRules},{etag:W/\\a125fbff-1dd0-417d-915e-574a8ce8790d\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbhmeionq5lckban2jvh/securityRules/inbound-rules-52209-22-22-TCP,name:inbound-rules-52209-22-22-TCP,properties:{access:Allow,destinationAddressPrefix:*,destinationAddressPrefixes:[],destinationPortRange:22,destinationPortRanges:[],direction:Inbound,priority:101,protocol:Tcp,provisioningState:Succeeded,sourceAddressPrefix:0.0.0.0/0,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/securityRules},{etag:W/\\a125fbff-1dd0-417d-915e-574a8ce8790d\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbhmeionq5lckban2jvh/securityRules/deny-outbound,name:deny-outbound,properties:{access:Deny,destinationAddressPrefix:0.0.0.0/0,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Outbound,priority:4096,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:*,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/securityRules},{etag:W/\\a125fbff-1dd0-417d-915e-574a8ce8790d\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbhmeionq5lckban2jvh/securityRules/allow-outbound,name:allow-outbound,properties:{access:Allow,destinationAddressPrefix:0.0.0.0/0,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Outbound,priority:101,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:*,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/securityRules}]}"
+      "value": "{defaultSecurityRules:[{etag:W/\\61699a49-94eb-4290-a33f-98b3490a0064\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbbrvi8emks31hq0cjig/defaultSecurityRules/AllowVnetInBound,name:AllowVnetInBound,properties:{access:Allow,description:Allow inbound traffic from all VMs in VNET,destinationAddressPrefix:VirtualNetwork,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Inbound,priority:65000,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:VirtualNetwork,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/defaultSecurityRules},{etag:W/\\61699a49-94eb-4290-a33f-98b3490a0064\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbbrvi8emks31hq0cjig/defaultSecurityRules/AllowAzureLoadBalancerInBound,name:AllowAzureLoadBalancerInBound,properties:{access:Allow,description:Allow inbound traffic from azure load balancer,destinationAddressPrefix:*,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Inbound,priority:65001,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:AzureLoadBalancer,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/defaultSecurityRules},{etag:W/\\61699a49-94eb-4290-a33f-98b3490a0064\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbbrvi8emks31hq0cjig/defaultSecurityRules/DenyAllInBound,name:DenyAllInBound,properties:{access:Deny,description:Deny all inbound traffic,destinationAddressPrefix:*,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Inbound,priority:65500,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:*,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/defaultSecurityRules},{etag:W/\\61699a49-94eb-4290-a33f-98b3490a0064\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbbrvi8emks31hq0cjig/defaultSecurityRules/AllowVnetOutBound,name:AllowVnetOutBound,properties:{access:Allow,description:Allow outbound traffic from all VMs to all VMs in VNET,destinationAddressPrefix:VirtualNetwork,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Outbound,priority:65000,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:VirtualNetwork,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/defaultSecurityRules},{etag:W/\\61699a49-94eb-4290-a33f-98b3490a0064\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbbrvi8emks31hq0cjig/defaultSecurityRules/AllowInternetOutBound,name:AllowInternetOutBound,properties:{access:Allow,description:Allow outbound traffic from all VMs to Internet,destinationAddressPrefix:Internet,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Outbound,priority:65001,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:*,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/defaultSecurityRules},{etag:W/\\61699a49-94eb-4290-a33f-98b3490a0064\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbbrvi8emks31hq0cjig/defaultSecurityRules/DenyAllOutBound,name:DenyAllOutBound,properties:{access:Deny,description:Deny all outbound traffic,destinationAddressPrefix:*,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Outbound,priority:65500,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:*,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/defaultSecurityRules}],provisioningState:Succeeded,resourceGuid:43febf8b-6e0d-441d-b4cf-ea166cb885ea,securityRules:[{etag:W/\\61699a49-94eb-4290-a33f-98b3490a0064\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbbrvi8emks31hq0cjig/securityRules/inbound-rules-3759-3306-3306-TCP,name:inbound-rules-3759-3306-3306-TCP,properties:{access:Allow,destinationAddressPrefix:*,destinationAddressPrefixes:[],destinationPortRange:3306,destinationPortRanges:[],direction:Inbound,priority:100,protocol:Tcp,provisioningState:Succeeded,sourceAddressPrefix:0.0.0.0/0,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/securityRules},{etag:W/\\61699a49-94eb-4290-a33f-98b3490a0064\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbbrvi8emks31hq0cjig/securityRules/inbound-rules-60895-22-22-TCP,name:inbound-rules-60895-22-22-TCP,properties:{access:Allow,destinationAddressPrefix:*,destinationAddressPrefixes:[],destinationPortRange:22,destinationPortRanges:[],direction:Inbound,priority:101,protocol:Tcp,provisioningState:Succeeded,sourceAddressPrefix:0.0.0.0/0,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/securityRules},{etag:W/\\61699a49-94eb-4290-a33f-98b3490a0064\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbbrvi8emks31hq0cjig/securityRules/deny-outbound,name:deny-outbound,properties:{access:Deny,destinationAddressPrefix:0.0.0.0/0,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Outbound,priority:4096,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:*,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/securityRules},{etag:W/\\61699a49-94eb-4290-a33f-98b3490a0064\\,id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.Network/networkSecurityGroups/tbbrvi8emks31hq0cjig/securityRules/allow-outbound,name:allow-outbound,properties:{access:Allow,destinationAddressPrefix:0.0.0.0/0,destinationAddressPrefixes:[],destinationPortRange:*,destinationPortRanges:[],direction:Outbound,priority:101,protocol:*,provisioningState:Succeeded,sourceAddressPrefix:*,sourceAddressPrefixes:[],sourcePortRange:*,sourcePortRanges:[]},type:Microsoft.Network/networkSecurityGroups/securityRules}]}"
     },
     {
       "key": "Etag",
-      "value": "W/\\a125fbff-1dd0-417d-915e-574a8ce8790d\\"
+      "value": "W/\\61699a49-94eb-4290-a33f-98b3490a0064\\"
     },
     {
       "key": "Name",
-      "value": "tbhmeionq5lckban2jvh"
+      "value": "tbbrvi8emks31hq0cjig"
     },
     {
       "key": "Type",
@@ -662,13 +711,13 @@
   "name": "test-rdbms-sg-azure",
   "resourceType": "securityGroup",
   "systemLabel": "",
-  "uid": "tbhmeionq5lckban2jvh",
+  "uid": "tbbrvi8emks31hq0cjig",
   "vNetId": "test-rdbms-vnet-azure"
 }
 ```
 
 ### 4. Beetle GET RDBMS Support [✅ SUCCESS]
-- **Duration:** 8ms
+- **Duration:** 9ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/support?providerName=azure`
 ```json
 // Response Body
@@ -690,7 +739,7 @@
 ```
 
 ### 5. Beetle GET RDBMS Capability [✅ SUCCESS]
-- **Duration:** 6.561s
+- **Duration:** 5.628s
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/capability?connectionName=azure-koreacentral&dbEngine=mysql`
 ```json
 // Response Body
@@ -1673,7 +1722,7 @@
 ```
 
 ### 6. Beetle POST Recommend RDBMS [✅ SUCCESS]
-- **Duration:** 3ms
+- **Duration:** 5ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms`
 ```json
 // Request Body
@@ -1728,7 +1777,7 @@
     }
   ],
   "targetPreferences": {
-    "adminUserName": "azureuser",
+    "adminUserName": "dbadmin",
     "backupRetentionDays": 7,
     "highAvailability": false,
     "publicAccess": true
@@ -1746,7 +1795,7 @@
   },
   "targetRDBMSInstances": [
     {
-      "adminUserName": "azureuser",
+      "adminUserName": "dbadmin",
       "adminUserPassword": "******",
       "backupRetentionDays": 7,
       "databases": [
@@ -1781,12 +1830,12 @@
 ```
 
 ### 7. Beetle POST Validate RDBMS Recommendation [✅ SUCCESS]
-- **Duration:** 29ms
+- **Duration:** 20ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/validate?nsId=default`
 ```json
 // Request Body
 {
-  "adminUserName": "azureuser",
+  "adminUserName": "dbadmin",
   "adminUserPassword": "******",
   "autoFillDefaults": true,
   "connectionName": "azure-koreacentral",
@@ -1809,7 +1858,7 @@
 // Response Body
 {
   "data": {
-    "adminUserName": "azureuser",
+    "adminUserName": "dbadmin",
     "adminUserPassword": "******",
     "connectionName": "azure-koreacentral",
     "dbEngine": "mysql",
@@ -1832,7 +1881,7 @@
 ```
 
 ### 8. Beetle POST Migrate RDBMS (Provisioning) [✅ SUCCESS]
-- **Duration:** 4m24.836s
+- **Duration:** 5m21.59s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms?nameSeed=test`
 ```json
 // Request Body
@@ -1845,7 +1894,7 @@
   },
   "targetRDBMSInstances": [
     {
-      "adminUserName": "azureuser",
+      "adminUserName": "dbadmin",
       "adminUserPassword": "******",
       "backupRetentionDays": 7,
       "databases": [
@@ -1887,7 +1936,7 @@
 ```
 
 ### 9. Beetle GET RDBMS Info [✅ SUCCESS]
-- **Duration:** 326ms
+- **Duration:** 230ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-azure`
 ```json
 // Response Body
@@ -1896,13 +1945,13 @@
   "backupTime": "AUTO",
   "conditions": [
     {
-      "lastTransitionTime": "2026-10-19T00:54:15Z",
+      "lastTransitionTime": "2026-11-25T09:59:42Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-10-19T00:54:15Z",
+      "lastTransitionTime": "2026-11-25T09:59:42Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
@@ -1938,17 +1987,47 @@
     "verified": true
   },
   "connectionName": "azure-koreacentral",
-  "cspResourceId": "tb30d3dnjrhkt7rajm80",
-  "cspResourceName": "tb30d3dnjrhkt7rajm80",
+  "cspResourceId": "tbqt11ul0jr723gfs0im",
+  "cspResourceName": "tbqt11ul0jr723gfs0im",
   "dbEngine": "mysql",
   "dbEngineVersion": "8.0.21",
   "dbInstanceSpec": "Standard_B2s",
   "dbInstanceType": "Burstable",
   "deletionProtection": false,
   "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-  "endpoint": "tb30d3dnjrhkt7rajm80.mysql.database.azure.com:3306",
+  "endpoint": "tbqt11ul0jr723gfs0im.mysql.database.azure.com:3306",
   "highAvailability": false,
   "id": "test-rdbms-azure",
+  "keyValueList": [
+    {
+      "key": "Location",
+      "value": "Korea Central"
+    },
+    {
+      "key": "Properties",
+      "value": "{administratorLogin:dbadmin,availabilityZone:1,backup:{backupRetentionDays:7,earliestRestoreDate:2026-11-25T10:05:13.3889866Z,geoRedundantBackup:Disabled},fullyQualifiedDomainName:tbqt11ul0jr723gfs0im.mysql.database.azure.com,highAvailability:{mode:Disabled,standbyAvailabilityZone:,state:NotEnabled},maintenanceWindow:{customWindow:Disabled,dayOfWeek:0,startHour:0,startMinute:0},network:{publicNetworkAccess:Enabled},replicaCapacity:10,replicationRole:None,state:Ready,storage:{autoGrow:Enabled,iops:600,storageSizeGB:100,storageSku:Premium_LRS},version:8.0.21}"
+    },
+    {
+      "key": "SKU",
+      "value": "{name:Standard_B2s,tier:Burstable}"
+    },
+    {
+      "key": "ID",
+      "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.DBforMySQL/flexibleServers/tbqt11ul0jr723gfs0im"
+    },
+    {
+      "key": "Name",
+      "value": "tbqt11ul0jr723gfs0im"
+    },
+    {
+      "key": "SystemData",
+      "value": "{createdAt:2026-11-25T09:55:13.3889866Z}"
+    },
+    {
+      "key": "Type",
+      "value": "Microsoft.DBforMySQL/flexibleServers"
+    }
+  ],
   "name": "test-rdbms-azure",
   "publicAccess": true,
   "resourceType": "rdbms",
@@ -1961,13 +2040,13 @@
   "subnetIds": [
     "subnet-1"
   ],
-  "uid": "tb30d3dnjrhkt7rajm80",
+  "uid": "tbqt11ul0jr723gfs0im",
   "vNetId": "test-rdbms-vnet-azure"
 }
 ```
 
 ### 10. Beetle GET RDBMS List [✅ SUCCESS]
-- **Duration:** 7ms
+- **Duration:** 61ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms`
 ```json
 // Response Body
@@ -1975,17 +2054,85 @@
   "rdbms": [
     {
       "backupRetentionDays": 7,
-      "backupTime": "17:34-18:04",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:49Z",
+          "lastTransitionTime": "2026-11-25T09:59:03Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:49Z",
+          "lastTransitionTime": "2026-11-25T09:59:03Z",
+          "reason": "Creating",
+          "status": "False",
+          "type": "Synced"
+        }
+      ],
+      "connectionConfig": {
+        "configName": "alibaba-ap-northeast-2",
+        "credentialHolder": "admin",
+        "credentialName": "alibaba",
+        "driverName": "alibaba-driver-v1.0.so",
+        "providerName": "alibaba",
+        "regionDetail": {
+          "description": "South Korea (Seoul)",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "regionId": "ap-northeast-2",
+          "regionName": "ap-northeast-2",
+          "zones": [
+            "ap-northeast-2a",
+            "ap-northeast-2b"
+          ]
+        },
+        "regionRepresentative": true,
+        "regionZoneInfo": {
+          "assignedRegion": "ap-northeast-2",
+          "assignedZone": "ap-northeast-2a"
+        },
+        "regionZoneInfoName": "alibaba-ap-northeast-2",
+        "verified": true
+      },
+      "connectionName": "alibaba-ap-northeast-2",
+      "dbEngine": "mysql",
+      "dbEngineVersion": "8.0",
+      "dbInstanceSpec": "mysql.n2.medium.1",
+      "deletionProtection": false,
+      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
+      "highAvailability": false,
+      "id": "test-rdbms-alibaba",
+      "name": "test-rdbms-alibaba",
+      "publicAccess": true,
+      "resourceType": "rdbms",
+      "securityGroupIds": [
+        "test-rdbms-sg-alibaba"
+      ],
+      "status": "Creating",
+      "storageSize": 100,
+      "storageType": "cloud_auto",
+      "subnetIds": [
+        "subnet-1"
+      ],
+      "uid": "tbc066ftkd9ijporkvrq",
+      "vNetId": "test-rdbms-vnet-alibaba"
+    },
+    {
+      "backupRetentionDays": 7,
+      "backupTime": "16:23-16:53",
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-25T09:55:24Z",
+          "message": "RDBMS creation in progress",
+          "reason": "Creating",
+          "status": "False",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2026-11-25T09:55:24Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -2022,17 +2169,168 @@
         "verified": true
       },
       "connectionName": "aws-ap-northeast-2",
-      "cspResourceId": "tbmo5d06mbrtcdfjposi",
-      "cspResourceName": "tbmo5d06mbrtcdfjposi",
+      "cspResourceId": "tbvtoteol9rtlis035nc",
+      "cspResourceName": "tbvtoteol9rtlis035nc",
       "dbEngine": "mysql",
       "dbEngineVersion": "8.0.46-rds.20260908",
       "dbInstanceSpec": "db.t3.medium",
       "dbInstanceType": "Primary",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
+      "endpoint": "tbvtoteol9rtlis035nc.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com:3306",
       "highAvailability": false,
       "id": "test-rdbms-aws",
       "iops": "3000",
+      "keyValueList": [
+        {
+          "key": "ActivityStreamStatus",
+          "value": "stopped"
+        },
+        {
+          "key": "AllocatedStorage",
+          "value": "100"
+        },
+        {
+          "key": "AutoMinorVersionUpgrade",
+          "value": "true"
+        },
+        {
+          "key": "AvailabilityZone",
+          "value": "ap-northeast-2c"
+        },
+        {
+          "key": "BackupRetentionPeriod",
+          "value": "7"
+        },
+        {
+          "key": "CACertificateIdentifier",
+          "value": "rds-ca-rsa2048-g1"
+        },
+        {
+          "key": "CopyTagsToSnapshot",
+          "value": "false"
+        },
+        {
+          "key": "CustomerOwnedIpEnabled",
+          "value": "false"
+        },
+        {
+          "key": "DBInstanceArn",
+          "value": "arn:aws:rds:ap-northeast-2:635484366616:db:tbvtoteol9rtlis035nc"
+        },
+        {
+          "key": "DBInstanceClass",
+          "value": "db.t3.medium"
+        },
+        {
+          "key": "DBInstanceIdentifier",
+          "value": "tbvtoteol9rtlis035nc"
+        },
+        {
+          "key": "DBInstanceStatus",
+          "value": "configuring-enhanced-monitoring"
+        },
+        {
+          "key": "DBParameterGroups",
+          "value": "{DBParameterGroupName:default.mysql8.0,ParameterApplyStatus:in-sync}"
+        },
+        {
+          "key": "DBSubnetGroup",
+          "value": "{DBSubnetGroupArn:null,DBSubnetGroupDescription:CB-Spider RDBMS subnet group for cb-spider-tbvtoteol9rtlis035nc,DBSubnetGroupName:cb-spider-tbvtoteol9rtlis035nc,SubnetGroupStatus:Complete,Subnets:[{SubnetAvailabilityZone:{Name:ap-northeast-2a},SubnetIdentifier:subnet-0cc10b17b6ec493e1,SubnetOutpost:{Arn:null},SubnetStatus:Active},{SubnetAvailabilityZone:{Name:ap-northeast-2c},SubnetIdentifier:subnet-0d95aacbfb1b0dbeb,SubnetOutpost:{Arn:null},SubnetStatus:Active}],VpcId:vpc-014472542cc87bfa5}"
+        },
+        {
+          "key": "DbInstancePort",
+          "value": "0"
+        },
+        {
+          "key": "DbiResourceId",
+          "value": "db-YIQ2PUCPDSN5UZ6AP34UZKPPJI"
+        },
+        {
+          "key": "DeletionProtection",
+          "value": "false"
+        },
+        {
+          "key": "Endpoint",
+          "value": "{Address:tbvtoteol9rtlis035nc.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com,HostedZoneId:ZLA2NUCOLGUUR,Port:3306}"
+        },
+        {
+          "key": "Engine",
+          "value": "mysql"
+        },
+        {
+          "key": "EngineVersion",
+          "value": "8.0.46-rds.20260908"
+        },
+        {
+          "key": "IAMDatabaseAuthenticationEnabled",
+          "value": "false"
+        },
+        {
+          "key": "InstanceCreateTime",
+          "value": "2026-11-25T09:58:58.611Z"
+        },
+        {
+          "key": "Iops",
+          "value": "3000"
+        },
+        {
+          "key": "LicenseModel",
+          "value": "general-public-license"
+        },
+        {
+          "key": "MasterUsername",
+          "value": "admin"
+        },
+        {
+          "key": "MonitoringInterval",
+          "value": "0"
+        },
+        {
+          "key": "MultiAZ",
+          "value": "false"
+        },
+        {
+          "key": "OptionGroupMemberships",
+          "value": "{OptionGroupName:default:mysql-8-0,Status:in-sync}"
+        },
+        {
+          "key": "PendingModifiedValues",
+          "value": "{AllocatedStorage:null,BackupRetentionPeriod:null,CACertificateIdentifier:null,DBInstanceClass:null,DBInstanceIdentifier:null,DBSubnetGroupName:null,EngineVersion:null,IAMDatabaseAuthenticationEnabled:null,Iops:null,LicenseModel:null,MasterUserPassword:null,MultiAZ:null,PendingCloudwatchLogsExports:null,Port:null,ProcessorFeatures:null,StorageType:null}"
+        },
+        {
+          "key": "PerformanceInsightsEnabled",
+          "value": "false"
+        },
+        {
+          "key": "PreferredBackupWindow",
+          "value": "16:23-16:53"
+        },
+        {
+          "key": "PreferredMaintenanceWindow",
+          "value": "mon:14:06-mon:14:36"
+        },
+        {
+          "key": "PubliclyAccessible",
+          "value": "true"
+        },
+        {
+          "key": "StorageEncrypted",
+          "value": "false"
+        },
+        {
+          "key": "StorageType",
+          "value": "gp3"
+        },
+        {
+          "key": "TagList",
+          "value": "{Key:Name,Value:tbvtoteol9rtlis035nc}"
+        },
+        {
+          "key": "VpcSecurityGroups",
+          "value": "{Status:active,VpcSecurityGroupId:sg-00fbbe9cd2de98ea2}"
+        }
+      ],
       "name": "test-rdbms-aws",
       "publicAccess": true,
       "resourceType": "rdbms",
@@ -2049,10 +2347,10 @@
       "tagList": [
         {
           "key": "Name",
-          "value": "tbmo5d06mbrtcdfjposi"
+          "value": "tbvtoteol9rtlis035nc"
         }
       ],
-      "uid": "tbmo5d06mbrtcdfjposi",
+      "uid": "tbvtoteol9rtlis035nc",
       "vNetId": "test-rdbms-vnet-aws"
     },
     {
@@ -2060,13 +2358,13 @@
       "backupTime": "AUTO",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:54:15Z",
+          "lastTransitionTime": "2026-11-25T09:59:42Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:54:15Z",
+          "lastTransitionTime": "2026-11-25T09:59:42Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -2102,17 +2400,47 @@
         "verified": true
       },
       "connectionName": "azure-koreacentral",
-      "cspResourceId": "tb30d3dnjrhkt7rajm80",
-      "cspResourceName": "tb30d3dnjrhkt7rajm80",
+      "cspResourceId": "tbqt11ul0jr723gfs0im",
+      "cspResourceName": "tbqt11ul0jr723gfs0im",
       "dbEngine": "mysql",
       "dbEngineVersion": "8.0.21",
       "dbInstanceSpec": "Standard_B2s",
       "dbInstanceType": "Burstable",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "tb30d3dnjrhkt7rajm80.mysql.database.azure.com:3306",
+      "endpoint": "tbqt11ul0jr723gfs0im.mysql.database.azure.com:3306",
       "highAvailability": false,
       "id": "test-rdbms-azure",
+      "keyValueList": [
+        {
+          "key": "Location",
+          "value": "Korea Central"
+        },
+        {
+          "key": "Properties",
+          "value": "{administratorLogin:dbadmin,availabilityZone:1,backup:{backupRetentionDays:7,earliestRestoreDate:2026-11-25T10:05:13.3889866Z,geoRedundantBackup:Disabled},fullyQualifiedDomainName:tbqt11ul0jr723gfs0im.mysql.database.azure.com,highAvailability:{mode:Disabled,standbyAvailabilityZone:,state:NotEnabled},maintenanceWindow:{customWindow:Disabled,dayOfWeek:0,startHour:0,startMinute:0},network:{publicNetworkAccess:Enabled},replicaCapacity:10,replicationRole:None,state:Ready,storage:{autoGrow:Enabled,iops:600,storageSizeGB:100,storageSku:Premium_LRS},version:8.0.21}"
+        },
+        {
+          "key": "SKU",
+          "value": "{name:Standard_B2s,tier:Burstable}"
+        },
+        {
+          "key": "ID",
+          "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.DBforMySQL/flexibleServers/tbqt11ul0jr723gfs0im"
+        },
+        {
+          "key": "Name",
+          "value": "tbqt11ul0jr723gfs0im"
+        },
+        {
+          "key": "SystemData",
+          "value": "{createdAt:2026-11-25T09:55:13.3889866Z}"
+        },
+        {
+          "key": "Type",
+          "value": "Microsoft.DBforMySQL/flexibleServers"
+        }
+      ],
       "name": "test-rdbms-azure",
       "publicAccess": true,
       "resourceType": "rdbms",
@@ -2125,21 +2453,21 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tb30d3dnjrhkt7rajm80",
+      "uid": "tbqt11ul0jr723gfs0im",
       "vNetId": "test-rdbms-vnet-azure"
     },
     {
       "backupRetentionDays": 7,
-      "backupTime": "20:00",
+      "backupTime": "16:00",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:54:00Z",
+          "lastTransitionTime": "2026-11-25T09:58:37Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:54:00Z",
+          "lastTransitionTime": "2026-11-25T09:58:37Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -2176,8 +2504,8 @@
         "verified": true
       },
       "connectionName": "gcp-us-central1",
-      "cspResourceId": "tbj7djjk245lg59evd6k",
-      "cspResourceName": "tbj7djjk245lg59evd6k",
+      "cspResourceId": "tbc0aj584ko18830vb1j",
+      "cspResourceName": "tbc0aj584ko18830vb1j",
       "dbEngine": "mysql",
       "dbEngineVersion": "8.0",
       "dbInstanceSpec": "db-n1-standard-2",
@@ -2185,9 +2513,127 @@
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
       "encryption": true,
-      "endpoint": "34.9.134.166:3306",
+      "endpoint": "136.80.5.81:3306",
       "highAvailability": false,
       "id": "test-rdbms-gcp",
+      "keyValueList": [
+        {
+          "key": "BackendType",
+          "value": "SECOND_GEN"
+        },
+        {
+          "key": "ConnectionName",
+          "value": "ykkim-etri:us-central1:tbc0aj584ko18830vb1j"
+        },
+        {
+          "key": "CreateTime",
+          "value": "2026-11-25T09:55:37.790Z"
+        },
+        {
+          "key": "CurrentDiskSize",
+          "value": "0"
+        },
+        {
+          "key": "DatabaseInstalledVersion",
+          "value": "MYSQL_8_0_46"
+        },
+        {
+          "key": "DatabaseVersion",
+          "value": "MYSQL_8_0"
+        },
+        {
+          "key": "Etag",
+          "value": "74c240921252e7aa3276e6b5dc8adb3ebefa361edcf0d4a331a9eee4d0012ea1"
+        },
+        {
+          "key": "GceZone",
+          "value": "us-central1-c"
+        },
+        {
+          "key": "GeminiConfig",
+          "value": "{flagRecommenderEnabled:true}"
+        },
+        {
+          "key": "IncludeReplicasForMajorVersionUpgrade",
+          "value": "false"
+        },
+        {
+          "key": "InstanceType",
+          "value": "CLOUD_SQL_INSTANCE"
+        },
+        {
+          "key": "IpAddresses",
+          "value": "{ipAddress:136.80.5.81,type:PRIMARY}"
+        },
+        {
+          "key": "Kind",
+          "value": "sql#instance"
+        },
+        {
+          "key": "MaintenanceVersion",
+          "value": "MYSQL_8_0_46.R20261013.02_15"
+        },
+        {
+          "key": "MaxDiskSize",
+          "value": "0"
+        },
+        {
+          "key": "Name",
+          "value": "tbc0aj584ko18830vb1j"
+        },
+        {
+          "key": "NodeCount",
+          "value": "0"
+        },
+        {
+          "key": "Project",
+          "value": "ykkim-etri"
+        },
+        {
+          "key": "Region",
+          "value": "us-central1"
+        },
+        {
+          "key": "SatisfiesPzi",
+          "value": "true"
+        },
+        {
+          "key": "SatisfiesPzs",
+          "value": "false"
+        },
+        {
+          "key": "SelfLink",
+          "value": "https://sqladmin.googleapis.com/sql/v1beta4/projects/GCP_PROJECT_ID/instances/tbc0aj584ko18830vb1j"
+        },
+        {
+          "key": "ServerCaCert",
+          "value": "{cert:-----BEGIN CERTIFICATE-----\\nMIIDcTCCAlmgAwIBAgIBADANBgkqhkiG9w0BAQsFADBwMS0wKwYDVQQuEyRhODg2\\nMWU3Ni0xYjRmLTRlZmItYmM4My0zOTZiYmZlZGEwNWIxHDAaBgNVBAMTE0Nsb3Vk\\nIFNRTCBTZXJ2ZXIgQ0ExFDASBgNVBAoTC0dvb2dsZSwgSW5jMQswCQYDVQQGEwJV\\nUzAeFw0yNjExMjUwOTU1MjZaFw0zNjExMjIwOTU2MjZaMHAxLTArBgNVBC4TJGE4\\nODYxZTc2LTFiNGYtNGVmYi1iYzgzLTM5NmJiZmVkYTA1YjEcMBoGA1UEAxMTQ2xv\\ndWQgU1FMIFNlcnZlciBDQTEUMBIGA1UEChMLR29vZ2xlLCBJbmMxCzAJBgNVBAYT\\nAlVTMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAilpdp2ZUIpAlxNob\\nmpLtJjEGEMvs0V77gI+27HmvrWkNOT3ppFhxLEnvsqdzKbVzSvD3ptPYm7zqiAoX\\nthlJ0LFmSUVw5ViP6EiTtywMiG0QNbt7UUSvU849j96MYN3h2wTJZgKm0co26Vxw\\ndZ2W4TK8WKOD5BF9vCGSkJVkpF1xPzOFl231DYm0KLrBRM4rMThSwB3ICifQiUso\\nlnIgiLZtdcEd1dXm1E8SMaAva6S7J3nd1SKpypnaCr4B3STY5wUEu8OXhDvYfzId\\nlRfEH5r0xptyIZjAR6ZrfcAUhTtOHSvSakaf9aSwzZnjEaYiO6dSHx0UhwH+gIxF\\n4jWwvQIDAQABoxYwFDASBgNVHRMBAf8ECDAGAQH/AgEAMA0GCSqGSIb3DQEBCwUA\\nA4IBAQByQWdUNDPEyiGz5HCpboeKwSmCrYxuM5JzORuaj6yJY3G7TPKnYb4ltM+6\\nU5d99PArl09QgNt6RNWyVdqp+/QycPwadArcS5G+1z/Md6yfp6/KlMD1cuxtxxsS\\nl4vGbaTAwUT5ldwQ3HfyZFnQfWyMTr7f4fwsrJkyjTPetPIqYHQgg63qbyucFiut\\nT+XkL+oQU41uSH9SHZ9iqJwTK+UFYi3d0cu2ex9ouf8YDihNn60sLKZiwHkYM5aj\\n0919+nHI2xXAwZi9+Qjo8VL5qxJK4U2tUUAu06NRnWTc+khUOI9qy3D5YjglqmV1\\nMb5SVhJd+pwMe1BK/zMlEOpk2Z3D\\n-----END CERTIFICATE-----,certSerialNumber:0,commonName:C=US,O=Google\\\\, Inc,CN=Cloud SQL Server CA,dnQualifier=a8861e76-1b4f-4efb-bc83-396bbfeda05b,createTime:2026-11-25T09:55:26.377Z,expirationTime:2036-11-22T09:56:26.377Z,instance:tbc0aj584ko18830vb1j,kind:sql#sslCert,sha1Fingerprint:6a34e29353b85234b2b6769082c46082deded54a}"
+        },
+        {
+          "key": "ServiceAccountEmailAddress",
+          "value": "MASKED_EMAIL"
+        },
+        {
+          "key": "Settings",
+          "value": "{activationPolicy:ALWAYS,availabilityType:ZONAL,backupConfiguration:{backupRetentionSettings:{retainedBackups:7,retentionUnit:COUNT},backupTier:STANDARD,enabled:true,kind:sql#backupConfiguration,startTime:16:00,transactionLogRetentionDays:7,transactionalLogStorageState:TRANSACTIONAL_LOG_STORAGE_STATE_UNSPECIFIED},connectorEnforcement:NOT_REQUIRED,dataDiskSizeGb:100,dataDiskType:PD_SSD,edition:ENTERPRISE,enableDataplexIntegration:true,ipConfiguration:{authorizedNetworks:[{kind:sql#aclEntry,name:AllowAll,value:0.0.0.0/0}],ipv4Enabled:true,serverCaMode:GOOGLE_MANAGED_INTERNAL_CA,serverCertificateRotationMode:SERVER_CERTIFICATE_ROTATION_MODE_UNSPECIFIED,sslMode:ALLOW_UNENCRYPTED_AND_ENCRYPTED},kind:sql#settings,locationPreference:{kind:sql#locationPreference,zone:us-central1-c},pricingPlan:PER_USE,replicationLagMaxSeconds:31536000,replicationType:SYNCHRONOUS,settingsVersion:1,storageAutoResize:true,tier:db-n1-standard-2}"
+        },
+        {
+          "key": "SqlNetworkArchitecture",
+          "value": "NEW_NETWORK_ARCHITECTURE"
+        },
+        {
+          "key": "State",
+          "value": "RUNNABLE"
+        },
+        {
+          "key": "SwitchTransactionLogsToCloudStorageEnabled",
+          "value": "false"
+        },
+        {
+          "key": "UpgradableDatabaseVersions",
+          "value": "{displayName:MySQL 8.0.18,majorVersion:MYSQL_8_0,name:MYSQL_8_0_18}; {displayName:MySQL 8.0.26,majorVersion:MYSQL_8_0,name:MYSQL_8_0_26}; {displayName:MySQL 8.0.27,majorVersion:MYSQL_8_0,name:MYSQL_8_0_27}; {displayName:MySQL 8.0.28,majorVersion:MYSQL_8_0,name:MYSQL_8_0_28}; {displayName:MySQL 8.0.29,majorVersion:MYSQL_8_0,name:MYSQL_8_0_29}; {displayName:MySQL 8.0.30,majorVersion:MYSQL_8_0,name:MYSQL_8_0_30}; {displayName:MySQL 8.0.31,majorVersion:MYSQL_8_0,name:MYSQL_8_0_31}; {displayName:MySQL 8.0.32,majorVersion:MYSQL_8_0,name:MYSQL_8_0_32}; {displayName:MySQL 8.0.33,majorVersion:MYSQL_8_0,name:MYSQL_8_0_33}; {displayName:MySQL 8.0.34,majorVersion:MYSQL_8_0,name:MYSQL_8_0_34}; {displayName:MySQL 8.0.35,majorVersion:MYSQL_8_0,name:MYSQL_8_0_35}; {displayName:MySQL 8.0.36,majorVersion:MYSQL_8_0,name:MYSQL_8_0_36}; {displayName:MySQL 8.0.37,majorVersion:MYSQL_8_0,name:MYSQL_8_0_37}; {displayName:MySQL 8.0.39,majorVersion:MYSQL_8_0,name:MYSQL_8_0_39}; {displayName:MySQL 8.0.40,majorVersion:MYSQL_8_0,name:MYSQL_8_0_40}; {displayName:MySQL 8.0.41,majorVersion:MYSQL_8_0,name:MYSQL_8_0_41}; {displayName:MySQL 8.0.42,majorVersion:MYSQL_8_0,name:MYSQL_8_0_42}; {displayName:MySQL 8.0.43,majorVersion:MYSQL_8_0,name:MYSQL_8_0_43}; {displayName:MySQL 8.0.44,majorVersion:MYSQL_8_0,name:MYSQL_8_0_44}; {displayName:MySQL 8.0.45,majorVersion:MYSQL_8_0,name:MYSQL_8_0_45}; {displayName:MySQL 8.4,majorVersion:MYSQL_8_4,name:MYSQL_8_4}"
+        }
+      ],
       "name": "test-rdbms-gcp",
       "publicAccess": true,
       "resourceType": "rdbms",
@@ -2200,20 +2646,20 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tbj7djjk245lg59evd6k",
+      "uid": "tbc0aj584ko18830vb1j",
       "vNetId": "test-rdbms-vnet-gcp"
     },
     {
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:27Z",
+          "lastTransitionTime": "2026-11-25T09:55:07Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:27Z",
+          "lastTransitionTime": "2026-11-25T09:55:07Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -2267,21 +2713,21 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tblp8rdv0nfnboaibv38",
+      "uid": "tbun4h3ej4rgndeesotl",
       "vNetId": "test-rdbms-vnet-ibm"
     },
     {
       "backupRetentionDays": 7,
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:44Z",
+          "lastTransitionTime": "2026-11-25T09:55:13Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:44Z",
+          "lastTransitionTime": "2026-11-25T09:55:13Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -2335,21 +2781,21 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tbs39bb5093bjft6118j",
+      "uid": "tbpth30tovigfplksoib",
       "vNetId": "test-rdbms-vnet-ncp"
     },
     {
       "backupRetentionDays": 7,
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:39Z",
+          "lastTransitionTime": "2026-11-25T09:55:13Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:39Z",
+          "lastTransitionTime": "2026-11-25T09:55:13Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -2404,7 +2850,7 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tb2s1h0bch71jggm9aqn",
+      "uid": "tbsn6ljiu7npo3re8iqr",
       "vNetId": "test-rdbms-vnet-nhn"
     },
     {
@@ -2412,13 +2858,13 @@
       "backupTime": "00:00-12:00",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:54:07Z",
+          "lastTransitionTime": "2026-11-25T09:59:46Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:54:07Z",
+          "lastTransitionTime": "2026-11-25T09:59:46Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -2453,17 +2899,175 @@
         "verified": true
       },
       "connectionName": "tencent-ap-seoul",
-      "cspResourceId": "cdb-d1hzepv8",
-      "cspResourceName": "tbvl2gccnqjborsmdd2u",
+      "cspResourceId": "cdb-q1mk2sbg",
+      "cspResourceName": "tbjgc7odeet6a3manird",
       "dbEngine": "mysql",
       "dbEngineVersion": "8.0",
       "dbInstanceSpec": "4000",
       "dbInstanceType": "NA",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "kr-cdb-d1hzepv8.sql.tencentcdb.com:21946",
+      "endpoint": "kr-cdb-q1mk2sbg.sql.tencentcdb.com:24489",
       "highAvailability": false,
       "id": "test-rdbms-tencent",
+      "keyValueList": [
+        {
+          "key": "WanStatus",
+          "value": "1"
+        },
+        {
+          "key": "Zone",
+          "value": "ap-seoul-1"
+        },
+        {
+          "key": "InitFlag",
+          "value": "1"
+        },
+        {
+          "key": "Memory",
+          "value": "4000"
+        },
+        {
+          "key": "Status",
+          "value": "1"
+        },
+        {
+          "key": "VpcId",
+          "value": "9730283"
+        },
+        {
+          "key": "InstanceId",
+          "value": "cdb-q1mk2sbg"
+        },
+        {
+          "key": "Volume",
+          "value": "100"
+        },
+        {
+          "key": "AutoRenew",
+          "value": "0"
+        },
+        {
+          "key": "ProtectMode",
+          "value": "0"
+        },
+        {
+          "key": "SubnetId",
+          "value": "820587"
+        },
+        {
+          "key": "InstanceType",
+          "value": "1"
+        },
+        {
+          "key": "ProjectId",
+          "value": "0"
+        },
+        {
+          "key": "Region",
+          "value": "ap-seoul"
+        },
+        {
+          "key": "DeadlineTime",
+          "value": "0000-00-00 00:00:00"
+        },
+        {
+          "key": "DeployMode",
+          "value": "0"
+        },
+        {
+          "key": "TaskStatus",
+          "value": "0"
+        },
+        {
+          "key": "DeviceType",
+          "value": "CLOUD_NATIVE_CLUSTER"
+        },
+        {
+          "key": "EngineVersion",
+          "value": "8.0"
+        },
+        {
+          "key": "InstanceName",
+          "value": "tbjgc7odeet6a3manird"
+        },
+        {
+          "key": "WanDomain",
+          "value": "kr-cdb-q1mk2sbg.sql.tencentcdb.com"
+        },
+        {
+          "key": "WanPort",
+          "value": "24489"
+        },
+        {
+          "key": "PayType",
+          "value": "1"
+        },
+        {
+          "key": "CreateTime",
+          "value": "2026-11-25 17:55:12"
+        },
+        {
+          "key": "Vip",
+          "value": "10.4.1.13"
+        },
+        {
+          "key": "Vport",
+          "value": "3306"
+        },
+        {
+          "key": "CdbError",
+          "value": "0"
+        },
+        {
+          "key": "UniqVpcId",
+          "value": "vpc-7yqgk5bc"
+        },
+        {
+          "key": "UniqSubnetId",
+          "value": "subnet-f4cf8dsh"
+        },
+        {
+          "key": "Cpu",
+          "value": "2"
+        },
+        {
+          "key": "Qps",
+          "value": "4400"
+        },
+        {
+          "key": "ZoneId",
+          "value": "180001"
+        },
+        {
+          "key": "InstanceNodes",
+          "value": "2"
+        },
+        {
+          "key": "EngineType",
+          "value": "InnoDB"
+        },
+        {
+          "key": "MaxDelayTime",
+          "value": "0"
+        },
+        {
+          "key": "DiskType",
+          "value": "CLOUD_HSSD"
+        },
+        {
+          "key": "ExpandCpu",
+          "value": "0"
+        },
+        {
+          "key": "DeviceBandwidth",
+          "value": "0"
+        },
+        {
+          "key": "DestroyProtect",
+          "value": "off"
+        }
+      ],
       "name": "test-rdbms-tencent",
       "publicAccess": true,
       "resourceType": "rdbms",
@@ -2476,7 +3080,7 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tbvl2gccnqjborsmdd2u",
+      "uid": "tbjgc7odeet6a3manird",
       "vNetId": "test-rdbms-vnet-tencent"
     }
   ]
@@ -2484,7 +3088,7 @@
 ```
 
 ### 11. Beetle POST Create Logical Database [✅ SUCCESS]
-- **Duration:** 16.659s
+- **Duration:** 19.23s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-azure/database`
 ```json
 // Request Body
@@ -2503,7 +3107,7 @@
 ```
 
 ### 12. Beetle GET List Logical Databases [✅ SUCCESS]
-- **Duration:** 918ms
+- **Duration:** 1.537s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-azure/database`
 ```json
 // Response Body
@@ -2520,7 +3124,7 @@
 ```
 
 ### 13. Beetle GET Secure Transport Info [✅ SUCCESS]
-- **Duration:** 949ms
+- **Duration:** 1.315s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-azure/secure-transport`
 ```json
 // Response Body
@@ -2543,7 +3147,7 @@
 ```
 
 ### 14. Data I/O Test (External Remote) [✅ SUCCESS]
-- **Duration:** 130ms
+- **Duration:** 355ms
 ```json
 // Response Body
 {
@@ -2552,7 +3156,7 @@
 ```
 
 ### 15. Data I/O Test (Internal VPC VM) [✅ SUCCESS]
-- **Duration:** 4m39.266s
+- **Duration:** 5m6.032s
 ```json
 // Response Body
 {
@@ -2561,16 +3165,16 @@
 ```
 
 ### 16. Beetle DELETE Logical Database [✅ SUCCESS]
-- **Duration:** 32.632s
+- **Duration:** 33.246s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-azure/database/sampledb`
 
 ### 17. Beetle DELETE RDBMS Instance [✅ SUCCESS]
-- **Duration:** 35.652s
+- **Duration:** 35.884s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-azure?option=force`
 
 ### 18. Tumblebug DELETE /resources/securityGroup [✅ SUCCESS]
-- **Duration:** 3.19s
+- **Duration:** 1.549s
 
 ### 19. Tumblebug DELETE /resources/vNet [✅ SUCCESS]
-- **Duration:** 21.724s
+- **Duration:** 20.827s
 

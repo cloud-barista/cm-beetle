@@ -7,19 +7,19 @@
 
 ### Environment
 
-- CM-Beetle: v0.6.3+ (d67a8e3)
-- imdl: v0.1.19+ (d67a8e3)
-- CB-Tumblebug: v0.13.8
-- CB-Spider: v0.13.20
-- CB-MapUI: v0.13.14
+- CM-Beetle: v0.6.5+ (83361e8)
+- imdl: v0.1.22+ (83361e8)
+- CB-Tumblebug: v0.14.0
+- CB-Spider: v0.14.0
+- CB-MapUI: v0.14.0
 - Target CSP: TENCENT
 - Target Region: ap-seoul
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: November 3, 2026
-- Test Time: 17:55:07 KST
-- Test Execution: 2026-11-03 17:55:07 KST
+- Test Date: November 25, 2026
+- Test Time: 18:16:06 KST
+- Test Execution: 2026-11-25 18:16:06 KST
 
 ### Scenario
 
@@ -48,27 +48,27 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/infraWithNlb` | ✅ **PASS** | 7.248s | Pass |
-| 2 | `POST /beetle/validation/ns/mig01/infra` | ✅ **PASS** | 378ms | Pass |
-| 3 | `POST /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 1m31.791s | Pass |
-| 4 | `GET /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 14ms | Pass |
-| 5 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ **PASS** | 3ms | Pass |
-| 6 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 18ms | Pass |
-| 7 | Remote Command Accessibility Check | ✅ **PASS** | 2.227s | Pass |
-| 8 | `POST /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb` | ✅ **PASS** | 19.295s | Pass |
-| 9 | `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb` | ✅ **PASS** | 8ms | Pass |
-| 10 | `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}` | ✅ **PASS** | 11ms | Pass |
-| 11 | NLB Load Balancing Verification | ✅ **PASS** | 1m23.391s | Pass |
-| 12 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.191s | Pass |
-| 13 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.208s | Pass |
-| 14 | `DELETE /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}` | ✅ **PASS** | 1m17.739s | Pass |
-| 15 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 34.766s | Pass |
+| 1 | `POST /beetle/recommendation/infraWithNlb` | ✅ **PASS** | 3.2s | Pass |
+| 2 | `POST /beetle/validation/ns/mig01/infra` | ✅ **PASS** | 467ms | Pass |
+| 3 | `POST /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 1m45.048s | Pass |
+| 4 | `GET /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 110ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ **PASS** | 4ms | Pass |
+| 6 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 27ms | Pass |
+| 7 | Remote Command Accessibility Check | ✅ **PASS** | 846ms | Pass |
+| 8 | `POST /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb` | ✅ **PASS** | 17.237s | Pass |
+| 9 | `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb` | ✅ **PASS** | 14ms | Pass |
+| 10 | `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}` | ✅ **PASS** | 14ms | Pass |
+| 11 | NLB Load Balancing Verification | ✅ **PASS** | 1m23.097s | Pass |
+| 12 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.27s | Pass |
+| 13 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.331s | Pass |
+| 14 | `DELETE /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}` | ✅ **PASS** | 1m17.078s | Pass |
+| 15 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 36.913s | Pass |
 
 **Overall Result**: 15/15 tests passed ✅
 
-**Total Duration**: 6m17.5184278s
+**Total Duration**: 6m25.048138066s
 
-*Test executed on November 3, 2026 at 17:55:07 KST (2026-11-03 17:55:07 KST) using CM-Beetle automated test CLI*
+*Test executed on November 25, 2026 at 18:16:06 KST (2026-11-25 18:16:06 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -528,7 +528,6 @@
       },
       "targetInfra": {
         "name": "infra101",
-        "installMonAgent": "",
         "label": null,
         "systemLabel": "",
         "description": "NLB-aware recommended infrastructure for cloud migration",
@@ -543,7 +542,7 @@
             "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
             "connectionName": "tencent-ap-seoul",
             "specId": "tencent+ap-seoul+sa5.large16",
-            "imageId": "img-7rotv4ux",
+            "imageId": "img-487zeit5",
             "vNetId": "mig-vnet-01",
             "subnetId": "mig-subnet-01",
             "securityGroupIds": [
@@ -554,7 +553,7 @@
             "dataDiskIds": null
           },
           {
-            "name": "ng-ec268ed7-821e-9d73-e79f-961262161624",
+            "name": "ng-ip-10-0-1-30-62161624",
             "nodeGroupSize": 1,
             "label": {
               "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"
@@ -562,7 +561,7 @@
             "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
             "connectionName": "tencent-ap-seoul",
             "specId": "tencent+ap-seoul+sa5.medium2",
-            "imageId": "img-7rotv4ux",
+            "imageId": "img-487zeit5",
             "vNetId": "mig-vnet-01",
             "subnetId": "mig-subnet-01",
             "securityGroupIds": [
@@ -583,6 +582,7 @@
           {
             "name": "mig-subnet-01",
             "ipv4_CIDR": "10.0.1.0/24",
+            "zone": "ap-seoul-2",
             "description": "a recommended subnet for migration"
           }
         ],
@@ -714,12 +714,24 @@
             }
           ],
           "availabilityStatus": "Available",
+          "availabilityReason": "zone(s) [ap-seoul-1] unavailable/SoldOut; available in [ap-seoul-2]",
           "availableZones": [
-            "ap-seoul-1",
             "ap-seoul-2"
           ],
-          "availabilityCheckedAt": "2026-11-03T08:55:00.811872587Z",
-          "availabilityRefreshAfter": "2026-11-03T09:55:00.811872587Z"
+          "unavailableZones": [
+            "ap-seoul-1"
+          ],
+          "availabilityQuota": {
+            "name": "postpaid instances",
+            "scope": "zone ap-seoul-2",
+            "unit": "instances",
+            "limit": 60,
+            "used": 0,
+            "perInstance": 1,
+            "fitCount": 60
+          },
+          "availabilityCheckedAt": "2026-11-25T09:16:12.048541276Z",
+          "availabilityRefreshAfter": "2026-11-25T09:21:12.048541276Z"
         },
         {
           "id": "tencent+ap-seoul+sa5.medium2",
@@ -842,7 +854,7 @@
           "resourceType": "image",
           "namespace": "system",
           "providerName": "tencent",
-          "cspImageName": "img-7rotv4ux",
+          "cspImageName": "img-487zeit5",
           "regionList": [
             "ap-bangkok",
             "ap-beijing",
@@ -862,9 +874,9 @@
             "na-siliconvalley",
             "sa-saopaulo"
           ],
-          "id": "img-7rotv4ux",
-          "uid": "tbrtv38m36npv5tcj4qk",
-          "name": "img-7rotv4ux",
+          "id": "img-487zeit5",
+          "uid": "tboi78b3ufsscsq71iaj",
+          "name": "img-487zeit5",
           "sourceNodeUid": "",
           "sourceCspImageName": "",
           "connectionName": "tencent-sa-saopaulo",
@@ -878,18 +890,18 @@
           "osType": "Ubuntu 22.04",
           "osArchitecture": "x86_64",
           "osPlatform": "Linux/UNIX",
-          "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI",
+          "osDistribution": "Ubuntu Server 22.04 LTS 64bit",
           "osDiskType": "NA",
           "osDiskSizeGB": 20,
           "imageStatus": "Available",
           "details": [
             {
               "key": "ImageId",
-              "value": "img-7rotv4ux"
+              "value": "img-487zeit5"
             },
             {
               "key": "OsName",
-              "value": "Ubuntu Server 22.04 LTS 64bit UEFI"
+              "value": "Ubuntu Server 22.04 LTS 64bit"
             },
             {
               "key": "ImageType",
@@ -897,11 +909,11 @@
             },
             {
               "key": "ImageName",
-              "value": "Ubuntu Server 22.04 LTS 64bit UEFI"
+              "value": "Ubuntu Server 22.04 LTS 64bit"
             },
             {
               "key": "ImageDescription",
-              "value": "Ubuntu Server 22.04 LTS 64bit UEFI"
+              "value": "Ubuntu Server 22.04 LTS 64bit"
             },
             {
               "key": "ImageSize",
@@ -945,6 +957,12 @@
           "description": "Recommended security group for NLB backend influxdb_back",
           "firewallRules": [
             {
+              "Ports": "22",
+              "Protocol": "tcp",
+              "Direction": "inbound",
+              "CIDR": "0.0.0.0/0"
+            },
+            {
               "Ports": "8086",
               "Protocol": "tcp",
               "Direction": "inbound",
@@ -955,12 +973,6 @@
               "Protocol": "ALL",
               "Direction": "inbound",
               "CIDR": "10.0.0.0/16"
-            },
-            {
-              "Ports": "22",
-              "Protocol": "tcp",
-              "Direction": "inbound",
-              "CIDR": "0.0.0.0/0"
             },
             {
               "Ports": "9999",
@@ -1049,7 +1061,6 @@
       },
       "targetInfra": {
         "name": "infra101",
-        "installMonAgent": "",
         "label": null,
         "systemLabel": "",
         "description": "NLB-aware recommended infrastructure for cloud migration",
@@ -1064,7 +1075,7 @@
             "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
             "connectionName": "tencent-ap-seoul",
             "specId": "tencent+ap-seoul+s6.large16",
-            "imageId": "img-7rotv4ux",
+            "imageId": "img-487zeit5",
             "vNetId": "mig-vnet-01",
             "subnetId": "mig-subnet-01",
             "securityGroupIds": [
@@ -1075,7 +1086,7 @@
             "dataDiskIds": null
           },
           {
-            "name": "ng-ec268ed7-821e-9d73-e79f-961262161624",
+            "name": "ng-ip-10-0-1-30-62161624",
             "nodeGroupSize": 1,
             "label": {
               "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"
@@ -1083,7 +1094,7 @@
             "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
             "connectionName": "tencent-ap-seoul",
             "specId": "tencent+ap-seoul+s8.medium2",
-            "imageId": "img-7rotv4ux",
+            "imageId": "img-487zeit5",
             "vNetId": "mig-vnet-01",
             "subnetId": "mig-subnet-01",
             "securityGroupIds": [
@@ -1104,6 +1115,7 @@
           {
             "name": "mig-subnet-01",
             "ipv4_CIDR": "10.0.1.0/24",
+            "zone": "ap-seoul-1",
             "description": "a recommended subnet for migration"
           }
         ],
@@ -1242,8 +1254,17 @@
           "unavailableZones": [
             "ap-seoul-2"
           ],
-          "availabilityCheckedAt": "2026-11-03T08:55:00.817243487Z",
-          "availabilityRefreshAfter": "2026-11-03T09:55:00.817243487Z"
+          "availabilityQuota": {
+            "name": "postpaid instances",
+            "scope": "zone ap-seoul-1",
+            "unit": "instances",
+            "limit": 60,
+            "used": 0,
+            "perInstance": 1,
+            "fitCount": 60
+          },
+          "availabilityCheckedAt": "2026-11-25T09:16:11.965152852Z",
+          "availabilityRefreshAfter": "2026-11-25T09:21:11.965152852Z"
         },
         {
           "id": "tencent+ap-seoul+s8.medium2",
@@ -1366,7 +1387,7 @@
           "resourceType": "image",
           "namespace": "system",
           "providerName": "tencent",
-          "cspImageName": "img-7rotv4ux",
+          "cspImageName": "img-487zeit5",
           "regionList": [
             "ap-bangkok",
             "ap-beijing",
@@ -1386,9 +1407,9 @@
             "na-siliconvalley",
             "sa-saopaulo"
           ],
-          "id": "img-7rotv4ux",
-          "uid": "tbrtv38m36npv5tcj4qk",
-          "name": "img-7rotv4ux",
+          "id": "img-487zeit5",
+          "uid": "tboi78b3ufsscsq71iaj",
+          "name": "img-487zeit5",
           "sourceNodeUid": "",
           "sourceCspImageName": "",
           "connectionName": "tencent-sa-saopaulo",
@@ -1402,18 +1423,18 @@
           "osType": "Ubuntu 22.04",
           "osArchitecture": "x86_64",
           "osPlatform": "Linux/UNIX",
-          "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI",
+          "osDistribution": "Ubuntu Server 22.04 LTS 64bit",
           "osDiskType": "NA",
           "osDiskSizeGB": 20,
           "imageStatus": "Available",
           "details": [
             {
               "key": "ImageId",
-              "value": "img-7rotv4ux"
+              "value": "img-487zeit5"
             },
             {
               "key": "OsName",
-              "value": "Ubuntu Server 22.04 LTS 64bit UEFI"
+              "value": "Ubuntu Server 22.04 LTS 64bit"
             },
             {
               "key": "ImageType",
@@ -1421,11 +1442,11 @@
             },
             {
               "key": "ImageName",
-              "value": "Ubuntu Server 22.04 LTS 64bit UEFI"
+              "value": "Ubuntu Server 22.04 LTS 64bit"
             },
             {
               "key": "ImageDescription",
-              "value": "Ubuntu Server 22.04 LTS 64bit UEFI"
+              "value": "Ubuntu Server 22.04 LTS 64bit"
             },
             {
               "key": "ImageSize",
@@ -1469,6 +1490,12 @@
           "description": "Recommended security group for NLB backend influxdb_back",
           "firewallRules": [
             {
+              "Ports": "22",
+              "Protocol": "tcp",
+              "Direction": "inbound",
+              "CIDR": "0.0.0.0/0"
+            },
+            {
               "Ports": "8086",
               "Protocol": "tcp",
               "Direction": "inbound",
@@ -1479,12 +1506,6 @@
               "Protocol": "ALL",
               "Direction": "inbound",
               "CIDR": "10.0.0.0/16"
-            },
-            {
-              "Ports": "22",
-              "Protocol": "tcp",
-              "Direction": "inbound",
-              "CIDR": "0.0.0.0/0"
             },
             {
               "Ports": "9999",
@@ -1593,7 +1614,6 @@
   },
   "targetInfra": {
     "name": "my05-infra101",
-    "installMonAgent": "",
     "label": null,
     "systemLabel": "",
     "description": "NLB-aware recommended infrastructure for cloud migration",
@@ -1608,7 +1628,7 @@
         "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
         "connectionName": "tencent-ap-seoul",
         "specId": "tencent+ap-seoul+sa5.large16",
-        "imageId": "img-7rotv4ux",
+        "imageId": "img-487zeit5",
         "vNetId": "my05-mig-vnet-01",
         "subnetId": "my05-mig-subnet-01",
         "securityGroupIds": [
@@ -1619,7 +1639,7 @@
         "dataDiskIds": null
       },
       {
-        "name": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624",
+        "name": "my05-ng-ip-10-0-1-30-62161624",
         "nodeGroupSize": 1,
         "label": {
           "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"
@@ -1627,7 +1647,7 @@
         "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
         "connectionName": "tencent-ap-seoul",
         "specId": "tencent+ap-seoul+sa5.medium2",
-        "imageId": "img-7rotv4ux",
+        "imageId": "img-487zeit5",
         "vNetId": "my05-mig-vnet-01",
         "subnetId": "my05-mig-subnet-01",
         "securityGroupIds": [
@@ -1648,6 +1668,7 @@
       {
         "name": "my05-mig-subnet-01",
         "ipv4_CIDR": "10.0.1.0/24",
+        "zone": "ap-seoul-2",
         "description": "a recommended subnet for migration"
       }
     ],
@@ -1779,12 +1800,24 @@
         }
       ],
       "availabilityStatus": "Available",
+      "availabilityReason": "zone(s) [ap-seoul-1] unavailable/SoldOut; available in [ap-seoul-2]",
       "availableZones": [
-        "ap-seoul-1",
         "ap-seoul-2"
       ],
-      "availabilityCheckedAt": "2026-11-03T08:55:00.811872587Z",
-      "availabilityRefreshAfter": "2026-11-03T09:55:00.811872587Z"
+      "unavailableZones": [
+        "ap-seoul-1"
+      ],
+      "availabilityQuota": {
+        "name": "postpaid instances",
+        "scope": "zone ap-seoul-2",
+        "unit": "instances",
+        "limit": 60,
+        "used": 0,
+        "perInstance": 1,
+        "fitCount": 60
+      },
+      "availabilityCheckedAt": "2026-11-25T09:16:12.048541276Z",
+      "availabilityRefreshAfter": "2026-11-25T09:21:12.048541276Z"
     },
     {
       "id": "tencent+ap-seoul+sa5.medium2",
@@ -1907,7 +1940,7 @@
       "resourceType": "image",
       "namespace": "system",
       "providerName": "tencent",
-      "cspImageName": "img-7rotv4ux",
+      "cspImageName": "img-487zeit5",
       "regionList": [
         "ap-bangkok",
         "ap-beijing",
@@ -1927,9 +1960,9 @@
         "na-siliconvalley",
         "sa-saopaulo"
       ],
-      "id": "img-7rotv4ux",
-      "uid": "tbrtv38m36npv5tcj4qk",
-      "name": "img-7rotv4ux",
+      "id": "img-487zeit5",
+      "uid": "tboi78b3ufsscsq71iaj",
+      "name": "img-487zeit5",
       "sourceNodeUid": "",
       "sourceCspImageName": "",
       "connectionName": "tencent-sa-saopaulo",
@@ -1943,18 +1976,18 @@
       "osType": "Ubuntu 22.04",
       "osArchitecture": "x86_64",
       "osPlatform": "Linux/UNIX",
-      "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI",
+      "osDistribution": "Ubuntu Server 22.04 LTS 64bit",
       "osDiskType": "NA",
       "osDiskSizeGB": 20,
       "imageStatus": "Available",
       "details": [
         {
           "key": "ImageId",
-          "value": "img-7rotv4ux"
+          "value": "img-487zeit5"
         },
         {
           "key": "OsName",
-          "value": "Ubuntu Server 22.04 LTS 64bit UEFI"
+          "value": "Ubuntu Server 22.04 LTS 64bit"
         },
         {
           "key": "ImageType",
@@ -1962,11 +1995,11 @@
         },
         {
           "key": "ImageName",
-          "value": "Ubuntu Server 22.04 LTS 64bit UEFI"
+          "value": "Ubuntu Server 22.04 LTS 64bit"
         },
         {
           "key": "ImageDescription",
-          "value": "Ubuntu Server 22.04 LTS 64bit UEFI"
+          "value": "Ubuntu Server 22.04 LTS 64bit"
         },
         {
           "key": "ImageSize",
@@ -2010,6 +2043,12 @@
       "description": "Recommended security group for NLB backend influxdb_back",
       "firewallRules": [
         {
+          "Ports": "22",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
           "Ports": "8086",
           "Protocol": "tcp",
           "Direction": "inbound",
@@ -2020,12 +2059,6 @@
           "Protocol": "ALL",
           "Direction": "inbound",
           "CIDR": "10.0.0.0/16"
-        },
-        {
-          "Ports": "22",
-          "Protocol": "tcp",
-          "Direction": "inbound",
-          "CIDR": "0.0.0.0/0"
         },
         {
           "Ports": "9999",
@@ -2153,7 +2186,7 @@
 {
   "resourceType": "infra",
   "id": "my05-infra101",
-  "uid": "tbf3tsbhtkhbgi88ndkt",
+  "uid": "tbf56iebln7rh1kjspoe",
   "name": "my05-infra101",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
@@ -2173,17 +2206,16 @@
   },
   "targetStatus": "None",
   "targetAction": "None",
-  "installMonAgent": "",
   "configureCloudAdaptiveNetwork": "",
   "label": {
-    "cm-migrated-at": "2026-11-03T08:55:25Z",
+    "cm-migrated-at": "2026-11-25T09:16:32Z",
     "sys.description": "NLB-aware recommended infrastructure for cloud migration",
     "sys.id": "my05-infra101",
     "sys.labelType": "infra",
     "sys.manager": "cb-tumblebug",
     "sys.name": "my05-infra101",
     "sys.namespace": "mig01",
-    "sys.uid": "tbf3tsbhtkhbgi88ndkt"
+    "sys.uid": "tbf56iebln7rh1kjspoe"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -2191,12 +2223,12 @@
   "node": [
     {
       "resourceType": "node",
-      "id": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "tbmmh0ojen41pao6hsik",
-      "cspResourceName": "tbmmh0ojen41pao6hsik",
-      "cspResourceId": "ins-7h4dbejf",
-      "name": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "nodeGroupId": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624",
+      "id": "my05-ng-influxdb-back-1",
+      "uid": "tb9q3als393k50fpj5ps",
+      "cspResourceName": "tb9q3als393k50fpj5ps",
+      "cspResourceId": "ins-fxa70pv9",
+      "name": "my05-ng-influxdb-back-1",
+      "nodeGroupId": "my05-ng-influxdb-back",
       "location": {
         "display": "South Korea (Seoul)",
         "latitude": 37.566536,
@@ -2205,26 +2237,294 @@
       "status": "Running",
       "targetStatus": "None",
       "targetAction": "None",
-      "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-11-03 08:55:56",
+      "createdTime": "2026-11-25 09:16:58",
+      "label": {
+        "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "nlbBackend": "influxdb_back"
+      },
+      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
+      "region": {
+        "region": "ap-seoul",
+        "zone": "ap-seoul-2"
+      },
+      "publicIP": "43.166.24.5",
+      "sshPort": 22,
+      "publicDNS": "",
+      "privateIP": "10.0.1.2",
+      "privateDNS": "",
+      "rootDiskType": "CLOUD_HSSD",
+      "rootDiskSize": 50,
+      "rootDeviceName": "disk-2im45s5z",
+      "connectionName": "tencent-ap-seoul",
+      "connectionConfig": {
+        "configName": "tencent-ap-seoul",
+        "providerName": "tencent",
+        "driverName": "tencent-driver-v1.0.so",
+        "credentialName": "tencent",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "tencent-ap-seoul",
+        "regionZoneInfo": {
+          "assignedRegion": "ap-seoul",
+          "assignedZone": "ap-seoul-1"
+        },
+        "regionDetail": {
+          "regionId": "ap-seoul",
+          "regionName": "ap-seoul",
+          "description": "Seoul",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.566536,
+            "longitude": 126.977966
+          },
+          "zones": [
+            "ap-seoul-1",
+            "ap-seoul-2"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "tencent+ap-seoul+sa5.large16",
+      "cspSpecName": "SA5.LARGE16",
+      "spec": {
+        "cspSpecName": "SA5.LARGE16",
+        "vCPU": 4,
+        "memoryGiB": 16,
+        "costPerHour": 0.22
+      },
+      "imageId": "img-487zeit5",
+      "cspImageName": "img-487zeit5",
+      "image": {
+        "resourceType": "image",
+        "cspImageName": "img-487zeit5",
+        "osType": "Ubuntu 22.04",
+        "osArchitecture": "x86_64",
+        "osDistribution": "Ubuntu Server 22.04 LTS 64bit"
+      },
+      "vNetId": "my05-mig-vnet-01",
+      "cspVNetId": "vpc-p2o55rts",
+      "subnetId": "my05-mig-subnet-01",
+      "cspSubnetId": "subnet-4kcu8oj9",
+      "networkInterface": "eni-n9fgsyh0",
+      "securityGroupIds": [
+        "my05-mig-sg-01"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "my05-mig-sshkey-01",
+      "cspSshKeyId": "skey-b1dxxqvp",
+      "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHV6E7PfmSRS2wIWPxnZhT2dhsWg4m/r0J6ewgOVl9h2bTwJ9tZOm0NV2gRuDR0b+JMSRphR0IdqIKrNfebYb58=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:90S5IKyVnwzv0YTwQ7GitYoRqhkNIlKD+rnI7dIB9lY",
+        "firstUsedAt": "2026-11-25T09:17:23Z"
+      },
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Completed",
+          "startedTime": "2026-11-25T09:17:01Z",
+          "completedTime": "2026-11-25T09:17:45Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "\n",
+          "stderr": "\n",
+          "repeatCount": 2,
+          "lastOccurredTime": "2026-11-25T09:17:54Z"
+        },
+        {
+          "index": 2,
+          "xRequestId": "ps-my05-infra101-tbv3igrj2t6jh9qrapf6",
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2026-11-25T09:17:56Z",
+          "completedTime": "2026-11-25T09:17:57Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux VM-1-2-ubuntu 5.15.0-190-generic #200-Ubuntu SMP Fri Aug 7 15:06:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ]
+    },
+    {
+      "resourceType": "node",
+      "id": "my05-ng-influxdb-back-2",
+      "uid": "tb1qavefj8k9l3vjdh1q",
+      "cspResourceName": "tb1qavefj8k9l3vjdh1q",
+      "cspResourceId": "ins-6t8n96er",
+      "name": "my05-ng-influxdb-back-2",
+      "nodeGroupId": "my05-ng-influxdb-back",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.566536,
+        "longitude": 126.977966
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2026-11-25 09:16:58",
+      "label": {
+        "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "nlbBackend": "influxdb_back"
+      },
+      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
+      "region": {
+        "region": "ap-seoul",
+        "zone": "ap-seoul-2"
+      },
+      "publicIP": "43.155.212.36",
+      "sshPort": 22,
+      "publicDNS": "",
+      "privateIP": "10.0.1.6",
+      "privateDNS": "",
+      "rootDiskType": "CLOUD_HSSD",
+      "rootDiskSize": 50,
+      "rootDeviceName": "disk-63k1iffj",
+      "connectionName": "tencent-ap-seoul",
+      "connectionConfig": {
+        "configName": "tencent-ap-seoul",
+        "providerName": "tencent",
+        "driverName": "tencent-driver-v1.0.so",
+        "credentialName": "tencent",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "tencent-ap-seoul",
+        "regionZoneInfo": {
+          "assignedRegion": "ap-seoul",
+          "assignedZone": "ap-seoul-1"
+        },
+        "regionDetail": {
+          "regionId": "ap-seoul",
+          "regionName": "ap-seoul",
+          "description": "Seoul",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.566536,
+            "longitude": 126.977966
+          },
+          "zones": [
+            "ap-seoul-1",
+            "ap-seoul-2"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "tencent+ap-seoul+sa5.large16",
+      "cspSpecName": "SA5.LARGE16",
+      "spec": {
+        "cspSpecName": "SA5.LARGE16",
+        "vCPU": 4,
+        "memoryGiB": 16,
+        "costPerHour": 0.22
+      },
+      "imageId": "img-487zeit5",
+      "cspImageName": "img-487zeit5",
+      "image": {
+        "resourceType": "image",
+        "cspImageName": "img-487zeit5",
+        "osType": "Ubuntu 22.04",
+        "osArchitecture": "x86_64",
+        "osDistribution": "Ubuntu Server 22.04 LTS 64bit"
+      },
+      "vNetId": "my05-mig-vnet-01",
+      "cspVNetId": "vpc-p2o55rts",
+      "subnetId": "my05-mig-subnet-01",
+      "cspSubnetId": "subnet-4kcu8oj9",
+      "networkInterface": "eni-ewr48fqa",
+      "securityGroupIds": [
+        "my05-mig-sg-01"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "my05-mig-sshkey-01",
+      "cspSshKeyId": "skey-b1dxxqvp",
+      "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBI6bwF5wvoPholhDX6L0Qb0GWZFl7/zfU7sBOT5lcU25hkTnNddwXgLArgdgdH7p56mmYNZXlWRIGMpaPc4igmg=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:J30a2XvKod7NwRfHiGdlJ6F7WABCW2Xq8dfwVSCC5mA",
+        "firstUsedAt": "2026-11-25T09:17:29Z"
+      },
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Failed",
+          "startedTime": "2026-11-25T09:17:01Z",
+          "completedTime": "2026-11-25T09:17:29Z",
+          "elapsedTime": 28,
+          "resultSummary": "Command execution failed",
+          "errorMessage": "SSH authentication failed. Please check: 1) private key is valid 2) user 'cb-user' exists on target 3) authorized_keys is properly configured"
+        },
+        {
+          "index": 2,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Completed",
+          "startedTime": "2026-11-25T09:17:53Z",
+          "completedTime": "2026-11-25T09:17:56Z",
+          "elapsedTime": 3,
+          "resultSummary": "Command executed successfully",
+          "stdout": "\n",
+          "stderr": "\n"
+        },
+        {
+          "index": 3,
+          "xRequestId": "ps-my05-infra101-tbv3igrj2t6jh9qrapf6",
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2026-11-25T09:17:56Z",
+          "completedTime": "2026-11-25T09:17:57Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux VM-1-6-ubuntu 5.15.0-190-generic #200-Ubuntu SMP Fri Aug 7 15:06:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ]
+    },
+    {
+      "resourceType": "node",
+      "id": "my05-ng-ip-10-0-1-30-62161624-1",
+      "uid": "tb5qb43uh91ckbefruhm",
+      "cspResourceName": "tb5qb43uh91ckbefruhm",
+      "cspResourceId": "ins-px4j8x8x",
+      "name": "my05-ng-ip-10-0-1-30-62161624-1",
+      "nodeGroupId": "my05-ng-ip-10-0-1-30-62161624",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.566536,
+        "longitude": 126.977966
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2026-11-25 09:17:01",
       "label": {
         "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"
       },
       "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
       "region": {
         "region": "ap-seoul",
-        "zone": "ap-seoul-1"
+        "zone": "ap-seoul-2"
       },
-      "publicIP": "101.33.73.9",
+      "publicIP": "43.155.211.124",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.13",
+      "privateIP": "10.0.1.11",
       "privateDNS": "",
       "rootDiskType": "CLOUD_HSSD",
       "rootDiskSize": 50,
-      "rootDeviceName": "disk-evs80xkr",
+      "rootDeviceName": "disk-h28hwqkb",
       "connectionName": "tencent-ap-seoul",
       "connectionConfig": {
         "configName": "tencent-ap-seoul",
@@ -2262,172 +2562,32 @@
         "memoryGiB": 2,
         "costPerHour": 0.06
       },
-      "imageId": "img-7rotv4ux",
-      "cspImageName": "img-7rotv4ux",
+      "imageId": "img-487zeit5",
+      "cspImageName": "img-487zeit5",
       "image": {
         "resourceType": "image",
-        "cspImageName": "img-7rotv4ux",
+        "cspImageName": "img-487zeit5",
         "osType": "Ubuntu 22.04",
         "osArchitecture": "x86_64",
-        "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI"
+        "osDistribution": "Ubuntu Server 22.04 LTS 64bit"
       },
       "vNetId": "my05-mig-vnet-01",
-      "cspVNetId": "vpc-6sjytz4a",
+      "cspVNetId": "vpc-p2o55rts",
       "subnetId": "my05-mig-subnet-01",
-      "cspSubnetId": "subnet-1poy0xlj",
-      "networkInterface": "eni-6e62gb9c",
+      "cspSubnetId": "subnet-4kcu8oj9",
+      "networkInterface": "eni-hs3bmg2o",
       "securityGroupIds": [
         "my05-mig-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my05-mig-sshkey-01",
-      "cspSshKeyId": "skey-ofv7yi59",
+      "cspSshKeyId": "skey-b1dxxqvp",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBDVQAhryPeAzpaXy9qRZ8FMdJLaYqmdCMS82MsqKspzxteX/YsklowDQYB4efjzxUBYqmmv6x5x1uLhng5VhEuo=",
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBM21x3p2YqAGsRudxoPTX3h5NTAqYJzqyuO2N0rGdjgdZKUMnIw+yjiljXoWGz6EHXPPm336OVzxjXzaY8h+iOs=",
         "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:0Q2hhwHMBEEK1txJsFCcKRVAYWYYGTQbCbnPVgBt4UE",
-        "firstUsedAt": "2026-11-03T08:56:39Z"
-      },
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "true",
-          "commandExecuted": "true",
-          "status": "Failed",
-          "startedTime": "2026-11-03T08:56:01Z",
-          "completedTime": "2026-11-03T08:56:26Z",
-          "elapsedTime": 25,
-          "resultSummary": "Command execution failed",
-          "errorMessage": "failed to connect to target Node \"my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1\" at 10.0.1.13:22 (as \"cb-user\") via bastion Node \"my05-ng-influxdb-back-1\" at 43.133.92.116:22 (as \"cb-user\") after 3 attempts: [bastion] failed to establish SSH connection to bastion 43.133.92.116:22 as user \"cb-user\" (bastionNodeId=my05-ng-influxdb-back-1): ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"
-        },
-        {
-          "index": 2,
-          "commandRequested": "true",
-          "commandExecuted": "true",
-          "status": "Completed",
-          "startedTime": "2026-11-03T08:56:39Z",
-          "completedTime": "2026-11-03T08:56:40Z",
-          "elapsedTime": 1,
-          "resultSummary": "Command executed successfully",
-          "stdout": "\n",
-          "stderr": "\n"
-        },
-        {
-          "index": 3,
-          "xRequestId": "pc-my05-infra101-tb6h71qjs7l2ln9q33p1",
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2026-11-03T08:56:40Z",
-          "completedTime": "2026-11-03T08:56:41Z",
-          "elapsedTime": 1,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux VM-1-13-ubuntu 5.15.0-191-generic #201-Ubuntu SMP Fri Aug 7 18:39:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ]
-    },
-    {
-      "resourceType": "node",
-      "id": "my05-ng-influxdb-back-1",
-      "uid": "tbs6a4suvroi915pj8md",
-      "cspResourceName": "tbs6a4suvroi915pj8md",
-      "cspResourceId": "ins-ncurja61",
-      "name": "my05-ng-influxdb-back-1",
-      "nodeGroupId": "my05-ng-influxdb-back",
-      "location": {
-        "display": "South Korea (Seoul)",
-        "latitude": 37.566536,
-        "longitude": 126.977966
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2026-11-03 08:55:54",
-      "label": {
-        "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "nlbBackend": "influxdb_back"
-      },
-      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
-      "region": {
-        "region": "ap-seoul",
-        "zone": "ap-seoul-1"
-      },
-      "publicIP": "43.133.92.116",
-      "sshPort": 22,
-      "publicDNS": "",
-      "privateIP": "10.0.1.12",
-      "privateDNS": "",
-      "rootDiskType": "CLOUD_HSSD",
-      "rootDiskSize": 50,
-      "rootDeviceName": "disk-ad5w7al3",
-      "connectionName": "tencent-ap-seoul",
-      "connectionConfig": {
-        "configName": "tencent-ap-seoul",
-        "providerName": "tencent",
-        "driverName": "tencent-driver-v1.0.so",
-        "credentialName": "tencent",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "tencent-ap-seoul",
-        "regionZoneInfo": {
-          "assignedRegion": "ap-seoul",
-          "assignedZone": "ap-seoul-1"
-        },
-        "regionDetail": {
-          "regionId": "ap-seoul",
-          "regionName": "ap-seoul",
-          "description": "Seoul",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.566536,
-            "longitude": 126.977966
-          },
-          "zones": [
-            "ap-seoul-1",
-            "ap-seoul-2"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "tencent+ap-seoul+sa5.large16",
-      "cspSpecName": "SA5.LARGE16",
-      "spec": {
-        "cspSpecName": "SA5.LARGE16",
-        "vCPU": 4,
-        "memoryGiB": 16,
-        "costPerHour": 0.22
-      },
-      "imageId": "img-7rotv4ux",
-      "cspImageName": "img-7rotv4ux",
-      "image": {
-        "resourceType": "image",
-        "cspImageName": "img-7rotv4ux",
-        "osType": "Ubuntu 22.04",
-        "osArchitecture": "x86_64",
-        "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI"
-      },
-      "vNetId": "my05-mig-vnet-01",
-      "cspVNetId": "vpc-6sjytz4a",
-      "subnetId": "my05-mig-subnet-01",
-      "cspSubnetId": "subnet-1poy0xlj",
-      "networkInterface": "eni-gcjn4nl0",
-      "securityGroupIds": [
-        "my05-mig-sg-01"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "my05-mig-sshkey-01",
-      "cspSshKeyId": "skey-ofv7yi59",
-      "nodeUserName": "cb-user",
-      "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBF8TcwNVd2LZiKP4+ROrPOH7g38PqZjb3+b9ale9TjP55kWOjkVi8NzX7044uOH63ZmCrQFP851HZkYI04aUcpQ=",
-        "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:R44brYbZ1TiTOv+ZgkxyFise8lFcn9jubPPAYNw4fl8",
-        "firstUsedAt": "2026-11-03T08:56:17Z"
+        "fingerprint": "SHA256:kU80Ha65WFpwJnACSOWfioIoq/XuS/IT4g39hUWRVFU",
+        "firstUsedAt": "2026-11-25T09:17:39Z"
       },
       "commandStatus": [
         {
@@ -2435,166 +2595,26 @@
           "commandRequested": "true",
           "commandExecuted": "true",
           "status": "Completed",
-          "startedTime": "2026-11-03T08:56:01Z",
-          "completedTime": "2026-11-03T08:56:29Z",
-          "elapsedTime": 1,
+          "startedTime": "2026-11-25T09:17:01Z",
+          "completedTime": "2026-11-25T09:17:42Z",
+          "elapsedTime": 2,
           "resultSummary": "Command executed successfully",
           "stdout": "\n",
           "stderr": "\n",
           "repeatCount": 2,
-          "lastOccurredTime": "2026-11-03T08:56:40Z"
+          "lastOccurredTime": "2026-11-25T09:17:55Z"
         },
         {
           "index": 2,
-          "xRequestId": "pc-my05-infra101-tb6h71qjs7l2ln9q33p1",
+          "xRequestId": "ps-my05-infra101-tbv3igrj2t6jh9qrapf6",
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-11-03T08:56:40Z",
-          "completedTime": "2026-11-03T08:56:42Z",
-          "elapsedTime": 2,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux VM-1-12-ubuntu 5.15.0-191-generic #201-Ubuntu SMP Fri Aug 7 18:39:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ]
-    },
-    {
-      "resourceType": "node",
-      "id": "my05-ng-influxdb-back-2",
-      "uid": "tbu8ptqpubtv73mdejs5",
-      "cspResourceName": "tbu8ptqpubtv73mdejs5",
-      "cspResourceId": "ins-2uveewfz",
-      "name": "my05-ng-influxdb-back-2",
-      "nodeGroupId": "my05-ng-influxdb-back",
-      "location": {
-        "display": "South Korea (Seoul)",
-        "latitude": 37.566536,
-        "longitude": 126.977966
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2026-11-03 08:56:01",
-      "label": {
-        "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "nlbBackend": "influxdb_back"
-      },
-      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
-      "region": {
-        "region": "ap-seoul",
-        "zone": "ap-seoul-1"
-      },
-      "publicIP": "43.166.14.150",
-      "sshPort": 22,
-      "publicDNS": "",
-      "privateIP": "10.0.1.2",
-      "privateDNS": "",
-      "rootDiskType": "CLOUD_HSSD",
-      "rootDiskSize": 50,
-      "rootDeviceName": "disk-06zi2y8n",
-      "connectionName": "tencent-ap-seoul",
-      "connectionConfig": {
-        "configName": "tencent-ap-seoul",
-        "providerName": "tencent",
-        "driverName": "tencent-driver-v1.0.so",
-        "credentialName": "tencent",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "tencent-ap-seoul",
-        "regionZoneInfo": {
-          "assignedRegion": "ap-seoul",
-          "assignedZone": "ap-seoul-1"
-        },
-        "regionDetail": {
-          "regionId": "ap-seoul",
-          "regionName": "ap-seoul",
-          "description": "Seoul",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.566536,
-            "longitude": 126.977966
-          },
-          "zones": [
-            "ap-seoul-1",
-            "ap-seoul-2"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "tencent+ap-seoul+sa5.large16",
-      "cspSpecName": "SA5.LARGE16",
-      "spec": {
-        "cspSpecName": "SA5.LARGE16",
-        "vCPU": 4,
-        "memoryGiB": 16,
-        "costPerHour": 0.22
-      },
-      "imageId": "img-7rotv4ux",
-      "cspImageName": "img-7rotv4ux",
-      "image": {
-        "resourceType": "image",
-        "cspImageName": "img-7rotv4ux",
-        "osType": "Ubuntu 22.04",
-        "osArchitecture": "x86_64",
-        "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI"
-      },
-      "vNetId": "my05-mig-vnet-01",
-      "cspVNetId": "vpc-6sjytz4a",
-      "subnetId": "my05-mig-subnet-01",
-      "cspSubnetId": "subnet-1poy0xlj",
-      "networkInterface": "eni-6laeqnew",
-      "securityGroupIds": [
-        "my05-mig-sg-01"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "my05-mig-sshkey-01",
-      "cspSshKeyId": "skey-ofv7yi59",
-      "nodeUserName": "cb-user",
-      "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBE4WRcAiAu1JCFwmTart1ssAQ4GGfM76L1zrGqV39995D/Fr9gkfepS6UFt12OXZN/WbhZmodAB7GgYZCZOJArQ=",
-        "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:Dcg+YfpF8AZHid5AxpCI3C0ejHbDPPHP3wJy+jkZPyE",
-        "firstUsedAt": "2026-11-03T08:56:39Z"
-      },
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "true",
-          "commandExecuted": "true",
-          "status": "Failed",
-          "startedTime": "2026-11-03T08:56:01Z",
-          "completedTime": "2026-11-03T08:56:26Z",
-          "elapsedTime": 25,
-          "resultSummary": "Command execution failed",
-          "errorMessage": "failed to connect to target Node \"my05-ng-influxdb-back-2\" at 10.0.1.2:22 (as \"cb-user\") via bastion Node \"my05-ng-influxdb-back-1\" at 43.133.92.116:22 (as \"cb-user\") after 3 attempts: [bastion] failed to establish SSH connection to bastion 43.133.92.116:22 as user \"cb-user\" (bastionNodeId=my05-ng-influxdb-back-1): ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"
-        },
-        {
-          "index": 2,
-          "commandRequested": "true",
-          "commandExecuted": "true",
-          "status": "Completed",
-          "startedTime": "2026-11-03T08:56:39Z",
-          "completedTime": "2026-11-03T08:56:40Z",
+          "startedTime": "2026-11-25T09:17:56Z",
+          "completedTime": "2026-11-25T09:17:57Z",
           "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "\n",
-          "stderr": "\n"
-        },
-        {
-          "index": 3,
-          "xRequestId": "pc-my05-infra101-tb6h71qjs7l2ln9q33p1",
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2026-11-03T08:56:40Z",
-          "completedTime": "2026-11-03T08:56:41Z",
-          "elapsedTime": 1,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux VM-1-2-ubuntu 5.15.0-191-generic #201-Ubuntu SMP Fri Aug 7 18:39:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux VM-1-11-ubuntu 5.15.0-190-generic #200-Ubuntu SMP Fri Aug 7 15:06:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ]
@@ -2616,30 +2636,32 @@
         "ap-seoul"
       ],
       "nodeGroupIds": [
-        "my05-ng-ec268ed7-821e-9d73-e79f-961262161624",
-        "my05-ng-influxdb-back"
+        "my05-ng-influxdb-back",
+        "my05-ng-ip-10-0-1-30-62161624"
       ],
       "nodeIds": [
-        "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
         "my05-ng-influxdb-back-1",
-        "my05-ng-influxdb-back-2"
+        "my05-ng-influxdb-back-2",
+        "my05-ng-ip-10-0-1-30-62161624-1"
       ],
       "nodeGroupCount": 2,
       "nodeCount": 3,
-      "representativeNodeGroupId": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624",
-      "representativeNodeId": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1"
+      "representativeNodeGroupId": "my05-ng-influxdb-back",
+      "representativeNodeId": "my05-ng-influxdb-back-1"
     }
   ],
   "newNodeList": null,
-  "postCommands": [
-    {
-      "userName": "cb-user",
-      "command": [
-        "uname -a"
-      ]
-    }
-  ],
-  "postCommandResults": [
+  "postScript": {
+    "phases": [
+      {
+        "userName": "cb-user",
+        "command": [
+          "uname -a"
+        ]
+      }
+    ]
+  },
+  "postScriptResults": [
     {
       "phase": 1,
       "target": "all nodes",
@@ -2648,43 +2670,43 @@
         "results": [
           {
             "infraId": "my05-infra101",
-            "nodeId": "my05-ng-influxdb-back-2",
-            "nodeIp": "43.166.14.150",
-            "command": {
-              "0": "uname -a"
-            },
-            "stdout": {
-              "0": "Linux VM-1-2-ubuntu 5.15.0-191-generic #201-Ubuntu SMP Fri Aug 7 18:39:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-            },
-            "stderr": {
-              "0": ""
-            },
-            "error": ""
-          },
-          {
-            "infraId": "my05-infra101",
-            "nodeId": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "nodeIp": "101.33.73.9",
-            "command": {
-              "0": "uname -a"
-            },
-            "stdout": {
-              "0": "Linux VM-1-13-ubuntu 5.15.0-191-generic #201-Ubuntu SMP Fri Aug 7 18:39:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-            },
-            "stderr": {
-              "0": ""
-            },
-            "error": ""
-          },
-          {
-            "infraId": "my05-infra101",
             "nodeId": "my05-ng-influxdb-back-1",
-            "nodeIp": "43.133.92.116",
+            "nodeIp": "43.166.24.5",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux VM-1-12-ubuntu 5.15.0-191-generic #201-Ubuntu SMP Fri Aug 7 18:39:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux VM-1-2-ubuntu 5.15.0-190-generic #200-Ubuntu SMP Fri Aug 7 15:06:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "error": ""
+          },
+          {
+            "infraId": "my05-infra101",
+            "nodeId": "my05-ng-influxdb-back-2",
+            "nodeIp": "43.155.212.36",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux VM-1-6-ubuntu 5.15.0-190-generic #200-Ubuntu SMP Fri Aug 7 15:06:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "error": ""
+          },
+          {
+            "infraId": "my05-infra101",
+            "nodeId": "my05-ng-ip-10-0-1-30-62161624-1",
+            "nodeIp": "43.155.211.124",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux VM-1-11-ubuntu 5.15.0-190-generic #200-Ubuntu SMP Fri Aug 7 15:06:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -2695,8 +2717,8 @@
       }
     }
   ],
-  "postCommandStatus": "Completed",
-  "postCommandRequestId": "pc-my05-infra101-tb6h71qjs7l2ln9q33p1"
+  "postScriptStatus": "Completed",
+  "postScriptRequestId": "ps-my05-infra101-tbv3igrj2t6jh9qrapf6"
 }
 ```
 
@@ -2713,7 +2735,7 @@
 #### 4.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
-- **Count**: 1
+- **Count**: 6
 
 **Response Body**:
 
@@ -2725,8 +2747,1476 @@
   "infra": [
     {
       "resourceType": "infra",
+      "id": "my01-infra101",
+      "uid": "tbohd5haepfsekdac2ko",
+      "name": "my01-infra101",
+      "status": "Running:3 (R:3/3)",
+      "statusCount": {
+        "countTotal": 3,
+        "countCreating": 0,
+        "countRunning": 3,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countRegistering": 0,
+        "countReconciling": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "configureCloudAdaptiveNetwork": "",
+      "label": {
+        "cm-migrated-at": "2026-11-25T09:14:38Z",
+        "sys.description": "NLB-aware recommended infrastructure for cloud migration",
+        "sys.id": "my01-infra101",
+        "sys.labelType": "infra",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my01-infra101",
+        "sys.namespace": "mig01",
+        "sys.uid": "tbohd5haepfsekdac2ko"
+      },
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "node": [
+        {
+          "resourceType": "node",
+          "id": "my01-ng-influxdb-back-1",
+          "uid": "tb9kb21aeetl91i0qfdj",
+          "cspResourceName": "tb9kb21aeetl91i0qfdj",
+          "cspResourceId": "i-0bbb8c166a68d3f41",
+          "name": "my01-ng-influxdb-back-1",
+          "nodeGroupId": "my01-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:14:55",
+          "label": {
+            "Name": "tb9kb21aeetl91i0qfdj",
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "aws-ap-northeast-2",
+            "sys.createdTime": "2026-11-25 09:14:55",
+            "sys.cspResourceId": "i-0bbb8c166a68d3f41",
+            "sys.cspResourceName": "tb9kb21aeetl91i0qfdj",
+            "sys.id": "my01-ng-influxdb-back-1",
+            "sys.infraId": "my01-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my01-ng-influxdb-back-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my01-ng-influxdb-back",
+            "sys.subnetId": "my01-mig-subnet-01",
+            "sys.uid": "tb9kb21aeetl91i0qfdj",
+            "sys.vNetId": "my01-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-northeast-2",
+            "zone": "ap-northeast-2a"
+          },
+          "publicIP": "3.38.252.17",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.123",
+          "privateDNS": "ip-10-0-1-123.ap-northeast-2.compute.internal",
+          "rootDiskType": "gp2",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "aws-ap-northeast-2",
+          "connectionConfig": {
+            "configName": "aws-ap-northeast-2",
+            "providerName": "aws",
+            "driverName": "aws-driver-v1.0.so",
+            "credentialName": "aws",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "aws-ap-northeast-2",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
+            },
+            "regionDetail": {
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "Asia Pacific (Seoul)",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.36,
+                "longitude": 126.78
+              },
+              "zones": [
+                "ap-northeast-2a",
+                "ap-northeast-2b",
+                "ap-northeast-2c",
+                "ap-northeast-2d"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "aws+ap-northeast-2+t3.xlarge",
+          "cspSpecName": "t3.xlarge",
+          "spec": {
+            "cspSpecName": "t3.xlarge",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.208
+          },
+          "imageId": "ami-046333f9ecafdf406",
+          "cspImageName": "ami-046333f9ecafdf406",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "ami-046333f9ecafdf406",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20261021"
+          },
+          "vNetId": "my01-mig-vnet-01",
+          "cspVNetId": "vpc-09aa8042d1c874768",
+          "subnetId": "my01-mig-subnet-01",
+          "cspSubnetId": "subnet-063b3e54670c7a6f5",
+          "networkInterface": "eni-0f4c6e1a23c3cae52",
+          "securityGroupIds": [
+            "my01-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my01-mig-sshkey-01",
+          "cspSshKeyId": "tb0tqsk2ejcg4plsgf7r"
+        },
+        {
+          "resourceType": "node",
+          "id": "my01-ng-influxdb-back-2",
+          "uid": "tbn8mcdp8a5j8e8918um",
+          "cspResourceName": "tbn8mcdp8a5j8e8918um",
+          "cspResourceId": "i-0f6efd5a8c05d59e1",
+          "name": "my01-ng-influxdb-back-2",
+          "nodeGroupId": "my01-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:14:59",
+          "label": {
+            "Name": "tbn8mcdp8a5j8e8918um",
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "aws-ap-northeast-2",
+            "sys.createdTime": "2026-11-25 09:14:59",
+            "sys.cspResourceId": "i-0f6efd5a8c05d59e1",
+            "sys.cspResourceName": "tbn8mcdp8a5j8e8918um",
+            "sys.id": "my01-ng-influxdb-back-2",
+            "sys.infraId": "my01-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my01-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my01-ng-influxdb-back",
+            "sys.subnetId": "my01-mig-subnet-01",
+            "sys.uid": "tbn8mcdp8a5j8e8918um",
+            "sys.vNetId": "my01-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-northeast-2",
+            "zone": "ap-northeast-2a"
+          },
+          "publicIP": "52.79.141.27",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.193",
+          "privateDNS": "ip-10-0-1-193.ap-northeast-2.compute.internal",
+          "rootDiskType": "gp2",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "aws-ap-northeast-2",
+          "connectionConfig": {
+            "configName": "aws-ap-northeast-2",
+            "providerName": "aws",
+            "driverName": "aws-driver-v1.0.so",
+            "credentialName": "aws",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "aws-ap-northeast-2",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
+            },
+            "regionDetail": {
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "Asia Pacific (Seoul)",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.36,
+                "longitude": 126.78
+              },
+              "zones": [
+                "ap-northeast-2a",
+                "ap-northeast-2b",
+                "ap-northeast-2c",
+                "ap-northeast-2d"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "aws+ap-northeast-2+t3.xlarge",
+          "cspSpecName": "t3.xlarge",
+          "spec": {
+            "cspSpecName": "t3.xlarge",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.208
+          },
+          "imageId": "ami-046333f9ecafdf406",
+          "cspImageName": "ami-046333f9ecafdf406",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "ami-046333f9ecafdf406",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20261021"
+          },
+          "vNetId": "my01-mig-vnet-01",
+          "cspVNetId": "vpc-09aa8042d1c874768",
+          "subnetId": "my01-mig-subnet-01",
+          "cspSubnetId": "subnet-063b3e54670c7a6f5",
+          "networkInterface": "eni-0cfff99b6b9719dd8",
+          "securityGroupIds": [
+            "my01-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my01-mig-sshkey-01",
+          "cspSshKeyId": "tb0tqsk2ejcg4plsgf7r"
+        },
+        {
+          "resourceType": "node",
+          "id": "my01-ng-ip-10-0-1-30-62161624-1",
+          "uid": "tbqfgi5tbnlnpkk7ec6e",
+          "cspResourceName": "tbqfgi5tbnlnpkk7ec6e",
+          "cspResourceId": "i-07196fca4d742d8ca",
+          "name": "my01-ng-ip-10-0-1-30-62161624-1",
+          "nodeGroupId": "my01-ng-ip-10-0-1-30-62161624",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:14:56",
+          "label": {
+            "Name": "tbqfgi5tbnlnpkk7ec6e",
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.connectionName": "aws-ap-northeast-2",
+            "sys.createdTime": "2026-11-25 09:14:56",
+            "sys.cspResourceId": "i-07196fca4d742d8ca",
+            "sys.cspResourceName": "tbqfgi5tbnlnpkk7ec6e",
+            "sys.id": "my01-ng-ip-10-0-1-30-62161624-1",
+            "sys.infraId": "my01-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my01-ng-ip-10-0-1-30-62161624-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my01-ng-ip-10-0-1-30-62161624",
+            "sys.subnetId": "my01-mig-subnet-01",
+            "sys.uid": "tbqfgi5tbnlnpkk7ec6e",
+            "sys.vNetId": "my01-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-northeast-2",
+            "zone": "ap-northeast-2a"
+          },
+          "publicIP": "15.165.15.17",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.194",
+          "privateDNS": "ip-10-0-1-194.ap-northeast-2.compute.internal",
+          "rootDiskType": "gp2",
+          "rootDiskSize": 10,
+          "rootDeviceName": "",
+          "connectionName": "aws-ap-northeast-2",
+          "connectionConfig": {
+            "configName": "aws-ap-northeast-2",
+            "providerName": "aws",
+            "driverName": "aws-driver-v1.0.so",
+            "credentialName": "aws",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "aws-ap-northeast-2",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
+            },
+            "regionDetail": {
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "Asia Pacific (Seoul)",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.36,
+                "longitude": 126.78
+              },
+              "zones": [
+                "ap-northeast-2a",
+                "ap-northeast-2b",
+                "ap-northeast-2c",
+                "ap-northeast-2d"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "aws+ap-northeast-2+t3.small",
+          "cspSpecName": "t3.small",
+          "spec": {
+            "cspSpecName": "t3.small",
+            "vCPU": 2,
+            "memoryGiB": 2,
+            "costPerHour": 0.026
+          },
+          "imageId": "ami-046333f9ecafdf406",
+          "cspImageName": "ami-046333f9ecafdf406",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "ami-046333f9ecafdf406",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20261021"
+          },
+          "vNetId": "my01-mig-vnet-01",
+          "cspVNetId": "vpc-09aa8042d1c874768",
+          "subnetId": "my01-mig-subnet-01",
+          "cspSubnetId": "subnet-063b3e54670c7a6f5",
+          "networkInterface": "eni-02dd0387f7ddfee69",
+          "securityGroupIds": [
+            "my01-mig-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my01-mig-sshkey-01",
+          "cspSshKeyId": "tb0tqsk2ejcg4plsgf7r"
+        }
+      ],
+      "newNodeList": null
+    },
+    {
+      "resourceType": "infra",
+      "id": "my02-infra101",
+      "uid": "tb3t1dqr76ce6f3l49ug",
+      "name": "my02-infra101",
+      "status": "Running:3 (R:3/3)",
+      "statusCount": {
+        "countTotal": 3,
+        "countCreating": 0,
+        "countRunning": 3,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countRegistering": 0,
+        "countReconciling": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "configureCloudAdaptiveNetwork": "",
+      "label": {
+        "cm-migrated-at": "2026-11-25T09:15:11Z",
+        "sys.description": "NLB-aware recommended infrastructure for cloud migration",
+        "sys.id": "my02-infra101",
+        "sys.labelType": "infra",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my02-infra101",
+        "sys.namespace": "mig01",
+        "sys.uid": "tb3t1dqr76ce6f3l49ug"
+      },
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "node": [
+        {
+          "resourceType": "node",
+          "id": "my02-ng-influxdb-back-1",
+          "uid": "tb2mefhc7qac6sg6gmoh",
+          "cspResourceName": "tb2mefhc7qac6sg6gmoh",
+          "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tb2mefhc7qac6sg6gmoh",
+          "name": "my02-ng-influxdb-back-1",
+          "nodeGroupId": "my02-ng-influxdb-back",
+          "location": {
+            "display": "Korea South",
+            "latitude": 35.1796,
+            "longitude": 129.0756
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:16:03",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "createdBy": "tb2mefhc7qac6sg6gmoh",
+            "keypair": "tbbm9d00plcuabc5g4jg",
+            "nlbBackend": "influxdb_back",
+            "publicip": "tb2mefhc7qac6sg6gmoh-91708-PublicIP",
+            "sys.connectionName": "azure-koreasouth",
+            "sys.createdTime": "2026-11-25 09:16:03",
+            "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tb2mefhc7qac6sg6gmoh",
+            "sys.cspResourceName": "tb2mefhc7qac6sg6gmoh",
+            "sys.id": "my02-ng-influxdb-back-1",
+            "sys.infraId": "my02-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my02-ng-influxdb-back-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my02-ng-influxdb-back",
+            "sys.subnetId": "my02-mig-subnet-01",
+            "sys.uid": "tb2mefhc7qac6sg6gmoh",
+            "sys.vNetId": "my02-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "koreasouth"
+          },
+          "publicIP": "52.147.125.128",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.6",
+          "privateDNS": "",
+          "rootDiskType": "StandardHDD",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "azure-koreasouth",
+          "connectionConfig": {
+            "configName": "azure-koreasouth",
+            "providerName": "azure",
+            "driverName": "azure-driver-v1.0.so",
+            "credentialName": "azure",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "azure-koreasouth",
+            "regionZoneInfo": {
+              "assignedRegion": "koreasouth",
+              "assignedZone": ""
+            },
+            "regionDetail": {
+              "regionId": "koreasouth",
+              "regionName": "koreasouth",
+              "description": "Korea South",
+              "location": {
+                "display": "Korea South",
+                "latitude": 35.1796,
+                "longitude": 129.0756
+              },
+              "zones": []
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "azure+koreasouth+standard_d4_v4",
+          "cspSpecName": "Standard_D4_v4",
+          "spec": {
+            "cspSpecName": "Standard_D4_v4",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.221
+          },
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202611110",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220"
+          },
+          "vNetId": "my02-mig-vnet-01",
+          "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbn5tmrldklp5kklaje9",
+          "subnetId": "my02-mig-subnet-01",
+          "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbn5tmrldklp5kklaje9/subnets/tbeh520erobu2h1n1nfm",
+          "networkInterface": "tb2mefhc7qac6sg6gmoh-61943-VNic",
+          "securityGroupIds": [
+            "my02-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my02-mig-sshkey-01",
+          "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/tbbm9d00plcuabc5g4jg"
+        },
+        {
+          "resourceType": "node",
+          "id": "my02-ng-influxdb-back-2",
+          "uid": "tb6lhvd6gifs72gf64ok",
+          "cspResourceName": "tb6lhvd6gifs72gf64ok",
+          "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tb6lhvd6gifs72gf64ok",
+          "name": "my02-ng-influxdb-back-2",
+          "nodeGroupId": "my02-ng-influxdb-back",
+          "location": {
+            "display": "Korea South",
+            "latitude": 35.1796,
+            "longitude": 129.0756
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:16:03",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "createdBy": "tb6lhvd6gifs72gf64ok",
+            "keypair": "tbbm9d00plcuabc5g4jg",
+            "nlbBackend": "influxdb_back",
+            "publicip": "tb6lhvd6gifs72gf64ok-39512-PublicIP",
+            "sys.connectionName": "azure-koreasouth",
+            "sys.createdTime": "2026-11-25 09:16:03",
+            "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tb6lhvd6gifs72gf64ok",
+            "sys.cspResourceName": "tb6lhvd6gifs72gf64ok",
+            "sys.id": "my02-ng-influxdb-back-2",
+            "sys.infraId": "my02-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my02-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my02-ng-influxdb-back",
+            "sys.subnetId": "my02-mig-subnet-01",
+            "sys.uid": "tb6lhvd6gifs72gf64ok",
+            "sys.vNetId": "my02-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "koreasouth"
+          },
+          "publicIP": "74.227.129.35",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.4",
+          "privateDNS": "",
+          "rootDiskType": "StandardHDD",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "azure-koreasouth",
+          "connectionConfig": {
+            "configName": "azure-koreasouth",
+            "providerName": "azure",
+            "driverName": "azure-driver-v1.0.so",
+            "credentialName": "azure",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "azure-koreasouth",
+            "regionZoneInfo": {
+              "assignedRegion": "koreasouth",
+              "assignedZone": ""
+            },
+            "regionDetail": {
+              "regionId": "koreasouth",
+              "regionName": "koreasouth",
+              "description": "Korea South",
+              "location": {
+                "display": "Korea South",
+                "latitude": 35.1796,
+                "longitude": 129.0756
+              },
+              "zones": []
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "azure+koreasouth+standard_d4_v4",
+          "cspSpecName": "Standard_D4_v4",
+          "spec": {
+            "cspSpecName": "Standard_D4_v4",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.221
+          },
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202611110",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220"
+          },
+          "vNetId": "my02-mig-vnet-01",
+          "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbn5tmrldklp5kklaje9",
+          "subnetId": "my02-mig-subnet-01",
+          "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbn5tmrldklp5kklaje9/subnets/tbeh520erobu2h1n1nfm",
+          "networkInterface": "tb6lhvd6gifs72gf64ok-32847-VNic",
+          "securityGroupIds": [
+            "my02-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my02-mig-sshkey-01",
+          "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/tbbm9d00plcuabc5g4jg"
+        },
+        {
+          "resourceType": "node",
+          "id": "my02-ng-ip-10-0-1-30-62161624-1",
+          "uid": "tbd32ihs5kcb30u4ok9r",
+          "cspResourceName": "tbd32ihs5kcb30u4ok9r",
+          "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbd32ihs5kcb30u4ok9r",
+          "name": "my02-ng-ip-10-0-1-30-62161624-1",
+          "nodeGroupId": "my02-ng-ip-10-0-1-30-62161624",
+          "location": {
+            "display": "Korea South",
+            "latitude": 35.1796,
+            "longitude": 129.0756
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:16:03",
+          "label": {
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
+            "createdBy": "tbd32ihs5kcb30u4ok9r",
+            "keypair": "tbbm9d00plcuabc5g4jg",
+            "publicip": "tbd32ihs5kcb30u4ok9r-53594-PublicIP",
+            "sys.connectionName": "azure-koreasouth",
+            "sys.createdTime": "2026-11-25 09:16:03",
+            "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbd32ihs5kcb30u4ok9r",
+            "sys.cspResourceName": "tbd32ihs5kcb30u4ok9r",
+            "sys.id": "my02-ng-ip-10-0-1-30-62161624-1",
+            "sys.infraId": "my02-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my02-ng-ip-10-0-1-30-62161624-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my02-ng-ip-10-0-1-30-62161624",
+            "sys.subnetId": "my02-mig-subnet-01",
+            "sys.uid": "tbd32ihs5kcb30u4ok9r",
+            "sys.vNetId": "my02-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "koreasouth"
+          },
+          "publicIP": "74.227.128.223",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.5",
+          "privateDNS": "",
+          "rootDiskType": "PremiumSSD",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "azure-koreasouth",
+          "connectionConfig": {
+            "configName": "azure-koreasouth",
+            "providerName": "azure",
+            "driverName": "azure-driver-v1.0.so",
+            "credentialName": "azure",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "azure-koreasouth",
+            "regionZoneInfo": {
+              "assignedRegion": "koreasouth",
+              "assignedZone": ""
+            },
+            "regionDetail": {
+              "regionId": "koreasouth",
+              "regionName": "koreasouth",
+              "description": "Korea South",
+              "location": {
+                "display": "Korea South",
+                "latitude": 35.1796,
+                "longitude": 129.0756
+              },
+              "zones": []
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "azure+koreasouth+standard_f2s_v2",
+          "cspSpecName": "Standard_F2s_v2",
+          "spec": {
+            "cspSpecName": "Standard_F2s_v2",
+            "vCPU": 2,
+            "memoryGiB": 4,
+            "costPerHour": 0.0961
+          },
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202611110",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202610220"
+          },
+          "vNetId": "my02-mig-vnet-01",
+          "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbn5tmrldklp5kklaje9",
+          "subnetId": "my02-mig-subnet-01",
+          "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbn5tmrldklp5kklaje9/subnets/tbeh520erobu2h1n1nfm",
+          "networkInterface": "tbd32ihs5kcb30u4ok9r-15740-VNic",
+          "securityGroupIds": [
+            "my02-mig-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my02-mig-sshkey-01",
+          "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/tbbm9d00plcuabc5g4jg"
+        }
+      ],
+      "newNodeList": null
+    },
+    {
+      "resourceType": "infra",
+      "id": "my03-infra101",
+      "uid": "tbq870bov9ecui7jr7gv",
+      "name": "my03-infra101",
+      "status": "Running:3 (R:3/3)",
+      "statusCount": {
+        "countTotal": 3,
+        "countCreating": 0,
+        "countRunning": 3,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countRegistering": 0,
+        "countReconciling": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "configureCloudAdaptiveNetwork": "",
+      "label": {
+        "cm-migrated-at": "2026-11-25T09:17:21Z",
+        "sys.description": "NLB-aware recommended infrastructure for cloud migration",
+        "sys.id": "my03-infra101",
+        "sys.labelType": "infra",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my03-infra101",
+        "sys.namespace": "mig01",
+        "sys.uid": "tbq870bov9ecui7jr7gv"
+      },
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "node": [
+        {
+          "resourceType": "node",
+          "id": "my03-ng-influxdb-back-1",
+          "uid": "tbjg90vgd6kbujirukfr",
+          "cspResourceName": "tbjg90vgd6kbujirukfr",
+          "cspResourceId": "tbjg90vgd6kbujirukfr",
+          "name": "my03-ng-influxdb-back-1",
+          "nodeGroupId": "my03-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.2,
+            "longitude": 127
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:17:43",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "keypair": "tbdnf6sndttnf336lgim",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "gcp-asia-northeast3",
+            "sys.createdTime": "2026-11-25 09:17:43",
+            "sys.cspResourceId": "tbjg90vgd6kbujirukfr",
+            "sys.cspResourceName": "tbjg90vgd6kbujirukfr",
+            "sys.id": "my03-ng-influxdb-back-1",
+            "sys.infraId": "my03-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my03-ng-influxdb-back-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my03-ng-influxdb-back",
+            "sys.subnetId": "my03-mig-subnet-01",
+            "sys.uid": "tbjg90vgd6kbujirukfr",
+            "sys.vNetId": "my03-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "asia-northeast3",
+            "zone": "asia-northeast3-a"
+          },
+          "publicIP": "34.64.48.98",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.4",
+          "privateDNS": "",
+          "rootDiskType": "hyperdisk-balanced",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "gcp-asia-northeast3",
+          "connectionConfig": {
+            "configName": "gcp-asia-northeast3",
+            "providerName": "gcp",
+            "driverName": "gcp-driver-v1.0.so",
+            "credentialName": "gcp",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "gcp-asia-northeast3",
+            "regionZoneInfo": {
+              "assignedRegion": "asia-northeast3",
+              "assignedZone": "asia-northeast3-a"
+            },
+            "regionDetail": {
+              "regionId": "asia-northeast3",
+              "regionName": "asia-northeast3",
+              "description": "Seoul South Korea",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.2,
+                "longitude": 127
+              },
+              "zones": [
+                "asia-northeast3-a",
+                "asia-northeast3-b",
+                "asia-northeast3-c"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "gcp+asia-northeast3+n4-standard-4",
+          "cspSpecName": "n4-standard-4",
+          "spec": {
+            "cspSpecName": "n4-standard-4",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.232954
+          },
+          "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021",
+          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21"
+          },
+          "vNetId": "my03-mig-vnet-01",
+          "cspVNetId": "tb5dn9aum2qip3phdv8n",
+          "subnetId": "my03-mig-subnet-01",
+          "cspSubnetId": "tbgi6cba5avpr77flia4",
+          "networkInterface": "nic0",
+          "securityGroupIds": [
+            "my03-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my03-mig-sshkey-01",
+          "cspSshKeyId": "tbdnf6sndttnf336lgim"
+        },
+        {
+          "resourceType": "node",
+          "id": "my03-ng-influxdb-back-2",
+          "uid": "tb1lee0l2cp9nso74pq6",
+          "cspResourceName": "tb1lee0l2cp9nso74pq6",
+          "cspResourceId": "tb1lee0l2cp9nso74pq6",
+          "name": "my03-ng-influxdb-back-2",
+          "nodeGroupId": "my03-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.2,
+            "longitude": 127
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:17:40",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "keypair": "tbdnf6sndttnf336lgim",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "gcp-asia-northeast3",
+            "sys.createdTime": "2026-11-25 09:17:40",
+            "sys.cspResourceId": "tb1lee0l2cp9nso74pq6",
+            "sys.cspResourceName": "tb1lee0l2cp9nso74pq6",
+            "sys.id": "my03-ng-influxdb-back-2",
+            "sys.infraId": "my03-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my03-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my03-ng-influxdb-back",
+            "sys.subnetId": "my03-mig-subnet-01",
+            "sys.uid": "tb1lee0l2cp9nso74pq6",
+            "sys.vNetId": "my03-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "asia-northeast3",
+            "zone": "asia-northeast3-a"
+          },
+          "publicIP": "34.158.205.11",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.2",
+          "privateDNS": "",
+          "rootDiskType": "hyperdisk-balanced",
+          "rootDiskSize": 30,
+          "rootDeviceName": "",
+          "connectionName": "gcp-asia-northeast3",
+          "connectionConfig": {
+            "configName": "gcp-asia-northeast3",
+            "providerName": "gcp",
+            "driverName": "gcp-driver-v1.0.so",
+            "credentialName": "gcp",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "gcp-asia-northeast3",
+            "regionZoneInfo": {
+              "assignedRegion": "asia-northeast3",
+              "assignedZone": "asia-northeast3-a"
+            },
+            "regionDetail": {
+              "regionId": "asia-northeast3",
+              "regionName": "asia-northeast3",
+              "description": "Seoul South Korea",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.2,
+                "longitude": 127
+              },
+              "zones": [
+                "asia-northeast3-a",
+                "asia-northeast3-b",
+                "asia-northeast3-c"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "gcp+asia-northeast3+n4-standard-4",
+          "cspSpecName": "n4-standard-4",
+          "spec": {
+            "cspSpecName": "n4-standard-4",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.232954
+          },
+          "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021",
+          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21"
+          },
+          "vNetId": "my03-mig-vnet-01",
+          "cspVNetId": "tb5dn9aum2qip3phdv8n",
+          "subnetId": "my03-mig-subnet-01",
+          "cspSubnetId": "tbgi6cba5avpr77flia4",
+          "networkInterface": "nic0",
+          "securityGroupIds": [
+            "my03-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my03-mig-sshkey-01",
+          "cspSshKeyId": "tbdnf6sndttnf336lgim"
+        },
+        {
+          "resourceType": "node",
+          "id": "my03-ng-ip-10-0-1-30-62161624-1",
+          "uid": "tbr066qbkvoha4fjthgs",
+          "cspResourceName": "tbr066qbkvoha4fjthgs",
+          "cspResourceId": "tbr066qbkvoha4fjthgs",
+          "name": "my03-ng-ip-10-0-1-30-62161624-1",
+          "nodeGroupId": "my03-ng-ip-10-0-1-30-62161624",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.2,
+            "longitude": 127
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:17:41",
+          "label": {
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
+            "keypair": "tbdnf6sndttnf336lgim",
+            "sys.connectionName": "gcp-asia-northeast3",
+            "sys.createdTime": "2026-11-25 09:17:41",
+            "sys.cspResourceId": "tbr066qbkvoha4fjthgs",
+            "sys.cspResourceName": "tbr066qbkvoha4fjthgs",
+            "sys.id": "my03-ng-ip-10-0-1-30-62161624-1",
+            "sys.infraId": "my03-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my03-ng-ip-10-0-1-30-62161624-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my03-ng-ip-10-0-1-30-62161624",
+            "sys.subnetId": "my03-mig-subnet-01",
+            "sys.uid": "tbr066qbkvoha4fjthgs",
+            "sys.vNetId": "my03-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "asia-northeast3",
+            "zone": "asia-northeast3-a"
+          },
+          "publicIP": "34.22.89.144",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.3",
+          "privateDNS": "",
+          "rootDiskType": "pd-standard",
+          "rootDiskSize": 10,
+          "rootDeviceName": "",
+          "connectionName": "gcp-asia-northeast3",
+          "connectionConfig": {
+            "configName": "gcp-asia-northeast3",
+            "providerName": "gcp",
+            "driverName": "gcp-driver-v1.0.so",
+            "credentialName": "gcp",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "gcp-asia-northeast3",
+            "regionZoneInfo": {
+              "assignedRegion": "asia-northeast3",
+              "assignedZone": "asia-northeast3-a"
+            },
+            "regionDetail": {
+              "regionId": "asia-northeast3",
+              "regionName": "asia-northeast3",
+              "description": "Seoul South Korea",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.2,
+                "longitude": 127
+              },
+              "zones": [
+                "asia-northeast3-a",
+                "asia-northeast3-b",
+                "asia-northeast3-c"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "gcp+asia-northeast3+n2-highcpu-2",
+          "cspSpecName": "n2-highcpu-2",
+          "spec": {
+            "cspSpecName": "n2-highcpu-2",
+            "vCPU": 2,
+            "memoryGiB": 2,
+            "costPerHour": 0.092072
+          },
+          "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021",
+          "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20261021",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-10-21"
+          },
+          "vNetId": "my03-mig-vnet-01",
+          "cspVNetId": "tb5dn9aum2qip3phdv8n",
+          "subnetId": "my03-mig-subnet-01",
+          "cspSubnetId": "tbgi6cba5avpr77flia4",
+          "networkInterface": "nic0",
+          "securityGroupIds": [
+            "my03-mig-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my03-mig-sshkey-01",
+          "cspSshKeyId": "tbdnf6sndttnf336lgim"
+        }
+      ],
+      "newNodeList": null
+    },
+    {
+      "resourceType": "infra",
+      "id": "my04-infra101",
+      "uid": "tbeamcb9hb2d3rp8n5a3",
+      "name": "my04-infra101",
+      "status": "Running:3 (R:3/3)",
+      "statusCount": {
+        "countTotal": 3,
+        "countCreating": 0,
+        "countRunning": 3,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countRegistering": 0,
+        "countReconciling": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "configureCloudAdaptiveNetwork": "",
+      "label": {
+        "cm-migrated-at": "2026-11-25T09:16:04Z",
+        "sys.description": "NLB-aware recommended infrastructure for cloud migration",
+        "sys.id": "my04-infra101",
+        "sys.labelType": "infra",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my04-infra101",
+        "sys.namespace": "mig01",
+        "sys.uid": "tbeamcb9hb2d3rp8n5a3"
+      },
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "node": [
+        {
+          "resourceType": "node",
+          "id": "my04-ng-influxdb-back-1",
+          "uid": "tbpthhohn7kjt5n614un",
+          "cspResourceName": "tbpthhohn7kjt5n614un",
+          "cspResourceId": "i-mj7f24f44ih73lbcha5e",
+          "name": "my04-ng-influxdb-back-1",
+          "nodeGroupId": "my04-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:16:12",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "alibaba-ap-northeast-2",
+            "sys.createdTime": "2026-11-25 09:16:12",
+            "sys.cspResourceId": "i-mj7f24f44ih73lbcha5e",
+            "sys.cspResourceName": "tbpthhohn7kjt5n614un",
+            "sys.id": "my04-ng-influxdb-back-1",
+            "sys.infraId": "my04-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my04-ng-influxdb-back-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my04-ng-influxdb-back",
+            "sys.subnetId": "my04-mig-subnet-01",
+            "sys.uid": "tbpthhohn7kjt5n614un",
+            "sys.vNetId": "my04-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-northeast-2",
+            "zone": "ap-northeast-2a"
+          },
+          "publicIP": "8.213.148.200",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.3",
+          "privateDNS": "",
+          "rootDiskType": "cloud_essd_entry",
+          "rootDiskSize": 40,
+          "rootDeviceName": "",
+          "connectionName": "alibaba-ap-northeast-2",
+          "connectionConfig": {
+            "configName": "alibaba-ap-northeast-2",
+            "providerName": "alibaba",
+            "driverName": "alibaba-driver-v1.0.so",
+            "credentialName": "alibaba",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "alibaba-ap-northeast-2",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
+            },
+            "regionDetail": {
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "South Korea (Seoul)",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.36,
+                "longitude": 126.78
+              },
+              "zones": [
+                "ap-northeast-2a",
+                "ap-northeast-2b"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "alibaba+ap-northeast-2+ecs.e-c1m4.xlarge",
+          "cspSpecName": "ecs.e-c1m4.xlarge",
+          "spec": {
+            "cspSpecName": "ecs.e-c1m4.xlarge",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.1582
+          },
+          "imageId": "ubuntu_22_04_x64_20G_alibase_20260916.vhd",
+          "cspImageName": "ubuntu_22_04_x64_20G_alibase_20261016.vhd",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "ubuntu_22_04_x64_20G_alibase_20260916.vhd",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu  22.04 64 bit"
+          },
+          "vNetId": "my04-mig-vnet-01",
+          "cspVNetId": "vpc-mj7abluu7bv81vyj6k43j",
+          "subnetId": "my04-mig-subnet-01",
+          "cspSubnetId": "vsw-mj7ipqju3acsuca2qfa7e",
+          "networkInterface": "eni-mj7f24f44ih73lb9htrf",
+          "securityGroupIds": [
+            "my04-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my04-mig-sshkey-01",
+          "cspSshKeyId": "tbskggpajj56tq2usk2e"
+        },
+        {
+          "resourceType": "node",
+          "id": "my04-ng-influxdb-back-2",
+          "uid": "tbbj2qfadajevs4b9t50",
+          "cspResourceName": "tbbj2qfadajevs4b9t50",
+          "cspResourceId": "i-mj7803i8w5ifq7vxuxuc",
+          "name": "my04-ng-influxdb-back-2",
+          "nodeGroupId": "my04-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:16:11",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "alibaba-ap-northeast-2",
+            "sys.createdTime": "2026-11-25 09:16:11",
+            "sys.cspResourceId": "i-mj7803i8w5ifq7vxuxuc",
+            "sys.cspResourceName": "tbbj2qfadajevs4b9t50",
+            "sys.id": "my04-ng-influxdb-back-2",
+            "sys.infraId": "my04-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my04-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my04-ng-influxdb-back",
+            "sys.subnetId": "my04-mig-subnet-01",
+            "sys.uid": "tbbj2qfadajevs4b9t50",
+            "sys.vNetId": "my04-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-northeast-2",
+            "zone": "ap-northeast-2a"
+          },
+          "publicIP": "47.80.61.166",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.2",
+          "privateDNS": "",
+          "rootDiskType": "cloud_essd_entry",
+          "rootDiskSize": 40,
+          "rootDeviceName": "",
+          "connectionName": "alibaba-ap-northeast-2",
+          "connectionConfig": {
+            "configName": "alibaba-ap-northeast-2",
+            "providerName": "alibaba",
+            "driverName": "alibaba-driver-v1.0.so",
+            "credentialName": "alibaba",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "alibaba-ap-northeast-2",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
+            },
+            "regionDetail": {
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "South Korea (Seoul)",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.36,
+                "longitude": 126.78
+              },
+              "zones": [
+                "ap-northeast-2a",
+                "ap-northeast-2b"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "alibaba+ap-northeast-2+ecs.e-c1m4.xlarge",
+          "cspSpecName": "ecs.e-c1m4.xlarge",
+          "spec": {
+            "cspSpecName": "ecs.e-c1m4.xlarge",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.1582
+          },
+          "imageId": "ubuntu_22_04_x64_20G_alibase_20260916.vhd",
+          "cspImageName": "ubuntu_22_04_x64_20G_alibase_20261016.vhd",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "ubuntu_22_04_x64_20G_alibase_20260916.vhd",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu  22.04 64 bit"
+          },
+          "vNetId": "my04-mig-vnet-01",
+          "cspVNetId": "vpc-mj7abluu7bv81vyj6k43j",
+          "subnetId": "my04-mig-subnet-01",
+          "cspSubnetId": "vsw-mj7ipqju3acsuca2qfa7e",
+          "networkInterface": "eni-mj7803i8w5ifq7vyy4l2",
+          "securityGroupIds": [
+            "my04-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my04-mig-sshkey-01",
+          "cspSshKeyId": "tbskggpajj56tq2usk2e"
+        },
+        {
+          "resourceType": "node",
+          "id": "my04-ng-ip-10-0-1-30-62161624-1",
+          "uid": "tbrvt5o72aejgu84q2d9",
+          "cspResourceName": "tbrvt5o72aejgu84q2d9",
+          "cspResourceId": "i-mj7ja9zhp5zysim4twue",
+          "name": "my04-ng-ip-10-0-1-30-62161624-1",
+          "nodeGroupId": "my04-ng-ip-10-0-1-30-62161624",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:16:11",
+          "label": {
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.connectionName": "alibaba-ap-northeast-2",
+            "sys.createdTime": "2026-11-25 09:16:11",
+            "sys.cspResourceId": "i-mj7ja9zhp5zysim4twue",
+            "sys.cspResourceName": "tbrvt5o72aejgu84q2d9",
+            "sys.id": "my04-ng-ip-10-0-1-30-62161624-1",
+            "sys.infraId": "my04-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my04-ng-ip-10-0-1-30-62161624-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my04-ng-ip-10-0-1-30-62161624",
+            "sys.subnetId": "my04-mig-subnet-01",
+            "sys.uid": "tbrvt5o72aejgu84q2d9",
+            "sys.vNetId": "my04-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-northeast-2",
+            "zone": "ap-northeast-2a"
+          },
+          "publicIP": "8.220.218.42",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.1",
+          "privateDNS": "",
+          "rootDiskType": "cloud_auto",
+          "rootDiskSize": 40,
+          "rootDeviceName": "",
+          "connectionName": "alibaba-ap-northeast-2",
+          "connectionConfig": {
+            "configName": "alibaba-ap-northeast-2",
+            "providerName": "alibaba",
+            "driverName": "alibaba-driver-v1.0.so",
+            "credentialName": "alibaba",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "alibaba-ap-northeast-2",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
+            },
+            "regionDetail": {
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "South Korea (Seoul)",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.36,
+                "longitude": 126.78
+              },
+              "zones": [
+                "ap-northeast-2a",
+                "ap-northeast-2b"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "alibaba+ap-northeast-2+ecs.e-c1m1.large",
+          "cspSpecName": "ecs.e-c1m1.large",
+          "spec": {
+            "cspSpecName": "ecs.e-c1m1.large",
+            "vCPU": 2,
+            "memoryGiB": 2,
+            "costPerHour": 0.0178
+          },
+          "imageId": "ubuntu_22_04_x64_20G_alibase_20260916.vhd",
+          "cspImageName": "ubuntu_22_04_x64_20G_alibase_20261016.vhd",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "ubuntu_22_04_x64_20G_alibase_20260916.vhd",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu  22.04 64 bit"
+          },
+          "vNetId": "my04-mig-vnet-01",
+          "cspVNetId": "vpc-mj7abluu7bv81vyj6k43j",
+          "subnetId": "my04-mig-subnet-01",
+          "cspSubnetId": "vsw-mj7ipqju3acsuca2qfa7e",
+          "networkInterface": "eni-mj7ja9zhp5zysim0y47s",
+          "securityGroupIds": [
+            "my04-mig-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my04-mig-sshkey-01",
+          "cspSshKeyId": "tbskggpajj56tq2usk2e"
+        }
+      ],
+      "newNodeList": null
+    },
+    {
+      "resourceType": "infra",
       "id": "my05-infra101",
-      "uid": "tbf3tsbhtkhbgi88ndkt",
+      "uid": "tbf56iebln7rh1kjspoe",
       "name": "my05-infra101",
       "status": "Running:3 (R:3/3)",
       "statusCount": {
@@ -2746,17 +4236,16 @@
       },
       "targetStatus": "None",
       "targetAction": "None",
-      "installMonAgent": "",
       "configureCloudAdaptiveNetwork": "",
       "label": {
-        "cm-migrated-at": "2026-11-03T08:55:25Z",
+        "cm-migrated-at": "2026-11-25T09:16:32Z",
         "sys.description": "NLB-aware recommended infrastructure for cloud migration",
         "sys.id": "my05-infra101",
         "sys.labelType": "infra",
         "sys.manager": "cb-tumblebug",
         "sys.name": "my05-infra101",
         "sys.namespace": "mig01",
-        "sys.uid": "tbf3tsbhtkhbgi88ndkt"
+        "sys.uid": "tbf56iebln7rh1kjspoe"
       },
       "systemLabel": "",
       "systemMessage": null,
@@ -2764,118 +4253,10 @@
       "node": [
         {
           "resourceType": "node",
-          "id": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "uid": "tbmmh0ojen41pao6hsik",
-          "cspResourceName": "tbmmh0ojen41pao6hsik",
-          "cspResourceId": "ins-7h4dbejf",
-          "name": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "nodeGroupId": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.566536,
-            "longitude": 126.977966
-          },
-          "status": "Running",
-          "targetStatus": "None",
-          "targetAction": "None",
-          "monAgentStatus": "notInstalled",
-          "networkAgentStatus": "",
-          "systemMessage": "Running==Running",
-          "createdTime": "2026-11-03 08:55:56",
-          "label": {
-            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
-            "sys.connectionName": "tencent-ap-seoul",
-            "sys.createdTime": "2026-11-03 08:55:56",
-            "sys.cspResourceId": "ins-7h4dbejf",
-            "sys.cspResourceName": "tbmmh0ojen41pao6hsik",
-            "sys.id": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "sys.infraId": "my05-infra101",
-            "sys.labelType": "node",
-            "sys.manager": "cb-tumblebug",
-            "sys.name": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "sys.namespace": "mig01",
-            "sys.nodeGroupId": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624",
-            "sys.subnetId": "my05-mig-subnet-01",
-            "sys.uid": "tbmmh0ojen41pao6hsik",
-            "sys.vNetId": "my05-mig-vnet-01"
-          },
-          "description": "",
-          "region": {
-            "region": "ap-seoul",
-            "zone": "ap-seoul-1"
-          },
-          "publicIP": "101.33.73.9",
-          "sshPort": 22,
-          "publicDNS": "",
-          "privateIP": "10.0.1.13",
-          "privateDNS": "",
-          "rootDiskType": "CLOUD_HSSD",
-          "rootDiskSize": 50,
-          "rootDeviceName": "",
-          "connectionName": "tencent-ap-seoul",
-          "connectionConfig": {
-            "configName": "tencent-ap-seoul",
-            "providerName": "tencent",
-            "driverName": "tencent-driver-v1.0.so",
-            "credentialName": "tencent",
-            "credentialHolder": "admin",
-            "regionZoneInfoName": "tencent-ap-seoul",
-            "regionZoneInfo": {
-              "assignedRegion": "ap-seoul",
-              "assignedZone": "ap-seoul-1"
-            },
-            "regionDetail": {
-              "regionId": "ap-seoul",
-              "regionName": "ap-seoul",
-              "description": "Seoul",
-              "location": {
-                "display": "South Korea (Seoul)",
-                "latitude": 37.566536,
-                "longitude": 126.977966
-              },
-              "zones": [
-                "ap-seoul-1",
-                "ap-seoul-2"
-              ]
-            },
-            "regionRepresentative": true,
-            "verified": true
-          },
-          "specId": "tencent+ap-seoul+sa5.medium2",
-          "cspSpecName": "SA5.MEDIUM2",
-          "spec": {
-            "cspSpecName": "SA5.MEDIUM2",
-            "vCPU": 2,
-            "memoryGiB": 2,
-            "costPerHour": 0.06
-          },
-          "imageId": "img-7rotv4ux",
-          "cspImageName": "img-7rotv4ux",
-          "image": {
-            "resourceType": "image",
-            "cspImageName": "img-7rotv4ux",
-            "osType": "Ubuntu 22.04",
-            "osArchitecture": "x86_64",
-            "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI"
-          },
-          "vNetId": "my05-mig-vnet-01",
-          "cspVNetId": "vpc-6sjytz4a",
-          "subnetId": "my05-mig-subnet-01",
-          "cspSubnetId": "subnet-1poy0xlj",
-          "networkInterface": "eni-6e62gb9c",
-          "securityGroupIds": [
-            "my05-mig-sg-02"
-          ],
-          "dataDiskIds": null,
-          "sshKeyId": "my05-mig-sshkey-01",
-          "cspSshKeyId": "skey-ofv7yi59"
-        },
-        {
-          "resourceType": "node",
           "id": "my05-ng-influxdb-back-1",
-          "uid": "tbs6a4suvroi915pj8md",
-          "cspResourceName": "tbs6a4suvroi915pj8md",
-          "cspResourceId": "ins-ncurja61",
+          "uid": "tb9q3als393k50fpj5ps",
+          "cspResourceName": "tb9q3als393k50fpj5ps",
+          "cspResourceId": "ins-fxa70pv9",
           "name": "my05-ng-influxdb-back-1",
           "nodeGroupId": "my05-ng-influxdb-back",
           "location": {
@@ -2886,17 +4267,16 @@
           "status": "Running",
           "targetStatus": "None",
           "targetAction": "None",
-          "monAgentStatus": "notInstalled",
           "networkAgentStatus": "",
           "systemMessage": "Running==Running",
-          "createdTime": "2026-11-03 08:55:54",
+          "createdTime": "2026-11-25 09:16:58",
           "label": {
             "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "nlbBackend": "influxdb_back",
             "sys.connectionName": "tencent-ap-seoul",
-            "sys.createdTime": "2026-11-03 08:55:54",
-            "sys.cspResourceId": "ins-ncurja61",
-            "sys.cspResourceName": "tbs6a4suvroi915pj8md",
+            "sys.createdTime": "2026-11-25 09:16:58",
+            "sys.cspResourceId": "ins-fxa70pv9",
+            "sys.cspResourceName": "tb9q3als393k50fpj5ps",
             "sys.id": "my05-ng-influxdb-back-1",
             "sys.infraId": "my05-infra101",
             "sys.labelType": "node",
@@ -2905,124 +4285,15 @@
             "sys.namespace": "mig01",
             "sys.nodeGroupId": "my05-ng-influxdb-back",
             "sys.subnetId": "my05-mig-subnet-01",
-            "sys.uid": "tbs6a4suvroi915pj8md",
+            "sys.uid": "tb9q3als393k50fpj5ps",
             "sys.vNetId": "my05-mig-vnet-01"
           },
           "description": "",
           "region": {
             "region": "ap-seoul",
-            "zone": "ap-seoul-1"
+            "zone": "ap-seoul-2"
           },
-          "publicIP": "43.133.92.116",
-          "sshPort": 22,
-          "publicDNS": "",
-          "privateIP": "10.0.1.12",
-          "privateDNS": "",
-          "rootDiskType": "CLOUD_HSSD",
-          "rootDiskSize": 50,
-          "rootDeviceName": "",
-          "connectionName": "tencent-ap-seoul",
-          "connectionConfig": {
-            "configName": "tencent-ap-seoul",
-            "providerName": "tencent",
-            "driverName": "tencent-driver-v1.0.so",
-            "credentialName": "tencent",
-            "credentialHolder": "admin",
-            "regionZoneInfoName": "tencent-ap-seoul",
-            "regionZoneInfo": {
-              "assignedRegion": "ap-seoul",
-              "assignedZone": "ap-seoul-1"
-            },
-            "regionDetail": {
-              "regionId": "ap-seoul",
-              "regionName": "ap-seoul",
-              "description": "Seoul",
-              "location": {
-                "display": "South Korea (Seoul)",
-                "latitude": 37.566536,
-                "longitude": 126.977966
-              },
-              "zones": [
-                "ap-seoul-1",
-                "ap-seoul-2"
-              ]
-            },
-            "regionRepresentative": true,
-            "verified": true
-          },
-          "specId": "tencent+ap-seoul+sa5.large16",
-          "cspSpecName": "SA5.LARGE16",
-          "spec": {
-            "cspSpecName": "SA5.LARGE16",
-            "vCPU": 4,
-            "memoryGiB": 16,
-            "costPerHour": 0.22
-          },
-          "imageId": "img-7rotv4ux",
-          "cspImageName": "img-7rotv4ux",
-          "image": {
-            "resourceType": "image",
-            "cspImageName": "img-7rotv4ux",
-            "osType": "Ubuntu 22.04",
-            "osArchitecture": "x86_64",
-            "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI"
-          },
-          "vNetId": "my05-mig-vnet-01",
-          "cspVNetId": "vpc-6sjytz4a",
-          "subnetId": "my05-mig-subnet-01",
-          "cspSubnetId": "subnet-1poy0xlj",
-          "networkInterface": "eni-gcjn4nl0",
-          "securityGroupIds": [
-            "my05-mig-sg-01"
-          ],
-          "dataDiskIds": null,
-          "sshKeyId": "my05-mig-sshkey-01",
-          "cspSshKeyId": "skey-ofv7yi59"
-        },
-        {
-          "resourceType": "node",
-          "id": "my05-ng-influxdb-back-2",
-          "uid": "tbu8ptqpubtv73mdejs5",
-          "cspResourceName": "tbu8ptqpubtv73mdejs5",
-          "cspResourceId": "ins-2uveewfz",
-          "name": "my05-ng-influxdb-back-2",
-          "nodeGroupId": "my05-ng-influxdb-back",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.566536,
-            "longitude": 126.977966
-          },
-          "status": "Running",
-          "targetStatus": "None",
-          "targetAction": "None",
-          "monAgentStatus": "notInstalled",
-          "networkAgentStatus": "",
-          "systemMessage": "Running==Running",
-          "createdTime": "2026-11-03 08:56:01",
-          "label": {
-            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
-            "nlbBackend": "influxdb_back",
-            "sys.connectionName": "tencent-ap-seoul",
-            "sys.createdTime": "2026-11-03 08:56:01",
-            "sys.cspResourceId": "ins-2uveewfz",
-            "sys.cspResourceName": "tbu8ptqpubtv73mdejs5",
-            "sys.id": "my05-ng-influxdb-back-2",
-            "sys.infraId": "my05-infra101",
-            "sys.labelType": "node",
-            "sys.manager": "cb-tumblebug",
-            "sys.name": "my05-ng-influxdb-back-2",
-            "sys.namespace": "mig01",
-            "sys.nodeGroupId": "my05-ng-influxdb-back",
-            "sys.subnetId": "my05-mig-subnet-01",
-            "sys.uid": "tbu8ptqpubtv73mdejs5",
-            "sys.vNetId": "my05-mig-vnet-01"
-          },
-          "description": "",
-          "region": {
-            "region": "ap-seoul",
-            "zone": "ap-seoul-1"
-          },
-          "publicIP": "43.166.14.150",
+          "publicIP": "43.166.24.5",
           "sshPort": 22,
           "publicDNS": "",
           "privateIP": "10.0.1.2",
@@ -3067,26 +4338,551 @@
             "memoryGiB": 16,
             "costPerHour": 0.22
           },
-          "imageId": "img-7rotv4ux",
-          "cspImageName": "img-7rotv4ux",
+          "imageId": "img-487zeit5",
+          "cspImageName": "img-487zeit5",
           "image": {
             "resourceType": "image",
-            "cspImageName": "img-7rotv4ux",
+            "cspImageName": "img-487zeit5",
             "osType": "Ubuntu 22.04",
             "osArchitecture": "x86_64",
-            "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI"
+            "osDistribution": "Ubuntu Server 22.04 LTS 64bit"
           },
           "vNetId": "my05-mig-vnet-01",
-          "cspVNetId": "vpc-6sjytz4a",
+          "cspVNetId": "vpc-p2o55rts",
           "subnetId": "my05-mig-subnet-01",
-          "cspSubnetId": "subnet-1poy0xlj",
-          "networkInterface": "eni-6laeqnew",
+          "cspSubnetId": "subnet-4kcu8oj9",
+          "networkInterface": "eni-n9fgsyh0",
           "securityGroupIds": [
             "my05-mig-sg-01"
           ],
           "dataDiskIds": null,
           "sshKeyId": "my05-mig-sshkey-01",
-          "cspSshKeyId": "skey-ofv7yi59"
+          "cspSshKeyId": "skey-b1dxxqvp"
+        },
+        {
+          "resourceType": "node",
+          "id": "my05-ng-influxdb-back-2",
+          "uid": "tb1qavefj8k9l3vjdh1q",
+          "cspResourceName": "tb1qavefj8k9l3vjdh1q",
+          "cspResourceId": "ins-6t8n96er",
+          "name": "my05-ng-influxdb-back-2",
+          "nodeGroupId": "my05-ng-influxdb-back",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.566536,
+            "longitude": 126.977966
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:16:58",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back",
+            "sys.connectionName": "tencent-ap-seoul",
+            "sys.createdTime": "2026-11-25 09:16:58",
+            "sys.cspResourceId": "ins-6t8n96er",
+            "sys.cspResourceName": "tb1qavefj8k9l3vjdh1q",
+            "sys.id": "my05-ng-influxdb-back-2",
+            "sys.infraId": "my05-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my05-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my05-ng-influxdb-back",
+            "sys.subnetId": "my05-mig-subnet-01",
+            "sys.uid": "tb1qavefj8k9l3vjdh1q",
+            "sys.vNetId": "my05-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-seoul",
+            "zone": "ap-seoul-2"
+          },
+          "publicIP": "43.155.212.36",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.6",
+          "privateDNS": "",
+          "rootDiskType": "CLOUD_HSSD",
+          "rootDiskSize": 50,
+          "rootDeviceName": "",
+          "connectionName": "tencent-ap-seoul",
+          "connectionConfig": {
+            "configName": "tencent-ap-seoul",
+            "providerName": "tencent",
+            "driverName": "tencent-driver-v1.0.so",
+            "credentialName": "tencent",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "tencent-ap-seoul",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-seoul",
+              "assignedZone": "ap-seoul-1"
+            },
+            "regionDetail": {
+              "regionId": "ap-seoul",
+              "regionName": "ap-seoul",
+              "description": "Seoul",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.566536,
+                "longitude": 126.977966
+              },
+              "zones": [
+                "ap-seoul-1",
+                "ap-seoul-2"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "tencent+ap-seoul+sa5.large16",
+          "cspSpecName": "SA5.LARGE16",
+          "spec": {
+            "cspSpecName": "SA5.LARGE16",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.22
+          },
+          "imageId": "img-487zeit5",
+          "cspImageName": "img-487zeit5",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "img-487zeit5",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Server 22.04 LTS 64bit"
+          },
+          "vNetId": "my05-mig-vnet-01",
+          "cspVNetId": "vpc-p2o55rts",
+          "subnetId": "my05-mig-subnet-01",
+          "cspSubnetId": "subnet-4kcu8oj9",
+          "networkInterface": "eni-ewr48fqa",
+          "securityGroupIds": [
+            "my05-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my05-mig-sshkey-01",
+          "cspSshKeyId": "skey-b1dxxqvp"
+        },
+        {
+          "resourceType": "node",
+          "id": "my05-ng-ip-10-0-1-30-62161624-1",
+          "uid": "tb5qb43uh91ckbefruhm",
+          "cspResourceName": "tb5qb43uh91ckbefruhm",
+          "cspResourceId": "ins-px4j8x8x",
+          "name": "my05-ng-ip-10-0-1-30-62161624-1",
+          "nodeGroupId": "my05-ng-ip-10-0-1-30-62161624",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.566536,
+            "longitude": 126.977966
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "networkAgentStatus": "",
+          "systemMessage": "Running==Running",
+          "createdTime": "2026-11-25 09:17:01",
+          "label": {
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.connectionName": "tencent-ap-seoul",
+            "sys.createdTime": "2026-11-25 09:17:01",
+            "sys.cspResourceId": "ins-px4j8x8x",
+            "sys.cspResourceName": "tb5qb43uh91ckbefruhm",
+            "sys.id": "my05-ng-ip-10-0-1-30-62161624-1",
+            "sys.infraId": "my05-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my05-ng-ip-10-0-1-30-62161624-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my05-ng-ip-10-0-1-30-62161624",
+            "sys.subnetId": "my05-mig-subnet-01",
+            "sys.uid": "tb5qb43uh91ckbefruhm",
+            "sys.vNetId": "my05-mig-vnet-01"
+          },
+          "description": "",
+          "region": {
+            "region": "ap-seoul",
+            "zone": "ap-seoul-2"
+          },
+          "publicIP": "43.155.211.124",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.11",
+          "privateDNS": "",
+          "rootDiskType": "CLOUD_HSSD",
+          "rootDiskSize": 50,
+          "rootDeviceName": "",
+          "connectionName": "tencent-ap-seoul",
+          "connectionConfig": {
+            "configName": "tencent-ap-seoul",
+            "providerName": "tencent",
+            "driverName": "tencent-driver-v1.0.so",
+            "credentialName": "tencent",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "tencent-ap-seoul",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-seoul",
+              "assignedZone": "ap-seoul-1"
+            },
+            "regionDetail": {
+              "regionId": "ap-seoul",
+              "regionName": "ap-seoul",
+              "description": "Seoul",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.566536,
+                "longitude": 126.977966
+              },
+              "zones": [
+                "ap-seoul-1",
+                "ap-seoul-2"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "tencent+ap-seoul+sa5.medium2",
+          "cspSpecName": "SA5.MEDIUM2",
+          "spec": {
+            "cspSpecName": "SA5.MEDIUM2",
+            "vCPU": 2,
+            "memoryGiB": 2,
+            "costPerHour": 0.06
+          },
+          "imageId": "img-487zeit5",
+          "cspImageName": "img-487zeit5",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "img-487zeit5",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Server 22.04 LTS 64bit"
+          },
+          "vNetId": "my05-mig-vnet-01",
+          "cspVNetId": "vpc-p2o55rts",
+          "subnetId": "my05-mig-subnet-01",
+          "cspSubnetId": "subnet-4kcu8oj9",
+          "networkInterface": "eni-hs3bmg2o",
+          "securityGroupIds": [
+            "my05-mig-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my05-mig-sshkey-01",
+          "cspSshKeyId": "skey-b1dxxqvp"
+        }
+      ],
+      "newNodeList": null
+    },
+    {
+      "resourceType": "infra",
+      "id": "my06-infra101",
+      "uid": "tbb0t27stpupc73nksn6",
+      "name": "my06-infra101",
+      "status": "Creating:3 (R:0/3)",
+      "statusCount": {
+        "countTotal": 3,
+        "countCreating": 3,
+        "countRunning": 0,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countRegistering": 0,
+        "countReconciling": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "Running",
+      "targetAction": "Create",
+      "configureCloudAdaptiveNetwork": "",
+      "label": null,
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "NLB-aware recommended infrastructure for cloud migration",
+      "node": [
+        {
+          "resourceType": "node",
+          "id": "my06-ng-influxdb-back-1",
+          "uid": "tbrec6bj4qkpctso5mci",
+          "name": "my06-ng-influxdb-back-1",
+          "nodeGroupId": "my06-ng-influxdb-back",
+          "location": {
+            "display": "Australia (Sydney)",
+            "latitude": -33.86882,
+            "longitude": 151.209296
+          },
+          "status": "Creating",
+          "targetStatus": "Running",
+          "targetAction": "Create",
+          "networkAgentStatus": "",
+          "systemMessage": "",
+          "createdTime": "",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back"
+          },
+          "description": "",
+          "region": {
+            "region": "au-syd",
+            "zone": "au-syd-1"
+          },
+          "publicIP": "",
+          "sshPort": 0,
+          "publicDNS": "",
+          "privateIP": "",
+          "privateDNS": "",
+          "rootDiskType": "",
+          "rootDiskSize": 100,
+          "rootDeviceName": "",
+          "connectionName": "ibm-au-syd",
+          "connectionConfig": {
+            "configName": "ibm-au-syd",
+            "providerName": "ibm",
+            "driverName": "ibm-driver-v1.0.so",
+            "credentialName": "ibm",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "ibm-au-syd",
+            "regionZoneInfo": {
+              "assignedRegion": "au-syd",
+              "assignedZone": "au-syd-1"
+            },
+            "regionDetail": {
+              "regionId": "au-syd",
+              "regionName": "au-syd",
+              "description": "Sydney (Australia)",
+              "location": {
+                "display": "Australia (Sydney)",
+                "latitude": -33.86882,
+                "longitude": 151.209296
+              },
+              "zones": [
+                "au-syd-1",
+                "au-syd-2",
+                "au-syd-3"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "ibm+au-syd+bx2-4x16",
+          "cspSpecName": "bx2-4x16",
+          "spec": {
+            "cspSpecName": "bx2-4x16",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.247
+          },
+          "imageId": "r026-6245bce7-1353-421f-9eb8-47aa0ed18c50",
+          "cspImageName": "r026-6245bce7-1353-421f-9eb8-47aa0ed18c50",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "r026-6245bce7-1353-421f-9eb8-47aa0ed18c50",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
+          },
+          "vNetId": "my06-mig-vnet-01",
+          "cspVNetId": "",
+          "subnetId": "my06-mig-subnet-01",
+          "cspSubnetId": "",
+          "networkInterface": "",
+          "securityGroupIds": [
+            "my06-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my06-mig-sshkey-01",
+          "cspSshKeyId": ""
+        },
+        {
+          "resourceType": "node",
+          "id": "my06-ng-influxdb-back-2",
+          "uid": "tbklm8p51kb4oqdr8o4f",
+          "name": "my06-ng-influxdb-back-2",
+          "nodeGroupId": "my06-ng-influxdb-back",
+          "location": {
+            "display": "Australia (Sydney)",
+            "latitude": -33.86882,
+            "longitude": 151.209296
+          },
+          "status": "Creating",
+          "targetStatus": "Running",
+          "targetAction": "Create",
+          "networkAgentStatus": "",
+          "systemMessage": "",
+          "createdTime": "",
+          "label": {
+            "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nlbBackend": "influxdb_back"
+          },
+          "description": "",
+          "region": {
+            "region": "au-syd",
+            "zone": "au-syd-1"
+          },
+          "publicIP": "",
+          "sshPort": 0,
+          "publicDNS": "",
+          "privateIP": "",
+          "privateDNS": "",
+          "rootDiskType": "",
+          "rootDiskSize": 100,
+          "rootDeviceName": "",
+          "connectionName": "ibm-au-syd",
+          "connectionConfig": {
+            "configName": "ibm-au-syd",
+            "providerName": "ibm",
+            "driverName": "ibm-driver-v1.0.so",
+            "credentialName": "ibm",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "ibm-au-syd",
+            "regionZoneInfo": {
+              "assignedRegion": "au-syd",
+              "assignedZone": "au-syd-1"
+            },
+            "regionDetail": {
+              "regionId": "au-syd",
+              "regionName": "au-syd",
+              "description": "Sydney (Australia)",
+              "location": {
+                "display": "Australia (Sydney)",
+                "latitude": -33.86882,
+                "longitude": 151.209296
+              },
+              "zones": [
+                "au-syd-1",
+                "au-syd-2",
+                "au-syd-3"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "ibm+au-syd+bx2-4x16",
+          "cspSpecName": "bx2-4x16",
+          "spec": {
+            "cspSpecName": "bx2-4x16",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.247
+          },
+          "imageId": "r026-6245bce7-1353-421f-9eb8-47aa0ed18c50",
+          "cspImageName": "r026-6245bce7-1353-421f-9eb8-47aa0ed18c50",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "r026-6245bce7-1353-421f-9eb8-47aa0ed18c50",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
+          },
+          "vNetId": "my06-mig-vnet-01",
+          "cspVNetId": "",
+          "subnetId": "my06-mig-subnet-01",
+          "cspSubnetId": "",
+          "networkInterface": "",
+          "securityGroupIds": [
+            "my06-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my06-mig-sshkey-01",
+          "cspSshKeyId": ""
+        },
+        {
+          "resourceType": "node",
+          "id": "my06-ng-ip-10-0-1-30-62161624-1",
+          "uid": "tbo141372eh8ff0pdrif",
+          "name": "my06-ng-ip-10-0-1-30-62161624-1",
+          "nodeGroupId": "my06-ng-ip-10-0-1-30-62161624",
+          "location": {
+            "display": "Australia (Sydney)",
+            "latitude": -33.86882,
+            "longitude": 151.209296
+          },
+          "status": "Creating",
+          "targetStatus": "Running",
+          "targetAction": "Create",
+          "networkAgentStatus": "",
+          "systemMessage": "",
+          "createdTime": "",
+          "label": {
+            "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"
+          },
+          "description": "",
+          "region": {
+            "region": "au-syd",
+            "zone": "au-syd-1"
+          },
+          "publicIP": "",
+          "sshPort": 0,
+          "publicDNS": "",
+          "privateIP": "",
+          "privateDNS": "",
+          "rootDiskType": "",
+          "rootDiskSize": 100,
+          "rootDeviceName": "",
+          "connectionName": "ibm-au-syd",
+          "connectionConfig": {
+            "configName": "ibm-au-syd",
+            "providerName": "ibm",
+            "driverName": "ibm-driver-v1.0.so",
+            "credentialName": "ibm",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "ibm-au-syd",
+            "regionZoneInfo": {
+              "assignedRegion": "au-syd",
+              "assignedZone": "au-syd-1"
+            },
+            "regionDetail": {
+              "regionId": "au-syd",
+              "regionName": "au-syd",
+              "description": "Sydney (Australia)",
+              "location": {
+                "display": "Australia (Sydney)",
+                "latitude": -33.86882,
+                "longitude": 151.209296
+              },
+              "zones": [
+                "au-syd-1",
+                "au-syd-2",
+                "au-syd-3"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "ibm+au-syd+cx2-2x4",
+          "cspSpecName": "cx2-2x4",
+          "spec": {
+            "cspSpecName": "cx2-2x4",
+            "vCPU": 2,
+            "memoryGiB": 4,
+            "costPerHour": 0.109
+          },
+          "imageId": "r026-6245bce7-1353-421f-9eb8-47aa0ed18c50",
+          "cspImageName": "r026-6245bce7-1353-421f-9eb8-47aa0ed18c50",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "r026-6245bce7-1353-421f-9eb8-47aa0ed18c50",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
+          },
+          "vNetId": "my06-mig-vnet-01",
+          "cspVNetId": "",
+          "subnetId": "my06-mig-subnet-01",
+          "cspSubnetId": "",
+          "networkInterface": "",
+          "securityGroupIds": [
+            "my06-mig-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my06-mig-sshkey-01",
+          "cspSshKeyId": ""
         }
       ],
       "newNodeList": null
@@ -3107,7 +4903,7 @@
 #### 5.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
-- **IDs**: [my05-infra101]
+- **IDs**: [my01-infra101 my02-infra101 my03-infra101 my04-infra101 my05-infra101 my06-infra101]
 
 ### Test Case 6: Get a specific infra
 
@@ -3127,7 +4923,7 @@
 {
   "resourceType": "infra",
   "id": "my05-infra101",
-  "uid": "tbf3tsbhtkhbgi88ndkt",
+  "uid": "tbf56iebln7rh1kjspoe",
   "name": "my05-infra101",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
@@ -3147,17 +4943,16 @@
   },
   "targetStatus": "None",
   "targetAction": "None",
-  "installMonAgent": "",
   "configureCloudAdaptiveNetwork": "",
   "label": {
-    "cm-migrated-at": "2026-11-03T08:55:25Z",
+    "cm-migrated-at": "2026-11-25T09:16:32Z",
     "sys.description": "NLB-aware recommended infrastructure for cloud migration",
     "sys.id": "my05-infra101",
     "sys.labelType": "infra",
     "sys.manager": "cb-tumblebug",
     "sys.name": "my05-infra101",
     "sys.namespace": "mig01",
-    "sys.uid": "tbf3tsbhtkhbgi88ndkt"
+    "sys.uid": "tbf56iebln7rh1kjspoe"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -3165,12 +4960,12 @@
   "node": [
     {
       "resourceType": "node",
-      "id": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "tbmmh0ojen41pao6hsik",
-      "cspResourceName": "tbmmh0ojen41pao6hsik",
-      "cspResourceId": "ins-7h4dbejf",
-      "name": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "nodeGroupId": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624",
+      "id": "my05-ng-influxdb-back-1",
+      "uid": "tb9q3als393k50fpj5ps",
+      "cspResourceName": "tb9q3als393k50fpj5ps",
+      "cspResourceId": "ins-fxa70pv9",
+      "name": "my05-ng-influxdb-back-1",
+      "nodeGroupId": "my05-ng-influxdb-back",
       "location": {
         "display": "South Korea (Seoul)",
         "latitude": 37.566536,
@@ -3179,26 +4974,294 @@
       "status": "Running",
       "targetStatus": "None",
       "targetAction": "None",
-      "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-11-03 08:55:56",
+      "createdTime": "2026-11-25 09:16:58",
+      "label": {
+        "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "nlbBackend": "influxdb_back"
+      },
+      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
+      "region": {
+        "region": "ap-seoul",
+        "zone": "ap-seoul-2"
+      },
+      "publicIP": "43.166.24.5",
+      "sshPort": 22,
+      "publicDNS": "",
+      "privateIP": "10.0.1.2",
+      "privateDNS": "",
+      "rootDiskType": "CLOUD_HSSD",
+      "rootDiskSize": 50,
+      "rootDeviceName": "disk-2im45s5z",
+      "connectionName": "tencent-ap-seoul",
+      "connectionConfig": {
+        "configName": "tencent-ap-seoul",
+        "providerName": "tencent",
+        "driverName": "tencent-driver-v1.0.so",
+        "credentialName": "tencent",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "tencent-ap-seoul",
+        "regionZoneInfo": {
+          "assignedRegion": "ap-seoul",
+          "assignedZone": "ap-seoul-1"
+        },
+        "regionDetail": {
+          "regionId": "ap-seoul",
+          "regionName": "ap-seoul",
+          "description": "Seoul",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.566536,
+            "longitude": 126.977966
+          },
+          "zones": [
+            "ap-seoul-1",
+            "ap-seoul-2"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "tencent+ap-seoul+sa5.large16",
+      "cspSpecName": "SA5.LARGE16",
+      "spec": {
+        "cspSpecName": "SA5.LARGE16",
+        "vCPU": 4,
+        "memoryGiB": 16,
+        "costPerHour": 0.22
+      },
+      "imageId": "img-487zeit5",
+      "cspImageName": "img-487zeit5",
+      "image": {
+        "resourceType": "image",
+        "cspImageName": "img-487zeit5",
+        "osType": "Ubuntu 22.04",
+        "osArchitecture": "x86_64",
+        "osDistribution": "Ubuntu Server 22.04 LTS 64bit"
+      },
+      "vNetId": "my05-mig-vnet-01",
+      "cspVNetId": "vpc-p2o55rts",
+      "subnetId": "my05-mig-subnet-01",
+      "cspSubnetId": "subnet-4kcu8oj9",
+      "networkInterface": "eni-n9fgsyh0",
+      "securityGroupIds": [
+        "my05-mig-sg-01"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "my05-mig-sshkey-01",
+      "cspSshKeyId": "skey-b1dxxqvp",
+      "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHV6E7PfmSRS2wIWPxnZhT2dhsWg4m/r0J6ewgOVl9h2bTwJ9tZOm0NV2gRuDR0b+JMSRphR0IdqIKrNfebYb58=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:90S5IKyVnwzv0YTwQ7GitYoRqhkNIlKD+rnI7dIB9lY",
+        "firstUsedAt": "2026-11-25T09:17:23Z"
+      },
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Completed",
+          "startedTime": "2026-11-25T09:17:01Z",
+          "completedTime": "2026-11-25T09:17:45Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "\n",
+          "stderr": "\n",
+          "repeatCount": 2,
+          "lastOccurredTime": "2026-11-25T09:17:54Z"
+        },
+        {
+          "index": 2,
+          "xRequestId": "ps-my05-infra101-tbv3igrj2t6jh9qrapf6",
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2026-11-25T09:17:56Z",
+          "completedTime": "2026-11-25T09:17:57Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux VM-1-2-ubuntu 5.15.0-190-generic #200-Ubuntu SMP Fri Aug 7 15:06:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ]
+    },
+    {
+      "resourceType": "node",
+      "id": "my05-ng-influxdb-back-2",
+      "uid": "tb1qavefj8k9l3vjdh1q",
+      "cspResourceName": "tb1qavefj8k9l3vjdh1q",
+      "cspResourceId": "ins-6t8n96er",
+      "name": "my05-ng-influxdb-back-2",
+      "nodeGroupId": "my05-ng-influxdb-back",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.566536,
+        "longitude": 126.977966
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2026-11-25 09:16:58",
+      "label": {
+        "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "nlbBackend": "influxdb_back"
+      },
+      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
+      "region": {
+        "region": "ap-seoul",
+        "zone": "ap-seoul-2"
+      },
+      "publicIP": "43.155.212.36",
+      "sshPort": 22,
+      "publicDNS": "",
+      "privateIP": "10.0.1.6",
+      "privateDNS": "",
+      "rootDiskType": "CLOUD_HSSD",
+      "rootDiskSize": 50,
+      "rootDeviceName": "disk-63k1iffj",
+      "connectionName": "tencent-ap-seoul",
+      "connectionConfig": {
+        "configName": "tencent-ap-seoul",
+        "providerName": "tencent",
+        "driverName": "tencent-driver-v1.0.so",
+        "credentialName": "tencent",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "tencent-ap-seoul",
+        "regionZoneInfo": {
+          "assignedRegion": "ap-seoul",
+          "assignedZone": "ap-seoul-1"
+        },
+        "regionDetail": {
+          "regionId": "ap-seoul",
+          "regionName": "ap-seoul",
+          "description": "Seoul",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.566536,
+            "longitude": 126.977966
+          },
+          "zones": [
+            "ap-seoul-1",
+            "ap-seoul-2"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "tencent+ap-seoul+sa5.large16",
+      "cspSpecName": "SA5.LARGE16",
+      "spec": {
+        "cspSpecName": "SA5.LARGE16",
+        "vCPU": 4,
+        "memoryGiB": 16,
+        "costPerHour": 0.22
+      },
+      "imageId": "img-487zeit5",
+      "cspImageName": "img-487zeit5",
+      "image": {
+        "resourceType": "image",
+        "cspImageName": "img-487zeit5",
+        "osType": "Ubuntu 22.04",
+        "osArchitecture": "x86_64",
+        "osDistribution": "Ubuntu Server 22.04 LTS 64bit"
+      },
+      "vNetId": "my05-mig-vnet-01",
+      "cspVNetId": "vpc-p2o55rts",
+      "subnetId": "my05-mig-subnet-01",
+      "cspSubnetId": "subnet-4kcu8oj9",
+      "networkInterface": "eni-ewr48fqa",
+      "securityGroupIds": [
+        "my05-mig-sg-01"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "my05-mig-sshkey-01",
+      "cspSshKeyId": "skey-b1dxxqvp",
+      "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBI6bwF5wvoPholhDX6L0Qb0GWZFl7/zfU7sBOT5lcU25hkTnNddwXgLArgdgdH7p56mmYNZXlWRIGMpaPc4igmg=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:J30a2XvKod7NwRfHiGdlJ6F7WABCW2Xq8dfwVSCC5mA",
+        "firstUsedAt": "2026-11-25T09:17:29Z"
+      },
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Failed",
+          "startedTime": "2026-11-25T09:17:01Z",
+          "completedTime": "2026-11-25T09:17:29Z",
+          "elapsedTime": 28,
+          "resultSummary": "Command execution failed",
+          "errorMessage": "SSH authentication failed. Please check: 1) private key is valid 2) user 'cb-user' exists on target 3) authorized_keys is properly configured"
+        },
+        {
+          "index": 2,
+          "commandRequested": "true",
+          "commandExecuted": "true",
+          "status": "Completed",
+          "startedTime": "2026-11-25T09:17:53Z",
+          "completedTime": "2026-11-25T09:17:56Z",
+          "elapsedTime": 3,
+          "resultSummary": "Command executed successfully",
+          "stdout": "\n",
+          "stderr": "\n"
+        },
+        {
+          "index": 3,
+          "xRequestId": "ps-my05-infra101-tbv3igrj2t6jh9qrapf6",
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2026-11-25T09:17:56Z",
+          "completedTime": "2026-11-25T09:17:57Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux VM-1-6-ubuntu 5.15.0-190-generic #200-Ubuntu SMP Fri Aug 7 15:06:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ]
+    },
+    {
+      "resourceType": "node",
+      "id": "my05-ng-ip-10-0-1-30-62161624-1",
+      "uid": "tb5qb43uh91ckbefruhm",
+      "cspResourceName": "tb5qb43uh91ckbefruhm",
+      "cspResourceId": "ins-px4j8x8x",
+      "name": "my05-ng-ip-10-0-1-30-62161624-1",
+      "nodeGroupId": "my05-ng-ip-10-0-1-30-62161624",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.566536,
+        "longitude": 126.977966
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2026-11-25 09:17:01",
       "label": {
         "cm-source-machine-ids": "ec268ed7-821e-9d73-e79f-961262161624"
       },
       "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
       "region": {
         "region": "ap-seoul",
-        "zone": "ap-seoul-1"
+        "zone": "ap-seoul-2"
       },
-      "publicIP": "101.33.73.9",
+      "publicIP": "43.155.211.124",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.13",
+      "privateIP": "10.0.1.11",
       "privateDNS": "",
       "rootDiskType": "CLOUD_HSSD",
       "rootDiskSize": 50,
-      "rootDeviceName": "disk-evs80xkr",
+      "rootDeviceName": "disk-h28hwqkb",
       "connectionName": "tencent-ap-seoul",
       "connectionConfig": {
         "configName": "tencent-ap-seoul",
@@ -3236,172 +5299,32 @@
         "memoryGiB": 2,
         "costPerHour": 0.06
       },
-      "imageId": "img-7rotv4ux",
-      "cspImageName": "img-7rotv4ux",
+      "imageId": "img-487zeit5",
+      "cspImageName": "img-487zeit5",
       "image": {
         "resourceType": "image",
-        "cspImageName": "img-7rotv4ux",
+        "cspImageName": "img-487zeit5",
         "osType": "Ubuntu 22.04",
         "osArchitecture": "x86_64",
-        "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI"
+        "osDistribution": "Ubuntu Server 22.04 LTS 64bit"
       },
       "vNetId": "my05-mig-vnet-01",
-      "cspVNetId": "vpc-6sjytz4a",
+      "cspVNetId": "vpc-p2o55rts",
       "subnetId": "my05-mig-subnet-01",
-      "cspSubnetId": "subnet-1poy0xlj",
-      "networkInterface": "eni-6e62gb9c",
+      "cspSubnetId": "subnet-4kcu8oj9",
+      "networkInterface": "eni-hs3bmg2o",
       "securityGroupIds": [
         "my05-mig-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my05-mig-sshkey-01",
-      "cspSshKeyId": "skey-ofv7yi59",
+      "cspSshKeyId": "skey-b1dxxqvp",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBDVQAhryPeAzpaXy9qRZ8FMdJLaYqmdCMS82MsqKspzxteX/YsklowDQYB4efjzxUBYqmmv6x5x1uLhng5VhEuo=",
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBM21x3p2YqAGsRudxoPTX3h5NTAqYJzqyuO2N0rGdjgdZKUMnIw+yjiljXoWGz6EHXPPm336OVzxjXzaY8h+iOs=",
         "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:0Q2hhwHMBEEK1txJsFCcKRVAYWYYGTQbCbnPVgBt4UE",
-        "firstUsedAt": "2026-11-03T08:56:39Z"
-      },
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "true",
-          "commandExecuted": "true",
-          "status": "Failed",
-          "startedTime": "2026-11-03T08:56:01Z",
-          "completedTime": "2026-11-03T08:56:26Z",
-          "elapsedTime": 25,
-          "resultSummary": "Command execution failed",
-          "errorMessage": "failed to connect to target Node \"my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1\" at 10.0.1.13:22 (as \"cb-user\") via bastion Node \"my05-ng-influxdb-back-1\" at 43.133.92.116:22 (as \"cb-user\") after 3 attempts: [bastion] failed to establish SSH connection to bastion 43.133.92.116:22 as user \"cb-user\" (bastionNodeId=my05-ng-influxdb-back-1): ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"
-        },
-        {
-          "index": 2,
-          "commandRequested": "true",
-          "commandExecuted": "true",
-          "status": "Completed",
-          "startedTime": "2026-11-03T08:56:39Z",
-          "completedTime": "2026-11-03T08:56:40Z",
-          "elapsedTime": 1,
-          "resultSummary": "Command executed successfully",
-          "stdout": "\n",
-          "stderr": "\n"
-        },
-        {
-          "index": 3,
-          "xRequestId": "pc-my05-infra101-tb6h71qjs7l2ln9q33p1",
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2026-11-03T08:56:40Z",
-          "completedTime": "2026-11-03T08:56:41Z",
-          "elapsedTime": 1,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux VM-1-13-ubuntu 5.15.0-191-generic #201-Ubuntu SMP Fri Aug 7 18:39:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ]
-    },
-    {
-      "resourceType": "node",
-      "id": "my05-ng-influxdb-back-1",
-      "uid": "tbs6a4suvroi915pj8md",
-      "cspResourceName": "tbs6a4suvroi915pj8md",
-      "cspResourceId": "ins-ncurja61",
-      "name": "my05-ng-influxdb-back-1",
-      "nodeGroupId": "my05-ng-influxdb-back",
-      "location": {
-        "display": "South Korea (Seoul)",
-        "latitude": 37.566536,
-        "longitude": 126.977966
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2026-11-03 08:55:54",
-      "label": {
-        "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "nlbBackend": "influxdb_back"
-      },
-      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
-      "region": {
-        "region": "ap-seoul",
-        "zone": "ap-seoul-1"
-      },
-      "publicIP": "43.133.92.116",
-      "sshPort": 22,
-      "publicDNS": "",
-      "privateIP": "10.0.1.12",
-      "privateDNS": "",
-      "rootDiskType": "CLOUD_HSSD",
-      "rootDiskSize": 50,
-      "rootDeviceName": "disk-ad5w7al3",
-      "connectionName": "tencent-ap-seoul",
-      "connectionConfig": {
-        "configName": "tencent-ap-seoul",
-        "providerName": "tencent",
-        "driverName": "tencent-driver-v1.0.so",
-        "credentialName": "tencent",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "tencent-ap-seoul",
-        "regionZoneInfo": {
-          "assignedRegion": "ap-seoul",
-          "assignedZone": "ap-seoul-1"
-        },
-        "regionDetail": {
-          "regionId": "ap-seoul",
-          "regionName": "ap-seoul",
-          "description": "Seoul",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.566536,
-            "longitude": 126.977966
-          },
-          "zones": [
-            "ap-seoul-1",
-            "ap-seoul-2"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "tencent+ap-seoul+sa5.large16",
-      "cspSpecName": "SA5.LARGE16",
-      "spec": {
-        "cspSpecName": "SA5.LARGE16",
-        "vCPU": 4,
-        "memoryGiB": 16,
-        "costPerHour": 0.22
-      },
-      "imageId": "img-7rotv4ux",
-      "cspImageName": "img-7rotv4ux",
-      "image": {
-        "resourceType": "image",
-        "cspImageName": "img-7rotv4ux",
-        "osType": "Ubuntu 22.04",
-        "osArchitecture": "x86_64",
-        "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI"
-      },
-      "vNetId": "my05-mig-vnet-01",
-      "cspVNetId": "vpc-6sjytz4a",
-      "subnetId": "my05-mig-subnet-01",
-      "cspSubnetId": "subnet-1poy0xlj",
-      "networkInterface": "eni-gcjn4nl0",
-      "securityGroupIds": [
-        "my05-mig-sg-01"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "my05-mig-sshkey-01",
-      "cspSshKeyId": "skey-ofv7yi59",
-      "nodeUserName": "cb-user",
-      "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBF8TcwNVd2LZiKP4+ROrPOH7g38PqZjb3+b9ale9TjP55kWOjkVi8NzX7044uOH63ZmCrQFP851HZkYI04aUcpQ=",
-        "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:R44brYbZ1TiTOv+ZgkxyFise8lFcn9jubPPAYNw4fl8",
-        "firstUsedAt": "2026-11-03T08:56:17Z"
+        "fingerprint": "SHA256:kU80Ha65WFpwJnACSOWfioIoq/XuS/IT4g39hUWRVFU",
+        "firstUsedAt": "2026-11-25T09:17:39Z"
       },
       "commandStatus": [
         {
@@ -3409,166 +5332,26 @@
           "commandRequested": "true",
           "commandExecuted": "true",
           "status": "Completed",
-          "startedTime": "2026-11-03T08:56:01Z",
-          "completedTime": "2026-11-03T08:56:29Z",
-          "elapsedTime": 1,
+          "startedTime": "2026-11-25T09:17:01Z",
+          "completedTime": "2026-11-25T09:17:42Z",
+          "elapsedTime": 2,
           "resultSummary": "Command executed successfully",
           "stdout": "\n",
           "stderr": "\n",
           "repeatCount": 2,
-          "lastOccurredTime": "2026-11-03T08:56:40Z"
+          "lastOccurredTime": "2026-11-25T09:17:55Z"
         },
         {
           "index": 2,
-          "xRequestId": "pc-my05-infra101-tb6h71qjs7l2ln9q33p1",
+          "xRequestId": "ps-my05-infra101-tbv3igrj2t6jh9qrapf6",
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-11-03T08:56:40Z",
-          "completedTime": "2026-11-03T08:56:42Z",
-          "elapsedTime": 2,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux VM-1-12-ubuntu 5.15.0-191-generic #201-Ubuntu SMP Fri Aug 7 18:39:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ]
-    },
-    {
-      "resourceType": "node",
-      "id": "my05-ng-influxdb-back-2",
-      "uid": "tbu8ptqpubtv73mdejs5",
-      "cspResourceName": "tbu8ptqpubtv73mdejs5",
-      "cspResourceId": "ins-2uveewfz",
-      "name": "my05-ng-influxdb-back-2",
-      "nodeGroupId": "my05-ng-influxdb-back",
-      "location": {
-        "display": "South Korea (Seoul)",
-        "latitude": 37.566536,
-        "longitude": 126.977966
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2026-11-03 08:56:01",
-      "label": {
-        "cm-source-machine-ids": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "nlbBackend": "influxdb_back"
-      },
-      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=66.7%",
-      "region": {
-        "region": "ap-seoul",
-        "zone": "ap-seoul-1"
-      },
-      "publicIP": "43.166.14.150",
-      "sshPort": 22,
-      "publicDNS": "",
-      "privateIP": "10.0.1.2",
-      "privateDNS": "",
-      "rootDiskType": "CLOUD_HSSD",
-      "rootDiskSize": 50,
-      "rootDeviceName": "disk-06zi2y8n",
-      "connectionName": "tencent-ap-seoul",
-      "connectionConfig": {
-        "configName": "tencent-ap-seoul",
-        "providerName": "tencent",
-        "driverName": "tencent-driver-v1.0.so",
-        "credentialName": "tencent",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "tencent-ap-seoul",
-        "regionZoneInfo": {
-          "assignedRegion": "ap-seoul",
-          "assignedZone": "ap-seoul-1"
-        },
-        "regionDetail": {
-          "regionId": "ap-seoul",
-          "regionName": "ap-seoul",
-          "description": "Seoul",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.566536,
-            "longitude": 126.977966
-          },
-          "zones": [
-            "ap-seoul-1",
-            "ap-seoul-2"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "tencent+ap-seoul+sa5.large16",
-      "cspSpecName": "SA5.LARGE16",
-      "spec": {
-        "cspSpecName": "SA5.LARGE16",
-        "vCPU": 4,
-        "memoryGiB": 16,
-        "costPerHour": 0.22
-      },
-      "imageId": "img-7rotv4ux",
-      "cspImageName": "img-7rotv4ux",
-      "image": {
-        "resourceType": "image",
-        "cspImageName": "img-7rotv4ux",
-        "osType": "Ubuntu 22.04",
-        "osArchitecture": "x86_64",
-        "osDistribution": "Ubuntu Server 22.04 LTS 64bit UEFI"
-      },
-      "vNetId": "my05-mig-vnet-01",
-      "cspVNetId": "vpc-6sjytz4a",
-      "subnetId": "my05-mig-subnet-01",
-      "cspSubnetId": "subnet-1poy0xlj",
-      "networkInterface": "eni-6laeqnew",
-      "securityGroupIds": [
-        "my05-mig-sg-01"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "my05-mig-sshkey-01",
-      "cspSshKeyId": "skey-ofv7yi59",
-      "nodeUserName": "cb-user",
-      "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBE4WRcAiAu1JCFwmTart1ssAQ4GGfM76L1zrGqV39995D/Fr9gkfepS6UFt12OXZN/WbhZmodAB7GgYZCZOJArQ=",
-        "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:Dcg+YfpF8AZHid5AxpCI3C0ejHbDPPHP3wJy+jkZPyE",
-        "firstUsedAt": "2026-11-03T08:56:39Z"
-      },
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "true",
-          "commandExecuted": "true",
-          "status": "Failed",
-          "startedTime": "2026-11-03T08:56:01Z",
-          "completedTime": "2026-11-03T08:56:26Z",
-          "elapsedTime": 25,
-          "resultSummary": "Command execution failed",
-          "errorMessage": "failed to connect to target Node \"my05-ng-influxdb-back-2\" at 10.0.1.2:22 (as \"cb-user\") via bastion Node \"my05-ng-influxdb-back-1\" at 43.133.92.116:22 (as \"cb-user\") after 3 attempts: [bastion] failed to establish SSH connection to bastion 43.133.92.116:22 as user \"cb-user\" (bastionNodeId=my05-ng-influxdb-back-1): ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"
-        },
-        {
-          "index": 2,
-          "commandRequested": "true",
-          "commandExecuted": "true",
-          "status": "Completed",
-          "startedTime": "2026-11-03T08:56:39Z",
-          "completedTime": "2026-11-03T08:56:40Z",
+          "startedTime": "2026-11-25T09:17:56Z",
+          "completedTime": "2026-11-25T09:17:57Z",
           "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "\n",
-          "stderr": "\n"
-        },
-        {
-          "index": 3,
-          "xRequestId": "pc-my05-infra101-tb6h71qjs7l2ln9q33p1",
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2026-11-03T08:56:40Z",
-          "completedTime": "2026-11-03T08:56:41Z",
-          "elapsedTime": 1,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux VM-1-2-ubuntu 5.15.0-191-generic #201-Ubuntu SMP Fri Aug 7 18:39:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux VM-1-11-ubuntu 5.15.0-190-generic #200-Ubuntu SMP Fri Aug 7 15:06:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ]
@@ -3590,30 +5373,32 @@
         "ap-seoul"
       ],
       "nodeGroupIds": [
-        "my05-ng-ec268ed7-821e-9d73-e79f-961262161624",
-        "my05-ng-influxdb-back"
+        "my05-ng-influxdb-back",
+        "my05-ng-ip-10-0-1-30-62161624"
       ],
       "nodeIds": [
-        "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
         "my05-ng-influxdb-back-1",
-        "my05-ng-influxdb-back-2"
+        "my05-ng-influxdb-back-2",
+        "my05-ng-ip-10-0-1-30-62161624-1"
       ],
       "nodeGroupCount": 2,
       "nodeCount": 3,
-      "representativeNodeGroupId": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624",
-      "representativeNodeId": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1"
+      "representativeNodeGroupId": "my05-ng-influxdb-back",
+      "representativeNodeId": "my05-ng-influxdb-back-1"
     }
   ],
   "newNodeList": null,
-  "postCommands": [
-    {
-      "userName": "cb-user",
-      "command": [
-        "uname -a"
-      ]
-    }
-  ],
-  "postCommandResults": [
+  "postScript": {
+    "phases": [
+      {
+        "userName": "cb-user",
+        "command": [
+          "uname -a"
+        ]
+      }
+    ]
+  },
+  "postScriptResults": [
     {
       "phase": 1,
       "target": "all nodes",
@@ -3622,43 +5407,43 @@
         "results": [
           {
             "infraId": "my05-infra101",
-            "nodeId": "my05-ng-influxdb-back-2",
-            "nodeIp": "43.166.14.150",
-            "command": {
-              "0": "uname -a"
-            },
-            "stdout": {
-              "0": "Linux VM-1-2-ubuntu 5.15.0-191-generic #201-Ubuntu SMP Fri Aug 7 18:39:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-            },
-            "stderr": {
-              "0": ""
-            },
-            "error": ""
-          },
-          {
-            "infraId": "my05-infra101",
-            "nodeId": "my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "nodeIp": "101.33.73.9",
-            "command": {
-              "0": "uname -a"
-            },
-            "stdout": {
-              "0": "Linux VM-1-13-ubuntu 5.15.0-191-generic #201-Ubuntu SMP Fri Aug 7 18:39:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-            },
-            "stderr": {
-              "0": ""
-            },
-            "error": ""
-          },
-          {
-            "infraId": "my05-infra101",
             "nodeId": "my05-ng-influxdb-back-1",
-            "nodeIp": "43.133.92.116",
+            "nodeIp": "43.166.24.5",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux VM-1-12-ubuntu 5.15.0-191-generic #201-Ubuntu SMP Fri Aug 7 18:39:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux VM-1-2-ubuntu 5.15.0-190-generic #200-Ubuntu SMP Fri Aug 7 15:06:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "error": ""
+          },
+          {
+            "infraId": "my05-infra101",
+            "nodeId": "my05-ng-influxdb-back-2",
+            "nodeIp": "43.155.212.36",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux VM-1-6-ubuntu 5.15.0-190-generic #200-Ubuntu SMP Fri Aug 7 15:06:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "error": ""
+          },
+          {
+            "infraId": "my05-infra101",
+            "nodeId": "my05-ng-ip-10-0-1-30-62161624-1",
+            "nodeIp": "43.155.211.124",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux VM-1-11-ubuntu 5.15.0-190-generic #200-Ubuntu SMP Fri Aug 7 15:06:04 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -3669,8 +5454,8 @@
       }
     }
   ],
-  "postCommandStatus": "Completed",
-  "postCommandRequestId": "pc-my05-infra101-tb6h71qjs7l2ln9q33p1"
+  "postScriptStatus": "Completed",
+  "postScriptRequestId": "ps-my05-infra101-tbv3igrj2t6jh9qrapf6"
 }
 ```
 
@@ -3714,8 +5499,8 @@
     {
       "resourceType": "",
       "id": "my05-ng-influxdb-back",
-      "cspResourceName": "tbv73dv4ckbrlo6pn8t2",
-      "cspResourceId": "lb-o8lkwd2z",
+      "cspResourceName": "tb4lovtl25d27niar0j5",
+      "cspResourceId": "lb-80vzpm0r",
       "name": "my05-ng-influxdb-back",
       "connectionName": "tencent-ap-seoul",
       "connectionConfig": {
@@ -3751,15 +5536,15 @@
       "listener": {
         "protocol": "TCP",
         "port": "9999",
-        "dnsName": "lb-o8lkwd2z-9xmsd0r2j3vfnl5i.clb.kr-tencentclb.com",
+        "dnsName": "lb-80vzpm0r-z1pcdkye6afvigxn.clb.kr-tencentclb.com",
         "keyValueList": [
           {
             "key": "LoadBalancerId",
-            "value": "lb-o8lkwd2z"
+            "value": "lb-80vzpm0r"
           },
           {
             "key": "LoadBalancerName",
-            "value": "tbv73dv4ckbrlo6pn8t2"
+            "value": "tb4lovtl25d27niar0j5"
           },
           {
             "key": "LoadBalancerType",
@@ -3771,7 +5556,7 @@
           },
           {
             "key": "Domain",
-            "value": "lb-o8lkwd2z-9xmsd0r2j3vfnl5i.clb.kr-tencentclb.com"
+            "value": "lb-80vzpm0r-z1pcdkye6afvigxn.clb.kr-tencentclb.com"
           },
           {
             "key": "Status",
@@ -3779,11 +5564,11 @@
           },
           {
             "key": "CreateTime",
-            "value": "2026-11-03 16:57:23"
+            "value": "2026-11-25 17:18:32"
           },
           {
             "key": "StatusTime",
-            "value": "2026-11-03 16:57:31"
+            "value": "2026-11-25 17:18:39"
           },
           {
             "key": "ProjectId",
@@ -3791,7 +5576,7 @@
           },
           {
             "key": "VpcId",
-            "value": "vpc-6sjytz4a"
+            "value": "vpc-p2o55rts"
           },
           {
             "key": "OpenBgp",
@@ -3807,7 +5592,7 @@
           },
           {
             "key": "TargetRegionInfo",
-            "value": "{Region:ap-seoul,VpcId:vpc-6sjytz4a}"
+            "value": "{Region:ap-seoul,VpcId:vpc-p2o55rts}"
           },
           {
             "key": "AddressIPVersion",
@@ -3815,7 +5600,7 @@
           },
           {
             "key": "NumericalVpcId",
-            "value": "15841761"
+            "value": "14444218"
           },
           {
             "key": "VipIsp",
@@ -3823,15 +5608,15 @@
           },
           {
             "key": "MasterZone",
-            "value": "{ZoneId:180001,Zone:ap-seoul-1,ZoneName:ap-seoul-1,ZoneRegion:ap-seoul,LocalZone:false}"
-          },
-          {
-            "key": "BackupZoneSet",
             "value": "{ZoneId:180002,Zone:ap-seoul-2,ZoneName:ap-seoul-2,ZoneRegion:ap-seoul,LocalZone:false}"
           },
           {
+            "key": "BackupZoneSet",
+            "value": "{ZoneId:180001,Zone:ap-seoul-1,ZoneName:ap-seoul-1,ZoneRegion:ap-seoul,LocalZone:false}"
+          },
+          {
             "key": "ExpireTime",
-            "value": "2026-12-03 16:57:23"
+            "value": "2026-12-25 17:18:32"
           },
           {
             "key": "ChargeType",
@@ -3929,17 +5714,17 @@
           }
         ]
       },
-      "createdTime": "2026-11-03T16:57:23Z",
+      "createdTime": "2026-11-25T17:18:32Z",
       "description": "Migrated from HAProxy backend: influxdb_back",
       "status": "",
       "keyValueList": [
         {
           "key": "LoadBalancerId",
-          "value": "lb-o8lkwd2z"
+          "value": "lb-80vzpm0r"
         },
         {
           "key": "LoadBalancerName",
-          "value": "tbv73dv4ckbrlo6pn8t2"
+          "value": "tb4lovtl25d27niar0j5"
         },
         {
           "key": "LoadBalancerType",
@@ -3951,7 +5736,7 @@
         },
         {
           "key": "Domain",
-          "value": "lb-o8lkwd2z-9xmsd0r2j3vfnl5i.clb.kr-tencentclb.com"
+          "value": "lb-80vzpm0r-z1pcdkye6afvigxn.clb.kr-tencentclb.com"
         },
         {
           "key": "Status",
@@ -3959,11 +5744,11 @@
         },
         {
           "key": "CreateTime",
-          "value": "2026-11-03 16:57:23"
+          "value": "2026-11-25 17:18:32"
         },
         {
           "key": "StatusTime",
-          "value": "2026-11-03 16:57:31"
+          "value": "2026-11-25 17:18:39"
         },
         {
           "key": "ProjectId",
@@ -3971,7 +5756,7 @@
         },
         {
           "key": "VpcId",
-          "value": "vpc-6sjytz4a"
+          "value": "vpc-p2o55rts"
         },
         {
           "key": "OpenBgp",
@@ -3987,7 +5772,7 @@
         },
         {
           "key": "TargetRegionInfo",
-          "value": "{Region:ap-seoul,VpcId:vpc-6sjytz4a}"
+          "value": "{Region:ap-seoul,VpcId:vpc-p2o55rts}"
         },
         {
           "key": "AddressIPVersion",
@@ -3995,7 +5780,7 @@
         },
         {
           "key": "NumericalVpcId",
-          "value": "15841761"
+          "value": "14444218"
         },
         {
           "key": "VipIsp",
@@ -4003,15 +5788,15 @@
         },
         {
           "key": "MasterZone",
-          "value": "{ZoneId:180001,Zone:ap-seoul-1,ZoneName:ap-seoul-1,ZoneRegion:ap-seoul,LocalZone:false}"
-        },
-        {
-          "key": "BackupZoneSet",
           "value": "{ZoneId:180002,Zone:ap-seoul-2,ZoneName:ap-seoul-2,ZoneRegion:ap-seoul,LocalZone:false}"
         },
         {
+          "key": "BackupZoneSet",
+          "value": "{ZoneId:180001,Zone:ap-seoul-1,ZoneName:ap-seoul-1,ZoneRegion:ap-seoul,LocalZone:false}"
+        },
+        {
           "key": "ExpireTime",
-          "value": "2026-12-03 16:57:23"
+          "value": "2026-12-25 17:18:32"
         },
         {
           "key": "ChargeType",
@@ -4091,8 +5876,8 @@
   {
     "resourceType": "",
     "id": "my05-ng-influxdb-back",
-    "cspResourceName": "tbv73dv4ckbrlo6pn8t2",
-    "cspResourceId": "lb-o8lkwd2z",
+    "cspResourceName": "tb4lovtl25d27niar0j5",
+    "cspResourceId": "lb-80vzpm0r",
     "name": "my05-ng-influxdb-back",
     "connectionName": "tencent-ap-seoul",
     "connectionConfig": {
@@ -4128,15 +5913,15 @@
     "listener": {
       "protocol": "TCP",
       "port": "9999",
-      "dnsName": "lb-o8lkwd2z-9xmsd0r2j3vfnl5i.clb.kr-tencentclb.com",
+      "dnsName": "lb-80vzpm0r-z1pcdkye6afvigxn.clb.kr-tencentclb.com",
       "keyValueList": [
         {
           "key": "LoadBalancerId",
-          "value": "lb-o8lkwd2z"
+          "value": "lb-80vzpm0r"
         },
         {
           "key": "LoadBalancerName",
-          "value": "tbv73dv4ckbrlo6pn8t2"
+          "value": "tb4lovtl25d27niar0j5"
         },
         {
           "key": "LoadBalancerType",
@@ -4148,7 +5933,7 @@
         },
         {
           "key": "Domain",
-          "value": "lb-o8lkwd2z-9xmsd0r2j3vfnl5i.clb.kr-tencentclb.com"
+          "value": "lb-80vzpm0r-z1pcdkye6afvigxn.clb.kr-tencentclb.com"
         },
         {
           "key": "Status",
@@ -4156,11 +5941,11 @@
         },
         {
           "key": "CreateTime",
-          "value": "2026-11-03 16:57:23"
+          "value": "2026-11-25 17:18:32"
         },
         {
           "key": "StatusTime",
-          "value": "2026-11-03 16:57:31"
+          "value": "2026-11-25 17:18:39"
         },
         {
           "key": "ProjectId",
@@ -4168,7 +5953,7 @@
         },
         {
           "key": "VpcId",
-          "value": "vpc-6sjytz4a"
+          "value": "vpc-p2o55rts"
         },
         {
           "key": "OpenBgp",
@@ -4184,7 +5969,7 @@
         },
         {
           "key": "TargetRegionInfo",
-          "value": "{Region:ap-seoul,VpcId:vpc-6sjytz4a}"
+          "value": "{Region:ap-seoul,VpcId:vpc-p2o55rts}"
         },
         {
           "key": "AddressIPVersion",
@@ -4192,7 +5977,7 @@
         },
         {
           "key": "NumericalVpcId",
-          "value": "15841761"
+          "value": "14444218"
         },
         {
           "key": "VipIsp",
@@ -4200,15 +5985,15 @@
         },
         {
           "key": "MasterZone",
-          "value": "{ZoneId:180001,Zone:ap-seoul-1,ZoneName:ap-seoul-1,ZoneRegion:ap-seoul,LocalZone:false}"
-        },
-        {
-          "key": "BackupZoneSet",
           "value": "{ZoneId:180002,Zone:ap-seoul-2,ZoneName:ap-seoul-2,ZoneRegion:ap-seoul,LocalZone:false}"
         },
         {
+          "key": "BackupZoneSet",
+          "value": "{ZoneId:180001,Zone:ap-seoul-1,ZoneName:ap-seoul-1,ZoneRegion:ap-seoul,LocalZone:false}"
+        },
+        {
           "key": "ExpireTime",
-          "value": "2026-12-03 16:57:23"
+          "value": "2026-12-25 17:18:32"
         },
         {
           "key": "ChargeType",
@@ -4306,17 +6091,17 @@
         }
       ]
     },
-    "createdTime": "2026-11-03T16:57:23Z",
+    "createdTime": "2026-11-25T17:18:32Z",
     "description": "Migrated from HAProxy backend: influxdb_back",
     "status": "",
     "keyValueList": [
       {
         "key": "LoadBalancerId",
-        "value": "lb-o8lkwd2z"
+        "value": "lb-80vzpm0r"
       },
       {
         "key": "LoadBalancerName",
-        "value": "tbv73dv4ckbrlo6pn8t2"
+        "value": "tb4lovtl25d27niar0j5"
       },
       {
         "key": "LoadBalancerType",
@@ -4328,7 +6113,7 @@
       },
       {
         "key": "Domain",
-        "value": "lb-o8lkwd2z-9xmsd0r2j3vfnl5i.clb.kr-tencentclb.com"
+        "value": "lb-80vzpm0r-z1pcdkye6afvigxn.clb.kr-tencentclb.com"
       },
       {
         "key": "Status",
@@ -4336,11 +6121,11 @@
       },
       {
         "key": "CreateTime",
-        "value": "2026-11-03 16:57:23"
+        "value": "2026-11-25 17:18:32"
       },
       {
         "key": "StatusTime",
-        "value": "2026-11-03 16:57:31"
+        "value": "2026-11-25 17:18:39"
       },
       {
         "key": "ProjectId",
@@ -4348,7 +6133,7 @@
       },
       {
         "key": "VpcId",
-        "value": "vpc-6sjytz4a"
+        "value": "vpc-p2o55rts"
       },
       {
         "key": "OpenBgp",
@@ -4364,7 +6149,7 @@
       },
       {
         "key": "TargetRegionInfo",
-        "value": "{Region:ap-seoul,VpcId:vpc-6sjytz4a}"
+        "value": "{Region:ap-seoul,VpcId:vpc-p2o55rts}"
       },
       {
         "key": "AddressIPVersion",
@@ -4372,7 +6157,7 @@
       },
       {
         "key": "NumericalVpcId",
-        "value": "15841761"
+        "value": "14444218"
       },
       {
         "key": "VipIsp",
@@ -4380,15 +6165,15 @@
       },
       {
         "key": "MasterZone",
-        "value": "{ZoneId:180001,Zone:ap-seoul-1,ZoneName:ap-seoul-1,ZoneRegion:ap-seoul,LocalZone:false}"
-      },
-      {
-        "key": "BackupZoneSet",
         "value": "{ZoneId:180002,Zone:ap-seoul-2,ZoneName:ap-seoul-2,ZoneRegion:ap-seoul,LocalZone:false}"
       },
       {
+        "key": "BackupZoneSet",
+        "value": "{ZoneId:180001,Zone:ap-seoul-1,ZoneName:ap-seoul-1,ZoneRegion:ap-seoul,LocalZone:false}"
+      },
+      {
         "key": "ExpireTime",
-        "value": "2026-12-03 16:57:23"
+        "value": "2026-12-25 17:18:32"
       },
       {
         "key": "ChargeType",
@@ -4466,8 +6251,8 @@
 {
   "resourceType": "",
   "id": "my05-ng-influxdb-back",
-  "cspResourceName": "tbv73dv4ckbrlo6pn8t2",
-  "cspResourceId": "lb-o8lkwd2z",
+  "cspResourceName": "tb4lovtl25d27niar0j5",
+  "cspResourceId": "lb-80vzpm0r",
   "name": "my05-ng-influxdb-back",
   "connectionName": "tencent-ap-seoul",
   "connectionConfig": {
@@ -4503,15 +6288,15 @@
   "listener": {
     "protocol": "TCP",
     "port": "9999",
-    "dnsName": "lb-o8lkwd2z-9xmsd0r2j3vfnl5i.clb.kr-tencentclb.com",
+    "dnsName": "lb-80vzpm0r-z1pcdkye6afvigxn.clb.kr-tencentclb.com",
     "keyValueList": [
       {
         "key": "LoadBalancerId",
-        "value": "lb-o8lkwd2z"
+        "value": "lb-80vzpm0r"
       },
       {
         "key": "LoadBalancerName",
-        "value": "tbv73dv4ckbrlo6pn8t2"
+        "value": "tb4lovtl25d27niar0j5"
       },
       {
         "key": "LoadBalancerType",
@@ -4523,7 +6308,7 @@
       },
       {
         "key": "Domain",
-        "value": "lb-o8lkwd2z-9xmsd0r2j3vfnl5i.clb.kr-tencentclb.com"
+        "value": "lb-80vzpm0r-z1pcdkye6afvigxn.clb.kr-tencentclb.com"
       },
       {
         "key": "Status",
@@ -4531,11 +6316,11 @@
       },
       {
         "key": "CreateTime",
-        "value": "2026-11-03 16:57:23"
+        "value": "2026-11-25 17:18:32"
       },
       {
         "key": "StatusTime",
-        "value": "2026-11-03 16:57:31"
+        "value": "2026-11-25 17:18:39"
       },
       {
         "key": "ProjectId",
@@ -4543,7 +6328,7 @@
       },
       {
         "key": "VpcId",
-        "value": "vpc-6sjytz4a"
+        "value": "vpc-p2o55rts"
       },
       {
         "key": "OpenBgp",
@@ -4559,7 +6344,7 @@
       },
       {
         "key": "TargetRegionInfo",
-        "value": "{Region:ap-seoul,VpcId:vpc-6sjytz4a}"
+        "value": "{Region:ap-seoul,VpcId:vpc-p2o55rts}"
       },
       {
         "key": "AddressIPVersion",
@@ -4567,7 +6352,7 @@
       },
       {
         "key": "NumericalVpcId",
-        "value": "15841761"
+        "value": "14444218"
       },
       {
         "key": "VipIsp",
@@ -4575,15 +6360,15 @@
       },
       {
         "key": "MasterZone",
-        "value": "{ZoneId:180001,Zone:ap-seoul-1,ZoneName:ap-seoul-1,ZoneRegion:ap-seoul,LocalZone:false}"
-      },
-      {
-        "key": "BackupZoneSet",
         "value": "{ZoneId:180002,Zone:ap-seoul-2,ZoneName:ap-seoul-2,ZoneRegion:ap-seoul,LocalZone:false}"
       },
       {
+        "key": "BackupZoneSet",
+        "value": "{ZoneId:180001,Zone:ap-seoul-1,ZoneName:ap-seoul-1,ZoneRegion:ap-seoul,LocalZone:false}"
+      },
+      {
         "key": "ExpireTime",
-        "value": "2026-12-03 16:57:23"
+        "value": "2026-12-25 17:18:32"
       },
       {
         "key": "ChargeType",
@@ -4681,17 +6466,17 @@
       }
     ]
   },
-  "createdTime": "2026-11-03T16:57:23Z",
+  "createdTime": "2026-11-25T17:18:32Z",
   "description": "Migrated from HAProxy backend: influxdb_back",
   "status": "",
   "keyValueList": [
     {
       "key": "LoadBalancerId",
-      "value": "lb-o8lkwd2z"
+      "value": "lb-80vzpm0r"
     },
     {
       "key": "LoadBalancerName",
-      "value": "tbv73dv4ckbrlo6pn8t2"
+      "value": "tb4lovtl25d27niar0j5"
     },
     {
       "key": "LoadBalancerType",
@@ -4703,7 +6488,7 @@
     },
     {
       "key": "Domain",
-      "value": "lb-o8lkwd2z-9xmsd0r2j3vfnl5i.clb.kr-tencentclb.com"
+      "value": "lb-80vzpm0r-z1pcdkye6afvigxn.clb.kr-tencentclb.com"
     },
     {
       "key": "Status",
@@ -4711,11 +6496,11 @@
     },
     {
       "key": "CreateTime",
-      "value": "2026-11-03 16:57:23"
+      "value": "2026-11-25 17:18:32"
     },
     {
       "key": "StatusTime",
-      "value": "2026-11-03 16:57:31"
+      "value": "2026-11-25 17:18:39"
     },
     {
       "key": "ProjectId",
@@ -4723,7 +6508,7 @@
     },
     {
       "key": "VpcId",
-      "value": "vpc-6sjytz4a"
+      "value": "vpc-p2o55rts"
     },
     {
       "key": "OpenBgp",
@@ -4739,7 +6524,7 @@
     },
     {
       "key": "TargetRegionInfo",
-      "value": "{Region:ap-seoul,VpcId:vpc-6sjytz4a}"
+      "value": "{Region:ap-seoul,VpcId:vpc-p2o55rts}"
     },
     {
       "key": "AddressIPVersion",
@@ -4747,7 +6532,7 @@
     },
     {
       "key": "NumericalVpcId",
-      "value": "15841761"
+      "value": "14444218"
     },
     {
       "key": "VipIsp",
@@ -4755,15 +6540,15 @@
     },
     {
       "key": "MasterZone",
-      "value": "{ZoneId:180001,Zone:ap-seoul-1,ZoneName:ap-seoul-1,ZoneRegion:ap-seoul,LocalZone:false}"
-    },
-    {
-      "key": "BackupZoneSet",
       "value": "{ZoneId:180002,Zone:ap-seoul-2,ZoneName:ap-seoul-2,ZoneRegion:ap-seoul,LocalZone:false}"
     },
     {
+      "key": "BackupZoneSet",
+      "value": "{ZoneId:180001,Zone:ap-seoul-1,ZoneName:ap-seoul-1,ZoneRegion:ap-seoul,LocalZone:false}"
+    },
+    {
       "key": "ExpireTime",
-      "value": "2026-12-03 16:57:23"
+      "value": "2026-12-25 17:18:32"
     },
     {
       "key": "ChargeType",
@@ -4850,7 +6635,7 @@
 
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-11-03 08:59:13
+**Generated At:** 2026-11-25 09:20:17
 
 **Namespace:** mig01
 
@@ -4871,7 +6656,6 @@
 | **Running VMs** | 3 |
 | **Stopped VMs** | 0 |
 | **Total NLBs** | 1 |
-| **Monitoring Agent** |  |
 
 ## Compute Resources
 
@@ -4886,15 +6670,15 @@
 
 | Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 |------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
-| img-7rotv4ux | Ubuntu Server 22.04 LTS 64bit UEFI | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 20 GB | 3 |
+| img-487zeit5 | Ubuntu Server 22.04 LTS 64bit | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 20 GB | 3 |
 
 ### Virtual Machines
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | ins-7h4dbejf | Running | 2 vCPU, 2.0 GiB | Ubuntu Server 22.04 LTS 64bit UEFI (Ubuntu Server 22.04 LTS 64bit UEFI) | **VNet:** my05-mig-vnet-01<br>**Subnet:** my05-mig-subnet-01<br>**Public IP:** 101.33.73.9<br>**Private IP:** 10.0.1.13<br>**SGs:** my05-mig-sg-02<br>**SSH:** my05-mig-sshkey-01 |
-| my05-ng-influxdb-back-1 | ins-ncurja61 | Running | 4 vCPU, 16.0 GiB | Ubuntu Server 22.04 LTS 64bit UEFI (Ubuntu Server 22.04 LTS 64bit UEFI) | **VNet:** my05-mig-vnet-01<br>**Subnet:** my05-mig-subnet-01<br>**Public IP:** 43.133.92.116<br>**Private IP:** 10.0.1.12<br>**SGs:** my05-mig-sg-01<br>**SSH:** my05-mig-sshkey-01 |
-| my05-ng-influxdb-back-2 | ins-2uveewfz | Running | 4 vCPU, 16.0 GiB | Ubuntu Server 22.04 LTS 64bit UEFI (Ubuntu Server 22.04 LTS 64bit UEFI) | **VNet:** my05-mig-vnet-01<br>**Subnet:** my05-mig-subnet-01<br>**Public IP:** 43.166.14.150<br>**Private IP:** 10.0.1.2<br>**SGs:** my05-mig-sg-01<br>**SSH:** my05-mig-sshkey-01 |
+| my05-ng-influxdb-back-1 | ins-fxa70pv9 | Running | 4 vCPU, 16.0 GiB | Ubuntu Server 22.04 LTS 64bit (Ubuntu Server 22.04 LTS 64bit) | **VNet:** my05-mig-vnet-01<br>**Subnet:** my05-mig-subnet-01<br>**Public IP:** 43.166.24.5<br>**Private IP:** 10.0.1.2<br>**SGs:** my05-mig-sg-01<br>**SSH:** my05-mig-sshkey-01 |
+| my05-ng-influxdb-back-2 | ins-6t8n96er | Running | 4 vCPU, 16.0 GiB | Ubuntu Server 22.04 LTS 64bit (Ubuntu Server 22.04 LTS 64bit) | **VNet:** my05-mig-vnet-01<br>**Subnet:** my05-mig-subnet-01<br>**Public IP:** 43.155.212.36<br>**Private IP:** 10.0.1.6<br>**SGs:** my05-mig-sg-01<br>**SSH:** my05-mig-sshkey-01 |
+| my05-ng-ip-10-0-1-30-62161624-1 | ins-px4j8x8x | Running | 2 vCPU, 2.0 GiB | Ubuntu Server 22.04 LTS 64bit (Ubuntu Server 22.04 LTS 64bit) | **VNet:** my05-mig-vnet-01<br>**Subnet:** my05-mig-subnet-01<br>**Public IP:** 43.155.211.124<br>**Private IP:** 10.0.1.11<br>**SGs:** my05-mig-sg-02<br>**SSH:** my05-mig-sshkey-01 |
 
 
 ## Network Resources
@@ -4906,7 +6690,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my05-mig-vnet-01 |
-| **CSP VNet ID** | vpc-6sjytz4a |
+| **CSP VNet ID** | vpc-p2o55rts |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | tencent-ap-seoul |
 | **Subnet Count** | 1 |
@@ -4915,7 +6699,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my05-mig-subnet-01 | subnet-1poy0xlj | 10.0.1.0/24 |  |
+| my05-mig-subnet-01 | subnet-4kcu8oj9 | 10.0.1.0/24 | ap-seoul-2 |
 
 ### Network Load Balancers (NLB)
 
@@ -4924,11 +6708,11 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my05-ng-influxdb-back |
-| **CSP NLB Name** | tbv73dv4ckbrlo6pn8t2 |
-| **CSP NLB ID** | lb-o8lkwd2z |
+| **CSP NLB Name** | tb4lovtl25d27niar0j5 |
+| **CSP NLB ID** | lb-80vzpm0r |
 | **Type / Scope** | PUBLIC / REGION |
 | **Connection** | tencent-ap-seoul |
-| **Listener** | TCP:9999 (DNS: lb-o8lkwd2z-9xmsd0r2j3vfnl5i.clb.kr-tencentclb.com) |
+| **Listener** | TCP:9999 (DNS: lb-80vzpm0r-z1pcdkye6afvigxn.clb.kr-tencentclb.com) |
 | **Target Group** | TCP:8086 (Node Group: my05-ng-influxdb-back, 2 nodes) |
 | **Health Checker** | TCP:8086 (Interval: 10s, Timeout: 10s, Threshold: 3) |
 
@@ -4936,8 +6720,8 @@
 
 | Node Name | CSP VM ID | Private IP | Public IP | Status |
 |-----------|-----------|------------|-----------|--------|
-| my05-ng-influxdb-back-1 | ins-ncurja61 | 10.0.1.12 | 43.133.92.116 | Running |
-| my05-ng-influxdb-back-2 | ins-2uveewfz | 10.0.1.2 | 43.166.14.150 | Running |
+| my05-ng-influxdb-back-1 | ins-fxa70pv9 | 10.0.1.2 | 43.166.24.5 | Running |
+| my05-ng-influxdb-back-2 | ins-6t8n96er | 10.0.1.6 | 43.155.212.36 | Running |
 
 
 ## Security Resources
@@ -4946,7 +6730,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my05-mig-sshkey-01 | skey-ofv7yi59 |  |  |
+| my05-mig-sshkey-01 | skey-b1dxxqvp |  |  |
 
 ### Security Groups
 
@@ -4955,7 +6739,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my05-mig-sg-01 |
-| **CSP Security Group ID** | sg-b31fuorh |
+| **CSP Security Group ID** | sg-43psw731 |
 | **VNet** | my05-mig-vnet-01 |
 | **Rule Count** | 6 rules |
 
@@ -4963,9 +6747,9 @@
 
 | Direction | Protocol | Port Range | CIDR |
 |-----------|----------|------------|------|
+| inbound | TCP | 22 | 0.0.0.0/0 |
 | inbound | TCP | 8086 | 10.0.0.0/16 |
 | inbound | ALL |  | 10.0.0.0/16 |
-| inbound | TCP | 22 | 0.0.0.0/0 |
 | inbound | TCP | 9999 | 0.0.0.0/0 |
 | inbound | TCP | 8086 | 0.0.0.0/0 |
 | outbound | ALL |  | 0.0.0.0/0 |
@@ -4975,7 +6759,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my05-mig-sg-02 |
-| **CSP Security Group ID** | sg-dmpck3qp |
+| **CSP Security Group ID** | sg-gk3esedz |
 | **VNet** | my05-mig-vnet-01 |
 | **Rule Count** | 4 rules |
 
@@ -5009,9 +6793,9 @@
 
 | VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
 |---------|------|-----------------|------------------|
-| my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | SA5.MEDIUM2 | $0.0600 | $43.20 |
 | my05-ng-influxdb-back-1 | SA5.LARGE16 | $0.2200 | $158.40 |
 | my05-ng-influxdb-back-2 | SA5.LARGE16 | $0.2200 | $158.40 |
+| my05-ng-ip-10-0-1-30-62161624-1 | SA5.MEDIUM2 | $0.0600 | $43.20 |
 
 
 
@@ -5032,7 +6816,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-11-03 08:59:18*
+*Report generated: 2026-11-25 09:20:21*
 
 ---
 
@@ -5067,7 +6851,7 @@ Summary of key infrastructure resources created or configured in the target clou
 | # | Resource Type | Count | Status | Details |
 |---|---------------|-------|--------|----------|
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
-| 2 | **VM Spec** | 2 | ✅ Selected | SA5.MEDIUM2, SA5.LARGE16 |
+| 2 | **VM Spec** | 2 | ✅ Selected | SA5.LARGE16, SA5.MEDIUM2 |
 | 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
 | 4 | **VNet (VPC)** | 1 | ✅ Created | my05-mig-vnet-01, CIDR: 10.0.0.0/21 |
 | 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my05-mig-vnet-01) |
@@ -5083,9 +6867,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** ins-7h4dbejf<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
-| 2 | **VM Name:** my05-ng-influxdb-back-1<br>**VM ID:** ins-ncurja61<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
-| 3 | **VM Name:** my05-ng-influxdb-back-2<br>**VM ID:** ins-2uveewfz<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
+| 1 | **VM Name:** my05-ng-influxdb-back-1<br>**VM ID:** ins-fxa70pv9<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| 2 | **VM Name:** my05-ng-influxdb-back-2<br>**VM ID:** ins-6t8n96er<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
+| 3 | **VM Name:** my05-ng-ip-10-0-1-30-62161624-1<br>**VM ID:** ins-px4j8x8x<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
 
 ---
 
@@ -5095,9 +6879,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | VM Spec | Source Server | Source Server Spec |
 |-----|-------------|---------|---------------|--------------------|
-| 1 | my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** SA5.MEDIUM2<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 2 GB<br>**Root Disk:** 8 GB |
-| 2 | my05-ng-influxdb-back-1 | **Spec ID:** SA5.LARGE16<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 30 GB |
-| 3 | my05-ng-influxdb-back-2 | **Spec ID:** SA5.LARGE16<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 8 GB<br>**Root Disk:** 30 GB |
+| 1 | my05-ng-influxdb-back-1 | **Spec ID:** SA5.LARGE16<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 30 GB |
+| 2 | my05-ng-influxdb-back-2 | **Spec ID:** SA5.LARGE16<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 8 GB<br>**Root Disk:** 30 GB |
+| 3 | my05-ng-ip-10-0-1-30-62161624-1 | **Spec ID:** SA5.MEDIUM2<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 2 GB<br>**Root Disk:** 8 GB |
 
 ---
 
@@ -5107,9 +6891,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | VM OS Image Info | Source Server | Source OS |
 |-----|-------------|------------------|---------------|-----------|
-| 1 | my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** img-7rotv4ux<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Server 22.04 LTS 64bit UEFI | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
-| 2 | my05-ng-influxdb-back-1 | **Image ID:** img-7rotv4ux<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Server 22.04 LTS 64bit UEFI | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
-| 3 | my05-ng-influxdb-back-2 | **Image ID:** img-7rotv4ux<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Server 22.04 LTS 64bit UEFI | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 1 | my05-ng-influxdb-back-1 | **Image ID:** img-487zeit5<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Server 22.04 LTS 64bit | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 2 | my05-ng-influxdb-back-2 | **Image ID:** img-487zeit5<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Server 22.04 LTS 64bit | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 3 | my05-ng-ip-10-0-1-30-62161624-1 | **Image ID:** img-487zeit5<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Server 22.04 LTS 64bit | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
 
 ---
 
@@ -5119,7 +6903,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my05-mig-sg-01
 
-**CSP ID:** sg-b31fuorh | **VNet:** my05-mig-vnet-01 | **Rules:** 6
+**CSP ID:** sg-43psw731 | **VNet:** my05-mig-vnet-01 | **Rules:** 6
 
 **Assigned VMs:**
 
@@ -5132,20 +6916,20 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
 |-----|-----------|----------|------|------|----------------------|------|
-| 1 | inbound | TCP | 8086 | 10.0.0.0/16 | inbound tcp 8086 from 10.0.0.0/16 | Migrated from source |
-| 2 | inbound | ALL |  | 10.0.0.0/16 | inbound tcp 8086 from 10.0.0.0/16 | Migrated from source |
-| 3 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 1 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 2 | inbound | TCP | 8086 | 10.0.0.0/16 | inbound tcp 8086 from 10.0.0.0/16 | Migrated from source |
+| 3 | inbound | ALL |  | 10.0.0.0/16 | inbound tcp 8086 from 10.0.0.0/16 | Migrated from source |
 | 4 | inbound | TCP | 9999 | 0.0.0.0/0 | - | Created by system |
 | 5 | inbound | TCP | 8086 | 0.0.0.0/0 | - | Created by system |
 | 6 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
 
 ### Security Group: my05-mig-sg-02
 
-**CSP ID:** sg-dmpck3qp | **VNet:** my05-mig-vnet-01 | **Rules:** 4
+**CSP ID:** sg-gk3esedz | **VNet:** my05-mig-vnet-01 | **Rules:** 4
 
 **Assigned VMs:**
 
-- **VM:** my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1
+- **VM:** my05-ng-ip-10-0-1-30-62161624-1
   - **Source Server:** **Hostname:** ip-10-0-1-30, **Machine ID:** ec268ed7-821e-9d73-e79f-961262161624
 
 **Security Rules:**
@@ -5167,13 +6951,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my05-mig-vnet-01<br>**ID:** vpc-6sjytz4a | 10.0.0.0/21 |
+| 1 | **Name:** my05-mig-vnet-01<br>**ID:** vpc-p2o55rts | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my05-mig-subnet-01<br>**ID:** subnet-1poy0xlj | 10.0.1.0/24 | my05-mig-vnet-01 |
+| 1 | **Name:** my05-mig-subnet-01<br>**ID:** subnet-4kcu8oj9 | 10.0.1.0/24 | my05-mig-vnet-01 |
 
 ### Source Network Information
 
@@ -5241,9 +7025,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | Property | Source (On-Premise) | Target (Cloud NLB) | Note |
 |----------|---------------------|--------------------|------|
-| **Load Balancer / Name** | haproxy (Host: ip-10-0-1-30) | my05-ng-influxdb-back (CSP ID: tbv73dv4ckbrlo6pn8t2) | Replaced by managed NLB |
+| **Load Balancer / Name** | haproxy (Host: ip-10-0-1-30) | my05-ng-influxdb-back (CSP ID: tb4lovtl25d27niar0j5) | Replaced by managed NLB |
 | **Type / Scope** | Software LB | PUBLIC / REGION | Cloud-native NLB |
-| **Frontend Listener** | *:9999 (TCP) | TCP:9999 | DNS: lb-o8lkwd2z-9xmsd0r2j3vfnl5i.clb.kr-tencentclb.com |
+| **Frontend Listener** | *:9999 (TCP) | TCP:9999 | DNS: lb-80vzpm0r-z1pcdkye6afvigxn.clb.kr-tencentclb.com |
 | **Backend / Target Group** | influxdb_back (TCP:8086, roundrobin) | my05-ng-influxdb-back (TCP:8086, 2 nodes) | Target Group attached to NodeGroup |
 | **Health Check** | Enabled (Interval: 10s, Timeout: 10s, Threshold: 3) | TCP:8086 (Interval: 10s, Timeout: 10s, Threshold: 3) | Preserved |
 
@@ -5251,11 +7035,11 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Source Backend Server | Source Endpoint | Target Node | Target CSP VM ID | Target Private IP | Target Public IP | Target Port | Status |
 |-----|-----------------------|-----------------|-------------|------------------|-------------------|------------------|-------------|--------|
-| 1 | influx1 (ip-10-0-1-221) | 10.0.1.221:8086 | my05-ng-influxdb-back-1 | ins-ncurja61 | 10.0.1.12 | 43.133.92.116 | 8086 | Running |
-| 2 | influx2 (ip-10-0-1-138) | 10.0.1.138:8086 | my05-ng-influxdb-back-2 | ins-2uveewfz | 10.0.1.2 | 43.166.14.150 | 8086 | Running |
+| 1 | influx1 (ip-10-0-1-221) | 10.0.1.221:8086 | my05-ng-influxdb-back-1 | ins-fxa70pv9 | 10.0.1.2 | 43.166.24.5 | 8086 | Running |
+| 2 | influx2 (ip-10-0-1-138) | 10.0.1.138:8086 | my05-ng-influxdb-back-2 | ins-6t8n96er | 10.0.1.6 | 43.155.212.36 | 8086 | Running |
 
 **Migration Notes:**
-- On-premise haproxy on ip-10-0-1-30 (migrated to my05-ng-ec268ed7-821e-9d73-e79f-961262161624-1) is replaced by cloud-managed NLB.
+- On-premise haproxy on ip-10-0-1-30 (migrated to my05-ng-ip-10-0-1-30-62161624-1) is replaced by cloud-managed NLB.
 
 ---
 
@@ -5267,7 +7051,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my05-mig-sshkey-01 | skey-ofv7yi59 |  | Used by all 3 VMs |
+| 1 | my05-mig-sshkey-01 | skey-b1dxxqvp |  | Used by all 3 VMs |
 
 ---
 

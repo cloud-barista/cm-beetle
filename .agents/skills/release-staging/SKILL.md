@@ -194,10 +194,10 @@ release: staging <version> with deployment updates
 - Update Swagger spec URLs to <version> across examples
 ```
 
-Remind the user of the full release execution sequence:
+Remind the user of the full manual release execution sequence (do not auto-push, open PRs, or post `/approve` unless explicitly instructed):
 
 ```text
-1. Push branch to origin fork -> Open PR to upstream/main -> /approve and wait for auto-merge
+1. Push branch to origin fork -> Open PR to upstream/main -> wait for all CI checks to pass -> post /approve (if using auto-merge) or merge manually
 2. git fetch upstream && git tag -a <version> upstream/main -m "Release <version>"
 3. git push upstream <version>
 4. Write GitHub Release Notes (including Breaking Changes)

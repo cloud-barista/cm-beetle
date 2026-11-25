@@ -1,9 +1,10 @@
 # Managed RDBMS (MySQL) Test Report: AWS (ap-northeast-2)
 
 - **Test Case:** AWS AP-Northeast-2 (Seoul) MySQL Test
-- **Date & Time:** 2026-10-19 09:49:54
+- **Access Mode:** Public (publicAccess=true)
+- **Date & Time:** 2026-11-25 18:54:32
 - **Namespace:** `default`
-- **Total Duration:** 19m10.745s
+- **Total Duration:** 18m31.647s
 - **Overall Status:** ✅ PASSED
 
 ## Environment and Scenario
@@ -12,7 +13,7 @@
 - **Target CSP:** AWS
 - **Target Region:** `ap-northeast-2`
 - **Namespace:** `default`
-- **Test Date:** 2026-10-19 09:49:54
+- **Test Date:** 2026-11-25 18:54:32
 
 ### Scenario & Tested APIs
 1. **Pre-flight Spec & Image Review**: `POST /tumblebug/specImagePairReview`
@@ -34,12 +35,12 @@
 ## Execution Steps & API Traces
 
 ### 1. Tumblebug POST /specImagePairReview (Pre-flight Spec & Image Review) [✅ SUCCESS]
-- **Duration:** 3.466s
+- **Duration:** 3.693s
 - **Request URL:** `http://localhost:1323/tumblebug/specImagePairReview`
 ```json
 // Request Body
 {
-  "imageId": "ami-04e3ca2324a305ad0",
+  "imageId": "ami-0e0a5fdc771990a70",
   "specId": "aws+ap-northeast-2+t4g.medium"
 }
 ```
@@ -48,11 +49,24 @@
 {
   "availability": {
     "available": true,
+    "cached": true,
     "instanceType": "t4g.medium",
     "provider": "aws",
-    "queriedAt": "2026-10-19T00:49:57.518285816Z",
+    "queriedAt": "2026-11-25T09:54:33.21011855Z",
+    "quota": {
+      "fitCount": 1204,
+      "limit": 2421,
+      "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+      "perInstance": 2,
+      "scope": "region",
+      "unit": "vCPU",
+      "used": 12
+    },
+    "refreshAfter": "2026-11-25T09:59:33.21011855Z",
     "region": "ap-northeast-2",
     "source": "aws:DescribeInstanceTypeOfferings",
+    "status": "Available",
+    "ttlSeconds": 300,
     "zones": [
       {
         "available": true,
@@ -62,7 +76,7 @@
       {
         "available": true,
         "status": "AVAILABLE",
-        "zoneId": "ap-northeast-2d"
+        "zoneId": "ap-northeast-2b"
       },
       {
         "available": true,
@@ -72,7 +86,7 @@
       {
         "available": true,
         "status": "AVAILABLE",
-        "zoneId": "ap-northeast-2b"
+        "zoneId": "ap-northeast-2d"
       }
     ]
   },
@@ -81,8 +95,8 @@
   "imageDetails": {
     "commandHistory": null,
     "connectionName": "aws-ap-northeast-2",
-    "creationDate": "2026-07-14T11:54:44.000Z",
-    "cspImageName": "ami-04e3ca2324a305ad0",
+    "creationDate": "2026-10-23T10:41:44.000Z",
+    "cspImageName": "ami-0e0a5fdc771990a70",
     "description": "Canonical, Ubuntu, 24.04, arm64 noble image",
     "details": [
       {
@@ -91,7 +105,7 @@
       },
       {
         "key": "BlockDeviceMappings",
-        "value": "{DeviceName:/dev/sda1,Ebs:{DeleteOnTermination:true,Encrypted:false,Iops:null,KmsKeyId:null,OutpostArn:null,SnapshotId:snap-0f98c4fc07815c093,Throughput:null,VolumeSize:8,VolumeType:gp3},NoDevice:null,VirtualName:null}; {DeviceName:/dev/sdb,Ebs:null,NoDevice:null,VirtualName:ephemeral0}; {DeviceName:/dev/sdc,Ebs:null,NoDevice:null,VirtualName:ephemeral1}"
+        "value": "{DeviceName:/dev/sda1,Ebs:{DeleteOnTermination:true,Encrypted:false,Iops:null,KmsKeyId:null,OutpostArn:null,SnapshotId:snap-00c4672f066104e67,Throughput:null,VolumeSize:8,VolumeType:gp3},NoDevice:null,VirtualName:null}; {DeviceName:/dev/sdb,Ebs:null,NoDevice:null,VirtualName:ephemeral0}; {DeviceName:/dev/sdc,Ebs:null,NoDevice:null,VirtualName:ephemeral1}"
       },
       {
         "key": "BootMode",
@@ -99,11 +113,11 @@
       },
       {
         "key": "CreationDate",
-        "value": "2026-07-14T11:54:44.000Z"
+        "value": "2026-10-23T10:41:44.000Z"
       },
       {
         "key": "DeprecationTime",
-        "value": "2028-07-14T11:54:44.000Z"
+        "value": "2028-10-23T10:41:44.000Z"
       },
       {
         "key": "Description",
@@ -119,11 +133,11 @@
       },
       {
         "key": "ImageId",
-        "value": "ami-04e3ca2324a305ad0"
+        "value": "ami-0e0a5fdc771990a70"
       },
       {
         "key": "ImageLocation",
-        "value": "amazon/ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-arm64-server-20260714"
+        "value": "amazon/ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-arm64-server-20261023"
       },
       {
         "key": "ImageOwnerAlias",
@@ -135,7 +149,7 @@
       },
       {
         "key": "Name",
-        "value": "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-arm64-server-20260714"
+        "value": "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-arm64-server-20261023"
       },
       {
         "key": "OwnerId",
@@ -174,20 +188,20 @@
         "value": "hvm"
       }
     ],
-    "fetchedTime": "2026.08.21 14:20:39 Fri",
-    "id": "ami-04e3ca2324a305ad0",
+    "fetchedTime": "2026.10.29 04:25:18 Thu",
+    "id": "ami-0e0a5fdc771990a70",
     "imageStatus": "Available",
     "infraType": "",
     "isBasicGpuImage": false,
     "isBasicImage": true,
     "isGPUImage": false,
     "isKubernetesImage": false,
-    "name": "ami-04e3ca2324a305ad0",
+    "name": "ami-0e0a5fdc771990a70",
     "namespace": "system",
     "osArchitecture": "arm64",
     "osDiskSizeGB": -1,
     "osDiskType": "ebs",
-    "osDistribution": "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-arm64-server-20260714",
+    "osDistribution": "ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-arm64-server-20261023",
     "osPlatform": "Linux/UNIX",
     "osType": "Ubuntu 24.04",
     "providerName": "aws",
@@ -198,22 +212,43 @@
     "sourceCspImageName": "",
     "sourceNodeUid": "",
     "systemLabel": "",
-    "uid": "tbk8m6abcnq0ogukdn90"
+    "uid": "tb3o288nb1ucm6n194qc"
   },
-  "imageId": "ami-04e3ca2324a305ad0",
+  "imageId": "ami-0e0a5fdc771990a70",
   "imageValidation": {
-    "cspResourceId": "ami-04e3ca2324a305ad0",
+    "cspResourceId": "ami-0e0a5fdc771990a70",
     "isAvailable": true,
-    "resourceId": "ami-04e3ca2324a305ad0",
-    "resourceName": "ami-04e3ca2324a305ad0",
+    "resourceId": "ami-0e0a5fdc771990a70",
+    "resourceName": "ami-0e0a5fdc771990a70",
     "status": "Available"
   },
+  "info": [
+    "Provisioning history: Image 'ami-0e0a5fdc771990a70' + Spec 'aws+ap-northeast-2+t4g.medium' is a new combination (no history)"
+  ],
   "isValid": true,
-  "message": "Spec and image pair is valid but has warnings",
+  "message": "Spec and image pair is valid for provisioning",
   "providerName": "aws",
   "regionName": "ap-northeast-2",
   "specDetails": {
     "architecture": "arm64",
+    "availabilityCheckedAt": "2026-11-25T09:54:33.21011855Z",
+    "availabilityQuota": {
+      "fitCount": 1204,
+      "limit": 2421,
+      "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+      "perInstance": 2,
+      "scope": "region",
+      "unit": "vCPU",
+      "used": 12
+    },
+    "availabilityRefreshAfter": "2026-11-25T09:59:33.21011855Z",
+    "availabilityStatus": "Available",
+    "availableZones": [
+      "ap-northeast-2a",
+      "ap-northeast-2b",
+      "ap-northeast-2c",
+      "ap-northeast-2d"
+    ],
     "connectionName": "aws-ap-northeast-2",
     "costPerHour": 0.0416,
     "cspSpecName": "t4g.medium",
@@ -240,7 +275,7 @@
       },
       {
         "key": "EbsInfo",
-        "value": "{EbsOptimizedInfo:{BaselineBandwidthInMbps:347,BaselineIops:2000,BaselineThroughputInMBps:43.375,MaximumBandwidthInMbps:2085,MaximumIops:11800,MaximumThroughputInMBps:260.625},EbsOptimizedSupport:default,EncryptionSupport:supported,NvmeSupport:required}"
+        "value": "{AttachmentLimitType:shared,EbsCards:null,EbsOptimizedInfo:{BaselineBandwidthInMbps:347,BaselineIops:2000,BaselineThroughputInMBps:43.375,MaximumBandwidthInMbps:2085,MaximumIops:11800,MaximumThroughputInMBps:260.625},EbsOptimizedSupport:default,EncryptionSupport:supported,MaximumEbsAttachments:27,MaximumEbsCards:null,NvmeSupport:required}"
       },
       {
         "key": "FreeTierEligible",
@@ -268,7 +303,23 @@
       },
       {
         "key": "NetworkInfo",
-        "value": "{DefaultNetworkCardIndex:0,EfaInfo:null,EfaSupported:false,EnaSupport:required,Ipv4AddressesPerInterface:6,Ipv6AddressesPerInterface:6,Ipv6Supported:true,MaximumNetworkCards:1,MaximumNetworkInterfaces:3,NetworkCards:[{MaximumNetworkInterfaces:3,NetworkCardIndex:0,NetworkPerformance:Up to 5 Gigabit}],NetworkPerformance:Up to 5 Gigabit}"
+        "value": "{BandwidthWeightings:null,ConnectionTrackingConfiguration:{DefaultTcpEstablishedTimeout:432000,DefaultUdpStreamTimeout:180,DefaultUdpTimeout:30},DefaultNetworkCardIndex:0,EfaInfo:null,EfaSupported:false,EnaSrdSupported:false,EnaSupport:required,EncryptionInTransitSupported:false,FlexibleEnaQueuesSupport:unsupported,Ipv4AddressesPerInterface:6,Ipv4AddressesPerSecondaryInterface:null,Ipv6AddressesPerInterface:6,Ipv6Supported:true,MaximumNetworkCards:1,MaximumNetworkInterfaces:3,MaximumSecondaryNetworkInterfaces:null,NetworkCards:[{AdditionalFlexibleNetworkInterfaces:null,BaselineBandwidthInGbps:0.256,DefaultEnaQueueCountPerInterface:2,MaximumEnaQueueCount:null,MaximumEnaQueueCountPerInterface:null,MaximumNetworkInterfaces:3,NetworkCardIndex:0,NetworkPerformance:Up to 5 Gigabit,PeakBandwidthInGbps:5}],NetworkPerformance:Up to 5 Gigabit,SecondaryNetworkSupported:false}"
+      },
+      {
+        "key": "NitroEnclavesSupport",
+        "value": "unsupported"
+      },
+      {
+        "key": "NitroTpmInfo",
+        "value": "{SupportedVersions:[2.0]}"
+      },
+      {
+        "key": "NitroTpmSupport",
+        "value": "supported"
+      },
+      {
+        "key": "PhcSupport",
+        "value": "unsupported"
       },
       {
         "key": "PlacementGroupInfo",
@@ -276,11 +327,19 @@
       },
       {
         "key": "ProcessorInfo",
-        "value": "{SupportedArchitectures:[arm64],SustainedClockSpeedInGhz:2.5}"
+        "value": "{Manufacturer:AWS,SupportedArchitectures:[arm64],SupportedFeatures:null,SustainedClockSpeedInGhz:2.5}"
+      },
+      {
+        "key": "RebootMigrationSupport",
+        "value": "supported"
       },
       {
         "key": "SupportedBootModes",
         "value": "uefi"
+      },
+      {
+        "key": "SupportedInRegion",
+        "value": "true"
       },
       {
         "key": "SupportedRootDeviceTypes",
@@ -322,7 +381,7 @@
     "rootDiskSize": -1,
     "rootDiskType": "",
     "systemLabel": "auto-gen",
-    "uid": "tbk5s7k571ba0vqjtqkg",
+    "uid": "tbep68pth62epiftrjg9",
     "vCPU": 2
   },
   "specId": "aws+ap-northeast-2+t4g.medium",
@@ -333,16 +392,13 @@
     "resourceName": "t4g.medium",
     "status": "Available"
   },
-  "status": "Warning",
-  "suggestedZone": "ap-northeast-2a",
-  "warnings": [
-    "Moderate provisioning failure risk: Spec 'aws+ap-northeast-2+t4g.medium' has 50% failure rate (1 failures, 1 successes) | Image 'ami-04e3ca2324a305ad0' with spec 'aws+ap-northeast-2+t4g.medium' has succeeded before, but also had past failures. Recent failures: VM provisioning failed (status: Terminating) - check CSP console for details"
-  ]
+  "status": "OK",
+  "suggestedZone": "ap-northeast-2a"
 }
 ```
 
 ### 2. Tumblebug POST /resources/vNet (Create VNet & Subnets) [✅ SUCCESS]
-- **Duration:** 2.748s
+- **Duration:** 3.688s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/vNet`
 ```json
 // Request Body
@@ -372,19 +428,19 @@
   "cidrBlock": "10.0.0.0/16",
   "conditions": [
     {
-      "lastTransitionTime": "2026-10-19T00:50:00Z",
+      "lastTransitionTime": "2026-11-25T09:54:37Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-10-19T00:50:00Z",
+      "lastTransitionTime": "2026-11-25T09:54:37Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
     },
     {
-      "lastTransitionTime": "2026-10-19T00:50:00Z",
+      "lastTransitionTime": "2026-11-25T09:54:37Z",
       "reason": "AllReady",
       "status": "True",
       "type": "ChildrenReady"
@@ -421,8 +477,8 @@
     "verified": true
   },
   "connectionName": "aws-ap-northeast-2",
-  "cspResourceId": "vpc-0f68eb42a6f5b32a7",
-  "cspResourceName": "tb0t62pin8970meaiomf",
+  "cspResourceId": "vpc-014472542cc87bfa5",
+  "cspResourceName": "tbt5alk98e6u93kche7b",
   "description": "Pre-requisite VNet for CM-Beetle RDBMS test",
   "id": "test-rdbms-vnet-aws",
   "isAutoGenerated": false,
@@ -433,7 +489,7 @@
     },
     {
       "key": "CidrBlockAssociationSet",
-      "value": "{AssociationId:vpc-cidr-assoc-08d5d72dba0d9767e,CidrBlock:10.0.0.0/16,CidrBlockState:{State:associated,StatusMessage:null}}"
+      "value": "{AssociationId:vpc-cidr-assoc-083cd7050019a1efd,CidrBlock:10.0.0.0/16,CidrBlockState:{State:associated,StatusMessage:null}}"
     },
     {
       "key": "DhcpOptionsId",
@@ -457,11 +513,11 @@
     },
     {
       "key": "Tags",
-      "value": "{Key:Name,Value:tb0t62pin8970meaiomf}"
+      "value": "{Key:Name,Value:tbt5alk98e6u93kche7b}"
     },
     {
       "key": "VpcId",
-      "value": "vpc-0f68eb42a6f5b32a7"
+      "value": "vpc-014472542cc87bfa5"
     }
   ],
   "name": "test-rdbms-vnet-aws",
@@ -471,13 +527,13 @@
     {
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:00Z",
+          "lastTransitionTime": "2026-11-25T09:54:37Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:00Z",
+          "lastTransitionTime": "2026-11-25T09:54:37Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -514,10 +570,10 @@
         "verified": true
       },
       "connectionName": "aws-ap-northeast-2",
-      "cspResourceId": "subnet-01656b07a47b08db1",
-      "cspResourceName": "tbh03suum32ikrjei0hm",
-      "cspVNetId": "vpc-0f68eb42a6f5b32a7",
-      "cspVNetName": "tb0t62pin8970meaiomf",
+      "cspResourceId": "subnet-0cc10b17b6ec493e1",
+      "cspResourceName": "tbigsnr2e3t5uc65i2no",
+      "cspVNetId": "vpc-014472542cc87bfa5",
+      "cspVNetName": "tbt5alk98e6u93kche7b",
       "description": "",
       "id": "subnet-1",
       "ipv4_CIDR": "10.0.1.0/24",
@@ -564,37 +620,37 @@
         },
         {
           "key": "SubnetArn",
-          "value": "arn:aws:ec2:ap-northeast-2:635484366616:subnet/subnet-01656b07a47b08db1"
+          "value": "arn:aws:ec2:ap-northeast-2:635484366616:subnet/subnet-0cc10b17b6ec493e1"
         },
         {
           "key": "SubnetId",
-          "value": "subnet-01656b07a47b08db1"
+          "value": "subnet-0cc10b17b6ec493e1"
         },
         {
           "key": "Tags",
-          "value": "{Key:Name,Value:tbh03suum32ikrjei0hm}"
+          "value": "{Key:Name,Value:tbigsnr2e3t5uc65i2no}"
         },
         {
           "key": "VpcId",
-          "value": "vpc-0f68eb42a6f5b32a7"
+          "value": "vpc-014472542cc87bfa5"
         }
       ],
       "name": "subnet-1",
       "resourceType": "subnet",
       "status": "Available",
-      "uid": "tbh03suum32ikrjei0hm",
+      "uid": "tbigsnr2e3t5uc65i2no",
       "zone": "ap-northeast-2a"
     },
     {
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:00Z",
+          "lastTransitionTime": "2026-11-25T09:54:37Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:00Z",
+          "lastTransitionTime": "2026-11-25T09:54:37Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -631,10 +687,10 @@
         "verified": true
       },
       "connectionName": "aws-ap-northeast-2",
-      "cspResourceId": "subnet-0edc50f27da325fcd",
-      "cspResourceName": "tbmjhfdqlaefm8mguu08",
-      "cspVNetId": "vpc-0f68eb42a6f5b32a7",
-      "cspVNetName": "tb0t62pin8970meaiomf",
+      "cspResourceId": "subnet-0d95aacbfb1b0dbeb",
+      "cspResourceName": "tbbmdrn1tarngstmna7k",
+      "cspVNetId": "vpc-014472542cc87bfa5",
+      "cspVNetName": "tbt5alk98e6u93kche7b",
       "description": "",
       "id": "subnet-2",
       "ipv4_CIDR": "10.0.2.0/24",
@@ -681,35 +737,35 @@
         },
         {
           "key": "SubnetArn",
-          "value": "arn:aws:ec2:ap-northeast-2:635484366616:subnet/subnet-0edc50f27da325fcd"
+          "value": "arn:aws:ec2:ap-northeast-2:635484366616:subnet/subnet-0d95aacbfb1b0dbeb"
         },
         {
           "key": "SubnetId",
-          "value": "subnet-0edc50f27da325fcd"
+          "value": "subnet-0d95aacbfb1b0dbeb"
         },
         {
           "key": "Tags",
-          "value": "{Key:Name,Value:tbmjhfdqlaefm8mguu08}"
+          "value": "{Key:Name,Value:tbbmdrn1tarngstmna7k}"
         },
         {
           "key": "VpcId",
-          "value": "vpc-0f68eb42a6f5b32a7"
+          "value": "vpc-014472542cc87bfa5"
         }
       ],
       "name": "subnet-2",
       "resourceType": "subnet",
       "status": "Available",
-      "uid": "tbmjhfdqlaefm8mguu08",
+      "uid": "tbbmdrn1tarngstmna7k",
       "zone": "ap-northeast-2c"
     }
   ],
   "systemLabel": "",
-  "uid": "tb0t62pin8970meaiomf"
+  "uid": "tbt5alk98e6u93kche7b"
 }
 ```
 
 ### 3. Tumblebug POST /resources/securityGroup (Create SecurityGroup) [✅ SUCCESS]
-- **Duration:** 1.374s
+- **Duration:** 1.978s
 - **Request URL:** `http://localhost:1323/tumblebug/ns/default/resources/securityGroup`
 ```json
 // Request Body
@@ -769,8 +825,8 @@
     "verified": true
   },
   "connectionName": "aws-ap-northeast-2",
-  "cspResourceId": "sg-0254337e18349e177",
-  "cspResourceName": "tbp45sko9npe9coogfb5",
+  "cspResourceId": "sg-00fbbe9cd2de98ea2",
+  "cspResourceName": "tburflq9g2o29alb00se",
   "description": "Pre-requisite SecurityGroup for CM-Beetle RDBMS test",
   "firewallRules": [
     {
@@ -797,11 +853,11 @@
   "keyValueList": [
     {
       "key": "GroupName",
-      "value": "tbp45sko9npe9coogfb5"
+      "value": "tburflq9g2o29alb00se"
     },
     {
       "key": "VpcID",
-      "value": "vpc-0f68eb42a6f5b32a7"
+      "value": "vpc-014472542cc87bfa5"
     },
     {
       "key": "OwnerID",
@@ -809,19 +865,19 @@
     },
     {
       "key": "Description",
-      "value": "tbp45sko9npe9coogfb5"
+      "value": "tburflq9g2o29alb00se"
     }
   ],
   "name": "test-rdbms-sg-aws",
   "resourceType": "securityGroup",
   "systemLabel": "",
-  "uid": "tbp45sko9npe9coogfb5",
+  "uid": "tburflq9g2o29alb00se",
   "vNetId": "test-rdbms-vnet-aws"
 }
 ```
 
 ### 4. Beetle GET RDBMS Support [✅ SUCCESS]
-- **Duration:** 15ms
+- **Duration:** 7ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/support?providerName=aws`
 ```json
 // Response Body
@@ -843,7 +899,7 @@
 ```
 
 ### 5. Beetle GET RDBMS Capability [✅ SUCCESS]
-- **Duration:** 45.665s
+- **Duration:** 40.245s
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/capability?connectionName=aws-ap-northeast-2&dbEngine=mysql`
 ```json
 // Response Body
@@ -2493,7 +2549,8 @@
     "supportedVersions": [
       "5.7",
       "8.0",
-      "8.4"
+      "8.4",
+      "9.7"
     ],
     "supportsBackup": true,
     "supportsDeletionProtection": true,
@@ -2508,7 +2565,7 @@
 ```
 
 ### 6. Beetle POST Recommend RDBMS [✅ SUCCESS]
-- **Duration:** 4ms
+- **Duration:** 5ms
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms`
 ```json
 // Request Body
@@ -2563,7 +2620,7 @@
     }
   ],
   "targetPreferences": {
-    "adminUserName": "root",
+    "adminUserName": "admin",
     "backupRetentionDays": 7,
     "highAvailability": false,
     "publicAccess": true
@@ -2581,7 +2638,7 @@
   },
   "targetRDBMSInstances": [
     {
-      "adminUserName": "root",
+      "adminUserName": "admin",
       "adminUserPassword": "******",
       "backupRetentionDays": 7,
       "databases": [
@@ -2615,12 +2672,12 @@
 ```
 
 ### 7. Beetle POST Validate RDBMS Recommendation [✅ SUCCESS]
-- **Duration:** 4.707s
+- **Duration:** 6.537s
 - **Request URL:** `http://localhost:8056/beetle/recommendation/middleware/rdbms/validate?nsId=default`
 ```json
 // Request Body
 {
-  "adminUserName": "root",
+  "adminUserName": "admin",
   "adminUserPassword": "******",
   "autoFillDefaults": true,
   "connectionName": "aws-ap-northeast-2",
@@ -2645,7 +2702,7 @@
 // Response Body
 {
   "data": {
-    "adminUserName": "root",
+    "adminUserName": "admin",
     "adminUserPassword": "******",
     "connectionName": "aws-ap-northeast-2",
     "dbEngine": "mysql",
@@ -2670,7 +2727,7 @@
 ```
 
 ### 8. Beetle POST Migrate RDBMS (Provisioning) [✅ SUCCESS]
-- **Duration:** 10m19.842s
+- **Duration:** 10m3.202s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms?nameSeed=test`
 ```json
 // Request Body
@@ -2683,7 +2740,7 @@
   },
   "targetRDBMSInstances": [
     {
-      "adminUserName": "root",
+      "adminUserName": "admin",
       "adminUserPassword": "******",
       "backupRetentionDays": 7,
       "databases": [
@@ -2724,22 +2781,22 @@
 ```
 
 ### 9. Beetle GET RDBMS Info [✅ SUCCESS]
-- **Duration:** 4ms
+- **Duration:** 9ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-aws`
 ```json
 // Response Body
 {
   "backupRetentionDays": 7,
-  "backupTime": "17:34-18:04",
+  "backupTime": "16:23-16:53",
   "conditions": [
     {
-      "lastTransitionTime": "2026-10-19T01:00:21Z",
+      "lastTransitionTime": "2026-11-25T10:04:51Z",
       "reason": "Available",
       "status": "True",
       "type": "Ready"
     },
     {
-      "lastTransitionTime": "2026-10-19T01:00:21Z",
+      "lastTransitionTime": "2026-11-25T10:04:51Z",
       "reason": "Available",
       "status": "True",
       "type": "Synced"
@@ -2776,18 +2833,172 @@
     "verified": true
   },
   "connectionName": "aws-ap-northeast-2",
-  "cspResourceId": "tbmo5d06mbrtcdfjposi",
-  "cspResourceName": "tbmo5d06mbrtcdfjposi",
+  "cspResourceId": "tbvtoteol9rtlis035nc",
+  "cspResourceName": "tbvtoteol9rtlis035nc",
   "dbEngine": "mysql",
   "dbEngineVersion": "8.0.46-rds.20260908",
   "dbInstanceSpec": "db.t3.medium",
   "dbInstanceType": "Primary",
   "deletionProtection": false,
   "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-  "endpoint": "tbmo5d06mbrtcdfjposi.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com:3306",
+  "endpoint": "tbvtoteol9rtlis035nc.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com:3306",
   "highAvailability": false,
   "id": "test-rdbms-aws",
   "iops": "3000",
+  "keyValueList": [
+    {
+      "key": "ActivityStreamStatus",
+      "value": "stopped"
+    },
+    {
+      "key": "AllocatedStorage",
+      "value": "100"
+    },
+    {
+      "key": "AutoMinorVersionUpgrade",
+      "value": "true"
+    },
+    {
+      "key": "AvailabilityZone",
+      "value": "ap-northeast-2c"
+    },
+    {
+      "key": "BackupRetentionPeriod",
+      "value": "7"
+    },
+    {
+      "key": "CACertificateIdentifier",
+      "value": "rds-ca-rsa2048-g1"
+    },
+    {
+      "key": "CopyTagsToSnapshot",
+      "value": "false"
+    },
+    {
+      "key": "CustomerOwnedIpEnabled",
+      "value": "false"
+    },
+    {
+      "key": "DBInstanceArn",
+      "value": "arn:aws:rds:ap-northeast-2:635484366616:db:tbvtoteol9rtlis035nc"
+    },
+    {
+      "key": "DBInstanceClass",
+      "value": "db.t3.medium"
+    },
+    {
+      "key": "DBInstanceIdentifier",
+      "value": "tbvtoteol9rtlis035nc"
+    },
+    {
+      "key": "DBInstanceStatus",
+      "value": "available"
+    },
+    {
+      "key": "DBParameterGroups",
+      "value": "{DBParameterGroupName:default.mysql8.0,ParameterApplyStatus:in-sync}"
+    },
+    {
+      "key": "DBSubnetGroup",
+      "value": "{DBSubnetGroupArn:null,DBSubnetGroupDescription:CB-Spider RDBMS subnet group for cb-spider-tbvtoteol9rtlis035nc,DBSubnetGroupName:cb-spider-tbvtoteol9rtlis035nc,SubnetGroupStatus:Complete,Subnets:[{SubnetAvailabilityZone:{Name:ap-northeast-2a},SubnetIdentifier:subnet-0cc10b17b6ec493e1,SubnetOutpost:{Arn:null},SubnetStatus:Active},{SubnetAvailabilityZone:{Name:ap-northeast-2c},SubnetIdentifier:subnet-0d95aacbfb1b0dbeb,SubnetOutpost:{Arn:null},SubnetStatus:Active}],VpcId:vpc-014472542cc87bfa5}"
+    },
+    {
+      "key": "DbInstancePort",
+      "value": "0"
+    },
+    {
+      "key": "DbiResourceId",
+      "value": "db-YIQ2PUCPDSN5UZ6AP34UZKPPJI"
+    },
+    {
+      "key": "DeletionProtection",
+      "value": "false"
+    },
+    {
+      "key": "Endpoint",
+      "value": "{Address:tbvtoteol9rtlis035nc.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com,HostedZoneId:ZLA2NUCOLGUUR,Port:3306}"
+    },
+    {
+      "key": "Engine",
+      "value": "mysql"
+    },
+    {
+      "key": "EngineVersion",
+      "value": "8.0.46-rds.20260908"
+    },
+    {
+      "key": "IAMDatabaseAuthenticationEnabled",
+      "value": "false"
+    },
+    {
+      "key": "InstanceCreateTime",
+      "value": "2026-11-25T09:58:58.611Z"
+    },
+    {
+      "key": "Iops",
+      "value": "3000"
+    },
+    {
+      "key": "LatestRestorableTime",
+      "value": "2026-11-25T10:00:09.563Z"
+    },
+    {
+      "key": "LicenseModel",
+      "value": "general-public-license"
+    },
+    {
+      "key": "MasterUsername",
+      "value": "admin"
+    },
+    {
+      "key": "MonitoringInterval",
+      "value": "0"
+    },
+    {
+      "key": "MultiAZ",
+      "value": "false"
+    },
+    {
+      "key": "OptionGroupMemberships",
+      "value": "{OptionGroupName:default:mysql-8-0,Status:in-sync}"
+    },
+    {
+      "key": "PendingModifiedValues",
+      "value": "{AllocatedStorage:null,BackupRetentionPeriod:null,CACertificateIdentifier:null,DBInstanceClass:null,DBInstanceIdentifier:null,DBSubnetGroupName:null,EngineVersion:null,IAMDatabaseAuthenticationEnabled:null,Iops:null,LicenseModel:null,MasterUserPassword:null,MultiAZ:null,PendingCloudwatchLogsExports:null,Port:null,ProcessorFeatures:null,StorageType:null}"
+    },
+    {
+      "key": "PerformanceInsightsEnabled",
+      "value": "false"
+    },
+    {
+      "key": "PreferredBackupWindow",
+      "value": "16:23-16:53"
+    },
+    {
+      "key": "PreferredMaintenanceWindow",
+      "value": "mon:14:06-mon:14:36"
+    },
+    {
+      "key": "PubliclyAccessible",
+      "value": "true"
+    },
+    {
+      "key": "StorageEncrypted",
+      "value": "false"
+    },
+    {
+      "key": "StorageType",
+      "value": "gp3"
+    },
+    {
+      "key": "TagList",
+      "value": "{Key:Name,Value:tbvtoteol9rtlis035nc}"
+    },
+    {
+      "key": "VpcSecurityGroups",
+      "value": "{Status:active,VpcSecurityGroupId:sg-00fbbe9cd2de98ea2}"
+    }
+  ],
   "name": "test-rdbms-aws",
   "publicAccess": true,
   "resourceType": "rdbms",
@@ -2804,16 +3015,16 @@
   "tagList": [
     {
       "key": "Name",
-      "value": "tbmo5d06mbrtcdfjposi"
+      "value": "tbvtoteol9rtlis035nc"
     }
   ],
-  "uid": "tbmo5d06mbrtcdfjposi",
+  "uid": "tbvtoteol9rtlis035nc",
   "vNetId": "test-rdbms-vnet-aws"
 }
 ```
 
 ### 10. Beetle GET RDBMS List [✅ SUCCESS]
-- **Duration:** 8ms
+- **Duration:** 30ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms`
 ```json
 // Response Body
@@ -2821,17 +3032,17 @@
   "rdbms": [
     {
       "backupRetentionDays": 7,
-      "backupTime": "16:00Z-17:00Z",
+      "backupTime": "07:00Z-08:00Z",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T01:00:16Z",
+          "lastTransitionTime": "2026-11-25T10:04:29Z",
           "message": "RDBMS deletion in progress",
           "reason": "Deleting",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:56:55Z",
+          "lastTransitionTime": "2026-11-25T10:01:41Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -2866,17 +3077,283 @@
         "verified": true
       },
       "connectionName": "alibaba-ap-northeast-2",
-      "cspResourceId": "rm-mj77hqffq9u8lfd98",
-      "cspResourceName": "tb4canurhcvccfe1cd7q",
+      "cspResourceId": "rm-mj7uar0nh1r8n558k",
+      "cspResourceName": "tbc066ftkd9ijporkvrq",
       "dbEngine": "mysql",
       "dbEngineVersion": "8.0",
       "dbInstanceSpec": "mysql.n2.medium.1",
       "dbInstanceType": "Basic",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "43.108.67.176:3306",
+      "endpoint": "43.108.66.129:3306",
       "highAvailability": false,
       "id": "test-rdbms-alibaba",
+      "keyValueList": [
+        {
+          "key": "Engine",
+          "value": "MySQL"
+        },
+        {
+          "key": "DBInstanceDiskUsed",
+          "value": "0"
+        },
+        {
+          "key": "AdvancedFeatures",
+          "value": "LinkedServer,DistributeTransaction"
+        },
+        {
+          "key": "VpcCloudInstanceId",
+          "value": "rm-mj7uar0nh1r8n558k-20261125175911"
+        },
+        {
+          "key": "DBInstanceNetType",
+          "value": "Intranet"
+        },
+        {
+          "key": "DBInstanceClass",
+          "value": "mysql.n2.medium.1"
+        },
+        {
+          "key": "MaxIOMBPS",
+          "value": "128"
+        },
+        {
+          "key": "DBMaxQuantity",
+          "value": "99999"
+        },
+        {
+          "key": "DBInstanceCPU",
+          "value": "2"
+        },
+        {
+          "key": "MaxConnections",
+          "value": "4000"
+        },
+        {
+          "key": "InstanceNetworkType",
+          "value": "VPC"
+        },
+        {
+          "key": "MultipleTempUpgrade",
+          "value": "false"
+        },
+        {
+          "key": "DBInstanceType",
+          "value": "Primary"
+        },
+        {
+          "key": "DBInstanceId",
+          "value": "rm-mj7uar0nh1r8n558k"
+        },
+        {
+          "key": "VpcId",
+          "value": "vpc-mj7t8uchc521yb50jec8v"
+        },
+        {
+          "key": "DBInstanceMemory",
+          "value": "4096"
+        },
+        {
+          "key": "DBInstanceStorageType",
+          "value": "general_essd"
+        },
+        {
+          "key": "LatestKernelVersion",
+          "value": "rds_20260620"
+        },
+        {
+          "key": "SecurityIPList",
+          "value": "0.0.0.0/0"
+        },
+        {
+          "key": "SupportUpgradeAccountType",
+          "value": "No"
+        },
+        {
+          "key": "MaxIOPS",
+          "value": "7550"
+        },
+        {
+          "key": "TipsLevel",
+          "value": "1"
+        },
+        {
+          "key": "MaintainTime",
+          "value": "18:00Z-22:00Z"
+        },
+        {
+          "key": "EngineVersion",
+          "value": "8.0"
+        },
+        {
+          "key": "InstructionSetArch",
+          "value": "x86"
+        },
+        {
+          "key": "PayType",
+          "value": "Postpaid"
+        },
+        {
+          "key": "BurstingEnabled",
+          "value": "false"
+        },
+        {
+          "key": "Tips",
+          "value": "ok"
+        },
+        {
+          "key": "DBInstanceStorage",
+          "value": "100"
+        },
+        {
+          "key": "KindCode",
+          "value": "18"
+        },
+        {
+          "key": "ColdDataEnabled",
+          "value": "false"
+        },
+        {
+          "key": "SupportCreateSuperAccount",
+          "value": "No"
+        },
+        {
+          "key": "CurrentKernelVersion",
+          "value": "rds_20260620"
+        },
+        {
+          "key": "ZoneId",
+          "value": "ap-northeast-2a"
+        },
+        {
+          "key": "IPType",
+          "value": "IPv4"
+        },
+        {
+          "key": "ConnectionMode",
+          "value": "Standard"
+        },
+        {
+          "key": "LockMode",
+          "value": "Unlock"
+        },
+        {
+          "key": "CanTempUpgrade",
+          "value": "false"
+        },
+        {
+          "key": "Category",
+          "value": "Basic"
+        },
+        {
+          "key": "InsId",
+          "value": "1"
+        },
+        {
+          "key": "DBInstanceDescription",
+          "value": "tbc066ftkd9ijporkvrq"
+        },
+        {
+          "key": "AccountType",
+          "value": "Mix"
+        },
+        {
+          "key": "RegionId",
+          "value": "ap-northeast-2"
+        },
+        {
+          "key": "ConsoleVersion",
+          "value": "2"
+        },
+        {
+          "key": "ResourceGroupId",
+          "value": "rg-acfnvekhilw5kmy"
+        },
+        {
+          "key": "DispenseMode",
+          "value": "ClassicDispenseMode"
+        },
+        {
+          "key": "TempUpgradeRecoveryMemory",
+          "value": "0"
+        },
+        {
+          "key": "ProxyType",
+          "value": "2"
+        },
+        {
+          "key": "AccountMaxQuantity",
+          "value": "99999"
+        },
+        {
+          "key": "Port",
+          "value": "3306"
+        },
+        {
+          "key": "VSwitchId",
+          "value": "vsw-mj7yfvd5kk99kumix6i1u"
+        },
+        {
+          "key": "CreationTime",
+          "value": "2026-11-25T09:59:16Z"
+        },
+        {
+          "key": "SecurityIPMode",
+          "value": "normal"
+        },
+        {
+          "key": "DBInstanceClassType",
+          "value": "x"
+        },
+        {
+          "key": "DBInstanceStatus",
+          "value": "Running"
+        },
+        {
+          "key": "ConnectionString",
+          "value": "rm-mj7uar0nh1r8n558k.mysql.ap-northeast-2.rds.aliyuncs.com"
+        },
+        {
+          "key": "TempUpgradeRecoveryCpu",
+          "value": "0"
+        },
+        {
+          "key": "AvailabilityValue",
+          "value": "100.0%"
+        },
+        {
+          "key": "AutoUpgradeMinorVersion",
+          "value": "Auto"
+        },
+        {
+          "key": "DeletionProtection",
+          "value": "false"
+        },
+        {
+          "key": "Extra",
+          "value": "{ReplicaGroupStatus:,ActiveReplicaDBInstanceID:,ReplicaGroupID:,RecoveryModel:,DBInstanceIds:{DBInstanceId:[]}}"
+        },
+        {
+          "key": "ServerlessConfig",
+          "value": "{ScaleMin:,ScaleMax:,AutoPause:false,SwitchForce:false}"
+        },
+        {
+          "key": "BabelfishConfig",
+          "value": "{BabelfishEnabled:,MigrationMode:}"
+        },
+        {
+          "key": "DBClusterNodes",
+          "value": "{DBClusterNode:[]}"
+        },
+        {
+          "key": "ReadOnlyDBInstanceIds",
+          "value": "{ReadOnlyDBInstanceId:[]}"
+        },
+        {
+          "key": "SlaveZones",
+          "value": "{SlaveZone:[]}"
+        }
+      ],
       "name": "test-rdbms-alibaba",
       "publicAccess": true,
       "resourceType": "rdbms",
@@ -2889,21 +3366,21 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tb4canurhcvccfe1cd7q",
+      "uid": "tbc066ftkd9ijporkvrq",
       "vNetId": "test-rdbms-vnet-alibaba"
     },
     {
       "backupRetentionDays": 7,
-      "backupTime": "17:34-18:04",
+      "backupTime": "16:23-16:53",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T01:00:21Z",
+          "lastTransitionTime": "2026-11-25T10:04:51Z",
           "reason": "Available",
           "status": "True",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T01:00:21Z",
+          "lastTransitionTime": "2026-11-25T10:04:51Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -2940,18 +3417,172 @@
         "verified": true
       },
       "connectionName": "aws-ap-northeast-2",
-      "cspResourceId": "tbmo5d06mbrtcdfjposi",
-      "cspResourceName": "tbmo5d06mbrtcdfjposi",
+      "cspResourceId": "tbvtoteol9rtlis035nc",
+      "cspResourceName": "tbvtoteol9rtlis035nc",
       "dbEngine": "mysql",
       "dbEngineVersion": "8.0.46-rds.20260908",
       "dbInstanceSpec": "db.t3.medium",
       "dbInstanceType": "Primary",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "tbmo5d06mbrtcdfjposi.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com:3306",
+      "endpoint": "tbvtoteol9rtlis035nc.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com:3306",
       "highAvailability": false,
       "id": "test-rdbms-aws",
       "iops": "3000",
+      "keyValueList": [
+        {
+          "key": "ActivityStreamStatus",
+          "value": "stopped"
+        },
+        {
+          "key": "AllocatedStorage",
+          "value": "100"
+        },
+        {
+          "key": "AutoMinorVersionUpgrade",
+          "value": "true"
+        },
+        {
+          "key": "AvailabilityZone",
+          "value": "ap-northeast-2c"
+        },
+        {
+          "key": "BackupRetentionPeriod",
+          "value": "7"
+        },
+        {
+          "key": "CACertificateIdentifier",
+          "value": "rds-ca-rsa2048-g1"
+        },
+        {
+          "key": "CopyTagsToSnapshot",
+          "value": "false"
+        },
+        {
+          "key": "CustomerOwnedIpEnabled",
+          "value": "false"
+        },
+        {
+          "key": "DBInstanceArn",
+          "value": "arn:aws:rds:ap-northeast-2:635484366616:db:tbvtoteol9rtlis035nc"
+        },
+        {
+          "key": "DBInstanceClass",
+          "value": "db.t3.medium"
+        },
+        {
+          "key": "DBInstanceIdentifier",
+          "value": "tbvtoteol9rtlis035nc"
+        },
+        {
+          "key": "DBInstanceStatus",
+          "value": "available"
+        },
+        {
+          "key": "DBParameterGroups",
+          "value": "{DBParameterGroupName:default.mysql8.0,ParameterApplyStatus:in-sync}"
+        },
+        {
+          "key": "DBSubnetGroup",
+          "value": "{DBSubnetGroupArn:null,DBSubnetGroupDescription:CB-Spider RDBMS subnet group for cb-spider-tbvtoteol9rtlis035nc,DBSubnetGroupName:cb-spider-tbvtoteol9rtlis035nc,SubnetGroupStatus:Complete,Subnets:[{SubnetAvailabilityZone:{Name:ap-northeast-2a},SubnetIdentifier:subnet-0cc10b17b6ec493e1,SubnetOutpost:{Arn:null},SubnetStatus:Active},{SubnetAvailabilityZone:{Name:ap-northeast-2c},SubnetIdentifier:subnet-0d95aacbfb1b0dbeb,SubnetOutpost:{Arn:null},SubnetStatus:Active}],VpcId:vpc-014472542cc87bfa5}"
+        },
+        {
+          "key": "DbInstancePort",
+          "value": "0"
+        },
+        {
+          "key": "DbiResourceId",
+          "value": "db-YIQ2PUCPDSN5UZ6AP34UZKPPJI"
+        },
+        {
+          "key": "DeletionProtection",
+          "value": "false"
+        },
+        {
+          "key": "Endpoint",
+          "value": "{Address:tbvtoteol9rtlis035nc.chrkjg2ktom1.ap-northeast-2.rds.amazonaws.com,HostedZoneId:ZLA2NUCOLGUUR,Port:3306}"
+        },
+        {
+          "key": "Engine",
+          "value": "mysql"
+        },
+        {
+          "key": "EngineVersion",
+          "value": "8.0.46-rds.20260908"
+        },
+        {
+          "key": "IAMDatabaseAuthenticationEnabled",
+          "value": "false"
+        },
+        {
+          "key": "InstanceCreateTime",
+          "value": "2026-11-25T09:58:58.611Z"
+        },
+        {
+          "key": "Iops",
+          "value": "3000"
+        },
+        {
+          "key": "LatestRestorableTime",
+          "value": "2026-11-25T10:00:09.563Z"
+        },
+        {
+          "key": "LicenseModel",
+          "value": "general-public-license"
+        },
+        {
+          "key": "MasterUsername",
+          "value": "admin"
+        },
+        {
+          "key": "MonitoringInterval",
+          "value": "0"
+        },
+        {
+          "key": "MultiAZ",
+          "value": "false"
+        },
+        {
+          "key": "OptionGroupMemberships",
+          "value": "{OptionGroupName:default:mysql-8-0,Status:in-sync}"
+        },
+        {
+          "key": "PendingModifiedValues",
+          "value": "{AllocatedStorage:null,BackupRetentionPeriod:null,CACertificateIdentifier:null,DBInstanceClass:null,DBInstanceIdentifier:null,DBSubnetGroupName:null,EngineVersion:null,IAMDatabaseAuthenticationEnabled:null,Iops:null,LicenseModel:null,MasterUserPassword:null,MultiAZ:null,PendingCloudwatchLogsExports:null,Port:null,ProcessorFeatures:null,StorageType:null}"
+        },
+        {
+          "key": "PerformanceInsightsEnabled",
+          "value": "false"
+        },
+        {
+          "key": "PreferredBackupWindow",
+          "value": "16:23-16:53"
+        },
+        {
+          "key": "PreferredMaintenanceWindow",
+          "value": "mon:14:06-mon:14:36"
+        },
+        {
+          "key": "PubliclyAccessible",
+          "value": "true"
+        },
+        {
+          "key": "StorageEncrypted",
+          "value": "false"
+        },
+        {
+          "key": "StorageType",
+          "value": "gp3"
+        },
+        {
+          "key": "TagList",
+          "value": "{Key:Name,Value:tbvtoteol9rtlis035nc}"
+        },
+        {
+          "key": "VpcSecurityGroups",
+          "value": "{Status:active,VpcSecurityGroupId:sg-00fbbe9cd2de98ea2}"
+        }
+      ],
       "name": "test-rdbms-aws",
       "publicAccess": true,
       "resourceType": "rdbms",
@@ -2968,25 +3599,128 @@
       "tagList": [
         {
           "key": "Name",
-          "value": "tbmo5d06mbrtcdfjposi"
+          "value": "tbvtoteol9rtlis035nc"
         }
       ],
-      "uid": "tbmo5d06mbrtcdfjposi",
+      "uid": "tbvtoteol9rtlis035nc",
       "vNetId": "test-rdbms-vnet-aws"
     },
     {
       "backupRetentionDays": 7,
-      "backupTime": "20:00",
+      "backupTime": "AUTO",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:58:33Z",
+          "lastTransitionTime": "2026-11-25T09:59:42Z",
+          "reason": "Available",
+          "status": "True",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2026-11-25T09:59:42Z",
+          "reason": "Available",
+          "status": "True",
+          "type": "Synced"
+        }
+      ],
+      "connectionConfig": {
+        "configName": "azure-koreacentral",
+        "credentialHolder": "admin",
+        "credentialName": "azure",
+        "driverName": "azure-driver-v1.0.so",
+        "providerName": "azure",
+        "regionDetail": {
+          "description": "Korea Central",
+          "location": {
+            "display": "Korea Central",
+            "latitude": 37.5665,
+            "longitude": 126.978
+          },
+          "regionId": "koreacentral",
+          "regionName": "koreacentral",
+          "zones": [
+            "1",
+            "2",
+            "3"
+          ]
+        },
+        "regionRepresentative": true,
+        "regionZoneInfo": {
+          "assignedRegion": "koreacentral",
+          "assignedZone": ""
+        },
+        "regionZoneInfoName": "azure-koreacentral",
+        "verified": true
+      },
+      "connectionName": "azure-koreacentral",
+      "cspResourceId": "tbqt11ul0jr723gfs0im",
+      "cspResourceName": "tbqt11ul0jr723gfs0im",
+      "dbEngine": "mysql",
+      "dbEngineVersion": "8.0.21",
+      "dbInstanceSpec": "Standard_B2s",
+      "dbInstanceType": "Burstable",
+      "deletionProtection": false,
+      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
+      "endpoint": "tbqt11ul0jr723gfs0im.mysql.database.azure.com:3306",
+      "highAvailability": false,
+      "id": "test-rdbms-azure",
+      "keyValueList": [
+        {
+          "key": "Location",
+          "value": "Korea Central"
+        },
+        {
+          "key": "Properties",
+          "value": "{administratorLogin:dbadmin,availabilityZone:1,backup:{backupRetentionDays:7,earliestRestoreDate:2026-11-25T10:05:13.3889866Z,geoRedundantBackup:Disabled},fullyQualifiedDomainName:tbqt11ul0jr723gfs0im.mysql.database.azure.com,highAvailability:{mode:Disabled,standbyAvailabilityZone:,state:NotEnabled},maintenanceWindow:{customWindow:Disabled,dayOfWeek:0,startHour:0,startMinute:0},network:{publicNetworkAccess:Enabled},replicaCapacity:10,replicationRole:None,state:Ready,storage:{autoGrow:Enabled,iops:600,storageSizeGB:100,storageSku:Premium_LRS},version:8.0.21}"
+        },
+        {
+          "key": "SKU",
+          "value": "{name:Standard_B2s,tier:Burstable}"
+        },
+        {
+          "key": "ID",
+          "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreacentral/providers/Microsoft.DBforMySQL/flexibleServers/tbqt11ul0jr723gfs0im"
+        },
+        {
+          "key": "Name",
+          "value": "tbqt11ul0jr723gfs0im"
+        },
+        {
+          "key": "SystemData",
+          "value": "{createdAt:2026-11-25T09:55:13.3889866Z}"
+        },
+        {
+          "key": "Type",
+          "value": "Microsoft.DBforMySQL/flexibleServers"
+        }
+      ],
+      "name": "test-rdbms-azure",
+      "publicAccess": true,
+      "resourceType": "rdbms",
+      "securityGroupIds": [
+        "test-rdbms-sg-azure"
+      ],
+      "status": "Available",
+      "storageSize": 100,
+      "storageType": "Premium_LRS",
+      "subnetIds": [
+        "subnet-1"
+      ],
+      "uid": "tbqt11ul0jr723gfs0im",
+      "vNetId": "test-rdbms-vnet-azure"
+    },
+    {
+      "backupRetentionDays": 7,
+      "backupTime": "16:00",
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-25T10:02:58Z",
           "message": "RDBMS deletion in progress",
           "reason": "Deleting",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:54:00Z",
+          "lastTransitionTime": "2026-11-25T09:58:37Z",
           "reason": "Available",
           "status": "True",
           "type": "Synced"
@@ -3023,8 +3757,8 @@
         "verified": true
       },
       "connectionName": "gcp-us-central1",
-      "cspResourceId": "tbj7djjk245lg59evd6k",
-      "cspResourceName": "tbj7djjk245lg59evd6k",
+      "cspResourceId": "tbc0aj584ko18830vb1j",
+      "cspResourceName": "tbc0aj584ko18830vb1j",
       "dbEngine": "mysql",
       "dbEngineVersion": "8.0",
       "dbInstanceSpec": "db-n1-standard-2",
@@ -3032,9 +3766,127 @@
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
       "encryption": true,
-      "endpoint": "34.9.134.166:3306",
+      "endpoint": "136.80.5.81:3306",
       "highAvailability": false,
       "id": "test-rdbms-gcp",
+      "keyValueList": [
+        {
+          "key": "BackendType",
+          "value": "SECOND_GEN"
+        },
+        {
+          "key": "ConnectionName",
+          "value": "ykkim-etri:us-central1:tbc0aj584ko18830vb1j"
+        },
+        {
+          "key": "CreateTime",
+          "value": "2026-11-25T09:55:37.790Z"
+        },
+        {
+          "key": "CurrentDiskSize",
+          "value": "0"
+        },
+        {
+          "key": "DatabaseInstalledVersion",
+          "value": "MYSQL_8_0_46"
+        },
+        {
+          "key": "DatabaseVersion",
+          "value": "MYSQL_8_0"
+        },
+        {
+          "key": "Etag",
+          "value": "74c240921252e7aa3276e6b5dc8adb3ebefa361edcf0d4a331a9eee4d0012ea1"
+        },
+        {
+          "key": "GceZone",
+          "value": "us-central1-c"
+        },
+        {
+          "key": "GeminiConfig",
+          "value": "{flagRecommenderEnabled:true}"
+        },
+        {
+          "key": "IncludeReplicasForMajorVersionUpgrade",
+          "value": "false"
+        },
+        {
+          "key": "InstanceType",
+          "value": "CLOUD_SQL_INSTANCE"
+        },
+        {
+          "key": "IpAddresses",
+          "value": "{ipAddress:136.80.5.81,type:PRIMARY}"
+        },
+        {
+          "key": "Kind",
+          "value": "sql#instance"
+        },
+        {
+          "key": "MaintenanceVersion",
+          "value": "MYSQL_8_0_46.R20261013.02_15"
+        },
+        {
+          "key": "MaxDiskSize",
+          "value": "0"
+        },
+        {
+          "key": "Name",
+          "value": "tbc0aj584ko18830vb1j"
+        },
+        {
+          "key": "NodeCount",
+          "value": "0"
+        },
+        {
+          "key": "Project",
+          "value": "ykkim-etri"
+        },
+        {
+          "key": "Region",
+          "value": "us-central1"
+        },
+        {
+          "key": "SatisfiesPzi",
+          "value": "true"
+        },
+        {
+          "key": "SatisfiesPzs",
+          "value": "false"
+        },
+        {
+          "key": "SelfLink",
+          "value": "https://sqladmin.googleapis.com/sql/v1beta4/projects/GCP_PROJECT_ID/instances/tbc0aj584ko18830vb1j"
+        },
+        {
+          "key": "ServerCaCert",
+          "value": "{cert:-----BEGIN CERTIFICATE-----\\nMIIDcTCCAlmgAwIBAgIBADANBgkqhkiG9w0BAQsFADBwMS0wKwYDVQQuEyRhODg2\\nMWU3Ni0xYjRmLTRlZmItYmM4My0zOTZiYmZlZGEwNWIxHDAaBgNVBAMTE0Nsb3Vk\\nIFNRTCBTZXJ2ZXIgQ0ExFDASBgNVBAoTC0dvb2dsZSwgSW5jMQswCQYDVQQGEwJV\\nUzAeFw0yNjExMjUwOTU1MjZaFw0zNjExMjIwOTU2MjZaMHAxLTArBgNVBC4TJGE4\\nODYxZTc2LTFiNGYtNGVmYi1iYzgzLTM5NmJiZmVkYTA1YjEcMBoGA1UEAxMTQ2xv\\ndWQgU1FMIFNlcnZlciBDQTEUMBIGA1UEChMLR29vZ2xlLCBJbmMxCzAJBgNVBAYT\\nAlVTMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAilpdp2ZUIpAlxNob\\nmpLtJjEGEMvs0V77gI+27HmvrWkNOT3ppFhxLEnvsqdzKbVzSvD3ptPYm7zqiAoX\\nthlJ0LFmSUVw5ViP6EiTtywMiG0QNbt7UUSvU849j96MYN3h2wTJZgKm0co26Vxw\\ndZ2W4TK8WKOD5BF9vCGSkJVkpF1xPzOFl231DYm0KLrBRM4rMThSwB3ICifQiUso\\nlnIgiLZtdcEd1dXm1E8SMaAva6S7J3nd1SKpypnaCr4B3STY5wUEu8OXhDvYfzId\\nlRfEH5r0xptyIZjAR6ZrfcAUhTtOHSvSakaf9aSwzZnjEaYiO6dSHx0UhwH+gIxF\\n4jWwvQIDAQABoxYwFDASBgNVHRMBAf8ECDAGAQH/AgEAMA0GCSqGSIb3DQEBCwUA\\nA4IBAQByQWdUNDPEyiGz5HCpboeKwSmCrYxuM5JzORuaj6yJY3G7TPKnYb4ltM+6\\nU5d99PArl09QgNt6RNWyVdqp+/QycPwadArcS5G+1z/Md6yfp6/KlMD1cuxtxxsS\\nl4vGbaTAwUT5ldwQ3HfyZFnQfWyMTr7f4fwsrJkyjTPetPIqYHQgg63qbyucFiut\\nT+XkL+oQU41uSH9SHZ9iqJwTK+UFYi3d0cu2ex9ouf8YDihNn60sLKZiwHkYM5aj\\n0919+nHI2xXAwZi9+Qjo8VL5qxJK4U2tUUAu06NRnWTc+khUOI9qy3D5YjglqmV1\\nMb5SVhJd+pwMe1BK/zMlEOpk2Z3D\\n-----END CERTIFICATE-----,certSerialNumber:0,commonName:C=US,O=Google\\\\, Inc,CN=Cloud SQL Server CA,dnQualifier=a8861e76-1b4f-4efb-bc83-396bbfeda05b,createTime:2026-11-25T09:55:26.377Z,expirationTime:2036-11-22T09:56:26.377Z,instance:tbc0aj584ko18830vb1j,kind:sql#sslCert,sha1Fingerprint:6a34e29353b85234b2b6769082c46082deded54a}"
+        },
+        {
+          "key": "ServiceAccountEmailAddress",
+          "value": "MASKED_EMAIL"
+        },
+        {
+          "key": "Settings",
+          "value": "{activationPolicy:ALWAYS,availabilityType:ZONAL,backupConfiguration:{backupRetentionSettings:{retainedBackups:7,retentionUnit:COUNT},backupTier:STANDARD,enabled:true,kind:sql#backupConfiguration,startTime:16:00,transactionLogRetentionDays:7,transactionalLogStorageState:TRANSACTIONAL_LOG_STORAGE_STATE_UNSPECIFIED},connectorEnforcement:NOT_REQUIRED,dataDiskSizeGb:100,dataDiskType:PD_SSD,edition:ENTERPRISE,enableDataplexIntegration:true,ipConfiguration:{authorizedNetworks:[{kind:sql#aclEntry,name:AllowAll,value:0.0.0.0/0}],ipv4Enabled:true,serverCaMode:GOOGLE_MANAGED_INTERNAL_CA,serverCertificateRotationMode:SERVER_CERTIFICATE_ROTATION_MODE_UNSPECIFIED,sslMode:ALLOW_UNENCRYPTED_AND_ENCRYPTED},kind:sql#settings,locationPreference:{kind:sql#locationPreference,zone:us-central1-c},pricingPlan:PER_USE,replicationLagMaxSeconds:31536000,replicationType:SYNCHRONOUS,settingsVersion:1,storageAutoResize:true,tier:db-n1-standard-2}"
+        },
+        {
+          "key": "SqlNetworkArchitecture",
+          "value": "NEW_NETWORK_ARCHITECTURE"
+        },
+        {
+          "key": "State",
+          "value": "RUNNABLE"
+        },
+        {
+          "key": "SwitchTransactionLogsToCloudStorageEnabled",
+          "value": "false"
+        },
+        {
+          "key": "UpgradableDatabaseVersions",
+          "value": "{displayName:MySQL 8.0.18,majorVersion:MYSQL_8_0,name:MYSQL_8_0_18}; {displayName:MySQL 8.0.26,majorVersion:MYSQL_8_0,name:MYSQL_8_0_26}; {displayName:MySQL 8.0.27,majorVersion:MYSQL_8_0,name:MYSQL_8_0_27}; {displayName:MySQL 8.0.28,majorVersion:MYSQL_8_0,name:MYSQL_8_0_28}; {displayName:MySQL 8.0.29,majorVersion:MYSQL_8_0,name:MYSQL_8_0_29}; {displayName:MySQL 8.0.30,majorVersion:MYSQL_8_0,name:MYSQL_8_0_30}; {displayName:MySQL 8.0.31,majorVersion:MYSQL_8_0,name:MYSQL_8_0_31}; {displayName:MySQL 8.0.32,majorVersion:MYSQL_8_0,name:MYSQL_8_0_32}; {displayName:MySQL 8.0.33,majorVersion:MYSQL_8_0,name:MYSQL_8_0_33}; {displayName:MySQL 8.0.34,majorVersion:MYSQL_8_0,name:MYSQL_8_0_34}; {displayName:MySQL 8.0.35,majorVersion:MYSQL_8_0,name:MYSQL_8_0_35}; {displayName:MySQL 8.0.36,majorVersion:MYSQL_8_0,name:MYSQL_8_0_36}; {displayName:MySQL 8.0.37,majorVersion:MYSQL_8_0,name:MYSQL_8_0_37}; {displayName:MySQL 8.0.39,majorVersion:MYSQL_8_0,name:MYSQL_8_0_39}; {displayName:MySQL 8.0.40,majorVersion:MYSQL_8_0,name:MYSQL_8_0_40}; {displayName:MySQL 8.0.41,majorVersion:MYSQL_8_0,name:MYSQL_8_0_41}; {displayName:MySQL 8.0.42,majorVersion:MYSQL_8_0,name:MYSQL_8_0_42}; {displayName:MySQL 8.0.43,majorVersion:MYSQL_8_0,name:MYSQL_8_0_43}; {displayName:MySQL 8.0.44,majorVersion:MYSQL_8_0,name:MYSQL_8_0_44}; {displayName:MySQL 8.0.45,majorVersion:MYSQL_8_0,name:MYSQL_8_0_45}; {displayName:MySQL 8.4,majorVersion:MYSQL_8_4,name:MYSQL_8_4}"
+        }
+      ],
       "name": "test-rdbms-gcp",
       "publicAccess": true,
       "resourceType": "rdbms",
@@ -3047,22 +3899,20 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tbj7djjk245lg59evd6k",
+      "uid": "tbc0aj584ko18830vb1j",
       "vNetId": "test-rdbms-vnet-gcp"
     },
     {
-      "backupRetentionDays": 30,
-      "backupTime": "AUTO",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:27Z",
+          "lastTransitionTime": "2026-11-25T09:55:07Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:27Z",
+          "lastTransitionTime": "2026-11-25T09:55:07Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -3098,16 +3948,11 @@
         "verified": true
       },
       "connectionName": "ibm-us-south",
-      "cspResourceId": "6c6198ca-4078-4508-aae4-cbaf09757ee8",
-      "cspResourceName": "tblp8rdv0nfnboaibv38",
       "dbEngine": "mysql",
       "dbEngineVersion": "8.4",
       "dbInstanceSpec": "multitenant",
-      "dbInstanceType": "NA",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "encryption": true,
-      "endpoint": "NA",
       "highAvailability": false,
       "id": "test-rdbms-ibm",
       "name": "test-rdbms-ibm",
@@ -3118,25 +3963,24 @@
       ],
       "status": "Creating",
       "storageSize": 100,
-      "storageType": "NA",
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tblp8rdv0nfnboaibv38",
+      "uid": "tbun4h3ej4rgndeesotl",
       "vNetId": "test-rdbms-vnet-ibm"
     },
     {
       "backupRetentionDays": 7,
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:50:44Z",
+          "lastTransitionTime": "2026-11-25T09:55:13Z",
           "message": "RDBMS creation in progress",
           "reason": "Creating",
           "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:50:44Z",
+          "lastTransitionTime": "2026-11-25T09:55:13Z",
           "reason": "Creating",
           "status": "False",
           "type": "Synced"
@@ -3190,23 +4034,23 @@
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tbs39bb5093bjft6118j",
+      "uid": "tbpth30tovigfplksoib",
       "vNetId": "test-rdbms-vnet-ncp"
     },
     {
       "backupRetentionDays": 7,
-      "backupTime": "03:00",
       "conditions": [
         {
-          "lastTransitionTime": "2026-10-19T00:58:48Z",
-          "reason": "Available",
-          "status": "True",
+          "lastTransitionTime": "2026-11-25T09:55:13Z",
+          "message": "RDBMS creation in progress",
+          "reason": "Creating",
+          "status": "False",
           "type": "Ready"
         },
         {
-          "lastTransitionTime": "2026-10-19T00:58:48Z",
-          "reason": "Available",
-          "status": "True",
+          "lastTransitionTime": "2026-11-25T09:55:13Z",
+          "reason": "Creating",
+          "status": "False",
           "type": "Synced"
         }
       ],
@@ -3239,15 +4083,11 @@
         "verified": true
       },
       "connectionName": "nhn-kr1",
-      "cspResourceId": "e0ea4718-41a9-490a-b400-640d6022ed39",
-      "cspResourceName": "tb2s1h0bch71jggm9aqn",
       "dbEngine": "mysql",
       "dbEngineVersion": "MYSQL_V8046",
       "dbInstanceSpec": "m2.c2m4",
-      "dbInstanceType": "NA",
       "deletionProtection": false,
       "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
-      "endpoint": "8ede9688-9fbb-4350-bd7c-2ec5371cef17.external.kr1.mysql.rds.nhncloudservice.com:3306",
       "highAvailability": false,
       "id": "test-rdbms-nhn",
       "name": "test-rdbms-nhn",
@@ -3257,21 +4097,252 @@
       "securityGroupIds": [
         "test-rdbms-sg-nhn"
       ],
-      "status": "Available",
+      "status": "Creating",
       "storageSize": 100,
       "storageType": "General SSD",
       "subnetIds": [
         "subnet-1"
       ],
-      "uid": "tb2s1h0bch71jggm9aqn",
+      "uid": "tbsn6ljiu7npo3re8iqr",
       "vNetId": "test-rdbms-vnet-nhn"
+    },
+    {
+      "backupRetentionDays": 7,
+      "backupTime": "00:00-12:00",
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-25T10:03:23Z",
+          "message": "RDBMS deletion in progress",
+          "reason": "Deleting",
+          "status": "False",
+          "type": "Ready"
+        },
+        {
+          "lastTransitionTime": "2026-11-25T09:59:46Z",
+          "reason": "Available",
+          "status": "True",
+          "type": "Synced"
+        }
+      ],
+      "connectionConfig": {
+        "configName": "tencent-ap-seoul",
+        "credentialHolder": "admin",
+        "credentialName": "tencent",
+        "driverName": "tencent-driver-v1.0.so",
+        "providerName": "tencent",
+        "regionDetail": {
+          "description": "Seoul",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.566536,
+            "longitude": 126.977966
+          },
+          "regionId": "ap-seoul",
+          "regionName": "ap-seoul",
+          "zones": [
+            "ap-seoul-1",
+            "ap-seoul-2"
+          ]
+        },
+        "regionRepresentative": true,
+        "regionZoneInfo": {
+          "assignedRegion": "ap-seoul",
+          "assignedZone": "ap-seoul-1"
+        },
+        "regionZoneInfoName": "tencent-ap-seoul",
+        "verified": true
+      },
+      "connectionName": "tencent-ap-seoul",
+      "cspResourceId": "cdb-q1mk2sbg",
+      "cspResourceName": "tbjgc7odeet6a3manird",
+      "dbEngine": "mysql",
+      "dbEngineVersion": "8.0",
+      "dbInstanceSpec": "4000",
+      "dbInstanceType": "NA",
+      "deletionProtection": false,
+      "description": "Migrated by CM-Beetle from source instance Source MySQL 01",
+      "endpoint": "kr-cdb-q1mk2sbg.sql.tencentcdb.com:24489",
+      "highAvailability": false,
+      "id": "test-rdbms-tencent",
+      "keyValueList": [
+        {
+          "key": "WanStatus",
+          "value": "1"
+        },
+        {
+          "key": "Zone",
+          "value": "ap-seoul-1"
+        },
+        {
+          "key": "InitFlag",
+          "value": "1"
+        },
+        {
+          "key": "Memory",
+          "value": "4000"
+        },
+        {
+          "key": "Status",
+          "value": "1"
+        },
+        {
+          "key": "VpcId",
+          "value": "9730283"
+        },
+        {
+          "key": "InstanceId",
+          "value": "cdb-q1mk2sbg"
+        },
+        {
+          "key": "Volume",
+          "value": "100"
+        },
+        {
+          "key": "AutoRenew",
+          "value": "0"
+        },
+        {
+          "key": "ProtectMode",
+          "value": "0"
+        },
+        {
+          "key": "SubnetId",
+          "value": "820587"
+        },
+        {
+          "key": "InstanceType",
+          "value": "1"
+        },
+        {
+          "key": "ProjectId",
+          "value": "0"
+        },
+        {
+          "key": "Region",
+          "value": "ap-seoul"
+        },
+        {
+          "key": "DeadlineTime",
+          "value": "0000-00-00 00:00:00"
+        },
+        {
+          "key": "DeployMode",
+          "value": "0"
+        },
+        {
+          "key": "TaskStatus",
+          "value": "0"
+        },
+        {
+          "key": "DeviceType",
+          "value": "CLOUD_NATIVE_CLUSTER"
+        },
+        {
+          "key": "EngineVersion",
+          "value": "8.0"
+        },
+        {
+          "key": "InstanceName",
+          "value": "tbjgc7odeet6a3manird"
+        },
+        {
+          "key": "WanDomain",
+          "value": "kr-cdb-q1mk2sbg.sql.tencentcdb.com"
+        },
+        {
+          "key": "WanPort",
+          "value": "24489"
+        },
+        {
+          "key": "PayType",
+          "value": "1"
+        },
+        {
+          "key": "CreateTime",
+          "value": "2026-11-25 17:55:12"
+        },
+        {
+          "key": "Vip",
+          "value": "10.4.1.13"
+        },
+        {
+          "key": "Vport",
+          "value": "3306"
+        },
+        {
+          "key": "CdbError",
+          "value": "0"
+        },
+        {
+          "key": "UniqVpcId",
+          "value": "vpc-7yqgk5bc"
+        },
+        {
+          "key": "UniqSubnetId",
+          "value": "subnet-f4cf8dsh"
+        },
+        {
+          "key": "Cpu",
+          "value": "2"
+        },
+        {
+          "key": "Qps",
+          "value": "4400"
+        },
+        {
+          "key": "ZoneId",
+          "value": "180001"
+        },
+        {
+          "key": "InstanceNodes",
+          "value": "2"
+        },
+        {
+          "key": "EngineType",
+          "value": "InnoDB"
+        },
+        {
+          "key": "MaxDelayTime",
+          "value": "0"
+        },
+        {
+          "key": "DiskType",
+          "value": "CLOUD_HSSD"
+        },
+        {
+          "key": "ExpandCpu",
+          "value": "0"
+        },
+        {
+          "key": "DeviceBandwidth",
+          "value": "0"
+        },
+        {
+          "key": "DestroyProtect",
+          "value": "off"
+        }
+      ],
+      "name": "test-rdbms-tencent",
+      "publicAccess": true,
+      "resourceType": "rdbms",
+      "securityGroupIds": [
+        "test-rdbms-sg-tencent"
+      ],
+      "status": "Deleting",
+      "storageSize": 100,
+      "storageType": "CLOUD_HSSD",
+      "subnetIds": [
+        "subnet-1"
+      ],
+      "uid": "tbjgc7odeet6a3manird",
+      "vNetId": "test-rdbms-vnet-tencent"
     }
   ]
 }
 ```
 
 ### 11. Beetle POST Create Logical Database [✅ SUCCESS]
-- **Duration:** 448ms
+- **Duration:** 769ms
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-aws/database`
 ```json
 // Request Body
@@ -3290,7 +4361,7 @@
 ```
 
 ### 12. Beetle GET List Logical Databases [✅ SUCCESS]
-- **Duration:** 430ms
+- **Duration:** 1.404s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-aws/database`
 ```json
 // Response Body
@@ -3307,7 +4378,7 @@
 ```
 
 ### 13. Beetle GET Secure Transport Info [✅ SUCCESS]
-- **Duration:** 18.944s
+- **Duration:** 19.443s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-aws/secure-transport`
 ```json
 // Response Body
@@ -3319,7 +4390,7 @@
     "pem": "",
     "subject": ""
   },
-  "caCertificateError": "after 2 attempts, last error: dial: dial tcp 43.203.100.85:3306: i/o timeout",
+  "caCertificateError": "after 2 attempts, last error: dial: dial tcp 43.200.17.225:3306: i/o timeout",
   "enforced": false,
   "engine": "mysql",
   "recommendedSSLMode": "",
@@ -3331,7 +4402,7 @@
 ```
 
 ### 14. Data I/O Test (External Remote) [✅ SUCCESS]
-- **Duration:** 47.485s
+- **Duration:** 47.438s
 ```json
 // Response Body
 {
@@ -3340,7 +4411,7 @@
 ```
 
 ### 15. Data I/O Test (Internal VPC VM) [✅ SUCCESS]
-- **Duration:** 3m49.875s
+- **Duration:** 3m37.273s
 ```json
 // Response Body
 {
@@ -3349,16 +4420,16 @@
 ```
 
 ### 16. Beetle DELETE Logical Database [✅ SUCCESS]
-- **Duration:** 12.969s
+- **Duration:** 13.22s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-aws/database/sampledb`
 
 ### 17. Beetle DELETE RDBMS Instance [✅ SUCCESS]
-- **Duration:** 2m21.802s
+- **Duration:** 2m21.401s
 - **Request URL:** `http://localhost:8056/beetle/migration/middleware/ns/default/rdbms/test-rdbms-aws?option=force`
 
 ### 18. Tumblebug DELETE /resources/securityGroup [✅ SUCCESS]
-- **Duration:** 1.344s
+- **Duration:** 825ms
 
 ### 19. Tumblebug DELETE /resources/vNet [✅ SUCCESS]
-- **Duration:** 19.617s
+- **Duration:** 10.481s
 

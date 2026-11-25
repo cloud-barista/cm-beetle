@@ -79,15 +79,19 @@ This skill automates the release process for the `imdl` module (`github.com/clou
    - Title: `update(imdl): sync models` (match commit title)
    - Body: Summary of changes and checklist.
 
-2. **Post `/approve` Comment**
-   Immediately post a comment with `/approve` to the created PR.
+2. **Wait for CI Checks to Succeed**
+   First poll PR check runs (`pull_request_read` with `method: "get_check_runs"`) until all required GitHub Actions checks complete with `conclusion: "success"`.
+   - Do NOT post `/approve` before CI finishes, because `.github/workflows/auto-merge.yml` retries merge for only ~60 seconds after the `/approve` comment.
+
+3. **Post `/approve` Comment**
+   Only after all CI checks succeed, post a comment with `/approve` to the PR.
    - Use GitHub MCP tool `add_issue_comment` (or GitHub API / CLI).
    - Body: `/approve`
    - This activates `.github/workflows/auto-merge.yml`, which validates maintainer membership, applies the `approved` label, submits review approval, and triggers auto-merge.
 
-3. **Wait for Auto-Merge to Complete**
+4. **Wait for Auto-Merge to Complete**
    Wait and poll the PR status until merged:
-   - Check every 5 to 10 seconds using GitHub MCP tool `pull_request_read` (or GitHub API).
+   - Check every 10 to 30 seconds using GitHub MCP tool `pull_request_read` (or GitHub API).
    - Verify `merged == true` and `state == "closed"`.
    - Do NOT proceed to Step 4 until merge is confirmed.
 
