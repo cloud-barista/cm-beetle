@@ -4,7 +4,6 @@
   "name": "infra-usecase-aws-ap-northeast-2-web",
   "description": "Small AWS web server template using t3.small in ap-northeast-2 region",
   "infraDynamicReq": {
-    "installMonAgent": "no",
     "nodeGroups": [
       {
         "name": "web",
@@ -14,6 +13,14 @@
         "rootDiskType": "gp3",
         "rootDiskSize": 30
       }
-    ]
+    ],
+    "sgTemplateId": "sg-usecase-web",
+    "initScript": {
+      "mode": "default",
+      "templateId": "initscript-nginx",
+      "env": {
+        "SITE_TITLE": "CB-Tumblebug web demo"
+      }
+    }
   }
 }

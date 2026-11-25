@@ -292,6 +292,10 @@ github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310 h1:BUAU3CGlLvorLI26
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
 github.com/armon/go-radix v1.0.0/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
+github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.56.1 h1:UwLZgt7jx83zDA5NCvmGlU+LNDssaUhZwyv6q+nn/Ac=
+github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.56.1/go.mod h1:+bNfizG/fpRGctZuVeH8uWht/0BLD9wUyXOKM4VaCVA=
+github.com/aws/aws-sdk-go-v2/service/servicequotas v1.34.5 h1:sRjuxc4BtteepCxn/Iji3YLHrnHIovT8K0NTiuPWMfs=
+github.com/aws/aws-sdk-go-v2/service/servicequotas v1.34.5/go.mod h1:TBXlyNPWjb0ZlYFdF7jBpzpIfN9Y6uc9ps1/gwIeqvA=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=

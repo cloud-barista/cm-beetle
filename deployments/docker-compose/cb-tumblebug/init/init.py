@@ -1309,6 +1309,8 @@ if run_load_templates:
                         template_type = "securityGroup"
                     elif resource_type == "k8sCluster":
                         template_type = "k8sCluster"
+                    elif resource_type == "initScript":
+                        template_type = "initScript"
                     elif "infraDynamicReq" in template_data:
                         template_type = "infra"
                     elif "vNetReq" in template_data or "vNetPolicy" in template_data:
@@ -1317,6 +1319,8 @@ if run_load_templates:
                         template_type = "securityGroup"
                     elif "k8sMultiClusterDynamicReq" in template_data:
                         template_type = "k8sCluster"
+                    elif "scripts" in template_data or "script" in template_data:
+                        template_type = "initScript"
                     else:
                         print(
                             Fore.RED + f"  ❌ Cannot detect template type for {os.path.basename(tf)}: "
@@ -1378,7 +1382,17 @@ if run_all or run_load_assets or run_fetch_price:
     print_assets_summary("system")
 
 # Final message and set initialization status
-if run_all or (run_credentials and run_load_assets):
+assets_already_loaded = False
+if run_credentials and not run_load_assets:
+    try:
+        summary_resp = requests.get(f"http://{TUMBLEBUG_SERVER}/tumblebug/assetsSummary", headers=HEADERS, timeout=10)
+        if summary_resp.status_code == 200:
+            sdata = summary_resp.json() or {}
+            assets_already_loaded = (sdata.get("totalSpecCount", 0) > 0) or (sdata.get("totalImageCount", 0) > 0)
+    except Exception:
+        assets_already_loaded = False
+
+if run_all or (run_credentials and (run_load_assets or assets_already_loaded)):
     # Notify CB-Tumblebug that initialization is complete
     try:
         init_url = f"http://{TUMBLEBUG_SERVER}/tumblebug/readyz/init"

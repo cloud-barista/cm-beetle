@@ -1690,9 +1690,8 @@ func runInternalVmDataIOTest(
 	}
 
 	infraReq := map[string]any{
-		"name":            infraId,
-		"description":     "Test runner VM for internal RDBMS SQL test",
-		"installMonAgent": "no",
+		"name":        infraId,
+		"description": "Test runner VM for internal RDBMS SQL test",
 		"nodeGroups": []map[string]any{
 			{
 				"name":             fmt.Sprintf("ng-%s", strings.ToLower(tc.Csp)),

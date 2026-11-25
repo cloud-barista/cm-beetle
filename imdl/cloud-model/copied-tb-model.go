@@ -4,15 +4,12 @@ import "time"
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.13.8 (commit: 19e8e8fdc1a0668ddb8f4abf3f66c44eb25d782a)
-// * Synchronized: 2026-10-30
+// * Version: CB-Tumblebug v0.14.0 (commit: c05bc2c5b926859a04eac4d4e2a8c0db9e32ad4a)
+// * Synchronized: 2026-11-24 (PostCommands -> PostScript, InitScript, SpecInfo AcceleratorPartitionSize/AvailabilityQuota, InstallMonAgent/MonAgentStatus removed)
 
 // InfraReq is struct for requirements to create Infra
 type InfraReq struct {
 	Name string `json:"name" validate:"required" example:"infra01"`
-
-	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)
-	InstallMonAgent string `json:"installMonAgent" example:"no" default:"no" enums:"yes,no"` // yes or no
 
 	// Label is for describing the object by keywords
 	Label map[string]string `json:"label"`
@@ -25,11 +22,11 @@ type InfraReq struct {
 
 	NodeGroups []CreateNodeGroupReq `json:"nodeGroups" validate:"required"`
 
-	// PostCommands are sequential post-deployment command phases that bootstrap the Nodes
-	PostCommands []PostCommandReq `json:"postCommands,omitempty" validate:"omitempty"`
+	// PostScript is the post-deployment script that bootstraps the Nodes once they are up
+	PostScript *PostScriptReq `json:"postScript,omitempty" validate:"omitempty"`
 
-	// PostCommandAsync runs post-deployment commands in the background
-	PostCommandAsync bool `json:"postCommandAsync,omitempty" example:"false"`
+	// PostScriptAsync carries the postScriptAsync query parameter (see InfraDynamicReq)
+	PostScriptAsync bool `json:"-"`
 
 	// PolicyOnPartialFailure determines how to handle Node creation failures
 	// - "continue": Continue with partial Infra creation (default)
@@ -70,14 +67,15 @@ type CreateNodeGroupReq struct {
 	// (round-robin by VM index). SubnetId above is the primary/fallback (first subnet).
 	// Populated by dynamic provisioning when DistributeSubnets is requested; empty means
 	// all VMs use the single SubnetId (default behavior).
-	SubnetIds        []string `json:"subnetIds,omitempty"`
-	SecurityGroupIds []string `json:"securityGroupIds" validate:"required"`
-	SshKeyId         string   `json:"sshKeyId" validate:"required"`
-	NodeUserName     string   `json:"nodeUserName,omitempty"`
-	NodeUserPassword string   `json:"nodeUserPassword,omitempty"`
-	RootDiskType     string   `json:"rootDiskType,omitempty" example:"default, TYPE1, ..."` // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
-	RootDiskSize     int      `json:"rootDiskSize,omitempty" example:"50"`                  // Root disk size in GB. 0 = use CSP default.
-	DataDiskIds      []string `json:"dataDiskIds"`
+	SubnetIds        []string       `json:"subnetIds,omitempty"`
+	SecurityGroupIds []string       `json:"securityGroupIds" validate:"required"`
+	SshKeyId         string         `json:"sshKeyId" validate:"required"`
+	NodeUserName     string         `json:"nodeUserName,omitempty"`
+	NodeUserPassword string         `json:"nodeUserPassword,omitempty"`
+	InitScript       *InitScriptReq `json:"initScript,omitempty"`
+	RootDiskType     string         `json:"rootDiskType,omitempty" example:"default, TYPE1, ..."` // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
+	RootDiskSize     int            `json:"rootDiskSize,omitempty" example:"50"`                  // Root disk size in GB. 0 = use CSP default.
+	DataDiskIds      []string       `json:"dataDiskIds"`
 }
 
 // InfraDynamicReq is struct for requirements to create Infra dynamically (with default resource option)
@@ -89,9 +87,6 @@ type InfraDynamicReq struct {
 	// - "rollback": Cleanup entire Infra when any Node fails
 	// - "refine": Mark failed Nodes for refinement
 	PolicyOnPartialFailure string `json:"policyOnPartialFailure" example:"continue" default:"continue" enums:"continue,rollback,refine"`
-
-	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)
-	InstallMonAgent string `json:"installMonAgent" example:"no" default:"no" enums:"yes,no"` // yes or no
 
 	// NodeGroups is array of Node requests for multi-cloud infrastructure
 	// Example: Multiple Node groups across different CSPs
@@ -123,17 +118,18 @@ type InfraDynamicReq struct {
 	// ]
 	NodeGroups []CreateNodeGroupDynamicReq `json:"nodeGroups" validate:"required"`
 
-	// PostCommands are post-deployment command phases that bootstrap the Nodes.
-	// Phases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.
-	// A single command set is simply one phase: [{"command": ["..."]}]
-	PostCommands []PostCommandReq `json:"postCommands,omitempty"`
+	// PostScript is the post-deployment script that bootstraps the Nodes once they are up.
+	// Its phases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.
+	PostScript *PostScriptReq `json:"postScript,omitempty"`
 
-	// PostCommandAsync (default false) returns the response as soon as nodes are
-	// provisioned and runs post-deployment commands in the background. The response
-	// then carries postCommandStatus="Running" plus postCommandRequestId; observe with
-	// GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}
-	// or by polling GET /ns/{nsId}/infra/{infraId}.
-	PostCommandAsync bool `json:"postCommandAsync,omitempty" example:"false"`
+	// PostScriptAsync carries the postScriptAsync query parameter of the call and is not a body field:
+	// return once the Nodes are provisioned and run the post script in the background
+	PostScriptAsync bool `json:"-"`
+	// With it the response carries postScriptStatus "Running" and postScriptRequestId; observe with
+	// GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postScriptRequestId} or by polling the Infra.
+
+	// InitScript is the default init script for all NodeGroups (overridable per NodeGroup)
+	InitScript *InitScriptReq `json:"initScript,omitempty"`
 
 	// SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose
 	SystemLabel string `json:"systemLabel" example:"" default:""`
@@ -195,6 +191,9 @@ type CreateNodeGroupDynamicReq struct {
 	// If empty, inherits the SgTemplateId from the parent InfraDynamicReq.
 	SgTemplateId string `json:"sgTemplateId,omitempty" example:""`
 
+	// InitScript overrides the Infra-level init script for this NodeGroup
+	InitScript *InitScriptReq `json:"initScript,omitempty"`
+
 	// DistributeSubnets, when true, spreads this NodeGroup's VMs across the VNet's subnets
 	// (round-robin), which spreads them across availability zones for multi-zone VNets.
 	// Best-effort: subnets whose zone lacks the requested spec are excluded so VMs consolidate
@@ -203,21 +202,72 @@ type CreateNodeGroupDynamicReq struct {
 	DistributeSubnets bool `json:"distributeSubnets,omitempty" example:"false"`
 }
 
+// InitScriptReq controls the init script (cloud-init user data) a Node runs on first boot.
+// TemplateId selects an init script template (looked up in the request namespace, then in system) whose
+// scripts run first, in order; Script and Scripts are inline steps appended after them. The first failure
+// stops the run. Templates are copied into the NodeGroup at creation so later Nodes get the same content.
+type InitScriptReq struct {
+	Mode       string            `json:"mode,omitempty" example:"default" enums:"default,custom,none" default:"default"`
+	UserName   string            `json:"userName,omitempty" example:"cb-user" default:"cb-user"`
+	TemplateId string            `json:"templateId,omitempty" example:"initscript-nginx"`
+	Script     string            `json:"script,omitempty" example:"#!/bin/bash\napt-get install -y -qq jq"`
+	Scripts    []InitScriptStep  `json:"scripts,omitempty"`
+	Env        map[string]string `json:"env,omitempty" example:"ROLE:worker"`
+	// Notify false stops the Node from reporting its result to the notifier (default: report when one is registered)
+	Notify *bool `json:"notify,omitempty" example:"true"`
+	// Implicit is set by CB-Tumblebug when the request had no initScript; a rendering failure then
+	// falls back to the CB-Spider default user data instead of failing the Node
+	Implicit bool `json:"implicit,omitempty"`
+	// FromTemplateId records the template the steps were copied from (set by CB-Tumblebug)
+	FromTemplateId string `json:"fromTemplateId,omitempty" example:"initscript-nginx"`
+}
+
+// InitScriptStep is one script of an init script sequence. Name defaults to the template id (single-step
+// template), "<template id>-<n>" or "step-<n>".
+type InitScriptStep struct {
+	Name   string `json:"name,omitempty" example:"install-agent"`
+	Script string `json:"script" example:"#!/bin/bash\napt-get install -y -qq jq"`
+	// ContinueOnError keeps running the next steps when this one fails; the Node then reports ok with a note
+	ContinueOnError bool `json:"continueOnError,omitempty" example:"false"`
+	// TimeoutSec stops the step after this many seconds (0: no limit); a timeout counts as a failure
+	TimeoutSec int `json:"timeoutSec,omitempty" example:"600"`
+	// LabelSelector runs the step only on Nodes whose labels match (e.g. "role=gpu"); empty runs everywhere
+	LabelSelector string `json:"labelSelector,omitempty" example:"role=gpu"`
+}
+
 // InfraCmdReq is struct for remote command
 type InfraCmdReq struct {
 	// UserName is the SSH username to use for command execution
 	UserName string `json:"userName" example:"cb-user" default:""`
 
-	// Command is the list of commands to execute
-	Command []string `json:"command" validate:"required" example:"client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"`
+	// Command is the list of commands to execute (not needed when TemplateId or Scripts is given)
+	Command []string `json:"command" validate:"required_without_all=TemplateId Scripts" example:"client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"`
+
+	// TemplateId runs an init script template over SSH instead of Command: its steps run in order as root with
+	// the Node identity (TB_*) and Env exported, exactly like a first-boot init script
+	TemplateId string `json:"templateId,omitempty" example:"initscript-nginx"`
+	// Scripts runs these steps over SSH (same runner as TemplateId), appended after the template's steps
+	Scripts []InitScriptStep `json:"scripts,omitempty"`
+	// Env is exported to Command, TemplateId and Scripts
+	Env map[string]string `json:"env,omitempty" example:"ROLE:web"`
 
 	// TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)
 	// If not specified or set to 0, the default timeout (30 minutes) will be used
 	TimeoutMinutes int `json:"timeoutMinutes,omitempty" example:"30" default:"30"`
 }
 
-// PostCommandReq is struct for post-deployment command with targeting
-type PostCommandReq struct {
+// PostScriptReq is the post-deployment script: phases run in order over SSH once the Nodes are up.
+// A single command set is one phase: {"phases": [{"command": ["..."]}]}
+// Whether the call waits for it is the postScriptAsync query parameter, not part of the script.
+type PostScriptReq struct {
+	// Phases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector
+	Phases []PostScriptPhase `json:"phases"`
+}
+
+// PostScriptPhase is one phase of a post-deployment script: an InfraCmdReq plus optional
+// targeting (at most one of nodeGroupId/nodeId/labelSelector) and phase policy.
+// Targeting mirrors the query parameters of the remote-command API.
+type PostScriptPhase struct {
 	InfraCmdReq
 
 	// NodeGroupId limits execution to one nodeGroup
@@ -233,36 +283,37 @@ type PostCommandReq struct {
 // AddNodeGroupDynamicReq is the request body for adding a NodeGroup to an existing Infra.
 // It is CreateNodeGroupDynamicReq plus bootstrap fields; those fields are intentionally
 // absent from the nodeGroups[] elements of InfraDynamicReq, where Infra-level
-// postCommands (with per-phase targeting) is the single way to bootstrap.
+// postScript (with per-phase targeting) is the single way to bootstrap.
 type AddNodeGroupDynamicReq struct {
 	CreateNodeGroupDynamicReq
 
-	// PostCommands are sequential bootstrap phases for the newly added nodes.
+	// PostScript bootstraps the newly added nodes.
 	// Phases without an explicit target are scoped to this NodeGroup.
-	PostCommands []PostCommandReq `json:"postCommands,omitempty" validate:"omitempty"`
+	PostScript *PostScriptReq `json:"postScript,omitempty" validate:"omitempty"`
 
-	// PostCommandAsync returns the response as soon as the nodes are provisioned and
-	// runs the bootstrap commands in the background (observe via streaming/polling)
-	PostCommandAsync bool `json:"postCommandAsync,omitempty" example:"false"`
+	// PostScriptAsync carries the postScriptAsync query parameter (see InfraDynamicReq)
+	PostScriptAsync bool `json:"-"`
 }
 
-// PostCommandStatus summarizes a post-deployment command run across target nodes
-type PostCommandStatus string
+// PostScriptStatus summarizes a post-deployment script run across target nodes
+type PostScriptStatus string
 
 const (
-	// PostCommandStatusNone indicates no post-deployment command was requested
-	PostCommandStatusNone PostCommandStatus = "None"
-	// PostCommandStatusCompleted indicates all target nodes succeeded
-	PostCommandStatusCompleted PostCommandStatus = "Completed"
-	// PostCommandStatusCompletedWithErrors indicates some target nodes failed
-	PostCommandStatusCompletedWithErrors PostCommandStatus = "CompletedWithErrors"
-	// PostCommandStatusFailed indicates all target nodes failed (or execution could not start)
-	PostCommandStatusFailed PostCommandStatus = "Failed"
-	// PostCommandStatusSkipped indicates the phase did not run (a previous phase failed)
-	PostCommandStatusSkipped PostCommandStatus = "Skipped"
-	// PostCommandStatusRunning indicates post-deployment commands are still executing
-	// (async mode: the creation response returns before they finish)
-	PostCommandStatusRunning PostCommandStatus = "Running"
+	// PostScriptStatusNone indicates no post-deployment script was requested
+	PostScriptStatusNone PostScriptStatus = "None"
+	// PostScriptStatusCompleted indicates all target nodes succeeded
+	PostScriptStatusCompleted PostScriptStatus = "Completed"
+	// PostScriptStatusCompletedWithErrors indicates some target nodes failed
+	PostScriptStatusCompletedWithErrors PostScriptStatus = "CompletedWithErrors"
+	// PostScriptStatusFailed indicates all target nodes failed (or execution could not start)
+	PostScriptStatusFailed PostScriptStatus = "Failed"
+	// PostScriptStatusSkipped indicates the phase did not run (a previous phase failed)
+	PostScriptStatusSkipped PostScriptStatus = "Skipped"
+	// PostScriptStatusRunning indicates the post-deployment script is still executing
+	// (async mode: the creation response returns before it finishes)
+	PostScriptStatusRunning PostScriptStatus = "Running"
+	// PostScriptStatusInterrupted indicates the run was cut off by a server restart before it finished
+	PostScriptStatusInterrupted PostScriptStatus = "Interrupted"
 )
 
 // SshCmdResultForAPI is struct for REST API response with error as string
@@ -281,14 +332,14 @@ type InfraSshCmdResultForAPI struct {
 	Results []SshCmdResultForAPI `json:"results"`
 }
 
-// PostCommandPhaseResult is the outcome of a single post-command phase
-type PostCommandPhaseResult struct {
+// PostScriptPhaseResult is the outcome of a single post-deployment script phase
+type PostScriptPhaseResult struct {
 	// Phase is the 1-based execution order
 	Phase int `json:"phase" example:"1"`
 	// Target echoes the scope this phase ran against
 	Target string `json:"target" example:"nodeGroupId=control"`
 	// Status is the aggregated outcome of this phase (Skipped when a previous phase stopped execution)
-	Status PostCommandStatus `json:"status" example:"Completed"`
+	Status PostScriptStatus `json:"status" example:"Completed"`
 	// Results holds per-node command results
 	Results InfraSshCmdResultForAPI `json:"results"`
 }
@@ -425,9 +476,6 @@ type InfraInfo struct {
 	TargetStatus string          `json:"targetStatus"`
 	TargetAction string          `json:"targetAction"`
 
-	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)
-	InstallMonAgent string `json:"installMonAgent" example:"no" default:"no" enums:"yes,no"` // yes or no
-
 	// ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)
 	ConfigureCloudAdaptiveNetwork string `json:"configureCloudAdaptiveNetwork" example:"yes" default:"no" enums:"yes,no"` // yes or no
 
@@ -450,24 +498,21 @@ type InfraInfo struct {
 	// List of IDs for new nodes. Return IDs if the nodes are newly added. This field should be used for return body only.
 	NewNodeList []string `json:"newNodeList"`
 
-	// PostCommands are the requested post-deployment command phases
-	PostCommands []PostCommandReq `json:"postCommands,omitempty"`
+	// PostScript echoes the requested post-deployment script
+	PostScript *PostScriptReq `json:"postScript,omitempty"`
 
-	// PostCommandAsync echoes whether the commands run in the background
-	PostCommandAsync bool `json:"postCommandAsync,omitempty"`
+	// PostScriptResults holds per-phase outcomes
+	PostScriptResults []PostScriptPhaseResult `json:"postScriptResults,omitempty"`
 
-	// PostCommandResults holds per-phase outcomes
-	PostCommandResults []PostCommandPhaseResult `json:"postCommandResults,omitempty"`
-
-	// PostCommandStatus summarizes the post-deployment command outcome.
+	// PostScriptStatus summarizes the post-deployment script outcome.
 	// "Running" means execution is still in progress (async mode): stream it with
-	// GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}
+	// GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postScriptRequestId}
 	// or poll this object until the status becomes terminal.
-	PostCommandStatus PostCommandStatus `json:"postCommandStatus,omitempty" example:"Completed"`
+	PostScriptStatus PostScriptStatus `json:"postScriptStatus,omitempty" example:"Completed"`
 
-	// PostCommandRequestId is the streaming/tracking key of the post-deployment run
-	// (always set when post-deployment commands were requested, in both modes)
-	PostCommandRequestId string `json:"postCommandRequestId,omitempty" example:"pc-infra01-1a2b3c"`
+	// PostScriptRequestId is the streaming/tracking key of the post-deployment run
+	// (always set when a post-deployment script was requested, in both modes)
+	PostScriptRequestId string `json:"postScriptRequestId,omitempty" example:"ps-infra01-1a2b3c"`
 
 	// CreationErrors contains information about Node creation failures (if any)
 	CreationErrors *InfraCreationErrors `json:"creationErrors,omitempty"`
@@ -630,9 +675,6 @@ type NodeInfo struct {
 	TargetStatus string `json:"targetStatus"`
 	TargetAction string `json:"targetAction"`
 
-	// Montoring agent status
-	MonAgentStatus string `json:"monAgentStatus" example:"[installed, notInstalled, failed]"` // yes or no// installed, notInstalled, failed
-
 	// NetworkAgent status
 	NetworkAgentStatus string `json:"networkAgentStatus" example:"[notInstalled, installing, installed, failed]"` // notInstalled, installing, installed, failed
 
@@ -661,25 +703,30 @@ type NodeInfo struct {
 	RootDiskSize   int        `json:"rootDiskSize"`
 	RootDeviceName string     `json:"rootDeviceName"`
 
-	ConnectionName   string       `json:"connectionName"`
-	ConnectionConfig ConnConfig   `json:"connectionConfig"`
-	SpecId           string       `json:"specId"`
-	CspSpecName      string       `json:"cspSpecName"`
-	Spec             SpecSummary  `json:"spec"`
-	ImageId          string       `json:"imageId"`
-	CspImageName     string       `json:"cspImageName"`
-	Image            ImageSummary `json:"image"`
-	VNetId           string       `json:"vNetId"`
-	CspVNetId        string       `json:"cspVNetId"`
-	SubnetId         string       `json:"subnetId"`
-	CspSubnetId      string       `json:"cspSubnetId"`
-	NetworkInterface string       `json:"networkInterface"`
-	SecurityGroupIds []string     `json:"securityGroupIds"`
-	DataDiskIds      []string     `json:"dataDiskIds"`
-	SshKeyId         string       `json:"sshKeyId"`
-	CspSshKeyId      string       `json:"cspSshKeyId"`
-	NodeUserName     string       `json:"nodeUserName,omitempty"`
-	NodeUserPassword string       `json:"nodeUserPassword,omitempty"`
+	ConnectionName   string         `json:"connectionName"`
+	ConnectionConfig ConnConfig     `json:"connectionConfig"`
+	SpecId           string         `json:"specId"`
+	CspSpecName      string         `json:"cspSpecName"`
+	Spec             SpecSummary    `json:"spec"`
+	ImageId          string         `json:"imageId"`
+	CspImageName     string         `json:"cspImageName"`
+	Image            ImageSummary   `json:"image"`
+	VNetId           string         `json:"vNetId"`
+	CspVNetId        string         `json:"cspVNetId"`
+	SubnetId         string         `json:"subnetId"`
+	CspSubnetId      string         `json:"cspSubnetId"`
+	NetworkInterface string         `json:"networkInterface"`
+	SecurityGroupIds []string       `json:"securityGroupIds"`
+	DataDiskIds      []string       `json:"dataDiskIds"`
+	SshKeyId         string         `json:"sshKeyId"`
+	CspSshKeyId      string         `json:"cspSshKeyId"`
+	NodeUserName     string         `json:"nodeUserName,omitempty"`
+	NodeUserPassword string         `json:"nodeUserPassword,omitempty"`
+	InitScript       *InitScriptReq `json:"initScript,omitempty"`
+	// InitScriptStatus and InitScriptMessage are read from the Node's stored init script result (not persisted here);
+	// pending means the Node has an init script with reporting on but has not reported yet
+	InitScriptStatus  string `json:"initScriptStatus,omitempty" example:"ok" enums:"pending,initializing,ok,fail"`
+	InitScriptMessage string `json:"initScriptMessage,omitempty"`
 
 	// SshHostKeyInfo contains SSH host key information for TOFU (Trust On First Use) verification
 	SshHostKeyInfo *SshHostKeyInfo `json:"sshHostKeyInfo,omitempty"`
@@ -824,7 +871,6 @@ type NodeSummary struct {
 	Status           string            `json:"status"`
 	TargetStatus     string            `json:"targetStatus"`
 	TargetAction     string            `json:"targetAction"`
-	MonAgentStatus   string            `json:"monAgentStatus"`
 	SystemMessage    string            `json:"systemMessage"`
 	CreatedTime      string            `json:"createdTime"`
 	Region           RegionInfo        `json:"region"`
@@ -852,6 +898,11 @@ type NodeSummary struct {
 	DataDiskIds      []string          `json:"dataDiskIds"`
 	SshKeyId         string            `json:"sshKeyId"`
 	CspSshKeyId      string            `json:"cspSshKeyId"`
+
+	// Init script progress (see NodeInfo); InitScriptSteps lists the step names only while initializing or failed
+	InitScriptStatus  string   `json:"initScriptStatus,omitempty" example:"initializing" enums:"pending,initializing,ok,fail"`
+	InitScriptMessage string   `json:"initScriptMessage,omitempty" example:"initializing: nginx (2/3)"`
+	InitScriptSteps   []string `json:"initScriptSteps,omitempty" example:"hello,nginx,after"`
 }
 
 // InfraInfoSummary is the Infra projection returned by the list view
@@ -867,7 +918,6 @@ type InfraInfoSummary struct {
 	StatusCount                   StatusCountInfo   `json:"statusCount"`
 	TargetStatus                  string            `json:"targetStatus"`
 	TargetAction                  string            `json:"targetAction"`
-	InstallMonAgent               string            `json:"installMonAgent"`
 	ConfigureCloudAdaptiveNetwork string            `json:"configureCloudAdaptiveNetwork"`
 	Label                         map[string]string `json:"label"`
 	SystemLabel                   string            `json:"systemLabel"`
@@ -1005,6 +1055,20 @@ const (
 	AvailabilityUnverified AvailabilityStatus = "Unverified"
 )
 
+// AvailabilityQuota is the tightest account quota that applies to the queried instance type,
+// with how many more instances of that type fit. It is reported only when the CSP exposes
+// quotas to the credential in use; a missing value says nothing about the quota itself.
+type AvailabilityQuota struct {
+	Name  string `json:"name" example:"Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances"` // quota name as the CSP calls it
+	Scope string `json:"scope,omitempty" example:"region"`                                                // region, or "zone <id>"
+	Unit  string `json:"unit" example:"vCPU"`
+	Limit int64  `json:"limit" example:"640"`
+	// Used is omitted when the CSP did not report usage; FitCount then assumes nothing is in use
+	Used        *int64 `json:"used,omitempty" example:"0"`
+	PerInstance int64  `json:"perInstance" example:"2"` // what one instance of this type takes from the quota
+	FitCount    int64  `json:"fitCount" example:"320"`  // more instances of this type that fit
+}
+
 // SpecInfo is a struct that represents TB spec object.
 type SpecInfo struct { // Tumblebug
 	// Id is unique identifier for the object
@@ -1024,36 +1088,37 @@ type SpecInfo struct { // Tumblebug
 	RegionLatitude  float64 `json:"regionLatitude"`
 	RegionLongitude float64 `json:"regionLongitude"`
 	// InfraType can be one of vm|k8s|kubernetes|container, etc.
-	InfraType             string   `json:"infraType,omitempty"`
-	Architecture          string   `json:"architecture,omitempty" example:"x86_64"`
-	OsType                string   `json:"osType,omitempty"`
-	VCPU                  uint16   `json:"vCPU,omitempty"`
-	MemoryGiB             float32  `json:"memoryGiB,omitempty"`
-	DiskSizeGB            float32  `json:"diskSizeGB,omitempty"`
-	MaxTotalStorageTiB    uint16   `json:"maxTotalStorageTiB,omitempty"`
-	NetBwGbps             uint16   `json:"netBwGbps,omitempty"`
-	AcceleratorModel      string   `json:"acceleratorModel,omitempty"`
-	AcceleratorCount      uint8    `json:"acceleratorCount,omitempty"`
-	AcceleratorMemoryGB   float32  `json:"acceleratorMemoryGB,omitempty"`
-	AcceleratorType       string   `json:"acceleratorType,omitempty"`
-	CostPerHour           float32  `json:"costPerHour,omitempty"`
-	Description           string   `json:"description,omitempty"`
-	OrderInFilteredResult uint16   `json:"orderInFilteredResult,omitempty"`
-	EvaluationStatus      string   `json:"evaluationStatus,omitempty"`
-	EvaluationScore01     float32  `json:"evaluationScore01"`
-	EvaluationScore02     float32  `json:"evaluationScore02"`
-	EvaluationScore03     float32  `json:"evaluationScore03"`
-	EvaluationScore04     float32  `json:"evaluationScore04"`
-	EvaluationScore05     float32  `json:"evaluationScore05"`
-	EvaluationScore06     float32  `json:"evaluationScore06"`
-	EvaluationScore07     float32  `json:"evaluationScore07"`
-	EvaluationScore08     float32  `json:"evaluationScore08"`
-	EvaluationScore09     float32  `json:"evaluationScore09"`
-	EvaluationScore10     float32  `json:"evaluationScore10"`
-	RootDiskType          string   `json:"rootDiskType"`
-	RootDiskSize          int      `json:"rootDiskSize"`
-	AssociatedObjectList  []string `json:"associatedObjectList,omitempty" gorm:"type:text;serializer:json"`
-	IsAutoGenerated       bool     `json:"isAutoGenerated,omitempty"`
+	InfraType                string   `json:"infraType,omitempty"`
+	Architecture             string   `json:"architecture,omitempty" example:"x86_64"`
+	OsType                   string   `json:"osType,omitempty"`
+	VCPU                     uint16   `json:"vCPU,omitempty"`
+	MemoryGiB                float32  `json:"memoryGiB,omitempty"`
+	DiskSizeGB               float32  `json:"diskSizeGB,omitempty"`
+	MaxTotalStorageTiB       uint16   `json:"maxTotalStorageTiB,omitempty"`
+	NetBwGbps                uint16   `json:"netBwGbps,omitempty"`
+	AcceleratorModel         string   `json:"acceleratorModel,omitempty"`
+	AcceleratorCount         uint8    `json:"acceleratorCount,omitempty"`
+	AcceleratorPartitionSize float32  `json:"acceleratorPartitionSize,omitempty" example:"0.125"`
+	AcceleratorMemoryGB      float32  `json:"acceleratorMemoryGB,omitempty"`
+	AcceleratorType          string   `json:"acceleratorType,omitempty"`
+	CostPerHour              float32  `json:"costPerHour,omitempty"`
+	Description              string   `json:"description,omitempty"`
+	OrderInFilteredResult    uint16   `json:"orderInFilteredResult,omitempty"`
+	EvaluationStatus         string   `json:"evaluationStatus,omitempty"`
+	EvaluationScore01        float32  `json:"evaluationScore01"`
+	EvaluationScore02        float32  `json:"evaluationScore02"`
+	EvaluationScore03        float32  `json:"evaluationScore03"`
+	EvaluationScore04        float32  `json:"evaluationScore04"`
+	EvaluationScore05        float32  `json:"evaluationScore05"`
+	EvaluationScore06        float32  `json:"evaluationScore06"`
+	EvaluationScore07        float32  `json:"evaluationScore07"`
+	EvaluationScore08        float32  `json:"evaluationScore08"`
+	EvaluationScore09        float32  `json:"evaluationScore09"`
+	EvaluationScore10        float32  `json:"evaluationScore10"`
+	RootDiskType             string   `json:"rootDiskType"`
+	RootDiskSize             int      `json:"rootDiskSize"`
+	AssociatedObjectList     []string `json:"associatedObjectList,omitempty" gorm:"type:text;serializer:json"`
+	IsAutoGenerated          bool     `json:"isAutoGenerated,omitempty"`
 
 	// SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose
 	SystemLabel string     `json:"systemLabel,omitempty" example:"Managed by CB-Tumblebug" default:""`
@@ -1064,20 +1129,22 @@ type SpecInfo struct { // Tumblebug
 	AvailabilityReason       string             `json:"availabilityReason,omitempty" gorm:"-"`
 	AvailableZones           []string           `json:"availableZones,omitempty" gorm:"-"`
 	UnavailableZones         []string           `json:"unavailableZones,omitempty" gorm:"-"`
+	AvailabilityQuota        *AvailabilityQuota `json:"availabilityQuota,omitempty" gorm:"-"`
 	AvailabilityCheckedAt    *time.Time         `json:"availabilityCheckedAt,omitempty" gorm:"-"`
 	AvailabilityRefreshAfter *time.Time         `json:"availabilityRefreshAfter,omitempty" gorm:"-"`
 }
 
 // SpecSummary is a lightweight struct containing essential spec information for VmInfo
 type SpecSummary struct {
-	CspSpecName         string  `json:"cspSpecName,omitempty" example:"t3.medium"`
-	VCPU                uint16  `json:"vCPU,omitempty" example:"2"`
-	MemoryGiB           float32 `json:"memoryGiB,omitempty" example:"4"`
-	AcceleratorModel    string  `json:"acceleratorModel,omitempty" example:"NVIDIA Tesla V100"`
-	AcceleratorCount    uint8   `json:"acceleratorCount,omitempty" example:"1"`
-	AcceleratorMemoryGB float32 `json:"acceleratorMemoryGB,omitempty" example:"16"`
-	AcceleratorType     string  `json:"acceleratorType,omitempty" example:"GPU"`
-	CostPerHour         float32 `json:"costPerHour,omitempty" example:"0.0416"`
+	CspSpecName              string  `json:"cspSpecName,omitempty" example:"t3.medium"`
+	VCPU                     uint16  `json:"vCPU,omitempty" example:"2"`
+	MemoryGiB                float32 `json:"memoryGiB,omitempty" example:"4"`
+	AcceleratorModel         string  `json:"acceleratorModel,omitempty" example:"NVIDIA Tesla V100"`
+	AcceleratorCount         uint8   `json:"acceleratorCount,omitempty" example:"1"`
+	AcceleratorPartitionSize float32 `json:"acceleratorPartitionSize,omitempty" example:"0.125"`
+	AcceleratorMemoryGB      float32 `json:"acceleratorMemoryGB,omitempty" example:"16"`
+	AcceleratorType          string  `json:"acceleratorType,omitempty" example:"GPU"`
+	CostPerHour              float32 `json:"costPerHour,omitempty" example:"0.0416"`
 }
 
 // KeyValue is struct for key-value pair

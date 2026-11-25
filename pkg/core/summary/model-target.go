@@ -53,7 +53,6 @@ type TargetInfraOverview struct {
 	TotalNlbCount    int               `json:"totalNlbCount,omitempty" example:"1"`
 	TotalGpuCount    int               `json:"totalGpuCount,omitempty" example:"2"`
 	Label            map[string]string `json:"label,omitempty"`
-	InstallMonAgent  string            `json:"installMonAgent" example:"no"`
 }
 
 // SummaryNetworkResources contains VNet, Subnet, and NLB information

@@ -9,7 +9,7 @@ When upgrading CB-Tumblebug, check each file against the upstream source and syn
 
    ```bash
    cd /path/to/cb-tumblebug
-   git checkout v0.13.2
+   git checkout v0.14.0
    ```
 
 2. Discover all changed files systematically:
@@ -34,7 +34,6 @@ When upgrading CB-Tumblebug, check each file against the upstream source and syn
    done
 
    # Note: assets/spider has been deprecated and removed
-   # Note: assets/rdbmsinfo.yaml is maintained directly in cm-beetle for managed RDBMS feature
    ```
 
 3. Review individual file changes and copy updated files:
@@ -53,49 +52,46 @@ When upgrading CB-Tumblebug, check each file against the upstream source and syn
 
 ---
 
-## v0.13.8 Sync (2026-10-30)
+## v0.14.0 Sync (2026-11-25)
 
-Based on CB-Tumblebug tag `v0.13.8` (`19e8e8fdc1a0668ddb8f4abf3f66c44eb25d782a`). Upgrade path: **v0.13.7 &rarr; v0.13.8**.
+Based on CB-Tumblebug tag `v0.14.0` (`c05bc2c5b926859a04eac4d4e2a8c0db9e32ad4a`). Upgrade path: **v0.13.8 -> v0.14.0**.
 
-### Model Changes (v0.13.7 &rarr; v0.13.8)
+### Model Changes (v0.13.8 -> v0.14.0)
 
 | Change | Description |
 | --- | --- |
-| **`SpecInfo`** & **`AvailabilityStatus`** | Added `AvailabilityStatus` string enum (`Available`, `SoldOut`, `QuotaExceeded`, `Unsupported`, `Unverified`) and runtime availability fields (`AvailabilityStatus`, `AvailabilityReason`, `AvailableZones`, `UnavailableZones`, `AvailabilityCheckedAt`, `AvailabilityRefreshAfter`) to `SpecInfo` |
-| **`K8sClusterReq`**, **`K8sClusterDynamicReq`**, **`K8sClusterInfo`** | Added optional `Storage` fields (`*K8sClusterStorageReq`, `*K8sClusterStorageInfo`) and connected K8s abstract storage dependency types (`K8sStorageStatus`, `K8sStorageDriverRef`, `K8sStorageTypeState`, `K8sStorageAction`) |
-| **`RDBMSInfo`** (`imdl/rdbms-model`) | Added optional `KeyValueList` (`json:"keyValueList,omitempty"`) field to propagate CSP-internal metadata (e.g., auto-created DB security groups) |
-| **Model Version Headers** | Updated `copied-tb-model.go`, `copied-tb-k8s-model.go`, and `copied-tb-rdbms-model.go` version headers to CB-Tumblebug `v0.13.8` (`19e8e8fdc1a0668ddb8f4abf3f66c44eb25d782a`) |
+| **`InfraReq`**, **`InfraDynamicReq`**, **`InfraInfo`**, **`InfraInfoSummary`** | Replaced `PostCommands`, `PostCommandAsync`, `PostCommandResults`, `PostCommandStatus`, `PostCommandRequestId` with `PostScript` (`*PostScriptReq`), `PostScriptAsync` (`json:"-"`), `PostScriptResults` (`[]PostScriptPhaseResult`), `PostScriptStatus` (added `PostScriptStatusInterrupted`), `PostScriptRequestId`; removed deprecated `InstallMonAgent` |
+| **`PostScriptReq`**, **`PostScriptPhase`**, **`PostScriptPhaseResult`**, **`PostScriptStatus`** | Renamed from `PostCommandReq` / `PostCommandPhaseResult` / `PostCommandStatus` and wrapped in `PostScriptReq{Phases}` |
+| **`InitScriptReq`**, **`InitScriptStep`**, **`InfraCmdReq`** | Added `InitScript *InitScriptReq` to `CreateNodeGroupReq`, `InfraDynamicReq`, `CreateNodeGroupDynamicReq`, `NodeInfo`, `NodeSummary` (with `InitScriptStatus`, `InitScriptMessage`, `InitScriptSteps`); added `TemplateId`, `Scripts`, `Env` to `InfraCmdReq` (`Command` tag updated to `required_without_all=TemplateId Scripts`) |
+| **`NodeInfo`**, **`NodeSummary`** | Removed deprecated `MonAgentStatus` |
+| **`SpecInfo`**, **`SpecSummary`**, **`AvailabilityQuota`** | Added `AcceleratorPartitionSize float32` and `AvailabilityQuota *AvailabilityQuota` |
+| **Model Version Headers** | Updated `copied-tb-model.go`, `copied-tb-k8s-model.go` (no struct changes), and `copied-tb-rdbms-model.go` (no struct changes) to CB-Tumblebug `v0.14.0` (`c05bc2c5b926859a04eac4d4e2a8c0db9e32ad4a`) |
 
 ### Deployment File Changes
 
 | File | Action |
 | --- | --- |
 | **Model files (`imdl/`)** | |
-| `imdl/cloud-model/copied-tb-model.go` | **Updated** - Synced version header to `v0.13.8` (`19e8e8fd`), added `AvailabilityStatus` and runtime availability fields on `SpecInfo` |
-| `imdl/cloud-model/copied-tb-k8s-model.go` | **Updated** - Synced version header to `v0.13.8` (`19e8e8fd`), added `Storage` fields and K8s abstract storage dependency types |
-| `imdl/rdbms-model/copied-tb-rdbms-model.go` | **Updated** - Synced version header to `v0.13.8` (`19e8e8fd`) and added `KeyValueList` to `RDBMSInfo` |
+| `imdl/cloud-model/copied-tb-model.go` | **Updated** - Synced structs and version header to `v0.14.0` (`c05bc2c5`) |
+| `imdl/cloud-model/copied-tb-k8s-model.go` | **Updated** - Synced version header to `v0.14.0` (`c05bc2c5`, no struct changes) |
+| `imdl/rdbms-model/copied-tb-rdbms-model.go` | **Updated** - Synced version header to `v0.14.0` (`c05bc2c5`, no struct changes) |
 | **Go Module Dependencies (`go.mod`)** | |
-| `go.mod` | **Updated** - `github.com/cloud-barista/cb-tumblebug` updated from `v0.13.7` to `v0.13.8`, `github.com/cloud-barista/cm-beetle/imdl` updated from `v0.1.18` to `v0.1.19` |
+| `go.mod` | **Updated** - `github.com/cloud-barista/cb-tumblebug` updated from `v0.13.8` to `v0.14.0` |
 | **Docker Compose (`deployments/docker-compose/`)** | |
-| `docker-compose.yaml` | **Updated** - Synced service images: `cb-spider:0.13.20`, `cb-mapui:0.13.14`, `cb-tumblebug:0.13.8` |
+| `docker-compose.yaml` | **Updated** - Synced service images (`cb-tumblebug:0.14.0`, `cb-spider:0.14.0`, `cb-mapui:0.14.0`, commented `cb-tumblebug-mcp-server:0.14.0`) and removed legacy `./data/cb-tumblebug-container/meta_db/:/app/meta_db/` volume mount |
 | **Assets & Scripts (`deployments/docker-compose/cb-tumblebug/`)** | |
-| `assets/assets.dump.gz` | **Updated** - Synced latest asset dump (MD5 `d738ba9cd2b21ccdbcc3f5259dec9ea2`, 98,960 specs / 234,602 images across 10 CSPs) |
-| `assets/assets.dump.gz.info` | **Updated** - Synced sidecar manifest matching `2026-10-29 16:41:54 UTC` asset dump |
-| `assets/cloudimage.csv` | **Updated** - Synced enriched OS image catalog entries |
-| `assets/cloudinfo.yaml` | **Updated** - Removed deprecated `cn-shenzhen-a` zone in Alibaba Cloud |
-| `assets/cloudspec.csv` | **Updated** - Synced enriched VM spec and pricing catalog entries |
-| `assets/diskinfo.yaml` | **No change** - Verified matches upstream |
-| `assets/extractionpatterns.yaml` | **Updated** - Synced updated spec/image extraction patterns |
-| `assets/k8sclusterinfo.yaml` | **No change** - Verified matches upstream |
-| `assets/k8sstorageinfo.yaml` | **New** - Added Kubernetes abstract storage (`ssd-general`) and CSP StorageClass catalog |
-| `assets/rdbmsinfo.yaml` | **Updated** - Added Alibaba `adminUserPasswordRequirement` and updated OpenStack Trove 2025.2 (Flamingo) active datastore versions (`mysql: 8.4`, `mariadb: 11.4`) |
-| `conf/cloud_conf.yaml` | **Updated** - Updated `nlb.timeout` from `9` to `-1` to disable custom NLB health check timeout incompatible with Azure |
-| `init/templates/*` | **Updated** - Synced verified CSP specs and Ubuntu image IDs across 8 `infra-*.json` templates |
-| `init/*` | **Updated** - Synced `init.py` and `README.md` (`init.sh`, `cleanDB.sh`, `multi-init.sh`, `template.credentials.yaml` unchanged) |
-| `scripts/*` | **Updated** - Synced `scripts/lib/pg-backend.sh` with SSH remote PostgreSQL backend support (`backup-assets.sh` and `restore-assets.sh` unchanged) |
-| `interface/mcp/*` | **No change** - Verified 1:1 match with upstream `src/interface/mcp` |
+| `assets/assets.dump.gz` | **Updated** - Synced latest asset dump (MD5 `f0e35d5e35cb4760736e002ef5c0d595`, 45M, `2026-10-30 05:26:01 UTC`, 98,960 specs / 234,602 images across 10 CSPs, KT priced 30% -> 35%) |
+| `assets/assets.dump.gz.info` | **Updated** - Synced sidecar manifest matching updated asset dump |
+| `assets/cloudspec.csv` | **Updated** - Added `acceleratorPartitionSize` column and updated KT/cloud spec entries (533 -> 543 lines) |
+| `assets/rdbmsinfo.yaml` | **Updated** - Added CB-Spider #1886/#1890 and CB-Tumblebug #2829 private-mode HTTP 422 fast-fail notes and NHN `nhnDBSGToAllowAllInbound` details |
+| `assets/*.yaml`, `assets/*.csv` (others) | **No change** - Verified matches upstream (`cloudimage.csv`, `cloudinfo.yaml`, `diskinfo.yaml`, `extractionpatterns.yaml`, `k8sclusterinfo.yaml`, `k8sstorageinfo.yaml`, `networkinfo.yaml`, etc.) |
+| `conf/cloud_conf.yaml` | **No change** - Verified matches upstream |
+| `init/*` | **Updated** - Synced `init.py` (initScript template detection and `/readyz/init` `assetsSummary` check), `multi-init.sh`, and `template.credentials.yaml` (NHN endpoint normalized) |
+| `init/templates/*` | **Updated** - Mirrored 1:1 with upstream; updated `infra-*.json` templates and added `infra-ntfy.json`, `infra-ntfy-global.json`, `infra-obs.json`, `initscript-hello.json`, `initscript-nginx.json`, `initscript-otel-agent.json`, `initscript-swap.json`, `sg-ntfy.json`, `sg-obs.json` |
+| `scripts/restore-assets.sh`, `scripts/lib/pg-backend.sh` | **Updated** - Synced compressed `.gz` direct SSH transfer and `LogLevel=ERROR` improvements (`backup-assets.sh` unchanged) |
+| `interface/mcp/*` | **Updated** - Mirrored upstream `src/interface/mcp/*` (`Dockerfile` +`pyyaml==6.0.4`, `tb-mcp.py`, `mcp-simple-proxy.py`, `README.md`, `PROXY_README.md`, `architecture.md`, and `tests/`) |
 
-> **Note:** OpenBao files are maintained independently at `deployments/docker-compose/openbao/` with its own `SYNC.md`, not under `cb-tumblebug/init/openbao/`.
+> **Note:** OpenBao files are maintained independently at `deployments/docker-compose/openbao/` with its own `SYNC.md`, not under `cb-tumblebug/init/openbao/`. (Verified 0 changes in upstream `init/openbao/` between `v0.13.8` and `v0.14.0`.)
 
 ## Upstream Source Paths
 

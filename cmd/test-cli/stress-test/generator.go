@@ -286,9 +286,11 @@ func ConsolidateIdenticalNodeGroups(rec cloudmodel.RecommendedInfra) cloudmodel.
 		consolidated = append(consolidated, ng)
 	}
 
-	for i, pc := range rec.TargetInfra.PostCommands {
-		if newName, ok := renamedMap[pc.NodeGroupId]; ok {
-			rec.TargetInfra.PostCommands[i].NodeGroupId = newName
+	if rec.TargetInfra.PostScript != nil {
+		for i, phase := range rec.TargetInfra.PostScript.Phases {
+			if newName, ok := renamedMap[phase.NodeGroupId]; ok {
+				rec.TargetInfra.PostScript.Phases[i].NodeGroupId = newName
+			}
 		}
 	}
 	for i, nlb := range rec.TargetNlbList {

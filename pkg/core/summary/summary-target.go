@@ -432,7 +432,6 @@ func buildInfraOverview(infraInfo *tbmodel.InfraInfo) TargetInfraOverview {
 		RunningVmCount:   runningCount,
 		StoppedVmCount:   stoppedCount,
 		Label:            infraInfo.Label,
-		InstallMonAgent:  infraInfo.InstallMonAgent,
 	}
 }
 
