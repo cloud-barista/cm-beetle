@@ -21,10 +21,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
         with:
-          # Explicitly checkout the PR head to access the new API spec
-          ref: ${{ github.event.pull_request.head.sha }}
-          allow-unsafe-pr-checkout: true
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Set up Go
         uses: actions/setup-go@v7
@@ -37,35 +34,42 @@ jobs:
 
       - name: Run DeepDiffGo and Generate Report
         id: deepdiff
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           # ========================================================
           # 1. Setup Variables
           # ========================================================
           REPORT_FILE="api_diff_report.txt"
           PREV_SPEC_FILE="prev_spec.yaml"
-          CURR_SPEC_FILE="${{ env.API_DOC_PATH }}"
-          BASE_REF="origin/${{ github.base_ref }}"
-          PR_HEAD_SHA="$(git rev-parse --short ${{ github.event.pull_request.head.sha }})"
-          PR_BRANCH="${{ github.event.pull_request.head.ref }}"
+          CURR_SPEC_FILE="pr_spec.yaml"
+          SPEC_PATH="${{ env.API_DOC_PATH }}"
 
           # ========================================================
-          # 2. Extract Previous API Spec (from Base Branch)
+          # 2. Extract Previous and PR API Specs as Data
           # ========================================================
-          echo "Extracting '$CURR_SPEC_FILE' from '$BASE_REF'..."
+          echo "Extracting '$SPEC_PATH' from base branch '$BASE_REF' and PR commit..."
 
-          # Ensure we have the base branch reference available
-          git fetch origin ${{ github.base_ref }} --depth=1
+          git fetch origin --depth=1 "$PR_HEAD_SHA"
 
-          if git show "$BASE_REF:$CURR_SPEC_FILE" > "$PREV_SPEC_FILE"; then
+          if git show "HEAD:$SPEC_PATH" > "$PREV_SPEC_FILE"; then
             echo "Successfully extracted previous spec."
           else
-            echo "Warning: Could not extract '$CURR_SPEC_FILE' from base branch."
+            echo "Warning: Could not extract '$SPEC_PATH' from base branch."
             echo "   -> Assuming this is a new file. Creating an empty file for comparison."
             touch "$PREV_SPEC_FILE"
           fi
 
-          # Get base branch SHA
-          BASE_SHA="$(git rev-parse --short $BASE_REF)"
+          if ! git show "$PR_HEAD_SHA:$SPEC_PATH" > "$CURR_SPEC_FILE"; then
+            echo "No '$SPEC_PATH' found in PR commit."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          BASE_SHA="$(git rev-parse --short HEAD)"
+          PR_HEAD_SHORT="$(git rev-parse --short "$PR_HEAD_SHA")"
 
           # ========================================================
           # 3. Execute DeepDiffGo (Compare Prev vs Curr)
@@ -73,15 +77,15 @@ jobs:
           echo "Running DeepDiffGo..."
 
           if deepdiffgo "$PREV_SPEC_FILE" "$CURR_SPEC_FILE" \
-            --old-desc "${{ github.base_ref }}($BASE_SHA)" \
-            --new-desc "PR#${{ github.event.pull_request.number }}($PR_HEAD_SHA)" \
+            --old-desc "${BASE_REF}(${BASE_SHA})" \
+            --new-desc "PR#${PR_NUMBER}(${PR_HEAD_SHORT})" \
             --format text \
             --output "$REPORT_FILE"; then
             echo "DeepDiffGo completed successfully."
           else
             echo "DeepDiffGo failed execution."
             # Fail gracefully without posting a comment
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -90,13 +94,15 @@ jobs:
           # ========================================================
           if [ -s "$REPORT_FILE" ]; then
               echo "API changes detected. Setting output..."
-              echo "has_changes=true" >> $GITHUB_OUTPUT
-              echo "report_body<<EOF" >> $GITHUB_OUTPUT
-              cat "$REPORT_FILE" >> $GITHUB_OUTPUT
-              echo "EOF" >> $GITHUB_OUTPUT
+              echo "has_changes=true" >> "$GITHUB_OUTPUT"
+              {
+                echo "report_body<<DEEPDIFF_EOF"
+                cat "$REPORT_FILE"
+                echo "DEEPDIFF_EOF"
+              } >> "$GITHUB_OUTPUT"
           else
               echo "No API changes detected."
-              echo "has_changes=false" >> $GITHUB_OUTPUT
+              echo "has_changes=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Post Comment to PR
@@ -105,7 +111,7 @@ jobs:
         env:
           REPORT_BODY: ${{ steps.deepdiff.outputs.report_body }}
         with:
-          github-token: ${{ secrets.CR_PAT }} # Replace with appropriate token if needed (e.g., secrets.GITHUB_TOKEN)
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             // Retrieve the report body from the previous step
             const reportBody = process.env.REPORT_BODY;
@@ -120,7 +126,7 @@ jobs:
               '```'
             ].join('\n');
 
-            github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,

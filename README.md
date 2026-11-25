@@ -3,7 +3,7 @@
 This repository provides computing infrastructure migration features.
 This is a sub-system on [Cloud-Barista platform](https://github.com/cloud-barista/docs)
 and utilizes [CB-Tumblebug](https://github.com/cloud-barista/cb-tumblebug)
-to depoly a multi-cloud infra as a target computing infrastructure.
+to deploy a multi-cloud infra as a target computing infrastructure.
 
 ## Overview
 
@@ -88,7 +88,7 @@ Data migration transfers data between storage endpoints regardless of which CSP 
   - [Validation](docs/feature-guide/core-validation.md)
 - **Infrastructure**
   - [Computing Infrastructure](docs/feature-guide/infra-computing.md)
-  - [GPU Infrastructure Recommendation & Migration](docs/feature-guide/gpu-infra-migration-api-guide.md)
+  - [GPU Infrastructure Recommendation & Migration](docs/gpu-infra-migration-api-guide.md)
   - [Kubernetes Infrastructure](docs/feature-guide/infra-kubernetes.md)
 - **Managed Middleware**
   - [Managed Middleware Overview](docs/feature-guide/middleware-overview.md)

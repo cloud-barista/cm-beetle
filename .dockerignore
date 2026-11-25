@@ -33,12 +33,19 @@ pkg/cm-beetle-arm
 pkg/cli/tbctl
 pkg/cli/cli
 cmd/cm-beetle/cm-beetle
+deepdiffgo/deepdiffgo
+analyzer/examples/basic/basic
 
 # Test Files & Artifacts
 *_test.go
 **/*_test.go
 cmd/test-cli/
 !cmd/cm-beetle/
+testresult/
+
+# Frontend & Agent Metadata
+ui/
+.agents/
 
 # Python & Virtual Env
 .venv/
@@ -52,6 +59,8 @@ meta_db/
 db/
 
 # Configuration & Secrets
+.env
+.env.*
 *.pem
 *.ppk
 *.key
