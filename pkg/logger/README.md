@@ -35,10 +35,10 @@ This package provides logging primitives for CM-Beetle, featuring automatic reda
 
 ## Masking Pipeline
 
-Log masking operates in two distinct stages to maintain high logging throughput:
+`MaskingWriter` delegates byte-level sensitive data detection and masking to `pkg/redact` (`redact.Bytes`). Log masking operates in two distinct stages to maintain high logging throughput:
 
 1. **Stage 1: Fast-Path Filter (Zero Allocations)**
-   Before running regular expression replacements, the log buffer is converted to lowercase and scanned against `sensitiveKeywords` using `bytes.Contains`. If none of the 13 sensitive keywords (`password`, `secret`, `token`, `privatekey`, `auth`, `-----begin`, `pem`, `bearer `, etc.) are present, the original byte slice is returned immediately without regular expression evaluation.
+   Before running regular expression replacements, the buffer is converted to lowercase and scanned against `sensitiveKeywords` in `pkg/redact` using `bytes.Contains`. If none of the sensitive keywords (`password`, `passphrase`, `secret`, `token`, `privatekey`, `apikey`, `accesskey`, `auth`, `-----begin`, `pem`, `bearer `, etc.) are present, the original byte slice is returned immediately without regular expression evaluation.
 
 2. **Stage 2: Pattern Redaction**
    When a keyword is detected, regular expressions scan and replace sensitive patterns with fixed-length asterisks (`********`) or structured tags (`[MASKED ...]`).
@@ -150,14 +150,14 @@ log.WithContext(ctx).Info().Msg("Processing migration step")
 
 ## Testing & Benchmarks
 
-Run the unit tests to verify masking rules across supported formats:
+Run the unit tests to verify redaction rules in `pkg/redact` and writer integration in `pkg/logger`:
 
 ```bash
-go test -v ./pkg/logger -run "TestMaskSensitiveData|TestMaskingWriter"
+go test -v ./pkg/redact ./pkg/logger
 ```
 
 Run benchmarks to evaluate fast-path versus regex masking overhead:
 
 ```bash
-go test -bench=. ./pkg/logger -benchmem
+go test -bench=. ./pkg/redact ./pkg/logger -benchmem
 ```

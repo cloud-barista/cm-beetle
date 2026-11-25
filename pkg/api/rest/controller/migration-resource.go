@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	tbresource "github.com/cloud-barista/cb-tumblebug/src/interface/rest/server/resource"
@@ -33,7 +34,20 @@ import (
 type JSONResult struct {
 }
 
-// createTumblebugProxyHandler creates a handler function that proxies requests to Tumblebug API
+type tumblebugProxyKey struct {
+	sourcePattern string
+	targetPattern string
+	restURL       string
+	username      string
+	password      string
+}
+
+var (
+	tbProxyCacheMu sync.RWMutex
+	tbProxyCache   = make(map[tumblebugProxyKey]echo.HandlerFunc)
+)
+
+// createTumblebugProxyHandler builds and caches a Tumblebug reverse proxy handler for a route pattern.
 // sourcePattern: the source URL pattern with wildcards (*)
 // targetPattern: the target URL pattern with wildcards ($1, $2, etc.)
 func createTumblebugProxyHandler(sourcePattern string, targetPattern string) echo.HandlerFunc {
@@ -41,10 +55,28 @@ func createTumblebugProxyHandler(sourcePattern string, targetPattern string) ech
 	log.Trace().Msgf("Just keep importing tbmodel %s", tbmodel.DefaultNamespace)
 	log.Trace().Msgf("Just keep importing tbresource %v", tbresource.RestGetAllVNetResponse{})
 
-	// Parse Tumblebug endpoint URL
-	tbURL, err := url.Parse(config.Tumblebug.RestUrl)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to parse Tumblebug endpoint URL")
+	restURL := strings.TrimSpace(config.Tumblebug.RestUrl)
+	username := config.Tumblebug.API.Username
+	password := config.Tumblebug.API.Password
+
+	key := tumblebugProxyKey{
+		sourcePattern: sourcePattern,
+		targetPattern: targetPattern,
+		restURL:       restURL,
+		username:      username,
+		password:      password,
+	}
+
+	tbProxyCacheMu.RLock()
+	cached, ok := tbProxyCache[key]
+	tbProxyCacheMu.RUnlock()
+	if ok {
+		return cached
+	}
+
+	tbURL, err := url.Parse(restURL)
+	if err != nil || restURL == "" || tbURL.Scheme == "" || tbURL.Host == "" {
+		log.Error().Err(err).Str("restUrl", restURL).Msg("Failed to parse Tumblebug endpoint URL")
 		return func(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, map[string]string{
 				"error": "Server configuration error",
@@ -52,50 +84,52 @@ func createTumblebugProxyHandler(sourcePattern string, targetPattern string) ech
 		}
 	}
 
-	// Return a handler that processes the request and forwards it to Tumblebug
-	return func(c echo.Context) error {
-		// Create the rewrite rule based on the source and target patterns
-		// Support both with and without the "/beetle" base group prefix
-		beetleSourcePattern := "/beetle" + sourcePattern
-		if strings.HasPrefix(sourcePattern, "/beetle") {
-			beetleSourcePattern = sourcePattern
-		}
-		rewriteRules := map[string]string{
-			sourcePattern:       targetPattern,
-			beetleSourcePattern: targetPattern,
-		}
-
-		log.Debug().Msgf("Proxying with rewrite rules: %v", rewriteRules)
-
-		// Use the existing Proxy middleware
-		proxyMiddleware := middlewares.Proxy(middlewares.ProxyConfig{
-			URL:     tbURL,
-			Rewrite: rewriteRules,
-			ModifyResponse: func(res *http.Response) error {
-				// [Policy] Keep original status code from Tumblebug
-				// We respect the status code returned by Tumblebug (e.g., 404 for Resource Not Found).
-
-				resBytes, err := io.ReadAll(res.Body)
-				if err != nil {
-					return err
-				}
-
-				log.Debug().Msgf("[Proxy] response from %s", res.Request.URL)
-				log.Trace().Msgf("[Proxy] response body: %s", string(resBytes))
-
-				res.Body = io.NopCloser(bytes.NewReader(resBytes))
-				return nil
-			},
-		})
-
-		// Create a handler that will be wrapped by the proxy middleware
-		handler := echo.HandlerFunc(func(c echo.Context) error {
-			return nil // This will never be called because the proxy middleware will handle the request
-		})
-
-		// Apply the proxy middleware to the handler
-		return proxyMiddleware(handler)(c)
+	// Support both with and without the "/beetle" base group prefix
+	beetleSourcePattern := "/beetle" + sourcePattern
+	if strings.HasPrefix(sourcePattern, "/beetle") {
+		beetleSourcePattern = sourcePattern
 	}
+	rewriteRules := map[string]string{
+		sourcePattern:       targetPattern,
+		beetleSourcePattern: targetPattern,
+	}
+
+	log.Debug().Msgf("Registering Tumblebug proxy with rewrite rules: %v", rewriteRules)
+
+	proxyMiddleware := middlewares.Proxy(middlewares.ProxyConfig{
+		URL:      tbURL,
+		Rewrite:  rewriteRules,
+		Username: username,
+		Password: password,
+		ModifyResponse: func(res *http.Response) error {
+			// Respect the HTTP status code returned by Tumblebug (e.g., 404 for Resource Not Found).
+			resBytes, err := io.ReadAll(res.Body)
+			if err != nil {
+				return err
+			}
+
+			log.Debug().Msgf("[Proxy] response from %s", res.Request.URL)
+			log.Trace().Msgf("[Proxy] response body: %s", string(resBytes))
+
+			res.Body = io.NopCloser(bytes.NewReader(resBytes))
+			return nil
+		},
+	})
+
+	noopHandler := echo.HandlerFunc(func(c echo.Context) error {
+		return nil
+	})
+	built := proxyMiddleware(noopHandler)
+
+	tbProxyCacheMu.Lock()
+	if existing, exists := tbProxyCache[key]; exists {
+		tbProxyCacheMu.Unlock()
+		return existing
+	}
+	tbProxyCache[key] = built
+	tbProxyCacheMu.Unlock()
+
+	return built
 }
 
 // ========== vNet Resource APIs ==========

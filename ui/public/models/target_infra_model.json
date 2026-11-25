@@ -13,7 +13,6 @@
     },
     "targetInfra": {
       "name": "infra101",
-      "installMonAgent": "",
       "label": null,
       "systemLabel": "",
       "description": "Recommended VMs comprising multi-cloud infrastructure",

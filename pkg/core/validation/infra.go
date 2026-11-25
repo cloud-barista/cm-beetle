@@ -393,14 +393,6 @@ func validateSubnetZoneAlignment(
 
 	for i, ng := range target.TargetInfra.NodeGroups {
 		ngPath := fmt.Sprintf("targetInfra.nodeGroups[%d]", i)
-		ngCSP := extractProviderName("", ng.ConnectionName)
-		if ngCSP == "" {
-			ngCSP = modelCSP
-		}
-		if !recommendation.IsZonalSubnetCSP(ngCSP) {
-			continue
-		}
-
 		spec := resolvedSpecs[i]
 		if spec == nil {
 			continue
@@ -414,6 +406,14 @@ func validateSubnetZoneAlignment(
 				Path:     ngPath + ".specId",
 				Message:  fmt.Sprintf("VM spec '%s' in nodegroup '%s' is not available (%s)", ng.SpecId, ng.Name, spec.AvailabilityStatus),
 			})
+			continue
+		}
+
+		ngCSP := extractProviderName("", ng.ConnectionName)
+		if ngCSP == "" {
+			ngCSP = modelCSP
+		}
+		if !recommendation.IsZonalSubnetCSP(ngCSP) {
 			continue
 		}
 

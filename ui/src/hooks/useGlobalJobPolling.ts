@@ -8,6 +8,7 @@ import { RequestDetailsResult } from '../types/migration';
 // Minimum automated polling period against CM-Beetle APIs (10 seconds).
 export const MIN_BEETLE_POLL_INTERVAL_MS = 10_000;
 const INITIAL_POLL_JITTER_GUARD_MS = MIN_BEETLE_POLL_INTERVAL_MS - 250;
+const MAX_CONSECUTIVE_POLL_FAILURES = 3;
 
 // Excludes unbound empty IDs and legacy client-side placeholder IDs from backend polling.
 const isPollableReqId = (reqId?: string): reqId is string =>
@@ -29,6 +30,7 @@ export function useGlobalJobPolling() {
   const inFlightRef = useRef(false);
   const lastDataPollAtRef = useRef<Record<string, number>>({});
   const lastInfraNodePollAtRef = useRef<Record<string, number>>({});
+  const pollFailCountsRef = useRef<Record<string, number>>({});
   const triggeredNlbJobIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -141,8 +143,10 @@ export function useGlobalJobPolling() {
         // 1. Poll Active Infrastructure Migration Jobs and NLB Stage 2 Jobs (every >= 10s)
         if (activeInfraJobs.length > 0 || activeNlbJobs.length > 0) {
           const statusUpdates: Record<string, RequestDetailsResult> = {};
+          const failedInfraUpdates: Record<string, string> = {};
           const liveNodeUpdates: Record<string, any[]> = {};
           const nlbStatusUpdates: Record<string, RequestDetailsResult> = {};
+          const failedNlbUpdates: Record<string, string> = {};
           const jobsToTriggerNlb: MigrationJob[] = [];
 
           for (const job of activeInfraJobs) {
@@ -152,8 +156,20 @@ export function useGlobalJobPolling() {
             if (job.createdAtMs && nowMs - job.createdAtMs < INITIAL_POLL_JITTER_GUARD_MS) {
               continue;
             }
+            const pollKey = `infra:${job.id}`;
             try {
-              let res = await beetleApi.getRequestDetails(job.reqId, { brief: true });
+              let res = await beetleApi.getRequestDetails(job.reqId, { brief: true, withTumblebug: true });
+              if (res?.pollError) {
+                const failCount = (pollFailCountsRef.current[pollKey] || 0) + 1;
+                pollFailCountsRef.current[pollKey] = failCount;
+                if (failCount >= MAX_CONSECUTIVE_POLL_FAILURES) {
+                  delete pollFailCountsRef.current[pollKey];
+                  delete lastInfraNodePollAtRef.current[job.id];
+                  failedInfraUpdates[job.id] = res.errorResponse || `HTTP ${res.httpStatus || 'error'}`;
+                }
+                continue;
+              }
+              delete pollFailCountsRef.current[pollKey];
               const isTerminalSuccess =
                 res?.status === 'Success' || res?.status === 'Completed' || res?.status === 'Succeeded';
               if (isTerminalSuccess && res.responseData === undefined) {
@@ -186,15 +202,33 @@ export function useGlobalJobPolling() {
                   }
                 }
               }
-            } catch (err) {
+            } catch (err: any) {
               console.warn('Poll error for infra job request', job.reqId, err);
+              const failCount = (pollFailCountsRef.current[pollKey] || 0) + 1;
+              pollFailCountsRef.current[pollKey] = failCount;
+              if (failCount >= MAX_CONSECUTIVE_POLL_FAILURES) {
+                delete pollFailCountsRef.current[pollKey];
+                delete lastInfraNodePollAtRef.current[job.id];
+                failedInfraUpdates[job.id] = err?.message || 'Polling failed';
+              }
             }
           }
 
           for (const job of activeNlbJobs) {
             if (!isPollableReqId(job.nlbReqId)) continue;
+            const pollKey = `nlb:${job.id}`;
             try {
-              let res = await beetleApi.getRequestDetails(job.nlbReqId, { brief: true });
+              let res = await beetleApi.getRequestDetails(job.nlbReqId, { brief: true, withTumblebug: true });
+              if (res?.pollError) {
+                const failCount = (pollFailCountsRef.current[pollKey] || 0) + 1;
+                pollFailCountsRef.current[pollKey] = failCount;
+                if (failCount >= MAX_CONSECUTIVE_POLL_FAILURES) {
+                  delete pollFailCountsRef.current[pollKey];
+                  failedNlbUpdates[job.id] = res.errorResponse || `HTTP ${res.httpStatus || 'error'}`;
+                }
+                continue;
+              }
+              delete pollFailCountsRef.current[pollKey];
               const isTerminalSuccess =
                 res?.status === 'Success' || res?.status === 'Completed' || res?.status === 'Succeeded';
               if (isTerminalSuccess && res.responseData === undefined) {
@@ -203,14 +237,22 @@ export function useGlobalJobPolling() {
               if (res && res.status) {
                 nlbStatusUpdates[job.id] = res;
               }
-            } catch (err) {
+            } catch (err: any) {
               console.warn('Poll error for NLB job request', job.nlbReqId, err);
+              const failCount = (pollFailCountsRef.current[pollKey] || 0) + 1;
+              pollFailCountsRef.current[pollKey] = failCount;
+              if (failCount >= MAX_CONSECUTIVE_POLL_FAILURES) {
+                delete pollFailCountsRef.current[pollKey];
+                failedNlbUpdates[job.id] = err?.message || 'NLB polling failed';
+              }
             }
           }
 
           if (
             Object.keys(statusUpdates).length > 0 ||
+            Object.keys(failedInfraUpdates).length > 0 ||
             Object.keys(nlbStatusUpdates).length > 0 ||
+            Object.keys(failedNlbUpdates).length > 0 ||
             Object.keys(liveNodeUpdates).length > 0
           ) {
             const nlbTriggeredIds = new Set(jobsToTriggerNlb.map((j) => j.id));
@@ -225,6 +267,20 @@ export function useGlobalJobPolling() {
 
                 // Process NLB Stage 2 update
                 if (job.nlbStatus === 'Provisioning' && job.nlbReqId) {
+                  const nlbFailReason = failedNlbUpdates[job.id];
+                  if (nlbFailReason) {
+                    const cleanedNlbLogs = updatedJob.logs.filter(
+                      (l) => !l.includes(`GET /beetle/request/${job.nlbReqId}`)
+                    );
+                    updatedJob = {
+                      ...updatedJob,
+                      nlbStatus: 'Failed',
+                      logs: [
+                        ...cleanedNlbLogs,
+                        `Stage 2 -> NLB Polling stopped after ${MAX_CONSECUTIVE_POLL_FAILURES} consecutive failures: ${nlbFailReason}`
+                      ]
+                    };
+                  }
                   const nlbUpdate = nlbStatusUpdates[job.id];
                   if (nlbUpdate) {
                     const cleanedNlbLogs = updatedJob.logs.filter(
@@ -288,6 +344,20 @@ export function useGlobalJobPolling() {
 
                 // Process VM Infra Stage 1 update
                 if (job.status === 'Handling') {
+                  const infraFailReason = failedInfraUpdates[job.id];
+                  if (infraFailReason) {
+                    const failMsg = `Polling stopped after ${MAX_CONSECUTIVE_POLL_FAILURES} consecutive failures: ${infraFailReason}`;
+                    const cleanedLogs = updatedJob.logs.filter((l) => !l.includes(`GET /beetle/request/${job.reqId}`));
+                    return {
+                      ...updatedJob,
+                      status: 'Failed',
+                      error: failMsg,
+                      logs: [
+                        ...cleanedLogs,
+                        `GET /beetle/request/${job.reqId} -> Status: Failed (${failMsg}) (Duration: ${newElapsed}s)`
+                      ]
+                    };
+                  }
                   const update = statusUpdates[job.id];
                   if (!update) {
                     return updatedJob;
@@ -388,8 +458,35 @@ export function useGlobalJobPolling() {
             if (job.createdAtMs && nowMs - job.createdAtMs < INITIAL_POLL_JITTER_GUARD_MS) {
               continue;
             }
+            const pollKey = `os:${job.id}`;
+            const markOsPollFailure = (reason: string) => {
+              const failCount = (pollFailCountsRef.current[pollKey] || 0) + 1;
+              pollFailCountsRef.current[pollKey] = failCount;
+              if (failCount < MAX_CONSECUTIVE_POLL_FAILURES) return;
+              delete pollFailCountsRef.current[pollKey];
+              setObjectStorageJobs((prevJobs) =>
+                prevJobs.map((j) => {
+                  if (j.id !== job.id) return j;
+                  const dur = calculateJobElapsedSeconds(j);
+                  return {
+                    ...j,
+                    status: 'Failed',
+                    elapsedSeconds: dur,
+                    logs: [
+                      ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
+                      `GET /beetle/request/${job.reqId} -> Status: Failed (Polling stopped after ${MAX_CONSECUTIVE_POLL_FAILURES} consecutive failures: ${reason}) (Duration: ${dur}s)`
+                    ]
+                  };
+                })
+              );
+            };
             try {
-              const reqDetails = await beetleApi.getRequestDetails(job.reqId, { brief: true });
+              const reqDetails = await beetleApi.getRequestDetails(job.reqId, { brief: true, withTumblebug: true });
+              if (reqDetails?.pollError) {
+                markOsPollFailure(reqDetails.errorResponse || `HTTP ${reqDetails.httpStatus || 'error'}`);
+                continue;
+              }
+              delete pollFailCountsRef.current[pollKey];
               const status = reqDetails?.status;
               if (status === 'Completed' || status === 'Succeeded' || status === 'Success') {
                 setObjectStorageJobs((prevJobs) =>
@@ -448,8 +545,9 @@ export function useGlobalJobPolling() {
                   })
                 );
               }
-            } catch (err) {
+            } catch (err: any) {
               console.warn('Poll error for OS job request', job.reqId, err);
+              markOsPollFailure(err?.message || 'Polling failed');
             }
           }
         }
@@ -463,8 +561,36 @@ export function useGlobalJobPolling() {
               continue;
             }
             lastDataPollAtRef.current[job.id] = nowMs;
+            const pollKey = `data:${job.id}`;
+            const markDataPollFailure = (reason: string) => {
+              const failCount = (pollFailCountsRef.current[pollKey] || 0) + 1;
+              pollFailCountsRef.current[pollKey] = failCount;
+              if (failCount < MAX_CONSECUTIVE_POLL_FAILURES) return;
+              delete pollFailCountsRef.current[pollKey];
+              delete lastDataPollAtRef.current[job.id];
+              setDataJobs((prevJobs) =>
+                prevJobs.map((j) => {
+                  if (j.id !== job.id) return j;
+                  const dur = calculateJobElapsedSeconds(j);
+                  return {
+                    ...j,
+                    status: 'Failed',
+                    elapsedSeconds: dur,
+                    logs: [
+                      ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
+                      `GET /beetle/request/${job.reqId} -> Status: Failed (Polling stopped after ${MAX_CONSECUTIVE_POLL_FAILURES} consecutive failures: ${reason}) (Duration: ${dur}s)`
+                    ]
+                  };
+                })
+              );
+            };
             try {
               let reqDetails = await beetleApi.getRequestDetails(job.reqId, { brief: true });
+              if (reqDetails?.pollError) {
+                markDataPollFailure(reqDetails.errorResponse || `HTTP ${reqDetails.httpStatus || 'error'}`);
+                continue;
+              }
+              delete pollFailCountsRef.current[pollKey];
               const status = reqDetails?.status;
               if (status === 'Completed' || status === 'Succeeded' || status === 'Success') {
                 delete lastDataPollAtRef.current[job.id];
@@ -552,8 +678,9 @@ export function useGlobalJobPolling() {
                   })
                 );
               }
-            } catch (err) {
+            } catch (err: any) {
               console.warn('Poll error for data job request', job.reqId, err);
+              markDataPollFailure(err?.message || 'Polling failed');
             }
           }
         }

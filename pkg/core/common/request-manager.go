@@ -32,6 +32,7 @@ import (
 
 	"github.com/cloud-barista/cm-beetle/pkg/lkvstore"
 	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
+	"github.com/cloud-barista/cm-beetle/pkg/redact"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 )
@@ -134,7 +135,13 @@ func SetRequest(reqID string, details RequestDetails) error {
 	if details.TumblebugSource == "" {
 		details.TumblebugSource = FormatTumblebugSource(reqID)
 	}
-	return lkvstore.Put(requestKeyPrefix+reqID, details)
+	raw, err := json.Marshal(details)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request details: %w", err)
+	}
+	// Redact sensitive fields once at the store boundary before persistence.
+	redacted := redact.Bytes(raw)
+	return lkvstore.Put(requestKeyPrefix+reqID, json.RawMessage(redacted))
 }
 
 // GetRequest retrieves request details by request ID.
@@ -396,16 +403,20 @@ func convertToRequestDetails(value any) (RequestDetails, bool) {
 func ExtractRequestInfo(r *http.Request) RequestInfo {
 	headerInfo := make(map[string]string)
 
-	// Headers to ignore
+	// Headers to ignore (case-insensitive prefix match)
 	ignorePatterns := []string{
-		"Accept", "Authorization", "Connection", "Referer",
-		"Sec-", "User-Agent",
+		"accept", "connection", "referer",
+		"sec-", "user-agent",
 	}
 
 	for name, headers := range r.Header {
+		if len(headers) == 0 || redact.IsSensitiveHeader(name) {
+			continue
+		}
+		lowerName := strings.ToLower(name)
 		shouldIgnore := false
 		for _, pattern := range ignorePatterns {
-			if strings.HasPrefix(name, pattern) {
+			if strings.HasPrefix(lowerName, pattern) {
 				shouldIgnore = true
 				break
 			}

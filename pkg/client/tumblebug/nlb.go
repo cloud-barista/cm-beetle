@@ -74,7 +74,8 @@ func (s *Session) ListNlbs(nsId, infraId string) (NLBListResponse, error) {
 	var lastErr error
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		var resBody NLBListResponse
-		resp, err := s.
+		attemptSess := s.newChildSession().NoCache()
+		resp, err := attemptSess.
 			SetResult(&resBody).
 			Get(fmt.Sprintf("/ns/%s/infra/%s/nlb", nsId, infraId))
 

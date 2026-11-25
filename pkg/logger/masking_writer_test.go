@@ -9,89 +9,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func TestMaskSensitiveData(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "RDBMS request body with MasterUserPassword",
-			input:    `{"Method":"DELETE","URI":"http://cb-spider:1024/spider/rdbms","requestBody":{"ConnectionName":"nhn-kr1","MasterUserName":"myadmin","MasterUserPassword":"Password123!"}}`,
-			expected: `{"Method":"DELETE","URI":"http://cb-spider:1024/spider/rdbms","requestBody":{"ConnectionName":"nhn-kr1","MasterUserName":"myadmin","MasterUserPassword":"********"}}`,
-		},
-		{
-			name:     "Escaped JSON string with secret token",
-			input:    `{"log":"{\"api_token\":\"secret-value-12345\"}"}`,
-			expected: `{"log":"{\"api_token\":\"********\"}"}`,
-		},
-		{
-			name:     "Config style DB password log",
-			input:    `<TB_POSTGRES_PASSWORD> Password123!`,
-			expected: `<TB_POSTGRES_PASSWORD> ********`,
-		},
-		{
-			name:     "Config style Beetle API password log",
-			input:    `<BEETLE_API_PASSWORD> Password123!`,
-			expected: `<BEETLE_API_PASSWORD> ********`,
-		},
-		{
-			name:     "URL query param with password",
-			input:    `Internal Call Method=GET URI=/api/test?password=secretPassword123&user=admin`,
-			expected: `Internal Call Method=GET URI=/api/test?password=********&user=admin`,
-		},
-		{
-			name:     "Key value with privateKey",
-			input:    `resource created privateKey: my-rsa-private-key-data`,
-			expected: `resource created privateKey: ********`,
-		},
-		{
-			name:     "RDBMS CACertificate PEM in Go struct format",
-			input:    `[Response from Spider] Getting RDBMS secure transport info: {Engine:mysql CACertificate:{PEM:-----BEGIN CERTIFICATE-----\nMIIDDzCCAfegAwIBAgIJANEH58y2/kzHMA0GCSqGSIb3DQEBCwUAMB4xHDAaBgNV\n-----END CERTIFICATE-----\n Subject:CN=IBM Cloud Databases} TLSInUse:true}`,
-			expected: `[Response from Spider] Getting RDBMS secure transport info: {Engine:mysql CACertificate:{PEM:[MASKED CERTIFICATE] Subject:CN=IBM Cloud Databases} TLSInUse:true}`,
-		},
-		{
-			name:     "Multiline PEM certificate block",
-			input:    "server cert:\n-----BEGIN CERTIFICATE-----\nMIIDDzCCAfegAwIBAgI\n-----END CERTIFICATE-----\nstatus: active",
-			expected: "server cert:\n[MASKED CERTIFICATE]status: active",
-		},
-		{
-			name:     "Go struct with password at the end followed by closing delimiters",
-			input:    `[Request to Spider] Creating RDBMS database (url: http://cb-spider:1024/spider/rdbms/tb094n6o6s88ckefvsb8/databases, request: {ConnectionName:ibm-us-south DatabaseName:sampledb MasterUserName:admin MasterUserPassword:Password123!})`,
-			expected: `[Request to Spider] Creating RDBMS database (url: http://cb-spider:1024/spider/rdbms/tb094n6o6s88ckefvsb8/databases, request: {ConnectionName:ibm-us-south DatabaseName:sampledb MasterUserName:admin MasterUserPassword:********})`,
-		},
-		{
-			name:     "Go struct already masked with password at the end followed by closing delimiters",
-			input:    `[Request to Spider] Creating RDBMS database (url: http://cb-spider:1024/spider/rdbms/tb094n6o6s88ckefvsb8/databases, request: {ConnectionName:ibm-us-south DatabaseName:sampledb MasterUserName:admin MasterUserPassword:********})`,
-			expected: `[Request to Spider] Creating RDBMS database (url: http://cb-spider:1024/spider/rdbms/tb094n6o6s88ckefvsb8/databases, request: {ConnectionName:ibm-us-south DatabaseName:sampledb MasterUserName:admin MasterUserPassword:********})`,
-		},
-		{
-			name:     "VMUserPasswd in Spider JSON request body",
-			input:    `{"Method":"POST","URI":"http://cb-spider:1024/spider/vm","requestBody":{"ConnectionName":"openstack-regionone","ReqInfo":{"VMUserId":"","VMUserPasswd":"ust1tqo!7rbA$s","RootDiskType":"default"}}}`,
-			expected: `{"Method":"POST","URI":"http://cb-spider:1024/spider/vm","requestBody":{"ConnectionName":"openstack-regionone","ReqInfo":{"VMUserId":"","VMUserPasswd":"********","RootDiskType":"default"}}}`,
-		},
-		{
-			name:     "HTTP Authorization Bearer token",
-			input:    `curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.token" http://localhost:1323`,
-			expected: `curl -H "Authorization: Bearer ********" http://localhost:1323`,
-		},
-		{
-			name:     "Normal log with no sensitive keywords",
-			input:    `New logger created with level=debug`,
-			expected: `New logger created with level=debug`,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := string(MaskSensitiveData([]byte(tt.input)))
-			if got != tt.expected {
-				t.Errorf("MaskSensitiveData() = %q, want %q", got, tt.expected)
-			}
-		})
-	}
-}
-
 func TestMaskingWriter_Write(t *testing.T) {
 	buf := &bytes.Buffer{}
 	mw := NewMaskingWriter(buf)
@@ -162,24 +79,6 @@ func TestConfigureWriter_MaskingToggle(t *testing.T) {
 	lFalse := NewLogger(Config{LogWriter: "stdout", LogMaskingEnabled: BoolPtr(false)})
 	if lFalse == nil {
 		t.Fatal("NewLogger returned nil for false")
-	}
-}
-
-func BenchmarkMaskSensitiveData_NormalLog(b *testing.B) {
-	logMsg := []byte(`{"level":"info","time":"2026-10-07T18:00:00Z","caller":"pkg/core/common.go:123","message":"fetching resource list for nsId=ns01"}`)
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = MaskSensitiveData(logMsg)
-	}
-}
-
-func BenchmarkMaskSensitiveData_SensitiveLog(b *testing.B) {
-	logMsg := []byte(`{"level":"info","message":"call spider","body":{"ConnectionName":"nhn-kr1","MasterUserName":"myadmin","MasterUserPassword":"Password123!"}}`)
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = MaskSensitiveData(logMsg)
 	}
 }
 

@@ -122,9 +122,9 @@ func extractHostnameLabel(hostname string) string {
 	return sanitized
 }
 
-// buildNodeGroupNameAndLineage returns a concise, unique NodeGroup name and its physical MachineId.
+// buildNodeGroupNameAndSrcMachineId returns a concise, unique NodeGroup name and its physical MachineId.
 // Standalone (1:1): "ng-{hostname}-{shortId8}", Decomposed GPU (1:N): "ng-{hostname}-{gpuModel}".
-func buildNodeGroupNameAndLineage(
+func buildNodeGroupNameAndSrcMachineId(
 	node onpremmodel.NodeProperty,
 	shortIds map[string]string,
 	usedNames map[string]bool,

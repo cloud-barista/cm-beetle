@@ -1,0 +1,18 @@
+# Dependencies & Build Outputs
+node_modules/
+.next/
+coverage/
+
+# VCS
+.git/
+.gitignore
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Logs & OS Files
+*.log
+.DS_Store
+Thumbs.db

@@ -695,8 +695,8 @@ export const ObjectStorageMigration: React.FC = () => {
     return rawBuckets.map((b: any) => ({
       bucketName: b.bucketName || 'sample-bucket-01',
       targetBucketName: b.targetBucketName || b.bucketName || 'sample-bucket-01',
-      totalSizeBytes: b.totalSizeBytes || 10737418240,
-      objectCount: b.objectCount || 1000,
+      totalSizeBytes: Number(b.totalSizeBytes ?? 0),
+      objectCount: Number(b.objectCount ?? 0),
       accessFrequency: b.accessFrequency || 'frequent',
       versioningEnabled: Boolean(b.versioningEnabled),
       encryptionEnabled: Boolean(b.encryptionEnabled),
@@ -750,8 +750,8 @@ export const ObjectStorageMigration: React.FC = () => {
       return {
         bucketName: srcName,
         targetBucketName: cleanTargetName,
-        totalSizeBytes: tb.totalSizeBytes || 10737418240,
-        objectCount: tb.objectCount || 1000,
+        totalSizeBytes: Number(tb.totalSizeBytes ?? 0),
+        objectCount: Number(tb.objectCount ?? 0),
         accessFrequency: freq,
         versioningEnabled: Boolean(tb.versioningEnabled),
         encryptionEnabled: Boolean(tb.encryptionEnabled),
@@ -888,11 +888,17 @@ export const ObjectStorageMigration: React.FC = () => {
         setScannedBuckets(res.buckets || []);
         setSelectedBucketNames([sortedBucketNames[0]]);
       } else {
+        setScannedBucketNames([]);
+        setScannedBuckets([]);
+        setSelectedBucketNames([]);
         showToast(res.error || 'No buckets found for the specified region or scan failed.', 'error');
       }
     } catch (e: any) {
       console.error('Scan error:', e);
-      showToast('Error scanning cloud account buckets.', 'error');
+      setScannedBucketNames([]);
+      setScannedBuckets([]);
+      setSelectedBucketNames([]);
+      showToast(e?.response?.data?.error || e?.message || 'Error scanning cloud account buckets.', 'error');
     } finally {
       setIsScanning(false);
     }
@@ -920,8 +926,8 @@ export const ObjectStorageMigration: React.FC = () => {
             if (insp) {
               return {
                 ...b,
-                totalSizeBytes: insp.totalSizeBytes || b.totalSizeBytes || 10737418240,
-                objectCount: insp.objectCount || b.objectCount || 1000,
+                totalSizeBytes: insp.totalSizeBytes ?? b.totalSizeBytes ?? 0,
+                objectCount: insp.objectCount ?? b.objectCount ?? 0,
                 versioningEnabled: insp.versioningEnabled ?? b.versioningEnabled,
                 encryptionEnabled: insp.encryptionEnabled ?? b.encryptionEnabled,
                 corsEnabled: insp.corsEnabled ?? b.corsEnabled,
@@ -936,14 +942,11 @@ export const ObjectStorageMigration: React.FC = () => {
         setHasStep1UnsavedChanges(true);
         showToast('Source object storage metadata inspection completed.');
       } else {
-        setIsInspectDone(true);
-        setHasStep1UnsavedChanges(true);
-        showToast('Source object storage metadata updated.');
+        showToast(res.error || 'Failed to inspect source object storage metadata.', 'error');
       }
     } catch (err: any) {
       console.warn('Inspect error:', err);
-      setIsInspectDone(true);
-      setHasStep1UnsavedChanges(true);
+      showToast(err?.response?.data?.error || err?.message || 'Failed to inspect source object storage metadata.', 'error');
     } finally {
       setIsInspectLoading(false);
     }
@@ -4030,8 +4033,8 @@ export const ObjectStorageMigration: React.FC = () => {
                     scannedBucketNames.map((name) => {
                       const isSelected = selectedBucketNames.includes(name);
                       const bucketData = scannedBuckets.find((b) => b.bucketName === name);
-                      const displaySize = bucketData?.totalSizeBytes || bucketData?.sizeBytes || 10737418240; // 10 GB default
-                      const displayObjects = bucketData?.objectCount || bucketData?.count || 1000;
+                      const displaySize = bucketData?.totalSizeBytes ?? bucketData?.sizeBytes ?? 0;
+                      const displayObjects = bucketData?.objectCount ?? bucketData?.count ?? 0;
                       return (
                         <label
                           key={name}
@@ -4047,7 +4050,7 @@ export const ObjectStorageMigration: React.FC = () => {
                               checked={isSelected}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setSelectedBucketNames((prev) => [...prev, name]);
+                                  setSelectedBucketNames((prev) => (prev.includes(name) ? prev : [...prev, name]));
                                 } else {
                                   setSelectedBucketNames((prev) => prev.filter((n) => n !== name));
                                 }
@@ -4081,16 +4084,20 @@ export const ObjectStorageMigration: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  if (selectedBucketNames.length === 0) {
+                  const validSelected = Array.from(
+                    new Set(selectedBucketNames.filter((n) => scannedBucketNames.includes(n)))
+                  );
+                  if (validSelected.length === 0) {
                     showToast('Please select at least one object storage bucket.', 'error');
                     return;
                   }
-                  const newBuckets: SourceBucket[] = selectedBucketNames.map((name) => {
+                  const newBuckets: SourceBucket[] = validSelected.map((name) => {
                     const existing = scannedBuckets.find((b) => b.bucketName === name);
                     return {
                       bucketName: name,
-                      totalSizeBytes: existing?.totalSizeBytes || existing?.sizeBytes || 10737418240,
-                      objectCount: existing?.objectCount || existing?.count || 1000,
+                      targetBucketName: name,
+                      totalSizeBytes: existing?.totalSizeBytes ?? existing?.sizeBytes ?? 0,
+                      objectCount: existing?.objectCount ?? existing?.count ?? 0,
                       accessFrequency: existing?.accessFrequency || 'frequent',
                       versioningEnabled: existing?.versioningEnabled || false,
                       encryptionEnabled: existing?.encryptionEnabled || false,

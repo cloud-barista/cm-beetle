@@ -46,6 +46,42 @@ import {
   Eye
 } from 'lucide-react';
 
+const formatProgressEntry = (entry: unknown): string | null => {
+  if (!entry) return null;
+  if (typeof entry === 'string') {
+    const trimmed = entry.trim();
+    return trimmed || null;
+  }
+  if (typeof entry === 'object') {
+    const obj = entry as Record<string, unknown>;
+    const title = typeof obj.title === 'string' ? obj.title.trim() : '';
+    const infoText =
+      typeof obj.info === 'string'
+        ? obj.info.trim()
+        : typeof obj.message === 'string'
+        ? obj.message.trim()
+        : obj.info !== undefined && obj.info !== null && typeof obj.info !== 'object'
+        ? String(obj.info).trim()
+        : '';
+    if (title && infoText && infoText !== title) return `${title}: ${infoText}`;
+    if (title) return title;
+    if (infoText) return infoText;
+  }
+  return null;
+};
+
+const extractLatestUpstreamProgress = (progress: unknown): string | null => {
+  if (!progress) return null;
+  if (Array.isArray(progress)) {
+    for (let i = progress.length - 1; i >= 0; i--) {
+      const formatted = formatProgressEntry(progress[i]);
+      if (formatted) return formatted;
+    }
+    return null;
+  }
+  return formatProgressEntry(progress);
+};
+
 export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const {
     jobs,
@@ -360,8 +396,17 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     }
   }, [jobs]);
 
+  const [, setClockTick] = useState(0);
+  const getDisplayElapsedSeconds = (job: MigrationJob): number =>
+    job.status === 'Handling' || job.nlbStatus === 'Provisioning'
+      ? calculateJobElapsedSeconds(job)
+      : job.elapsedSeconds;
+
   const hasRunningLocalClockJob = jobs.some(
     (j) => j.status === 'Handling' || j.nlbStatus === 'Provisioning'
+  );
+  const hasRunningSampleClockJob = jobs.some(
+    (j) => j.isSample && (j.status === 'Handling' || j.nlbStatus === 'Provisioning')
   );
 
   // Local 1s elapsed-time UI clock and demo sample completion (API polling runs >= 10s in useGlobalJobPolling)
@@ -369,17 +414,17 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     if (!hasRunningLocalClockJob) return;
 
     const interval = setInterval(() => {
+      setClockTick((t) => t + 1);
+      if (!hasRunningSampleClockJob) return;
+
       setJobs((prevJobs) =>
         prevJobs.map((job) => {
+          if (!job.isSample) return job;
           const isInfraDone = job.status === 'Success' || job.status === 'Failed';
           const isNlbDone = !job.nlbStatus || job.nlbStatus === 'Success' || job.nlbStatus === 'Failed';
           if (isInfraDone && isNlbDone) return job;
 
           const newElapsed = calculateJobElapsedSeconds(job);
-
-          if (!job.isSample) {
-            return job.elapsedSeconds === newElapsed ? job : { ...job, elapsedSeconds: newElapsed };
-          }
 
           if (newElapsed >= 30) {
             const cleanedLogs = job.logs.filter((l) => !l.includes('GET /beetle/request/'));
@@ -414,7 +459,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [hasRunningLocalClockJob, setJobs]);
+  }, [hasRunningLocalClockJob, hasRunningSampleClockJob, setJobs]);
 
   const hasUnsavedCloudDraft = Boolean(hasUnsavedCloudChanges && editedCandidate);
   const draftCloudModel = React.useMemo<CloudModelEnvelope | null>(() => {
@@ -678,13 +723,14 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     error?: string;
   }>({ open: false, infraId: '', loading: false });
 
+  const hasSshCooldown = sshCooldownSec > 0;
   useEffect(() => {
-    if (sshCooldownSec <= 0) return;
+    if (!hasSshCooldown) return;
     const timer = setInterval(() => {
       setSshCooldownSec(prev => (prev > 1 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(timer);
-  }, [sshCooldownSec]);
+  }, [hasSshCooldown]);
 
   const handleCheckSshReady = async (filterNodeName?: string) => {
     if (!activeJob) return;
@@ -1022,8 +1068,8 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                     <span className="flex items-center gap-1 font-bold text-text-main">
                       <Clock className="w-3.5 h-3.5 text-emerald-500" />
                       {job.status === 'Success' && job.nlbStatus !== 'Provisioning'
-                        ? `Time: ${job.elapsedSeconds}s (Done)`
-                        : `Time: ${job.elapsedSeconds}s...`}
+                        ? `Time: ${getDisplayElapsedSeconds(job)}s (Done)`
+                        : `Time: ${getDisplayElapsedSeconds(job)}s...`}
                     </span>
                   </div>
                 </div>
@@ -1086,7 +1132,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
             <div className="flex items-center gap-3 text-xs font-mono text-text-muted">
               <span>Namespace: <strong className="text-text-main">{activeJob.nsId}</strong></span>
               <span>Req ID: <strong className="text-emerald-500">{activeJob.reqId || 'Pending...'}</strong></span>
-              <span>Elapsed: <strong className="text-teal-400">{activeJob.elapsedSeconds}s</strong></span>
+              <span>Elapsed: <strong className="text-teal-400">{getDisplayElapsedSeconds(activeJob)}s</strong></span>
               <button
                 onClick={() => handleOpenDeleteModal(activeJob)}
                 className="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-xs font-bold font-mono flex items-center gap-1 transition cursor-pointer ml-1"
@@ -1195,51 +1241,74 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 </span>
               </div>
 
-              {activeJob.subRequestSummary?.currentAction && activeJob.status === 'Handling' && (
-                <div className="px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-2 text-sm">
-                  <RefreshCw className="w-3.5 h-3.5 text-emerald-500 animate-spin shrink-0" />
-                  <span className="font-normal text-text-muted">Current Step:</span>
-                  <span className="font-extrabold text-text-main font-mono">
-                    {activeJob.subRequestSummary.currentAction}
-                  </span>
-                </div>
-              )}
+              {(() => {
+                const activeHandlingSub = activeJob.subRequests.find((sr) => sr.status === 'Handling');
+                const activeUpstreamProgress = activeHandlingSub
+                  ? extractLatestUpstreamProgress(activeHandlingSub.upstreamProgress)
+                  : null;
+                if (!activeJob.subRequestSummary?.currentAction || activeJob.status !== 'Handling') {
+                  return null;
+                }
+                return (
+                  <div className="px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex flex-wrap items-center gap-2 text-sm">
+                    <RefreshCw className="w-3.5 h-3.5 text-emerald-500 animate-spin shrink-0" />
+                    <span className="font-normal text-text-muted">Current Step:</span>
+                    <span className="font-extrabold text-text-main font-mono">
+                      {activeJob.subRequestSummary.currentAction}
+                    </span>
+                    {activeUpstreamProgress && (
+                      <span className="font-normal text-teal-600 dark:text-teal-400 font-mono truncate" title={activeUpstreamProgress}>
+                        ({activeUpstreamProgress})
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-56 overflow-y-auto">
                 {activeJob.subRequests.map((sr) => {
                   const isOk = sr.status === 'Success';
                   const isErr = sr.status === 'Error';
+                  const latestUpstream =
+                    sr.status === 'Handling' ? extractLatestUpstreamProgress(sr.upstreamProgress) : null;
                   return (
                     <div
                       key={sr.subReqId || sr.seq}
-                      className="px-3 py-2 rounded-lg bg-bg-input/70 border border-border-main/50 flex items-center justify-between gap-2 text-xs font-mono"
+                      className="px-3 py-2 rounded-lg bg-bg-input/70 border border-border-main/50 flex flex-col gap-1 text-xs font-mono"
                     >
-                      <div className="min-w-0 flex items-center gap-2">
-                        <span className="text-text-muted shrink-0">#{sr.seq}</span>
-                        <span className="px-1.5 py-0.5 rounded bg-bg-panel border border-border-main text-text-main font-extrabold shrink-0">
-                          {sr.method}
-                        </span>
-                        <span className="font-extrabold text-text-main truncate" title={`${sr.resourceType || 'api'}: ${sr.resourceHint || sr.targetPath}`}>
-                          {sr.resourceType || 'api'}
-                          {sr.resourceHint ? ` (${sr.resourceHint})` : ''}
-                        </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex items-center gap-2">
+                          <span className="text-text-muted shrink-0">#{sr.seq}</span>
+                          <span className="px-1.5 py-0.5 rounded bg-bg-panel border border-border-main text-text-main font-extrabold shrink-0">
+                            {sr.method}
+                          </span>
+                          <span className="font-extrabold text-text-main truncate" title={`${sr.resourceType || 'api'}: ${sr.resourceHint || sr.targetPath}`}>
+                            {sr.resourceType || 'api'}
+                            {sr.resourceHint ? ` (${sr.resourceHint})` : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {typeof sr.durationMs === 'number' && (
+                            <span className="text-text-muted">{sr.durationMs}ms</span>
+                          )}
+                          <span
+                            className={`px-2 py-0.5 rounded font-extrabold uppercase ${
+                              isOk
+                                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                                : isErr
+                                ? 'bg-red-500/15 text-red-500'
+                                : 'bg-teal-500/15 text-teal-600 dark:text-teal-400'
+                            }`}
+                          >
+                            {sr.status}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {typeof sr.durationMs === 'number' && (
-                          <span className="text-text-muted">{sr.durationMs}ms</span>
-                        )}
-                        <span
-                          className={`px-2 py-0.5 rounded font-extrabold uppercase ${
-                            isOk
-                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                              : isErr
-                              ? 'bg-red-500/15 text-red-500'
-                              : 'bg-teal-500/15 text-teal-600 dark:text-teal-400'
-                          }`}
-                        >
-                          {sr.status}
-                        </span>
-                      </div>
+                      {latestUpstream && (
+                        <div className="text-xs font-mono text-teal-600 dark:text-teal-400 truncate pl-6" title={latestUpstream}>
+                          Tumblebug: {latestUpstream}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

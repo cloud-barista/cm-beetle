@@ -18,10 +18,12 @@ dependency: ## Get dependencies
 	@$(GO) mod tidy
 	@echo "Checked!"
 
-tidy: ## Run go mod tidy for all modules (root, transx, analyzer, deepdiffgo)
+tidy: ## Run go mod tidy for all modules (root, imdl, transx, analyzer, deepdiffgo)
 	@echo "Running go mod tidy for all modules..."
 	@echo "  - Root module..."
 	@$(GO) mod tidy
+	@echo "  - imdl module..."
+	@cd imdl && $(GO) mod tidy
 	@echo "  - transx module..."
 	@cd transx && $(GO) mod tidy
 	@echo "  - analyzer module..."
@@ -314,8 +316,8 @@ ps: status ## Alias for status
 compose: prepare-volumes ## Build and up services by docker compose
 	@echo "Starting OpenBao..."
 	@cd deployments/docker-compose && docker compose up -d openbao
-	@if [ ! -f deployments/docker-compose/.env ] || ! grep -q '^VAULT_TOKEN=.+' deployments/docker-compose/.env 2>/dev/null; then \
-		echo "VAULT_TOKEN not found — running first-time OpenBao initialization..."; \
+	@if [ ! -f deployments/docker-compose/.env ] || ! grep -qE '^VAULT_TOKEN=.+' deployments/docker-compose/.env 2>/dev/null; then \
+		echo "VAULT_TOKEN not found: running first-time OpenBao initialization..."; \
 		bash deployments/docker-compose/openbao/openbao-init.sh; \
 	fi
 	@$(MAKE) unseal
@@ -325,8 +327,8 @@ compose: prepare-volumes ## Build and up services by docker compose
 compose-no-cache: prepare-volumes ## Build all services with no-cache and up by docker compose
 	@echo "Starting OpenBao..."
 	@cd deployments/docker-compose && docker compose up -d openbao
-	@if [ ! -f deployments/docker-compose/.env ] || ! grep -q '^VAULT_TOKEN=.+' deployments/docker-compose/.env 2>/dev/null; then \
-		echo "VAULT_TOKEN not found — running first-time OpenBao initialization..."; \
+	@if [ ! -f deployments/docker-compose/.env ] || ! grep -qE '^VAULT_TOKEN=.+' deployments/docker-compose/.env 2>/dev/null; then \
+		echo "VAULT_TOKEN not found: running first-time OpenBao initialization..."; \
 		bash deployments/docker-compose/openbao/openbao-init.sh; \
 	fi
 	@$(MAKE) unseal

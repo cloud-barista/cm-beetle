@@ -198,7 +198,7 @@ func RecommendGpuInfraCandidates(
 			recommendedSg = existingSg
 		}
 
-		ngName, origMachineId := buildNodeGroupNameAndLineage(node, shortIds, usedNames)
+		ngName, origMachineId := buildNodeGroupNameAndSrcMachineId(node, shortIds, usedNames)
 
 		tempCreateNodeGroupReq := cloudmodel.CreateNodeGroupReq{
 			ConnectionName:   connectionName,

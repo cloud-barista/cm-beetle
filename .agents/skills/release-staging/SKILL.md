@@ -33,6 +33,7 @@ Collect the current state of the following and compare against the target versio
    - `github.com/cloud-barista/cb-tumblebug` version
    - `github.com/cloud-barista/cm-beetle/imdl` version
    - `github.com/cloud-barista/cm-beetle/transx` version
+   - Local `replace` directives for `./imdl` and `./transx` (during release staging, comment them out with `// replace ...` instead of deleting them so `GOWORK=off` verifies published module tags while keeping local dev easy to restore)
 
 3. **Cross-check Service Image Versions**:
    Check `deployments/docker-compose/docker-compose.yaml` and `deployments/docker-compose/docker-compose.ui.yaml`:
@@ -108,6 +109,10 @@ git push upstream imdl/vX.Y.Z transx/vX.Y.Z
 
 # 4. Update root go.mod and go.sum
 go get github.com/cloud-barista/cm-beetle/imdl@vX.Y.Z github.com/cloud-barista/cm-beetle/transx@vX.Y.Z
+
+# 5. Comment out local replace directives (do NOT delete them) before verifying GOWORK=off build:
+# // replace github.com/cloud-barista/cm-beetle/imdl => ./imdl
+# // replace github.com/cloud-barista/cm-beetle/transx => ./transx
 ```
 
 ### 3.2 Version String Updates (Manifests, UI, Examples)

@@ -30,7 +30,7 @@ Browser -> Next.js (port 3000)
 - **4-Stage Guided Migration Pipeline**:
   1. **Source Extraction**: Import `OnpremInfra` JSON artifacts or fetch live source groups from CM-Honeybee, with GPU model/VRAM and runtime readiness (`NVIDIA Driver`, `CUDA`) badges.
   2. **Source Infra Refinement**: Inspect and refine heterogeneous multi-tier source nodes (e.g., Web/App CPU tiers + GPU AI tiers) and strategy insights (`rightSizeUp`, `dividing`).
-  3. **2. Target Cloud Optimizer**: Compare multi-cloud candidate specs, pricing, regions, and `postCommands` bootstrap scripts across CSPs.
+  3. **2. Target Cloud Optimizer**: Compare multi-cloud candidate specs, pricing, regions, and `postScript` bootstrap phases across CSPs.
   4. **Migration Execution & Data Transfer (`transx`)**: Track live CB-Tumblebug sub-request steps (`GET /beetle/request/{reqId}?brief=true`) alongside per-node status/IP polling, then run encrypted SSH/S3 data transfers with symmetric 4-stage `preCmd` / `postCmd` hooks and automatic source recovery visibility.
 - **Migrated Infra Operations & AI Workload Verification**:
   - Inspect `cm-*` artifact lineage (`Source Group -> Source Model -> Planning Model -> Target Model -> Deployed Cloud Infra`) and trigger 1-click **Re-Target to Another Cloud** workflows.

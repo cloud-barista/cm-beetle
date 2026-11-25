@@ -1074,12 +1074,19 @@ type NodeSSHStatusDetail struct {
 //   - []NodeSSHStatusDetail: Detailed status for each node
 //   - error: nil if all Nodes are SSH-ready, or error describing the issue
 func CheckSSHReadinessWithDetails(ctx context.Context, nsId string, infraId string, maxWaitTime time.Duration, checkInterval time.Duration) ([]NodeSSHStatusDetail, error) {
+	if maxWaitTime <= 0 || checkInterval <= 0 {
+		return nil, fmt.Errorf("invalid SSH readiness parameters: maxWaitTime (%v) and checkInterval (%v) must be positive", maxWaitTime, checkInterval)
+	}
+
 	log.Info().Msgf("Starting SSH readiness check (nsId: %s, infraId: %s, maxWait: %v, interval: %v)",
 		nsId, infraId, maxWaitTime, checkInterval)
 
 	deadline := time.Now().Add(maxWaitTime)
 	attempt := 0
 	maxAttempts := int(maxWaitTime / checkInterval)
+	if maxAttempts < 1 {
+		maxAttempts = 1
+	}
 	var nodeStatusList []NodeSSHStatusDetail
 
 	// Nodes already confirmed SSH-ready are never probed again, so Tumblebug doesn't
@@ -1149,6 +1156,8 @@ func CheckSSHReadinessWithDetails(ctx context.Context, nsId string, infraId stri
 			if err := common.SleepWithContext(ctx, checkInterval); err != nil {
 				return nodeStatusList, err
 			}
+		} else {
+			break
 		}
 	}
 

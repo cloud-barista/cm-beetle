@@ -83,7 +83,7 @@ func init() {
 			OSArchitecture: tbmodel.X86_64,
 		},
 	}
-	fixtures["/ns/" + testNsId + "/resources/vNet/vnet-aws-2b"] = fixture{
+	fixtures["/ns/"+testNsId+"/resources/vNet/vnet-aws-2b"] = fixture{
 		status: http.StatusOK,
 		body: tbmodel.VNetInfo{
 			Id:             "vnet-aws-2b",
@@ -92,13 +92,13 @@ func init() {
 			SubnetInfoList: []tbmodel.SubnetInfo{{Name: "subnet-a", Zone: "ap-northeast-2b"}},
 		},
 	}
-	fixtures["/ns/" + testNsId + "/resources/sshKey/sshkey-aws"] = fixture{
+	fixtures["/ns/"+testNsId+"/resources/sshKey/sshkey-aws"] = fixture{
 		status: http.StatusOK,
 		body: tbmodel.SshKeyInfo{
 			Id: "sshkey-aws", Name: "sshkey-aws", ConnectionName: "aws-ap-northeast-2",
 		},
 	}
-	fixtures["/ns/" + testNsId + "/resources/securityGroup/sg-aws"] = fixture{
+	fixtures["/ns/"+testNsId+"/resources/securityGroup/sg-aws"] = fixture{
 		status: http.StatusOK,
 		body: tbmodel.SecurityGroupInfo{
 			Id: "sg-aws", Name: "sg-aws", ConnectionName: "aws-ap-northeast-2",
@@ -110,6 +110,15 @@ func init() {
 			Id:           "azure+standard-d4s-v5",
 			CspSpecName:  "Standard_D4s_v5",
 			Architecture: "x86_64",
+		},
+	}
+	fixtures["/ns/system/resources/spec/azure+soldout"] = fixture{
+		status: http.StatusOK,
+		body: tbmodel.SpecInfo{
+			Id:                 "azure+soldout",
+			CspSpecName:        "Standard_NC6s_v3",
+			Architecture:       "x86_64",
+			AvailabilityStatus: tbmodel.AvailabilitySoldOut,
 		},
 	}
 	fixtures["/ns/system/resources/image/azure+ubuntu-2204-gen2"] = fixture{
@@ -298,5 +307,48 @@ func TestValidateTargetInfra_SubnetZoneAlignment(t *testing.T) {
 		assert.Equal(t, CodeRegionalSubnetZonePinned, res.Issues[0].Code)
 		assert.Equal(t, SeverityWarning, res.Issues[0].Severity)
 		assert.Equal(t, "targetVNet.subnetInfoList[0].zone", res.Issues[0].Path)
+	})
+
+	t.Run("non-zonal CSP with SoldOut spec fails availability check", func(t *testing.T) {
+		target := &cloudmodel.RecommendedInfra{
+			TargetCloud: cloudmodel.CloudProperty{Csp: "azure", Region: "koreacentral"},
+			TargetInfra: cloudmodel.InfraReq{
+				Name: "infra-azure-soldout",
+				NodeGroups: []cloudmodel.CreateNodeGroupReq{
+					{
+						Name:             "ng-azure",
+						ConnectionName:   "azure-koreacentral",
+						SpecId:           "azure+soldout",
+						ImageId:          "ubuntu-2204-gen2",
+						VNetId:           "vnet-az-new",
+						SubnetId:         "subnet-a",
+						SecurityGroupIds: []string{"sg-az-new"},
+						SshKeyId:         "sshkey-az-new",
+					},
+				},
+			},
+			TargetVNet: cloudmodel.VNetReq{
+				Name:           "vnet-az-new",
+				ConnectionName: "azure-koreacentral",
+				CidrBlock:      "10.0.0.0/16",
+				SubnetInfoList: []cloudmodel.SubnetReq{
+					{Name: "subnet-a", IPv4_CIDR: "10.0.1.0/24"},
+				},
+			},
+			TargetSshKey: cloudmodel.SshKeyReq{
+				Name:           "sshkey-az-new",
+				ConnectionName: "azure-koreacentral",
+			},
+			TargetSecurityGroupList: []cloudmodel.SecurityGroupReq{
+				{Name: "sg-az-new", ConnectionName: "azure-koreacentral", VNetId: "vnet-az-new"},
+			},
+		}
+
+		res := ValidateTargetInfra(ctx, testNsId, target, false)
+		assert.False(t, res.Valid)
+		require.Len(t, res.Issues, 1)
+		assert.Equal(t, CodeSubnetZoneUnavailable, res.Issues[0].Code)
+		assert.Equal(t, SeverityError, res.Issues[0].Severity)
+		assert.Equal(t, "targetInfra.nodeGroups[0].specId", res.Issues[0].Path)
 	})
 }

@@ -32,6 +32,7 @@ Read `go.mod` and extract:
 - `github.com/cloud-barista/cb-tumblebug` version
 - `github.com/cloud-barista/cm-beetle/imdl` version
 - `github.com/cloud-barista/cm-beetle/transx` version
+- Local `replace` directives for `./imdl` and `./transx` (comment out as `// replace ...` rather than deleting during release staging so `GOWORK=off` builds verify published tags cleanly)
 
 Cross-check these against the service image versions in `deployments/docker-compose/docker-compose.yaml`:
 
@@ -113,6 +114,15 @@ Ensure `deployments/docker-compose/docker-compose.yaml` is configured for produc
    # - BEETLE_LOGLEVEL=debug
    ```
    (This allows the default `info` level to be used)
+
+### `go.mod` Local `replace` Directives for Release Staging
+
+Comment out (do NOT delete) local `./imdl` and `./transx` `replace` lines in root `go.mod` when staging a release, then verify `GOWORK=off go build ./cmd/cm-beetle`:
+
+```go
+// replace github.com/cloud-barista/cm-beetle/imdl => ./imdl
+// replace github.com/cloud-barista/cm-beetle/transx => ./transx
+```
 
 ### Go Dependency Upgrade (if go.mod version is behind docker-compose)
 

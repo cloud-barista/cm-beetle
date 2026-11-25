@@ -131,14 +131,14 @@ func RunServer(port string) {
 	e.HideBanner = true
 	//e.colorer.Printf(banner, e.colorer.Red("v"+Version), e.colorer.Blue(website))
 
-	allowedOrigins := config.Beetle.API.Allow.Origins
-	if allowedOrigins == "" {
-		log.Fatal().Msg("ALLOW_ORIGINS env variable for CORS is " + allowedOrigins +
+	allowedOrigins := parseAllowedOrigins(config.Beetle.API.Allow.Origins)
+	if len(allowedOrigins) == 0 {
+		log.Fatal().Msg("ALLOW_ORIGINS env variable for CORS is " + config.Beetle.API.Allow.Origins +
 			". Please provide a proper value and source setup.env again. EXITING...")
 	}
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{allowedOrigins},
+		AllowOrigins: allowedOrigins,
 		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPost, http.MethodDelete},
 	}))
 
@@ -281,7 +281,7 @@ func RunServer(port string) {
 
 	gBeetle.GET("/api/explorer", docs.ScalarHandler(docs.ScalarConfig{
 		Title:           "CM-Beetle API Explorer",
-		SpecURL:         "/beetle/api/doc.yaml",
+		SpecURL:         "/beetle/swagger.yaml",
 		AuthEnabled:     enableAuth,
 		AuthDescription: authDesc,
 		SidebarWidth:    "500px",
@@ -575,6 +575,18 @@ func RunServer(port string) {
 	log.Info().Msg("CM-Beetle REST API server is started.")
 
 	wg.Wait()
+}
+
+// parseAllowedOrigins splits a comma-separated CORS origin string and omits empty entries.
+func parseAllowedOrigins(raw string) []string {
+	var origins []string
+	for _, entry := range strings.Split(raw, ",") {
+		trimmed := strings.TrimSpace(entry)
+		if trimmed != "" {
+			origins = append(origins, trimmed)
+		}
+	}
+	return origins
 }
 
 // TODO: Implement authentication security validation

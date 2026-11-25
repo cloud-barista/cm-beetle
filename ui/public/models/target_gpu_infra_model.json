@@ -13,7 +13,6 @@
     },
     "targetInfra": {
       "name": "infra101",
-      "installMonAgent": "",
       "label": null,
       "systemLabel": "",
       "description": "Homogeneous GPU-accelerated recommended cloud infrastructure for multi-cloud migration",

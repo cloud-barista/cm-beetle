@@ -51,6 +51,11 @@ func GetCacheDuration(ctx context.Context) (time.Duration, bool) {
 type TumblebugTransport struct {
 	Transport     http.RoundTripper
 	CacheDuration time.Duration
+
+	mu              sync.Mutex
+	cache           map[string]CacheItem
+	requestCounter  map[string]int
+	circuitBreakers map[string]CircuitBreakerState
 }
 
 // CacheItem is a struct to store cached item
@@ -68,14 +73,19 @@ type CircuitBreakerState struct {
 	IsOpen       bool
 }
 
-// clientCache is a map for cache items of internal calls
-var clientCache = sync.Map{}
+const maxClientCacheEntries = 1024
 
-// clientRequestCounter is a map for request counters of internal calls
-var clientRequestCounter = sync.Map{}
-
-// clientCircuitBreakers tracks circuit breaker states for different request keys
-var clientCircuitBreakers = sync.Map{}
+func (t *TumblebugTransport) ensureInitLocked() {
+	if t.cache == nil {
+		t.cache = make(map[string]CacheItem)
+	}
+	if t.requestCounter == nil {
+		t.requestCounter = make(map[string]int)
+	}
+	if t.circuitBreakers == nil {
+		t.circuitBreakers = make(map[string]CircuitBreakerState)
+	}
+}
 
 const (
 	// Circuit breaker thresholds
@@ -148,31 +158,25 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 
 		// Check Cache
 		if !noCacheRequested {
-			if item, found := clientCache.Load(requestKey); found {
-				if cachedItem, ok := item.(CacheItem); ok {
-					if time.Now().Before(cachedItem.ExpiresAt) {
-						log.Trace().Msgf("Cache hit! Expires: %v", time.Since(cachedItem.ExpiresAt))
-						if cacheableInRequest && cachedItem.StatusCode >= http.StatusOK && cachedItem.StatusCode < http.StatusMultipleChoices {
-							reqCache.set(reqCacheKey, cachedItem.StatusCode, cachedItem.Header, cachedItem.ResponseBytes)
-						}
-
-						// Construct response from cache
-						resp := &http.Response{
-							StatusCode: cachedItem.StatusCode,
-							Header:     cachedItem.Header.Clone(),
-							Body:       io.NopCloser(bytes.NewBuffer(cachedItem.ResponseBytes)),
-							Request:    req,
-						}
-						return resp, nil
-					} else {
-						clientCache.Delete(requestKey)
-					}
+			if cachedItem, found := t.getCachedItem(requestKey); found {
+				log.Trace().Msgf("Cache hit! Expires: %v", time.Since(cachedItem.ExpiresAt))
+				if cacheableInRequest && cachedItem.StatusCode >= http.StatusOK && cachedItem.StatusCode < http.StatusMultipleChoices {
+					reqCache.set(reqCacheKey, cachedItem.StatusCode, cachedItem.Header, cachedItem.ResponseBytes)
 				}
+
+				// Construct response from cache
+				resp := &http.Response{
+					StatusCode: cachedItem.StatusCode,
+					Header:     cachedItem.Header.Clone(),
+					Body:       io.NopCloser(bytes.NewBuffer(cachedItem.ResponseBytes)),
+					Request:    req,
+				}
+				return resp, nil
 			}
 		}
 
 		// Check Circuit Breaker
-		if checkCircuitBreaker(requestKey) {
+		if t.checkCircuitBreaker(requestKey) {
 			return nil, fmt.Errorf("API call temporarily blocked due to circuit breaker protection (repeated failures detected), please try again later (API: %s)", requestKey)
 		}
 
@@ -183,7 +187,7 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 		retryCount := 0
 
 		for {
-			if !limitConcurrentRequests(requestKey, concurrencyLimit) {
+			if !t.limitConcurrentRequests(requestKey, concurrencyLimit) {
 				if retryCount >= retryLimit {
 					log.Debug().Msgf("too many same requests after %d retries: %s", retryLimit, requestKey)
 					return nil, fmt.Errorf("too many same requests: %s", requestKey)
@@ -194,20 +198,18 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 
 				// Return newly populated cache entry if an in-flight request completed while waiting.
 				if !noCacheRequested {
-					if item, found := clientCache.Load(requestKey); found {
-						if cachedItem, ok := item.(CacheItem); ok && time.Now().Before(cachedItem.ExpiresAt) {
-							log.Debug().Msg("Got the cached result while waiting")
-							if cacheableInRequest && cachedItem.StatusCode >= http.StatusOK && cachedItem.StatusCode < http.StatusMultipleChoices {
-								reqCache.set(reqCacheKey, cachedItem.StatusCode, cachedItem.Header, cachedItem.ResponseBytes)
-							}
-							resp := &http.Response{
-								StatusCode: cachedItem.StatusCode,
-								Header:     cachedItem.Header.Clone(),
-								Body:       io.NopCloser(bytes.NewBuffer(cachedItem.ResponseBytes)),
-								Request:    req,
-							}
-							return resp, nil
+					if cachedItem, found := t.getCachedItem(requestKey); found {
+						log.Debug().Msg("Got the cached result while waiting")
+						if cacheableInRequest && cachedItem.StatusCode >= http.StatusOK && cachedItem.StatusCode < http.StatusMultipleChoices {
+							reqCache.set(reqCacheKey, cachedItem.StatusCode, cachedItem.Header, cachedItem.ResponseBytes)
 						}
+						resp := &http.Response{
+							StatusCode: cachedItem.StatusCode,
+							Header:     cachedItem.Header.Clone(),
+							Body:       io.NopCloser(bytes.NewBuffer(cachedItem.ResponseBytes)),
+							Request:    req,
+						}
+						return resp, nil
 					}
 				}
 				retryCount++
@@ -231,9 +233,9 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 	if err != nil {
 		finishSubReq(0, nil, err)
 		if method == "GET" {
-			requestDone(requestKey)
+			t.requestDone(requestKey)
 			if req.Context().Err() == nil {
-				recordCircuitBreakerFailure(requestKey)
+				t.recordCircuitBreakerFailure(requestKey)
 			}
 		}
 		log.Error().Err(err).Str("method", method).Str("url", url).Dur("latency", duration).Msg("Internal Call Failed")
@@ -245,7 +247,7 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 	if err != nil {
 		finishSubReq(resp.StatusCode, nil, err)
 		if method == "GET" {
-			requestDone(requestKey)
+			t.requestDone(requestKey)
 		}
 		return nil, err
 	}
@@ -255,9 +257,9 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 	if resp.StatusCode >= 400 {
 		finishSubReq(resp.StatusCode, respBodyBytes, nil)
 		if method == "GET" {
-			requestDone(requestKey)
+			t.requestDone(requestKey)
 			if resp.StatusCode != http.StatusNotFound {
-				recordCircuitBreakerFailure(requestKey)
+				t.recordCircuitBreakerFailure(requestKey)
 			}
 		}
 		if resp.StatusCode == http.StatusNotFound {
@@ -277,23 +279,22 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 
 	// Success
 	if method == "GET" {
-		requestDone(requestKey)
-		recordCircuitBreakerSuccess(requestKey)
+		t.requestDone(requestKey)
+		t.recordCircuitBreakerSuccess(requestKey)
 
 		if !noCacheRequested {
-			// Determine cache duration
 			cacheDuration := t.CacheDuration
 			if hasExplicitDuration {
 				cacheDuration = explicitDuration
 			}
-
-			// Cache the response
-			clientCache.Store(requestKey, CacheItem{
-				ResponseBytes: respBodyBytes,
-				StatusCode:    resp.StatusCode,
-				Header:        resp.Header,
-				ExpiresAt:     time.Now().Add(cacheDuration),
-			})
+			if cacheDuration > 0 {
+				t.setCachedItem(requestKey, CacheItem{
+					ResponseBytes: respBodyBytes,
+					StatusCode:    resp.StatusCode,
+					Header:        resp.Header,
+					ExpiresAt:     time.Now().Add(cacheDuration),
+				})
+			}
 		}
 	}
 
@@ -301,37 +302,72 @@ func (t *TumblebugTransport) RoundTrip(req *http.Request) (*http.Response, error
 	return resp, nil
 }
 
-// checkCircuitBreaker checks if the circuit breaker is open for a given request key
-func checkCircuitBreaker(requestKey string) bool {
-	if item, found := clientCircuitBreakers.Load(requestKey); found {
-		if breaker, ok := item.(CircuitBreakerState); ok {
-			if breaker.IsOpen {
-				// Check if enough time has passed to reset the circuit breaker
-				if time.Since(breaker.LastFailure) > circuitBreakerOpenDuration {
-					// Reset circuit breaker
-					breaker.IsOpen = false
-					breaker.FailureCount = 0
-					clientCircuitBreakers.Store(requestKey, breaker)
-					log.Debug().Msgf("API protection reset, service resumed: %s", requestKey)
-					return false
-				}
-				log.Debug().Msgf("API protection is active: %s", requestKey)
-				return true
+func (t *TumblebugTransport) getCachedItem(requestKey string) (CacheItem, bool) {
+	now := time.Now()
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.ensureInitLocked()
+	item, found := t.cache[requestKey]
+	if !found {
+		return CacheItem{}, false
+	}
+	if !now.Before(item.ExpiresAt) {
+		delete(t.cache, requestKey)
+		return CacheItem{}, false
+	}
+	return item, true
+}
+
+func (t *TumblebugTransport) setCachedItem(requestKey string, item CacheItem) {
+	now := time.Now()
+	if !now.Before(item.ExpiresAt) {
+		return
+	}
+	item.Header = item.Header.Clone()
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.ensureInitLocked()
+	if len(t.cache) >= maxClientCacheEntries {
+		for k, v := range t.cache {
+			if !now.Before(v.ExpiresAt) {
+				delete(t.cache, k)
 			}
 		}
 	}
-	return false
+	t.cache[requestKey] = item
 }
 
-// recordCircuitBreakerFailure records a failure for circuit breaker
-func recordCircuitBreakerFailure(requestKey string) {
-	var breaker CircuitBreakerState
-	if item, found := clientCircuitBreakers.Load(requestKey); found {
-		if existing, ok := item.(CircuitBreakerState); ok {
-			breaker = existing
-		}
+// checkCircuitBreaker checks if the circuit breaker is open for a given request key.
+func (t *TumblebugTransport) checkCircuitBreaker(requestKey string) bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.ensureInitLocked()
+	breaker, found := t.circuitBreakers[requestKey]
+	if !found || !breaker.IsOpen {
+		return false
 	}
 
+	if time.Since(breaker.LastFailure) > circuitBreakerOpenDuration {
+		delete(t.circuitBreakers, requestKey)
+		log.Debug().Msgf("API protection reset, service resumed: %s", requestKey)
+		return false
+	}
+
+	log.Debug().Msgf("API protection is active: %s", requestKey)
+	return true
+}
+
+// recordCircuitBreakerFailure records a failure for circuit breaker.
+func (t *TumblebugTransport) recordCircuitBreakerFailure(requestKey string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.ensureInitLocked()
+	breaker := t.circuitBreakers[requestKey]
 	breaker.FailureCount++
 	breaker.LastFailure = time.Now()
 
@@ -340,46 +376,49 @@ func recordCircuitBreakerFailure(requestKey string) {
 		log.Warn().Msgf("API protection activated due to consecutive failures: %s (failures: %d, blocked for 30 seconds)", requestKey, breaker.FailureCount)
 	}
 
-	clientCircuitBreakers.Store(requestKey, breaker)
+	t.circuitBreakers[requestKey] = breaker
 }
 
-// recordCircuitBreakerSuccess resets failure count on successful request
-func recordCircuitBreakerSuccess(requestKey string) {
-	if item, found := clientCircuitBreakers.Load(requestKey); found {
-		if breaker, ok := item.(CircuitBreakerState); ok {
-			if breaker.FailureCount > 0 {
-				breaker.FailureCount = 0
-				breaker.IsOpen = false
-				clientCircuitBreakers.Store(requestKey, breaker)
-				log.Debug().Msgf("API failure counter reset due to successful response: %s", requestKey)
-			}
-		}
+// recordCircuitBreakerSuccess resets failure count on successful request.
+func (t *TumblebugTransport) recordCircuitBreakerSuccess(requestKey string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	t.ensureInitLocked()
+	if _, found := t.circuitBreakers[requestKey]; found {
+		delete(t.circuitBreakers, requestKey)
+		log.Debug().Msgf("API failure counter reset due to successful response: %s", requestKey)
 	}
 }
 
-// limitConcurrentRequests limits the number of Concurrent requests to the given limit
-func limitConcurrentRequests(requestKey string, limit int) bool {
-	count, _ := clientRequestCounter.LoadOrStore(requestKey, 0)
-	currentCount := count.(int)
+// limitConcurrentRequests limits the number of concurrent requests to the given limit.
+func (t *TumblebugTransport) limitConcurrentRequests(requestKey string, limit int) bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
+	t.ensureInitLocked()
+	currentCount := t.requestCounter[requestKey]
 	if currentCount >= limit {
 		log.Debug().Msgf("[%d] requests for %s", currentCount, requestKey)
 		return false
 	}
 
-	clientRequestCounter.Store(requestKey, currentCount+1)
+	t.requestCounter[requestKey] = currentCount + 1
 	return true
 }
 
-// requestDone decreases the request counter
-func requestDone(requestKey string) {
-	count, _ := clientRequestCounter.Load(requestKey)
-	if count == nil {
+// requestDone decreases the request counter and removes empty entries.
+func (t *TumblebugTransport) requestDone(requestKey string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	if t.requestCounter == nil {
 		return
 	}
-	currentCount := count.(int)
-
-	if currentCount > 0 {
-		clientRequestCounter.Store(requestKey, currentCount-1)
+	currentCount := t.requestCounter[requestKey]
+	if currentCount <= 1 {
+		delete(t.requestCounter, requestKey)
+		return
 	}
+	t.requestCounter[requestKey] = currentCount - 1
 }

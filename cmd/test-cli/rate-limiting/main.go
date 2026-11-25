@@ -111,7 +111,7 @@ func main() {
 
 	// Validate prerequisites
 	log.Info().Msg("Checking prerequisites...")
-	if err := validatePrerequisites(config); err != nil {
+	if err := validatePrerequisites(config, authConfig); err != nil {
 		log.Fatal().Err(err).Msg("Prerequisites check failed")
 	}
 	log.Info().Msg("✅ Prerequisites validated")
@@ -349,7 +349,7 @@ func loadConfig(filename string) (TestConfig, error) {
 	return config, err
 }
 
-func validatePrerequisites(config TestConfig) error {
+func validatePrerequisites(config TestConfig, authConfig AuthConfig) error {
 	client := resty.New().SetTimeout(5 * time.Second)
 	client.SetLogger(&NoOpLogger{}) // Suppress warnings
 
@@ -372,10 +372,21 @@ func validatePrerequisites(config TestConfig) error {
 
 	// Check 2: Namespace exists
 	nsURL := fmt.Sprintf("%s/tumblebug/ns/%s", config.Beetle.Endpoint, config.Beetle.NamespaceID)
-	resp, err = client.R().Get(nsURL)
-	if err != nil || resp.StatusCode() == 404 {
+	nsReq := client.R()
+	if authConfig.TumblebugApiUsername != "" && authConfig.TumblebugApiPassword != "" {
+		nsReq.SetBasicAuth(authConfig.TumblebugApiUsername, authConfig.TumblebugApiPassword)
+	}
+	resp, err = nsReq.Get(nsURL)
+	if err != nil {
+		return fmt.Errorf("failed to check namespace '%s': %w", config.Beetle.NamespaceID, err)
+	}
+	if resp.StatusCode() == http.StatusNotFound {
 		return fmt.Errorf("namespace '%s' does not exist. Create it first:\n  curl -X POST %s/tumblebug/ns -d '{\"name\":\"%s\"}'",
 			config.Beetle.NamespaceID, config.Beetle.Endpoint, config.Beetle.NamespaceID)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return fmt.Errorf("namespace check failed for '%s' (status %d): %s",
+			config.Beetle.NamespaceID, resp.StatusCode(), truncateMessage(string(resp.Body()), 200))
 	}
 
 	// Check 3: Request body file exists

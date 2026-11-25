@@ -1,14 +1,19 @@
 import { NextRequest } from 'next/server';
 import { proxy } from '@/lib/proxy';
 
-const TARGET = process.env.SPIDER_ENDPOINT || 'http://localhost:1024';
-
 async function handler(
   req: NextRequest,
   { params }: { params: Promise<{ path?: string[] }> },
 ) {
   const { path = [] } = await params;
-  return proxy(req, TARGET, 'spider', path);
+  const targetBase = process.env.SPIDER_ENDPOINT || 'http://localhost:1024';
+  return proxy(req, targetBase, 'spider', path, {
+    auth: {
+      username: process.env.SPIDER_API_USERNAME,
+      password: process.env.SPIDER_API_PASSWORD,
+      required: true,
+    },
+  });
 }
 
 export {

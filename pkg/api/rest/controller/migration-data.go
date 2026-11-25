@@ -16,6 +16,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -144,17 +145,7 @@ func MigrateData(c echo.Context) error {
 		decryptedModel, err := transx.DecryptModel(*req)
 		if err != nil {
 			log.Error().Err(err).Str("keyId", req.EncryptionKeyID).Msg("Failed to decrypt request")
-
-			switch err {
-			case transx.ErrKeyNotFound:
-				return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Encryption key not found or already used"))
-			case transx.ErrKeyExpired:
-				return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Encryption key has expired"))
-			case transx.ErrKeyMismatch:
-				return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Encryption key ID mismatch"))
-			default:
-				return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Decryption failed"))
-			}
+			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(decryptErrorMessage(err)))
 		}
 
 		log.Info().Msg("Request decrypted successfully")
@@ -384,17 +375,7 @@ func TestDecryptData(c echo.Context) error {
 	decryptedModel, err := transx.DecryptModel(*req)
 	if err != nil {
 		log.Error().Err(err).Str("keyId", req.EncryptionKeyID).Msg("Decryption test failed")
-
-		switch err {
-		case transx.ErrKeyNotFound:
-			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Encryption key not found or already used"))
-		case transx.ErrKeyExpired:
-			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Encryption key has expired"))
-		case transx.ErrKeyMismatch:
-			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Encryption key ID mismatch"))
-		default:
-			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Decryption failed"))
-		}
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(decryptErrorMessage(err)))
 	}
 
 	log.Info().
@@ -402,6 +383,20 @@ func TestDecryptData(c echo.Context) error {
 		Msg("Decryption test passed")
 
 	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(decryptedModel, "Decryption successful"))
+}
+
+// decryptErrorMessage maps wrapped or sentinel decryption errors to client-facing messages.
+func decryptErrorMessage(err error) string {
+	switch {
+	case errors.Is(err, transx.ErrKeyNotFound):
+		return "Encryption key not found or already used"
+	case errors.Is(err, transx.ErrKeyExpired):
+		return "Encryption key has expired"
+	case errors.Is(err, transx.ErrKeyMismatch):
+		return "Encryption key ID mismatch"
+	default:
+		return "Decryption failed"
+	}
 }
 
 // enrichTumblebugDefaults fills system default Tumblebug endpoint and credentials if omitted by UI/client.

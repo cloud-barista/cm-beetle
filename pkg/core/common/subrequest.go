@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/cloud-barista/cm-beetle/pkg/redact"
 )
 
 // TumblebugSourcePrefix identifies CM-Beetle as the upstream caller in X-Request-Source.
@@ -199,7 +201,7 @@ func FinishSubRequest(parentReqID string, seq uint64, statusCode int, errMsg str
 				parent.items[i].Status = RequestStatusSuccess
 			} else {
 				parent.items[i].Status = RequestStatusError
-				parent.items[i].ErrorMessage = errMsg
+				parent.items[i].ErrorMessage = redact.String(errMsg)
 			}
 			return
 		}

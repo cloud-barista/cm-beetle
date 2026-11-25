@@ -249,7 +249,7 @@ func RecommendCompositeInfraCandidates(
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		ngName, origMachineId := buildNodeGroupNameAndLineage(node, shortIds, usedNames)
+		ngName, origMachineId := buildNodeGroupNameAndSrcMachineId(node, shortIds, usedNames)
 
 		sg, sgErr := RecommendSecurityGroup(ctx, csp, region, node)
 		if sgErr != nil {
