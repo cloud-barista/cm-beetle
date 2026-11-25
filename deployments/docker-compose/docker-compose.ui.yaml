@@ -100,6 +100,12 @@ services:
       - HONEYBEE_ENDPOINT=http://cm-honeybee:8081
       - SPIDER_ENDPOINT=http://cb-spider:1024
       - MAPUI_ENDPOINT=http://cb-mapui:1324
+      - BEETLE_API_USERNAME=${BEETLE_API_USERNAME:?Please set BEETLE_API_USERNAME}
+      - BEETLE_API_PASSWORD=${BEETLE_API_PASSWORD:?Please set BEETLE_API_PASSWORD}
+      - TUMBLEBUG_API_USERNAME=${TB_API_USERNAME:?Please set TB_API_USERNAME}
+      - TUMBLEBUG_API_PASSWORD=${TB_API_PASSWORD:?Please set TB_API_PASSWORD}
+      - SPIDER_API_USERNAME=${SP_API_USERNAME:?Please set SP_API_USERNAME}
+      - SPIDER_API_PASSWORD=${SP_API_PASSWORD:?Please set SP_API_PASSWORD}
     depends_on:
       - cm-beetle
       - cm-honeybee

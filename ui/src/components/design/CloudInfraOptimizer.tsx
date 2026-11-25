@@ -1159,57 +1159,72 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     }
   };
 
-  // Post-Deployment Bootstrap Commands (targetInfra.postCommands & postCommandAsync)
-  const handleTogglePostCommandAsync = (checked: boolean) => {
+  // Post-Deployment Script (targetInfra.postScript.phases)
+  const handleAddPostScriptPhase = () => {
     if (!editedCandidate) return;
     const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
     if (!updatedCandidate.targetInfra) return;
-    updatedCandidate.targetInfra.postCommandAsync = checked;
+    const existing = updatedCandidate.targetInfra.postScript?.phases || [];
+    updatedCandidate.targetInfra.postScript = {
+      phases: [
+        ...existing,
+        {
+          command: ['sudo apt-get update -y']
+        }
+      ]
+    };
     updateEditedCandidate(updatedCandidate);
   };
 
-  const handleAddPostCommand = () => {
+  const handleRemovePostScriptPhase = (phaseIdx: number) => {
     if (!editedCandidate) return;
     const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
-    if (!updatedCandidate.targetInfra) return;
-    const existing = updatedCandidate.targetInfra.postCommands || [];
-    updatedCandidate.targetInfra.postCommands = [
-      ...existing,
-      {
-        commands: ['sudo apt-get update -y'],
-        nodeGroupName: '',
-        nodeName: ''
-      }
-    ];
-    updateEditedCandidate(updatedCandidate);
-  };
-
-  const handleRemovePostCommand = (cmdIdx: number) => {
-    if (!editedCandidate) return;
-    const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
-    if (!updatedCandidate.targetInfra?.postCommands) return;
-    updatedCandidate.targetInfra.postCommands = updatedCandidate.targetInfra.postCommands.filter(
-      (_: any, idx: number) => idx !== cmdIdx
+    if (!updatedCandidate.targetInfra?.postScript?.phases) return;
+    const nextPhases = updatedCandidate.targetInfra.postScript.phases.filter(
+      (_: any, idx: number) => idx !== phaseIdx
     );
+    if (nextPhases.length === 0) {
+      delete updatedCandidate.targetInfra.postScript;
+    } else {
+      updatedCandidate.targetInfra.postScript = { phases: nextPhases };
+    }
     updateEditedCandidate(updatedCandidate);
   };
 
-  const handleUpdatePostCommand = (
-    cmdIdx: number,
-    field: 'nodeGroupName' | 'nodeName' | 'commandsText',
-    value: string
+  const handleUpdatePostScriptPhase = (
+    phaseIdx: number,
+    field: 'nodeGroupId' | 'nodeId' | 'labelSelector' | 'userName' | 'continueOnError' | 'commandsText',
+    value: string | boolean
   ) => {
     if (!editedCandidate) return;
     const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
-    if (!updatedCandidate.targetInfra?.postCommands?.[cmdIdx]) return;
+    const phase = updatedCandidate.targetInfra?.postScript?.phases?.[phaseIdx];
+    if (!phase) return;
     if (field === 'commandsText') {
-      updatedCandidate.targetInfra.postCommands[cmdIdx].commands = value
-        .split('\n')
-        .map((line: string) => line.trim())
-        .filter(Boolean);
+      phase.command = String(value).split('\n');
+    } else if (field === 'continueOnError') {
+      if (Boolean(value)) {
+        phase.continueOnError = true;
+      } else {
+        delete phase.continueOnError;
+      }
     } else {
-      updatedCandidate.targetInfra.postCommands[cmdIdx][field] = value;
+      const trimmed = String(value).trim();
+      if (trimmed) {
+        phase[field] = trimmed;
+      } else {
+        delete phase[field];
+      }
     }
+    updateEditedCandidate(updatedCandidate);
+  };
+
+  const handleNormalizePostScriptCommands = (phaseIdx: number) => {
+    if (!editedCandidate) return;
+    const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
+    const phase = updatedCandidate.targetInfra?.postScript?.phases?.[phaseIdx];
+    if (!phase || !Array.isArray(phase.command)) return;
+    phase.command = phase.command.map((line: string) => line.trim()).filter(Boolean);
     updateEditedCandidate(updatedCandidate);
   };
 
@@ -3081,89 +3096,112 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                   );
                                 })}
 
-                                {/* Post-Deployment Bootstrap Commands (targetInfra.postCommands & postCommandAsync) */}
+                                {/* Post-Deployment Script (targetInfra.postScript.phases) */}
                                 <div className="bg-bg-panel/40 p-4 rounded-xl border border-border-main/30 space-y-3">
                                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-main/10 pb-2">
                                     <div>
-                                      <span className="text-sm font-extrabold text-text-main block">Post-Deployment Bootstrap Commands (postCommands)</span>
-                                      <span className="text-xs text-text-muted">Configure remote commands executed on target nodes after provisioning</span>
+                                      <span className="text-sm font-extrabold text-text-main block">Post-Deployment Script (postScript)</span>
+                                      <span className="text-sm font-normal text-text-muted">Configure sequential SSH script phases executed on target nodes after provisioning</span>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                      <label className="inline-flex items-center gap-2 text-xs text-text-main cursor-pointer">
-                                        <input
-                                          type="checkbox"
-                                          checked={Boolean(editedCandidate.targetInfra.postCommandAsync)}
-                                          onChange={(e) => handleTogglePostCommandAsync(e.target.checked)}
-                                          className="rounded border-border-main text-emerald-500 focus:ring-emerald-500"
-                                        />
-                                        <span className="font-normal text-text-muted">Async Execution (</span>
-                                        <span className="font-extrabold text-text-main font-mono">postCommandAsync</span>
-                                        <span className="font-normal text-text-muted">)</span>
-                                      </label>
                                       <button
                                         type="button"
-                                        onClick={handleAddPostCommand}
-                                        className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-lg text-xs font-extrabold transition cursor-pointer"
+                                        onClick={handleAddPostScriptPhase}
+                                        className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-lg text-sm font-extrabold transition cursor-pointer"
                                       >
-                                        + Add Command Block
+                                        + Add Script Phase
                                       </button>
                                     </div>
                                   </div>
 
-                                  {(editedCandidate.targetInfra.postCommands || []).length === 0 ? (
-                                    <p className="text-xs text-text-muted italic">
-                                      No post-deployment commands configured. Click &quot;+ Add Command Block&quot; to attach bootstrap scripts to all nodes, a specific Node Group, or a specific Node.
+                                  {(editedCandidate.targetInfra.postScript?.phases || []).length === 0 ? (
+                                    <p className="text-sm font-normal text-text-muted italic">
+                                      No post-deployment script phases configured. Click &quot;+ Add Script Phase&quot; to attach bootstrap commands to all Nodes, a Node Group, or a specific Node.
                                     </p>
                                   ) : (
                                     <div className="space-y-3">
-                                      {(editedCandidate.targetInfra.postCommands || []).map((cmdBlock, cmdIdx) => (
-                                        <div key={cmdIdx} className="bg-bg-input/20 border border-border-main/20 p-3 rounded-lg space-y-2.5">
+                                      {(editedCandidate.targetInfra.postScript?.phases || []).map((phase, phaseIdx) => (
+                                        <div key={phaseIdx} className="bg-bg-input/20 border border-border-main/20 p-3 rounded-lg space-y-2.5">
                                           <div className="flex items-center justify-between">
-                                            <span className="text-xs font-extrabold text-text-main font-mono">
-                                              Command Block #{cmdIdx + 1}
+                                            <span className="text-sm font-extrabold text-text-main font-mono">
+                                              Phase #{phaseIdx + 1}
                                             </span>
                                             <button
                                               type="button"
-                                              onClick={() => handleRemovePostCommand(cmdIdx)}
-                                              className="px-2 py-1 text-xs font-bold text-red-400 hover:bg-red-500/10 rounded transition cursor-pointer"
+                                              onClick={() => handleRemovePostScriptPhase(phaseIdx)}
+                                              className="px-2 py-1 text-sm font-bold text-red-400 hover:bg-red-500/10 rounded transition cursor-pointer"
                                             >
                                               Remove
                                             </button>
                                           </div>
                                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             <div>
-                                              <label className="block text-xs font-normal text-text-muted mb-1">
-                                                Target Node Group (optional)
+                                              <label className="block text-sm font-normal text-text-muted mb-1">
+                                                Target Node Group ID (optional)
                                               </label>
                                               <input
                                                 type="text"
                                                 placeholder="Leave empty for all Node Groups"
-                                                value={cmdBlock.nodeGroupName || ''}
-                                                onChange={(e) => handleUpdatePostCommand(cmdIdx, 'nodeGroupName', e.target.value)}
+                                                value={phase.nodeGroupId || ''}
+                                                onChange={(e) => handleUpdatePostScriptPhase(phaseIdx, 'nodeGroupId', e.target.value)}
                                                 className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                               />
                                             </div>
                                             <div>
-                                              <label className="block text-xs font-normal text-text-muted mb-1">
-                                                Target Node Name (optional)
+                                              <label className="block text-sm font-normal text-text-muted mb-1">
+                                                Target Node ID (optional)
                                               </label>
                                               <input
                                                 type="text"
                                                 placeholder="Leave empty for all Nodes in group"
-                                                value={cmdBlock.nodeName || ''}
-                                                onChange={(e) => handleUpdatePostCommand(cmdIdx, 'nodeName', e.target.value)}
+                                                value={phase.nodeId || ''}
+                                                onChange={(e) => handleUpdatePostScriptPhase(phaseIdx, 'nodeId', e.target.value)}
+                                                className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
+                                              />
+                                            </div>
+                                            <div>
+                                              <label className="block text-sm font-normal text-text-muted mb-1">
+                                                Label Selector (optional)
+                                              </label>
+                                              <input
+                                                type="text"
+                                                placeholder="e.g. role=worker"
+                                                value={phase.labelSelector || ''}
+                                                onChange={(e) => handleUpdatePostScriptPhase(phaseIdx, 'labelSelector', e.target.value)}
+                                                className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
+                                              />
+                                            </div>
+                                            <div>
+                                              <label className="block text-sm font-normal text-text-muted mb-1">
+                                                SSH Username (optional)
+                                              </label>
+                                              <input
+                                                type="text"
+                                                placeholder="e.g. cb-user"
+                                                value={phase.userName || ''}
+                                                onChange={(e) => handleUpdatePostScriptPhase(phaseIdx, 'userName', e.target.value)}
                                                 className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                               />
                                             </div>
                                           </div>
+                                          <label className="inline-flex items-center gap-2 text-sm cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={Boolean(phase.continueOnError)}
+                                              onChange={(e) => handleUpdatePostScriptPhase(phaseIdx, 'continueOnError', e.target.checked)}
+                                              className="rounded border-border-main text-emerald-500 focus:ring-emerald-500"
+                                            />
+                                            <span className="font-normal text-text-muted">Continue On Error</span>
+                                          </label>
                                           <div>
-                                            <label className="block text-xs font-normal text-text-muted mb-1">
+                                            <label className="block text-sm font-normal text-text-muted mb-1">
                                               Shell Commands (one command per line)
                                             </label>
                                             <textarea
                                               rows={3}
-                                              value={(cmdBlock.commands || []).join('\n')}
-                                              onChange={(e) => handleUpdatePostCommand(cmdIdx, 'commandsText', e.target.value)}
+                                              value={(phase.command || []).join('\n')}
+                                              onChange={(e) => handleUpdatePostScriptPhase(phaseIdx, 'commandsText', e.target.value)}
+                                              onBlur={() => handleNormalizePostScriptCommands(phaseIdx)}
                                               className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                               placeholder="sudo apt-get update -y"
                                             />

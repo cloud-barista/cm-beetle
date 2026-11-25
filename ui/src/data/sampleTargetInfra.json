@@ -10,7 +10,6 @@
       },
       "targetInfra": {
         "name": "infra101",
-        "installMonAgent": "",
         "label": null,
         "systemLabel": "",
         "description": "Recommended VMs comprising multi-cloud infrastructure",
@@ -1175,7 +1174,6 @@
       },
       "targetInfra": {
         "name": "sample-aws-infra-01",
-        "installMonAgent": "",
         "label": null,
         "systemLabel": "",
         "description": "NLB-aware recommended infrastructure for cloud migration",
@@ -1704,7 +1702,6 @@
       },
       "targetInfra": {
         "name": "sample-aws-infra-01",
-        "installMonAgent": "",
         "label": null,
         "systemLabel": "",
         "description": "NLB-aware recommended infrastructure for cloud migration",
@@ -2233,7 +2230,6 @@
       },
       "targetInfra": {
         "name": "sample-aws-infra-01",
-        "installMonAgent": "",
         "label": null,
         "systemLabel": "",
         "description": "NLB-aware recommended infrastructure for cloud migration",
@@ -2762,7 +2758,6 @@
       },
       "targetInfra": {
         "name": "sample-aws-infra-01",
-        "installMonAgent": "",
         "label": null,
         "systemLabel": "",
         "description": "NLB-aware recommended infrastructure for cloud migration",

@@ -246,3 +246,68 @@ func TestRestDeleteRequest_ReturnsSuccessEnvelope(t *testing.T) {
 	assert.True(t, resp.Success)
 	assert.False(t, common.HasRequest(reqID))
 }
+
+func TestRestGetRequest_WithTumblebugSkipsCompletedSubRequests(t *testing.T) {
+	e := echo.New()
+	reqID := "req-get-with-tb-active-only"
+	common.RemoveAllRequests()
+	t.Cleanup(common.RemoveAllRequests)
+
+	require.NoError(t, common.SetRequest(reqID, common.RequestDetails{
+		ReqId:           reqID,
+		StartTime:       time.Now().Add(-5 * time.Second),
+		Status:          common.RequestStatusHandling,
+		TumblebugSource: common.FormatTumblebugSource(reqID),
+		RequestInfo: common.RequestInfo{
+			Method: http.MethodPost,
+			URL:    "/beetle/migration/ns/mig01/infra",
+		},
+	}))
+
+	completedSubID, seq1 := common.StartSubRequest(reqID, http.MethodPost, "/ns/mig01/resources/vNet", "vNet", "mig-vnet-01")
+	common.FinishSubRequest(reqID, seq1, http.StatusCreated, "")
+	activeSubID, _ := common.StartSubRequest(reqID, http.MethodPost, "/ns/mig01/infra", "infra", "mig-infra-01")
+
+	var requestedPaths []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPaths = append(requestedPaths, r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(tbclient.TumblebugRequestSummary{
+			Status: "Handling",
+			ResponseData: []map[string]any{
+				{"title": "Creating VM", "info": "node 1/2"},
+			},
+		})
+	}))
+	restore := tbclient.SetClient(tbclient.NewClient(tbclient.ApiConfig{
+		RestUrl:  srv.URL,
+		Username: "default",
+		Password: "default",
+	}))
+	t.Cleanup(func() {
+		restore()
+		srv.Close()
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/beetle/request/"+reqID+"?brief=true&withTumblebug=true", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetParamNames("reqId")
+	c.SetParamValues(reqID)
+
+	require.NoError(t, RestGetRequest(c))
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	var resp model.ApiResponse[common.RequestDetails]
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
+	require.Len(t, resp.Data.SubRequests, 2)
+
+	assert.Equal(t, []string{"/request/" + activeSubID}, requestedPaths)
+	assert.Equal(t, completedSubID, resp.Data.SubRequests[0].SubReqId)
+	assert.Empty(t, resp.Data.SubRequests[0].UpstreamStatus)
+	assert.Nil(t, resp.Data.SubRequests[0].UpstreamProgress)
+
+	assert.Equal(t, activeSubID, resp.Data.SubRequests[1].SubReqId)
+	assert.Equal(t, "Handling", resp.Data.SubRequests[1].UpstreamStatus)
+	assert.NotNil(t, resp.Data.SubRequests[1].UpstreamProgress)
+}

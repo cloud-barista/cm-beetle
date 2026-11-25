@@ -2,12 +2,10 @@ import axios from 'axios';
 import { OnpremInfra, OnpremNlb, OnpremNode, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty, CheckSSHReadyResponse, ArtifactLineage, RequestDetailsResult, SubRequestSummary, AiStackLayerStatus } from '../types/migration';
 import { cleanModelDisplayName, isBuiltInSampleModel, normalizeModelVersion } from '../utils/modelFormat';
 
-// Shared Axios client with basic authentication pre-configured (standard Cloud-Barista settings)
+// Shared Axios client; backend API Basic Auth is injected server-side by Next.js proxy routes
 const api = axios.create({
   headers: {
-    'Content-Type': 'application/json',
-    // Using default credentials commonly used in Cloud-Barista development setups
-    'Authorization': 'Basic ' + btoa('default:default')
+    'Content-Type': 'application/json'
   }
 });
 
@@ -1398,11 +1396,12 @@ export const beetleApi = {
         subRequests: normalizedSubs
       };
     } catch (err: any) {
-      // 404 Not Found means request is still initializing or in-flight - treat as Handling, NOT Error!
-      if (err.response?.status === 404) {
-        return { status: 'Handling' };
-      }
-      return { status: 'Handling', errorResponse: err.response?.data?.error || err.message };
+      const httpStatus = err?.response?.status;
+      const errMsg =
+        httpStatus === 404
+          ? 'Request record not found (404)'
+          : (err?.response?.data?.error || err?.message || 'Polling request failed');
+      return { status: 'Handling', pollError: true, httpStatus, errorResponse: errMsg };
     }
   },
 
@@ -2153,10 +2152,14 @@ export const tumblebugApi = {
       await api.post(`/tumblebug/ns/${nsId}/cmd/infra/${infraId}`, { command: [command] });
       return { success: true, statusText: 'All Nodes Reachable (Connected)', reachable: true };
     } catch (err: any) {
-      if (err.response?.status === 404) {
+      const status = err?.response?.status;
+      if (status === 404) {
         return { success: false, statusText: 'Resource Not Found (404)', reachable: false };
       }
-      return { success: true, statusText: 'All Nodes Reachable (Connected)', reachable: true };
+      const detail = status
+        ? `HTTP ${status}: ${err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Reachability check failed'}`
+        : (err?.message || 'Reachability check failed');
+      return { success: false, statusText: detail, reachable: false };
     }
   },
 
@@ -2167,10 +2170,14 @@ export const tumblebugApi = {
       await api.post(`/tumblebug/ns/${nsId}/cmd/infra/${infraId}?nodeId=${nodeName}`, { command: [command] });
       return { success: true, statusText: 'Reachable (Connected)', reachable: true };
     } catch (err: any) {
-      if (err.response?.status === 404) {
+      const status = err?.response?.status;
+      if (status === 404) {
         return { success: false, statusText: 'Resource Not Found (404)', reachable: false };
       }
-      return { success: true, statusText: 'Reachable (Connected)', reachable: true };
+      const detail = status
+        ? `HTTP ${status}: ${err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Node reachability check failed'}`
+        : (err?.message || 'Node reachability check failed');
+      return { success: false, statusText: detail, reachable: false };
     }
   }
 };

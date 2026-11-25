@@ -1,14 +1,19 @@
 import { NextRequest } from 'next/server';
 import { proxy } from '@/lib/proxy';
 
-const TARGET = process.env.BEETLE_ENDPOINT || 'http://localhost:8056';
-
 async function handler(
   req: NextRequest,
   { params }: { params: Promise<{ path?: string[] }> },
 ) {
   const { path = [] } = await params;
-  return proxy(req, TARGET, 'beetle', path);
+  const targetBase = process.env.BEETLE_ENDPOINT || 'http://localhost:8056';
+  return proxy(req, targetBase, 'beetle', path, {
+    auth: {
+      username: process.env.BEETLE_API_USERNAME,
+      password: process.env.BEETLE_API_PASSWORD,
+      required: true,
+    },
+  });
 }
 
 export {

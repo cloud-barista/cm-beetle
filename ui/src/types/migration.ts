@@ -210,20 +210,27 @@ export interface NodeGroup {
   dataDiskIds?: string[] | null;
 }
 
-export interface PostCommandReq {
-  commands?: string[];
-  cmd?: string[];
-  nodeGroupName?: string;
-  nodeName?: string;
+export interface PostScriptPhase {
   userName?: string;
+  command?: string[];
+  templateId?: string;
+  env?: Record<string, string>;
+  timeoutMinutes?: number;
+  nodeGroupId?: string;
+  nodeId?: string;
+  labelSelector?: string;
+  continueOnError?: boolean;
+}
+
+export interface PostScriptReq {
+  phases: PostScriptPhase[];
 }
 
 export interface TargetInfra {
   name: string;
   description: string;
   nodeGroups: NodeGroup[];
-  postCommands?: PostCommandReq[];
-  postCommandAsync?: boolean;
+  postScript?: PostScriptReq;
   label?: Record<string, string>;
 }
 
@@ -413,6 +420,8 @@ export interface RequestDetailsResult {
   tumblebugSource?: string;
   subRequestSummary?: SubRequestSummary;
   subRequests?: SubRequestItem[];
+  pollError?: boolean;
+  httpStatus?: number;
 }
 
 export interface AiStackLayerStatus {

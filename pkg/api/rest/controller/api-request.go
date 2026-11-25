@@ -62,7 +62,7 @@ func CheckHTTPVersion(c echo.Context) error {
 // @Description - Request tracking is managed independently by Beetle using `reqId` (from `X-Request-Id`).
 // @Description - Outbound state-changing and recommendation calls to CB-Tumblebug are recorded in `subRequests[]` with `subReqId` (`{reqId}-{seq}`) and `tumblebugSource` (`cm-beetle:{reqId}`).
 // @Description - Use `brief=true` during high-frequency polling to omit large request/response bodies while still receiving `status`, `subRequestSummary`, and `subRequests`.
-// @Description - Set `withTumblebug=true` to enrich each `subRequests[]` entry with live `upstreamStatus` and `upstreamProgress` from CB-Tumblebug `GET /request/{subReqId}`.
+// @Description - Set `withTumblebug=true` to enrich active (`Handling`) `subRequests[]` entries with live `upstreamStatus` and `upstreamProgress` from CB-Tumblebug `GET /request/{subReqId}`.
 // @Description
 // @Description [Status Values]
 // @Description - Handling: Request is currently being processed
@@ -79,7 +79,7 @@ func CheckHTTPVersion(c echo.Context) error {
 // @Param reqId path string true "Request ID (from X-Request-Id header of a previous Beetle API call)"
 // @Param brief query bool false "Omit requestInfo.body and responseData for lightweight polling (default: false)" default(false)
 // @Param withSubRequests query bool false "Include outbound CB-Tumblebug subRequests list (default: true)" default(true)
-// @Param withTumblebug query bool false "Enrich subRequests with live upstream status/progress from CB-Tumblebug (default: false)" default(false)
+// @Param withTumblebug query bool false "Enrich active (Handling) subRequests with live upstream status/progress from CB-Tumblebug (default: false)" default(false)
 // @Success 200 {object} model.ApiResponse[common.RequestDetails]
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
@@ -103,6 +103,10 @@ func RestGetRequest(c echo.Context) error {
 		for i := range details.SubRequests {
 			if enrichCtx.Err() != nil {
 				break
+			}
+			// Enrich only in-flight sub-requests to avoid re-querying completed steps.
+			if !strings.EqualFold(details.SubRequests[i].Status, common.RequestStatusHandling) {
+				continue
 			}
 			subID := details.SubRequests[i].SubReqId
 			if subID == "" {
