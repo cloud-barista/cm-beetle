@@ -14,6 +14,7 @@ on:
       - ".gitignore"
       - "LICENSE"
       - "CODEOWNERS"
+      - "api/**"
       - "assets/**"
       - "scripts/**"
       - "src/testclient/scripts/**"
